@@ -1,220 +1,346 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>kotlinx.coroutines.reactor - kotlinx-coroutines-reactor</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-reactor</a> / <a href="./index.html">kotlinx.coroutines.reactor</a></div>
-
-<h2 id="package-kotlinxcoroutinesreactor">Package kotlinx.coroutines.reactor</h2>
-
-<p>Utilities for <a href="https://projectreactor.io">Reactor</a>.</p>
-
-<h3 id="types">Types</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="-reactor-context/index.html">ReactorContext</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">ReactorContext</span></code></div>
-
-        <p>Wraps Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration between
-Reactor and kotlinx.coroutines.
-<a href="reactor.util.context.-context-view/as-coroutine-context.html">Context.asCoroutineContext</a> puts Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> elements into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>,
-which can be used to propagate the information about Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> through coroutines.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="-scheduler-coroutine-dispatcher/index.html">SchedulerCoroutineDispatcher</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">SchedulerCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-delay/index.html"><span class="identifier">Delay</span></a></code></div>
-
-        <p>Implements <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> on top of an arbitrary <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/scheduler/Scheduler.html">Scheduler</a>.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extensions-for-external-classes">Extensions for External Classes</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.-coroutine-scope/index.html">kotlinx.coroutines.CoroutineScope</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.-deferred/index.html">kotlinx.coroutines.Deferred</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.-job/index.html">kotlinx.coroutines.Job</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.channels.-receive-channel/index.html">kotlinx.coroutines.channels.ReceiveChannel</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.flow.-flow/index.html">kotlinx.coroutines.flow.Flow</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="reactor.core.publisher.-mono/index.html">reactor.core.publisher.Mono</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="reactor.core.scheduler.-scheduler/index.html">reactor.core.scheduler.Scheduler</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="reactor.util.context.-context/index.html">reactor.util.context.Context</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="reactor.util.context.-context-view/index.html">reactor.util.context.ContextView</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="functions">Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="flux.html">flux</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">flux</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$flux(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactor.flux.T)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$flux(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactor.flux.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="flux.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Flux.html"><span class="identifier">Flux</span></a><span class="symbol">&lt;</span><a href="flux.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Creates a cold reactive <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Flux.html">Flux</a> that runs the given <a href="flux.html#kotlinx.coroutines.reactor$flux(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactor.flux.T)), kotlin.Unit)))/block">block</a> in a coroutine.
-Every time the returned flux is subscribed, it starts a new coroutine in the specified <a href="flux.html#kotlinx.coroutines.reactor$flux(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactor.flux.T)), kotlin.Unit)))/context">context</a>.
-The coroutine emits (<a href="#">Subscriber.onNext</a>) values with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/send.html">send</a>, completes (<a href="#">Subscriber.onComplete</a>)
-when the coroutine completes, or, in case the coroutine throws an exception or the channel is closed,
-emits the error (<a href="#">Subscriber.onError</a>) and closes the channel with the cause.
-Unsubscribing cancels the running coroutine.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="mono.html">mono</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">mono</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="mono.html#T"><span class="identifier">T</span></a><span class="symbol">?</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html"><span class="identifier">Mono</span></a><span class="symbol">&lt;</span><a href="mono.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Creates a cold <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">mono</a> that runs a given <a href="mono.html#kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</a> in a coroutine and emits its result.
-Every time the returned mono is subscribed, it starts a new coroutine.
-If the result of <a href="mono.html#kotlinx.coroutines.reactor$mono(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.reactor.mono.T)))/block">block</a> is <code>null</code>, <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/MonoSink.html#success()">MonoSink.success</a> is invoked without a value.
-Unsubscribing cancels the running coroutine.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>kotlinx.coroutines.reactor</title>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-reactor::kotlinx.coroutines.reactor////PointingToDeclaration//-3089886">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-reactor</a>/<a href="index.html">kotlinx.coroutines.reactor</a></div>
+            <div class="pull-right d-flex">
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Package kotlinx.</span><wbr><span>coroutines.</span><wbr><span>reactor</span></h1>
+            <div class="platform-hinted UnderCoverText" data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><p class="paragraph">Utilities for <a href="https://projectreactor.io">Reactor</a>.</p></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Types</h2>
+              <div class="table" data-togglable="Types"><a data-name="2141151995%2FClasslikes%2F-3089886" anchor-label="ReactorContext" id="2141151995%2FClasslikes%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-reactor-context/index.html">ReactorContext</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2141151995%2FClasslikes%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">class <a href="-reactor-context/index.html">ReactorContext</a>(context: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>) : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-abstract-coroutine-context-element/index.html">AbstractCoroutineContextElement</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="2141151995%2FClasslikes%2F-3089886" anchor-label="ReactorContext" id="2141151995%2FClasslikes%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="2141151995%2FClasslikes%2F-3089886" anchor-label="ReactorContext" id="2141151995%2FClasslikes%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Wraps Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration between Reactor and kotlinx.coroutines.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-447004828%2FClasslikes%2F-3089886" anchor-label="SchedulerCoroutineDispatcher" id="-447004828%2FClasslikes%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-scheduler-coroutine-dispatcher/index.html">SchedulerCoroutineDispatcher</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-447004828%2FClasslikes%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">class <a href="-scheduler-coroutine-dispatcher/index.html">SchedulerCoroutineDispatcher</a>(scheduler: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/scheduler/Scheduler.html">Scheduler</a>) : <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a>, <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-delay/index.html">Delay</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-447004828%2FClasslikes%2F-3089886" anchor-label="SchedulerCoroutineDispatcher" id="-447004828%2FClasslikes%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-447004828%2FClasslikes%2F-3089886" anchor-label="SchedulerCoroutineDispatcher" id="-447004828%2FClasslikes%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Implements <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> on top of an arbitrary <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/scheduler/Scheduler.html">Scheduler</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="1113180561%2FFunctions%2F-3089886" anchor-label="asCoroutineContext" id="1113180561%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-coroutine-context.html">asCoroutineContext</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1113180561%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>.<a href="as-coroutine-context.html">asCoroutineContext</a>(): <a href="-reactor-context/index.html">ReactorContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1417629662%2FFunctions%2F-3089886" anchor-label="asCoroutineContext" id="1417629662%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1417629662%2FFunctions%2F-3089886" anchor-label="asCoroutineContext" id="1417629662%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Wraps the given <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into <a href="-reactor-context/index.html">ReactorContext</a>, so it can be added to the coroutine's context and later used via <code>coroutineContext[ReactorContext]</code>.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/ContextView.html">ContextView</a>.<a href="as-coroutine-context.html">asCoroutineContext</a>(): <a href="-reactor-context/index.html">ReactorContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="152115107%2FFunctions%2F-3089886" anchor-label="asCoroutineContext" id="152115107%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="152115107%2FFunctions%2F-3089886" anchor-label="asCoroutineContext" id="152115107%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Wraps the given <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/ContextView.html">ContextView</a> into <a href="-reactor-context/index.html">ReactorContext</a>, so it can be added to the coroutine's context and later used via <code>coroutineContext[ReactorContext]</code>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1763529051%2FFunctions%2F-3089886" anchor-label="asCoroutineDispatcher" id="1763529051%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-coroutine-dispatcher.html">asCoroutineDispatcher</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1763529051%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/scheduler/Scheduler.html">Scheduler</a>.<a href="as-coroutine-dispatcher.html">asCoroutineDispatcher</a>(): <a href="-scheduler-coroutine-dispatcher/index.html">SchedulerCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1763529051%2FFunctions%2F-3089886" anchor-label="asCoroutineDispatcher" id="1763529051%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1763529051%2FFunctions%2F-3089886" anchor-label="asCoroutineDispatcher" id="1763529051%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Converts an instance of <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/scheduler/Scheduler.html">Scheduler</a> to an implementation of <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1778753431%2FFunctions%2F-3089886" anchor-label="asFlux" id="1778753431%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-flux.html">asFlux</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1778753431%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="as-flux.html">T</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>&lt;<a href="as-flux.html">T</a>&gt;.<a href="as-flux.html">asFlux</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext): <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Flux.html">Flux</a>&lt;<a href="as-flux.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1280482027%2FFunctions%2F-3089886" anchor-label="asFlux" id="-1280482027%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1280482027%2FFunctions%2F-3089886" anchor-label="asFlux" id="-1280482027%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Converts a stream of elements received from the channel to the hot reactive flux.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a>()</div></div>fun &lt;<a href="as-flux.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-flux.html">T</a>&gt;.<a href="as-flux.html">asFlux</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext): <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Flux.html">Flux</a>&lt;<a href="as-flux.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-303057728%2FFunctions%2F-3089886" anchor-label="asFlux" id="-303057728%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-303057728%2FFunctions%2F-3089886" anchor-label="asFlux" id="-303057728%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Converts the given flow to a cold flux.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-285524214%2FFunctions%2F-3089886" anchor-label="asFluxDeprecated" id="-285524214%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-flux-deprecated.html">asFluxDeprecated</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-285524214%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(<span>name = <span class="breakable-word">asFlux</span></span><wbr>)</div></div>fun &lt;<a href="as-flux-deprecated.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-flux-deprecated.html">T</a>&gt;.<a href="as-flux-deprecated.html">asFluxDeprecated</a>(): <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Flux.html">Flux</a>&lt;<a href="as-flux-deprecated.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-114481421%2FFunctions%2F-3089886" anchor-label="asMono" id="-114481421%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-mono.html">asMono</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-114481421%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="as-mono.html">T</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html">Deferred</a>&lt;<a href="as-mono.html">T</a>?&gt;.<a href="as-mono.html">asMono</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="as-mono.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1750988801%2FFunctions%2F-3089886" anchor-label="asMono" id="-1750988801%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1750988801%2FFunctions%2F-3089886" anchor-label="asMono" id="-1750988801%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Converts this deferred value to the hot reactive mono that signals <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/MonoSink.html#success--">success</a> or <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/MonoSink.html#error-kotlin.Throwable-">error</a>.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a>.<a href="as-mono.html">asMono</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1614952570%2FFunctions%2F-3089886" anchor-label="asMono" id="-1614952570%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1614952570%2FFunctions%2F-3089886" anchor-label="asMono" id="-1614952570%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Converts this job to the hot reactive mono that signals with <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/MonoSink.html#success--">success</a> when the corresponding job completes.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="208592185%2FFunctions%2F-3089886" anchor-label="awaitFirst" id="208592185%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first.html">awaitFirst</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="208592185%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await-first.html">T</a>&gt; <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="await-first.html">T</a>&gt;.<a href="await-first.html">awaitFirst</a>(): <a href="await-first.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="208592185%2FFunctions%2F-3089886" anchor-label="awaitFirst" id="208592185%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="208592185%2FFunctions%2F-3089886" anchor-label="awaitFirst" id="208592185%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>This is a lint function that was added already deprecated in order to guard against confusing usages on <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1310354339%2FFunctions%2F-3089886" anchor-label="awaitFirstOrDefault" id="1310354339%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first-or-default.html">awaitFirstOrDefault</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1310354339%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await-first-or-default.html">T</a>&gt; <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="await-first-or-default.html">T</a>&gt;.<a href="await-first-or-default.html">awaitFirstOrDefault</a>(default: <a href="await-first-or-default.html">T</a>): <a href="await-first-or-default.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1310354339%2FFunctions%2F-3089886" anchor-label="awaitFirstOrDefault" id="1310354339%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1310354339%2FFunctions%2F-3089886" anchor-label="awaitFirstOrDefault" id="1310354339%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>This is a lint function that was added already deprecated in order to guard against confusing usages on <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-2057400740%2FFunctions%2F-3089886" anchor-label="awaitFirstOrElse" id="-2057400740%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first-or-else.html">awaitFirstOrElse</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2057400740%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await-first-or-else.html">T</a>&gt; <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="await-first-or-else.html">T</a>&gt;.<a href="await-first-or-else.html">awaitFirstOrElse</a>(defaultValue: () -&gt; <a href="await-first-or-else.html">T</a>): <a href="await-first-or-else.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-2057400740%2FFunctions%2F-3089886" anchor-label="awaitFirstOrElse" id="-2057400740%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-2057400740%2FFunctions%2F-3089886" anchor-label="awaitFirstOrElse" id="-2057400740%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>This is a lint function that was added already deprecated in order to guard against confusing usages on <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-168908465%2FFunctions%2F-3089886" anchor-label="awaitFirstOrNull" id="-168908465%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first-or-null.html">awaitFirstOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-168908465%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await-first-or-null.html">T</a>&gt; <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="await-first-or-null.html">T</a>&gt;.<a href="await-first-or-null.html">awaitFirstOrNull</a>(): <a href="await-first-or-null.html">T</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-168908465%2FFunctions%2F-3089886" anchor-label="awaitFirstOrNull" id="-168908465%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-168908465%2FFunctions%2F-3089886" anchor-label="awaitFirstOrNull" id="-168908465%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>This is a lint function that was added already deprecated in order to guard against confusing usages on <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="204619635%2FFunctions%2F-3089886" anchor-label="awaitLast" id="204619635%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-last.html">awaitLast</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="204619635%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await-last.html">T</a>&gt; <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="await-last.html">T</a>&gt;.<a href="await-last.html">awaitLast</a>(): <a href="await-last.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="204619635%2FFunctions%2F-3089886" anchor-label="awaitLast" id="204619635%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="204619635%2FFunctions%2F-3089886" anchor-label="awaitLast" id="204619635%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>This is a lint function that was added already deprecated in order to guard against confusing usages on <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="858289409%2FFunctions%2F-3089886" anchor-label="awaitSingle" id="858289409%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-single.html">awaitSingle</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="858289409%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-single.html">T</a>&gt; <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="await-single.html">T</a>&gt;.<a href="await-single.html">awaitSingle</a>(): <a href="await-single.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="858289409%2FFunctions%2F-3089886" anchor-label="awaitSingle" id="858289409%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="858289409%2FFunctions%2F-3089886" anchor-label="awaitSingle" id="858289409%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Awaits the single value from the given <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a> without blocking the thread and returns the resulting value, or, if this Mono has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1900459241%2FFunctions%2F-3089886" anchor-label="awaitSingleOrNull" id="-1900459241%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-single-or-null.html">awaitSingleOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1900459241%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-single-or-null.html">T</a>&gt; <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="await-single-or-null.html">T</a>&gt;.<a href="await-single-or-null.html">awaitSingleOrNull</a>(): <a href="await-single-or-null.html">T</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1900459241%2FFunctions%2F-3089886" anchor-label="awaitSingleOrNull" id="-1900459241%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1900459241%2FFunctions%2F-3089886" anchor-label="awaitSingleOrNull" id="-1900459241%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Awaits the single value from the given <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a> without blocking the thread and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1014144972%2FFunctions%2F-3089886" anchor-label="flux" id="-1014144972%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="flux.html">flux</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1014144972%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="flux.html">T</a>&gt; <a href="flux.html">flux</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="flux.html">T</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Flux.html">Flux</a>&lt;<a href="flux.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-378845214%2FFunctions%2F-3089886" anchor-label="flux" id="-378845214%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-378845214%2FFunctions%2F-3089886" anchor-label="flux" id="-378845214%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Creates a cold reactive <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Flux.html">Flux</a> that runs the given <a href="flux.html">block</a> in a coroutine.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="flux.html">T</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.<a href="flux.html">flux</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="flux.html">T</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Flux.html">Flux</a>&lt;<a href="flux.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1515267712%2FFunctions%2F-3089886" anchor-label="mono" id="-1515267712%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="mono.html">mono</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1515267712%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="mono.html">T</a>&gt; <a href="mono.html">mono</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.() -&gt; <a href="mono.html">T</a>?): <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="mono.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1467551858%2FFunctions%2F-3089886" anchor-label="mono" id="1467551858%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1467551858%2FFunctions%2F-3089886" anchor-label="mono" id="1467551858%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>Creates a cold <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">mono</a> that runs a given <a href="mono.html">block</a> in a coroutine and emits its result.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="mono.html">T</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.<a href="mono.html">mono</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.() -&gt; <a href="mono.html">T</a>?): <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/core/publisher/Mono.html">Mono</a>&lt;<a href="mono.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

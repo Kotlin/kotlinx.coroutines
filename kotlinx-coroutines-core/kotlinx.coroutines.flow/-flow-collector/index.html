@@ -1,162 +1,173 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FlowCollector - kotlinx-coroutines-core</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow-collector/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.flow</a> / <a href="./index.html">FlowCollector</a></div>
-
-<h1 id="flowcollector">FlowCollector</h1>
-
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">FlowCollector</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/FlowCollector.kt#L14">(source)</a></div>
-
-<p><a href="./index.html">FlowCollector</a> is used as an intermediate or a terminal collector of the flow and represents
-an entity that accepts values emitted by the <a href="../-flow/index.html">Flow</a>.</p>
-
-<p>This interface should usually not be implemented directly, but rather used as a receiver in a <a href="#">flow</a> builder when implementing a custom operator.
-Implementations of this interface are not thread-safe.</p>
-
-<h3 id="functions">Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="emit.html">emit</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">emit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow.FlowCollector$emit(kotlinx.coroutines.flow.FlowCollector.T)/value">value</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Collects the value emitted by the upstream.
-This method is not thread-safe and should not be invoked concurrently.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extension-properties">Extension Properties</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../coroutine-context.html">coroutineContext</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">coroutineContext</span></s><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../is-active.html">isActive</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">isActive</span></s><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extension-functions">Extension Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../cancel.html">cancel</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">cancel</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$cancel(kotlinx.coroutines.flow.FlowCollector((kotlin.Any)), kotlinx.coroutines.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../emit-all.html">emitAll</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">emitAll</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.flow.emitAll.T)))/channel">channel</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Emits all elements from the given <a href="../emit-all.html#kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.channels.ReceiveChannel((kotlinx.coroutines.flow.emitAll.T)))/channel">channel</a> to this flow collector and <a href="../cancel.html">cancels</a> (consumes)
-the channel afterwards. If you need to iterate over the channel without consuming it,
-a regular <code>for</code> loop should be used instead.</p>
-
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">emitAll</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.emitAll.T)))/flow">flow</span><span class="symbol">:</span>&nbsp;<a href="../-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="../emit-all.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Collects all the values from the given <a href="../emit-all.html#kotlinx.coroutines.flow$emitAll(kotlinx.coroutines.flow.FlowCollector((kotlinx.coroutines.flow.emitAll.T)), kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.emitAll.T)))/flow">flow</a> and emits them to the collector.
-It is a shorthand for <code>flow.collect { value -&gt; emit(value) }</code>.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inheritors">Inheritors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../-mutable-shared-flow/index.html">MutableSharedFlow</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">MutableSharedFlow</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-shared-flow/index.html"><span class="identifier">SharedFlow</span></a><span class="symbol">&lt;</span><a href="../-mutable-shared-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.html"><span class="identifier">FlowCollector</span></a><span class="symbol">&lt;</span><a href="../-mutable-shared-flow/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>A mutable <a href="../-shared-flow/index.html">SharedFlow</a> that provides functions to <a href="../-mutable-shared-flow/emit.html">emit</a> values to the flow.
-An instance of <code>MutableSharedFlow</code> with the given configuration parameters can be created using <code>MutableSharedFlow(...)</code>
-constructor function.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>FlowCollector</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow/FlowCollector///PointingToDeclaration//1975948010">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines.flow</a>/<a href="index.html">FlowCollector</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Flow</span><wbr><span>Collector</span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">interface <a href="index.html">FlowCollector</a>&lt;in <a href="index.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph"><a href="index.html">FlowCollector</a> is used as an intermediate or a terminal collector of the flow and represents an entity that accepts values emitted by the <a href="../-flow/index.html">Flow</a>.</p><p class="paragraph">This interface should usually not be implemented directly, but rather used as a receiver in a <a href="../flow.html">flow</a> builder when implementing a custom operator. Implementations of this interface are not thread-safe.</p></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Extensions">Extensions</button><button class="section-tab" data-togglable="Sources">Sources</button><button class="section-tab" data-togglable="Inheritors">Inheritors</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="1193097097%2FFunctions%2F1975948010" anchor-label="emit" id="1193097097%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="emit.html">emit</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1193097097%2FFunctions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">abstract suspend fun <a href="emit.html">emit</a>(value: <a href="index.html">T</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1193097097%2FFunctions%2F1975948010" anchor-label="emit" id="1193097097%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1193097097%2FFunctions%2F1975948010" anchor-label="emit" id="1193097097%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Collects the value emitted by the upstream.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Inheritors</h2>
+              <div class="table" data-togglable="Inheritors"><a data-name="-1995951523%2FInheritors%2F1975948010" anchor-label="MutableSharedFlow" id="-1995951523%2FInheritors%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../-mutable-shared-flow/index.html">MutableSharedFlow</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1995951523%2FInheritors%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="tabbedcontent">Extensions</h2>
+              <div class="table" data-togglable="Extensions"><a data-name="-1803011673%2FExtensions%2F1975948010" anchor-label="cancel" id="-1803011673%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../cancel.html">cancel</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1803011673%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace strikethrough">fun <a href="index.html">FlowCollector</a>&lt;*&gt;.<a href="../cancel.html">cancel</a>(cause: <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>? = null)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-2108863121%2FExtensions%2F1975948010" anchor-label="coroutineContext" id="-2108863121%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../coroutine-context.html">coroutineContext</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2108863121%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace strikethrough">val <a href="index.html">FlowCollector</a>&lt;*&gt;.<a href="../coroutine-context.html">coroutineContext</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-2070356128%2FExtensions%2F1975948010" anchor-label="emitAll" id="-2070356128%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../emit-all.html">emitAll</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2070356128%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">suspend fun &lt;<a href="../emit-all.html">T</a>&gt; <a href="index.html">FlowCollector</a>&lt;<a href="../emit-all.html">T</a>&gt;.<a href="../emit-all.html">emitAll</a>(channel: <a href="../../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>&lt;<a href="../emit-all.html">T</a>&gt;)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="857540574%2FExtensions%2F1975948010" anchor-label="emitAll" id="857540574%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="857540574%2FExtensions%2F1975948010" anchor-label="emitAll" id="857540574%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Emits all elements from the given <a href="../emit-all.html">channel</a> to this flow collector and <a href="../cancel.html">cancels</a> (consumes) the channel afterwards.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">suspend fun &lt;<a href="../emit-all.html">T</a>&gt; <a href="index.html">FlowCollector</a>&lt;<a href="../emit-all.html">T</a>&gt;.<a href="../emit-all.html">emitAll</a>(flow: <a href="../-flow/index.html">Flow</a>&lt;<a href="../emit-all.html">T</a>&gt;)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-126269298%2FExtensions%2F1975948010" anchor-label="emitAll" id="-126269298%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-126269298%2FExtensions%2F1975948010" anchor-label="emitAll" id="-126269298%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Collects all the values from the given <a href="../emit-all.html">flow</a> and emits them to the collector.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-694360714%2FExtensions%2F1975948010" anchor-label="isActive" id="-694360714%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../is-active.html">isActive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-694360714%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace strikethrough">val <a href="index.html">FlowCollector</a>&lt;*&gt;.<a href="../is-active.html">isActive</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Sources</h2>
+              <div class="table" data-togglable="Sources"><a data-name="-1441983593%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/FlowCollector.kt#L7" id="-1441983593%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/FlowCollector.kt#L7">common source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1441983593%2FSource%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

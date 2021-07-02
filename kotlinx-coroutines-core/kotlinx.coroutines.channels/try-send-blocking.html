@@ -1,69 +1,52 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>trySendBlocking - kotlinx-coroutines-core</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/try-send-blocking.html">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.channels</a> / <a href="./try-send-blocking.html">trySendBlocking</a></div>
-
-<h1 id="trysendblocking">trySendBlocking</h1>
-
-<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="try-send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">trySendBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$trySendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.trySendBlocking.E)), kotlinx.coroutines.channels.trySendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="try-send-blocking.html#E"><span class="identifier">E</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/channels/Channels.kt#L83">(source)</a></div>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
-
-<p>Adds <a href="try-send-blocking.html#kotlinx.coroutines.channels$trySendBlocking(kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.channels.trySendBlocking.E)), kotlinx.coroutines.channels.trySendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel is full,
-and returning either <a href="-channel-result/is-success.html">successful</a> result when the element was added, or
-failed result representing closed channel with a corresponding exception.</p>
-
-<p>This is a way to call <a href="-send-channel/send.html">Channel.send</a> method in a safe manner inside a blocking code using <a href="../kotlinx.coroutines/run-blocking.html">runBlocking</a> and catching,
-so this function should not be used from coroutine.</p>
-
-<p>Example of usage:</p>
-
-<pre>// From callback API
-channel.trySendBlocking(element)
-    .onSuccess { /* request next element or debug log */}
-    .onFailure { t: Throwable? -&gt; /* throw or log */}
-</pre>
-
-<p>For this operation it is guaranteed that <a href="#">failure</a> always contains an exception in it.</p>
-
-<h3 id="exceptions">Exceptions</h3>
-
-<p><code>InterruptedException</code> - if the current thread is interrupted during the blocking send operation.</p>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>trySendBlocking</title>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.channels//trySendBlocking/kotlinx.coroutines.channels.SendChannel[TypeParam(bounds=[kotlin.Any?])]#TypeParam(bounds=[kotlin.Any?])/PointingToDeclaration//-1316292404">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines.channels</a>/<a href="try-send-blocking.html">trySendBlocking</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>try</span><wbr><span>Send</span><wbr><span>Blocking</span></h1>
+          </div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace">fun &lt;<a href="try-send-blocking.html">E</a>&gt; <a href="-send-channel/index.html#858078105%2FExtensions%2F-1316292404">SendChannel</a>&lt;<a href="try-send-blocking.html">E</a>&gt;.<a href="try-send-blocking.html">trySendBlocking</a>(element: <a href="try-send-blocking.html">E</a>): <a href="-channel-result/index.html">ChannelResult</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<p class="paragraph">Adds <a href="try-send-blocking.html">element</a> into to this channel, blocking the caller while this channel is full, and returning either <a href="-channel-result/is-success.html">successful</a> result when the element was added, or failed result representing closed channel with a corresponding exception.</p><p class="paragraph">This is a way to call <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/send.html">Channel.send</a> method in a safe manner inside a blocking code using <a href="../kotlinx.coroutines/run-blocking.html">runBlocking</a> and catching, so this function should not be used from coroutine.</p><p class="paragraph">Example of usage:</p><div class="sample-container"><code class="" theme="idea"><pre>// From callback API<br>channel.trySendBlocking(element)<br>    .onSuccess { /* request next element or debug log */}<br>    .onFailure { t: Throwable? -&gt; /* throw or log */}</pre></code></div><p class="paragraph">For this operation it is guaranteed that <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel-result/-companion/failed.html">failure</a> always contains an exception in it.</p><h4 class="">Throws</h4><div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="table"><div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/InterruptedException.html">java.lang.InterruptedException</a></span></div><div><div class="title"><p class="paragraph">if the current thread is interrupted during the blocking send operation.</p></div></div></div></div></div></div></div></div>
+          <h2 class="">Sources</h2>
+          <div class="table" data-togglable="Sources"><a data-name="-338278190%2FSource%2F-1316292404" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/channels/Channels.kt#L61" id="-338278190%2FSource%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+            <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+              <div class="main-subrow keyValue ">
+                <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/channels/Channels.kt#L61">jvm source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-338278190%2FSource%2F-1316292404"></span>
+                      <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                    </span></span></div>
+                <div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

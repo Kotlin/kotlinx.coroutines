@@ -1,143 +1,165 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>kotlinx.coroutines.sync - kotlinx-coroutines-core</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="./index.html">kotlinx.coroutines.sync</a></div>
-
-<h2 id="package-kotlinxcoroutinessync">Package kotlinx.coroutines.sync</h2>
-
-<p>Synchronization primitives (mutex).</p>
-
-<h3 id="types">Types</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="-mutex/index.html">Mutex</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Mutex</span></code></div>
-
-        <p>Mutual exclusion for coroutines.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="-semaphore/index.html">Semaphore</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Semaphore</span></code></div>
-
-        <p>A counting semaphore for coroutines that logically maintains a number of available permits.
-Each <a href="-semaphore/acquire.html">acquire</a> takes a single permit or suspends until it is available.
-Each <a href="-semaphore/release.html">release</a> adds a permit, potentially releasing a suspended acquirer.
-Semaphore is fair and maintains a FIFO order of acquirers.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="functions">Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="-mutex.html">Mutex</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Mutex</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.sync$Mutex(kotlin.Boolean)/locked">locked</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span><span class="symbol">: </span><a href="-mutex/index.html"><span class="identifier">Mutex</span></a></code></div>
-
-        <p>Creates a <a href="-mutex/index.html">Mutex</a> instance.
-The mutex created is fair: lock is granted in first come, first served order.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="-semaphore.html">Semaphore</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Semaphore</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$Semaphore(kotlin.Int, kotlin.Int)/permits">permits</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$Semaphore(kotlin.Int, kotlin.Int)/acquiredPermits">acquiredPermits</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-semaphore/index.html"><span class="identifier">Semaphore</span></a></code></div>
-
-        <p>Creates new <a href="-semaphore/index.html">Semaphore</a> instance.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="with-lock.html">withLock</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-mutex/index.html"><span class="identifier">Mutex</span></a><span class="symbol">.</span><span class="identifier">withLock</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-lock.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="with-lock.html#T"><span class="identifier">T</span></a></code></div>
-
-        <p>Executes the given <a href="with-lock.html#kotlinx.coroutines.sync$withLock(kotlinx.coroutines.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.sync.withLock.T)))/action">action</a> under this mutex’s lock.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="with-permit.html">withPermit</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-semaphore/index.html"><span class="identifier">Semaphore</span></a><span class="symbol">.</span><span class="identifier">withPermit</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.sync$withPermit(kotlinx.coroutines.sync.Semaphore, kotlin.Function0((kotlinx.coroutines.sync.withPermit.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-permit.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="with-permit.html#T"><span class="identifier">T</span></a></code></div>
-
-        <p>Executes the given <a href="with-permit.html#kotlinx.coroutines.sync$withPermit(kotlinx.coroutines.sync.Semaphore, kotlin.Function0((kotlinx.coroutines.sync.withPermit.T)))/action">action</a>, acquiring a permit from this semaphore at the beginning
-and releasing it after the <a href="with-permit.html#kotlinx.coroutines.sync$withPermit(kotlinx.coroutines.sync.Semaphore, kotlin.Function0((kotlinx.coroutines.sync.withPermit.T)))/action">action</a> is completed.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>kotlinx.coroutines.sync</title>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.sync////PointingToDeclaration//1975948010">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines.sync</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Package kotlinx.</span><wbr><span>coroutines.</span><wbr><span>sync</span></h1>
+            <div class="platform-hinted UnderCoverText" data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><p class="paragraph">Synchronization primitives (mutex).</p></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Types</h2>
+              <div class="table" data-togglable="Types"><a data-name="1615437578%2FClasslikes%2F1975948010" anchor-label="Mutex" id="1615437578%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-mutex/index.html">Mutex</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1615437578%2FClasslikes%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">interface <a href="-mutex/index.html">Mutex</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1615437578%2FClasslikes%2F1975948010" anchor-label="Mutex" id="1615437578%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1615437578%2FClasslikes%2F1975948010" anchor-label="Mutex" id="1615437578%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Mutual exclusion for coroutines.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="237923813%2FClasslikes%2F1975948010" anchor-label="Semaphore" id="237923813%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-semaphore/index.html">Semaphore</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="237923813%2FClasslikes%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">interface <a href="-semaphore/index.html">Semaphore</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="237923813%2FClasslikes%2F1975948010" anchor-label="Semaphore" id="237923813%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="237923813%2FClasslikes%2F1975948010" anchor-label="Semaphore" id="237923813%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>A counting semaphore for coroutines that logically maintains a number of available permits.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="1451394906%2FFunctions%2F1975948010" anchor-label="Mutex" id="1451394906%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-mutex.html">Mutex</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1451394906%2FFunctions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="-mutex.html">Mutex</a>(locked: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a> = false): <a href="-mutex/index.html">Mutex</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1451394906%2FFunctions%2F1975948010" anchor-label="Mutex" id="1451394906%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1451394906%2FFunctions%2F1975948010" anchor-label="Mutex" id="1451394906%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Creates a <a href="-mutex/index.html">Mutex</a> instance.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="747258575%2FFunctions%2F1975948010" anchor-label="Semaphore" id="747258575%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-semaphore.html">Semaphore</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="747258575%2FFunctions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="-semaphore.html">Semaphore</a>(permits: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>, acquiredPermits: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = 0): <a href="-semaphore/index.html">Semaphore</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="747258575%2FFunctions%2F1975948010" anchor-label="Semaphore" id="747258575%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="747258575%2FFunctions%2F1975948010" anchor-label="Semaphore" id="747258575%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Creates new <a href="-semaphore/index.html">Semaphore</a> instance.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="74969293%2FFunctions%2F1975948010" anchor-label="withLock" id="74969293%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="with-lock.html">withLock</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="74969293%2FFunctions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">inline suspend fun &lt;<a href="with-lock.html">T</a>&gt; <a href="-mutex/index.html">Mutex</a>.<a href="with-lock.html">withLock</a>(owner: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>? = null, action: () -&gt; <a href="with-lock.html">T</a>): <a href="with-lock.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="74969293%2FFunctions%2F1975948010" anchor-label="withLock" id="74969293%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="74969293%2FFunctions%2F1975948010" anchor-label="withLock" id="74969293%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Executes the given <a href="with-lock.html">action</a> under this mutex's lock.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1171378283%2FFunctions%2F1975948010" anchor-label="withPermit" id="-1171378283%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="with-permit.html">withPermit</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1171378283%2FFunctions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">inline suspend fun &lt;<a href="with-permit.html">T</a>&gt; <a href="-semaphore/index.html">Semaphore</a>.<a href="with-permit.html">withPermit</a>(action: () -&gt; <a href="with-permit.html">T</a>): <a href="with-permit.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1171378283%2FFunctions%2F1975948010" anchor-label="withPermit" id="-1171378283%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-1171378283%2FFunctions%2F1975948010" anchor-label="withPermit" id="-1171378283%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Executes the given <a href="with-permit.html">action</a>, acquiring a permit from this semaphore at the beginning and releasing it after the <a href="with-permit.html">action</a> is completed.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

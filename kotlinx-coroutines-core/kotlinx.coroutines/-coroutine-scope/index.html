@@ -1,353 +1,348 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CoroutineScope - kotlinx-coroutines-core</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines</a> / <a href="./index.html">CoroutineScope</a></div>
-
-<h1 id="coroutinescope">CoroutineScope</h1>
-
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineScope</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L78">(source)</a></div>
-
-<p>Defines a scope for new coroutines. Every <strong>coroutine builder</strong> (like <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc)
-is an extension on <a href="./index.html">CoroutineScope</a> and inherits its <a href="coroutine-context.html">coroutineContext</a>
-to automatically propagate all its elements and cancellation.</p>
-
-<p>The best ways to obtain a standalone instance of the scope are <a href="./index.html">CoroutineScope</a> and <a href="../-main-scope.html">MainScope</a> factory functions,
-taking care to cancel these coroutine scopes when they are no longer needed (see section on custom usage below for
-explanation and example).</p>
-
-<p>Additional context elements can be appended to the scope using the <a href="../plus.html">plus</a> operator.</p>
-
-<h3 id="convention-for-structured-concurrency">Convention for structured concurrency</h3>
-
-<p>Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead.
-By convention, the <a href="coroutine-context.html">context of a scope</a> should contain an instance of a
-<a href="../-job/index.html">job</a> to enforce the discipline of <strong>structured concurrency</strong> with propagation of cancellation.</p>
-
-<p>Every coroutine builder (like <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc)
-and every scoping function (like <a href="../coroutine-scope.html">coroutineScope</a>, <a href="../with-context.html">withContext</a>, etc) provides <em>its own</em> scope
-with its own <a href="../-job/index.html">Job</a> instance into the inner block of code it runs.
-By convention, they all wait for all the coroutines inside their block to complete before completing themselves,
-thus enforcing the structured concurrency. See <a href="../-job/index.html">Job</a> documentation for more details.</p>
-
-<h3 id="android-usage">Android usage</h3>
-
-<p>Android has first-party support for coroutine scope in all entities with the lifecycle.
-See <a href="https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope">the corresponding documentation</a>.</p>
-
-<h3 id="custom-usage">Custom usage</h3>
-
-<p><code>CoroutineScope</code> should be declared as a property on entities with a well-defined lifecycle that are
-responsible for launching children coroutines. The corresponding instance of <code>CoroutineScope</code> shall be created
-with either <code>CoroutineScope()</code> or <code>MainScope()</code> functions. The difference between them is only in the
-<a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a>:</p>
-
-<ul>
-  <li><code>CoroutineScope()</code> uses <a href="../-dispatchers/-default.html">Dispatchers.Default</a> for its coroutines.</li>
-  <li><code>MainScope()</code> uses <a href="../-dispatchers/-main.html">Dispatchers.Main</a> for its coroutines.</li>
-</ul>
-
-<p><strong>The key part of custom usage of <code>CustomScope</code> is cancelling it and the end of the lifecycle.</strong>
-The <a href="../cancel.html">CoroutineScope.cancel</a> extension function shall be used when the entity that was launching coroutines
-is no longer needed. It cancels all the coroutines that might still be running on behalf of it.</p>
-
-<p>For example:</p>
-
-<pre>class MyUIClass {
-    val scope = MainScope() // the scope of MyUIClass, uses Dispatchers.Main
-
-    fun destroy() { // destroys an instance of MyUIClass
-        scope.cancel() // cancels all coroutines launched in this scope
-        // ... do the rest of cleanup here ...
-    }
-
-    /*
-     * Note: if this instance is destroyed or any of the launched coroutines
-     * in this method throws an exception, then all nested coroutines are cancelled.
-     */
-        fun showSomeData() = scope.launch { // launched in the main thread
-           // ... here we can use suspending functions or coroutine builders with other dispatchers
-           draw(data) // draw in the main thread
-        }
-    }
-</pre>
-
-<h3 id="properties">Properties</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="coroutine-context.html">coroutineContext</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
-
-        <p>The context of this scope.
-Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
-Accessing this property in general code is not recommended for any purposes except accessing the <a href="../-job/index.html">Job</a> instance for advanced usages.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extension-properties">Extension Properties</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../is-active.html">isActive</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Returns <code>true</code> when the current <a href="../-job/index.html">Job</a> is still active (has not completed and was not cancelled yet).</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extension-functions">Extension Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr data-platform="JVM"><td>
-
-        <p><a href="../../kotlinx.coroutines.channels/actor.html">actor</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">actor</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../../kotlinx.coroutines.channels/-actor-scope/index.html"><span class="identifier">ActorScope</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.channels/actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.channels/actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Launches new coroutine that is receiving messages from its mailbox channel
-and returns a reference to its mailbox channel as a <a href="../../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>. The resulting
-object can be used to <a href="../../kotlinx.coroutines.channels/-send-channel/send.html">send</a> messages to this coroutine.</p>
-
-      </td>
-</tr><tr>
-<td>
-
-        <p><a href="../async.html">async</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">async</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../async.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="../async.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Creates a coroutine and returns its future result as an implementation of <a href="../-deferred/index.html">Deferred</a>.
-The running coroutine is cancelled when the resulting deferred is <a href="../-job/cancel.html">cancelled</a>.
-The resulting coroutine has a key difference compared with similar primitives in other languages
-and frameworks: it cancels the parent job (or outer scope) on failure to enforce <em>structured concurrency</em> paradigm.
-To change that behaviour, supervising parent (<a href="../-supervisor-job.html">SupervisorJob</a> or <a href="../supervisor-scope.html">supervisorScope</a>) can be used.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../../kotlinx.coroutines.channels/broadcast.html">broadcast</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">broadcast</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$broadcast(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.broadcast.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$broadcast(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.broadcast.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$broadcast(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.broadcast.E)), kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.LAZY<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$broadcast(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.broadcast.E)), kotlin.Unit)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$broadcast(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.broadcast.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../../kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.channels/broadcast.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.channels/-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.channels/broadcast.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Launches new coroutine to produce a stream of values by sending them to a broadcast channel
-and returns a reference to the coroutine as a <a href="../../kotlinx.coroutines.channels/-broadcast-channel/index.html">BroadcastChannel</a>. The resulting
-object can be used to <a href="../../kotlinx.coroutines.channels/-broadcast-channel/open-subscription.html">subscribe</a> to elements produced by this coroutine.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../cancel.html">cancel</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CancellationException)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Cancels this scope, including its job and all its children with an optional cancellation <a href="../cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CancellationException)/cause">cause</a>.
-A cause can be used to specify an error message or to provide other details on
-a cancellation reason for debugging purposes.
-Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if the scope does not have a job in it.</p>
-
-        <div class="signature"><code><span class="keyword">fun </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Cancels this scope, including its job and all its children with a specified diagnostic error <a href="../cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/message">message</a>.
-A <a href="../cancel.html#kotlinx.coroutines$cancel(kotlinx.coroutines.CoroutineScope, kotlin.String, kotlin.Throwable)/cause">cause</a> can be specified to provide additional details on a cancellation reason for debugging purposes.
-Throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalStateException.html">IllegalStateException</a> if the scope does not have a job in it.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../ensure-active.html">ensureActive</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">ensureActive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Ensures that current scope is <a href="../is-active.html">active</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../launch.html">launch</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">launch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$launch(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$launch(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$launch(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/index.html"><span class="identifier">Job</span></a></code></div>
-
-        <p>Launches a new coroutine without blocking the current thread and returns a reference to the coroutine as a <a href="../-job/index.html">Job</a>.
-The coroutine is cancelled when the resulting job is <a href="../-job/cancel.html">cancelled</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../new-coroutine-context.html">newCoroutineContext</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">expect</span> <span class="keyword">fun </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">newCoroutineContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newCoroutineContext(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
-
-        <p>Creates a context for the new coroutine. It installs <a href="../-dispatchers/-default.html">Dispatchers.Default</a> when no other dispatcher or
-<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified, and adds optional support for debugging facilities (when turned on).</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../plus.html">plus</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">plus</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$plus(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a></code></div>
-
-        <p>Adds the specified coroutine context to this scope, overriding existing elements in the current
-scope’s context with the corresponding keys.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../../kotlinx.coroutines.channels/produce.html">produce</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">produce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$produce(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.produce.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$produce(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.produce.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$produce(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.channels.produce.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../../kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.channels/produce.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.channels/produce.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Launches a new coroutine to produce a stream of values by sending them to a channel
-and returns a reference to the coroutine as a <a href="../../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>. This resulting
-object can be used to <a href="../../kotlinx.coroutines.channels/-receive-channel/receive.html">receive</a> elements produced by this coroutine.</p>
-
-      </td>
-</tr>
-<tr data-platform="JS"><td>
-
-        <p><a href="../promise.html">promise</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">promise</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$promise(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.promise.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$promise(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.promise.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$promise(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.promise.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../promise.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html"><span class="identifier">Promise</span></a><span class="symbol">&lt;</span><a href="../promise.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Starts new coroutine and returns its result as an implementation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html">Promise</a>.</p>
-
-      </td>
-</tr></tbody>
-</table>
-
-<h3 id="inheritors">Inheritors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr data-platform="JVM"><td>
-
-        <p><a href="../../kotlinx.coroutines.channels/-actor-scope/index.html">ActorScope</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorScope</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><a href="../../kotlinx.coroutines.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.channels/-actor-scope/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Scope for <a href="../../kotlinx.coroutines.channels/actor.html">actor</a> coroutine builder.</p>
-
-      </td>
-</tr><tr>
-<td>
-
-        <p><a href="../-global-scope/index.html">GlobalScope</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">object </span><span class="identifier">GlobalScope</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.html"><span class="identifier">CoroutineScope</span></a></code></div>
-
-        <p>A global <a href="./index.html">CoroutineScope</a> not bound to any job.
-Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
-and are not cancelled prematurely.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ProducerScope</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../../kotlinx.coroutines.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.channels/-producer-scope/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Scope for the <a href="../../kotlinx.coroutines.channels/produce.html">produce</a> coroutine builder.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>CoroutineScope</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines/CoroutineScope///PointingToDeclaration//1975948010">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines</a>/<a href="index.html">CoroutineScope</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button><button class="platform-tag platform-selector js-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain">js</button><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Coroutine</span><wbr><span>Scope</span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">interface <a href="index.html">CoroutineScope</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Defines a scope for new coroutines. Every coroutine builder (like <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc) is an extension on <a href="index.html">CoroutineScope</a> and inherits its <a href="coroutine-context.html">coroutineContext</a> to automatically propagate all its elements and cancellation.</p><p class="paragraph">The best ways to obtain a standalone instance of the scope are CoroutineScope() and MainScope() factory functions, taking care to cancel these coroutine scopes when they are no longer needed (see section on custom usage below for explanation and example).</p><p class="paragraph">Additional context elements can be appended to the scope using the <a href="../plus.html">plus</a> operator.</p><h3 class=""> Convention for structured concurrency</h3><p class="paragraph">Manual implementation of this interface is not recommended, implementation by delegation should be preferred instead. By convention, the <a href="coroutine-context.html">context of a scope</a> should contain an instance of a <a href="../-job/index.html">job</a> to enforce the discipline of structured concurrency with propagation of cancellation.</p><p class="paragraph">Every coroutine builder (like <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc) and every scoping function (like <a href="../coroutine-scope.html">coroutineScope</a>, <a href="../with-context.html">withContext</a>, etc) provides its own scope with its own <a href="../-job/index.html">Job</a> instance into the inner block of code it runs. By convention, they all wait for all the coroutines inside their block to complete before completing themselves, thus enforcing the structured concurrency. See <a href="../-job/index.html">Job</a> documentation for more details.</p><h3 class=""> Android usage</h3><p class="paragraph">Android has first-party support for coroutine scope in all entities with the lifecycle. See <a href="https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope">the corresponding documentation</a>.</p><h3 class=""> Custom usage</h3><p class="paragraph"><code>CoroutineScope</code> should be declared as a property on entities with a well-defined lifecycle that are responsible for launching children coroutines. The corresponding instance of <code>CoroutineScope</code> shall be created with either <code>CoroutineScope()</code> or <code>MainScope()</code> functions. The difference between them is only in the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a>:</p><ul><li><p class="paragraph"><code>CoroutineScope()</code> uses <a href="../-dispatchers/-default.html">Dispatchers.Default</a> for its coroutines.</p></li><li><p class="paragraph"><code>MainScope()</code> uses <a href="../-dispatchers/-main.html">Dispatchers.Main</a> for its coroutines.</p></li></ul><p class="paragraph">The key part of custom usage of <code>CustomScope</code> is cancelling it and the end of the lifecycle. The <a href="../cancel.html">CoroutineScope.cancel</a> extension function shall be used when the entity that was launching coroutines is no longer needed. It cancels all the coroutines that might still be running on behalf of it.</p><p class="paragraph">For example:</p><div class="sample-container"><code class="" theme="idea"><pre>class MyUIClass {<br>    val scope = MainScope() // the scope of MyUIClass, uses Dispatchers.Main<br><br>    fun destroy() { // destroys an instance of MyUIClass<br>        scope.cancel() // cancels all coroutines launched in this scope<br>        // ... do the rest of cleanup here ...<br>    }<br><br>    /*<br>     * Note: if this instance is destroyed or any of the launched coroutines<br>     * in this method throws an exception, then all nested coroutines are cancelled.<br>     */<br>        fun showSomeData() = scope.launch { // launched in the main thread<br>           // ... here we can use suspending functions or coroutine builders with other dispatchers<br>           draw(data) // draw in the main thread<br>        }<br>    }</pre></code></div></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Extensions">Extensions</button><button class="section-tab" data-togglable="Sources">Sources</button><button class="section-tab" data-togglable="Inheritors">Inheritors</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Properties</h2>
+              <div class="table" data-togglable="Properties"><a data-name="-1654120400%2FProperties%2F1975948010" anchor-label="coroutineContext" id="-1654120400%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="coroutine-context.html">coroutineContext</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1654120400%2FProperties%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-1654120400%2FProperties%2F1975948010" anchor-label="coroutineContext" id="-1654120400%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract val <a href="coroutine-context.html">coroutineContext</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-1654120400%2FProperties%2F1975948010" anchor-label="coroutineContext" id="-1654120400%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>The context of this scope.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Inheritors</h2>
+              <div class="table" data-togglable="Inheritors"><a data-name="323217309%2FInheritors%2F1975948010" anchor-label="GlobalScope" id="323217309%2FInheritors%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../-global-scope/index.html">GlobalScope</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="323217309%2FInheritors%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div></div>
+                  </div>
+                </div>
+<a data-name="1258469170%2FInheritors%2F1975948010" anchor-label="ProducerScope" id="1258469170%2FInheritors%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1258469170%2FInheritors%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div></div>
+                  </div>
+                </div>
+<a data-name="1450339311%2FInheritors%2F-1316292404" anchor-label="ActorScope" id="1450339311%2FInheritors%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../../kotlinx.coroutines.channels/-actor-scope/index.html">ActorScope</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1450339311%2FInheritors%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="tabbedcontent">Extensions</h2>
+              <div class="table" data-togglable="Extensions"><a data-name="781733066%2FExtensions%2F-1316292404" anchor-label="actor" id="781733066%2FExtensions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../../kotlinx.coroutines.channels/actor.html">actor</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="781733066%2FExtensions%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="../-obsolete-coroutines-api/index.html">ObsoleteCoroutinesApi</a>()</div></div>fun &lt;<a href="../../kotlinx.coroutines.channels/actor.html">E</a>&gt; <a href="index.html#675796344%2FExtensions%2F-1316292404">CoroutineScope</a>.<a href="../../kotlinx.coroutines.channels/actor.html">actor</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, capacity: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = 0, start: <a href="../-coroutine-start/index.html">CoroutineStart</a> = CoroutineStart.DEFAULT, onCompletion: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-completion-handler/index.html">CompletionHandler</a>? = null, block: suspend <a href="../../kotlinx.coroutines.channels/-actor-scope/index.html">ActorScope</a>&lt;<a href="../../kotlinx.coroutines.channels/actor.html">E</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="../../kotlinx.coroutines.channels/-send-channel/index.html#858078105%2FExtensions%2F-1316292404">SendChannel</a>&lt;<a href="../../kotlinx.coroutines.channels/actor.html">E</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="781733066%2FExtensions%2F-1316292404" anchor-label="actor" id="781733066%2FExtensions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="781733066%2FExtensions%2F-1316292404" anchor-label="actor" id="781733066%2FExtensions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Launches new coroutine that is receiving messages from its mailbox channel and returns a reference to its mailbox channel as a <a href="../../kotlinx.coroutines.channels/-send-channel/index.html#858078105%2FExtensions%2F-1316292404">SendChannel</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-2057754337%2FExtensions%2F1975948010" anchor-label="async" id="-2057754337%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../async.html">async</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2057754337%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun &lt;<a href="../async.html">T</a>&gt; <a href="index.html">CoroutineScope</a>.<a href="../async.html">async</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, start: <a href="../-coroutine-start/index.html">CoroutineStart</a> = CoroutineStart.DEFAULT, block: suspend <a href="index.html">CoroutineScope</a>.() -&gt; <a href="../async.html">T</a>): <a href="../-deferred/index.html">Deferred</a>&lt;<a href="../async.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-2057754337%2FExtensions%2F1975948010" anchor-label="async" id="-2057754337%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-2057754337%2FExtensions%2F1975948010" anchor-label="async" id="-2057754337%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Creates a coroutine and returns its future result as an implementation of <a href="../-deferred/index.html">Deferred</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1589536157%2FExtensions%2F1975948010" anchor-label="broadcast" id="-1589536157%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../../kotlinx.coroutines.channels/broadcast.html">broadcast</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1589536157%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="../-obsolete-coroutines-api/index.html">ObsoleteCoroutinesApi</a>()</div></div>fun &lt;<a href="../../kotlinx.coroutines.channels/broadcast.html">E</a>&gt; <a href="index.html">CoroutineScope</a>.<a href="../../kotlinx.coroutines.channels/broadcast.html">broadcast</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, capacity: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = 1, start: <a href="../-coroutine-start/index.html">CoroutineStart</a> = CoroutineStart.LAZY, onCompletion: <a href="../index.html#2145916192%2FClasslikes%2F1975948010">CompletionHandler</a>? = null, block: suspend <a href="../../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="../../kotlinx.coroutines.channels/broadcast.html">E</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="../../kotlinx.coroutines.channels/-broadcast-channel/index.html">BroadcastChannel</a>&lt;<a href="../../kotlinx.coroutines.channels/broadcast.html">E</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1589536157%2FExtensions%2F1975948010" anchor-label="broadcast" id="-1589536157%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-1589536157%2FExtensions%2F1975948010" anchor-label="broadcast" id="-1589536157%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Launches new coroutine to produce a stream of values by sending them to a broadcast channel and returns a reference to the coroutine as a <a href="../../kotlinx.coroutines.channels/-broadcast-channel/index.html">BroadcastChannel</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1662384444%2FExtensions%2F1975948010" anchor-label="cancel" id="-1662384444%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../cancel.html">cancel</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1662384444%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="index.html">CoroutineScope</a>.<a href="../cancel.html">cancel</a>(cause: <a href="../-cancellation-exception/index.html">CancellationException</a>? = null)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-251909232%2FExtensions%2F1975948010" anchor-label="cancel" id="-251909232%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-251909232%2FExtensions%2F1975948010" anchor-label="cancel" id="-251909232%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Cancels this scope, including its job and all its children with an optional cancellation <a href="../cancel.html">cause</a>.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="index.html">CoroutineScope</a>.<a href="../cancel.html">cancel</a>(message: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, cause: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>? = null)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-178030376%2FExtensions%2F1975948010" anchor-label="cancel" id="-178030376%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-178030376%2FExtensions%2F1975948010" anchor-label="cancel" id="-178030376%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Cancels this scope, including its job and all its children with a specified diagnostic error <a href="../cancel.html">message</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="119633645%2FExtensions%2F1975948010" anchor-label="ensureActive" id="119633645%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../ensure-active.html">ensureActive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="119633645%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="index.html">CoroutineScope</a>.<a href="../ensure-active.html">ensureActive</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="119633645%2FExtensions%2F1975948010" anchor-label="ensureActive" id="119633645%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="119633645%2FExtensions%2F1975948010" anchor-label="ensureActive" id="119633645%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Ensures that current scope is <a href="../is-active.html">active</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-394923815%2FExtensions%2F1975948010" anchor-label="isActive" id="-394923815%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../is-active.html">isActive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-394923815%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">val <a href="index.html">CoroutineScope</a>.<a href="../is-active.html">isActive</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-394923815%2FExtensions%2F1975948010" anchor-label="isActive" id="-394923815%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-394923815%2FExtensions%2F1975948010" anchor-label="isActive" id="-394923815%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns <code>true</code> when the current <a href="../-job/index.html">Job</a> is still active (has not completed and was not cancelled yet).</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1933022681%2FExtensions%2F1975948010" anchor-label="launch" id="-1933022681%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../launch.html">launch</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1933022681%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="index.html">CoroutineScope</a>.<a href="../launch.html">launch</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, start: <a href="../-coroutine-start/index.html">CoroutineStart</a> = CoroutineStart.DEFAULT, block: suspend <a href="index.html">CoroutineScope</a>.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="../-job/index.html">Job</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1933022681%2FExtensions%2F1975948010" anchor-label="launch" id="-1933022681%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-1933022681%2FExtensions%2F1975948010" anchor-label="launch" id="-1933022681%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Launches a new coroutine without blocking the current thread and returns a reference to the coroutine as a <a href="../-job/index.html">Job</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="288900703%2FExtensions%2F-2058047826" anchor-label="newCoroutineContext" id="288900703%2FExtensions%2F-2058047826" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain :kotlinx-coroutines-core:dokkaHtmlPartial/jsMain :kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain :kotlinx-coroutines-core:dokkaHtmlPartial/jsMain :kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain :kotlinx-coroutines-core:dokkaHtmlPartial/jsMain :kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../new-coroutine-context.html">newCoroutineContext</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="288900703%2FExtensions%2F-2058047826"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right">
+  <div class="platform-tags ">
+    <div class="platform-tag common-like">common</div>
+  </div>
+</span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="index.html">CoroutineScope</a>.<a href="../new-coroutine-context.html">newCoroutineContext</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="288900703%2FExtensions%2F-2058047826" anchor-label="newCoroutineContext" id="288900703%2FExtensions%2F-2058047826" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain :kotlinx-coroutines-core:dokkaHtmlPartial/jsMain :kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="288900703%2FExtensions%2F1975948010" anchor-label="newCoroutineContext" id="288900703%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Creates a context for the new coroutine.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain"><div class="with-platform-tags"><span class="pull-right">
+  <div class="platform-tags ">
+    <div class="platform-tag js-like">js</div>
+  </div>
+</span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain"><div class="symbol monospace">fun <a href="index.html#675796344%2FExtensions%2F-355669620">CoroutineScope</a>.<a href="../new-coroutine-context.html">newCoroutineContext</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="288900703%2FExtensions%2F-2058047826" anchor-label="newCoroutineContext" id="288900703%2FExtensions%2F-2058047826" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain :kotlinx-coroutines-core:dokkaHtmlPartial/jsMain :kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right">
+  <div class="platform-tags ">
+    <div class="platform-tag jvm-like">jvm</div>
+  </div>
+</span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="../-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>fun <a href="index.html#675796344%2FExtensions%2F-1316292404">CoroutineScope</a>.<a href="../new-coroutine-context.html">newCoroutineContext</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="288900703%2FExtensions%2F-2058047826" anchor-label="newCoroutineContext" id="288900703%2FExtensions%2F-2058047826" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain :kotlinx-coroutines-core:dokkaHtmlPartial/jsMain :kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="288900703%2FExtensions%2F-1316292404" anchor-label="newCoroutineContext" id="288900703%2FExtensions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Creates context for the new coroutine.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1223514022%2FExtensions%2F1975948010" anchor-label="plus" id="1223514022%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../plus.html">plus</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1223514022%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">operator fun <a href="index.html">CoroutineScope</a>.<a href="../plus.html">plus</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="index.html">CoroutineScope</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1223514022%2FExtensions%2F1975948010" anchor-label="plus" id="1223514022%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1223514022%2FExtensions%2F1975948010" anchor-label="plus" id="1223514022%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Adds the specified coroutine context to this scope, overriding existing elements in the current scope's context with the corresponding keys.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="710359428%2FExtensions%2F1975948010" anchor-label="produce" id="710359428%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../../kotlinx.coroutines.channels/produce.html">produce</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="710359428%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="../-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>fun &lt;<a href="../../kotlinx.coroutines.channels/produce.html">E</a>&gt; <a href="index.html">CoroutineScope</a>.<a href="../../kotlinx.coroutines.channels/produce.html">produce</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, capacity: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = 0, block: suspend <a href="../../kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="../../kotlinx.coroutines.channels/produce.html">E</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="../../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>&lt;<a href="../../kotlinx.coroutines.channels/produce.html">E</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="710359428%2FExtensions%2F1975948010" anchor-label="produce" id="710359428%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="710359428%2FExtensions%2F1975948010" anchor-label="produce" id="710359428%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Launches a new coroutine to produce a stream of values by sending them to a channel and returns a reference to the coroutine as a <a href="../../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1653004098%2FExtensions%2F-355669620" anchor-label="promise" id="-1653004098%2FExtensions%2F-355669620" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../promise.html">promise</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1653004098%2FExtensions%2F-355669620"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag js-like">js</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain"><div class="symbol monospace">fun &lt;<a href="../promise.html">T</a>&gt; <a href="index.html#675796344%2FExtensions%2F-355669620">CoroutineScope</a>.<a href="../promise.html">promise</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, start: <a href="../-coroutine-start/index.html">CoroutineStart</a> = CoroutineStart.DEFAULT, block: suspend <a href="index.html#675796344%2FExtensions%2F-355669620">CoroutineScope</a>.() -&gt; <a href="../promise.html">T</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html">Promise</a>&lt;<a href="../promise.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1653004098%2FExtensions%2F-355669620" anchor-label="promise" id="-1653004098%2FExtensions%2F-355669620" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain"></a><div class="brief "><a data-name="-1653004098%2FExtensions%2F-355669620" anchor-label="promise" id="-1653004098%2FExtensions%2F-355669620" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain"></a>Starts new coroutine and returns its result as an implementation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html">Promise</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Sources</h2>
+              <div class="table" data-togglable="Sources"><a data-name="675796344%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L14" id="675796344%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CoroutineScope.kt#L14">common source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="675796344%2FSource%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

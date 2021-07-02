@@ -1,0 +1,113 @@
+.search button{border:none;fill:#637282;background:#f4f4f4;cursor:pointer;margin-top:3px}.search button:focus{outline:none}.popup-wrapper{min-width:calc(100% - 360px) !important}@media screen and (max-width: 759px){.popup-wrapper{min-width:100% !important}}.template-wrapper{height:32px;display:grid;grid-template-columns:auto auto}.template-wrapper span{line-height:32px}@media screen and (max-width: 759px){.template-wrapper{display:flex;height:auto;flex-direction:column}.template-wrapper span{line-height:unset}}.template-name{justify-self:start}.template-description{color:gray;justify-self:end}
+/* stylelint-disable color-no-hex */
+
+:root {
+  --ring-unit: 8px;
+
+  /* Element */
+  --ring-line-color: #dfe5eb;
+  --ring-dark-line-color: #475159;
+  --ring-borders-color: #b8d1e5;
+  --ring-dark-borders-color: #406380;
+  --ring-icon-color: var(--ring-borders-color);
+  --ring-icon-secondary-color: #999;
+  --ring-border-disabled-color: #dbdbdb;
+  --ring-icon-disabled-color: #bbb;
+  --ring-border-hover-color: #80c6ff;
+  --ring-dark-border-hover-color: #70b1e6;
+  --ring-icon-hover-color: var(--ring-link-hover-color);
+  --ring-main-color: #008eff;
+  --ring-main-hover-color: #007ee5;
+  --ring-icon-error-color: #db5860;
+  --ring-icon-warning-color: #eda200;
+  --ring-icon-success-color: #59a869;
+  --ring-pale-control-color: #cfdbe5;
+  --ring-popup-border-components: 0, 42, 76;
+  --ring-popup-border-color: rgba(var(--ring-popup-border-components), 0.1);
+  --ring-popup-shadow-color: rgba(var(--ring-popup-border-components), 0.15);
+  --ring-message-shadow-color: rgba(var(--ring-popup-border-components), 0.3);
+  --ring-pinned-shadow-color: #737577;
+
+  /* Text */
+  --ring-search-color: #669ecc;
+  --ring-hint-color: #406380;
+  --ring-link-color: #0f5b99;
+  --ring-link-hover-color: #ff008c;
+  --ring-error-color: #c22731;
+  --ring-warning-color: #cc8b00;
+  --ring-success-color: #1b8833;
+  --ring-text-color: #1f2326;
+  --ring-dark-text-color: #fff;
+  --ring-heading-color: var(--ring-text-color);
+  --ring-secondary-color: #737577;
+  --ring-dark-secondary-color: #888;
+  --ring-disabled-color: #999;
+  --ring-dark-disabled-color: #444;
+  --ring-dark-active-color: #ccc;
+
+  /* Background */
+  --ring-content-background-color: #fff;
+  --ring-popup-background-color: #fff;
+  --ring-sidebar-background-color: #f7f9fa;
+  --ring-selected-background-color: #d4edff;
+  --ring-hover-background-color: #ebf6ff;
+  --ring-dark-selected-background-color: #002a4d;
+  --ring-message-background-color: #111314;
+  --ring-navigation-background-color: #000;
+  --ring-tag-background-color: #e6ecf2;
+  --ring-removed-background-color: #ffd5cb;
+  --ring-warning-background-color: #faeccd;
+  --ring-added-background-color: #bce8bb;
+
+  /* Code */
+  --ring-code-background-color: var(--ring-content-background-color);
+  --ring-code-color: #000;
+  --ring-code-comment-color: #707070;
+  --ring-code-meta-color: #707070;
+  --ring-code-keyword-color: #000080;
+  --ring-code-tag-background-color: #efefef;
+  --ring-code-tag-color: var(--ring-code-keyword-color);
+  --ring-code-tag-font-weight: bold;
+  --ring-code-field-color: #660e7a;
+  --ring-code-attribute-color: #00f;
+  --ring-code-number-color: var(--ring-code-attribute-color);
+  --ring-code-string-color: #007a00;
+  --ring-code-addition-color: #aadeaa;
+  --ring-code-deletion-color: #c8c8c8;
+
+  /* Metrics */
+  --ring-border-radius: 3px;
+  --ring-border-radius-small: 2px;
+  --ring-font-size-larger: 14px;
+  --ring-font-size: 13px;
+  --ring-font-size-smaller: 12px;
+  --ring-line-height-taller: 21px;
+  --ring-line-height: 20px;
+  --ring-line-height-lower: 18px;
+  --ring-line-height-lowest: 16px;
+  --ring-ease: 0.3s ease-out;
+  --ring-fast-ease: 0.15s ease-out;
+  --ring-font-family: system-ui, Arial, sans-serif;
+  --ring-font-family-monospace: Menlo, "Bitstream Vera Sans Mono", "Ubuntu Mono", Consolas, "Courier New", Courier, monospace;
+
+  /* Common z-index-values */
+
+  /* Invisible element is an absolutely positioned element which should be below */
+  /* all other elements on the page */
+  --ring-invisible-element-z-index: -1;
+
+  /* z-index for position: fixed elements */
+  --ring-fixed-z-index: 1;
+
+  /* Elements that should overlay all other elements on the page */
+  --ring-overlay-z-index: 5;
+
+  /* Alerts should de displayed above overlays */
+  --ring-alert-z-index: 6;
+}
+
+html,.app-root{height:100%}.search-root{margin:0;padding:0;background:var(--ring-content-background-color);font-family:var(--ring-font-family);font-size:var(--ring-font-size);line-height:var(--ring-line-height)}.search-content{z-index:8;background-color:#f4f4f4}
+div#paneSearch{width:248px;margin:0 auto}div#paneSearch input#navigation-pane-search{background:#fff;border:1px solid #dadfe6;box-sizing:border-box;border-radius:4px;padding:8px;height:40px}div#paneSearch .navigation-pane-search{padding-top:16px;width:100%}div#paneSearch div.paneSearchInputWrapper{position:relative}div#paneSearch div.paneSearchInputWrapper span.paneSearchInputClearIcon{position:absolute;top:calc(50% + 2px);right:8px;cursor:pointer}.navigation-pane-popup{margin-top:1.2em}
+.page-summary{background:#fff;border:1px solid #dadfe6;position:fixed;top:25%;max-height:70vh;right:-2px;width:250px;z-index:8;transition:width .2s}.page-summary.hidden{width:3em;writing-mode:vertical-rl;text-orientation:mixed}.page-summary.hidden .content-wrapper h4{margin:0;padding:8px}.page-summary .content-wrapper{padding:.5em 0 1em 0;letter-spacing:.2px}.page-summary .content-wrapper h4{margin:0 2em;font-weight:600}.page-summary .content-wrapper ul{list-style-type:none;width:100%;padding:0;margin:1em 0;overflow-x:hidden;overflow-y:auto;max-height:60vh}.page-summary .content-wrapper ul li{width:100%;padding:4px 0}.page-summary .content-wrapper ul li:hover{background:rgba(91,93,239,.15)}.page-summary .content-wrapper ul li>a{margin:0 2em;cursor:pointer}.page-summary .content-wrapper ul li.selected{border-left:4px solid #5b5def}@media screen and (max-width: 759px){.page-summary{display:none}}
+
+/*# sourceMappingURL=main.css.map*/

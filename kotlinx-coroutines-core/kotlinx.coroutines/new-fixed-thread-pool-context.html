@@ -1,72 +1,52 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>newFixedThreadPoolContext - kotlinx-coroutines-core</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-fixed-thread-pool-context.html">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines</a> / <a href="./new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a></div>
-
-<h1 id="newfixedthreadpoolcontext">newFixedThreadPoolContext</h1>
-
-<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">fun </span><span class="identifier">newFixedThreadPoolContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newFixedThreadPoolContext(kotlin.Int, kotlin.String)/nThreads">nThreads</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newFixedThreadPoolContext(kotlin.Int, kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-executor-coroutine-dispatcher/index.html"><span class="identifier">ExecutorCoroutineDispatcher</span></a></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadPoolDispatcher.kt#L60">(source)</a></div>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
-
-<p>Creates a coroutine execution context with the fixed-size thread-pool and built-in <a href="#">yield</a> support.
-<strong>NOTE: The resulting <a href="-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a> owns native resources (its threads).Resources are reclaimed by <a href="-executor-coroutine-dispatcher/close.html">ExecutorCoroutineDispatcher.close</a>.</strong></p>
-
-<p>If the resulting dispatcher is <a href="-executor-coroutine-dispatcher/close.html">closed</a> and
-attempt to submit a continuation task is made,
-then the <a href="-job/index.html">Job</a> of the affected task is <a href="#">cancelled</a> and the task is submitted to the
-<a href="-dispatchers/-i-o.html">Dispatchers.IO</a>, so that the affected coroutine can cleanup its resources and promptly complete.</p>
-
-<p><strong>NOTE: This API will be replaced in the future</strong>. A different API to create thread-limited thread pools
-that is based on a shared thread-pool and does not require the resulting dispatcher to be explicitly closed
-will be provided, thus avoiding potential thread leaks and also significantly improving performance, due
-to coroutine-oriented scheduling policy and thread-switch minimization.
-See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/261">issue #261</a> for details.
-If you need a completely separate thread-pool with scheduling policy that is based on the standard
-JDK executors, use the following expression:
-<code>Executors.newFixedThreadPool().asCoroutineDispatcher()</code>.
-See <a href="java.util.concurrent.-executor/as-coroutine-dispatcher.html">Executor.asCoroutineDispatcher</a> for details.</p>
-
-<h3 id="parameters">Parameters</h3>
-
-<p><code>nThreads</code> - the number of threads.</p>
-
-<p><code>name</code> - the base name of the created threads.</p>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>newFixedThreadPoolContext</title>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines//newFixedThreadPoolContext/#kotlin.Int#kotlin.String/PointingToDeclaration//-1316292404">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines</a>/<a href="new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>new</span><wbr><span>Fixed</span><wbr><span>Thread</span><wbr><span>Pool</span><wbr><span>Context</span></h1>
+          </div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="-obsolete-coroutines-api/index.html">ObsoleteCoroutinesApi</a>()</div></div>fun <a href="new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a>(nThreads: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>, name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<p class="paragraph">Creates a coroutine execution context with the fixed-size thread-pool and built-in <a href="yield.html">yield</a> support. NOTE: The resulting <a href="-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a> owns native resources (its threads). Resources are reclaimed by <a href="-executor-coroutine-dispatcher/close.html">ExecutorCoroutineDispatcher.close</a>.</p><p class="paragraph">If the resulting dispatcher is <a href="-executor-coroutine-dispatcher/close.html">closed</a> and attempt to submit a continuation task is made, then the <a href="-job/index.html">Job</a> of the affected task is <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html">cancelled</a> and the task is submitted to the <a href="-dispatchers/-i-o.html">Dispatchers.IO</a>, so that the affected coroutine can cleanup its resources and promptly complete.</p><p class="paragraph">NOTE: This API will be replaced in the future. A different API to create thread-limited thread pools that is based on a shared thread-pool and does not require the resulting dispatcher to be explicitly closed will be provided, thus avoiding potential thread leaks and also significantly improving performance, due to coroutine-oriented scheduling policy and thread-switch minimization. See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/261">issue #261</a> for details. If you need a completely separate thread-pool with scheduling policy that is based on the standard JDK executors, use the following expression: <code>Executors.newFixedThreadPool().asCoroutineDispatcher()</code>. See <a href="index.html#401428932%2FFunctions%2F-1316292404">Executor.asCoroutineDispatcher</a> for details.</p><h2 class="">Parameters</h2><div data-togglable="Parameters"><div class="platform-hinted WithExtraAttributes" data-platform-hinted="data-platform-hinted" data-togglable="Parameters"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div data-togglable="Parameters"><div class="table" data-togglable="Parameters"><div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex">nThreads</span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">the number of threads.</p></div></div></div></div></div><div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex">name</span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">the base name of the created threads.</p></div></div></div></div></div></div></div></div></div></div></div>
+          <h2 class="">Sources</h2>
+          <div class="table" data-togglable="Sources"><a data-name="-421076131%2FSource%2F-1316292404" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadPoolDispatcher.kt#L36" id="-421076131%2FSource%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+            <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+              <div class="main-subrow keyValue ">
+                <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadPoolDispatcher.kt#L36">jvm source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-421076131%2FSource%2F-1316292404"></span>
+                      <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                    </span></span></div>
+                <div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

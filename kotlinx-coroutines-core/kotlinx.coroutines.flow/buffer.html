@@ -1,160 +1,47 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>buffer - kotlinx-coroutines-core</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/buffer.html">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.flow</a> / <a href="./buffer.html">buffer</a></div>
-
-<h1 id="buffer">buffer</h1>
-
-<div class="overload-group">
-
-  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">buffer</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BUFFERED<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/onBufferOverflow">onBufferOverflow</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines.channels/-buffer-overflow/index.html"><span class="identifier">BufferOverflow</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BufferOverflow.SUSPEND<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Context.kt#L125">(source)</a></div>
-
-  <p>Buffers flow emissions via channel of a specified capacity and runs collector in a separate coroutine.</p>
-
-  <p>Normally, <a href="-flow/index.html">flows</a> are <em>sequential</em>. It means that the code of all operators is executed in the
-same coroutine. For example, consider the following code using <a href="on-each.html">onEach</a> and <a href="collect.html">collect</a> operators:</p>
-
-  <pre>flowOf("A", "B", "C")
-    .onEach  { println("1$it") }
-    .collect { println("2$it") }
-</pre>
-
-  <p>It is going to be executed in the following order by the coroutine <code>Q</code> that calls this code:</p>
-
-  <pre>Q : --&gt;-- [1A] -- [2A] -- [1B] -- [2B] -- [1C] -- [2C] --&gt;--
-</pre>
-
-  <p>So if the operator’s code takes considerable time to execute, then the total execution time is going to be
-the sum of execution times for all operators.</p>
-
-  <p>The <code>buffer</code> operator creates a separate coroutine during execution for the flow it applies to.
-Consider the following code:</p>
-
-  <pre>flowOf("A", "B", "C")
-    .onEach  { println("1$it") }
-    .buffer()  // &lt;--------------- buffer between onEach and collect
-    .collect { println("2$it") }
-</pre>
-
-  <p>It will use two coroutines for execution of the code. A coroutine <code>Q</code> that calls this code is
-going to execute <code>collect</code>, and the code before <code>buffer</code> will be executed in a separate
-new coroutine <code>P</code> concurrently with <code>Q</code>:</p>
-
-  <pre>P : --&gt;-- [1A] -- [1B] -- [1C] ----------&gt;--  // flowOf(...).onEach { ... }
-
-                      |
-                      | channel               // buffer()
-                      V
-
-Q : --&gt;---------- [2A] -- [2B] -- [2C] --&gt;--  // collect
-</pre>
-
-  <p>When the operator’s code takes some time to execute, this decreases the total execution time of the flow.
-A <a href="../kotlinx.coroutines.channels/-channel/index.html">channel</a> is used between the coroutines to send elements emitted by the coroutine <code>P</code> to
-the coroutine <code>Q</code>. If the code before <code>buffer</code> operator (in the coroutine <code>P</code>) is faster than the code after
-<code>buffer</code> operator (in the coroutine <code>Q</code>), then this channel will become full at some point and will suspend
-the producer coroutine <code>P</code> until the consumer coroutine <code>Q</code> catches up.
-The <a href="buffer.html#kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/capacity">capacity</a> parameter defines the size of this buffer.</p>
-
-  <h3 id="buffer-overflow">Buffer overflow</h3>
-
-  <p>By default, the emitter is suspended when the buffer overflows, to let collector catch up. This strategy can be
-overridden with an optional <a href="buffer.html#kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/onBufferOverflow">onBufferOverflow</a> parameter so that the emitter is never suspended. In this
-case, on buffer overflow either the oldest value in the buffer is dropped with the <a href="../kotlinx.coroutines.channels/-buffer-overflow/-d-r-o-p_-o-l-d-e-s-t.html">DROP_OLDEST</a>
-strategy and the latest emitted value is added to the buffer,
-or the latest value that is being emitted is dropped with the <a href="../kotlinx.coroutines.channels/-buffer-overflow/-d-r-o-p_-l-a-t-e-s-t.html">DROP_LATEST</a> strategy,
-keeping the buffer intact.
-To implement either of the custom strategies, a buffer of at least one element is used.</p>
-
-  <h3 id="operator-fusion">Operator fusion</h3>
-
-  <p>Adjacent applications of <a href="channel-flow.html">channelFlow</a>, <a href="flow-on.html">flowOn</a>, <a href="./buffer.md">buffer</a>, and <a href="produce-in.html">produceIn</a> are
-always fused so that only one properly configured channel is used for execution.</p>
-
-  <p>Explicitly specified buffer capacity takes precedence over <code>buffer()</code> or <code>buffer(Channel.BUFFERED)</code> calls,
-which effectively requests a buffer of any size. Multiple requests with a specified buffer
-size produce a buffer with the sum of the requested buffer sizes.</p>
-
-  <p>A <code>buffer</code> call with a non-default value of the <a href="buffer.html#kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/onBufferOverflow">onBufferOverflow</a> parameter overrides all immediately preceding
-buffering operators, because it never suspends its upstream, and thus no upstream buffer would ever be used.</p>
-
-  <h3 id="conceptual-implementation">Conceptual implementation</h3>
-
-  <p>The actual implementation of <code>buffer</code> is not trivial due to the fusing, but conceptually its basic
-implementation is equivalent to the following code that can be written using <a href="../kotlinx.coroutines.channels/produce.html">produce</a>
-coroutine builder to produce a channel and <a href="../kotlinx.coroutines.channels/consume-each.html">consumeEach</a> extension to consume it:</p>
-
-  <pre>fun &lt;T&gt; Flow&lt;T&gt;.buffer(capacity: Int = DEFAULT): Flow&lt;T&gt; = flow {
-    coroutineScope { // limit the scope of concurrent producer coroutine
-        val channel = produce(capacity = capacity) {
-            collect { send(it) } // send all to channel
-        }
-        // emit all received values
-        channel.consumeEach { emit(it) }
-    }
-}
-</pre>
-
-  <h3 id="conflation">Conflation</h3>
-
-  <p>Usage of this function with <a href="buffer.html#kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int, kotlinx.coroutines.channels.BufferOverflow)/capacity">capacity</a> of <a href="../kotlinx.coroutines.channels/-channel/-c-o-n-f-l-a-t-e-d.html">Channel.CONFLATED</a> is a shortcut to
-<code>buffer(onBufferOverflow = </code><a href="../kotlinx.coroutines.channels/-buffer-overflow/-d-r-o-p_-o-l-d-e-s-t.html"><code>BufferOverflow.DROP_OLDEST</code></a><code>)</code>, and is available via
-a separate <a href="conflate.html">conflate</a> operator. See its documentation for details.</p>
-
-  <h3 id="parameters">Parameters</h3>
-
-  <p><code>capacity</code> - type/capacity of the buffer between coroutines. Allowed values are the same as in <code>Channel(...)</code>
-factory function: <a href="../kotlinx.coroutines.channels/-channel/-b-u-f-f-e-r-e-d.html">BUFFERED</a> (by default), <a href="../kotlinx.coroutines.channels/-channel/-c-o-n-f-l-a-t-e-d.html">CONFLATED</a>,
-<a href="../kotlinx.coroutines.channels/-channel/-r-e-n-d-e-z-v-o-u-s.html">RENDEZVOUS</a>, <a href="../kotlinx.coroutines.channels/-channel/-u-n-l-i-m-i-t-e-d.html">UNLIMITED</a> or a non-negative value indicating
-an explicitly requested size.</p>
-
-  <p><code>onBufferOverflow</code> - configures an action on buffer overflow (optional, defaults to
-<a href="../kotlinx.coroutines.channels/-buffer-overflow/-s-u-s-p-e-n-d.html">SUSPEND</a>, supported only when <code>capacity &gt;= 0</code> or <code>capacity == Channel.BUFFERED</code>,
-implicitly creates a channel with at least one buffered element).</p>
-
-</div>
-<div class="overload-group">
-
-  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">buffer</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.flow$buffer(kotlinx.coroutines.flow.Flow((kotlinx.coroutines.flow.buffer.T)), kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;BUFFERED<span class="symbol">)</span><span class="symbol">: </span><a href="-flow/index.html"><span class="identifier">Flow</span></a><span class="symbol">&lt;</span><a href="buffer.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Context.kt#L147">(source)</a></div>
-
-  <p><strong>Deprecated:</strong> DeprecationLevel.HIDDEN</p>
-
-</div>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>buffer</title>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow//buffer/kotlinx.coroutines.flow.Flow[TypeParam(bounds=[kotlin.Any?])]#kotlin.Int#kotlinx.coroutines.channels.BufferOverflow/PointingToDeclaration//1975948010">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines.flow</a>/<a href="buffer.html">buffer</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>buffer</span></h1>
+          </div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun &lt;<a href="buffer.html">T</a>&gt; <a href="-flow/index.html">Flow</a>&lt;<a href="buffer.html">T</a>&gt;.<a href="buffer.html">buffer</a>(capacity: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = BUFFERED, onBufferOverflow: <a href="../kotlinx.coroutines.channels/-buffer-overflow/index.html">BufferOverflow</a> = BufferOverflow.SUSPEND): <a href="-flow/index.html">Flow</a>&lt;<a href="buffer.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<p class="paragraph">Buffers flow emissions via channel of a specified capacity and runs collector in a separate coroutine.</p><p class="paragraph">Normally, <a href="-flow/index.html">flows</a> are sequential. It means that the code of all operators is executed in the same coroutine. For example, consider the following code using <a href="on-each.html">onEach</a> and <a href="collect.html">collect</a> operators:</p><div class="sample-container"><code class="" theme="idea"><pre>flowOf("A", "B", "C")<br>    .onEach  { println("1$it") }<br>    .collect { println("2$it") }</pre></code></div><p class="paragraph">It is going to be executed in the following order by the coroutine <code>Q</code> that calls this code:</p><div class="sample-container"><code class="" theme="idea"><pre>Q : --&gt;-- [1A] -- [2A] -- [1B] -- [2B] -- [1C] -- [2C] --&gt;--</pre></code></div><p class="paragraph">So if the operator's code takes considerable time to execute, then the total execution time is going to be the sum of execution times for all operators.</p><p class="paragraph">The <code>buffer</code> operator creates a separate coroutine during execution for the flow it applies to. Consider the following code:</p><div class="sample-container"><code class="" theme="idea"><pre>flowOf("A", "B", "C")<br>    .onEach  { println("1$it") }<br>    .buffer()  // &lt;--------------- buffer between onEach and collect<br>    .collect { println("2$it") }</pre></code></div><p class="paragraph">It will use two coroutines for execution of the code. A coroutine <code>Q</code> that calls this code is going to execute <code>collect</code>, and the code before <code>buffer</code> will be executed in a separate new coroutine <code>P</code> concurrently with <code>Q</code>:</p><div class="sample-container"><code class="" theme="idea"><pre>P : --&gt;-- [1A] -- [1B] -- [1C] ----------&gt;--  // flowOf(...).onEach { ... }<br><br>                      |<br>                      | channel               // buffer()<br>                      V<br><br>Q : --&gt;---------- [2A] -- [2B] -- [2C] --&gt;--  // collect</pre></code></div><p class="paragraph">When the operator's code takes some time to execute, this decreases the total execution time of the flow. A <a href="../kotlinx.coroutines.channels/-channel/index.html">channel</a> is used between the coroutines to send elements emitted by the coroutine <code>P</code> to the coroutine <code>Q</code>. If the code before <code>buffer</code> operator (in the coroutine <code>P</code>) is faster than the code after <code>buffer</code> operator (in the coroutine <code>Q</code>), then this channel will become full at some point and will suspend the producer coroutine <code>P</code> until the consumer coroutine <code>Q</code> catches up. The <a href="buffer.html">capacity</a> parameter defines the size of this buffer.</p><h3 class=""> Buffer overflow</h3><p class="paragraph">By default, the emitter is suspended when the buffer overflows, to let collector catch up. This strategy can be overridden with an optional <a href="buffer.html">onBufferOverflow</a> parameter so that the emitter is never suspended. In this case, on buffer overflow either the oldest value in the buffer is dropped with the <a href="../kotlinx.coroutines.channels/-buffer-overflow/-d-r-o-p_-o-l-d-e-s-t/index.html">DROP_OLDEST</a> strategy and the latest emitted value is added to the buffer, or the latest value that is being emitted is dropped with the <a href="../kotlinx.coroutines.channels/-buffer-overflow/-d-r-o-p_-l-a-t-e-s-t/index.html">DROP_LATEST</a> strategy, keeping the buffer intact. To implement either of the custom strategies, a buffer of at least one element is used.</p><h3 class=""> Operator fusion</h3><p class="paragraph">Adjacent applications of <a href="channel-flow.html">channelFlow</a>, <a href="flow-on.html">flowOn</a>, <a href="buffer.html">buffer</a>, and <a href="produce-in.html">produceIn</a> are always fused so that only one properly configured channel is used for execution.</p><p class="paragraph">Explicitly specified buffer capacity takes precedence over <code>buffer()</code> or <code>buffer(Channel.BUFFERED)</code> calls, which effectively requests a buffer of any size. Multiple requests with a specified buffer size produce a buffer with the sum of the requested buffer sizes.</p><p class="paragraph">A <code>buffer</code> call with a non-default value of the <a href="buffer.html">onBufferOverflow</a> parameter overrides all immediately preceding buffering operators, because it never suspends its upstream, and thus no upstream buffer would ever be used.</p><h3 class=""> Conceptual implementation</h3><p class="paragraph">The actual implementation of <code>buffer</code> is not trivial due to the fusing, but conceptually its basic implementation is equivalent to the following code that can be written using <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine builder to produce a channel and <a href="../kotlinx.coroutines.channels/consume-each.html">consumeEach</a> extension to consume it:</p><div class="sample-container"><code class="" theme="idea"><pre>fun &lt;T&gt; Flow&lt;T&gt;.buffer(capacity: Int = DEFAULT): Flow&lt;T&gt; = flow {<br>    coroutineScope { // limit the scope of concurrent producer coroutine<br>        val channel = produce(capacity = capacity) {<br>            collect { send(it) } // send all to channel<br>        }<br>        // emit all received values<br>        channel.consumeEach { emit(it) }<br>    }<br>}</pre></code></div><h3 class=""> Conflation</h3><p class="paragraph">Usage of this function with <a href="buffer.html">capacity</a> of <a href="../kotlinx.coroutines.channels/-channel/-factory/-c-o-n-f-l-a-t-e-d.html">Channel.CONFLATED</a> is a shortcut to <code>buffer(onBufferOverflow = </code><a href="../kotlinx.coroutines.channels/-buffer-overflow/-d-r-o-p_-o-l-d-e-s-t/index.html"><code>BufferOverflow.DROP_OLDEST</code></a><code>)</code>, and is available via a separate <a href="conflate.html">conflate</a> operator. See its documentation for details.</p><h2 class="">Parameters</h2><div data-togglable="Parameters"><div class="platform-hinted WithExtraAttributes" data-platform-hinted="data-platform-hinted" data-togglable="Parameters"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div data-togglable="Parameters"><div class="table" data-togglable="Parameters"><div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex">capacity</span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">type/capacity of the buffer between coroutines. Allowed values are the same as in <code>Channel(...)</code> factory function: <a href="../kotlinx.coroutines.channels/-channel/-factory/-b-u-f-f-e-r-e-d.html">BUFFERED</a> (by default), <a href="../kotlinx.coroutines.channels/-channel/-factory/-c-o-n-f-l-a-t-e-d.html">CONFLATED</a>, <a href="../kotlinx.coroutines.channels/-channel/-factory/-r-e-n-d-e-z-v-o-u-s.html">RENDEZVOUS</a>, <a href="../kotlinx.coroutines.channels/-channel/-factory/-u-n-l-i-m-i-t-e-d.html">UNLIMITED</a> or a non-negative value indicating an explicitly requested size.</p></div></div></div></div></div><div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex">onBufferOverflow</span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">configures an action on buffer overflow (optional, defaults to <a href="../kotlinx.coroutines.channels/-buffer-overflow/-s-u-s-p-e-n-d/index.html">SUSPEND</a>, supported only when <code>capacity &gt;= 0</code> or <code>capacity == Channel.BUFFERED</code>, implicitly creates a channel with at least one buffered element).</p></div></div></div></div></div></div></div></div></div></div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace strikethrough">fun &lt;<a href="buffer.html">T</a>&gt; <a href="-flow/index.html">Flow</a>&lt;<a href="buffer.html">T</a>&gt;.<a href="buffer.html">buffer</a>(capacity: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = BUFFERED): <a href="-flow/index.html">Flow</a>&lt;<a href="buffer.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

@@ -1,228 +1,672 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PublisherCoroutine - kotlinx-coroutines-reactive</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/-publisher-coroutine/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-reactive</a> / <a href="../index.html">kotlinx.coroutines.reactive</a> / <a href="./index.html">PublisherCoroutine</a></div>
-
-<h1 id="publishercoroutine">PublisherCoroutine</h1>
-
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">PublisherCoroutine</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-abstract-coroutine/index.html"><span class="identifier">AbstractCoroutine</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Subscription.html"><span class="identifier">Subscription</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-clause2/index.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">,</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
-
-<h3 id="constructors">Constructors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="-init-.html">&lt;init&gt;</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="identifier">PublisherCoroutine</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$&lt;init&gt;(kotlin.coroutines.CoroutineContext, org.reactivestreams.Subscriber((kotlinx.coroutines.reactive.PublisherCoroutine.T)), kotlin.Function2((kotlin.Throwable, kotlin.coroutines.CoroutineContext, kotlin.Unit)))/parentContext">parentContext</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$&lt;init&gt;(kotlin.coroutines.CoroutineContext, org.reactivestreams.Subscriber((kotlinx.coroutines.reactive.PublisherCoroutine.T)), kotlin.Function2((kotlin.Throwable, kotlin.coroutines.CoroutineContext, kotlin.Unit)))/subscriber">subscriber</span><span class="symbol">:</span>&nbsp;<a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Subscriber.html"><span class="identifier">Subscriber</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$&lt;init&gt;(kotlin.coroutines.CoroutineContext, org.reactivestreams.Subscriber((kotlinx.coroutines.reactive.PublisherCoroutine.T)), kotlin.Function2((kotlin.Throwable, kotlin.coroutines.CoroutineContext, kotlin.Unit)))/exceptionOnCancelHandler">exceptionOnCancelHandler</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">)</span></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="properties">Properties</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="channel.html">channel</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">channel</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="is-closed-for-send.html">isClosedForSend</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="on-send.html">onSend</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">onSend</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-clause2/index.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">,</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="functions">Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="cancel.html">cancel</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="close.html">close</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="invoke-on-close.html">invokeOnClose</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">invokeOnClose</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$invokeOnClose(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing/index.html"><span class="identifier">Nothing</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="on-cancelled.html">onCancelled</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">onCancelled</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$onCancelled(kotlin.Throwable, kotlin.Boolean)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">, </span><span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$onCancelled(kotlin.Throwable, kotlin.Boolean)/handled">handled</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="on-completed.html">onCompleted</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">onCompleted</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$onCompleted(kotlin.Unit)/value">value</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="register-select-clause2.html">registerSelectClause2</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">registerSelectClause2</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$registerSelectClause2(kotlinx.coroutines.selects.SelectInstance((kotlinx.coroutines.reactive.PublisherCoroutine.registerSelectClause2.R)), kotlinx.coroutines.reactive.PublisherCoroutine.T, kotlin.SuspendFunction1((kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.reactive.PublisherCoroutine.T)), kotlinx.coroutines.reactive.PublisherCoroutine.registerSelectClause2.R)))/select">select</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-instance/index.html"><span class="identifier">SelectInstance</span></a><span class="symbol">&lt;</span><a href="register-select-clause2.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$registerSelectClause2(kotlinx.coroutines.selects.SelectInstance((kotlinx.coroutines.reactive.PublisherCoroutine.registerSelectClause2.R)), kotlinx.coroutines.reactive.PublisherCoroutine.T, kotlin.SuspendFunction1((kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.reactive.PublisherCoroutine.T)), kotlinx.coroutines.reactive.PublisherCoroutine.registerSelectClause2.R)))/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$registerSelectClause2(kotlinx.coroutines.selects.SelectInstance((kotlinx.coroutines.reactive.PublisherCoroutine.registerSelectClause2.R)), kotlinx.coroutines.reactive.PublisherCoroutine.T, kotlin.SuspendFunction1((kotlinx.coroutines.channels.SendChannel((kotlinx.coroutines.reactive.PublisherCoroutine.T)), kotlinx.coroutines.reactive.PublisherCoroutine.registerSelectClause2.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="register-select-clause2.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="request.html">request</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">request</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$request(kotlin.Long)/n">n</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="send.html">send</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$send(kotlinx.coroutines.reactive.PublisherCoroutine.T)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="try-send.html">trySend</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">trySend</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactive.PublisherCoroutine$trySend(kotlinx.coroutines.reactive.PublisherCoroutine.T)/element">element</span><span class="symbol">:</span>&nbsp;<a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extension-functions">Extension Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../kotlinx.coroutines.-coroutine-scope/publish.html">publish</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><s><span class="identifier">publish</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive$publish(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactive.publish.T)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive$publish(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactive.publish.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="../kotlinx.coroutines.-coroutine-scope/publish.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="../kotlinx.coroutines.-coroutine-scope/publish.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>PublisherCoroutine</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-reactive::kotlinx.coroutines.reactive/PublisherCoroutine///PointingToDeclaration//1844271109">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-reactive</a>/<a href="../index.html">kotlinx.coroutines.reactive</a>/<a href="index.html">PublisherCoroutine</a></div>
+            <div class="pull-right d-flex">
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Publisher</span><wbr><span>Coroutine</span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">class <a href="index.html">PublisherCoroutine</a>&lt;in <a href="index.html">T</a>&gt;(parentContext: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>, subscriber: <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Subscriber.html">Subscriber</a>&lt;<a href="index.html">T</a>&gt;, exceptionOnCancelHandler: (<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>) : <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-abstract-coroutine/index.html">AbstractCoroutine</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>&gt; , <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="index.html">T</a>&gt; , <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Subscription.html">Subscription</a>, <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-clause2/index.html">SelectClause2</a>&lt;<a href="index.html">T</a>, <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>&lt;<a href="index.html">T</a>&gt;&gt; <span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="-1357889889%2FFunctions%2F1844271109" anchor-label="attachChild" id="-1357889889%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1357889889%2FFunctions%2F1844271109">attachChild</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1357889889%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">override fun <a href="index.html#-1357889889%2FFunctions%2F1844271109">attachChild</a>(child: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-child-job/index.html">ChildJob</a>): <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-child-handle/index.html">ChildHandle</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="369566586%2FFunctions%2F1844271109" anchor-label="cancel" id="369566586%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="cancel.html">cancel</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="369566586%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="cancel.html">cancel</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">open override fun <a href="index.html#1028382997%2FFunctions%2F1844271109">cancel</a>(cause: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>?)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace strikethrough">open override fun <a href="index.html#-972256781%2FFunctions%2F1844271109">cancel</a>(cause: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-11343753%2FFunctions%2F1844271109" anchor-label="cancelCoroutine" id="-11343753%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-11343753%2FFunctions%2F1844271109">cancelCoroutine</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-11343753%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="index.html#-11343753%2FFunctions%2F1844271109">cancelCoroutine</a>(cause: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-76056909%2FFunctions%2F1844271109" anchor-label="cancelInternal" id="-76056909%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-76056909%2FFunctions%2F1844271109">cancelInternal</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-76056909%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open fun <a href="index.html#-76056909%2FFunctions%2F1844271109">cancelInternal</a>(cause: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-251543499%2FFunctions%2F1844271109" anchor-label="childCancelled" id="-251543499%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-251543499%2FFunctions%2F1844271109">childCancelled</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-251543499%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open fun <a href="index.html#-251543499%2FFunctions%2F1844271109">childCancelled</a>(cause: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="180306104%2FFunctions%2F1844271109" anchor-label="close" id="180306104%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="close.html">close</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="180306104%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="close.html">close</a>(cause: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="466442070%2FFunctions%2F1844271109" anchor-label="fold" id="466442070%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#466442070%2FFunctions%2F1844271109">fold</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="466442070%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun &lt;<a href="index.html#466442070%2FFunctions%2F1844271109">R</a>&gt; <a href="index.html#466442070%2FFunctions%2F1844271109">fold</a>(initial: <a href="index.html#466442070%2FFunctions%2F1844271109">R</a>, operation: (<a href="index.html#466442070%2FFunctions%2F1844271109">R</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a>) -&gt; <a href="index.html#466442070%2FFunctions%2F1844271109">R</a>): <a href="index.html#466442070%2FFunctions%2F1844271109">R</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="232613081%2FFunctions%2F1844271109" anchor-label="get" id="232613081%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#232613081%2FFunctions%2F1844271109">get</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="232613081%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open operator override fun &lt;<a href="index.html#232613081%2FFunctions%2F1844271109">E</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a>&gt; <a href="index.html#232613081%2FFunctions%2F1844271109">get</a>(key: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;<a href="index.html#232613081%2FFunctions%2F1844271109">E</a>&gt;): <a href="index.html#232613081%2FFunctions%2F1844271109">E</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="507562471%2FFunctions%2F1844271109" anchor-label="getCancellationException" id="507562471%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#507562471%2FFunctions%2F1844271109">getCancellationException</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="507562471%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">override fun <a href="index.html#507562471%2FFunctions%2F1844271109">getCancellationException</a>(): <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1879509358%2FFunctions%2F1844271109" anchor-label="getChildJobCancellationCause" id="1879509358%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1879509358%2FFunctions%2F1844271109">getChildJobCancellationCause</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1879509358%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="index.html#1879509358%2FFunctions%2F1844271109">getChildJobCancellationCause</a>(): <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1047355094%2FFunctions%2F1844271109" anchor-label="getCompletionExceptionOrNull" id="1047355094%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1047355094%2FFunctions%2F1844271109">getCompletionExceptionOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1047355094%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="index.html#1047355094%2FFunctions%2F1844271109">getCompletionExceptionOrNull</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="2143724018%2FFunctions%2F1844271109" anchor-label="invokeOnClose" id="2143724018%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="invoke-on-close.html">invokeOnClose</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2143724018%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="invoke-on-close.html">invokeOnClose</a>(handler: (<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing/index.html">Nothing</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="544592046%2FFunctions%2F1844271109" anchor-label="invokeOnCompletion" id="544592046%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1024327587%2FFunctions%2F1844271109">invokeOnCompletion</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="544592046%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">override fun <a href="index.html#-1024327587%2FFunctions%2F1844271109">invokeOnCompletion</a>(handler: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-completion-handler/index.html">CompletionHandler</a>): <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-disposable-handle/index.html">DisposableHandle</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">override fun <a href="index.html#-1767912163%2FFunctions%2F1844271109">invokeOnCompletion</a>(onCancelling: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>, invokeImmediately: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>, handler: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-completion-handler/index.html">CompletionHandler</a>): <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-disposable-handle/index.html">DisposableHandle</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1450278931%2FFunctions%2F1844271109" anchor-label="join" id="1450278931%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1450278931%2FFunctions%2F1844271109">join</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1450278931%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">suspend override fun <a href="index.html#1450278931%2FFunctions%2F1844271109">join</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1830620809%2FFunctions%2F1844271109" anchor-label="minusKey" id="-1830620809%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1830620809%2FFunctions%2F1844271109">minusKey</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1830620809%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="index.html#-1830620809%2FFunctions%2F1844271109">minusKey</a>(key: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;*&gt;): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1840509638%2FFunctions%2F1844271109" anchor-label="offer" id="1840509638%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1840509638%2FFunctions%2F1844271109">offer</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1840509638%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">open fun <a href="index.html#1840509638%2FFunctions%2F1844271109">offer</a>(element: <a href="index.html">T</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-263814849%2FFunctions%2F1844271109" anchor-label="parentCancelled" id="-263814849%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-263814849%2FFunctions%2F1844271109">parentCancelled</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-263814849%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">override fun <a href="index.html#-263814849%2FFunctions%2F1844271109">parentCancelled</a>(parentJob: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-parent-job/index.html">ParentJob</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1088078916%2FFunctions%2F1844271109" anchor-label="plus" id="-1088078916%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1141296693%2FFunctions%2F1844271109">plus</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1088078916%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open operator fun <a href="index.html#1141296693%2FFunctions%2F1844271109">plus</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace strikethrough">open operator fun <a href="index.html#1574049939%2FFunctions%2F1844271109">plus</a>(other: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a>): <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1318311812%2FFunctions%2F1844271109" anchor-label="registerSelectClause0" id="-1318311812%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1318311812%2FFunctions%2F1844271109">registerSelectClause0</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1318311812%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">override fun &lt;<a href="index.html#-1318311812%2FFunctions%2F1844271109">R</a>&gt; <a href="index.html#-1318311812%2FFunctions%2F1844271109">registerSelectClause0</a>(select: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-instance/index.html">SelectInstance</a>&lt;<a href="index.html#-1318311812%2FFunctions%2F1844271109">R</a>&gt;, block: suspend () -&gt; <a href="index.html#-1318311812%2FFunctions%2F1844271109">R</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="416313164%2FFunctions%2F1844271109" anchor-label="registerSelectClause2" id="416313164%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="register-select-clause2.html">registerSelectClause2</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="416313164%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun &lt;<a href="register-select-clause2.html">R</a>&gt; <a href="register-select-clause2.html">registerSelectClause2</a>(select: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-instance/index.html">SelectInstance</a>&lt;<a href="register-select-clause2.html">R</a>&gt;, element: <a href="index.html">T</a>, block: suspend (<a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>&lt;<a href="index.html">T</a>&gt;) -&gt; <a href="register-select-clause2.html">R</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="57935986%2FFunctions%2F1844271109" anchor-label="request" id="57935986%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="request.html">request</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="57935986%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="request.html">request</a>(n: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="879974391%2FFunctions%2F1844271109" anchor-label="resumeWith" id="879974391%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#879974391%2FFunctions%2F1844271109">resumeWith</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="879974391%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">override fun <a href="index.html#879974391%2FFunctions%2F1844271109">resumeWith</a>(result: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/index.html">Result</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>&gt;)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="869746434%2FFunctions%2F1844271109" anchor-label="send" id="869746434%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="send.html">send</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="869746434%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open suspend override fun <a href="send.html">send</a>(element: <a href="index.html">T</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="906753808%2FFunctions%2F1844271109" anchor-label="start" id="906753808%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#173048667%2FFunctions%2F1844271109">start</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="906753808%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">override fun <a href="index.html#173048667%2FFunctions%2F1844271109">start</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="symbol monospace">fun &lt;<a href="index.html#-1882148863%2FFunctions%2F1844271109">R</a>&gt; <a href="index.html#-1882148863%2FFunctions%2F1844271109">start</a>(start: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/index.html">CoroutineStart</a>, receiver: <a href="index.html#-1882148863%2FFunctions%2F1844271109">R</a>, block: suspend <a href="index.html#-1882148863%2FFunctions%2F1844271109">R</a>.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1865503444%2FFunctions%2F1844271109" anchor-label="toDebugString" id="1865503444%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1865503444%2FFunctions%2F1844271109">toDebugString</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1865503444%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="index.html#1865503444%2FFunctions%2F1844271109">toDebugString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="804059409%2FFunctions%2F1844271109" anchor-label="toString" id="804059409%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#804059409%2FFunctions%2F1844271109">toString</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="804059409%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="index.html#804059409%2FFunctions%2F1844271109">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1988404747%2FFunctions%2F1844271109" anchor-label="trySend" id="1988404747%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="try-send.html">trySend</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1988404747%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="try-send.html">trySend</a>(element: <a href="index.html">T</a>): <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel-result/index.html">ChannelResult</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Properties</h2>
+              <div class="table" data-togglable="Properties"><a data-name="-919880589%2FProperties%2F1844271109" anchor-label="channel" id="-919880589%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="channel.html">channel</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-919880589%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="-919880589%2FProperties%2F1844271109" anchor-label="channel" id="-919880589%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">open override val <a href="channel.html">channel</a>: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>&lt;<a href="index.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1654407525%2FProperties%2F1844271109" anchor-label="children" id="1654407525%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1654407525%2FProperties%2F1844271109">children</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1654407525%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="1654407525%2FProperties%2F1844271109" anchor-label="children" id="1654407525%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">override val <a href="index.html#1654407525%2FProperties%2F1844271109">children</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html">Sequence</a>&lt;<a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="883088711%2FProperties%2F1844271109" anchor-label="context" id="883088711%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#883088711%2FProperties%2F1844271109">context</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="883088711%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="883088711%2FProperties%2F1844271109" anchor-label="context" id="883088711%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">override val <a href="index.html#883088711%2FProperties%2F1844271109">context</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="561258413%2FProperties%2F1844271109" anchor-label="coroutineContext" id="561258413%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#561258413%2FProperties%2F1844271109">coroutineContext</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="561258413%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="561258413%2FProperties%2F1844271109" anchor-label="coroutineContext" id="561258413%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">open override val <a href="index.html#561258413%2FProperties%2F1844271109">coroutineContext</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1062253644%2FProperties%2F1844271109" anchor-label="isActive" id="-1062253644%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1062253644%2FProperties%2F1844271109">isActive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1062253644%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="-1062253644%2FProperties%2F1844271109" anchor-label="isActive" id="-1062253644%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">open override val <a href="index.html#-1062253644%2FProperties%2F1844271109">isActive</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="532401711%2FProperties%2F1844271109" anchor-label="isCancelled" id="532401711%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#532401711%2FProperties%2F1844271109">isCancelled</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="532401711%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="532401711%2FProperties%2F1844271109" anchor-label="isCancelled" id="532401711%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">override val <a href="index.html#532401711%2FProperties%2F1844271109">isCancelled</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="328799131%2FProperties%2F1844271109" anchor-label="isClosedForSend" id="328799131%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="is-closed-for-send.html">isClosedForSend</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="328799131%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="328799131%2FProperties%2F1844271109" anchor-label="isClosedForSend" id="328799131%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">open override val <a href="is-closed-for-send.html">isClosedForSend</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-214192523%2FProperties%2F1844271109" anchor-label="isCompleted" id="-214192523%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-214192523%2FProperties%2F1844271109">isCompleted</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-214192523%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="-214192523%2FProperties%2F1844271109" anchor-label="isCompleted" id="-214192523%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">override val <a href="index.html#-214192523%2FProperties%2F1844271109">isCompleted</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1981047358%2FProperties%2F1844271109" anchor-label="isCompletedExceptionally" id="1981047358%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1981047358%2FProperties%2F1844271109">isCompletedExceptionally</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1981047358%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="1981047358%2FProperties%2F1844271109" anchor-label="isCompletedExceptionally" id="1981047358%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="index.html#1981047358%2FProperties%2F1844271109">isCompletedExceptionally</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="668774167%2FProperties%2F1844271109" anchor-label="key" id="668774167%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#668774167%2FProperties%2F1844271109">key</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="668774167%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="668774167%2FProperties%2F1844271109" anchor-label="key" id="668774167%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">override val <a href="index.html#668774167%2FProperties%2F1844271109">key</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;*&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1557552965%2FProperties%2F1844271109" anchor-label="onJoin" id="-1557552965%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1557552965%2FProperties%2F1844271109">onJoin</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1557552965%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="-1557552965%2FProperties%2F1844271109" anchor-label="onJoin" id="-1557552965%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">override val <a href="index.html#-1557552965%2FProperties%2F1844271109">onJoin</a>: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-clause0/index.html">SelectClause0</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1159302115%2FProperties%2F1844271109" anchor-label="onSend" id="-1159302115%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="on-send.html">onSend</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1159302115%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="-1159302115%2FProperties%2F1844271109" anchor-label="onSend" id="-1159302115%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">open override val <a href="on-send.html">onSend</a>: <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-clause2/index.html">SelectClause2</a>&lt;<a href="index.html">T</a>, <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>&lt;<a href="index.html">T</a>&gt;&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-892529316%2FProperties%2F1844271109" anchor-label="subscriber" id="-892529316%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="subscriber.html">subscriber</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-892529316%2FProperties%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><a data-name="-892529316%2FProperties%2F1844271109" anchor-label="subscriber" id="-892529316%2FProperties%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="subscriber.html">subscriber</a>: <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Subscriber.html">Subscriber</a>&lt;<a href="index.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

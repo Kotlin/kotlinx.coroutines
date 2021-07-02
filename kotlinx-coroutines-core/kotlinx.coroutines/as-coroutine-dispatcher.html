@@ -1,0 +1,65 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>asCoroutineDispatcher</title>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
+      </div>
+      <div id="main">
+        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
+
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines//asCoroutineDispatcher/org.w3c.dom.Window#/PointingToDeclaration//-355669620">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines</a>/<a href="as-coroutine-dispatcher.html">asCoroutineDispatcher</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector js-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain">js</button><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>as</span><wbr><span>Coroutine</span><wbr><span>Dispatcher</span></h1>
+          </div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain"><div class="with-platform-tags"><span class="pull-right">
+  <div class="platform-tags ">
+    <div class="platform-tag js-like">js</div>
+  </div>
+</span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jsMain"><div class="symbol monospace">fun <a href="https://kotlinlang.org/api/latest/jvm/stdlib/org.w3c.dom/-window/index.html">Window</a>.<a href="as-coroutine-dispatcher.html">asCoroutineDispatcher</a>(): <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<p class="paragraph">Converts an instance of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/org.w3c.dom/-window/index.html">Window</a> to an implementation of <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a>.</p></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right">
+  <div class="platform-tags ">
+    <div class="platform-tag jvm-like">jvm</div>
+  </div>
+</span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(<span>name = <span class="breakable-word">from</span></span><wbr>)</div></div>fun <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html">ExecutorService</a>.<a href="index.html#195507757%2FFunctions%2F-1316292404">asCoroutineDispatcher</a>(): <a href="-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<p class="paragraph">Converts an instance of <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html">ExecutorService</a> to an implementation of <a href="-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a>.</p><p class="paragraph">If the underlying executor throws <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RejectedExecutionException.html">RejectedExecutionException</a> on attempt to submit a continuation task (it happens when <a href="-executor-coroutine-dispatcher/close.html">closing</a> the resulting dispatcher, on underlying executor <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html#shutdown--">shutdown</a>, or when it uses limited queues), then the <a href="-job/index.html">Job</a> of the affected task is <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html">cancelled</a> and the task is submitted to the <a href="-dispatchers/-i-o.html">Dispatchers.IO</a>, so that the affected coroutine can cleanup its resources and promptly complete.</p></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right">
+  <div class="platform-tags ">
+    <div class="platform-tag jvm-like">jvm</div>
+  </div>
+</span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(<span>name = <span class="breakable-word">from</span></span><wbr>)</div></div>fun <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a>.<a href="index.html#401428932%2FFunctions%2F-1316292404">asCoroutineDispatcher</a>(): <a href="-coroutine-dispatcher/index.html#1994667823%2FExtensions%2F-1316292404">CoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<p class="paragraph">Converts an instance of <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a> to an implementation of <a href="-coroutine-dispatcher/index.html#1994667823%2FExtensions%2F-1316292404">CoroutineDispatcher</a>.</p><p class="paragraph">If the underlying executor throws <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RejectedExecutionException.html">RejectedExecutionException</a> on attempt to submit a continuation task (it happens when <a href="-executor-coroutine-dispatcher/close.html">closing</a> the resulting dispatcher, on underlying executor <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html#shutdown--">shutdown</a>, or when it uses limited queues), then the <a href="-job/index.html">Job</a> of the affected task is <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html">cancelled</a> and the task is submitted to the <a href="-dispatchers/-i-o.html">Dispatchers.IO</a>, so that the affected coroutine can cleanup its resources and promptly complete.</p></div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
+

@@ -1,163 +1,202 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ReactorContext - kotlinx-coroutines-reactor</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/-reactor-context/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-reactor</a> / <a href="../index.html">kotlinx.coroutines.reactor</a> / <a href="./index.html">ReactorContext</a></div>
-
-<h1 id="reactorcontext">ReactorContext</h1>
-
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">ReactorContext</span></code></div>
-
-<p>Wraps Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration between
-Reactor and kotlinx.coroutines.
-<a href="../reactor.util.context.-context-view/as-coroutine-context.html">Context.asCoroutineContext</a> puts Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> elements into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>,
-which can be used to propagate the information about Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> through coroutines.</p>
-
-<p>This context element is implicitly propagated through subscribers’ context by all Reactive integrations,
-such as <a href="../mono.html">mono</a>, <a href="../flux.html">flux</a>, <a href="#">Publisher.asFlow</a>, <a href="#">Flow.asPublisher</a> and <a href="../kotlinx.coroutines.channels.-receive-channel/as-flux.html">Flow.asFlux</a>.
-Functions that subscribe to a reactive stream
-(e.g. <a href="#">Publisher.awaitFirst</a>), too, propagate <a href="./index.html">ReactorContext</a>
-to the subscriber’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>.</p>
-
-<h3 id="examples-of-reactive-context-integration">Examples of Reactive context integration.</h3>
-
-<h4 id="propagating-reactorcontext-to-reactors-context">Propagating ReactorContext to Reactor’s Context</h4>
-
-<pre>val flux = myDatabaseService.getUsers()
-    .contextWrite { ctx -&gt; println(ctx); ctx }
-flux.awaitFirst() // Will print "null"
-
-// Now add ReactorContext
-withContext(Context.of("answer", "42").asCoroutineContext()) {
-   flux.awaitFirst() // Will print "Context{'key'='value'}"
-}
-</pre>
-
-<h4 id="propagating-subscribers-context-to-reactorcontext">Propagating subscriber’s Context to ReactorContext:</h4>
-
-<pre>val flow = flow {
-    println("Reactor context in Flow: " + currentCoroutineContext()[ReactorContext])
-}
-// No context
-flow.asFlux()
-    .subscribe() // Will print 'Reactor context in Flow: null'
-// Add subscriber's context
-flow.asFlux()
-    .contextWrite { ctx -&gt; ctx.put("answer", 42) }
-    .subscribe() // Will print "Reactor context in Flow: Context{'answer'=42}"
-</pre>
-
-<h3 id="types">Types</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="-key.html">Key</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">companion</span> <span class="keyword">object </span><span class="identifier">Key</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html"><span class="identifier">Key</span></a><span class="symbol">&lt;</span><a href="./index.html"><span class="identifier">ReactorContext</span></a><span class="symbol">&gt;</span></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="constructors">Constructors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="-init-.html">&lt;init&gt;</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="identifier">ReactorContext</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactor.ReactorContext$&lt;init&gt;(reactor.util.context.ContextView)/contextView">contextView</span><span class="symbol">:</span>&nbsp;<a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/ContextView.html"><span class="identifier">ContextView</span></a><span class="symbol">)</span></code></div>
-        <div class="signature"><code><span class="identifier">ReactorContext</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.reactor.ReactorContext$&lt;init&gt;(reactor.util.context.Context)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html"><span class="identifier">Context</span></a><span class="symbol">)</span></code></div>
-
-        <p>Wraps Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration between
-Reactor and kotlinx.coroutines.
-<a href="../reactor.util.context.-context-view/as-coroutine-context.html">Context.asCoroutineContext</a> puts Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> elements into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>,
-which can be used to propagate the information about Reactor’s <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> through coroutines.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="properties">Properties</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="context.html">context</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html"><span class="identifier">Context</span></a></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="functions">Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="to-string.html">toString</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ReactorContext</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-reactor::kotlinx.coroutines.reactor/ReactorContext///PointingToDeclaration//-3089886">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-reactor</a>/<a href="../index.html">kotlinx.coroutines.reactor</a>/<a href="index.html">ReactorContext</a></div>
+            <div class="pull-right d-flex">
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Reactor</span><wbr><span>Context</span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">class <a href="index.html">ReactorContext</a>(context: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>) : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-abstract-coroutine-context-element/index.html">AbstractCoroutineContextElement</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Wraps Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration between Reactor and kotlinx.coroutines. <a href="../as-coroutine-context.html">Context.asCoroutineContext</a> puts Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> elements into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>, which can be used to propagate the information about Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> through coroutines.</p><p class="paragraph">This context element is implicitly propagated through subscribers' context by all Reactive integrations, such as <a href="../mono.html">mono</a>, <a href="../flux.html">flux</a>, <a href="../../../kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/index.html">Publisher.asFlow</a>, <a href="../../../kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/index.html">Flow.asPublisher</a> and <a href="../as-flux.html">Flow.asFlux</a>. Functions that subscribe to a reactive stream (e.g. <a href="../../../kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/index.html">Publisher.awaitFirst</a>), too, propagate <a href="index.html">ReactorContext</a> to the subscriber's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>.</p><h3 class=""> Examples of Reactive context integration.</h3><h4 class=""> Propagating ReactorContext to Reactor's Context</h4><div class="sample-container"><code class="" theme="idea"><pre>val flux = myDatabaseService.getUsers()<br>    .contextWrite { ctx -&gt; println(ctx); ctx }<br>flux.awaitFirst() // Will print "null"<br><br>// Now add ReactorContext<br>withContext(Context.of("answer", "42").asCoroutineContext()) {<br>   flux.awaitFirst() // Will print "Context{'key'='value'}"<br>}</pre></code></div><h4 class=""> Propagating subscriber's Context to ReactorContext:</h4><div class="sample-container"><code class="" theme="idea"><pre>val flow = flow {<br>    println("Reactor context in Flow: " + currentCoroutineContext()[ReactorContext])<br>}<br>// No context<br>flow.asFlux()<br>    .subscribe() // Will print 'Reactor context in Flow: null'<br>// Add subscriber's context<br>flow.asFlux()<br>    .contextWrite { ctx -&gt; ctx.put("answer", 42) }<br>    .subscribe() // Will print "Reactor context in Flow: Context{'answer'=42}"</pre></code></div></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Constructors">Constructors</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button></div>
+            <div class="tabs-section-body">
+              <h2 class="tabbedcontent">Constructors</h2>
+              <div class="table" data-togglable="Constructors"><a data-name="1711166434%2FConstructors%2F-3089886" anchor-label="ReactorContext" id="1711166434%2FConstructors%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue TabbedContent">
+                    <div class=""><span class="inline-flex"><a href="-reactor-context.html">ReactorContext</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1711166434%2FConstructors%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="-reactor-context.html">ReactorContext</a>(contextView: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/ContextView.html">ContextView</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1799904071%2FConstructors%2F-3089886" anchor-label="ReactorContext" id="1799904071%2FConstructors%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue TabbedContent">
+                    <div class=""><span class="inline-flex"><a href="-reactor-context.html">ReactorContext</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1799904071%2FConstructors%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="-reactor-context.html">ReactorContext</a>(context: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Types</h2>
+              <div class="table" data-togglable="Types"><a data-name="-945550390%2FClasslikes%2F-3089886" anchor-label="Key" id="-945550390%2FClasslikes%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-key/index.html">Key</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-945550390%2FClasslikes%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">object <a href="-key/index.html">Key</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;<a href="index.html">ReactorContext</a>&gt; <span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="466442070%2FFunctions%2F-3089886" anchor-label="fold" id="466442070%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../-scheduler-coroutine-dispatcher/index.html#466442070%2FFunctions%2F-3089886">fold</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="466442070%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun &lt;<a href="../-scheduler-coroutine-dispatcher/index.html#466442070%2FFunctions%2F-3089886">R</a>&gt; <a href="../-scheduler-coroutine-dispatcher/index.html#466442070%2FFunctions%2F-3089886">fold</a>(initial: <a href="../-scheduler-coroutine-dispatcher/index.html#466442070%2FFunctions%2F-3089886">R</a>, operation: (<a href="../-scheduler-coroutine-dispatcher/index.html#466442070%2FFunctions%2F-3089886">R</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a>) -&gt; <a href="../-scheduler-coroutine-dispatcher/index.html#466442070%2FFunctions%2F-3089886">R</a>): <a href="../-scheduler-coroutine-dispatcher/index.html#466442070%2FFunctions%2F-3089886">R</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="232613081%2FFunctions%2F-3089886" anchor-label="get" id="232613081%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../-scheduler-coroutine-dispatcher/index.html#232613081%2FFunctions%2F-3089886">get</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="232613081%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">open operator override fun &lt;<a href="../-scheduler-coroutine-dispatcher/index.html#232613081%2FFunctions%2F-3089886">E</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a>&gt; <a href="../-scheduler-coroutine-dispatcher/index.html#232613081%2FFunctions%2F-3089886">get</a>(key: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;<a href="../-scheduler-coroutine-dispatcher/index.html#232613081%2FFunctions%2F-3089886">E</a>&gt;): <a href="../-scheduler-coroutine-dispatcher/index.html#232613081%2FFunctions%2F-3089886">E</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1830620809%2FFunctions%2F-3089886" anchor-label="minusKey" id="-1830620809%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../-scheduler-coroutine-dispatcher/index.html#-1830620809%2FFunctions%2F-3089886">minusKey</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1830620809%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="../-scheduler-coroutine-dispatcher/index.html#-1830620809%2FFunctions%2F-3089886">minusKey</a>(key: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;*&gt;): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1141296693%2FFunctions%2F-3089886" anchor-label="plus" id="1141296693%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../-scheduler-coroutine-dispatcher/index.html#1141296693%2FFunctions%2F-3089886">plus</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1141296693%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">open operator fun <a href="../-scheduler-coroutine-dispatcher/index.html#1141296693%2FFunctions%2F-3089886">plus</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-825140488%2FFunctions%2F-3089886" anchor-label="toString" id="-825140488%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="to-string.html">toString</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-825140488%2FFunctions%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="to-string.html">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Properties</h2>
+              <div class="table" data-togglable="Properties"><a data-name="-313915417%2FProperties%2F-3089886" anchor-label="context" id="-313915417%2FProperties%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="context.html">context</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-313915417%2FProperties%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><a data-name="-313915417%2FProperties%2F-3089886" anchor-label="context" id="-313915417%2FProperties%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="context.html">context</a>: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="989997495%2FProperties%2F-3089886" anchor-label="key" id="989997495%2FProperties%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#989997495%2FProperties%2F-3089886">key</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="989997495%2FProperties%2F-3089886"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><a data-name="989997495%2FProperties%2F-3089886" anchor-label="key" id="989997495%2FProperties%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="symbol monospace">open override val <a href="index.html#989997495%2FProperties%2F-3089886">key</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;*&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

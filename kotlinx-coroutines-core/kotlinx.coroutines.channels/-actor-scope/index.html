@@ -1,291 +1,292 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ActorScope - kotlinx-coroutines-core</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-actor-scope/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.channels</a> / <a href="./index.html">ActorScope</a></div>
-
-<h1 id="actorscope">ActorScope</h1>
-
-<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">ActorScope</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/channels/Actor.kt#L20">(source)</a></div>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
-
-<p>Scope for <a href="../actor.html">actor</a> coroutine builder.</p>
-
-<p><strong>Note: This API will become obsolete in future updates with introduction of complex actors.</strong>
-    See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/87">issue #87</a>.</p>
-
-<h3 id="properties">Properties</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="channel.html">channel</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">channel</span><span class="symbol">: </span><a href="../-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>A reference to the mailbox channel that this coroutine <a href="../-receive-channel/receive.html">receives</a> messages from.
-It is provided for convenience, so that the code in the coroutine can refer
-to the channel as <code>channel</code> as apposed to <code>this</code>.
-All the <a href="../-receive-channel/index.html">ReceiveChannel</a> functions on this interface delegate to
-the channel instance returned by this function.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inherited-properties">Inherited Properties</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../../kotlinx.coroutines/-coroutine-scope/coroutine-context.html">coroutineContext</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
-
-        <p>The context of this scope.
-Context is encapsulated by the scope and used for implementation of coroutine builders that are extensions on the scope.
-Accessing this property in general code is not recommended for any purposes except accessing the <a href="../../kotlinx.coroutines/-job/index.html">Job</a> instance for advanced usages.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> on the <a href="../-send-channel/index.html">SendChannel</a>
-side and all previously sent items were already received. This means that calling <a href="../-receive-channel/receive.html">receive</a>
-will result in a <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a>. If the channel was closed because of an exception, it
-is considered closed, too, but is called a <em>failed</em> channel. All suspending attempts to receive
-an element from a failed channel throw the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/is-empty.html">isEmpty</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Returns <code>true</code> if the channel is empty (contains no elements), which means that an attempt to <a href="../-receive-channel/receive.html">receive</a> will suspend.
-This function returns <code>false</code> if the channel <a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/on-receive.html">onReceive</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onReceive</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Clause for the <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of the <a href="../-receive-channel/receive.html">receive</a> suspending function that selects with the element
-received from the channel.
-The <a href="../../kotlinx.coroutines.selects/select.html">select</a> invocation fails with an exception if the channel
-<a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/on-receive-catching.html">onReceiveCatching</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onReceiveCatching</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Clause for the <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of the <a href="../-receive-channel/on-receive-catching.html">onReceiveCatching</a> suspending function that selects with the <a href="../-channel-result/index.html">ChannelResult</a> with a value
-that is received from the channel or with a close cause if the channel
-<a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a>.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inherited-functions">Inherited Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/iterator.html">iterator</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-iterator/index.html"><span class="identifier">ChannelIterator</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Returns a new iterator to receive elements from this channel using a <code>for</code> loop.
-Iteration completes normally when the channel <a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a> without a cause and
-throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/poll.html">poll</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><s><span class="identifier">poll</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
-
-        <p><strong>Deprecated</strong> poll method.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/receive.html">receive</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a></code></div>
-
-        <p>Retrieves and removes an element from this channel if it’s not empty, or suspends the caller while the channel is empty,
-or throws a <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a>.
-If the channel was closed because of an exception, it is called a <em>failed</em> channel and this function
-will throw the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/receive-catching.html">receiveCatching</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveCatching</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Retrieves and removes an element from this channel if it’s not empty, or suspends the caller while this channel is empty.
-This method returns <a href="../-channel-result/index.html">ChannelResult</a> with the value of an element successfully retrieved from the channel
-or the close cause if the channel was closed. Closed cause may be <code>null</code> if the channel was closed normally.
-The result cannot be <a href="../-channel-result/is-failure.html">failed</a> without being <a href="../-channel-result/is-closed.html">closed</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/receive-or-null.html">receiveOrNull</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><s><span class="identifier">receiveOrNull</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
-
-        <p>This function was deprecated since 1.3.0 and is no longer recommended to use
-or to implement in subclasses.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-receive-channel/try-receive.html">tryReceive</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryReceive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-result/index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Retrieves and removes an element from this channel if it’s not empty, returning a <a href="../-channel-result/success.html">successful</a>
-result, returns <a href="#">failed</a> result if the channel is empty, and <a href="../-channel-result/closed.html">closed</a>
-result if the channel is closed.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extension-functions">Extension Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr data-platform="JVM"><td>
-
-        <p><a href="../actor.html">actor</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">actor</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, , kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="./index.html"><span class="identifier">ActorScope</span></a><span class="symbol">&lt;</span><a href="../actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Launches new coroutine that is receiving messages from its mailbox channel
-and returns a reference to its mailbox channel as a <a href="../-send-channel/index.html">SendChannel</a>. The resulting
-object can be used to <a href="../-send-channel/send.html">send</a> messages to this coroutine.</p>
-
-      </td>
-</tr><tr>
-<td>
-
-        <p><a href="../../kotlinx.coroutines/new-coroutine-context.html">newCoroutineContext</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">expect</span> <span class="keyword">fun </span><a href="../../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">newCoroutineContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$newCoroutineContext(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
-
-        <p>Creates a context for the new coroutine. It installs <a href="../../kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> when no other dispatcher or
-<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified, and adds optional support for debugging facilities (when turned on).</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ActorScope</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.channels/ActorScope///PointingToDeclaration//-1316292404">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines.channels</a>/<a href="index.html">ActorScope</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Actor</span><wbr><span>Scope</span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="../../kotlinx.coroutines/-obsolete-coroutines-api/index.html">ObsoleteCoroutinesApi</a>()</div></div>interface <a href="index.html">ActorScope</a>&lt;<a href="index.html">E</a>&gt; : <a href="../../kotlinx.coroutines/-coroutine-scope/index.html#675796344%2FExtensions%2F-1316292404">CoroutineScope</a>, <a href="../-receive-channel/index.html">ReceiveChannel</a>&lt;<a href="index.html">E</a>&gt; <span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Scope for <a href="../actor.html">actor</a> coroutine builder.</p><p class="paragraph">Note: This API will become obsolete in future updates with introduction of complex actors.     See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/87">issue #87</a>.</p></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Sources">Sources</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="883669665%2FFunctions%2F-1316292404" anchor-label="cancel" id="883669665%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#883669665%2FFunctions%2F-1316292404">cancel</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="883669665%2FFunctions%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace">abstract fun <a href="index.html#883669665%2FFunctions%2F-1316292404">cancel</a>(cause: <a href="../../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>? = null)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="883669665%2FFunctions%2F-1316292404" anchor-label="cancel" id="883669665%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="883669665%2FFunctions%2F-1316292404" anchor-label="cancel" id="883669665%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Cancels reception of remaining elements from this channel with an optional <a href="index.html#883669665%2FFunctions%2F-1316292404">cause</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1469418941%2FFunctions%2F-1316292404" anchor-label="iterator" id="-1469418941%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1469418941%2FFunctions%2F-1316292404">iterator</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1469418941%2FFunctions%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace">abstract operator fun <a href="index.html#-1469418941%2FFunctions%2F-1316292404">iterator</a>(): <a href="../-channel-iterator/index.html">ChannelIterator</a>&lt;<a href="index.html">E</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1469418941%2FFunctions%2F-1316292404" anchor-label="iterator" id="-1469418941%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="-1469418941%2FFunctions%2F-1316292404" anchor-label="iterator" id="-1469418941%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Returns a new iterator to receive elements from this channel using a <code>for</code> loop.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-241448430%2FFunctions%2F-1316292404" anchor-label="poll" id="-241448430%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-241448430%2FFunctions%2F-1316292404">poll</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-241448430%2FFunctions%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace strikethrough">open fun <a href="index.html#-241448430%2FFunctions%2F-1316292404">poll</a>(): <a href="index.html">E</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-241448430%2FFunctions%2F-1316292404" anchor-label="poll" id="-241448430%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="-241448430%2FFunctions%2F-1316292404" anchor-label="poll" id="-241448430%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Deprecated poll method.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1595977594%2FFunctions%2F-1316292404" anchor-label="receive" id="-1595977594%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1595977594%2FFunctions%2F-1316292404">receive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1595977594%2FFunctions%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace">abstract suspend fun <a href="index.html#-1595977594%2FFunctions%2F-1316292404">receive</a>(): <a href="index.html">E</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1595977594%2FFunctions%2F-1316292404" anchor-label="receive" id="-1595977594%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="-1595977594%2FFunctions%2F-1316292404" anchor-label="receive" id="-1595977594%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Retrieves and removes an element from this channel if it's not empty, or suspends the caller while the channel is empty, or throws a <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1101298175%2FFunctions%2F-1316292404" anchor-label="receiveCatching" id="1101298175%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1101298175%2FFunctions%2F-1316292404">receiveCatching</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1101298175%2FFunctions%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace">abstract suspend fun <a href="index.html#1101298175%2FFunctions%2F-1316292404">receiveCatching</a>(): <a href="../-channel-result/index.html">ChannelResult</a>&lt;<a href="index.html">E</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1101298175%2FFunctions%2F-1316292404" anchor-label="receiveCatching" id="1101298175%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="1101298175%2FFunctions%2F-1316292404" anchor-label="receiveCatching" id="1101298175%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Retrieves and removes an element from this channel if it's not empty, or suspends the caller while this channel is empty.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1800458532%2FFunctions%2F-1316292404" anchor-label="receiveOrNull" id="-1800458532%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1800458532%2FFunctions%2F-1316292404">receiveOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1800458532%2FFunctions%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace strikethrough">open suspend fun <a href="index.html#-1800458532%2FFunctions%2F-1316292404">receiveOrNull</a>(): <a href="index.html">E</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1800458532%2FFunctions%2F-1316292404" anchor-label="receiveOrNull" id="-1800458532%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="-1800458532%2FFunctions%2F-1316292404" anchor-label="receiveOrNull" id="-1800458532%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>This function was deprecated since 1.3.0 and is no longer recommended to use or to implement in subclasses.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1755537993%2FFunctions%2F-1316292404" anchor-label="tryReceive" id="1755537993%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#1755537993%2FFunctions%2F-1316292404">tryReceive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1755537993%2FFunctions%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace">abstract fun <a href="index.html#1755537993%2FFunctions%2F-1316292404">tryReceive</a>(): <a href="../-channel-result/index.html">ChannelResult</a>&lt;<a href="index.html">E</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1755537993%2FFunctions%2F-1316292404" anchor-label="tryReceive" id="1755537993%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="1755537993%2FFunctions%2F-1316292404" anchor-label="tryReceive" id="1755537993%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Retrieves and removes an element from this channel if it's not empty, returning a <a href="../-channel-result/-companion/success.html">successful</a> result, returns <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel-result/-companion/failed.html">failed</a> result if the channel is empty, and <a href="../-channel-result/-companion/closed.html">closed</a> result if the channel is closed.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Properties</h2>
+              <div class="table" data-togglable="Properties"><a data-name="1247263751%2FProperties%2F-1316292404" anchor-label="channel" id="1247263751%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="channel.html">channel</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1247263751%2FProperties%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><a data-name="1247263751%2FProperties%2F-1316292404" anchor-label="channel" id="1247263751%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="symbol monospace">abstract val <a href="channel.html">channel</a>: <a href="../-channel/index.html">Channel</a>&lt;<a href="index.html">E</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="1247263751%2FProperties%2F-1316292404" anchor-label="channel" id="1247263751%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>A reference to the mailbox channel that this coroutine <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-actor-scope/receive.html">receives</a> messages from.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="583820953%2FProperties%2F-1316292404" anchor-label="coroutineContext" id="583820953%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#583820953%2FProperties%2F-1316292404">coroutineContext</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="583820953%2FProperties%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><a data-name="583820953%2FProperties%2F-1316292404" anchor-label="coroutineContext" id="583820953%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="symbol monospace">abstract val <a href="index.html#583820953%2FProperties%2F-1316292404">coroutineContext</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="583820953%2FProperties%2F-1316292404" anchor-label="coroutineContext" id="583820953%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>The context of this scope.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1858156032%2FProperties%2F-1316292404" anchor-label="isClosedForReceive" id="-1858156032%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1858156032%2FProperties%2F-1316292404">isClosedForReceive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1858156032%2FProperties%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><a data-name="-1858156032%2FProperties%2F-1316292404" anchor-label="isClosedForReceive" id="-1858156032%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="symbol monospace"><div class="block"><div class="block">@<a href="../../kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>abstract val <a href="index.html#-1858156032%2FProperties%2F-1316292404">isClosedForReceive</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-1858156032%2FProperties%2F-1316292404" anchor-label="isClosedForReceive" id="-1858156032%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> on the <a href="../-send-channel/index.html#858078105%2FExtensions%2F-1316292404">SendChannel</a> side and all previously sent items were already received.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="2058514119%2FProperties%2F-1316292404" anchor-label="isEmpty" id="2058514119%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#2058514119%2FProperties%2F-1316292404">isEmpty</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2058514119%2FProperties%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><a data-name="2058514119%2FProperties%2F-1316292404" anchor-label="isEmpty" id="2058514119%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="symbol monospace"><div class="block"><div class="block">@<a href="../../kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>abstract val <a href="index.html#2058514119%2FProperties%2F-1316292404">isEmpty</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="2058514119%2FProperties%2F-1316292404" anchor-label="isEmpty" id="2058514119%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Returns <code>true</code> if the channel is empty (contains no elements), which means that an attempt to <a href="index.html#-1595977594%2FFunctions%2F-1316292404">receive</a> will suspend.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1871138586%2FProperties%2F-1316292404" anchor-label="onReceive" id="-1871138586%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-1871138586%2FProperties%2F-1316292404">onReceive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1871138586%2FProperties%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><a data-name="-1871138586%2FProperties%2F-1316292404" anchor-label="onReceive" id="-1871138586%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="symbol monospace">abstract val <a href="index.html#-1871138586%2FProperties%2F-1316292404">onReceive</a>: <a href="../../kotlinx.coroutines.selects/-select-clause1/index.html">SelectClause1</a>&lt;<a href="index.html">E</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-1871138586%2FProperties%2F-1316292404" anchor-label="onReceive" id="-1871138586%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Clause for the <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of the <a href="index.html#-1595977594%2FFunctions%2F-1316292404">receive</a> suspending function that selects with the element received from the channel.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-880313761%2FProperties%2F-1316292404" anchor-label="onReceiveCatching" id="-880313761%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="index.html#-880313761%2FProperties%2F-1316292404">onReceiveCatching</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-880313761%2FProperties%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><a data-name="-880313761%2FProperties%2F-1316292404" anchor-label="onReceiveCatching" id="-880313761%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="symbol monospace">abstract val <a href="index.html#-880313761%2FProperties%2F-1316292404">onReceiveCatching</a>: <a href="../../kotlinx.coroutines.selects/-select-clause1/index.html">SelectClause1</a>&lt;<a href="../-channel-result/index.html">ChannelResult</a>&lt;<a href="index.html">E</a>&gt;&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-880313761%2FProperties%2F-1316292404" anchor-label="onReceiveCatching" id="-880313761%2FProperties%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Clause for the <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of the <a href="../-receive-channel/on-receive-catching.html">onReceiveCatching</a> suspending function that selects with the <a href="../-channel-result/index.html">ChannelResult</a> with a value that is received from the channel or with a close cause if the channel <a href="../-receive-channel/is-closed-for-receive.html">is closed for <code>receive</code></a>.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Sources</h2>
+              <div class="table" data-togglable="Sources"><a data-name="1450339311%2FSource%2F-1316292404" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/channels/Actor.kt#L13" id="1450339311%2FSource%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/channels/Actor.kt#L13">jvm source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1450339311%2FSource%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

@@ -1,71 +1,40 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HandlerDispatcher.immediate - kotlinx-coroutines-android</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.android/-handler-dispatcher/immediate.html">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-android</a> / <a href="../index.html">kotlinx.coroutines.android</a> / <a href="index.html">HandlerDispatcher</a> / <a href="./immediate.html">immediate</a></div>
-
-<h1 id="immediate">immediate</h1>
-
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="index.html"><span class="identifier">HandlerDispatcher</span></a></code></div>
-
-<p>Returns dispatcher that executes coroutines immediately when it is already in the right context
-(current looper is the same as this handler’s looper) without an additional <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/dispatch.html">re-dispatch</a>.
-This dispatcher does not use <a href="https://developer.android.com/reference/android/os/Handler.html#post(java.lang.Runnable)">Handler.post</a> when current looper is the same as looper of the handler.</p>
-
-<p>Immediate dispatcher is safe from stack overflows and in case of nested invocations forms event-loop similar to <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>.
-The event loop is an advanced topic and its implications can be found in <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> documentation.</p>
-
-<p>Example of usage:</p>
-
-<pre>suspend fun updateUiElement(val text: String) {
-  /*
-   * If it is known that updateUiElement can be invoked both from the Main thread and from other threads,
-   * `immediate` dispatcher is used as a performance optimization to avoid unnecessary dispatch.
-   *
-   * In that case, when `updateUiElement` is invoked from the Main thread, `uiElement.text` will be
-   * invoked immediately without any dispatching, otherwise, the `Dispatchers.Main` dispatch cycle via
-   * `Handler.post` will be triggered.
-   */
-  withContext(Dispatchers.Main.immediate) {
-    uiElement.text = text
-  }
-  // Do context-independent logic such as logging
-}
-</pre>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>immediate</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-android::kotlinx.coroutines.android/HandlerDispatcher/immediate/#/PointingToDeclaration//1110077173">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-android</a>/<a href="../index.html">kotlinx.coroutines.android</a>/<a href="index.html">HandlerDispatcher</a>/<a href="immediate.html">immediate</a></div>
+            <div class="pull-right d-flex">
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>immediate</span></h1>
+          </div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-android:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-android:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-android:dokkaHtmlPartial/main"><div class="symbol monospace">abstract override val <a href="immediate.html">immediate</a>: <a href="index.html">HandlerDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<p class="paragraph">Returns dispatcher that executes coroutines immediately when it is already in the right context (current looper is the same as this handler's looper) without an additional <a href="index.html#624949013%2FFunctions%2F1110077173">re-dispatch</a>. This dispatcher does not use <a href="https://developer.android.com/reference/android/os/Handler.html#post-java.lang.Runnable-">Handler.post</a> when current looper is the same as looper of the handler.</p><p class="paragraph">Immediate dispatcher is safe from stack overflows and in case of nested invocations forms event-loop similar to <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>. The event loop is an advanced topic and its implications can be found in <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> documentation.</p><p class="paragraph">Example of usage:</p><div class="sample-container"><code class="" theme="idea"><pre>suspend fun updateUiElement(val text: String) {<br>  /*<br>   * If it is known that updateUiElement can be invoked both from the Main thread and from other threads,<br>   * `immediate` dispatcher is used as a performance optimization to avoid unnecessary dispatch.<br>   *<br>   * In that case, when `updateUiElement` is invoked from the Main thread, `uiElement.text` will be<br>   * invoked immediately without any dispatching, otherwise, the `Dispatchers.Main` dispatch cycle via<br>   * `Handler.post` will be triggered.<br>   */<br>  withContext(Dispatchers.Main.immediate) {<br>    uiElement.text = text<br>  }<br>  // Do context-independent logic such as logging<br>}</pre></code></div></div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

@@ -1,263 +1,552 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>kotlinx.coroutines.rx2 - kotlinx-coroutines-rx2</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-rx2</a> / <a href="./index.html">kotlinx.coroutines.rx2</a></div>
-
-<h2 id="package-kotlinxcoroutinesrx2">Package kotlinx.coroutines.rx2</h2>
-
-<p>Utilities for <a href="https://github.com/ReactiveX/RxJava">RxJava 2.x</a>.</p>
-
-<h3 id="types">Types</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="-scheduler-coroutine-dispatcher/index.html">SchedulerCoroutineDispatcher</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">SchedulerCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-delay/index.html"><span class="identifier">Delay</span></a></code></div>
-
-        <p>Implements <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> on top of an arbitrary <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Scheduler.html">Scheduler</a>.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extensions-for-external-classes">Extensions for External Classes</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="io.reactivex.-completable-source/index.html">io.reactivex.CompletableSource</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="io.reactivex.-maybe-source/index.html">io.reactivex.MaybeSource</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="io.reactivex.-observable-source/index.html">io.reactivex.ObservableSource</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="io.reactivex.-scheduler/index.html">io.reactivex.Scheduler</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="io.reactivex.-single-source/index.html">io.reactivex.SingleSource</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.-coroutine-scope/index.html">kotlinx.coroutines.CoroutineScope</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.-deferred/index.html">kotlinx.coroutines.Deferred</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.-job/index.html">kotlinx.coroutines.Job</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.channels.-receive-channel/index.html">kotlinx.coroutines.channels.ReceiveChannel</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.flow.-flow/index.html">kotlinx.coroutines.flow.Flow</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="functions">Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="rx-completable.html">rxCompletable</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">rxCompletable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxCompletable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxCompletable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Completable.html"><span class="identifier">Completable</span></a></code></div>
-
-        <p>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Completable.html">Completable</a> that runs a given <a href="rx-completable.html#kotlinx.coroutines.rx2$rxCompletable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/block">block</a> in a coroutine and emits its result.
-Every time the returned completable is subscribed, it starts a new coroutine.
-Unsubscribing cancels running coroutine.
-Coroutine context can be specified with <a href="rx-completable.html#kotlinx.coroutines.rx2$rxCompletable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/context">context</a> argument.
-If the context does not have any dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>, then <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> is used.
-Method throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a> if provided <a href="rx-completable.html#kotlinx.coroutines.rx2$rxCompletable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlin.Unit)))/context">context</a> contains a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> instance.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="rx-flowable.html">rxFlowable</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <span class="identifier">rxFlowable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxFlowable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxFlowable.T)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxFlowable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxFlowable.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="rx-flowable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html"><span class="identifier">Flowable</span></a><span class="symbol">&lt;</span><a href="rx-flowable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">flowable</a> that will run a given <a href="rx-flowable.html#kotlinx.coroutines.rx2$rxFlowable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxFlowable.T)), kotlin.Unit)))/block">block</a> in a coroutine.
-Every time the returned flowable is subscribed, it starts a new coroutine.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="rx-maybe.html">rxMaybe</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">rxMaybe</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxMaybe(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxMaybe.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxMaybe(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxMaybe.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="rx-maybe.html#T"><span class="identifier">T</span></a><span class="symbol">?</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Maybe.html"><span class="identifier">Maybe</span></a><span class="symbol">&lt;</span><a href="rx-maybe.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Maybe.html">maybe</a> that will run a given <a href="rx-maybe.html#kotlinx.coroutines.rx2$rxMaybe(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxMaybe.T)))/block">block</a> in a coroutine and emits its result.
-If <a href="rx-maybe.html#kotlinx.coroutines.rx2$rxMaybe(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxMaybe.T)))/block">block</a> result is <code>null</code>, <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeObserver.html#onComplete()">onComplete</a> is invoked without a value.
-Every time the returned observable is subscribed, it starts a new coroutine.
-Unsubscribing cancels running coroutine.
-Coroutine context can be specified with <a href="rx-maybe.html#kotlinx.coroutines.rx2$rxMaybe(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxMaybe.T)))/context">context</a> argument.
-If the context does not have any dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>, then <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> is used.
-Method throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a> if provided <a href="rx-maybe.html#kotlinx.coroutines.rx2$rxMaybe(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxMaybe.T)))/context">context</a> contains a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> instance.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="rx-observable.html">rxObservable</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <span class="identifier">rxObservable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxObservable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxObservable.T)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxObservable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxObservable.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="rx-observable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html"><span class="identifier">Observable</span></a><span class="symbol">&lt;</span><a href="rx-observable.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">observable</a> that will run a given <a href="rx-observable.html#kotlinx.coroutines.rx2$rxObservable(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.rx2.rxObservable.T)), kotlin.Unit)))/block">block</a> in a coroutine.
-Every time the returned observable is subscribed, it starts a new coroutine.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="rx-single.html">rxSingle</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <span class="identifier">rxSingle</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxSingle(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxSingle.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.rx2$rxSingle(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxSingle.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="rx-single.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html"><span class="identifier">Single</span></a><span class="symbol">&lt;</span><a href="rx-single.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html">single</a> that will run a given <a href="rx-single.html#kotlinx.coroutines.rx2$rxSingle(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxSingle.T)))/block">block</a> in a coroutine and emits its result.
-Every time the returned observable is subscribed, it starts a new coroutine.
-Unsubscribing cancels running coroutine.
-Coroutine context can be specified with <a href="rx-single.html#kotlinx.coroutines.rx2$rxSingle(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxSingle.T)))/context">context</a> argument.
-If the context does not have any dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>, then <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> is used.
-Method throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html">IllegalArgumentException</a> if provided <a href="rx-single.html#kotlinx.coroutines.rx2$rxSingle(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.rx2.rxSingle.T)))/context">context</a> contains a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> instance.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>kotlinx.coroutines.rx2</title>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-rx2::kotlinx.coroutines.rx2////PointingToDeclaration//-2141947432">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-rx2</a>/<a href="index.html">kotlinx.coroutines.rx2</a></div>
+            <div class="pull-right d-flex">
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Package kotlinx.</span><wbr><span>coroutines.</span><wbr><span>rx2</span></h1>
+            <div class="platform-hinted UnderCoverText" data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><p class="paragraph">Utilities for <a href="https://github.com/ReactiveX/RxJava">RxJava 2.x</a>.</p></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Types</h2>
+              <div class="table" data-togglable="Types"><a data-name="1522425070%2FClasslikes%2F-2141947432" anchor-label="SchedulerCoroutineDispatcher" id="1522425070%2FClasslikes%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-scheduler-coroutine-dispatcher/index.html">SchedulerCoroutineDispatcher</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1522425070%2FClasslikes%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">class <a href="-scheduler-coroutine-dispatcher/index.html">SchedulerCoroutineDispatcher</a>(scheduler: <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Scheduler.html">Scheduler</a>) : <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a>, <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-delay/index.html">Delay</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1522425070%2FClasslikes%2F-2141947432" anchor-label="SchedulerCoroutineDispatcher" id="1522425070%2FClasslikes%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1522425070%2FClasslikes%2F-2141947432" anchor-label="SchedulerCoroutineDispatcher" id="1522425070%2FClasslikes%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Implements <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> on top of an arbitrary <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Scheduler.html">Scheduler</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="1502046296%2FFunctions%2F-2141947432" anchor-label="_asFlowable" id="1502046296%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="_as-flowable.html">_asFlowable</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1502046296%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a>()</div><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(<span>name = <span class="breakable-word">from</span></span><wbr>)</div></div>fun &lt;<a href="_as-flowable.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="_as-flowable.html">T</a>&gt;.<a href="_as-flowable.html">_asFlowable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">Flowable</a>&lt;<a href="_as-flowable.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1013823363%2FFunctions%2F-2141947432" anchor-label="_asObservable" id="-1013823363%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="_as-observable.html">_asObservable</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1013823363%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a>()</div><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(<span>name = <span class="breakable-word">from</span></span><wbr>)</div></div>fun &lt;<a href="_as-observable.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="_as-observable.html">T</a>&gt;.<a href="_as-observable.html">_asObservable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a>&lt;<a href="_as-observable.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1466864835%2FFunctions%2F-2141947432" anchor-label="asCompletable" id="-1466864835%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-completable.html">asCompletable</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1466864835%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a>.<a href="as-completable.html">asCompletable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Completable.html">Completable</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1466864835%2FFunctions%2F-2141947432" anchor-label="asCompletable" id="-1466864835%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1466864835%2FFunctions%2F-2141947432" anchor-label="asCompletable" id="-1466864835%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Converts this job to the hot reactive completable that signals with <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/CompletableObserver.html#onComplete--">onCompleted</a> when the corresponding job completes.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="323870212%2FFunctions%2F-2141947432" anchor-label="asCoroutineDispatcher" id="323870212%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-coroutine-dispatcher.html">asCoroutineDispatcher</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="323870212%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Scheduler.html">Scheduler</a>.<a href="as-coroutine-dispatcher.html">asCoroutineDispatcher</a>(): <a href="-scheduler-coroutine-dispatcher/index.html">SchedulerCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="323870212%2FFunctions%2F-2141947432" anchor-label="asCoroutineDispatcher" id="323870212%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="323870212%2FFunctions%2F-2141947432" anchor-label="asCoroutineDispatcher" id="323870212%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Converts an instance of <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Scheduler.html">Scheduler</a> to an implementation of <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> and provides native support of <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/index.html">delay</a> and <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/index.html">withTimeout</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1461713235%2FFunctions%2F-2141947432" anchor-label="asFlow" id="1461713235%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-flow.html">asFlow</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1461713235%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="as-flow.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a>&lt;<a href="as-flow.html">T</a>&gt;.<a href="as-flow.html">asFlow</a>(): <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-flow.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1461713235%2FFunctions%2F-2141947432" anchor-label="asFlow" id="1461713235%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1461713235%2FFunctions%2F-2141947432" anchor-label="asFlow" id="1461713235%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Transforms given cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a> into cold <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1797581065%2FFunctions%2F-2141947432" anchor-label="asFlowable" id="-1797581065%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-flowable.html">asFlowable</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1797581065%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="as-flowable.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-flowable.html">T</a>&gt;.<a href="as-flowable.html">asFlowable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">Flowable</a>&lt;<a href="as-flowable.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1797581065%2FFunctions%2F-2141947432" anchor-label="asFlowable" id="-1797581065%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1797581065%2FFunctions%2F-2141947432" anchor-label="asFlowable" id="-1797581065%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Converts the given flow to a cold flowable.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="339440970%2FFunctions%2F-2141947432" anchor-label="asMaybe" id="339440970%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-maybe.html">asMaybe</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="339440970%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="as-maybe.html">T</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html">Deferred</a>&lt;<a href="as-maybe.html">T</a>?&gt;.<a href="as-maybe.html">asMaybe</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Maybe.html">Maybe</a>&lt;<a href="as-maybe.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="339440970%2FFunctions%2F-2141947432" anchor-label="asMaybe" id="339440970%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="339440970%2FFunctions%2F-2141947432" anchor-label="asMaybe" id="339440970%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Converts this deferred value to the hot reactive maybe that signals <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeEmitter.html#onComplete--">onComplete</a>, <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeEmitter.html#onSuccess-TypeParam(bounds=[kotlin.Any])-">onSuccess</a> or <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeEmitter.html#onError-kotlin.Throwable-">onError</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="276692348%2FFunctions%2F-2141947432" anchor-label="asObservable" id="276692348%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-observable.html">asObservable</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="276692348%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="as-observable.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>&lt;<a href="as-observable.html">T</a>&gt;.<a href="as-observable.html">asObservable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a>&lt;<a href="as-observable.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="as-observable.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-observable.html">T</a>&gt;.<a href="as-observable.html">asObservable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a>&lt;<a href="as-observable.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="2025114460%2FFunctions%2F-2141947432" anchor-label="asObservable" id="2025114460%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="2025114460%2FFunctions%2F-2141947432" anchor-label="asObservable" id="2025114460%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Converts the given flow to a cold observable.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1356842186%2FFunctions%2F-2141947432" anchor-label="asSingle" id="-1356842186%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-single.html">asSingle</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1356842186%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="as-single.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html">Deferred</a>&lt;<a href="as-single.html">T</a>&gt;.<a href="as-single.html">asSingle</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html">Single</a>&lt;<a href="as-single.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1356842186%2FFunctions%2F-2141947432" anchor-label="asSingle" id="-1356842186%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1356842186%2FFunctions%2F-2141947432" anchor-label="asSingle" id="-1356842186%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Converts this deferred value to the hot reactive single that signals either <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/SingleObserver.html#onSuccess-TypeParam(bounds=[kotlin.Any])-">onSuccess</a> or <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/SingleObserver.html#onError-kotlin.Throwable-">onError</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1585564067%2FFunctions%2F-2141947432" anchor-label="await" id="-1585564067%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await.html">await</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1585564067%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/CompletableSource.html">CompletableSource</a>.<a href="await.html">await</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-980006239%2FFunctions%2F-2141947432" anchor-label="await" id="-980006239%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-980006239%2FFunctions%2F-2141947432" anchor-label="await" id="-980006239%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits for completion of this completable without blocking the thread.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a>&lt;<a href="await.html">T</a>&gt;.<a href="await.html">await</a>(): <a href="await.html">T</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1730200531%2FFunctions%2F-2141947432" anchor-label="await" id="-1730200531%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1730200531%2FFunctions%2F-2141947432" anchor-label="await" id="-1730200531%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits for completion of the maybe without blocking a thread.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/SingleSource.html">SingleSource</a>&lt;<a href="await.html">T</a>&gt;.<a href="await.html">await</a>(): <a href="await.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="564895537%2FFunctions%2F-2141947432" anchor-label="await" id="564895537%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="564895537%2FFunctions%2F-2141947432" anchor-label="await" id="564895537%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits for completion of the single value response without blocking the thread.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1474647598%2FFunctions%2F-2141947432" anchor-label="awaitFirst" id="-1474647598%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first.html">awaitFirst</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1474647598%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-first.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a>&lt;<a href="await-first.html">T</a>&gt;.<a href="await-first.html">awaitFirst</a>(): <a href="await-first.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1474647598%2FFunctions%2F-2141947432" anchor-label="awaitFirst" id="-1474647598%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1474647598%2FFunctions%2F-2141947432" anchor-label="awaitFirst" id="-1474647598%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits the first value from the given <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a> without blocking the thread and returns the resulting value, or, if the observable has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-48373098%2FFunctions%2F-2141947432" anchor-label="awaitFirstOrDefault" id="-48373098%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first-or-default.html">awaitFirstOrDefault</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-48373098%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-first-or-default.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a>&lt;<a href="await-first-or-default.html">T</a>&gt;.<a href="await-first-or-default.html">awaitFirstOrDefault</a>(default: <a href="await-first-or-default.html">T</a>): <a href="await-first-or-default.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-48373098%2FFunctions%2F-2141947432" anchor-label="awaitFirstOrDefault" id="-48373098%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-48373098%2FFunctions%2F-2141947432" anchor-label="awaitFirstOrDefault" id="-48373098%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits the first value from the given <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a>, or returns the <a href="await-first-or-default.html">default</a> value if none is emitted, without blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-532343709%2FFunctions%2F-2141947432" anchor-label="awaitFirstOrElse" id="-532343709%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first-or-else.html">awaitFirstOrElse</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-532343709%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-first-or-else.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a>&lt;<a href="await-first-or-else.html">T</a>&gt;.<a href="await-first-or-else.html">awaitFirstOrElse</a>(defaultValue: () -&gt; <a href="await-first-or-else.html">T</a>): <a href="await-first-or-else.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-532343709%2FFunctions%2F-2141947432" anchor-label="awaitFirstOrElse" id="-532343709%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-532343709%2FFunctions%2F-2141947432" anchor-label="awaitFirstOrElse" id="-532343709%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits the first value from the given <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a>, or calls <a href="await-first-or-else.html">defaultValue</a> to get a value if none is emitted, without blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1713739800%2FFunctions%2F-2141947432" anchor-label="awaitFirstOrNull" id="-1713739800%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first-or-null.html">awaitFirstOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1713739800%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-first-or-null.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a>&lt;<a href="await-first-or-null.html">T</a>&gt;.<a href="await-first-or-null.html">awaitFirstOrNull</a>(): <a href="await-first-or-null.html">T</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1713739800%2FFunctions%2F-2141947432" anchor-label="awaitFirstOrNull" id="-1713739800%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1713739800%2FFunctions%2F-2141947432" anchor-label="awaitFirstOrNull" id="-1713739800%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits the first value from the given <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a>, or returns <code>null</code> if none is emitted, without blocking the thread, and returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1926725280%2FFunctions%2F-2141947432" anchor-label="awaitLast" id="-1926725280%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-last.html">awaitLast</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1926725280%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-last.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a>&lt;<a href="await-last.html">T</a>&gt;.<a href="await-last.html">awaitLast</a>(): <a href="await-last.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1926725280%2FFunctions%2F-2141947432" anchor-label="awaitLast" id="-1926725280%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1926725280%2FFunctions%2F-2141947432" anchor-label="awaitLast" id="-1926725280%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits the last value from the given <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a> without blocking the thread and returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-875356225%2FFunctions%2F-2141947432" anchor-label="awaitOrDefault" id="-875356225%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-or-default.html">awaitOrDefault</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-875356225%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await-or-default.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a>&lt;<a href="await-or-default.html">T</a>&gt;.<a href="await-or-default.html">awaitOrDefault</a>(default: <a href="await-or-default.html">T</a>): <a href="await-or-default.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-875356225%2FFunctions%2F-2141947432" anchor-label="awaitOrDefault" id="-875356225%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-875356225%2FFunctions%2F-2141947432" anchor-label="awaitOrDefault" id="-875356225%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits for completion of the maybe without blocking a thread.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-53174793%2FFunctions%2F-2141947432" anchor-label="awaitSingle" id="-53174793%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-single.html">awaitSingle</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-53174793%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-single.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a>&lt;<a href="await-single.html">T</a>&gt;.<a href="await-single.html">awaitSingle</a>(): <a href="await-single.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1299735019%2FFunctions%2F-2141947432" anchor-label="awaitSingle" id="-1299735019%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1299735019%2FFunctions%2F-2141947432" anchor-label="awaitSingle" id="-1299735019%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits for completion of the <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a> without blocking the thread.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-single.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a>&lt;<a href="await-single.html">T</a>&gt;.<a href="await-single.html">awaitSingle</a>(): <a href="await-single.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1138487058%2FFunctions%2F-2141947432" anchor-label="awaitSingle" id="-1138487058%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1138487058%2FFunctions%2F-2141947432" anchor-label="awaitSingle" id="-1138487058%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits the single value from the given observable without blocking the thread and returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1673842495%2FFunctions%2F-2141947432" anchor-label="awaitSingleOrNull" id="1673842495%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-single-or-null.html">awaitSingleOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1673842495%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-single-or-null.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a>&lt;<a href="await-single-or-null.html">T</a>&gt;.<a href="await-single-or-null.html">awaitSingleOrNull</a>(): <a href="await-single-or-null.html">T</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1673842495%2FFunctions%2F-2141947432" anchor-label="awaitSingleOrNull" id="1673842495%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1673842495%2FFunctions%2F-2141947432" anchor-label="awaitSingleOrNull" id="1673842495%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Awaits for completion of the <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a> without blocking the thread.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1535701995%2FFunctions%2F-2141947432" anchor-label="collect" id="1535701995%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="collect.html">collect</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1535701995%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">inline suspend fun &lt;<a href="collect.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a>&lt;<a href="collect.html">T</a>&gt;.<a href="collect.html">collect</a>(action: (<a href="collect.html">T</a>) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="669293054%2FFunctions%2F-2141947432" anchor-label="collect" id="669293054%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="669293054%2FFunctions%2F-2141947432" anchor-label="collect" id="669293054%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Subscribes to this <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a> and performs the specified action for each received element.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">inline suspend fun &lt;<a href="collect.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a>&lt;<a href="collect.html">T</a>&gt;.<a href="collect.html">collect</a>(action: (<a href="collect.html">T</a>) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1602837789%2FFunctions%2F-2141947432" anchor-label="collect" id="1602837789%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1602837789%2FFunctions%2F-2141947432" anchor-label="collect" id="1602837789%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Subscribes to this <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a> and performs the specified action for each received element.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-475429261%2FFunctions%2F-2141947432" anchor-label="openSubscription" id="-475429261%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="open-subscription.html">openSubscription</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-475429261%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="open-subscription.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a>&lt;<a href="open-subscription.html">T</a>&gt;.<a href="open-subscription.html">openSubscription</a>(): <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>&lt;<a href="open-subscription.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1270028546%2FFunctions%2F-2141947432" anchor-label="openSubscription" id="-1270028546%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1270028546%2FFunctions%2F-2141947432" anchor-label="openSubscription" id="-1270028546%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Subscribes to this <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a> and returns a channel to receive elements emitted by it.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="open-subscription.html">T</a>&gt; <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a>&lt;<a href="open-subscription.html">T</a>&gt;.<a href="open-subscription.html">openSubscription</a>(): <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>&lt;<a href="open-subscription.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="2013589925%2FFunctions%2F-2141947432" anchor-label="openSubscription" id="2013589925%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="2013589925%2FFunctions%2F-2141947432" anchor-label="openSubscription" id="2013589925%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Subscribes to this <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/ObservableSource.html">ObservableSource</a> and returns a channel to receive elements emitted by it.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="223868390%2FFunctions%2F-2141947432" anchor-label="rxCompletable" id="223868390%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="rx-completable.html">rxCompletable</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="223868390%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="rx-completable.html">rxCompletable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Completable.html">Completable</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="13938171%2FFunctions%2F-2141947432" anchor-label="rxCompletable" id="13938171%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="13938171%2FFunctions%2F-2141947432" anchor-label="rxCompletable" id="13938171%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Completable.html">Completable</a> that runs a given <a href="rx-completable.html">block</a> in a coroutine and emits its result.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.<a href="rx-completable.html">rxCompletable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Completable.html">Completable</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="807086866%2FFunctions%2F-2141947432" anchor-label="rxFlowable" id="807086866%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="rx-flowable.html">rxFlowable</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="807086866%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="rx-flowable.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="rx-flowable.html">rxFlowable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="rx-flowable.html">T</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">Flowable</a>&lt;<a href="rx-flowable.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1760327292%2FFunctions%2F-2141947432" anchor-label="rxFlowable" id="-1760327292%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1760327292%2FFunctions%2F-2141947432" anchor-label="rxFlowable" id="-1760327292%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">flowable</a> that will run a given <a href="rx-flowable.html">block</a> in a coroutine.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="rx-flowable.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.<a href="rx-flowable.html">rxFlowable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="rx-flowable.html">T</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">Flowable</a>&lt;<a href="rx-flowable.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1211396396%2FFunctions%2F-2141947432" anchor-label="rxMaybe" id="1211396396%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="rx-maybe.html">rxMaybe</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1211396396%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="rx-maybe.html">T</a>&gt; <a href="rx-maybe.html">rxMaybe</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.() -&gt; <a href="rx-maybe.html">T</a>?): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Maybe.html">Maybe</a>&lt;<a href="rx-maybe.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="2027192507%2FFunctions%2F-2141947432" anchor-label="rxMaybe" id="2027192507%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="2027192507%2FFunctions%2F-2141947432" anchor-label="rxMaybe" id="2027192507%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Maybe.html">maybe</a> that will run a given <a href="rx-maybe.html">block</a> in a coroutine and emits its result.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="rx-maybe.html">T</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.<a href="rx-maybe.html">rxMaybe</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.() -&gt; <a href="rx-maybe.html">T</a>?): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Maybe.html">Maybe</a>&lt;<a href="rx-maybe.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-678547406%2FFunctions%2F-2141947432" anchor-label="rxObservable" id="-678547406%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="rx-observable.html">rxObservable</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-678547406%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="rx-observable.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="rx-observable.html">rxObservable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="rx-observable.html">T</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a>&lt;<a href="rx-observable.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-816480215%2FFunctions%2F-2141947432" anchor-label="rxObservable" id="-816480215%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-816480215%2FFunctions%2F-2141947432" anchor-label="rxObservable" id="-816480215%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">observable</a> that will run a given <a href="rx-observable.html">block</a> in a coroutine.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="rx-observable.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.<a href="rx-observable.html">rxObservable</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="rx-observable.html">T</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Observable.html">Observable</a>&lt;<a href="rx-observable.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-979861802%2FFunctions%2F-2141947432" anchor-label="rxSingle" id="-979861802%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="rx-single.html">rxSingle</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-979861802%2FFunctions%2F-2141947432"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="rx-single.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="rx-single.html">rxSingle</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.() -&gt; <a href="rx-single.html">T</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html">Single</a>&lt;<a href="rx-single.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1621165439%2FFunctions%2F-2141947432" anchor-label="rxSingle" id="1621165439%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1621165439%2FFunctions%2F-2141947432" anchor-label="rxSingle" id="1621165439%2FFunctions%2F-2141947432" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"></a>Creates cold <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html">single</a> that will run a given <a href="rx-single.html">block</a> in a coroutine and emits its result.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-rx2:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="rx-single.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.<a href="rx-single.html">rxSingle</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.() -&gt; <a href="rx-single.html">T</a>): <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html">Single</a>&lt;<a href="rx-single.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

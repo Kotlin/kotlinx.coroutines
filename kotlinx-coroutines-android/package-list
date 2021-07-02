@@ -1,4 +1,0 @@
-$dokka.format:kotlin-website
-$dokka.linkExtension:html
-$dokka.location:kotlinx.coroutines.android$asCoroutineDispatcher(android.os.Handler, kotlin.String)kotlinx.coroutines.android/android.os.-handler/as-coroutine-dispatcher.html
-kotlinx.coroutines.android

@@ -1,131 +1,351 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>kotlinx.coroutines.reactive - kotlinx-coroutines-reactive</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-reactive</a> / <a href="./index.html">kotlinx.coroutines.reactive</a></div>
-
-<h2 id="package-kotlinxcoroutinesreactive">Package kotlinx.coroutines.reactive</h2>
-
-<p>Utilities for <a href="https://www.reactive-streams.org">Reactive Streams</a>.</p>
-
-<h3 id="types">Types</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="-publisher-coroutine/index.html">PublisherCoroutine</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">PublisherCoroutine</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-abstract-coroutine/index.html"><span class="identifier">AbstractCoroutine</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="-publisher-coroutine/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Subscription.html"><span class="identifier">Subscription</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-clause2/index.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="-publisher-coroutine/index.html#T"><span class="identifier">T</span></a><span class="symbol">,</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="-publisher-coroutine/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extensions-for-external-classes">Extensions for External Classes</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.-coroutine-scope/index.html">kotlinx.coroutines.CoroutineScope</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.channels.-receive-channel/index.html">kotlinx.coroutines.channels.ReceiveChannel</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="kotlinx.coroutines.flow.-flow/index.html">kotlinx.coroutines.flow.Flow</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="org.reactivestreams.-publisher/index.html">org.reactivestreams.Publisher</a></p>
-
-      </td>
-<td>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="functions">Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="publish.html">publish</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">publish</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive$publish(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactive.publish.T)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.reactive$publish(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactive.publish.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="publish.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html"><span class="identifier">Publisher</span></a><span class="symbol">&lt;</span><a href="publish.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Creates a cold reactive <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a> that runs a given <a href="publish.html#kotlinx.coroutines.reactive$publish(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.channels.ProducerScope((kotlinx.coroutines.reactive.publish.T)), kotlin.Unit)))/block">block</a> in a coroutine.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>kotlinx.coroutines.reactive</title>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-reactive::kotlinx.coroutines.reactive////PointingToDeclaration//1844271109">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-reactive</a>/<a href="index.html">kotlinx.coroutines.reactive</a></div>
+            <div class="pull-right d-flex">
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Package kotlinx.</span><wbr><span>coroutines.</span><wbr><span>reactive</span></h1>
+            <div class="platform-hinted UnderCoverText" data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><p class="paragraph">Utilities for <a href="https://www.reactive-streams.org">Reactive Streams</a>.</p></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Types</h2>
+              <div class="table" data-togglable="Types"><a data-name="-162293669%2FClasslikes%2F1844271109" anchor-label="PublisherCoroutine" id="-162293669%2FClasslikes%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-publisher-coroutine/index.html">PublisherCoroutine</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-162293669%2FClasslikes%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">class <a href="-publisher-coroutine/index.html">PublisherCoroutine</a>&lt;in <a href="-publisher-coroutine/index.html">T</a>&gt;(parentContext: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>, subscriber: <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Subscriber.html">Subscriber</a>&lt;<a href="-publisher-coroutine/index.html">T</a>&gt;, exceptionOnCancelHandler: (<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>) : <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-abstract-coroutine/index.html">AbstractCoroutine</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>&gt; , <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="-publisher-coroutine/index.html">T</a>&gt; , <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Subscription.html">Subscription</a>, <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-clause2/index.html">SelectClause2</a>&lt;<a href="-publisher-coroutine/index.html">T</a>, <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a>&lt;<a href="-publisher-coroutine/index.html">T</a>&gt;&gt; <span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="38724362%2FFunctions%2F1844271109" anchor-label="asFlow" id="38724362%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-flow.html">asFlow</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="38724362%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="as-flow.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="as-flow.html">T</a>&gt;.<a href="as-flow.html">asFlow</a>(): <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-flow.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1346004801%2FFunctions%2F1844271109" anchor-label="asFlow" id="1346004801%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1346004801%2FFunctions%2F1844271109" anchor-label="asFlow" id="1346004801%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Transforms the given reactive <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a> into <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough"><div class="block"><div class="block">@<a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-flow-preview/index.html">FlowPreview</a>()</div></div>fun &lt;<a href="as-flow.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="as-flow.html">T</a>&gt;.<a href="as-flow.html">asFlow</a>(batchSize: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>): <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-flow.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1078312300%2FFunctions%2F1844271109" anchor-label="asFlowDeprecated" id="-1078312300%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-flow-deprecated.html">asFlowDeprecated</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1078312300%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(<span>name = <span class="breakable-word">asFlow</span></span><wbr>)</div></div>fun &lt;<a href="as-flow-deprecated.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="as-flow-deprecated.html">T</a>&gt;.<a href="as-flow-deprecated.html">asFlowDeprecated</a>(): <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-flow-deprecated.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1971896687%2FFunctions%2F1844271109" anchor-label="asPublisher" id="1971896687%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-publisher.html">asPublisher</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1971896687%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="as-publisher.html">T</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>&lt;<a href="as-publisher.html">T</a>&gt;.<a href="as-publisher.html">asPublisher</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext): <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="as-publisher.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-2033473527%2FFunctions%2F1844271109" anchor-label="asPublisher" id="-2033473527%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-2033473527%2FFunctions%2F1844271109" anchor-label="asPublisher" id="-2033473527%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Converts a stream of elements received from the channel to the hot reactive publisher.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a>()</div></div>fun &lt;<a href="as-publisher.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-publisher.html">T</a>&gt;.<a href="as-publisher.html">asPublisher</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext): <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="as-publisher.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-277190580%2FFunctions%2F1844271109" anchor-label="asPublisher" id="-277190580%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-277190580%2FFunctions%2F1844271109" anchor-label="asPublisher" id="-277190580%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Transforms the given flow into a reactive specification compliant <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1213147498%2FFunctions%2F1844271109" anchor-label="asPublisherDeprecated" id="-1213147498%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="as-publisher-deprecated.html">asPublisherDeprecated</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1213147498%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(<span>name = <span class="breakable-word">asPublisher</span></span><wbr>)</div></div>fun &lt;<a href="as-publisher-deprecated.html">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html">Flow</a>&lt;<a href="as-publisher-deprecated.html">T</a>&gt;.<a href="as-publisher-deprecated.html">asPublisherDeprecated</a>(): <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="as-publisher-deprecated.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-574041052%2FFunctions%2F1844271109" anchor-label="awaitFirst" id="-574041052%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first.html">awaitFirst</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-574041052%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-first.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="await-first.html">T</a>&gt;.<a href="await-first.html">awaitFirst</a>(): <a href="await-first.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-574041052%2FFunctions%2F1844271109" anchor-label="awaitFirst" id="-574041052%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-574041052%2FFunctions%2F1844271109" anchor-label="awaitFirst" id="-574041052%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Awaits the first value from the given publisher without blocking the thread and returns the resulting value, or, if the publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1084139034%2FFunctions%2F1844271109" anchor-label="awaitFirstOrDefault" id="1084139034%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first-or-default.html">awaitFirstOrDefault</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1084139034%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-first-or-default.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="await-first-or-default.html">T</a>&gt;.<a href="await-first-or-default.html">awaitFirstOrDefault</a>(default: <a href="await-first-or-default.html">T</a>): <a href="await-first-or-default.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1084139034%2FFunctions%2F1844271109" anchor-label="awaitFirstOrDefault" id="1084139034%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1084139034%2FFunctions%2F1844271109" anchor-label="awaitFirstOrDefault" id="1084139034%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Awaits the first value from the given publisher, or returns the <a href="await-first-or-default.html">default</a> value if none is emitted, without blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="140372113%2FFunctions%2F1844271109" anchor-label="awaitFirstOrElse" id="140372113%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first-or-else.html">awaitFirstOrElse</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="140372113%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-first-or-else.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="await-first-or-else.html">T</a>&gt;.<a href="await-first-or-else.html">awaitFirstOrElse</a>(defaultValue: () -&gt; <a href="await-first-or-else.html">T</a>): <a href="await-first-or-else.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="140372113%2FFunctions%2F1844271109" anchor-label="awaitFirstOrElse" id="140372113%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="140372113%2FFunctions%2F1844271109" anchor-label="awaitFirstOrElse" id="140372113%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Awaits the first value from the given publisher, or calls <a href="await-first-or-else.html">defaultValue</a> to get a value if none is emitted, without blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1225687546%2FFunctions%2F1844271109" anchor-label="awaitFirstOrNull" id="1225687546%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-first-or-null.html">awaitFirstOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1225687546%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-first-or-null.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="await-first-or-null.html">T</a>&gt;.<a href="await-first-or-null.html">awaitFirstOrNull</a>(): <a href="await-first-or-null.html">T</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1225687546%2FFunctions%2F1844271109" anchor-label="awaitFirstOrNull" id="1225687546%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1225687546%2FFunctions%2F1844271109" anchor-label="awaitFirstOrNull" id="1225687546%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Awaits the first value from the given publisher, or returns <code>null</code> if none is emitted, without blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-740093796%2FFunctions%2F1844271109" anchor-label="awaitLast" id="-740093796%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-last.html">awaitLast</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-740093796%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-last.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="await-last.html">T</a>&gt;.<a href="await-last.html">awaitLast</a>(): <a href="await-last.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-740093796%2FFunctions%2F1844271109" anchor-label="awaitLast" id="-740093796%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-740093796%2FFunctions%2F1844271109" anchor-label="awaitLast" id="-740093796%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Awaits the last value from the given publisher without blocking the thread and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-514718998%2FFunctions%2F1844271109" anchor-label="awaitSingle" id="-514718998%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-single.html">awaitSingle</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-514718998%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">suspend fun &lt;<a href="await-single.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="await-single.html">T</a>&gt;.<a href="await-single.html">awaitSingle</a>(): <a href="await-single.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-514718998%2FFunctions%2F1844271109" anchor-label="awaitSingle" id="-514718998%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-514718998%2FFunctions%2F1844271109" anchor-label="awaitSingle" id="-514718998%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Awaits the single value from the given publisher without blocking the thread and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-758966560%2FFunctions%2F1844271109" anchor-label="awaitSingleOrDefault" id="-758966560%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-single-or-default.html">awaitSingleOrDefault</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-758966560%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await-single-or-default.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="await-single-or-default.html">T</a>&gt;.<a href="await-single-or-default.html">awaitSingleOrDefault</a>(default: <a href="await-single-or-default.html">T</a>): <a href="await-single-or-default.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-758966560%2FFunctions%2F1844271109" anchor-label="awaitSingleOrDefault" id="-758966560%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-758966560%2FFunctions%2F1844271109" anchor-label="awaitSingleOrDefault" id="-758966560%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Awaits the single value from the given publisher, or returns the <a href="await-single-or-default.html">default</a> value if none is emitted, without blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1315106037%2FFunctions%2F1844271109" anchor-label="awaitSingleOrElse" id="-1315106037%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-single-or-else.html">awaitSingleOrElse</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1315106037%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await-single-or-else.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="await-single-or-else.html">T</a>&gt;.<a href="await-single-or-else.html">awaitSingleOrElse</a>(defaultValue: () -&gt; <a href="await-single-or-else.html">T</a>): <a href="await-single-or-else.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1315106037%2FFunctions%2F1844271109" anchor-label="awaitSingleOrElse" id="-1315106037%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1315106037%2FFunctions%2F1844271109" anchor-label="awaitSingleOrElse" id="-1315106037%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Awaits the single value from the given publisher, or calls <a href="await-single-or-else.html">defaultValue</a> to get a value if none is emitted, without blocking the thread, and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="177144896%2FFunctions%2F1844271109" anchor-label="awaitSingleOrNull" id="177144896%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="await-single-or-null.html">awaitSingleOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="177144896%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">suspend fun &lt;<a href="await-single-or-null.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="await-single-or-null.html">T</a>&gt;.<a href="await-single-or-null.html">awaitSingleOrNull</a>(): <a href="await-single-or-null.html">T</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="177144896%2FFunctions%2F1844271109" anchor-label="awaitSingleOrNull" id="177144896%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="177144896%2FFunctions%2F1844271109" anchor-label="awaitSingleOrNull" id="177144896%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Awaits the single value from the given publisher without blocking the thread and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-575966687%2FFunctions%2F1844271109" anchor-label="collect" id="-575966687%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="collect.html">collect</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-575966687%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">inline suspend fun &lt;<a href="collect.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="collect.html">T</a>&gt;.<a href="collect.html">collect</a>(action: (<a href="collect.html">T</a>) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-575966687%2FFunctions%2F1844271109" anchor-label="collect" id="-575966687%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-575966687%2FFunctions%2F1844271109" anchor-label="collect" id="-575966687%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Subscribes to this <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a> and performs the specified action for each received element.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="910757013%2FFunctions%2F1844271109" anchor-label="openSubscription" id="910757013%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="open-subscription.html">openSubscription</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="910757013%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="open-subscription.html">T</a>&gt; <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="open-subscription.html">T</a>&gt;.<a href="open-subscription.html">openSubscription</a>(request: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = 1): <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a>&lt;<a href="open-subscription.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="910757013%2FFunctions%2F1844271109" anchor-label="openSubscription" id="910757013%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="910757013%2FFunctions%2F1844271109" anchor-label="openSubscription" id="910757013%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Subscribes to this <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a> and returns a channel to receive the elements emitted by it.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1344210914%2FFunctions%2F1844271109" anchor-label="publish" id="-1344210914%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="publish.html">publish</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1344210914%2FFunctions%2F1844271109"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace">fun &lt;<a href="publish.html">T</a>&gt; <a href="publish.html">publish</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="publish.html">T</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="publish.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1214171635%2FFunctions%2F1844271109" anchor-label="publish" id="-1214171635%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1214171635%2FFunctions%2F1844271109" anchor-label="publish" id="-1214171635%2FFunctions%2F1844271109" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"></a>Creates a cold reactive <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a> that runs a given <a href="publish.html">block</a> in a coroutine.</div></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactive:dokkaHtmlPartial/main"><div class="symbol monospace strikethrough">fun &lt;<a href="publish.html">T</a>&gt; <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.<a href="publish.html">publish</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> = EmptyCoroutineContext, block: suspend <a href="../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-producer-scope/index.html">ProducerScope</a>&lt;<a href="publish.html">T</a>&gt;.() -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html">Publisher</a>&lt;<a href="publish.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

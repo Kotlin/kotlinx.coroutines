@@ -1,115 +1,87 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CoroutinesTimeout - kotlinx-coroutines-debug</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/-coroutines-timeout/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a> / <a href="../index.html">kotlinx.coroutines.debug.junit4</a> / <a href="./index.html">CoroutinesTimeout</a></div>
-
-<h1 id="coroutinestimeout">CoroutinesTimeout</h1>
-
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">CoroutinesTimeout</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">TestRule</span></code></div>
-
-<p>Coroutines timeout rule for JUnit4 that is applied to all methods in the class.
-This rule is very similar to <a href="#">Timeout</a> rule: it runs tests in a separate thread,
-fails tests after the given timeout and interrupts test thread.</p>
-
-<p>Additionally, this rule installs <a href="../../kotlinx.coroutines.debug/-debug-probes/index.html">DebugProbes</a> and dumps all coroutines at the moment of the timeout.
-It may cancel coroutines on timeout if <a href="#">cancelOnTimeout</a> set to <code>true</code>.
-<a href="#">enableCoroutineCreationStackTraces</a> controls the corresponding <a href="../../kotlinx.coroutines.debug/-debug-probes/enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> property
-and can be optionally disabled to speed-up tests if creation stack traces are not needed.</p>
-
-<p>Example of usage:</p>
-
-<pre>class HangingTest {
-    @get:Rule
-    val timeout = CoroutinesTimeout.seconds(5)
-
-    @Test
-    fun testThatHangs() = runBlocking {
-         ...
-         delay(Long.MAX_VALUE) // somewhere deep in the stack
-         ...
-    }
-}
-</pre>
-
-<h3 id="constructors">Constructors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="-init-.html">&lt;init&gt;</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="identifier">CoroutinesTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/testTimeoutMs">testTimeoutMs</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span></code></div>
-        <div class="signature"><code><span class="identifier">CoroutinesTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/testTimeoutMs">testTimeoutMs</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout$&lt;init&gt;(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/enableCoroutineCreationStackTraces">enableCoroutineCreationStackTraces</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;true<span class="symbol">)</span></code></div>
-
-        <p>Coroutines timeout rule for JUnit4 that is applied to all methods in the class.
-This rule is very similar to <a href="#">Timeout</a> rule: it runs tests in a separate thread,
-fails tests after the given timeout and interrupts test thread.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="companion-object-functions">Companion Object Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="seconds.html">seconds</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">seconds</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout.Companion$seconds(kotlin.Int, kotlin.Boolean, kotlin.Boolean)/seconds">seconds</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout.Companion$seconds(kotlin.Int, kotlin.Boolean, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout.Companion$seconds(kotlin.Int, kotlin.Boolean, kotlin.Boolean)/enableCoroutineCreationStackTraces">enableCoroutineCreationStackTraces</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;true<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">CoroutinesTimeout</span></a></code></div>
-
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">seconds</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout.Companion$seconds(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/seconds">seconds</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout.Companion$seconds(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/cancelOnTimeout">cancelOnTimeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.debug.junit4.CoroutinesTimeout.Companion$seconds(kotlin.Long, kotlin.Boolean, kotlin.Boolean)/enableCoroutineCreationStackTraces">enableCoroutineCreationStackTraces</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;true<br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">CoroutinesTimeout</span></a></code></div>
-
-        <p>Creates <a href="./index.html">CoroutinesTimeout</a> rule with the given timeout in seconds.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>CoroutinesTimeout</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-debug::kotlinx.coroutines.debug.junit4/CoroutinesTimeout///PointingToDeclaration//-1708783535">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a>/<a href="../index.html">kotlinx.coroutines.debug.junit4</a>/<a href="index.html">CoroutinesTimeout</a></div>
+            <div class="pull-right d-flex">
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Coroutines</span><wbr><span>Timeout</span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">class <a href="index.html">CoroutinesTimeout</a>(testTimeoutMs: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>, cancelOnTimeout: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>, enableCoroutineCreationStackTraces: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a>) : <span data-unresolved-link="org.junit.rules/TestRule///PointingToDeclaration/">TestRule</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Coroutines timeout rule for JUnit4 that is applied to all methods in the class. This rule is very similar to <span data-unresolved-link="org.junit.rules/Timeout///PointingToDeclaration/">Timeout</span> rule: it runs tests in a separate thread, fails tests after the given timeout and interrupts test thread.</p><p class="paragraph">Additionally, this rule installs <a href="../../kotlinx.coroutines.debug/-debug-probes/index.html">DebugProbes</a> and dumps all coroutines at the moment of the timeout. It may cancel coroutines on timeout if <a href="../../../kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/-coroutines-timeout/cancel-on-timeout.html">cancelOnTimeout</a> set to <code>true</code>. <a href="../../../kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/-coroutines-timeout/enable-coroutine-creation-stack-traces.html">enableCoroutineCreationStackTraces</a> controls the corresponding <a href="../../kotlinx.coroutines.debug/-debug-probes/enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> property and can be optionally disabled to speed-up tests if creation stack traces are not needed.</p><p class="paragraph">Example of usage:</p><div class="sample-container"><code class="" theme="idea"><pre>class HangingTest {<br>    @get:Rule<br>    val timeout = CoroutinesTimeout.seconds(5)<br><br>    @Test<br>    fun testThatHangs() = runBlocking {<br>         ...<br>         delay(Long.MAX_VALUE) // somewhere deep in the stack<br>         ...<br>    }<br>}</pre></code></div></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Constructors">Constructors</button></div>
+            <div class="tabs-section-body">
+              <h2 class="tabbedcontent">Constructors</h2>
+              <div class="table" data-togglable="Constructors"><a data-name="-1553169603%2FConstructors%2F-1708783535" anchor-label="CoroutinesTimeout" id="-1553169603%2FConstructors%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue TabbedContent">
+                    <div class=""><span class="inline-flex"><a href="-coroutines-timeout.html">CoroutinesTimeout</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1553169603%2FConstructors%2F-1708783535"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="-coroutines-timeout.html">CoroutinesTimeout</a>(testTimeoutMs: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>, cancelOnTimeout: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a> = false)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-591688025%2FConstructors%2F-1708783535" anchor-label="CoroutinesTimeout" id="-591688025%2FConstructors%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue TabbedContent">
+                    <div class=""><span class="inline-flex"><a href="-coroutines-timeout.html">CoroutinesTimeout</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-591688025%2FConstructors%2F-1708783535"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="-coroutines-timeout.html">CoroutinesTimeout</a>(testTimeoutMs: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>, cancelOnTimeout: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a> = false, enableCoroutineCreationStackTraces: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a> = true)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Types</h2>
+              <div class="table" data-togglable="Types"><a data-name="-1008544705%2FClasslikes%2F-1708783535" anchor-label="Companion" id="-1008544705%2FClasslikes%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-companion/index.html">Companion</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1008544705%2FClasslikes%2F-1708783535"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">object <a href="-companion/index.html">Companion</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 

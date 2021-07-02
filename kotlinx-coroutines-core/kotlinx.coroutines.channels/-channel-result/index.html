@@ -1,259 +1,288 @@
-<!DOCTYPE html>
 <html>
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ChannelResult - kotlinx-coroutines-core</title>
-  <meta name="description" content="Library support for kotlin coroutines">
-  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel-result/">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-47631155-3', 'auto');
-    ga('send', 'pageview');
-  </script>
-</head>
-
-  <body>
-    <header class="site-header" role="banner">
-  <div class="wrapper">
-    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
-  </div>
-</header>
-
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.channels</a> / <a href="./index.html">ChannelResult</a></div>
-
-<h1 id="channelresult">ChannelResult</h1>
-
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">ChannelResult</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L393">(source)</a></div>
-
-<h3 id="properties">Properties</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="is-closed.html">isClosed</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosed</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Returns <code>true</code> if this instance represents unsuccessful operation
-to a closed or cancelled channel.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="is-failure.html">isFailure</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isFailure</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Returns <code>true</code> if this instance represents unsuccessful operation.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="is-success.html">isSuccess</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isSuccess</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Returns <code>true</code> if this instance represents a successful
-operation outcome.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="functions">Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="exception-or-null.html">exceptionOrNull</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">exceptionOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span></code></div>
-
-        <p>Returns the encapsulated exception if this instance represents failure or <code>null</code> if it is success
-or unsuccessful operation to closed channel.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="get-or-null.html">getOrNull</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">getOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
-
-        <p>Returns the encapsulated value if this instance represents success or <code>null</code> if it represents failed result.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="get-or-throw.html">getOrThrow</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">getOrThrow</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#T"><span class="identifier">T</span></a></code></div>
-
-        <p>Returns the encapsulated value if this instance represents success or throws an exception if it is closed or failed.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="to-string.html">toString</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="companion-object-functions">Companion Object Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="closed.html">closed</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">closed</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ChannelResult.Companion$closed(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="closed.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="failure.html">failure</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">failure</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="failure.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="success.html">success</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">success</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.channels.ChannelResult.Companion$success(kotlinx.coroutines.channels.ChannelResult.Companion.success.E)/value">value</span><span class="symbol">:</span>&nbsp;<a href="success.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="success.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extension-functions">Extension Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../get-or-else.html">getOrElse</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../get-or-else.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">getOrElse</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$getOrElse(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.getOrElse.T)), kotlin.Function1((kotlin.Throwable, kotlinx.coroutines.channels.getOrElse.T)))/onFailure">onFailure</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../get-or-else.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../get-or-else.html#T"><span class="identifier">T</span></a></code></div>
-
-        <p>Returns the encapsulated value if this instance represents <a href="is-success.html">success</a> or the
-result of <a href="../get-or-else.html#kotlinx.coroutines.channels$getOrElse(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.getOrElse.T)), kotlin.Function1((kotlin.Throwable, kotlinx.coroutines.channels.getOrElse.T)))/onFailure">onFailure</a> function for the encapsulated <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a> exception if it is failed or closed
-result.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../on-closed.html">onClosed</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../on-closed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onClosed</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$onClosed(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.onClosed.T)), kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../on-closed.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Performs the given <a href="../on-closed.html#kotlinx.coroutines.channels$onClosed(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.onClosed.T)), kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/action">action</a> on the encapsulated <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a> exception if this instance represents <a href="is-failure.html">failure</a>
-due to channel being <a href="../-send-channel/close.html">closed</a>.
-The result of <a href="exception-or-null.html">ChannelResult.exceptionOrNull</a> is passed to the <a href="../on-closed.html#kotlinx.coroutines.channels$onClosed(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.onClosed.T)), kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/action">action</a> parameter.
-It is guaranteed that if action is invoked, then the channel is either <a href="../-send-channel/is-closed-for-send.html">closed for send</a>
-or is <a href="../-receive-channel/is-closed-for-receive.html">closed for receive</a> depending on the failed operation.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../on-failure.html">onFailure</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../on-failure.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onFailure</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$onFailure(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.onFailure.T)), kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../on-failure.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Performs the given <a href="../on-failure.html#kotlinx.coroutines.channels$onFailure(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.onFailure.T)), kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/action">action</a> on the encapsulated <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a> exception if this instance represents <a href="is-failure.html">failure</a>.
-The result of <a href="exception-or-null.html">ChannelResult.exceptionOrNull</a> is passed to the <a href="../on-failure.html#kotlinx.coroutines.channels$onFailure(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.onFailure.T)), kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/action">action</a> parameter.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../on-success.html">onSuccess</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../on-success.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onSuccess</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$onSuccess(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.onSuccess.T)), kotlin.Function1((kotlinx.coroutines.channels.onSuccess.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">value</span><span class="symbol">:</span>&nbsp;<a href="../on-success.html#T"><span class="identifier">T</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ChannelResult</span></a><span class="symbol">&lt;</span><a href="../on-success.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Performs the given <a href="../on-success.html#kotlinx.coroutines.channels$onSuccess(kotlinx.coroutines.channels.ChannelResult((kotlinx.coroutines.channels.onSuccess.T)), kotlin.Function1((kotlinx.coroutines.channels.onSuccess.T, kotlin.Unit)))/action">action</a> on the encapsulated value if this instance represents <a href="is-success.html">success</a>.
-Returns the original <code>ChannelResult</code> unchanged.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ChannelResult</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
       </div>
-    </main>
-    <footer class="site-footer">
-  <!-- empty -->
-</footer>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-  </body>
-</html>
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.channels/ChannelResult///PointingToDeclaration//1975948010">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines.channels</a>/<a href="index.html">ChannelResult</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Channel</span><wbr><span>Result</span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-inline/index.html">JvmInline</a>()</div></div>value class <a href="index.html">ChannelResult</a>&lt;out <a href="index.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A discriminated union of channel operation result. It encapsulates the successful or failed result of a channel operation or a failed operation to a closed channel with an optional cause.</p><p class="paragraph">The successful result represents a successful operation with a value of type <a href="index.html">T</a>, for example, the result of <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/receive-catching.html">Channel.receiveCatching</a> operation or a successfully sent element as a result of <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/try-send.html">Channel.trySend</a>.</p><p class="paragraph">The failed result represents a failed operation attempt to a channel, but it doesn't necessary indicate that the channel is failed. E.g. when the channel is full, <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/try-send.html">Channel.trySend</a> returns failed result, but the channel itself is not in the failed state.</p><p class="paragraph">The closed result represents an operation attempt to a closed channel and also implies that the operation has failed. It is guaranteed that if the result is closed, then the target channel is either <a href="../-channel/index.html#-659275599%2FProperties%2F1975948010">closed for send</a> or is <a href="../-channel/index.html#-94355138%2FProperties%2F1975948010">closed for receive</a> depending on whether the failed operation was sending or receiving.</p></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Extensions">Extensions</button><button class="section-tab" data-togglable="Sources">Sources</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Types</h2>
+              <div class="table" data-togglable="Types"><a data-name="-1837121706%2FClasslikes%2F1975948010" anchor-label="Companion" id="-1837121706%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="-companion/index.html">Companion</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1837121706%2FClasslikes%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">object <a href="-companion/index.html">Companion</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="1907926902%2FFunctions%2F1975948010" anchor-label="exceptionOrNull" id="1907926902%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="exception-or-null.html">exceptionOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1907926902%2FFunctions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="exception-or-null.html">exceptionOrNull</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1907926902%2FFunctions%2F1975948010" anchor-label="exceptionOrNull" id="1907926902%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1907926902%2FFunctions%2F1975948010" anchor-label="exceptionOrNull" id="1907926902%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns the encapsulated exception if this instance represents failure or <code>null</code> if it is success or unsuccessful operation to closed channel.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1514229007%2FFunctions%2F1975948010" anchor-label="getOrNull" id="1514229007%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="get-or-null.html">getOrNull</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1514229007%2FFunctions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="get-or-null.html">getOrNull</a>(): <a href="index.html">T</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="1514229007%2FFunctions%2F1975948010" anchor-label="getOrNull" id="1514229007%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1514229007%2FFunctions%2F1975948010" anchor-label="getOrNull" id="1514229007%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns the encapsulated value if this instance represents success or <code>null</code> if it represents failed result.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1904242242%2FFunctions%2F1975948010" anchor-label="getOrThrow" id="-1904242242%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="get-or-throw.html">getOrThrow</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1904242242%2FFunctions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun <a href="get-or-throw.html">getOrThrow</a>(): <a href="index.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1904242242%2FFunctions%2F1975948010" anchor-label="getOrThrow" id="-1904242242%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-1904242242%2FFunctions%2F1975948010" anchor-label="getOrThrow" id="-1904242242%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns the encapsulated value if this instance represents success or throws an exception if it is closed or failed.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="1271514687%2FFunctions%2F1975948010" anchor-label="toString" id="1271514687%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="to-string.html">toString</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1271514687%2FFunctions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open override fun <a href="to-string.html">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+</div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Properties</h2>
+              <div class="table" data-togglable="Properties"><a data-name="-1826038603%2FProperties%2F1975948010" anchor-label="isClosed" id="-1826038603%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="is-closed.html">isClosed</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1826038603%2FProperties%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-1826038603%2FProperties%2F1975948010" anchor-label="isClosed" id="-1826038603%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">val <a href="is-closed.html">isClosed</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-1826038603%2FProperties%2F1975948010" anchor-label="isClosed" id="-1826038603%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns <code>true</code> if this instance represents unsuccessful operation to a closed or cancelled channel.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-767585009%2FProperties%2F1975948010" anchor-label="isFailure" id="-767585009%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="is-failure.html">isFailure</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-767585009%2FProperties%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-767585009%2FProperties%2F1975948010" anchor-label="isFailure" id="-767585009%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">val <a href="is-failure.html">isFailure</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-767585009%2FProperties%2F1975948010" anchor-label="isFailure" id="-767585009%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns <code>true</code> if this instance represents unsuccessful operation.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="757764278%2FProperties%2F1975948010" anchor-label="isSuccess" id="757764278%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="is-success.html">isSuccess</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="757764278%2FProperties%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="757764278%2FProperties%2F1975948010" anchor-label="isSuccess" id="757764278%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">val <a href="is-success.html">isSuccess</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="757764278%2FProperties%2F1975948010" anchor-label="isSuccess" id="757764278%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns <code>true</code> if this instance represents a successful operation outcome.</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="tabbedcontent">Extensions</h2>
+              <div class="table" data-togglable="Extensions"><a data-name="-687022899%2FExtensions%2F1975948010" anchor-label="getOrElse" id="-687022899%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../get-or-else.html">getOrElse</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-687022899%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">inline fun &lt;<a href="../get-or-else.html">T</a>&gt; <a href="index.html">ChannelResult</a>&lt;<a href="../get-or-else.html">T</a>&gt;.<a href="../get-or-else.html">getOrElse</a>(onFailure: (exception: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?) -&gt; <a href="../get-or-else.html">T</a>): <a href="../get-or-else.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-687022899%2FExtensions%2F1975948010" anchor-label="getOrElse" id="-687022899%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-687022899%2FExtensions%2F1975948010" anchor-label="getOrElse" id="-687022899%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns the encapsulated value if this instance represents <a href="is-success.html">success</a> or the result of <a href="../get-or-else.html">onFailure</a> function for the encapsulated <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a> exception if it is failed or closed result.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-597061557%2FExtensions%2F1975948010" anchor-label="onClosed" id="-597061557%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../on-closed.html">onClosed</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-597061557%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">inline fun &lt;<a href="../on-closed.html">T</a>&gt; <a href="index.html">ChannelResult</a>&lt;<a href="../on-closed.html">T</a>&gt;.<a href="../on-closed.html">onClosed</a>(action: (exception: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="index.html">ChannelResult</a>&lt;<a href="../on-closed.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-597061557%2FExtensions%2F1975948010" anchor-label="onClosed" id="-597061557%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-597061557%2FExtensions%2F1975948010" anchor-label="onClosed" id="-597061557%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Performs the given <a href="../on-closed.html">action</a> on the encapsulated <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a> exception if this instance represents <a href="is-failure.html">failure</a> due to channel being <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/close.html">closed</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="-1951633741%2FExtensions%2F1975948010" anchor-label="onFailure" id="-1951633741%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../on-failure.html">onFailure</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1951633741%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">inline fun &lt;<a href="../on-failure.html">T</a>&gt; <a href="index.html">ChannelResult</a>&lt;<a href="../on-failure.html">T</a>&gt;.<a href="../on-failure.html">onFailure</a>(action: (exception: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="index.html">ChannelResult</a>&lt;<a href="../on-failure.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-1951633741%2FExtensions%2F1975948010" anchor-label="onFailure" id="-1951633741%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-1951633741%2FExtensions%2F1975948010" anchor-label="onFailure" id="-1951633741%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Performs the given <a href="../on-failure.html">action</a> on the encapsulated <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a> exception if this instance represents <a href="is-failure.html">failure</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+<a data-name="398669380%2FExtensions%2F1975948010" anchor-label="onSuccess" id="398669380%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="../on-success.html">onSuccess</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="398669380%2FExtensions%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag common-like">common</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">inline fun &lt;<a href="../on-success.html">T</a>&gt; <a href="index.html">ChannelResult</a>&lt;<a href="../on-success.html">T</a>&gt;.<a href="../on-success.html">onSuccess</a>(action: (<a href="../on-success.html">T</a>) -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>): <a href="index.html">ChannelResult</a>&lt;<a href="../on-success.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="398669380%2FExtensions%2F1975948010" anchor-label="onSuccess" id="398669380%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="398669380%2FExtensions%2F1975948010" anchor-label="onSuccess" id="398669380%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Performs the given <a href="../on-success.html">action</a> on the encapsulated value if this instance represents <a href="is-success.html">success</a>.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Sources</h2>
+              <div class="table" data-togglable="Sources"><a data-name="651090900%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L377" id="651090900%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/channels/Channel.kt#L377">common source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="651090900%2FSource%2F1975948010"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
 
