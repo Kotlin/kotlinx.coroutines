@@ -55,9 +55,11 @@ buildscript {
     }
 
     repositories {
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/" }
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        mavenLocal()
     }
 
     dependencies {
@@ -141,6 +143,8 @@ allprojects {
          * google should be first in the repository list because some of the play services
          * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
          */
+        mavenLocal()
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/" }
         google()
         mavenCentral()
     }

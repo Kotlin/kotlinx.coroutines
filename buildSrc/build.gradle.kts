@@ -12,6 +12,9 @@ val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == t
 val buildSnapshotTrain = properties["build_snapshot_train"]?.toString()?.toBoolean() == true
 
 repositories {
+    maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
+    mavenLocal()
+
     if (cacheRedirectorEnabled) {
         maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
         maven("https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-dev")
