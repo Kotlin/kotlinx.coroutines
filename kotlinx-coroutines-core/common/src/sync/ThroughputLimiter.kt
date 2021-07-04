@@ -69,7 +69,7 @@ public fun intervalLimiter(eventsPerInterval: Int, interval: Duration): Interval
 internal class IntervalLimiterImpl(
     eventsPerInterval: Int,
     interval: Duration,
-    val timeSource: LongTimeSource = LongTimeSource(),
+    val timeSource: NanoTimeSource = NanoTimeSource(),
     val delay: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) }
 ) : IntervalLimiter {
 
@@ -90,18 +90,18 @@ internal class IntervalLimiterImpl(
     private val eventSegment = _interval.div(eventsPerInterval)
     private val counter = ThroughputCounter(CoroutineScope(Dispatchers.Default))
 
-    private var intervalStartCursor: LongTimeMark = timeSource.markNow()
-    private var cursor: LongTimeMark = intervalStartCursor + eventSegment
-    private var intervalEndCursor: LongTimeMark = intervalStartCursor + _interval
+    private var intervalStartCursor: NanoTimeMark = timeSource.markNow()
+    private var cursor: NanoTimeMark = intervalStartCursor + eventSegment
+    private var intervalEndCursor: NanoTimeMark = intervalStartCursor + _interval
 
     override suspend fun acquire(): Long = acquire(permits = 1)
     override suspend fun acquire(permits: Int): Long {
         if (permits < 0) throw IllegalArgumentException("You need to ask for at least zero permits")
 
-        val now: LongTimeMark = timeSource.markNow()
+        val now: NanoTimeMark = timeSource.markNow()
         val permitDuration = if (permits == 1) eventSegment else eventSegment.times(permits)
 
-        val wakeUpTime: LongTimeMark = mutex.withLock {
+        val wakeUpTime: NanoTimeMark = mutex.withLock {
             getWakeUpTime(now, permitDuration)
         }
         val sleep: Duration = (wakeUpTime.minus(now))
@@ -124,8 +124,8 @@ internal class IntervalLimiterImpl(
     private suspend fun tryAcquireInternal(permits: Int = 1, timeout: Duration? = null): Boolean {
         if (permits < 0) throw IllegalArgumentException("You need to ask for at least zero permits")
 
-        val now: LongTimeMark = timeSource.markNow()
-        val timeoutEnd: LongTimeMark = if (timeout == null) now else now + timeout
+        val now: NanoTimeMark = timeSource.markNow()
+        val timeoutEnd: NanoTimeMark = if (timeout == null) now else now + timeout
         // Early elimination without waiting for locks
         if (!shouldAllowOnTry(now, timeoutEnd)) {
             // Start of current interval is in the future
@@ -134,7 +134,7 @@ internal class IntervalLimiterImpl(
         }
 
         val permitDuration = if (permits == 1) eventSegment else eventSegment.times(permits)
-        val wakeUpTime: LongTimeMark = mutex.withLock {
+        val wakeUpTime: NanoTimeMark = mutex.withLock {
             // Late elimination with locks
             // In case things changed while waiting for the lock
             if (!shouldAllowOnTry(now, timeoutEnd)) {
@@ -157,7 +157,7 @@ internal class IntervalLimiterImpl(
     /**
      * Must be run inside the mutex.. This is the Danger Zone.
      */
-    private fun getWakeUpTime(now: LongTimeMark, permitDuration: Duration): LongTimeMark {
+    private fun getWakeUpTime(now: NanoTimeMark, permitDuration: Duration): NanoTimeMark {
         return if (intervalEndCursor < now) {
             // Active interval is in the past
             // Align start of interval with current point in time
@@ -198,13 +198,13 @@ internal class IntervalLimiterImpl(
         return _interval.times(intervalSteps)
     }
 
-    private fun shouldAllowOnTry(now: LongTimeMark, timeoutEnd: LongTimeMark): Boolean {
+    private fun shouldAllowOnTry(now: NanoTimeMark, timeoutEnd: NanoTimeMark): Boolean {
         return if (now > intervalEndCursor) {
             // println("Stale interval")
             return true
         } else if (cursor > intervalEndCursor) {
             val displacement: Duration = getDisplacement()
-            val newStart: LongTimeMark = intervalStartCursor + displacement
+            val newStart: NanoTimeMark = intervalStartCursor + displacement
             // println("Timeout end is going to be before the new start of period ${(timeoutEnd - newStart).inWholeNanoseconds}ns diff")
             return timeoutEnd >= newStart
         } else {
@@ -235,7 +235,7 @@ public fun rateLimiter(eventsPerInterval: Int, interval: Duration): RateLimiter 
 internal class RateLimiterImpl(
     eventsPerInterval: Int,
     interval: Duration,
-    val timeSource: LongTimeSource = LongTimeSource(),
+    val timeSource: NanoTimeSource = NanoTimeSource(),
     val delay: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) }
 ) : RateLimiter {
 
@@ -244,7 +244,7 @@ internal class RateLimiterImpl(
     private val permitDuration = _interval.div(eventsPerInterval)
     private val counter = ThroughputCounter(CoroutineScope(Dispatchers.Default))
 
-    private var cursor: LongTimeMark = timeSource.markNow()
+    private var cursor: NanoTimeMark = timeSource.markNow()
 
     init {
         require(interval.inWholeMilliseconds > 5) {
@@ -261,8 +261,8 @@ internal class RateLimiterImpl(
 
     override suspend fun acquire(permits: Int): Long {
         val permitDuration: Duration = if (permits == 1) permitDuration else permitDuration.times(permits)
-        val now: LongTimeMark = timeSource.markNow()
-        val wakeUpTime: LongTimeMark = mutex.withLock {
+        val now: NanoTimeMark = timeSource.markNow()
+        val wakeUpTime: NanoTimeMark = mutex.withLock {
             val base = if (cursor > now) cursor else now
             cursor = base + permitDuration
             base
@@ -281,14 +281,14 @@ internal class RateLimiterImpl(
 
     private suspend fun tryAcquireInternal(permits: Int, timeout: Duration?): Boolean {
         val permitDuration: Duration = if (permits == 1) permitDuration else permitDuration.times(permits)
-        val now: LongTimeMark = timeSource.markNow()
+        val now: NanoTimeMark = timeSource.markNow()
         val timeoutMark = if (timeout == null) now else now + timeout
 
         if (cursor > timeoutMark) {
             counter.count(DENIED, permits)
             return false
         }
-        val wakeUpTime: LongTimeMark = mutex.withLock {
+        val wakeUpTime: NanoTimeMark = mutex.withLock {
             val base = if (cursor > now) cursor else now
             if (base > timeoutMark) {
                 counter.count(DENIED, permits)

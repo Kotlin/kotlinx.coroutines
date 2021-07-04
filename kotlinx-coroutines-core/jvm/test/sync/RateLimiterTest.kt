@@ -29,7 +29,7 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
     @Test
     fun acquire(): Unit = runBlocking {
         val delayer = Delayer()
-        val timeSource: LongTimeSource = TestLongTimeSource()
+        val timeSource: NanoTimeSource = TestNanoTimeSource()
         val rateLimiter = RateLimiterImpl(
             eventsPerInterval = eventsPerInterval,
             interval = Duration.seconds(1),

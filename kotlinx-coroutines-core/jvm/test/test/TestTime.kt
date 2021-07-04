@@ -9,10 +9,10 @@ import java.util.concurrent.atomic.*
 import kotlin.time.*
 
 @OptIn(ExperimentalTime::class)
-internal class TestLongTimeSource : LongTimeSource() {
+internal class TestNanoTimeSource : NanoTimeSource() {
     @Volatile
     var nanos:Long = 0L
-    override fun markNow(): LongTimeMark = LongTimeMark(nanos, this)
+    override fun markNow(): NanoTimeMark = NanoTimeMark(nanos, this)
 }
 internal class Delayer {
     private val delayCounter = AtomicLong(0)

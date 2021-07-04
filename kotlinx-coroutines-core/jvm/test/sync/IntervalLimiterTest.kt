@@ -28,7 +28,7 @@ class IntervalLimiterTest(
 
     @Test
     fun run_for_several_intervals(): Unit = runBlocking {
-        val timeSource = TestLongTimeSource()
+        val timeSource = TestNanoTimeSource()
         val delayer = Delayer()
         val intervalLimiter: IntervalLimiter = IntervalLimiterImpl(
             eventsPerInterval = eventsPerInterval,
@@ -54,7 +54,7 @@ class IntervalLimiterTest(
 
     @Test
     fun try_acquire(): Unit = runBlocking {
-        val timeSource = TestLongTimeSource()
+        val timeSource = TestNanoTimeSource()
         val delayer = Delayer()
         val intervalLimiter: IntervalLimiter = IntervalLimiterImpl(
             eventsPerInterval = eventsPerInterval,
@@ -70,7 +70,7 @@ class IntervalLimiterTest(
 
     @Test
     fun try_acquire_on_stale_limiter(): Unit = runBlocking {
-        val timeSource = TestLongTimeSource()
+        val timeSource = TestNanoTimeSource()
         val delayer = Delayer()
         val interval = Duration.seconds(1)
         val intervalLimiter: IntervalLimiter = IntervalLimiterImpl(
