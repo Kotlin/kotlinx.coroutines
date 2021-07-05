@@ -7,7 +7,7 @@ import java.net.*
 
 // Configures generation of JavaDoc & Dokka artifacts
 apply<DokkaPlugin>()
-apply<JavaPlugin>()
+//apply<JavaPlugin>()
 
 fun GradleDokkaSourceSetBuilder.makeLinkMapping(projectDir: File) {
     sourceLink {
