@@ -7,6 +7,7 @@ on:
     branches: [ '*' ]
   pull_request:
     branches: [ '*' ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -26,4 +27,4 @@ jobs:
         run: |
           export JDK_16="$JAVA_HOME"
           export JDK_18="$JAVA_HOME"
-          ./gradlew jvmTest
+          ./gradlew clean jvmTest
