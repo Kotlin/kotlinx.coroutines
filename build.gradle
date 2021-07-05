@@ -11,8 +11,8 @@ apply from: rootProject.file("gradle/experimental.gradle")
 
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'integration-testing']
-def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'integration-testing']
+def sourceless = ['kotlinx.coroutines', 'kotlinx-coroutines-bom', 'integration-testing']
+def internal = ['kotlinx.coroutines', 'benchmarks', 'integration-testing']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
@@ -129,7 +129,6 @@ apply plugin: "binary-compatibility-validator"
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
     if (build_snapshot_train) {
-        ignoredProjects.remove("site")
         ignoredProjects.remove("example-frontend-js")
         ignoredProjects.add("kotlinx-coroutines-core")
     }

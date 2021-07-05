@@ -58,7 +58,6 @@ module('ui/kotlinx-coroutines-swing')
 
 if (!build_snapshot_train) {
     module('js/example-frontend-js')
-    include('site')
 }
 
 module('integration-testing')
