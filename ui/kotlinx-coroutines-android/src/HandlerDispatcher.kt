@@ -120,7 +120,7 @@ internal class HandlerContext private constructor(
      * @param handler a handler.
      * @param name an optional name for debugging.
      */
-    public constructor(
+    constructor(
         handler: Handler,
         name: String? = null
     ) : this(handler, name, false)
