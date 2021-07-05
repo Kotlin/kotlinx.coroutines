@@ -247,16 +247,17 @@ public interface RateLimiter : ThroughputLimiter
 
 @SinceKotlin("1.5")
 @OptIn(ExperimentalTime::class)
-public fun rateLimiter(eventsPerInterval: Int, interval: Duration): RateLimiter =
-    RateLimiterImpl(eventsPerInterval, interval)
+public fun rateLimiter(eventsPerInterval: Int, interval: Duration, warmupPeriod: Duration? = null): RateLimiter =
+    RateLimiterImpl(eventsPerInterval = eventsPerInterval, interval = interval, warmupPeriod = warmupPeriod)
 
 @SinceKotlin("1.5")
 @OptIn(ExperimentalTime::class)
 internal class RateLimiterImpl(
     eventsPerInterval: Int,
     interval: Duration,
-    val timeSource: NanoTimeSource = NanoTimeSourceImpl,
-    val delay: suspend (Long) -> Unit = ::delay
+    private val timeSource: NanoTimeSource = NanoTimeSourceImpl,
+    private val delay: suspend (Long) -> Unit = ::delay,
+    warmupPeriod: Duration? = null,
 ) : RateLimiter {
 
     private val mutex = Mutex()
@@ -264,6 +265,7 @@ internal class RateLimiterImpl(
     private val permitDuration = _interval.div(eventsPerInterval)
     private val counter = ThroughputCounter(CoroutineScope(Dispatchers.Default))
 
+    private var warmupMark: NanoTimeMark? = warmupPeriod?.let { timeSource.markNow() + it }
     private var cursor: NanoTimeMark = timeSource.markNow()
 
     init {
@@ -282,7 +284,13 @@ internal class RateLimiterImpl(
     override suspend fun acquire(permits: Int): Long {
         val permitDuration: Duration = if (permits == 1) permitDuration else permitDuration.times(permits)
         val now: NanoTimeMark = timeSource.markNow()
+        if (warmupMark?.let { it > now } == true) return 0L
+
         val wakeUpTime: NanoTimeMark = mutex.withLock {
+            if (warmupMark != null) {
+                warmupMark = null
+                cursor = now
+            }
             val base = if (cursor > now) cursor else now
             cursor = base + permitDuration
             base
@@ -302,14 +310,22 @@ internal class RateLimiterImpl(
     private suspend fun tryAcquireInternal(permits: Int, timeout: Duration?): Boolean {
         val permitDuration: Duration = if (permits == 1) permitDuration else permitDuration.times(permits)
         val now: NanoTimeMark = timeSource.markNow()
+        if (warmupMark?.let { it > now } == true) return true
         val timeoutMark = if (timeout == null) now else now + timeout
 
-        if (cursor > timeoutMark) {
+        if (warmupMark == null && cursor > timeoutMark) {
             counter.count(DENIED, permits)
             return false
         }
         val wakeUpTime: NanoTimeMark = mutex.withLock {
-            val base = if (cursor > now) cursor else now
+            val base = if (warmupMark != null) {
+                warmupMark = null
+                now
+            } else if (cursor > now) {
+                cursor
+            } else {
+                now
+            }
             if (base > timeoutMark) {
                 counter.count(DENIED, permits)
                 return false
