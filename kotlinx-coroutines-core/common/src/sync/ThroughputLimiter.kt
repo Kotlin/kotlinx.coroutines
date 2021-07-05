@@ -61,16 +61,17 @@ public interface IntervalLimiter : ThroughputLimiter
 
 @SinceKotlin("1.5")
 @OptIn(ExperimentalTime::class)
-public fun intervalLimiter(eventsPerInterval: Int, interval: Duration): IntervalLimiter =
-    IntervalLimiterImpl(eventsPerInterval, interval)
+public fun intervalLimiter(eventsPerInterval: Int, interval: Duration, warmupPeriod: Duration? = null): IntervalLimiter =
+    IntervalLimiterImpl(eventsPerInterval = eventsPerInterval, interval = interval, warmupPeriod = warmupPeriod)
 
 @SinceKotlin("1.5")
 @OptIn(ExperimentalTime::class)
 internal class IntervalLimiterImpl(
     eventsPerInterval: Int,
-    interval: Duration,
-    val timeSource: NanoTimeSource = NanoTimeSource(),
-    val delay: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) }
+    interval: Duration = Duration.seconds(1),
+    private val timeSource: NanoTimeSource = NanoTimeSourceImpl,
+    private val delay: suspend (Long) -> Unit = ::delay,
+    warmupPeriod:Duration? = null
 ) : IntervalLimiter {
 
     init {
@@ -83,16 +84,23 @@ internal class IntervalLimiterImpl(
         require(interval.inWholeNanoseconds / eventsPerInterval > 1) {
             "Interval segment is not allowed to be less than one"
         }
+        require(warmupPeriod?.let { interval <= warmupPeriod } != false){
+            "Interval has to be greater or equal to the warmup period"
+        }
     }
 
-    private val _interval = Duration.nanoseconds(interval.inWholeNanoseconds)
+    private var warmupMark:NanoTimeMark? = warmupPeriod?.let { timeSource.markNow() + it }
+    //private val oneNano = Duration.nanoseconds(1)
     private val mutex = Mutex()
+    private val _interval = Duration.nanoseconds(interval.inWholeNanoseconds)
     private val eventSegment = _interval.div(eventsPerInterval)
     private val counter = ThroughputCounter(CoroutineScope(Dispatchers.Default))
 
-    private var intervalStartCursor: NanoTimeMark = timeSource.markNow()
-    private var cursor: NanoTimeMark = intervalStartCursor + eventSegment
+    // Mutable state, access through mutex
+    private var cursor: NanoTimeMark = timeSource.markNow()
+    private var intervalStartCursor: NanoTimeMark = timeSource.markNow() - eventSegment
     private var intervalEndCursor: NanoTimeMark = intervalStartCursor + _interval
+    // End Mutable state
 
     override suspend fun acquire(): Long = acquire(permits = 1)
     override suspend fun acquire(permits: Int): Long {
@@ -158,14 +166,24 @@ internal class IntervalLimiterImpl(
      * Must be run inside the mutex.. This is the Danger Zone.
      */
     private fun getWakeUpTime(now: NanoTimeMark, permitDuration: Duration): NanoTimeMark {
-        return if (intervalEndCursor < now) {
+        return if(warmupMark != null){
+            if(now < warmupMark!!){
+                now
+            } else {
+                warmupMark = null
+                cursor = now + permitDuration
+                intervalStartCursor = now - eventSegment
+                intervalEndCursor = intervalStartCursor + _interval
+                now
+            }
+        } else if (intervalEndCursor < now) {
             // Active interval is in the past
             // Align start of interval with current point in time
             intervalStartCursor = now
-            intervalEndCursor = now + _interval
+            intervalEndCursor = intervalStartCursor + _interval
             cursor = intervalStartCursor + permitDuration
             // No delay
-            // println("Settign up")
+            // println("Setting up")
             now
         } else if (cursor > intervalEndCursor) {
             // Cursor has moved into new interval
@@ -175,12 +193,12 @@ internal class IntervalLimiterImpl(
             intervalStartCursor += displacement
             cursor += permitDuration
             // println("Cursor beyond interval, moving interval $intervalSteps steps")
-            intervalStartCursor
+            intervalStartCursor + eventSegment
         } else if (intervalStartCursor > now) {
             // Active interval is in the future, and the current permit must be delayed
             cursor += permitDuration
             // println("Cursor in future interval")
-            intervalStartCursor
+            intervalStartCursor + eventSegment
         } else {
             // Now and Cursor are within the active interval
             // Only need to move the Cursor, nothing else
@@ -194,27 +212,29 @@ internal class IntervalLimiterImpl(
     private fun getDisplacement(): Duration {
         val cursorDiff = cursor - intervalEndCursor
         var intervalSteps: Int = (cursorDiff.inWholeNanoseconds / _interval.inWholeNanoseconds).toInt()
-        if (cursorDiff.inWholeNanoseconds % _interval.inWholeNanoseconds > 9) intervalSteps++
+        if (cursorDiff.inWholeNanoseconds % _interval.inWholeNanoseconds > 0) intervalSteps++
         return _interval.times(intervalSteps)
     }
 
     private fun shouldAllowOnTry(now: NanoTimeMark, timeoutEnd: NanoTimeMark): Boolean {
-        return if (now > intervalEndCursor) {
-            // println("Stale interval")
+        return if(warmupMark != null && warmupMark!! < now) {
             return true
         } else if (cursor > intervalEndCursor) {
             val displacement: Duration = getDisplacement()
             val newStart: NanoTimeMark = intervalStartCursor + displacement
             // println("Timeout end is going to be before the new start of period ${(timeoutEnd - newStart).inWholeNanoseconds}ns diff")
-            return timeoutEnd >= newStart
+            return timeoutEnd > newStart
+        } else if (now > intervalEndCursor) {
+            // println("Stale interval")
+            return true
         } else {
             // println("Cursor doesn't need mod to eval")
-            timeoutEnd >= intervalStartCursor
+            timeoutEnd > intervalStartCursor
         }
     }
 
-    public override fun stats(): Map<ThroughputCounterEventType, Long> = counter.stats
-    public override fun resetStats() = counter.reset()
+    override fun stats(): Map<ThroughputCounterEventType, Long> = counter.stats
+    override fun resetStats() = counter.reset()
 }
 
 /**
@@ -235,8 +255,8 @@ public fun rateLimiter(eventsPerInterval: Int, interval: Duration): RateLimiter 
 internal class RateLimiterImpl(
     eventsPerInterval: Int,
     interval: Duration,
-    val timeSource: NanoTimeSource = NanoTimeSource(),
-    val delay: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) }
+    val timeSource: NanoTimeSource = NanoTimeSourceImpl,
+    val delay: suspend (Long) -> Unit = ::delay
 ) : RateLimiter {
 
     private val mutex = Mutex()

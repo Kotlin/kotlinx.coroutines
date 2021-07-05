@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.*
 import kotlin.time.*
 
 @OptIn(ExperimentalTime::class)
-internal class TestNanoTimeSource : NanoTimeSource() {
+internal class TestNanoTimeSource : NanoTimeSource {
     @Volatile
     var nanos:Long = 0L
     override fun markNow(): NanoTimeMark = NanoTimeMark(nanos, this)
@@ -19,6 +19,6 @@ internal class Delayer {
     fun delay(duration: Long){
         delayCounter.addAndGet(duration)
     }
-    public fun getDelay():Long = delayCounter.get()
-    public fun reset():Unit = delayCounter.set(0)
+    fun getDelay():Long = delayCounter.get()
+    fun reset():Unit = delayCounter.set(0)
 }

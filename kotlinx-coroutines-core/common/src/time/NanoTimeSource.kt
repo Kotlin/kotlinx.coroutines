@@ -7,9 +7,13 @@ package kotlinx.coroutines.time
 import kotlinx.coroutines.*
 import kotlin.time.*
 
+internal interface NanoTimeSource {
+    fun markNow(): NanoTimeMark
+}
+
 @SinceKotlin("1.5")
 @ExperimentalTime
-internal open class NanoTimeSource : TimeSource {
+internal object NanoTimeSourceImpl : NanoTimeSource {
     override fun markNow(): NanoTimeMark = NanoTimeMark(nanoTime(), this)
 }
 
@@ -17,10 +21,10 @@ internal open class NanoTimeSource : TimeSource {
 @OptIn(ExperimentalTime::class)
 internal class NanoTimeMark(private val nanos: Long, private val source: NanoTimeSource) : TimeMark() {
 
-    operator fun minus(other: NanoTimeMark): Duration = Duration.nanoseconds(nanos - other.nanos)
+    operator fun minus(other: NanoTimeMark): Duration =
+        Duration.nanoseconds(nanos - other.nanos)
     override operator fun minus(duration: Duration): NanoTimeMark =
         NanoTimeMark(nanos - duration.inWholeNanoseconds, source)
-
     override operator fun plus(duration: Duration): NanoTimeMark =
         NanoTimeMark(nanos + duration.inWholeNanoseconds, source)
 

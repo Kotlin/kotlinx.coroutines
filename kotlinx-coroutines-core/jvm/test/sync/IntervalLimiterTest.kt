@@ -4,14 +4,13 @@
 
 package kotlinx.coroutines.sync
 
-
-import kotlin.test.*
-import kotlin.time.*
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
+import kotlin.test.*
+import kotlin.time.*
 
 @RunWith(Parameterized::class)
 @OptIn(ExperimentalTime::class)
@@ -23,7 +22,11 @@ class IntervalLimiterTest(
 
         @JvmStatic
         @Parameterized.Parameters(name = "{0} events per interval")
-        fun data(): Collection<Array<Any>> = listOf(1, 3, 10, 100, 1000).map { arrayOf(it) }
+        fun data(): Collection<Array<Any>> = listOf(
+            1,
+            3,
+            10, 100, 1000
+        ).map { arrayOf(it) }
     }
 
     @Test
@@ -44,9 +47,9 @@ class IntervalLimiterTest(
             intervalLimiter.acquire()
             val delay: Long = (idx / eventsPerInterval) * 1000L
             assertEquals(
-                delay,
-                delayer.getDelay(),
-                "Permit #${idx} for $eventsPerInterval events/interval should be delayed $delay ms"
+                expected = delay,
+                actual = delayer.getDelay(),
+                message = "Permit #${idx} for $eventsPerInterval events/interval should be delayed $delay ms"
             )
         }
         assertEquals(eventsPerInterval * laps, pokes, "The test is wrong, wrong number of iterations")
@@ -63,9 +66,15 @@ class IntervalLimiterTest(
             delay = delayer::delay
         )
         (1..eventsPerInterval).forEach {
-            assertTrue(intervalLimiter.tryAcquire(), "Permit #$it was supposed to be allowed")
+            assertTrue(
+                actual = intervalLimiter.tryAcquire(),
+                message = "Permit #$it was supposed to be allowed"
+            )
         }
-        assertFalse(intervalLimiter.tryAcquire(), "Permit #${eventsPerInterval + 1} was supposed to be disallowed")
+        assertFalse(
+            actual = intervalLimiter.tryAcquire(),
+            message = "Permit #${eventsPerInterval + 1} was supposed to be disallowed"
+        )
     }
 
     @Test
@@ -79,9 +88,46 @@ class IntervalLimiterTest(
             timeSource = timeSource,
             delay = delayer::delay
         )
-        assertTrue(intervalLimiter.tryAcquire(eventsPerInterval))
+        assertTrue(
+            intervalLimiter.tryAcquire(eventsPerInterval * 2),
+            message = "First permit should be granted"
+        )
 
-        timeSource.nanos += interval.inWholeNanoseconds
-        assertTrue(intervalLimiter.tryAcquire(eventsPerInterval))
+        timeSource.nanos += interval.inWholeNanoseconds * 3
+        assertTrue(
+            intervalLimiter.tryAcquire(eventsPerInterval),
+            message = "Stale permit should be granted"
+        )
+        assertFalse(
+            intervalLimiter.tryAcquire(),
+            message = "Exhausted permit should not be granted"
+        )
+        assertEquals(
+            expected = 0,
+            actual = delayer.getDelay(),
+            message = "Zero delay was expected"
+        )
+    }
+
+    @Test
+    fun warm_up_period_test(): Unit = runBlocking {
+        val timeSource = TestNanoTimeSource()
+        val delayer = Delayer()
+        val interval = Duration.seconds(1)
+        val intervalLimiter: IntervalLimiter = IntervalLimiterImpl(
+            eventsPerInterval = eventsPerInterval,
+            interval = interval,
+            timeSource = timeSource,
+            delay = delayer::delay,
+            warmupPeriod = interval * 2
+        )
+
+        repeat(10) {
+            assertTrue(intervalLimiter.tryAcquire(eventsPerInterval * 100), "Permits inside warmup period should be granted")
+        }
+        timeSource.nanos = (interval * 2).inWholeNanoseconds
+        assertTrue(intervalLimiter.tryAcquire(eventsPerInterval - 1), "Permit should be granted")
+        assertTrue(intervalLimiter.tryAcquire(1), "Last permit before we move out of interval should be granted")
+        assertFalse(intervalLimiter.tryAcquire(1), "First permit outside of interval should not be granted")
     }
 }
