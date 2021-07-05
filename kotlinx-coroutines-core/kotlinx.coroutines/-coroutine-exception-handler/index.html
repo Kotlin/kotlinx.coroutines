@@ -27,7 +27,7 @@
             <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">interface <a href="index.html">CoroutineExceptionHandler</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">An optional element in the coroutine context to handle uncaught exceptions.</p><p class="paragraph">Normally, uncaught exceptions can only result from root coroutines created using the <a href="../launch.html">launch</a> builder. All children coroutines (coroutines created in the context of another <a href="../-job/index.html">Job</a>) delegate handling of their exceptions to their parent coroutine, which also delegates to the parent, and so on until the root, so the <code>CoroutineExceptionHandler</code> installed in their context is never used. Coroutines running with <a href="../-supervisor-job.html">SupervisorJob</a> do not propagate exceptions to their parent and are treated like root coroutines. A coroutine that was created using <a href="../async.html">async</a> always catches all its exceptions and represents them in the resulting <a href="../-deferred/index.html">Deferred</a> object, so it cannot result in uncaught exceptions.</p><h3 class=""> Handling coroutine exceptions</h3><p class="paragraph"><code>CoroutineExceptionHandler</code> is a last-resort mechanism for global "catch all" behavior. You cannot recover from the exception in the <code>CoroutineExceptionHandler</code>. The coroutine had already completed with the corresponding exception when the handler is called. Normally, the handler is used to log the exception, show some kind of error message, terminate, and/or restart the application.</p><p class="paragraph">If you need to handle exception in a specific part of the code, it is recommended to use <code>try</code>/<code>catch</code> around the corresponding code inside your coroutine. This way you can prevent completion of the coroutine with the exception (exception is now caught), retry the operation, and/or take other arbitrary actions:</p><div class="sample-container"><code class="" theme="idea"><pre>scope.launch { // launch child coroutine in a scope<br>    try {<br>         // do something<br>    } catch (e: Throwable) {<br>         // handle exception<br>    }<br>}</pre></code></div><h3 class=""> Implementation details</h3><p class="paragraph">By default, when no handler is installed, uncaught exception are handled in the following way:</p><ul><li><p class="paragraph">If exception is <a href="../-cancellation-exception/index.html">CancellationException</a> then it is ignored (because that is the supposed mechanism to cancel the running coroutine)</p></li><li><p class="paragraph">Otherwise:</p></li><ul><li><p class="paragraph">if there is a <a href="../-job/index.html">Job</a> in the context, then <a href="../-job/cancel.html">Job.cancel</a> is invoked;</p></li><li><p class="paragraph">Otherwise, all instances of <a href="index.html">CoroutineExceptionHandler</a> found via ServiceLoader</p></li><li><p class="paragraph">and current thread's Thread.uncaughtExceptionHandler are invoked.</p></li></ul></ul><p class="paragraph"><a href="index.html">CoroutineExceptionHandler</a> can be invoked from an arbitrary thread.</p></div></div>
           </div>
           <div class="tabbedcontent">
-            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Sources">Sources</button></div>
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Sources">Sources</button></div>
             <div class="tabs-section-body">
               <h2 class="">Types</h2>
               <div class="table" data-togglable="Types"><a data-name="-1566510742%2FClasslikes%2F1975948010" anchor-label="Key" id="-1566510742%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
@@ -52,47 +52,7 @@
                 </div>
               </div>
               <h2 class="">Functions</h2>
-              <div class="table" data-togglable="Functions"><a data-name="466442070%2FFunctions%2F1975948010" anchor-label="fold" id="466442070%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">fold</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="466442070%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open override fun &lt;<a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a>&gt; <a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">fold</a>(initial: <a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a>, operation: (<a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a>) -&gt; <a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a>): <a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="232613081%2FFunctions%2F1975948010" anchor-label="get" id="232613081%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">get</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="232613081%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open operator override fun &lt;<a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">E</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a>&gt; <a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">get</a>(key: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;<a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">E</a>&gt;): <a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">E</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="-1789448646%2FFunctions%2F1975948010" anchor-label="handleException" id="-1789448646%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+              <div class="table" data-togglable="Functions"><a data-name="-1789448646%2FFunctions%2F1975948010" anchor-label="handleException" id="-1789448646%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
                     <div class=""><span class="inline-flex"><a href="handle-exception.html">handleException</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1789448646%2FFunctions%2F1975948010"></span>
@@ -109,64 +69,6 @@
   </div>
 <a data-name="-1789448646%2FFunctions%2F1975948010" anchor-label="handleException" id="-1789448646%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-1789448646%2FFunctions%2F1975948010" anchor-label="handleException" id="-1789448646%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Handles uncaught <a href="handle-exception.html">exception</a> in the given <a href="handle-exception.html">context</a>.</div></div>
 </div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="-1830620809%2FFunctions%2F1975948010" anchor-label="minusKey" id="-1830620809%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-non-cancellable/index.html#-1830620809%2FFunctions%2F1975948010">minusKey</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1830620809%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open override fun <a href="../-non-cancellable/index.html#-1830620809%2FFunctions%2F1975948010">minusKey</a>(key: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;*&gt;): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="1141296693%2FFunctions%2F1975948010" anchor-label="plus" id="1141296693%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-non-cancellable/index.html#1141296693%2FFunctions%2F1975948010">plus</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1141296693%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open operator fun <a href="../-non-cancellable/index.html#1141296693%2FFunctions%2F1975948010">plus</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <h2 class="">Properties</h2>
-              <div class="table" data-togglable="Properties"><a data-name="369037143%2FProperties%2F1975948010" anchor-label="key" id="369037143%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="index.html#369037143%2FProperties%2F1975948010">key</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="369037143%2FProperties%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="369037143%2FProperties%2F1975948010" anchor-label="key" id="369037143%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract val <a href="index.html#369037143%2FProperties%2F1975948010">key</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;*&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-                      </div>
                     </div>
                   </div>
                 </div>

@@ -27,7 +27,7 @@
             <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">enum <a href="index.html">BufferOverflow</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html">Enum</a>&lt;<a href="index.html">BufferOverflow</a>&gt; <span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A strategy for buffer overflow handling in <a href="../-channel/index.html">channels</a> and <a href="../../kotlinx.coroutines.flow/-flow/index.html">flows</a> that controls what is going to be sacrificed on buffer overflow:</p><ul><li><p class="paragraph"><a href="-s-u-s-p-e-n-d/index.html">SUSPEND</a> &amp;mdash; the upstream that is <a href="../-send-channel/send.html">sending</a> or is <a href="../../kotlinx.coroutines.flow/-flow-collector/emit.html">emitting</a> a value is suspended while the buffer is full.</p></li><li><p class="paragraph"><a href="-d-r-o-p_-o-l-d-e-s-t/index.html">DROP_OLDEST</a> &amp;mdash; drop the oldest value in the buffer on overflow, add the new value to the buffer, do not suspend.</p></li><li><p class="paragraph"><a href="-d-r-o-p_-l-a-t-e-s-t/index.html">DROP_LATEST</a> &amp;mdash; drop the latest value that is being added to the buffer right now on buffer overflow (so that buffer contents stay the same), do not suspend.</p></li></ul></div></div>
           </div>
           <div class="tabbedcontent">
-            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Entries">Entries</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Sources">Sources</button></div>
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Entries">Entries</button><button class="section-tab" data-togglable="Sources">Sources</button></div>
             <div class="tabs-section-body">
               <h2 class="tabbedcontent">Entries</h2>
               <div class="table" data-togglable="Entries"><a data-name="-504526461%2FClasslikes%2F1975948010" anchor-label="DROP_LATEST" id="-504526461%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
@@ -74,40 +74,6 @@
                       </div>
                       <div class="title">
                         <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><a href="-s-u-s-p-e-n-d/index.html">SUSPEND</a>()</div><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief ">Suspend on buffer overflow.</div></div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <h2 class="">Properties</h2>
-              <div class="table" data-togglable="Properties"><a data-name="1069819144%2FProperties%2F1975948010" anchor-label="name" id="1069819144%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="index.html#1069819144%2FProperties%2F1975948010">name</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1069819144%2FProperties%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="1069819144%2FProperties%2F1975948010" anchor-label="name" id="1069819144%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">val <a href="index.html#1069819144%2FProperties%2F1975948010">name</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="1799111990%2FProperties%2F1975948010" anchor-label="ordinal" id="1799111990%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="index.html#1799111990%2FProperties%2F1975948010">ordinal</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1799111990%2FProperties%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="1799111990%2FProperties%2F1975948010" anchor-label="ordinal" id="1799111990%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">val <a href="index.html#1799111990%2FProperties%2F1975948010">ordinal</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
                       </div>
                     </div>
                   </div>

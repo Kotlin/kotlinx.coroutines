@@ -24,7 +24,7 @@
           </div>
           <div class="cover ">
             <h1 class="cover"><span>Deferred</span></h1>
-            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">interface <a href="index.html">Deferred</a>&lt;out <a href="index.html">T</a>&gt; : <a href="../-job/index.html">Job</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Deferred value is a non-blocking cancellable future &amp;mdash; it is a <a href="../-job/index.html">Job</a> with a result.</p><p class="paragraph">It is created with the <a href="../async.html">async</a> coroutine builder or via the constructor of <a href="../-completable-deferred/index.html">CompletableDeferred</a> class. It is in <a href="index.html#-1594571334%2FProperties%2F1975948010">active</a> state while the value is being computed.</p><p class="paragraph"><code>Deferred</code> has the same state machine as the <a href="../-job/index.html">Job</a> with additional convenience methods to retrieve the successful or failed result of the computation that was carried out. The result of the deferred is available when it is <a href="index.html#-1471238481%2FProperties%2F1975948010">completed</a> and can be retrieved by <a href="await.html">await</a> method, which throws an exception if the deferred had failed. Note that a cancelled deferred is also considered as completed. The corresponding exception can be retrieved via <a href="get-completion-exception-or-null.html">getCompletionExceptionOrNull</a> from a completed instance of deferred.</p><p class="paragraph">Usually, a deferred value is created in active state (it is created and started). However, the <a href="../async.html">async</a> coroutine builder has an optional <code>start</code> parameter that creates a deferred value in new state when this parameter is set to <a href="../-coroutine-start/-l-a-z-y/index.html">CoroutineStart.LAZY</a>. Such a deferred can be be made active by invoking <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/start.html">start</a>, <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/join.html">join</a>, or <a href="await.html">await</a>.</p><p class="paragraph">A deferred value is a <a href="../-job/index.html">Job</a>. A job in the <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html">coroutineContext</a> of <a href="../async.html">async</a> builder represents the coroutine itself.</p><p class="paragraph">All functions on this interface and on all interfaces derived from it are thread-safe and can be safely invoked from concurrent coroutines without external synchronization.</p><p class="paragraph"><code>Deferred</code> interface and all its derived interfaces are not stable for inheritance in 3rd party libraries, as new methods might be added to this interface in the future, but is stable for use.</p></div></div>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">interface <a href="index.html">Deferred</a>&lt;out <a href="index.html">T</a>&gt; : <a href="../-job/index.html">Job</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Deferred value is a non-blocking cancellable future &amp;mdash; it is a <a href="../-job/index.html">Job</a> with a result.</p><p class="paragraph">It is created with the <a href="../async.html">async</a> coroutine builder or via the constructor of <a href="../-completable-deferred/index.html">CompletableDeferred</a> class. It is in <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/is-active.html">active</a> state while the value is being computed.</p><p class="paragraph"><code>Deferred</code> has the same state machine as the <a href="../-job/index.html">Job</a> with additional convenience methods to retrieve the successful or failed result of the computation that was carried out. The result of the deferred is available when it is <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/is-completed.html">completed</a> and can be retrieved by <a href="await.html">await</a> method, which throws an exception if the deferred had failed. Note that a cancelled deferred is also considered as completed. The corresponding exception can be retrieved via <a href="get-completion-exception-or-null.html">getCompletionExceptionOrNull</a> from a completed instance of deferred.</p><p class="paragraph">Usually, a deferred value is created in active state (it is created and started). However, the <a href="../async.html">async</a> coroutine builder has an optional <code>start</code> parameter that creates a deferred value in new state when this parameter is set to <a href="../-coroutine-start/-l-a-z-y/index.html">CoroutineStart.LAZY</a>. Such a deferred can be be made active by invoking <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/start.html">start</a>, <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/join.html">join</a>, or <a href="await.html">await</a>.</p><p class="paragraph">A deferred value is a <a href="../-job/index.html">Job</a>. A job in the <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html">coroutineContext</a> of <a href="../async.html">async</a> builder represents the coroutine itself.</p><p class="paragraph">All functions on this interface and on all interfaces derived from it are thread-safe and can be safely invoked from concurrent coroutines without external synchronization.</p><p class="paragraph"><code>Deferred</code> interface and all its derived interfaces are not stable for inheritance in 3rd party libraries, as new methods might be added to this interface in the future, but is stable for use.</p></div></div>
           </div>
           <div class="tabbedcontent">
             <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Extensions">Extensions</button><button class="section-tab" data-togglable="Sources">Sources</button><button class="section-tab" data-togglable="Inheritors">Inheritors</button></div>
@@ -50,66 +50,6 @@
                     </div>
                   </div>
                 </div>
-<a data-name="-1323829921%2FFunctions%2F1975948010" anchor-label="cancel" id="-1323829921%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-job/cancel.html">cancel</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1323829921%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">abstract fun <a href="../-job/cancel.html">cancel</a>(cause: <a href="../-cancellation-exception/index.html">CancellationException</a>? = null)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="-1323829921%2FFunctions%2F1975948010" anchor-label="cancel" id="-1323829921%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-1323829921%2FFunctions%2F1975948010" anchor-label="cancel" id="-1323829921%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Cancels this job with an optional cancellation <a href="../-job/cancel.html">cause</a>.</div></div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="466442070%2FFunctions%2F1975948010" anchor-label="fold" id="466442070%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">fold</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="466442070%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open override fun &lt;<a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a>&gt; <a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">fold</a>(initial: <a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a>, operation: (<a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a>) -&gt; <a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a>): <a href="../-non-cancellable/index.html#466442070%2FFunctions%2F1975948010">R</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="232613081%2FFunctions%2F1975948010" anchor-label="get" id="232613081%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">get</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="232613081%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open operator override fun &lt;<a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">E</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a>&gt; <a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">get</a>(key: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;<a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">E</a>&gt;): <a href="../-non-cancellable/index.html#232613081%2FFunctions%2F1975948010">E</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
-                    </div>
-                  </div>
-                </div>
 <a data-name="-205170667%2FFunctions%2F1975948010" anchor-label="getCompleted" id="-205170667%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
@@ -125,7 +65,7 @@
   <div>
     <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="../-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>abstract fun <a href="get-completed.html">getCompleted</a>(): <a href="index.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
   </div>
-<a data-name="-205170667%2FFunctions%2F1975948010" anchor-label="getCompleted" id="-205170667%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-205170667%2FFunctions%2F1975948010" anchor-label="getCompleted" id="-205170667%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns completed result or throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if this deferred value has not <a href="index.html#-1471238481%2FProperties%2F1975948010">completed</a> yet.</div></div>
+<a data-name="-205170667%2FFunctions%2F1975948010" anchor-label="getCompleted" id="-205170667%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-205170667%2FFunctions%2F1975948010" anchor-label="getCompleted" id="-205170667%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns completed result or throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if this deferred value has not <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/is-completed.html">completed</a> yet.</div></div>
 </div>
                     </div>
                   </div>
@@ -145,194 +85,14 @@
   <div>
     <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="../-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>abstract fun <a href="get-completion-exception-or-null.html">getCompletionExceptionOrNull</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
   </div>
-<a data-name="147540195%2FFunctions%2F1975948010" anchor-label="getCompletionExceptionOrNull" id="147540195%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="147540195%2FFunctions%2F1975948010" anchor-label="getCompletionExceptionOrNull" id="147540195%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns completion exception result if this deferred was <a href="index.html#-724644247%2FProperties%2F1975948010">cancelled</a> and has <a href="index.html#-1471238481%2FProperties%2F1975948010">completed</a>, <code>null</code> if it had completed normally, or throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if this deferred value has not <a href="index.html#-1471238481%2FProperties%2F1975948010">completed</a> yet.</div></div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="1756523180%2FFunctions%2F1975948010" anchor-label="invokeOnCompletion" id="1756523180%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-job/invoke-on-completion.html">invokeOnCompletion</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1756523180%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">abstract fun <a href="../-job/invoke-on-completion.html">invokeOnCompletion</a>(handler: <a href="../index.html#2145916192%2FClasslikes%2F1975948010">CompletionHandler</a>): <a href="../-disposable-handle/index.html">DisposableHandle</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="1756523180%2FFunctions%2F1975948010" anchor-label="invokeOnCompletion" id="1756523180%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1756523180%2FFunctions%2F1975948010" anchor-label="invokeOnCompletion" id="1756523180%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Registers handler that is synchronously invoked once on completion of this job.</div></div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="86493028%2FFunctions%2F1975948010" anchor-label="join" id="86493028%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-job/join.html">join</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="86493028%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">abstract suspend fun <a href="../-job/join.html">join</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="86493028%2FFunctions%2F1975948010" anchor-label="join" id="86493028%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="86493028%2FFunctions%2F1975948010" anchor-label="join" id="86493028%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Suspends the coroutine until this job is complete.</div></div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="-1830620809%2FFunctions%2F1975948010" anchor-label="minusKey" id="-1830620809%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-non-cancellable/index.html#-1830620809%2FFunctions%2F1975948010">minusKey</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1830620809%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open override fun <a href="../-non-cancellable/index.html#-1830620809%2FFunctions%2F1975948010">minusKey</a>(key: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;*&gt;): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="1141296693%2FFunctions%2F1975948010" anchor-label="plus" id="1141296693%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-non-cancellable/index.html#1141296693%2FFunctions%2F1975948010">plus</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1141296693%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open operator fun <a href="../-non-cancellable/index.html#1141296693%2FFunctions%2F1975948010">plus</a>(context: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="845358634%2FFunctions%2F1975948010" anchor-label="start" id="845358634%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-job/start.html">start</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="845358634%2FFunctions%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">abstract fun <a href="../-job/start.html">start</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="845358634%2FFunctions%2F1975948010" anchor-label="start" id="845358634%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="845358634%2FFunctions%2F1975948010" anchor-label="start" id="845358634%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Starts coroutine related to this job (if any) if it was not started yet.</div></div>
+<a data-name="147540195%2FFunctions%2F1975948010" anchor-label="getCompletionExceptionOrNull" id="147540195%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="147540195%2FFunctions%2F1975948010" anchor-label="getCompletionExceptionOrNull" id="147540195%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns completion exception result if this deferred was <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/is-cancelled.html">cancelled</a> and has <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/is-completed.html">completed</a>, <code>null</code> if it had completed normally, or throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if this deferred value has not <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-deferred/is-completed.html">completed</a> yet.</div></div>
 </div>
                     </div>
                   </div>
                 </div>
               </div>
               <h2 class="">Properties</h2>
-              <div class="table" data-togglable="Properties"><a data-name="1122089835%2FProperties%2F1975948010" anchor-label="children" id="1122089835%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="index.html#1122089835%2FProperties%2F1975948010">children</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1122089835%2FProperties%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="1122089835%2FProperties%2F1975948010" anchor-label="children" id="1122089835%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract val <a href="index.html#1122089835%2FProperties%2F1975948010">children</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html">Sequence</a>&lt;<a href="../-job/index.html">Job</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="1122089835%2FProperties%2F1975948010" anchor-label="children" id="1122089835%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns a sequence of this job's children.</div></div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="-1594571334%2FProperties%2F1975948010" anchor-label="isActive" id="-1594571334%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="index.html#-1594571334%2FProperties%2F1975948010">isActive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1594571334%2FProperties%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-1594571334%2FProperties%2F1975948010" anchor-label="isActive" id="-1594571334%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract val <a href="index.html#-1594571334%2FProperties%2F1975948010">isActive</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-1594571334%2FProperties%2F1975948010" anchor-label="isActive" id="-1594571334%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns <code>true</code> when this job is active -- it was already started and has not completed nor was cancelled yet.</div></div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="-724644247%2FProperties%2F1975948010" anchor-label="isCancelled" id="-724644247%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="index.html#-724644247%2FProperties%2F1975948010">isCancelled</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-724644247%2FProperties%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-724644247%2FProperties%2F1975948010" anchor-label="isCancelled" id="-724644247%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract val <a href="index.html#-724644247%2FProperties%2F1975948010">isCancelled</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-724644247%2FProperties%2F1975948010" anchor-label="isCancelled" id="-724644247%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns <code>true</code> if this job was cancelled for any reason, either by explicit invocation of <a href="../-job/cancel.html">cancel</a> or because it had failed or its child or parent was cancelled.</div></div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="-1471238481%2FProperties%2F1975948010" anchor-label="isCompleted" id="-1471238481%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="index.html#-1471238481%2FProperties%2F1975948010">isCompleted</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1471238481%2FProperties%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-1471238481%2FProperties%2F1975948010" anchor-label="isCompleted" id="-1471238481%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract val <a href="index.html#-1471238481%2FProperties%2F1975948010">isCompleted</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-1471238481%2FProperties%2F1975948010" anchor-label="isCompleted" id="-1471238481%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Returns <code>true</code> when this job has completed for any reason.</div></div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="971540817%2FProperties%2F1975948010" anchor-label="key" id="971540817%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="index.html#971540817%2FProperties%2F1975948010">key</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="971540817%2FProperties%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="971540817%2FProperties%2F1975948010" anchor-label="key" id="971540817%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract val <a href="index.html#971540817%2FProperties%2F1975948010">key</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;*&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="-665933191%2FProperties%2F1975948010" anchor-label="onAwait" id="-665933191%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+              <div class="table" data-togglable="Properties"><a data-name="-665933191%2FProperties%2F1975948010" anchor-label="onAwait" id="-665933191%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
                     <div class=""><span class="inline-flex"><a href="on-await.html">onAwait</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-665933191%2FProperties%2F1975948010"></span>
@@ -344,22 +104,6 @@
                       </div>
                       <div class="title">
                         <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-665933191%2FProperties%2F1975948010" anchor-label="onAwait" id="-665933191%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract val <a href="on-await.html">onAwait</a>: <a href="../../kotlinx.coroutines.selects/-select-clause1/index.html">SelectClause1</a>&lt;<a href="index.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-665933191%2FProperties%2F1975948010" anchor-label="onAwait" id="-665933191%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Clause for <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of <a href="await.html">await</a> suspending function that selects with the deferred value when it is resolved.</div></div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-<a data-name="-1267604415%2FProperties%2F1975948010" anchor-label="onJoin" id="-1267604415%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-                  <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="index.html#-1267604415%2FProperties%2F1975948010">onJoin</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1267604415%2FProperties%2F1975948010"></span>
-                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                        </span></span></div>
-                    <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
-                      <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-1267604415%2FProperties%2F1975948010" anchor-label="onJoin" id="-1267604415%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract val <a href="index.html#-1267604415%2FProperties%2F1975948010">onJoin</a>: <a href="../../kotlinx.coroutines.selects/-select-clause0/index.html">SelectClause0</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-1267604415%2FProperties%2F1975948010" anchor-label="onJoin" id="-1267604415%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Clause for <a href="../../kotlinx.coroutines.selects/select.html">select</a> expression of <a href="../-job/join.html">join</a> suspending function that selects when the job is complete.</div></div></div>
                       </div>
                     </div>
                   </div>
