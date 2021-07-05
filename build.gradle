@@ -286,6 +286,10 @@ knit {
 
 knitPrepare.dependsOn getTasksByName("dokkaHtmlMultiModule", true)
 
+dependencies {
+    dokkaHtmlMultiModulePlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+}
+
 // Disable binary compatibility check for JVM IR compiler output by default
 if (jvm_ir_enabled) {
     subprojects { project ->
