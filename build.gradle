@@ -280,11 +280,13 @@ apply plugin: 'kotlinx-knit'
 knit {
     siteRoot = "https://kotlin.github.io/kotlinx.coroutines"
     moduleRoots = [".", "integration", "reactive", "ui"]
-    moduleDocs = "build/dokka/htmlPartial"
-    dokkaMultiModuleRoot = "build/dokka/htmlMultiModule/"
 }
 
 knitPrepare.dependsOn getTasksByName("dokkaHtmlMultiModule", true)
+
+dependencies {
+    dokkaHtmlMultiModulePlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+}
 
 // Disable binary compatibility check for JVM IR compiler output by default
 if (jvm_ir_enabled) {

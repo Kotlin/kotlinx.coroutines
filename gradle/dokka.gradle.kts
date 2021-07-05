@@ -19,13 +19,11 @@ fun GradleDokkaSourceSetBuilder.makeLinkMapping(projectDir: File) {
 }
 
 val knit_version: String by project
-tasks.withType(DokkaTask::class).configureEach {
+tasks.withType(DokkaTaskPartial::class).configureEach {
     dependencies {
         plugins("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
     }
-}
 
-tasks.withType(DokkaTaskPartial::class).configureEach {
     suppressInheritedMembers.set(true)
     dokkaSourceSets.configureEach {
         jdkVersion.set(11)
