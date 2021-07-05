@@ -56,7 +56,6 @@ buildscript {
 
     repositories {
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/" }
-        maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         mavenLocal()
@@ -230,7 +229,7 @@ configure(subprojects.findAll {
 }
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
-def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
+def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
 apply plugin: "org.jetbrains.dokka"
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
@@ -281,10 +280,11 @@ apply plugin: 'kotlinx-knit'
 knit {
     siteRoot = "https://kotlin.github.io/kotlinx.coroutines"
     moduleRoots = [".", "integration", "reactive", "ui"]
-    moduleDocs = "build/dokka/html"
+    moduleDocs = "build/dokka/htmlPartial"
+    dokkaMultiModuleRoot = "build/dokka/htmlMultiModule/"
 }
 
-knitPrepare.dependsOn getTasksByName("dokkaHtml", true)
+knitPrepare.dependsOn getTasksByName("dokkaHtmlMultiModule", true)
 
 // Disable binary compatibility check for JVM IR compiler output by default
 if (jvm_ir_enabled) {
