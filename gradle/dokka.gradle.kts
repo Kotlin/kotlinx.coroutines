@@ -26,6 +26,7 @@ tasks.withType(DokkaTask::class).configureEach {
 }
 
 tasks.withType(DokkaTaskPartial::class).configureEach {
+    suppressInheritedMembers.set(true)
     dokkaSourceSets.configureEach {
         jdkVersion.set(8)
         includes.from("README.md")
