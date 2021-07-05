@@ -40,6 +40,7 @@ public fun <T: Any> rxFlowable(
     return Flowable.fromPublisher(publishInternal(GlobalScope, context, RX_HANDLER, block))
 }
 
+/** @suppress */
 @Deprecated(
     message = "CoroutineScope.rxFlowable is deprecated in favour of top-level rxFlowable",
     level = DeprecationLevel.HIDDEN,

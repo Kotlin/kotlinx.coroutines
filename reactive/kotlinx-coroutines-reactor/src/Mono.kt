@@ -125,6 +125,9 @@ private class MonoCoroutine<in T>(
     override fun isDisposed(): Boolean = disposed
 }
 
+/**
+ * @suppress
+ */
 @Deprecated(
     message = "CoroutineScope.mono is deprecated in favour of top-level mono",
     level = DeprecationLevel.HIDDEN,
@@ -148,6 +151,8 @@ public fun <T> CoroutineScope.mono(
  * ```
  * It looks like more than one value could be returned from `findById` and [awaitFirst] discards the extra elements,
  * when in fact, at most a single value can be present.
+ *
+ * @suppress
  */
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
@@ -170,6 +175,8 @@ public suspend fun <T> Mono<T>.awaitFirst(): T = awaitSingle()
  * ```
  * It looks like more than one value could be returned from `findById` and [awaitFirstOrDefault] discards the extra
  * elements, when in fact, at most a single value can be present.
+ *
+ * @suppress
  */
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
@@ -192,6 +199,8 @@ public suspend fun <T> Mono<T>.awaitFirstOrDefault(default: T): T = awaitSingleO
  * ```
  * It looks like more than one value could be returned from `findById` and [awaitFirstOrNull] discards the extra
  * elements, when in fact, at most a single value can be present.
+ *
+ * @suppress
  */
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
@@ -214,6 +223,8 @@ public suspend fun <T> Mono<T>.awaitFirstOrNull(): T? = awaitSingleOrNull()
  * ```
  * It looks like more than one value could be returned from `findById` and [awaitFirstOrElse] discards the extra
  * elements, when in fact, at most a single value can be present.
+ *
+ * @suppress
  */
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
@@ -236,6 +247,8 @@ public suspend fun <T> Mono<T>.awaitFirstOrElse(defaultValue: () -> T): T = awai
  * ```
  * It looks like more than one value could be returned from `findById` and [awaitLast] discards the initial elements,
  * when in fact, at most a single value can be present.
+ *
+ * @suppress
  */
 @Deprecated(
     message = "Mono produces at most one value, so the last element is the same as the first. " +

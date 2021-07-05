@@ -60,6 +60,9 @@ private class RxCompletableCoroutine(
     }
 }
 
+/**
+ * @suppress
+ */
 @Deprecated(
     message = "CoroutineScope.rxCompletable is deprecated in favour of top-level rxCompletable",
     level = DeprecationLevel.HIDDEN,

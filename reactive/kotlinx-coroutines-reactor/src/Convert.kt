@@ -42,6 +42,7 @@ public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(co
  * Every subscriber receives values from this channel in a **fan-out** fashion. If the are multiple subscribers,
  * they'll receive values in a round-robin way.
  * @param context -- the coroutine context from which the resulting flux is going to be signalled
+ * @suppress
  */
 @Deprecated(message = "Deprecated in the favour of consumeAsFlow()",
     level = DeprecationLevel.ERROR,

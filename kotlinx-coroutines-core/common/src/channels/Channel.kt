@@ -154,6 +154,8 @@ public interface SendChannel<in E> {
      * ```
      *
      * See https://github.com/Kotlin/kotlinx.coroutines/issues/974 for more context.
+     *
+     * @suppress **Deprecated**.
      */
     @Deprecated(
         level = DeprecationLevel.WARNING,
@@ -308,6 +310,8 @@ public interface ReceiveChannel<out E> {
      * The replacement `tryReceive().getOrNull()` is a default that ignores all close exceptions and
      * proceeds with `null`, while `poll` throws an exception if the channel was closed with an exception.
      * Replacement with the very same 'poll' semantics is `tryReceive().onClosed { if (it != null) throw it }.getOrNull()`
+     *
+     * @suppress **Deprecated**.
      */
     @Deprecated(
         level = DeprecationLevel.WARNING,
@@ -336,6 +340,8 @@ public interface ReceiveChannel<out E> {
      * The replacement `receiveCatching().getOrNull()` is a safe default that ignores all close exceptions and
      * proceeds with `null`, while `receiveOrNull` throws an exception if the channel was closed with an exception.
      * Replacement with the very same `receiveOrNull` semantics is `receiveCatching().onClosed { if (it != null) throw it }.getOrNull()`.
+     *
+     * @suppress **Deprecated**
      */
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     @LowPriorityInOverloadResolution

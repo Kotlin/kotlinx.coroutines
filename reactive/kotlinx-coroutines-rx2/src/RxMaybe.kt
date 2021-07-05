@@ -61,6 +61,7 @@ private class RxMaybeCoroutine<T>(
     }
 }
 
+/** @suppress */
 @Deprecated(
     message = "CoroutineScope.rxMaybe is deprecated in favour of top-level rxMaybe",
     level = DeprecationLevel.HIDDEN,

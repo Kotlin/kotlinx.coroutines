@@ -83,6 +83,9 @@ private fun <T> Subscriber<T>?.reject(t: Throwable) {
     onError(t)
 }
 
+/**
+ * @suppress
+ */
 @Deprecated(
     message = "CoroutineScope.flux is deprecated in favour of top-level flux",
     level = DeprecationLevel.HIDDEN,
