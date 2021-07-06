@@ -140,7 +140,7 @@ public fun SharingStarted.Companion.WhileSubscribed(
     stopTimeout: Duration = Duration.ZERO,
     replayExpiration: Duration = Duration.INFINITE
 ): SharingStarted =
-    StartedWhileSubscribed(stopTimeout.toLongMilliseconds(), replayExpiration.toLongMilliseconds())
+    StartedWhileSubscribed(stopTimeout.inWholeMilliseconds, replayExpiration.inWholeMilliseconds)
 
 // -------------------------------- implementation --------------------------------
 
