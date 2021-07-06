@@ -3,10 +3,10 @@
  */
 
 // For new mpp
-ext.experimentalAnnotations = [
-        "kotlin.Experimental",
+ext.optInAnnotations = [
         "kotlin.experimental.ExperimentalTypeInference",
         "kotlin.ExperimentalMultiplatform",
+        "kotlinx.coroutines.DelicateCoroutinesApi",
         "kotlinx.coroutines.ExperimentalCoroutinesApi",
         "kotlinx.coroutines.ObsoleteCoroutinesApi",
         "kotlinx.coroutines.InternalCoroutinesApi",

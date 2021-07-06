@@ -81,7 +81,7 @@ kotlin {
         }
         languageSettings {
             progressiveMode = true
-            experimentalAnnotations.each { useExperimentalAnnotation(it) }
+            optInAnnotations.each { useExperimentalAnnotation(it) }
         }
     }
 
