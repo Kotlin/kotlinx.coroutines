@@ -27,7 +27,6 @@ Conversion functions:
 | -------- | ---------------
 | [Job.asMono][kotlinx.coroutines.Job.asMono] | Converts a job to a hot Mono
 | [Deferred.asMono][kotlinx.coroutines.Deferred.asMono] | Converts a deferred value to a hot Mono
-| [ReceiveChannel.asFlux][kotlinx.coroutines.channels.ReceiveChannel.asFlux] | Converts a streaming channel to a hot Flux
 | [Scheduler.asCoroutineDispatcher][reactor.core.scheduler.Scheduler.asCoroutineDispatcher] | Converts a scheduler to a [CoroutineDispatcher]
 
 <!--- MODULE kotlinx-coroutines-core -->
@@ -50,7 +49,6 @@ Conversion functions:
 [ReactorContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/-reactor-context/index.html
 [kotlinx.coroutines.Job.asMono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/as-mono.html
 [kotlinx.coroutines.Deferred.asMono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/as-mono.html
-[kotlinx.coroutines.channels.ReceiveChannel.asFlux]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/as-flux.html
 [reactor.core.scheduler.Scheduler.asCoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/as-coroutine-dispatcher.html
 
 <!--- END -->
