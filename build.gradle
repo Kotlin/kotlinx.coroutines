@@ -4,14 +4,17 @@
 
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.gradle.util.VersionNumber
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 
 apply plugin: 'jdk-convention'
 apply from: rootProject.file("gradle/experimental.gradle")
 
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'integration-testing']
-def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-stubs', 'integration-testing']
+def sourceless = ['kotlinx.coroutines', 'kotlinx-coroutines-bom', 'integration-testing']
+def internal = ['kotlinx.coroutines', 'benchmarks', 'integration-testing']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
@@ -43,7 +46,7 @@ buildscript {
     rootProject.properties.each { key, value ->
         if (key.endsWith("_version") && value instanceof String && value.endsWith("-SNAPSHOT")) {
             println("NOTE: USING SNAPSHOT VERSION: $key=$value")
-            ext.using_snapshot_version=true
+            ext.using_snapshot_version = true
         }
     }
 
@@ -54,11 +57,10 @@ buildscript {
     }
 
     repositories {
-        // Leftover until we migrated to Dokka 1.4.30
-        maven { url "https://kotlin.bintray.com/kotlin-dev" }
-        maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/" }
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        mavenLocal()
     }
 
     dependencies {
@@ -125,7 +127,6 @@ apply plugin: "binary-compatibility-validator"
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
     if (build_snapshot_train) {
-        ignoredProjects.remove("site")
         ignoredProjects.remove("example-frontend-js")
         ignoredProjects.add("kotlinx-coroutines-core")
     }
@@ -139,6 +140,8 @@ allprojects {
          * google should be first in the repository list because some of the play services
          * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
          */
+        mavenLocal()
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/" }
         google()
         mavenCentral()
     }
@@ -225,11 +228,12 @@ configure(subprojects.findAll {
 }
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
-def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
+def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
+apply plugin: "org.jetbrains.dokka"
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != 'kotlinx-coroutines-bom') {
-        apply from: rootProject.file('gradle/dokka.gradle')
+        apply from: rootProject.file('gradle/dokka.gradle.kts')
     }
     apply from: rootProject.file('gradle/publish.gradle')
 }
@@ -237,11 +241,12 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != "kotlinx-coroutines-bom") {
         if (it.name != coreModule) {
-            dokka.dependsOn project(":$coreModule").dokka
-            tasks.withType(dokka.getClass()) {
-                externalDocumentationLink {
-                    url = new URL(core_docs_url)
-                    packageListUrl = new File(core_docs_file).toURI().toURL()
+            tasks.withType(DokkaTaskPartial.class) {
+                dokkaSourceSets.configureEach {
+                    externalDocumentationLink {
+                        url.set(new URL(core_docs_url))
+                        packageListUrl.set(new File(core_docs_file).toURI().toURL())
+                    }
                 }
             }
         }
@@ -274,9 +279,15 @@ apply plugin: 'kotlinx-knit'
 knit {
     siteRoot = "https://kotlin.github.io/kotlinx.coroutines"
     moduleRoots = [".", "integration", "reactive", "ui"]
+    moduleDocs = "build/dokka/htmlPartial"
+    dokkaMultiModuleRoot = "build/dokka/htmlMultiModule/"
 }
 
-knitPrepare.dependsOn getTasksByName("dokka", true)
+knitPrepare.dependsOn getTasksByName("dokkaHtmlMultiModule", true)
+
+dependencies {
+    dokkaHtmlMultiModulePlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+}
 
 // Disable binary compatibility check for JVM IR compiler output by default
 if (jvm_ir_enabled) {
