@@ -7,8 +7,8 @@
 package kotlinx.coroutines.android
 
 import android.os.*
-import androidx.annotation.*
 import android.view.*
+import androidx.annotation.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import java.lang.reflect.*
@@ -54,15 +54,22 @@ internal class AndroidDispatcherFactory : MainDispatcherFactory {
     override fun createDispatcher(allFactories: List<MainDispatcherFactory>) =
         HandlerContext(Looper.getMainLooper().asHandler(async = true))
 
-    override fun hintOnError(): String? = "For tests Dispatchers.setMain from kotlinx-coroutines-test module can be used"
+    override fun hintOnError(): String = "For tests Dispatchers.setMain from kotlinx-coroutines-test module can be used"
 
     override val loadPriority: Int
         get() = Int.MAX_VALUE / 2
 }
 
 /**
- * Represents an arbitrary [Handler] as a implementation of [CoroutineDispatcher]
+ * Represents an arbitrary [Handler] as an implementation of [CoroutineDispatcher]
  * with an optional [name] for nicer debugging
+ *
+ * ## Rejected execution
+ *
+ * If the underlying handler is closed and its message-scheduling methods start to return `false` on
+ * an attempt to submit a continuation task to the resulting dispatcher,
+ * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
+ * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
 @JvmOverloads
@@ -129,24 +136,33 @@ internal class HandlerContext private constructor(
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        handler.post(block)
+        if (!handler.post(block)) {
+            cancelOnRejection(context, block)
+        }
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val block = Runnable {
             with(continuation) { resumeUndispatched(Unit) }
         }
-        handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))
-        continuation.invokeOnCancellation { handler.removeCallbacks(block) }
+        if (handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))) {
+            continuation.invokeOnCancellation { handler.removeCallbacks(block) }
+        } else {
+            cancelOnRejection(continuation.context, block)
+        }
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))
-        return object : DisposableHandle {
-            override fun dispose() {
-                handler.removeCallbacks(block)
-            }
+        if (handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))) {
+            return DisposableHandle { handler.removeCallbacks(block) }
         }
+        cancelOnRejection(context, block)
+        return NonDisposableHandle
+    }
+
+    private fun cancelOnRejection(context: CoroutineContext, block: Runnable) {
+        context.cancel(CancellationException("The task was rejected, the handler underlying the dispatcher '${toString()}' was closed"))
+        Dispatchers.IO.dispatch(context, block)
     }
 
     override fun toString(): String = toStringInternalImpl() ?: run {

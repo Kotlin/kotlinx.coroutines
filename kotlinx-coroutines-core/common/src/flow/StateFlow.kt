@@ -37,7 +37,7 @@ import kotlin.native.concurrent.*
  *     val counter = _counter.asStateFlow() // publicly exposed as read-only state flow
  *
  *     fun inc() {
- *         _counter.value++
+ *         _counter.update { count -> count + 1 } // atomic, safe for concurrent use
  *     }
  * }
  * ```
@@ -185,6 +185,56 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
  */
 @Suppress("FunctionName")
 public fun <T> MutableStateFlow(value: T): MutableStateFlow<T> = StateFlowImpl(value ?: NULL)
+
+// ------------------------------------ Update methods ------------------------------------
+
+/**
+ * Updates the [MutableStateFlow.value] atomically using the specified [function] of its value, and returns the new
+ * value.
+ *
+ * [function] may be evaluated multiple times, if [value] is being concurrently updated.
+ */
+public inline fun <T> MutableStateFlow<T>.updateAndGet(function: (T) -> T): T {
+    while (true) {
+        val prevValue = value
+        val nextValue = function(prevValue)
+        if (compareAndSet(prevValue, nextValue)) {
+            return nextValue
+        }
+    }
+}
+
+/**
+ * Updates the [MutableStateFlow.value] atomically using the specified [function] of its value, and returns its
+ * prior value.
+ *
+ * [function] may be evaluated multiple times, if [value] is being concurrently updated.
+ */
+public inline fun <T> MutableStateFlow<T>.getAndUpdate(function: (T) -> T): T {
+    while (true) {
+        val prevValue = value
+        val nextValue = function(prevValue)
+        if (compareAndSet(prevValue, nextValue)) {
+            return prevValue
+        }
+    }
+}
+
+
+/**
+ * Updates the [MutableStateFlow.value] atomically using the specified [function] of its value.
+ *
+ * [function] may be evaluated multiple times, if [value] is being concurrently updated.
+ */
+public inline fun <T> MutableStateFlow<T>.update(function: (T) -> T) {
+    while (true) {
+        val prevValue = value
+        val nextValue = function(prevValue)
+        if (compareAndSet(prevValue, nextValue)) {
+            return
+        }
+    }
+}
 
 // ------------------------------------ Implementation ------------------------------------
 
@@ -366,10 +416,7 @@ private class StateFlowImpl<T>(
 }
 
 internal fun MutableStateFlow<Int>.increment(delta: Int) {
-    while (true) { // CAS loop
-        val current = value
-        if (compareAndSet(current, current + delta)) return
-    }
+    update { it + delta }
 }
 
 internal fun <T> StateFlow<T>.fuseStateFlow(

@@ -7,18 +7,12 @@
 package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.flow.*
-import org.junit.*
 import org.junit.Ignore
 import org.junit.Test
 import org.reactivestreams.*
 import org.reactivestreams.tck.*
-
-import org.reactivestreams.Subscription
-import org.reactivestreams.Subscriber
-import java.util.ArrayList
 import java.util.concurrent.*
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ForkJoinPool.commonPool
+import java.util.concurrent.ForkJoinPool.*
 import kotlin.test.*
 
 class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
@@ -97,7 +91,7 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
 
             override fun onSubscribe(s: Subscription) {
                 this.s = s
-                for (i in 0 until n) {
+                for (i in 0..n) {
                     commonPool().execute { s.request(1) }
                 }
             }
@@ -115,7 +109,7 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
             }
         })
 
-        latch.await(50, TimeUnit.SECONDS)
+        latch.await()
         assertEquals(array.toList(), collected)
     }
 

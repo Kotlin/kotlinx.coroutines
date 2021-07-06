@@ -126,13 +126,18 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
     }
     val result = CompletableDeferred<T>()
     whenComplete { value, exception ->
-        if (exception == null) {
-            // the future has completed normally
-            result.complete(value)
-        } else {
-            // the future has completed with an exception, unwrap it consistently with fast path
-            // Note: In the fast-path the implementation of CompletableFuture.get() does unwrapping
-            result.completeExceptionally((exception as? CompletionException)?.cause ?: exception)
+        try {
+            if (exception == null) {
+                // the future has completed normally
+                result.complete(value)
+            } else {
+                // the future has completed with an exception, unwrap it consistently with fast path
+                // Note: In the fast-path the implementation of CompletableFuture.get() does unwrapping
+                result.completeExceptionally((exception as? CompletionException)?.cause ?: exception)
+            }
+        } catch (e: Throwable) {
+            // We come here iff the internals of Deferred threw an exception during its completion
+            handleCoroutineException(EmptyCoroutineContext, e)
         }
     }
     result.cancelFutureOnCompletion(future)

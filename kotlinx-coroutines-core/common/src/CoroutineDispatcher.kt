@@ -99,8 +99,7 @@ public abstract class CoroutineDispatcher :
     public final override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
         DispatchedContinuation(this, continuation)
 
-    @InternalCoroutinesApi
-    public override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
+    public final override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
         /*
          * Unconditional cast is safe here: we only return DispatchedContinuation from `interceptContinuation`,
          * any ClassCastException can only indicate compiler bug

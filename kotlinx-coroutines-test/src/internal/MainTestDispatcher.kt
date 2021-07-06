@@ -35,7 +35,6 @@ internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory
         delegate.dispatch(context, block)
     }
 
-    @ExperimentalCoroutinesApi
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = delegate.isDispatchNeeded(context)
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
@@ -50,11 +49,11 @@ internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory
         return delay.invokeOnTimeout(timeMillis, block, context)
     }
 
-    public fun setDispatcher(dispatcher: CoroutineDispatcher) {
+    fun setDispatcher(dispatcher: CoroutineDispatcher) {
         _delegate = dispatcher
     }
 
-    public fun resetDispatcher() {
+    fun resetDispatcher() {
         _delegate = null
     }
 }
