@@ -34,6 +34,7 @@ public suspend fun <E> ReceiveChannel<E>.elementAt(index: Int): E = consume {
         throw IndexOutOfBoundsException("ReceiveChannel doesn't contain element at index $index.")
     var count = 0
     for (element in this) {
+        @Suppress("UNUSED_CHANGED_VALUE") // KT-47628
         if (index == count++)
             return element
     }
