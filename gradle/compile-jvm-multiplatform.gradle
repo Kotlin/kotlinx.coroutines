@@ -6,13 +6,7 @@ sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 kotlin {
-    jvm {
-        if (rootProject.ext.jvm_ir_enabled) {
-            compilations.all {
-                kotlinOptions.useIR = true
-            }
-        }
-    }
+    jvm {}
     sourceSets {
         jvmTest.dependencies {
             api "org.jetbrains.kotlin:kotlin-test:$kotlin_version"

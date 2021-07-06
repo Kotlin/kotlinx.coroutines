@@ -201,12 +201,6 @@ jvmTest {
         // Configure the IDEA runner for Lincheck
         configureJvmForLincheck(jvmTest)
     }
-    // TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
-    if (rootProject.ext.jvm_ir_enabled) {
-        filter {
-            excludeTestsMatching('kotlinx.coroutines.exceptions.StackTraceRecovery*')
-        }
-    }
 }
 
 // Setup manifest for kotlinx-coroutines-core-jvm.jar
