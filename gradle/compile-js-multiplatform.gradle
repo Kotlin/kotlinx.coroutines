@@ -46,7 +46,7 @@ compileJsLegacy.configure {
     kotlinOptions {
         // drop -js suffix from outputFile
         def baseName = project.name - "-js"
-        outputFile = new File(outputFile.parent, baseName + ".js")
+        outputFile = new File(outputFileProperty.get().parent, baseName + ".js")
     }
 }
 
