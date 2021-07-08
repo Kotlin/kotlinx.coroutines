@@ -12,16 +12,11 @@ val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == t
 val buildSnapshotTrain = properties["build_snapshot_train"]?.toString()?.toBoolean() == true
 
 repositories {
-    maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
-    mavenLocal()
-
+    mavenCentral()
     if (cacheRedirectorEnabled) {
         maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
-        maven("https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-dev")
     } else {
         maven("https://plugins.gradle.org/m2")
-        // Leftover until we migrated to Dokka 1.4.30
-        maven("https://dl.bintray.com/kotlin/kotlin-dev")
     }
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
 
