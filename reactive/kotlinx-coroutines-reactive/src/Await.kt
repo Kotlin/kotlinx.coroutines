@@ -100,6 +100,8 @@ public suspend fun <T> Publisher<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
  *
  * @throws NoSuchElementException if the publisher does not emit any value
  * @throws IllegalArgumentException if the publisher emits more than one value
+ *
+ * @suppress
  */
 @Deprecated(
     message = "Deprecated without a replacement due to its name incorrectly conveying the behavior. " +
@@ -127,6 +129,7 @@ public suspend fun <T> Publisher<T>.awaitSingleOrDefault(default: T): T = awaitO
  * meaning.
  *
  * @throws IllegalArgumentException if the publisher emits more than one value
+ * @suppress
  */
 @Deprecated(
     message = "Deprecated without a replacement due to its name incorrectly conveying the behavior. " +
@@ -156,6 +159,7 @@ public suspend fun <T> Publisher<T>.awaitSingleOrNull(): T? = awaitOne(Mode.SING
  * meaning.
  *
  * @throws IllegalArgumentException if the publisher emits more than one value
+ * @suppress
  */
 @Deprecated(
     message = "Deprecated without a replacement due to its name incorrectly conveying the behavior. " +

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.*
 import org.reactivestreams.*
 
 // Binary compatibility with Spring 5.2 RC
+/** @suppress */
 @Deprecated(
     message = "Replaced in favor of ReactiveFlow extension, please import kotlinx.coroutines.reactive.* instead of kotlinx.coroutines.reactive.FlowKt",
     level = DeprecationLevel.HIDDEN
@@ -20,6 +21,7 @@ import org.reactivestreams.*
 public fun <T : Any> Publisher<T>.asFlowDeprecated(): Flow<T> = asFlow()
 
 // Binary compatibility with Spring 5.2 RC
+/** @suppress */
 @Deprecated(
     message = "Replaced in favor of ReactiveFlow extension, please import kotlinx.coroutines.reactive.* instead of kotlinx.coroutines.reactive.FlowKt",
     level = DeprecationLevel.HIDDEN
@@ -27,6 +29,7 @@ public fun <T : Any> Publisher<T>.asFlowDeprecated(): Flow<T> = asFlow()
 @JvmName("asPublisher")
 public fun <T : Any> Flow<T>.asPublisherDeprecated(): Publisher<T> = asPublisher()
 
+/** @suppress */
 @FlowPreview
 @Deprecated(
     message = "batchSize parameter is deprecated, use .buffer() instead to control the backpressure",

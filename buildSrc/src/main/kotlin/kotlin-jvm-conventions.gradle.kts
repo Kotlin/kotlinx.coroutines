@@ -15,12 +15,6 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_6
 }
 
-if (rootProject.extra.get("jvm_ir_enabled") as Boolean) {
-    kotlin.target.compilations.configureEach {
-        kotlinOptions.useIR = true
-    }
-}
-
 dependencies {
     testImplementation(kotlin("test"))
     // Workaround to make addSuppressed work in tests

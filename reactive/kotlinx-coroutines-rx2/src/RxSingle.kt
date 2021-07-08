@@ -60,6 +60,7 @@ private class RxSingleCoroutine<T: Any>(
     }
 }
 
+/** @suppress */
 @Deprecated(
     message = "CoroutineScope.rxSingle is deprecated in favour of top-level rxSingle",
     level = DeprecationLevel.HIDDEN,

@@ -309,6 +309,8 @@ private class CancellableFlowImpl<T>(private val flow: Flow<T>) : CancellableFlo
  * 3) It defers the execution of declarative [builder] until the moment of [collection][Flow.collect] similarly
  *    to `Observable.defer`. But it is unexpected because nothing in the name `flowWith` reflects this fact.
  * 4) It can be confused with [flowOn] operator, though [flowWith] is much rarer.
+ *
+ * @suppress
  */
 @FlowPreview
 @Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.ERROR) // Error in beta release, removal in 1.4

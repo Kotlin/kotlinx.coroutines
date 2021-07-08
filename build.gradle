@@ -9,7 +9,7 @@ import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 
 apply plugin: 'jdk-convention'
-apply from: rootProject.file("gradle/experimental.gradle")
+apply from: rootProject.file("gradle/opt-in.gradle")
 
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
@@ -36,9 +36,6 @@ buildscript {
             throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
         }
     }
-    // These three flags are enabled in train builds for JVM IR compiler testing
-    ext.jvm_ir_enabled = rootProject.properties['enable_jvm_ir'] != null
-    ext.jvm_ir_api_check_enabled = rootProject.properties['enable_jvm_ir_api_check'] != null
     ext.native_targets_enabled = rootProject.properties['disable_native_targets'] == null
 
     // Determine if any project dependency is using a snapshot version
@@ -167,9 +164,8 @@ configure(subprojects.findAll { !sourceless.contains(it.name) }) {
 
     // Configure options for all Kotlin compilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
-        kotlinOptions.freeCompilerArgs += experimentalAnnotations.collect { "-Xuse-experimental=" + it }
+        kotlinOptions.freeCompilerArgs += optInAnnotations.collect { "-Xopt-in=" + it }
         kotlinOptions.freeCompilerArgs += "-progressive"
-        kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
         // Disable KT-36770 for RxJava2 integration
         kotlinOptions.freeCompilerArgs += "-XXLanguage:-ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated"
         // Remove null assertions to get smaller bytecode on Android
@@ -287,15 +283,6 @@ knitPrepare.dependsOn getTasksByName("dokkaHtmlMultiModule", true)
 
 dependencies {
     dokkaHtmlMultiModulePlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
-}
-
-// Disable binary compatibility check for JVM IR compiler output by default
-if (jvm_ir_enabled) {
-    subprojects { project ->
-        configure(tasks.matching { it.name == "apiCheck" }) {
-            enabled = enabled && jvm_ir_api_check_enabled
-        }
-    }
 }
 
 // Opt-in for build scan in order to troubleshoot Gradle on TC

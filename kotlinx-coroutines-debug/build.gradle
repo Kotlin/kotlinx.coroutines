@@ -31,16 +31,6 @@ dependencies {
     api "net.java.dev.jna:jna-platform:$jna_version"
 }
 
-// TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
-if (rootProject.ext.jvm_ir_enabled) {
-    tasks.named('test', Test) {
-        filter {
-//            excludeTest('kotlinx.coroutines.debug.CoroutinesDumpTest', 'testCreationStackTrace')
-            excludeTestsMatching('kotlinx.coroutines.debug.DebugProbesTest')
-        }
-    }
-}
-
 java {
     /* This is needed to be able to run JUnit5 tests. Otherwise, Gradle complains that it can't find the
     JVM1.6-compatible version of the `junit-jupiter-api` artifact. */

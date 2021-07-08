@@ -61,6 +61,7 @@ private const val CLOSED = -1L    // closed, but have not signalled onCompleted/
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
 private val DEFAULT_HANDLER: (Throwable, CoroutineContext) -> Unit = { t, ctx -> if (t !is CancellationException) handleCoroutineException(ctx, t) }
 
+/** @suppress */
 @Suppress("CONFLICTING_JVM_DECLARATIONS", "RETURN_TYPE_MISMATCH_ON_INHERITANCE")
 @InternalCoroutinesApi
 public class PublisherCoroutine<in T>(
