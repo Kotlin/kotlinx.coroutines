@@ -147,7 +147,7 @@ public fun <T: Any> Flow<T>.asFlowable(context: CoroutineContext = EmptyCoroutin
 public fun <T: Any> Flow<T>._asFlowable(context: CoroutineContext = EmptyCoroutineContext): Flowable<T> =
     asFlowable(context)
 
-/* @suppress */
+/** @suppress */
 @Suppress("UNUSED") // KT-42513
 @JvmOverloads // binary compatibility
 @JvmName("from")
