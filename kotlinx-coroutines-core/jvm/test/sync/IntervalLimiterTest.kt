@@ -6,6 +6,7 @@ package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
+import org.junit.*
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
@@ -14,7 +15,7 @@ import kotlin.time.*
 
 @RunWith(Parameterized::class)
 @OptIn(ExperimentalTime::class)
-class IntervalLimiterTest(
+class IntervalLimiterParamTest(
     private val eventsPerInterval: Int
 ) {
 
@@ -22,11 +23,7 @@ class IntervalLimiterTest(
 
         @JvmStatic
         @Parameterized.Parameters(name = "{0} events per interval")
-        fun data(): Collection<Array<Any>> = listOf(
-            1,
-            3,
-            10, 100, 1000
-        ).map { arrayOf(it) }
+        fun data(): Collection<Array<Int>> = listOf(1, 3, 10, 100, 1000).map { arrayOf(it) }
     }
 
     @Test
@@ -123,11 +120,48 @@ class IntervalLimiterTest(
         )
 
         repeat(10) {
-            assertTrue(intervalLimiter.tryAcquire(eventsPerInterval * 100), "Permits inside warmup period should be granted")
+            assertTrue(
+                intervalLimiter.tryAcquire(eventsPerInterval * 100),
+                "Permits inside warmup period should be granted"
+            )
         }
         timeSource.nanos = (interval * 2).inWholeNanoseconds
         assertTrue(intervalLimiter.tryAcquire(eventsPerInterval - 1), "Permit should be granted")
         assertTrue(intervalLimiter.tryAcquire(1), "Last permit before we move out of interval should be granted")
         assertFalse(intervalLimiter.tryAcquire(1), "First permit outside of interval should not be granted")
+    }
+}
+
+@OptIn(ExperimentalTime::class)
+internal class IntervalLimiterTest {
+
+    private val timeSource = TestNanoTimeSource()
+    private val delayer = Delayer()
+    private val permits:Int = 100000
+    private val interval = Duration.days(1) - Duration.nanoseconds(1)
+    private val limiter = IntervalLimiterImpl(
+        eventsPerInterval = 3,
+        interval = interval,
+        timeSource = timeSource,
+        delay = delayer::delay
+    )
+
+    @Test
+    fun extreme_permits_number_tryAcquire():Unit = runBlocking {
+        assertFailsWith(IllegalArgumentException::class) {
+            limiter.tryAcquire(permits)
+        }
+    }
+
+    @Test
+    fun extreme_permits_numbers_acquire():Unit = runBlocking {
+        assertFailsWith(IllegalArgumentException::class){
+            limiter.acquire(permits)
+        }
+    }
+
+    @Test
+    fun get_permits_at_the_end_of_time() {
+        TODO("not implemented")
     }
 }

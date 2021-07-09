@@ -24,7 +24,7 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
 
         @JvmStatic
         @Parameters(name = "{0} events per interval")
-        fun data(): Collection<Array<Any>> = listOf(1, 3, 10, 100, 1000).map { arrayOf(it) }
+        fun data(): Collection<Array<Int>> = listOf(1, 3, 10, 100, 1000).map { arrayOf(it) }
     }
 
     @Test
@@ -164,11 +164,11 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
             warmupPeriod = interval
         )
         repeat(10) {
-            assertEquals(0,rateLimiter.acquire(eventsPerInterval * 10))
+            assertEquals(0, rateLimiter.acquire(eventsPerInterval * 10))
         }
 
         timeSource.nanos += interval.inWholeNanoseconds - 1
-        assertEquals(0,rateLimiter.acquire(), "Still in warmup, should not be delayed")
+        assertEquals(0, rateLimiter.acquire(), "Still in warmup, should not be delayed")
         timeSource.nanos += 1
         assertEquals(0, rateLimiter.acquire(eventsPerInterval), "First event out of warmup should not be delayed")
 
@@ -178,8 +178,9 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
             message = "No delay should have been recorded so far, due to warm up period"
         )
 
-        val delayMillis = ((interval / eventsPerInterval) * eventsPerInterval).inWholeMilliseconds // Avoid fraction deviation
-        assertEquals(delayMillis,rateLimiter.acquire(eventsPerInterval))
+        val delayMillis =
+            ((interval / eventsPerInterval) * eventsPerInterval).inWholeMilliseconds // Avoid fraction deviation
+        assertEquals(delayMillis, rateLimiter.acquire(eventsPerInterval))
         assertEquals(delayMillis, delayer.getDelay())
     }
 }

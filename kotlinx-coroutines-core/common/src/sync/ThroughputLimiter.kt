@@ -61,22 +61,26 @@ public interface IntervalLimiter : ThroughputLimiter
 
 @SinceKotlin("1.5")
 @OptIn(ExperimentalTime::class)
-public fun intervalLimiter(eventsPerInterval: Int, interval: Duration, warmupPeriod: Duration? = null): IntervalLimiter =
+public fun intervalLimiter(
+    eventsPerInterval: Int,
+    interval: Duration,
+    warmupPeriod: Duration? = null
+): IntervalLimiter =
     IntervalLimiterImpl(eventsPerInterval = eventsPerInterval, interval = interval, warmupPeriod = warmupPeriod)
 
 @SinceKotlin("1.5")
 @OptIn(ExperimentalTime::class)
 internal class IntervalLimiterImpl(
-    eventsPerInterval: Int,
-    interval: Duration = Duration.seconds(1),
+    private val eventsPerInterval: Int,
+    private val interval: Duration = Duration.seconds(1),
     private val timeSource: NanoTimeSource = NanoTimeSourceImpl,
     private val delay: suspend (Long) -> Unit = ::delay,
-    warmupPeriod:Duration? = null
+    warmupPeriod: Duration? = null
 ) : IntervalLimiter {
 
     init {
         require(interval.inWholeMilliseconds > 5) {
-            "Interval has to be at least 5 ms. The overhead of having locks and such in place if enough to render this moot."
+            "Interval has to be at least 5 ms. The overhead of having locks and such in place is enough to render this moot."
         }
         require(interval.inWholeDays <= 1) {
             "Interval has to be less than 1 day"
@@ -84,33 +88,34 @@ internal class IntervalLimiterImpl(
         require(interval.inWholeNanoseconds / eventsPerInterval > 1) {
             "Interval segment is not allowed to be less than one"
         }
-        require(warmupPeriod?.let { interval <= warmupPeriod } != false){
+        require(warmupPeriod?.let { interval <= warmupPeriod } != false) {
             "Interval has to be greater or equal to the warmup period"
         }
+        require(interval.inWholeNanoseconds != Long.MAX_VALUE) {
+            "Interval overflowed"
+        }
     }
+    private val maxPermitDuration = Duration.days(10)
+    private val maxPermits:Long = (maxPermitDuration / (interval / eventsPerInterval)).toLong()
 
-    private var warmupMark:NanoTimeMark? = warmupPeriod?.let { timeSource.markNow() + it }
-    //private val oneNano = Duration.nanoseconds(1)
+    private var warmupMark: NanoTimeMark? = warmupPeriod?.let { timeSource.markNow() + it }
     private val mutex = Mutex()
-    private val _interval = Duration.nanoseconds(interval.inWholeNanoseconds)
-    private val eventSegment = _interval.div(eventsPerInterval)
     private val counter = ThroughputCounter(CoroutineScope(Dispatchers.Default))
 
     // Mutable state, access through mutex
-    private var cursor: NanoTimeMark = timeSource.markNow()
-    private var intervalStartCursor: NanoTimeMark = timeSource.markNow() - eventSegment
-    private var intervalEndCursor: NanoTimeMark = intervalStartCursor + _interval
+    private var cursor: Long = 0
+    private var intervalStartCursor: NanoTimeMark = timeSource.markNow()
+    private var intervalEndCursor: NanoTimeMark = intervalStartCursor + interval
     // End Mutable state
 
     override suspend fun acquire(): Long = acquire(permits = 1)
     override suspend fun acquire(permits: Int): Long {
-        if (permits < 0) throw IllegalArgumentException("You need to ask for at least zero permits")
+        if(permits < 0) throw IllegalArgumentException("Permits must be zero or larger")
+        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take permits $permits, max $maxPermits is allowed")
 
         val now: NanoTimeMark = timeSource.markNow()
-        val permitDuration = if (permits == 1) eventSegment else eventSegment.times(permits)
-
         val wakeUpTime: NanoTimeMark = mutex.withLock {
-            getWakeUpTime(now, permitDuration)
+            getWakeUpTime(now, permits)
         }
         val sleep: Duration = (wakeUpTime.minus(now))
         val sleepMillis = sleep.inWholeMilliseconds
@@ -130,10 +135,12 @@ internal class IntervalLimiterImpl(
 
     override suspend fun tryAcquire(timeout: Duration): Boolean = tryAcquireInternal(timeout = timeout)
     private suspend fun tryAcquireInternal(permits: Int = 1, timeout: Duration? = null): Boolean {
-        if (permits < 0) throw IllegalArgumentException("You need to ask for at least zero permits")
+        if(permits < 0) throw IllegalArgumentException("Permits must be zero or larger")
+        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take permits $permits, max $maxPermits is allowed")
 
         val now: NanoTimeMark = timeSource.markNow()
         val timeoutEnd: NanoTimeMark = if (timeout == null) now else now + timeout
+
         // Early elimination without waiting for locks
         if (!shouldAllowOnTry(now, timeoutEnd)) {
             // Start of current interval is in the future
@@ -141,7 +148,6 @@ internal class IntervalLimiterImpl(
             return false
         }
 
-        val permitDuration = if (permits == 1) eventSegment else eventSegment.times(permits)
         val wakeUpTime: NanoTimeMark = mutex.withLock {
             // Late elimination with locks
             // In case things changed while waiting for the lock
@@ -149,7 +155,7 @@ internal class IntervalLimiterImpl(
                 counter.count(DENIED, permits)
                 return false
             }
-            getWakeUpTime(now, permitDuration)
+            getWakeUpTime(now, permits)
         }
         val sleep: Duration = (wakeUpTime.minus(now))
         val sleepMillis = sleep.inWholeMilliseconds
@@ -165,65 +171,64 @@ internal class IntervalLimiterImpl(
     /**
      * Must be run inside the mutex.. This is the Danger Zone.
      */
-    private fun getWakeUpTime(now: NanoTimeMark, permitDuration: Duration): NanoTimeMark {
-        return if(warmupMark != null){
-            if(now < warmupMark!!){
+    private fun getWakeUpTime(now: NanoTimeMark, permits: Int): NanoTimeMark {
+        return if (warmupMark != null) {
+            if (now < warmupMark!!) {
                 now
             } else {
                 warmupMark = null
-                cursor = now + permitDuration
-                intervalStartCursor = now - eventSegment
-                intervalEndCursor = intervalStartCursor + _interval
+                cursor = permits.toLong()
+                intervalStartCursor = now
+                intervalEndCursor = intervalStartCursor + interval
                 now
             }
         } else if (intervalEndCursor < now) {
             // Active interval is in the past
             // Align start of interval with current point in time
             intervalStartCursor = now
-            intervalEndCursor = intervalStartCursor + _interval
-            cursor = intervalStartCursor + permitDuration
+            intervalEndCursor = intervalStartCursor + interval
+            cursor = permits.toLong()
             // No delay
             // println("Setting up")
             now
-        } else if (cursor > intervalEndCursor) {
+        } else if (cursor >= eventsPerInterval) {
             // Cursor has moved into new interval
             // Move cursors to match new interval
             val displacement = getDisplacement()
             intervalEndCursor += displacement
             intervalStartCursor += displacement
-            cursor += permitDuration
+            cursor = (cursor + permits) % eventsPerInterval
             // println("Cursor beyond interval, moving interval $intervalSteps steps")
-            intervalStartCursor + eventSegment
+            intervalStartCursor
         } else if (intervalStartCursor > now) {
             // Active interval is in the future, and the current permit must be delayed
-            cursor += permitDuration
+            cursor += permits
             // println("Cursor in future interval")
-            intervalStartCursor + eventSegment
+            intervalStartCursor
         } else {
             // Now and Cursor are within the active interval
             // Only need to move the Cursor, nothing else
             // No delay
-            cursor += permitDuration
+            cursor += permits
             // println("Nothing special - cursor in first interval")
             now
         }
     }
 
     private fun getDisplacement(): Duration {
-        val cursorDiff = cursor - intervalEndCursor
-        var intervalSteps: Int = (cursorDiff.inWholeNanoseconds / _interval.inWholeNanoseconds).toInt()
-        if (cursorDiff.inWholeNanoseconds % _interval.inWholeNanoseconds > 0) intervalSteps++
-        return _interval.times(intervalSteps)
+        val intervalSteps: Int = (cursor / eventsPerInterval).toInt()
+        // TODO if (inter)
+        return interval.times(intervalSteps)
     }
 
     private fun shouldAllowOnTry(now: NanoTimeMark, timeoutEnd: NanoTimeMark): Boolean {
-        return if(warmupMark != null && warmupMark!! < now) {
+        return if (warmupMark != null && warmupMark!! < now) {
             return true
-        } else if (cursor > intervalEndCursor) {
+        } else if (cursor >= eventsPerInterval) {
             val displacement: Duration = getDisplacement()
             val newStart: NanoTimeMark = intervalStartCursor + displacement
             // println("Timeout end is going to be before the new start of period ${(timeoutEnd - newStart).inWholeNanoseconds}ns diff")
-            return timeoutEnd > newStart
+            return timeoutEnd >= newStart
         } else if (now > intervalEndCursor) {
             // println("Stale interval")
             return true
@@ -261,8 +266,7 @@ internal class RateLimiterImpl(
 ) : RateLimiter {
 
     private val mutex = Mutex()
-    private val _interval = Duration.nanoseconds(interval.inWholeNanoseconds)
-    private val permitDuration = _interval.div(eventsPerInterval)
+    private val permitDuration = interval.div(eventsPerInterval).round()
     private val counter = ThroughputCounter(CoroutineScope(Dispatchers.Default))
 
     private var warmupMark: NanoTimeMark? = warmupPeriod?.let { timeSource.markNow() + it }
@@ -277,11 +281,17 @@ internal class RateLimiterImpl(
         }
     }
 
+    private val maxPermitDuration:Duration = Duration.days(10)
+    private val maxPermits:Long = (maxPermitDuration / (interval / eventsPerInterval)).toLong()
+
     override suspend fun acquire(): Long {
         return acquire(1)
     }
 
     override suspend fun acquire(permits: Int): Long {
+        if(permits < 0) throw IllegalArgumentException("Permits must be zero or larger")
+        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take permits $permits, max $maxPermits is allowed")
+
         val permitDuration: Duration = if (permits == 1) permitDuration else permitDuration.times(permits)
         val now: NanoTimeMark = timeSource.markNow()
         if (warmupMark?.let { it > now } == true) return 0L
@@ -308,6 +318,9 @@ internal class RateLimiterImpl(
     override suspend fun tryAcquire(timeout: Duration): Boolean = tryAcquireInternal(1, timeout)
 
     private suspend fun tryAcquireInternal(permits: Int, timeout: Duration?): Boolean {
+        if(permits < 0) throw IllegalArgumentException("Permits must be zero or larger")
+        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take permits $permits, max $maxPermits is allowed")
+
         val permitDuration: Duration = if (permits == 1) permitDuration else permitDuration.times(permits)
         val now: NanoTimeMark = timeSource.markNow()
         if (warmupMark?.let { it > now } == true) return true
@@ -347,10 +360,11 @@ internal class RateLimiterImpl(
 private class ThroughputCounter(scope: CoroutineScope) {
     private val counter: MutableMap<ThroughputCounterEventType, Long> = mutableMapOf()
     private val channel = Channel<ThroughputCounterMessage>()
+
     init {
         scope.launch {
-            for(msg in channel){
-                if (msg.type == RESET){
+            for (msg in channel) {
+                if (msg.type == RESET) {
                     counter.clear()
                 } else {
                     counter[msg.type] = (counter[msg.type] ?: 0L) + 1
@@ -382,3 +396,17 @@ public enum class ThroughputCounterEventType {
     DENIED,
     RESET,
 }
+
+@ExperimentalTime
+internal fun Duration.round(): Duration {
+    return when {
+        this.inWholeMilliseconds == Long.MAX_VALUE -> throw IllegalArgumentException("Duration size overflow")
+        this > Duration.days(100) -> throw IllegalArgumentException("We dont accept durations greater than 100 days for interval length or permits")
+        this > Duration.days(1) -> Duration.minutes(this.inWholeMinutes)
+        this > Duration.hours(1) -> Duration.seconds(this.inWholeSeconds)
+        this > Duration.minutes(1) -> Duration.seconds(this.inWholeMilliseconds)
+        else -> this
+    }
+}
+
+private operator fun Long.plus(other: Int):Long = this + other.toLong()
