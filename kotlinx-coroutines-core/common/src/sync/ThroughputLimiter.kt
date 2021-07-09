@@ -10,7 +10,8 @@ import kotlinx.coroutines.time.*
 import kotlin.time.*
 
 @SinceKotlin("1.5")
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 public interface ThroughputLimiter {
     /**
      * Acquires a single permit, blocking until the request can be granted. Tells the amount of time slept, if any.
@@ -56,11 +57,18 @@ public interface ThroughputLimiter {
  * okay to pass the rate limiter.
  */
 @SinceKotlin("1.5")
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 public interface IntervalLimiter : ThroughputLimiter
 
+/**
+ * Limit throughput of events, per interval, to be at most equal to the argument eventsPerInterval.
+ * When the limit is passed, calls are suspended until the calculated point in time when it's
+ * okay to pass the rate limiter.
+ */
 @SinceKotlin("1.5")
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 public fun intervalLimiter(
     eventsPerInterval: Int,
     interval: Duration,
@@ -69,7 +77,8 @@ public fun intervalLimiter(
     IntervalLimiterImpl(eventsPerInterval = eventsPerInterval, interval = interval, warmupPeriod = warmupPeriod)
 
 @SinceKotlin("1.5")
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 internal class IntervalLimiterImpl(
     private val eventsPerInterval: Int,
     private val interval: Duration = Duration.seconds(1),
@@ -242,20 +251,29 @@ internal class IntervalLimiterImpl(
 }
 
 /**
- * Limit throughput of events per second to be at most equal to the argument eventsPerInterval.
+ * Limit throughput of events per interval to be at most equal to the argument eventsPerInterval.
  * When the limit is passed, calls are suspended until the calculated point in time when it's
  * okay to pass the rate limiter.
  */
 @SinceKotlin("1.5")
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 public interface RateLimiter : ThroughputLimiter
 
+/**
+ * Limit throughput of events per interval to be at most equal to the argument eventsPerInterval.
+ * When the limit is passed, calls are suspended until the calculated point in time when it's
+ * okay to pass the rate limiter.
+ */
 @SinceKotlin("1.5")
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 public fun rateLimiter(eventsPerInterval: Int, interval: Duration, warmupPeriod: Duration? = null): RateLimiter =
     RateLimiterImpl(eventsPerInterval = eventsPerInterval, interval = interval, warmupPeriod = warmupPeriod)
 
 @SinceKotlin("1.5")
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 internal class RateLimiterImpl(
     eventsPerInterval: Int,
     interval: Duration,

@@ -17,7 +17,8 @@ import kotlin.test.*
 import kotlin.time.*
 
 @RunWith(Parameterized::class)
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 internal class RateLimiterParamTest(private val eventsPerInterval: Int) {
 
     companion object {
@@ -185,7 +186,8 @@ internal class RateLimiterParamTest(private val eventsPerInterval: Int) {
     }
 }
 
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 internal class RateLimiterTest {
 
     private val timesource: TestNanoTimeSource = TestNanoTimeSource()

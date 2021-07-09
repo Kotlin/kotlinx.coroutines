@@ -13,7 +13,8 @@ import kotlin.test.*
 import kotlin.time.*
 
 @RunWith(Parameterized::class)
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 class IntervalLimiterParamTest(
     private val eventsPerInterval: Int
 ) {
@@ -131,7 +132,8 @@ class IntervalLimiterParamTest(
     }
 }
 
-@OptIn(ExperimentalTime::class)
+@ExperimentalTime
+@ExperimentalThroughputLimiter
 internal class IntervalLimiterTest {
 
     private val timeSource = TestNanoTimeSource()
