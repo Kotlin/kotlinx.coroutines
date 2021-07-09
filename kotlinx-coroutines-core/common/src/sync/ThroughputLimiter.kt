@@ -111,7 +111,7 @@ internal class IntervalLimiterImpl(
     override suspend fun acquire(): Long = acquire(permits = 1)
     override suspend fun acquire(permits: Int): Long {
         if(permits < 0) throw IllegalArgumentException("Permits must be zero or larger")
-        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take permits $permits, max $maxPermits is allowed")
+        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take $permits permits, max $maxPermits is allowed")
 
         val now: NanoTimeMark = timeSource.markNow()
         val wakeUpTime: NanoTimeMark = mutex.withLock {
@@ -136,7 +136,7 @@ internal class IntervalLimiterImpl(
     override suspend fun tryAcquire(timeout: Duration): Boolean = tryAcquireInternal(timeout = timeout)
     private suspend fun tryAcquireInternal(permits: Int = 1, timeout: Duration? = null): Boolean {
         if(permits < 0) throw IllegalArgumentException("Permits must be zero or larger")
-        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take permits $permits, max $maxPermits is allowed")
+        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take $permits permits, max $maxPermits is allowed")
 
         val now: NanoTimeMark = timeSource.markNow()
         val timeoutEnd: NanoTimeMark = if (timeout == null) now else now + timeout
@@ -197,7 +197,7 @@ internal class IntervalLimiterImpl(
             val displacement = getDisplacement()
             intervalEndCursor += displacement
             intervalStartCursor += displacement
-            cursor = (cursor + permits) % eventsPerInterval
+            cursor = (cursor % eventsPerInterval) + permits
             // println("Cursor beyond interval, moving interval $intervalSteps steps")
             intervalStartCursor
         } else if (intervalStartCursor > now) {
@@ -217,7 +217,6 @@ internal class IntervalLimiterImpl(
 
     private fun getDisplacement(): Duration {
         val intervalSteps: Int = (cursor / eventsPerInterval).toInt()
-        // TODO if (inter)
         return interval.times(intervalSteps)
     }
 
@@ -234,7 +233,7 @@ internal class IntervalLimiterImpl(
             return true
         } else {
             // println("Cursor doesn't need mod to eval")
-            timeoutEnd > intervalStartCursor
+            timeoutEnd >= intervalStartCursor
         }
     }
 
@@ -290,7 +289,7 @@ internal class RateLimiterImpl(
 
     override suspend fun acquire(permits: Int): Long {
         if(permits < 0) throw IllegalArgumentException("Permits must be zero or larger")
-        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take permits $permits, max $maxPermits is allowed")
+        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take $permits permits, max $maxPermits is allowed")
 
         val permitDuration: Duration = if (permits == 1) permitDuration else permitDuration.times(permits)
         val now: NanoTimeMark = timeSource.markNow()
@@ -319,7 +318,7 @@ internal class RateLimiterImpl(
 
     private suspend fun tryAcquireInternal(permits: Int, timeout: Duration?): Boolean {
         if(permits < 0) throw IllegalArgumentException("Permits must be zero or larger")
-        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take permits $permits, max $maxPermits is allowed")
+        if(permits > maxPermits) throw IllegalArgumentException("You are not allowed to take $permits permits, max $maxPermits is allowed")
 
         val permitDuration: Duration = if (permits == 1) permitDuration else permitDuration.times(permits)
         val now: NanoTimeMark = timeSource.markNow()
@@ -409,4 +408,4 @@ internal fun Duration.round(): Duration {
     }
 }
 
-private operator fun Long.plus(other: Int):Long = this + other.toLong()
+//private operator fun Long.plus(other: Int):Long = this + other.toLong()

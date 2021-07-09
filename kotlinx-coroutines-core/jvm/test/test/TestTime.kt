@@ -24,6 +24,7 @@ internal class Delayer {
     }
 
     fun getDelay(): Long = delayCounter.get()
+    fun getDelayAndReset(): Long = delayCounter.getAndSet(0)
     fun reset(): Unit = delayCounter.set(0)
 }
 
@@ -31,14 +32,30 @@ internal class Delayer {
 internal class NanoTimeMarkTest {
 
     private val timeSource = TestNanoTimeSource()
+    private val nearEndOfTime = NanoTimeMark(Long.MAX_VALUE - 2, timeSource)
+    private val nearStartOfTime = NanoTimeMark(Long.MIN_VALUE + 2, timeSource)
+    private val justShortOfOneDay = Duration.days(1) - Duration.nanoseconds(1)
 
     @Test
     fun roll_over_max_test() {
-        timeSource.nanos = Long.MAX_VALUE - 2
-        var mark = timeSource.markNow()
+        var mark = nearEndOfTime
         mark += Duration.nanoseconds(5)
+        assertEquals(actual = mark.nanos, expected = Long.MIN_VALUE + 3)
 
-        assertEquals(actual = mark.nanos, expected = Long.MIN_VALUE + 2)
+        val mark2 = nearEndOfTime + justShortOfOneDay
+        assertTrue(mark2.nanos < 0)
+        assertTrue( mark2 > mark)
+    }
+
+    @Test
+    fun roll_under_min_test() {
+        var mark = nearStartOfTime
+        mark -= Duration.nanoseconds(5)
+        assertEquals(actual = mark.nanos, expected = Long.MAX_VALUE - 3)
+
+        val mark2 = nearStartOfTime - justShortOfOneDay
+        assertTrue(mark2.nanos > 0)
+        assertTrue( mark2 < mark)
     }
 
     @Test

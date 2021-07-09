@@ -6,7 +6,6 @@ package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
-import org.junit.*
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
@@ -27,7 +26,7 @@ class IntervalLimiterParamTest(
     }
 
     @Test
-    fun run_for_several_intervals(): Unit = runBlocking {
+    internal fun run_for_several_intervals(): Unit = runBlocking {
         val timeSource = TestNanoTimeSource()
         val delayer = Delayer()
         val intervalLimiter: IntervalLimiter = IntervalLimiterImpl(
@@ -53,7 +52,7 @@ class IntervalLimiterParamTest(
     }
 
     @Test
-    fun try_acquire(): Unit = runBlocking {
+    internal fun try_acquire(): Unit = runBlocking {
         val timeSource = TestNanoTimeSource()
         val delayer = Delayer()
         val intervalLimiter: IntervalLimiter = IntervalLimiterImpl(
@@ -75,7 +74,7 @@ class IntervalLimiterParamTest(
     }
 
     @Test
-    fun try_acquire_on_stale_limiter(): Unit = runBlocking {
+    internal fun try_acquire_on_stale_limiter(): Unit = runBlocking {
         val timeSource = TestNanoTimeSource()
         val delayer = Delayer()
         val interval = Duration.seconds(1)
@@ -107,7 +106,7 @@ class IntervalLimiterParamTest(
     }
 
     @Test
-    fun warm_up_period_test(): Unit = runBlocking {
+    internal fun warm_up_period_test(): Unit = runBlocking {
         val timeSource = TestNanoTimeSource()
         val delayer = Delayer()
         val interval = Duration.seconds(1)
@@ -137,31 +136,52 @@ internal class IntervalLimiterTest {
 
     private val timeSource = TestNanoTimeSource()
     private val delayer = Delayer()
-    private val permits:Int = 100000
+    private val permits: Int = 100000
     private val interval = Duration.days(1) - Duration.nanoseconds(1)
+    private val intervalMillis = interval.inWholeMilliseconds
+
+    private val permitsPerInterval = 3
     private val limiter = IntervalLimiterImpl(
-        eventsPerInterval = 3,
+        eventsPerInterval = permitsPerInterval,
         interval = interval,
         timeSource = timeSource,
         delay = delayer::delay
     )
 
     @Test
-    fun extreme_permits_number_tryAcquire():Unit = runBlocking {
+    internal fun extreme_permits_number_tryAcquire(): Unit = runBlocking {
         assertFailsWith(IllegalArgumentException::class) {
             limiter.tryAcquire(permits)
         }
     }
 
     @Test
-    fun extreme_permits_numbers_acquire():Unit = runBlocking {
-        assertFailsWith(IllegalArgumentException::class){
+    internal fun extreme_permits_numbers_acquire(): Unit = runBlocking {
+        assertFailsWith(IllegalArgumentException::class) {
             limiter.acquire(permits)
         }
     }
 
     @Test
-    fun get_permits_at_the_end_of_time() {
-        TODO("not implemented")
+    internal fun get_permits_at_the_end_of_time(): Unit = runBlocking {
+        timeSource.nanos = Long.MAX_VALUE - 1
+
+        // Take all permits for this interval, make time roll over into negative
+        assertTrue(limiter.tryAcquire(permitsPerInterval))
+        assertEquals(expected = 0L, actual = delayer.getDelay()) // No delay for the first taker
+
+        // Take another permit
+        assertTrue(limiter.tryAcquire())
+        // This time we should be delayed
+        assertTrue(delayer.getDelay() >= intervalMillis -1 && delayer.getDelay() <= intervalMillis + 1,
+            message = "Delay of ${delayer.getDelay()} ms was recorded where ca $intervalMillis was expected.")
+    }
+
+    @Test
+    internal fun test_max_permit_size(): Unit = runBlocking {
+        assertFailsWith(IllegalArgumentException::class) {
+            limiter.tryAcquire((permitsPerInterval * 10) + 1)
+        }
+        assertTrue(limiter.tryAcquire(permitsPerInterval * 10))
     }
 }

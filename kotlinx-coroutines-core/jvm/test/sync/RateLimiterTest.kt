@@ -18,7 +18,7 @@ import kotlin.time.*
 
 @RunWith(Parameterized::class)
 @OptIn(ExperimentalTime::class)
-class RateLimiterTest(private val eventsPerInterval: Int) {
+internal class RateLimiterParamTest(private val eventsPerInterval: Int) {
 
     companion object {
 
@@ -28,7 +28,7 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
     }
 
     @Test
-    fun acquire(): Unit = runBlocking {
+    internal fun acquire(): Unit = runBlocking {
         val delayer = Delayer()
         val timeSource: NanoTimeSource = TestNanoTimeSource()
         val rateLimiter = RateLimiterImpl(
@@ -56,7 +56,7 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
     }
 
     @Test
-    fun try_acquire_one_less_with_timout(): Unit = runBlocking {
+    internal fun try_acquire_one_less_with_timout(): Unit = runBlocking {
         val delayer = Delayer()
         val timeSource: NanoTimeSource = TestNanoTimeSource()
         val interval = Duration.seconds(10)
@@ -94,7 +94,7 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
     }
 
     @Test
-    fun try_acquire_one_less_without_timout(): Unit = runBlocking {
+    internal fun try_acquire_one_less_without_timout(): Unit = runBlocking {
         val delayer = Delayer()
         val timeSource: NanoTimeSource = TestNanoTimeSource()
         val interval = Duration.seconds(10)
@@ -118,7 +118,7 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
     }
 
     @Test
-    fun warm_up_period_tryAcquire_test(): Unit = runBlocking {
+    internal fun warm_up_period_tryAcquire_test(): Unit = runBlocking {
         val delayer = Delayer()
         val timeSource = TestNanoTimeSource()
         val interval = Duration.seconds(10)
@@ -152,7 +152,7 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
     }
 
     @Test
-    fun warm_up_period_acquire_test(): Unit = runBlocking {
+    internal fun warm_up_period_acquire_test(): Unit = runBlocking {
         val delayer = Delayer()
         val timeSource = TestNanoTimeSource()
         val interval = Duration.seconds(10)
@@ -182,5 +182,49 @@ class RateLimiterTest(private val eventsPerInterval: Int) {
             ((interval / eventsPerInterval) * eventsPerInterval).inWholeMilliseconds // Avoid fraction deviation
         assertEquals(delayMillis, rateLimiter.acquire(eventsPerInterval))
         assertEquals(delayMillis, delayer.getDelay())
+    }
+}
+
+@OptIn(ExperimentalTime::class)
+internal class RateLimiterTest {
+
+    private val timesource: TestNanoTimeSource = TestNanoTimeSource()
+    private val delayer = Delayer()
+
+    @Test
+    internal fun get_permits_at_the_end_of_time():Unit = runBlocking {
+        val interval = Duration.milliseconds(10)
+        val limiter = RateLimiterImpl(
+            eventsPerInterval = 1,
+            interval = interval,
+            timeSource = timesource,
+            delay = delayer::delay,
+            warmupPeriod = interval
+        )
+        timesource.nanos = Long.MAX_VALUE-2
+
+        limiter.acquire()
+        assertEquals(0L, delayer.getDelay())
+        limiter.acquire()
+        assertEquals(10L, delayer.getDelayAndReset())
+        limiter.acquire()
+        assertEquals(20L, delayer.getDelay())
+    }
+
+    @Test
+    internal fun test_max_permit_size():Unit = runBlocking {
+        val interval = Duration.days(1)
+        val limiter = RateLimiterImpl(
+            eventsPerInterval = 1,
+            interval = interval,
+            timeSource = timesource,
+            delay = delayer::delay,
+            warmupPeriod = interval
+        )
+
+        assertFailsWith(IllegalArgumentException::class) {
+            limiter.tryAcquire(11)
+        }
+        assertTrue(limiter.tryAcquire(10))
     }
 }
