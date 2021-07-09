@@ -76,6 +76,7 @@ public suspend fun <T> MaybeSource<T>.awaitSingle(): T = awaitSingleOrNull() ?: 
  *
  * Deprecated in favor of [awaitSingleOrNull] in order to reflect that `null` can be returned to denote the absence of
  * a value, as opposed to throwing in such case.
+ * @suppress
  */
 @Deprecated(
     message = "Deprecated in favor of awaitSingleOrNull()",
@@ -97,6 +98,7 @@ public suspend fun <T> MaybeSource<T>.await(): T? = awaitSingleOrNull()
  *
  * Deprecated in favor of [awaitSingleOrNull] for naming consistency (see the deprecation of [MaybeSource.await] for
  * details).
+ * @suppress
  */
 @Deprecated(
     message = "Deprecated in favor of awaitSingleOrNull()",

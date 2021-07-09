@@ -1,16 +1,20 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.gradle.util.VersionNumber
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 
 apply plugin: 'jdk-convention'
-apply from: rootProject.file("gradle/experimental.gradle")
+apply from: rootProject.file("gradle/opt-in.gradle")
 
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'site', 'kotlinx-coroutines-bom', 'integration-testing']
-def internal = ['kotlinx.coroutines', 'site', 'benchmarks', 'js-stub', 'stdlib-stubs', 'integration-testing']
+def sourceless = ['kotlinx.coroutines', 'kotlinx-coroutines-bom', 'integration-testing']
+def internal = ['kotlinx.coroutines', 'benchmarks', 'integration-testing']
 // Not published
 def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
@@ -32,9 +36,6 @@ buildscript {
             throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
         }
     }
-    // These three flags are enabled in train builds for JVM IR compiler testing
-    ext.jvm_ir_enabled = rootProject.properties['enable_jvm_ir'] != null
-    ext.jvm_ir_api_check_enabled = rootProject.properties['enable_jvm_ir_api_check'] != null
     ext.native_targets_enabled = rootProject.properties['disable_native_targets'] == null
 
     // Determine if any project dependency is using a snapshot version
@@ -42,7 +43,7 @@ buildscript {
     rootProject.properties.each { key, value ->
         if (key.endsWith("_version") && value instanceof String && value.endsWith("-SNAPSHOT")) {
             println("NOTE: USING SNAPSHOT VERSION: $key=$value")
-            ext.using_snapshot_version=true
+            ext.using_snapshot_version = true
         }
     }
 
@@ -53,11 +54,10 @@ buildscript {
     }
 
     repositories {
-        // Leftover until we migrated to Dokka 1.4.30
-        maven { url "https://kotlin.bintray.com/kotlin-dev" }
-        maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
+        mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        mavenLocal()
     }
 
     dependencies {
@@ -74,9 +74,6 @@ buildscript {
 
     CacheRedirector.configureBuildScript(buildscript, rootProject)
 }
-
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-
 // todo:KLUDGE: Hierarchical project structures are not fully supported in IDEA, enable only for a regular built
 if (!Idea.active) {
     ext.set("kotlin.mpp.enableGranularSourceSetsMetadata", "true")
@@ -127,7 +124,6 @@ apply plugin: "binary-compatibility-validator"
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
     if (build_snapshot_train) {
-        ignoredProjects.remove("site")
         ignoredProjects.remove("example-frontend-js")
         ignoredProjects.add("kotlinx-coroutines-core")
     }
@@ -166,9 +162,8 @@ configure(subprojects.findAll { !sourceless.contains(it.name) }) {
 
     // Configure options for all Kotlin compilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
-        kotlinOptions.freeCompilerArgs += experimentalAnnotations.collect { "-Xuse-experimental=" + it }
+        kotlinOptions.freeCompilerArgs += optInAnnotations.collect { "-Xopt-in=" + it }
         kotlinOptions.freeCompilerArgs += "-progressive"
-        kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
         // Disable KT-36770 for RxJava2 integration
         kotlinOptions.freeCompilerArgs += "-XXLanguage:-ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated"
         // Remove null assertions to get smaller bytecode on Android
@@ -227,11 +222,12 @@ configure(subprojects.findAll {
 }
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
-def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
+def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
+apply plugin: "org.jetbrains.dokka"
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != 'kotlinx-coroutines-bom') {
-        apply from: rootProject.file('gradle/dokka.gradle')
+        apply from: rootProject.file('gradle/dokka.gradle.kts')
     }
     apply from: rootProject.file('gradle/publish.gradle')
 }
@@ -239,11 +235,12 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != "kotlinx-coroutines-bom") {
         if (it.name != coreModule) {
-            dokka.dependsOn project(":$coreModule").dokka
-            tasks.withType(dokka.getClass()) {
-                externalDocumentationLink {
-                    url = new URL(core_docs_url)
-                    packageListUrl = new File(core_docs_file).toURI().toURL()
+            tasks.withType(DokkaTaskPartial.class) {
+                dokkaSourceSets.configureEach {
+                    externalDocumentationLink {
+                        url.set(new URL(core_docs_url))
+                        packageListUrl.set(new File(core_docs_file).toURI().toURL())
+                    }
                 }
             }
         }
@@ -276,15 +273,43 @@ apply plugin: 'kotlinx-knit'
 knit {
     siteRoot = "https://kotlin.github.io/kotlinx.coroutines"
     moduleRoots = [".", "integration", "reactive", "ui"]
+    moduleDocs = "build/dokka/htmlPartial"
+    dokkaMultiModuleRoot = "build/dokka/htmlMultiModule/"
 }
 
-knitPrepare.dependsOn getTasksByName("dokka", true)
+knitPrepare.dependsOn getTasksByName("dokkaHtmlMultiModule", true)
 
-// Disable binary compatibility check for JVM IR compiler output by default
-if (jvm_ir_enabled) {
-    subprojects { project ->
-        configure(tasks.matching { it.name == "apiCheck" }) {
-            enabled = enabled && jvm_ir_api_check_enabled
-        }
+dependencies {
+    dokkaHtmlMultiModulePlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+}
+
+// Opt-in for build scan in order to troubleshoot Gradle on TC
+if (hasProperty('buildScan')) {
+    buildScan {
+        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+        termsOfServiceAgree = 'yes'
     }
+}
+
+/*
+ * kotlinx-coroutines-core dependency leaks into test runtime classpath via kotlin-compiler-embeddable
+ * and conflicts with our own test/runtime incompatibilities (e.g. when class is moved from a main to test),
+ * so we do substitution here
+ */
+allprojects { subProject ->
+    subProject
+            .configurations
+            .matching {
+                // Excluding substituted project itself because of circular dependencies, but still do it
+                // for "*Test*" configurations
+                subProject.name != "kotlinx-coroutines-core" || it.name.contains("Test")
+            }
+            .configureEach { conf ->
+                conf.resolutionStrategy.dependencySubstitution {
+                    substitute(module("org.jetbrains.kotlinx:kotlinx-coroutines-core"))
+                            .using(project(":kotlinx-coroutines-core"))
+                            .because("Because Kotlin compiler embeddable leaks coroutines into the runtime classpath, " +
+                                    "triggering all sort of incompatible class changes errors")
+                }
+            }
 }

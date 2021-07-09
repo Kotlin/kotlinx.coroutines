@@ -1,5 +1,23 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.5.1
+
+* Atomic `update`, `getAndUpdate`, and `updateAndGet` operations of `MutableStateFlow` (#2720).
+* `Executor.asCoroutineDispatcher` implementation improvements (#2601):
+  * If the target executor is `ScheduledExecutorService`, then its `schedule` API is used for time-related coroutine operations.
+  * `RemoveOnCancelPolicy` is now part of the public contract.
+* Introduced overloads for `Task.asDeferred` and `Task.await` that accept `CancellationTokenSource` for bidirectional cancellation (#2527).    
+* Reactive streams are updated to `1.0.3` (#2740).
+* `CopyableThrowable` is allowed to modify the exception message during stacktrace recovery (#1931).
+* `CoroutineDispatcher.releaseInterceptedContinuation` is now a `final` method (#2785).
+* Closing a Handler underlying `Handler.asCoroutineDispatcher` now causes the dispatched coroutines to be canceled on `Dispatchers.IO (#2778)`.
+* Kotlin is updated to 1.5.20.  
+* Fixed a spurious `ClassCastException` in `releaseInterceptedContinuation` and `IllegalStateException` from `tryReleaseClaimedContinuation` (#2736, #2768).  
+* Fixed inconsistent exception message during stacktrace recovery for non-suspending channel iterators (#2749).  
+* Fixed linear stack usage for `CompletableFuture.asDeferred` when the target future has a long chain of listeners (#2730).
+* Any exceptions from `CoroutineDispatcher.isDispatchNeeded` are now considered as fatal and are propagated to the caller (#2733).  
+* Internal `DebugProbesKt` (used in the debugger implementation) are moved from `debug` to `core` module.
+
 ## Version 1.5.0
 
 Note that this is a full changelog relative to 1.4.3 version. Changelog relative to 1.5.0-RC can be found in the end.

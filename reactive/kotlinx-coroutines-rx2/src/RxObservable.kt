@@ -191,6 +191,7 @@ private class RxObservableCoroutine<T : Any>(
     }
 }
 
+/** @suppress */
 @Deprecated(
     message = "CoroutineScope.rxObservable is deprecated in favour of top-level rxObservable",
     level = DeprecationLevel.HIDDEN,

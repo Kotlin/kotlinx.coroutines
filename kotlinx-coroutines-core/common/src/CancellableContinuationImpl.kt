@@ -107,7 +107,7 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
-    private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.isReusable(this)
+    private fun isReusable(): Boolean = resumeMode.isReusableMode && (delegate as DispatchedContinuation<*>).isReusable()
 
     /**
      * Resets cancellability state in order to [suspendCancellableCoroutineReusable] to work.
@@ -115,7 +115,7 @@ internal open class CancellableContinuationImpl<in T>(
      */
     @JvmName("resetStateReusable") // Prettier stack traces
     internal fun resetStateReusable(): Boolean {
-        assert { resumeMode == MODE_CANCELLABLE_REUSABLE } // invalid mode for CancellableContinuationImpl
+        assert { resumeMode == MODE_CANCELLABLE_REUSABLE }
         assert { parentHandle !== NonDisposableHandle }
         val state = _state.value
         assert { state !is NotCompleted }
@@ -164,8 +164,7 @@ internal open class CancellableContinuationImpl<in T>(
      * Attempt to postpone cancellation for reusable cancellable continuation
      */
     private fun cancelLater(cause: Throwable): Boolean {
-        if (!resumeMode.isReusableMode) return false
-        // Ensure that we are postponing cancellation to the right instance
+        // Ensure that we are postponing cancellation to the right reusable instance
         if (!isReusable()) return false
         val dispatched = delegate as DispatchedContinuation<*>
         return dispatched.postponeCancellation(cause)

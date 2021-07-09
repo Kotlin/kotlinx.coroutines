@@ -139,6 +139,7 @@ public fun <T: Any> Flow<T>.asObservable(context: CoroutineContext = EmptyCorout
 public fun <T: Any> Flow<T>.asFlowable(context: CoroutineContext = EmptyCoroutineContext): Flowable<T> =
     Flowable.fromPublisher(asPublisher(context))
 
+/** @suppress */
 @Suppress("UNUSED") // KT-42513
 @JvmOverloads // binary compatibility
 @JvmName("from")
@@ -146,6 +147,7 @@ public fun <T: Any> Flow<T>.asFlowable(context: CoroutineContext = EmptyCoroutin
 public fun <T: Any> Flow<T>._asFlowable(context: CoroutineContext = EmptyCoroutineContext): Flowable<T> =
     asFlowable(context)
 
+/** @suppress */
 @Suppress("UNUSED") // KT-42513
 @JvmOverloads // binary compatibility
 @JvmName("from")

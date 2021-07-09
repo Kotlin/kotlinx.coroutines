@@ -18,6 +18,7 @@ import kotlinx.coroutines.reactive.*
  *
  * This API is deprecated in the favour of [Flow].
  * [MaybeSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
+ * @suppress
  */
 @Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.ERROR) // Will be hidden in 1.5
 public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
@@ -32,6 +33,7 @@ public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
  *
  * This API is deprecated in the favour of [Flow].
  * [ObservableSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
+ * @suppress
  */
 @Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.ERROR) // Will be hidden in 1.5
 public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {

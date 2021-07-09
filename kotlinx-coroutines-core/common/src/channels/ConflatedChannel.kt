@@ -123,6 +123,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
         undeliveredElementException?.let { throw it } // throw UndeliveredElementException at the end if there was one
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun updateValueLocked(element: Any?): UndeliveredElementException? {
         val old = value
         val undeliveredElementException = if (old === EMPTY) null else

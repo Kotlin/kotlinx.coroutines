@@ -39,14 +39,6 @@ abstract class SchedulerTestBase : TestBase() {
             )
         }
 
-        /**
-         * Asserts that any number of pool worker threads in [range] exists at the time of method invocation
-         */
-        fun checkPoolThreadsExist(range: IntRange) {
-            val threads = Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }.count()
-            assertTrue(threads in range, "Expected threads in $range interval, but has $threads")
-        }
-
         private fun maxSequenceNumber(): Int? {
             return Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }
                 .map { sequenceNumber(it.name) }.maxOrNull()

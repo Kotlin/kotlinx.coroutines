@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.knit
@@ -10,8 +10,6 @@ import kotlinx.coroutines.scheduling.*
 import kotlinx.knit.test.*
 import java.util.concurrent.*
 import kotlin.test.*
-
-fun wrapTask(block: Runnable) = kotlinx.coroutines.wrapTask(block)
 
 // helper function to dump exception to stdout for ease of debugging failed tests
 private inline fun <T> outputException(name: String, block: () -> T): T =

@@ -18,7 +18,7 @@ dependencies {
     testImplementation("org.robolectric:robolectric:${version("robolectric")}")
     testImplementation("org.smali:baksmali:${version("baksmali")}")
 
-    "r8"("com.android.tools.build:builder:7.0.0-alpha14")
+    "r8"("com.android.tools.build:builder:7.1.0-alpha01")
 }
 
 val optimizedDexDir = File(buildDir, "dex-optim/")
@@ -41,24 +41,65 @@ val runR8NoOptim by tasks.registering(RunR8::class) {
     dependsOn("jar")
 }
 
-// TODO: Disable the test until we have published version of R8 that supports Kotlin 1.5.0 metadata
+tasks.test {
+    // Ensure the R8-processed dex is built and supply its path as a property to the test.
+    dependsOn(runR8)
+    dependsOn(runR8NoOptim)
 
-//tasks.test {
-//    // Ensure the R8-processed dex is built and supply its path as a property to the test.
-//    dependsOn(runR8)
-//    dependsOn(runR8NoOptim)
-//
-//    inputs.files(optimizedDexFile, unOptimizedDexFile)
-//
-//    systemProperty("dexPath", optimizedDexFile.absolutePath)
-//    systemProperty("noOptimDexPath", unOptimizedDexFile.absolutePath)
-//
-//    // Output custom metric with the size of the optimized dex
-//    doLast {
-//        println("##teamcity[buildStatisticValue key='optimizedDexSize' value='${optimizedDexFile.length()}']")
-//    }
-//}
+    inputs.files(optimizedDexFile, unOptimizedDexFile)
+
+    systemProperty("dexPath", optimizedDexFile.absolutePath)
+    systemProperty("noOptimDexPath", unOptimizedDexFile.absolutePath)
+
+    // Output custom metric with the size of the optimized dex
+    doLast {
+        println("##teamcity[buildStatisticValue key='optimizedDexSize' value='${optimizedDexFile.length()}']")
+    }
+}
 
 externalDocumentationLink(
     url = "https://developer.android.com/reference/"
 )
+/*
+ * Task used by our ui/android tests to test minification results and keep track of size of the binary.
+ */
+open class RunR8 : JavaExec() {
+
+    @OutputDirectory
+    lateinit var outputDex: File
+
+    @InputFile
+    lateinit var inputConfig: File
+
+    @InputFile
+    val inputConfigCommon: File = File("testdata/r8-test-common.pro")
+
+    @InputFiles
+    val jarFile: File = project.tasks.named<Zip>("jar").get().archivePath
+
+    init {
+        classpath = project.configurations["r8"]
+        main = "com.android.tools.r8.R8"
+    }
+
+    override fun exec() {
+        // Resolve classpath only during execution
+        val arguments = mutableListOf(
+            "--release",
+            "--no-desugaring",
+            "--min-api", "26",
+            "--output", outputDex.absolutePath,
+            "--pg-conf", inputConfig.absolutePath
+        )
+        arguments.addAll(project.configurations["runtimeClasspath"].files.map { it.absolutePath })
+        arguments.add(jarFile.absolutePath)
+
+        args = arguments
+
+        project.delete(outputDex)
+        outputDex.mkdirs()
+
+        super.exec()
+    }
+}
+

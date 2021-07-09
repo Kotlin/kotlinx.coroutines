@@ -149,6 +149,7 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
         send(t)
 }
 
+/** @suppress **/
 @Suppress("UNUSED") // KT-42513
 @JvmOverloads // binary compatibility
 @JvmName("from")
@@ -156,6 +157,7 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
 public fun <T: Any> Flow<T>._asFlowable(context: CoroutineContext = EmptyCoroutineContext): Flowable<T> =
     asFlowable(context)
 
+/** @suppress **/
 @Suppress("UNUSED") // KT-42513
 @JvmOverloads // binary compatibility
 @JvmName("from")
