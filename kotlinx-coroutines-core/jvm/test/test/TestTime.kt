@@ -6,6 +6,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.time.*
 import org.junit.Test
+import java.lang.IllegalArgumentException
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 import kotlin.time.*
@@ -103,5 +104,25 @@ internal class NanoTimeMarkTest {
 
         val diff2 = mark2 - mark1
         assertEquals(5, diff2.inWholeNanoseconds)
+    }
+
+    @Test
+    fun comparing_different_time_sources(){
+        val mark1 = timeSource.markNow()
+        val timeSource2 = TestNanoTimeSource()
+        val mark2 = timeSource2.markNow()
+
+        assertFailsWith(IllegalArgumentException::class){
+            mark1 > mark2
+        }
+        assertFailsWith(IllegalArgumentException::class){
+            mark1 < mark2
+        }
+        assertFailsWith(IllegalArgumentException::class){
+            mark1 - mark2
+        }
+        assertFailsWith(IllegalArgumentException::class){
+            mark2 - mark1
+        }
     }
 }
