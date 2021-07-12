@@ -59,6 +59,7 @@ public abstract class CoroutineDispatcher :
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
      */
+    @ExperimentalCoroutinesApi
     public open fun isDispatchNeeded(context: CoroutineContext): Boolean = true
 
     /**
