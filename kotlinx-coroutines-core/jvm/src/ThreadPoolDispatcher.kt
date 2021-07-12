@@ -30,8 +30,13 @@ import java.util.concurrent.atomic.AtomicInteger
  * @param name the base name of the created thread.
  */
 @ObsoleteCoroutinesApi
-public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
+public actual fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
+
+/**
+ * A coroutine dispatcher that is confined to a single thread.
+ */
+public actual typealias MultithreadedDispatcher = ExecutorCoroutineDispatcher
 
 /**
  * Creates a coroutine execution context with the fixed-size thread-pool and built-in [yield] support.
@@ -57,7 +62,7 @@ public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
  * @param name the base name of the created threads.
  */
 @ObsoleteCoroutinesApi
-public fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
+public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     val threadNo = AtomicInteger()
     val executor = Executors.newScheduledThreadPool(nThreads) { runnable ->

@@ -1,22 +1,48 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.exceptions.*
 import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 class MutexStressTest : TestBase() {
+
+    private val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
+
     @Test
-    fun testStress() = runBlocking(Dispatchers.Default) {
-        val n = 1000 * stressTestMultiplier
+    fun testDefaultDispatcher() = testBody(Dispatchers.Default)
+
+    @Test
+    fun testSingleThreadContext() {
+        val ctx = newSingleThreadContext("testSingleThreadContext")
+        testBody(ctx)
+        ctx.close()
+    }
+
+    @Test
+    fun testMultiThreadedContextWithSingleWorker() {
+        val ctx = newFixedThreadPoolContext(1, "testMultiThreadedContextWithSingleWorker")
+        testBody(ctx)
+        ctx.close()
+    }
+
+    @Test
+    fun testMultiThreadedContext() {
+        val ctx = newFixedThreadPoolContext(8, "testMultiThreadedContext")
+        testBody(ctx)
+        ctx.close()
+    }
+
+    private fun testBody(dispatcher: CoroutineDispatcher) = runBlocking {
         val k = 100
         var shared = 0
         val mutex = Mutex()
         val jobs = List(n) {
-            launch {
+            launch(dispatcher) {
                 repeat(k) {
                     mutex.lock()
                     shared++

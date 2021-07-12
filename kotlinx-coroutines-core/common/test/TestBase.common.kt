@@ -12,6 +12,7 @@ import kotlin.test.*
 
 public expect val isStressTest: Boolean
 public expect val stressTestMultiplier: Int
+public expect val stressTestMultiplierSqrt: Int
 
 /**
  * The result of a multiplatform asynchronous test.
@@ -19,6 +20,10 @@ public expect val stressTestMultiplier: Int
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 public expect class TestResult
+
+public expect val isNative: Boolean
+// "Speedup" native stress tests
+public val stressTestNativeDivisor = if (isNative) 10 else 1
 
 public expect open class TestBase constructor() {
     /*

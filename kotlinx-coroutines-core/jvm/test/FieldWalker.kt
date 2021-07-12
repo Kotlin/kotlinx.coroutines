@@ -89,7 +89,9 @@ object FieldWalker {
                     cur = ref.parent
                     path += "[${ref.index}]"
                 }
-                else -> error("Should not be reached")
+                else -> {
+                    // Nothing
+                }
             }
         }
         path.reverse()
