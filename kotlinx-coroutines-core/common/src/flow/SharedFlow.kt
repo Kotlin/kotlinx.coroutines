@@ -469,7 +469,7 @@ private class SharedFlowImpl<T>(
         // outside of the lock: register dispose on cancellation
         emitter?.let { cont.disposeOnCancellation(it) }
         // outside of the lock: resume slots if needed
-        for (cont in resumes) cont?.resume(Unit)
+        for (r in resumes) r?.resume(Unit)
     }
 
     private fun cancelEmitter(emitter: Emitter) = synchronized(this) {

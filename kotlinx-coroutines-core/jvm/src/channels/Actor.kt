@@ -163,7 +163,7 @@ private class LazyActorCoroutine<E>(
         return super.send(element)
     }
 
-    @Suppress("DEPRECATION_ERROR")
+    @Suppress("DEPRECATION")
     override fun offer(element: E): Boolean {
         start()
         return super.offer(element)

@@ -216,6 +216,7 @@ internal actual typealias CoroutineStackFrame = kotlin.coroutines.jvm.internal.C
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias StackTraceElement = java.lang.StackTraceElement
 
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 internal actual fun Throwable.initCause(cause: Throwable) {
     // Resolved to member, verified by test
     initCause(cause)

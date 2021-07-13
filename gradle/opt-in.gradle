@@ -3,6 +3,7 @@
  */
 
 ext.optInAnnotations = [
+        "kotlin.RequiresOptIn",
         "kotlin.experimental.ExperimentalTypeInference",
         "kotlin.ExperimentalMultiplatform",
         "kotlinx.coroutines.DelicateCoroutinesApi",
