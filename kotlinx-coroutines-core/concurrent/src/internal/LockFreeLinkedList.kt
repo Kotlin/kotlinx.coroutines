@@ -7,6 +7,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlin.jvm.*
 
 private typealias Node = LockFreeLinkedListNode
 
@@ -616,7 +617,7 @@ public actual open class LockFreeLinkedListNode {
         assert { next === this._next.value }
     }
 
-    override fun toString(): String = "${this::class.java.simpleName}@${Integer.toHexString(System.identityHashCode(this))}"
+    override fun toString(): String = "${this::classSimpleName}@${this.hexAddress}"
 }
 
 private class Removed(@JvmField val ref: Node) {
