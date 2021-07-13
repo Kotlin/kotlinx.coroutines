@@ -30,7 +30,7 @@ import kotlin.coroutines.*
  * @param context context of the coroutine. The default value is an implementation of [EventLoop].
  * @param block the coroutine code.
  */
-public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
+public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val contextInterceptor = context[ContinuationInterceptor]
     val eventLoop: EventLoop?
     var newContext: CoroutineContext = context // todo: kludge for data flow analysis error
