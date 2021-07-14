@@ -13,6 +13,7 @@ public actual open class TestBase actual constructor() {
     private var actionIndex = 0
     private var finished = false
     private var error: Throwable? = null
+    private var previousPromise: Promise<*>? = null
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
@@ -79,7 +80,10 @@ public actual open class TestBase actual constructor() {
     ): dynamic {
         var exCount = 0
         var ex: Throwable? = null
-        return GlobalScope.promise(block = block, context = CoroutineExceptionHandler { context, e ->
+        if (previousPromise != null) {
+            error("Attempt to run multiple asynchronous test within one @Test method")
+        }
+        val result = GlobalScope.promise(block = block, context = CoroutineExceptionHandler { context, e ->
             if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
             exCount++
             when {
@@ -102,6 +106,8 @@ public actual open class TestBase actual constructor() {
             error?.let { throw it }
             check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
         }
+        previousPromise = result
+        return result
     }
 }
 
