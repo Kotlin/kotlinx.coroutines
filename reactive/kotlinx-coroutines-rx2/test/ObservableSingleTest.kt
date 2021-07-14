@@ -137,7 +137,7 @@ class ObservableSingleTest : TestBase() {
     @Test
     fun testAwaitFirstOrElseWithValues() {
         val observable = rxObservable {
-            send(Observable.just("O", "#").awaitFirstOrElse { "!" } + "K")
+            send(Observable.just("O", "#").awaitFirstOrElse { null } + "K")
         }
 
         checkSingleValue(observable) {

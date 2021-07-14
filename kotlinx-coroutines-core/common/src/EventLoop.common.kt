@@ -66,7 +66,9 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     public fun processUnconfinedEvent(): Boolean {
         val queue = unconfinedQueue ?: return false
         val task = queue.removeFirstOrNull() ?: return false
-        task.run()
+        platformAutoreleasePool {
+            task.run()
+        }
         return true
     }
     /**
@@ -230,8 +232,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         val timeNanos = delayToNanos(timeMillis)
         if (timeNanos < MAX_DELAY_NS) {
             val now = nanoTime()
-            DelayedResumeTask(now + timeNanos, continuation).also { task ->
-                continuation.disposeOnCancellation(task)
+            DelayedResumeTask(now + timeNanos, continuation, asShareable()).also { task ->
+                continuation.disposeOnCancellation(task.asShareable())
                 schedule(now, task)
             }
         }
@@ -243,7 +245,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             val now = nanoTime()
             DelayedRunnableTask(now + timeNanos, block).also { task ->
                 schedule(now, task)
-            }
+            }.asShareable()
         } else {
             NonDisposableHandle
         }
@@ -271,7 +273,9 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         // then process one event from queue
         val task = dequeue()
         if (task != null) {
-            task.run()
+            platformAutoreleasePool {
+                task.run()
+            }
             return 0
         }
         return nextTime
@@ -404,7 +408,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
          * into heap to avoid overflow and corruption of heap data structure.
          */
         @JvmField var nanoTime: Long
-    ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
+    ) : ShareableRefHolder(), Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
         private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
 
         override var heap: ThreadSafeHeap<*>?
@@ -477,25 +481,31 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             @Suppress("UNCHECKED_CAST")
             (heap as? DelayedTaskQueue)?.remove(this) // remove if it is in heap (first)
             _heap = DISPOSED_TASK // never add again to any heap
+            disposeSharedRef()
         }
 
-        override fun toString(): String = "Delayed[nanos=$nanoTime]"
+        override fun toString(): String = "Delayed@$hexAddress[nanos=$nanoTime]"
     }
 
-    private inner class DelayedResumeTask(
+    private class DelayedResumeTask(
         nanoTime: Long,
-        private val cont: CancellableContinuation<Unit>
+        private val cont: CancellableContinuation<Unit>,
+        private val dispatcher: CoroutineDispatcher
     ) : DelayedTask(nanoTime) {
-        override fun run() { with(cont) { resumeUndispatched(Unit) } }
-        override fun toString(): String = super.toString() + cont.toString()
+        override fun run() {
+            disposeSharedRef()
+            with(cont) { dispatcher.resumeUndispatched(Unit) }
+        }
     }
 
     private class DelayedRunnableTask(
         nanoTime: Long,
         private val block: Runnable
     ) : DelayedTask(nanoTime) {
-        override fun run() { block.run() }
-        override fun toString(): String = super.toString() + block.toString()
+        override fun run() {
+            disposeSharedRef()
+            block.run()
+        }
     }
 
     /**
@@ -519,6 +529,17 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 }
 
 internal expect fun createEventLoop(): EventLoop
+
+/**
+ * Used by Darwin targets to wrap a [Runnable.run] call in an Objective-C Autorelease Pool. It is a no-op on JVM, JS and
+ * non-Darwin native targets.
+ *
+ * Coroutines on Darwin targets can call into the Objective-C world, where a callee may push a to-be-returned object to
+ * the Autorelease Pool, so as to avoid a premature ARC release before it reaches the caller. This means the pool must
+ * be eventually drained to avoid leaks. Since Kotlin Coroutines does not use [NSRunLoop], which provides automatic
+ * pool management, it must manage the pool creation and pool drainage manually.
+ */
+internal expect inline fun platformAutoreleasePool(crossinline block: () -> Unit)
 
 internal expect fun nanoTime(): Long
 

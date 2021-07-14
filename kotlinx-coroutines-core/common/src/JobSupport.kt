@@ -6,6 +6,7 @@
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
+import kotlinx.atomicfu.locks.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
@@ -139,7 +140,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Initializes parent job.
      * It shall be invoked at most once after construction after all other initialization.
      */
-    protected fun initParentJob(parent: Job?) {
+    internal fun initParentJob(parent: Job?) {
         assert { parentHandle == null }
         if (parent == null) {
             parentHandle = NonDisposableHandle
@@ -238,6 +239,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         assert { casSuccess }
         // And process all post-completion actions
         completeStateFinalization(state, finalState)
+        disposeLockFreeLinkedList { state.list } // only needed on Kotlin/Native
         return finalState
     }
 
@@ -293,6 +295,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         onCancelling(null) // simple state is not a failure
         onCompletionInternal(update)
         completeStateFinalization(state, update)
+        disposeLockFreeLinkedList { state as? JobNode } // only needed on Kotlin/Native
         return true
     }
 
@@ -498,6 +501,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                     }
                 }
                 else -> { // is complete
+                    disposeLockFreeLinkedList { node }
                     // :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
                     // because we play type tricks on Kotlin/JS and handler is not necessarily a function there
                     if (invokeImmediately) handler.invokeIt((state as? CompletedExceptionally)?.cause)
@@ -527,11 +531,15 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // try to promote it to LIST state with the corresponding state
         val list = NodeList()
         val update = if (state.isActive) list else InactiveNodeList(list)
-        _state.compareAndSet(state, update)
+        if (!_state.compareAndSet(state, update)) {
+            disposeLockFreeLinkedList { list }
+        }
     }
 
     private fun promoteSingleToNodeList(state: JobNode) {
         // try to promote it to list (SINGLE+ state)
+        // Note: on Kotlin/Native we don't have to dispose NodeList() that we've failed to add, since
+        // it does not have cyclic references when addOneIfEmpty fails.
         state.addOneIfEmpty(NodeList())
         // it must be in SINGLE+ state or state has changed (node could have need removed from state)
         val list = state.nextNode // either our NodeList or somebody else won the race, updated state
@@ -592,7 +600,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 is JobNode -> { // SINGE/SINGLE+ state -- one completion handler
                     if (state !== node) return // a different job node --> we were already removed
                     // try remove and revert back to empty state
-                    if (_state.compareAndSet(state, EMPTY_ACTIVE)) return
+                    if (_state.compareAndSet(state, EMPTY_ACTIVE)) {
+                        disposeLockFreeLinkedList { state }
+                        return
+                    }
                 }
                 is Incomplete -> { // may have a list of completion handlers
                     // remove node from the list if there is a list
@@ -790,7 +801,11 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val list = getOrPromoteCancellingList(state) ?: return false
         // Create cancelling state (with rootCause!)
         val cancelling = Finishing(list, false, rootCause)
-        if (!_state.compareAndSet(state, cancelling)) return false
+        if (!_state.compareAndSet(state, cancelling)) {
+            // Dispose if the list was just freshly allocated
+            disposeLockFreeLinkedList { list.takeIf { list !== state.list } }
+            return false
+        }
         // Notify listeners
         notifyCancelling(list, rootCause)
         return true
@@ -886,7 +901,11 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             // We do it as early is possible while still holding the lock. This ensures that we cancelImpl asap
             // (if somebody else is faster) and we synchronize all the threads on this finishing lock asap.
             if (finishing !== state) {
-                if (!_state.compareAndSet(state, finishing)) return COMPLETING_RETRY
+                if (!_state.compareAndSet(state, finishing)) {
+                    // Dispose if the list was just freshly allocated
+                    disposeLockFreeLinkedList { list.takeIf { list !== state.list } }
+                    return COMPLETING_RETRY
+                }
             }
             // ## IMPORTANT INVARIANT: Only one thread (that had set isCompleting) can go past this point
             assert { !finishing.isSealed } // cannot be sealed
@@ -1099,15 +1118,20 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // Seals current state and returns list of exceptions
         // guarded by `synchronized(this)`
         fun sealLocked(proposedException: Throwable?): List<Throwable> {
-            val list = when(val eh = exceptionsHolder) { // volatile read
+            var list = when(val eh = exceptionsHolder) { // volatile read
                 null -> allocateList()
                 is Throwable -> allocateList().also { it.add(eh) }
                 is ArrayList<*> -> eh as ArrayList<Throwable>
                 else -> error("State is $eh") // already sealed -- cannot happen
             }
             val rootCause = this.rootCause // volatile read
-            rootCause?.let { list.add(0, it) } // note -- rootCause goes to the beginning
-            if (proposedException != null && proposedException != rootCause) list.add(proposedException)
+            rootCause?.let {
+                // note -- rootCause goes to the beginning
+                list.addOrUpdate(0, it) { list = it }
+            }
+            if (proposedException != null && proposedException != rootCause) {
+                list.addOrUpdate(proposedException) { list = it }
+            }
             exceptionsHolder = SEALED
             return list
         }
@@ -1127,10 +1151,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                     exceptionsHolder = allocateList().apply {
                         add(eh)
                         add(exception)
-
                     }
                 }
-                is ArrayList<*> -> (eh as ArrayList<Throwable>).add(exception)
+                is ArrayList<*> -> (eh as ArrayList<Throwable>).addOrUpdate(exception) { exceptionsHolder = it }
                 else -> error("State is $eh") // already sealed -- cannot happen
             }
         }
@@ -1313,8 +1336,6 @@ private class Empty(override val isActive: Boolean) : Incomplete {
 }
 
 internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
-    init { initParentJob(parent) }
-    override val onCancelComplete get() = true
     /*
      * Check whether parent is able to handle exceptions as well.
      * With this check, an exception in that pattern will be handled once:
@@ -1325,18 +1346,24 @@ internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
      * }
      * ```
      */
-    override val handlesException: Boolean = handlesException()
+    override val handlesException: Boolean = handlesException(parent)
+
+    /*
+     * Only after that we init parent job (which might freeze this object if parent is frozen).
+     */
+    init { initParentJob(parent) }
+
+    override val onCancelComplete get() = true
+
     override fun complete() = makeCompleting(Unit)
     override fun completeExceptionally(exception: Throwable): Boolean =
         makeCompleting(CompletedExceptionally(exception))
 
     @JsName("handlesExceptionF")
-    private fun handlesException(): Boolean {
-        var parentJob = (parentHandle as? ChildHandleNode)?.job ?: return false
-        while (true) {
-            if (parentJob.handlesException) return true
-            parentJob = (parentJob.parentHandle as? ChildHandleNode)?.job ?: return false
-        }
+    private tailrec fun handlesException(parent: Job?): Boolean {
+        val parentJob = (parent as? JobSupport) ?: return false
+        if (parentJob.handlesException) return true
+        return handlesException((parentJob.parentHandle as? ChildHandleNode)?.job)
     }
 }
 
@@ -1471,7 +1498,7 @@ internal class ChildContinuation(
     @JvmField val child: CancellableContinuationImpl<*>
 ) : JobCancellingNode() {
     override fun invoke(cause: Throwable?) {
-        child.parentCancelled(child.getContinuationCancellationCause(job))
+        child.parentCancelled(job)
     }
 }
 

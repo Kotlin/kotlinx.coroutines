@@ -5,6 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.atomicfu.*
+import kotlinx.atomicfu.locks.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
@@ -84,7 +85,7 @@ import kotlin.native.concurrent.*
  *
  * Use [SharedFlow] when you need a [StateFlow] with tweaks in its behavior such as extra buffering, replaying more
  * values, or omitting the initial value.
- * 
+ *
  * ### StateFlow vs ConflatedBroadcastChannel
  *
  * Conceptually, state flow is similar to [ConflatedBroadcastChannel]
@@ -310,7 +311,7 @@ private class StateFlowImpl<T>(
     initialState: Any // T | NULL
 ) : AbstractSharedFlow<StateFlowSlot>(), MutableStateFlow<T>, CancellableFlow<T>, FusibleFlow<T> {
     private val _state = atomic(initialState) // T | NULL
-    private var sequence = 0 // serializes updates, value update is in process when sequence is odd
+    private val sequence = atomic(0) // serializes updates, value update is in process when sequence is odd
 
     @Suppress("UNCHECKED_CAST")
     public override var value: T
@@ -322,19 +323,19 @@ private class StateFlowImpl<T>(
 
     private fun updateState(expectedState: Any?, newState: Any): Boolean {
         var curSequence = 0
-        var curSlots: Array<StateFlowSlot?>? = this.slots // benign race, we will not use it
+        var curSlots: SharedFlowState<StateFlowSlot>? = slots // benign race, we will not use it
         synchronized(this) {
             val oldState = _state.value
             if (expectedState != null && oldState != expectedState) return false // CAS support
             if (oldState == newState) return true // Don't do anything if value is not changing, but CAS -> true
             _state.value = newState
-            curSequence = sequence
+            curSequence = sequence.value
             if (curSequence and 1 == 0) { // even sequence means quiescent state flow (no ongoing update)
                 curSequence++ // make it odd
-                sequence = curSequence
+                sequence.value = curSequence
             } else {
                 // update is already in process, notify it, and return
-                sequence = curSequence + 2 // change sequence to notify, keep it odd
+                sequence.value = curSequence + 2 // change sequence to notify, keep it odd
                 return true // updated
             }
             curSlots = slots // read current reference to collectors under lock
@@ -347,17 +348,21 @@ private class StateFlowImpl<T>(
          */
         while (true) {
             // Benign race on element read from array
-            curSlots?.forEach {
-                it?.makePending()
+            val _cs = curSlots
+            if (_cs != null) {
+                for (index in 0 until _cs.size) {
+                    _cs[index]?.makePending()
+                }
             }
+
             // check if the value was updated again while we were updating the old one
             synchronized(this) {
-                if (sequence == curSequence) { // nothing changed, we are done
-                    sequence = curSequence + 1 // make sequence even again
+                if (sequence.value == curSequence) { // nothing changed, we are done
+                    sequence.value = curSequence + 1 // make sequence even again
                     return true // done, updated
                 }
                 // reread everything for the next loop under the lock
-                curSequence = sequence
+                curSequence = sequence.value
                 curSlots = slots
             }
         }
@@ -409,7 +414,6 @@ private class StateFlowImpl<T>(
     }
 
     override fun createSlot() = StateFlowSlot()
-    override fun createSlotArray(size: Int): Array<StateFlowSlot?> = arrayOfNulls(size)
 
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseStateFlow(context, capacity, onBufferOverflow)

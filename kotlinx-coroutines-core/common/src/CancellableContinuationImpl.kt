@@ -24,13 +24,15 @@ internal val RESUME_TOKEN = Symbol("RESUME_TOKEN")
  */
 @PublishedApi
 internal open class CancellableContinuationImpl<in T>(
-    final override val delegate: Continuation<T>,
+    delegate: Continuation<T>,
     resumeMode: Int
 ) : DispatchedTask<T>(resumeMode), CancellableContinuation<T>, CoroutineStackFrame {
     init {
         assert { resumeMode != MODE_UNINITIALIZED } // invalid mode for CancellableContinuationImpl
     }
 
+    @PublishedApi // for Kotlin/Native
+    final override val delegate: Continuation<T> = delegate.asShareable()
     public override val context: CoroutineContext = delegate.context
 
     /*
@@ -72,7 +74,10 @@ internal open class CancellableContinuationImpl<in T>(
      */
     private val _state = atomic<Any?>(Active)
 
-    private var parentHandle: DisposableHandle? = null
+    private val _parentHandle = atomic<DisposableHandle?>(null)
+    private var parentHandle: DisposableHandle?
+        get() = _parentHandle.value
+        set(value) { _parentHandle.value = value }
 
     internal val state: Any? get() = _state.value
 
@@ -107,7 +112,8 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
-    private fun isReusable(): Boolean = resumeMode.isReusableMode && (delegate as DispatchedContinuation<*>).isReusable()
+    // todo: It is never reusable on Kotlin/Native due to architectural peculiarities
+    private fun isReusable(): Boolean = isReuseSupportedInPlatform() && resumeMode.isReusableMode && (delegate as DispatchedContinuation<*>).isReusable()
 
     /**
      * Resets cancellability state in order to [suspendCancellableCoroutineReusable] to work.
@@ -130,7 +136,7 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     public override val callerFrame: CoroutineStackFrame?
-        get() = delegate as? CoroutineStackFrame
+        get() = delegate.asLocal() as? CoroutineStackFrame
 
     public override fun getStackTraceElement(): StackTraceElement? = null
 
@@ -185,7 +191,8 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
-    internal fun parentCancelled(cause: Throwable) {
+    internal fun parentCancelled(parentJob: Job) {
+        val cause = getContinuationCancellationCause(parentJob)
         if (cancelLater(cause)) return
         cancel(cause)
         // Even if cancellation has failed, we should detach child to avoid potential leak
@@ -280,6 +287,8 @@ internal open class CancellableContinuationImpl<in T>(
             }
             return COROUTINE_SUSPENDED
         }
+        // When cancellation does not suspend on Kotlin/Native it shall dispose its continuation which it will not use
+        disposeContinuation { delegate }
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         if (isReusable) {
             // release claimed reusable continuation for the future reuse
@@ -514,19 +523,22 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
-        val dc = delegate as? DispatchedContinuation
+        val dc = delegate.asLocalOrNullIfNotUsed() as? DispatchedContinuation
         resumeImpl(value, if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
     }
 
     override fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable) {
-        val dc = delegate as? DispatchedContinuation
+        val dc = delegate.asLocalOrNullIfNotUsed() as? DispatchedContinuation
         resumeImpl(CompletedExceptionally(exception), if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> getSuccessfulResult(state: Any?): T =
         when (state) {
-            is CompletedContinuation -> state.result as T
+            is CompletedContinuation -> {
+                state.releaseHandlers()
+                state.result as T
+            }
             else -> state as T
         }
 
@@ -576,17 +588,37 @@ private class InvokeOnCancel( // Clashes with InvokeOnCancellation
 }
 
 // Completed with additional metadata
-private data class CompletedContinuation(
+private class CompletedContinuation(
     @JvmField val result: Any?,
-    @JvmField val cancelHandler: CancelHandler? = null, // installed via invokeOnCancellation
-    @JvmField val onCancellation: ((cause: Throwable) -> Unit)? = null, // installed via resume block
+    cancelHandler: CancelHandler? = null, // installed via invokeOnCancellation
+    onCancellation: ((cause: Throwable) -> Unit)? = null, // installed via resume block
     @JvmField val idempotentResume: Any? = null,
     @JvmField val cancelCause: Throwable? = null
 ) {
+    private val _cancelHandler = atomic(cancelHandler)
+    private val _onCancellation = atomic(onCancellation)
+
+    val cancelHandler: CancelHandler? get() = _cancelHandler.value
+    val onCancellation: ((cause: Throwable) -> Unit)? get() = _onCancellation.value
     val cancelled: Boolean get() = cancelCause != null
+
+    fun releaseHandlers() {
+        _cancelHandler.value = null
+        _onCancellation.value = null
+    }
 
     fun invokeHandlers(cont: CancellableContinuationImpl<*>, cause: Throwable) {
         cancelHandler?.let { cont.callCancelHandler(it, cause) }
         onCancellation?.let { cont.callOnCancellation(it, cause) }
+        releaseHandlers()
     }
+
+    fun copy(
+        result: Any? = this.result,
+        cancelHandler: CancelHandler? = this.cancelHandler,
+        onCancellation: ((cause: Throwable) -> Unit)? = this.onCancellation,
+        idempotentResume: Any? = this.idempotentResume,
+        cancelCause: Throwable? = this.cancelCause
+    ) =
+        CompletedContinuation(result, cancelHandler, onCancellation, idempotentResume, cancelCause)
 }

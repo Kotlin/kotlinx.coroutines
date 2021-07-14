@@ -25,6 +25,8 @@ internal class BlockingEventLoop(
 
 internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.currentThread())
 
+internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()
+
 /**
  * Processes next event in the current thread's event loop.
  *

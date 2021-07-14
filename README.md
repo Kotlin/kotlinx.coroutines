@@ -197,17 +197,25 @@ Kotlin/JS version of `kotlinx.coroutines` is published as
 
 #### Native
 
-Kotlin/Native version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-$platform`](https://mvnrepository.com/search?q=kotlinx-coroutines-core-) where `$platform` is 
-the target Kotlin/Native platform. [List of currently supported targets](https://github.com/Kotlin/kotlinx.coroutines/blob/master/gradle/compile-native-multiplatform.gradle#L16).
+[Kotlin/Native](https://kotlinlang.org/docs/reference/native-overview.html) version of `kotlinx.coroutines` is published as 
+[`kotlinx-coroutines-core`](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.4.2/jar)
+(follow the link to get the dependency declaration snippet). **Kotlin/Native requires Gradle version 6.0 or later**
+to resolve that dependency properly into the corresponding platform-specific artifacts.
 
+Kotlin/Native does not generally provide binary compatibility between versions. 
+You should use the same version of Kotlin/Native compiler as was used to build `kotlinx.coroutines`.
 
-Only single-threaded code (JS-style) on Kotlin/Native is supported in stable versions.
-Additionally, a special `-native-mt` version is released on a regular basis, for the state of multi-threaded coroutines support
-please follow the [corresponding issue](https://github.com/Kotlin/kotlinx.coroutines/issues/462) for the additional details.
+Kotlin/Native does not support free sharing of mutable objects between threads as on JVM, so several 
+limitations apply to using coroutines on Kotlin/Native. 
+See [Sharing and background threads on Kotlin/Native](kotlin-native-sharing.md) for details.
 
-Since Kotlin/Native does not generally provide binary compatibility between versions, 
-you should use the same version of the Kotlin/Native compiler as was used to build `kotlinx.coroutines`. 
+Some functions like [newSingleThreadContext] and [runBlocking] are available only for Kotlin/JVM and Kotlin/Native 
+and are not available on Kotlin/JS. In order to access them from the code that is shared between JVM and Native 
+you need to enable granular metadata (aka HMPP) in your `gradle.properties` file:
+
+```properties
+kotlin.mpp.enableGranularSourceSetsMetadata=true
+``` 
 
 ## Building and Contributing
 
@@ -237,7 +245,8 @@ See [Contributing Guidelines](CONTRIBUTING.md).
 [Promise.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await.html
 [promise]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/promise.html
 [Window.asCoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/as-coroutine-dispatcher.html
-
+[newSingleThreadContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-single-thread-context.html
+[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 <!--- INDEX kotlinx.coroutines.flow -->
 
 [Flow]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html

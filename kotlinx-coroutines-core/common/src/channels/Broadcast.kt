@@ -7,9 +7,11 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.internal.isReuseSupportedInPlatform
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.native.concurrent.*
 
 /**
  * Broadcasts all elements of the channel.
@@ -136,7 +138,11 @@ private open class BroadcastCoroutine<E>(
     ProducerScope<E>, BroadcastChannel<E> by _channel {
 
     init {
-        initParentJob(parentContext[Job])
+        if (isReuseSupportedInPlatform()) initParentJob(parentContext[Job])
+    }
+
+    override fun onStart() {
+        if (!isReuseSupportedInPlatform()) initParentJob(parentContext[Job])
     }
 
     override val isActive: Boolean get() = super.isActive
@@ -182,7 +188,7 @@ private class LazyBroadcastCoroutine<E>(
     channel: BroadcastChannel<E>,
     block: suspend ProducerScope<E>.() -> Unit
 ) : BroadcastCoroutine<E>(parentContext, channel, active = false) {
-    private val continuation = block.createCoroutineUnintercepted(this, this)
+    private val saved = saveLazyCoroutine(this, this, block)
 
     override fun openSubscription(): ReceiveChannel<E> {
         // open subscription _first_
@@ -193,6 +199,6 @@ private class LazyBroadcastCoroutine<E>(
     }
 
     override fun onStart() {
-        continuation.startCoroutineCancellable(this)
+        startLazyCoroutine(saved, this, this)
     }
 }
