@@ -10,10 +10,11 @@ public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 
 public actual open class TestBase actual constructor() {
+    public actual val isJs = true
     private var actionIndex = 0
     private var finished = false
     private var error: Throwable? = null
-    private var previousPromise: Promise<*>? = null
+    private var lastTestPromise: Promise<*>? = null
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
@@ -80,7 +81,7 @@ public actual open class TestBase actual constructor() {
     ): dynamic {
         var exCount = 0
         var ex: Throwable? = null
-        if (previousPromise != null) {
+        if (lastTestPromise != null) {
             error("Attempt to run multiple asynchronous test within one @Test method")
         }
         val result = GlobalScope.promise(block = block, context = CoroutineExceptionHandler { context, e ->
@@ -106,7 +107,7 @@ public actual open class TestBase actual constructor() {
             error?.let { throw it }
             check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
         }
-        previousPromise = result
+        lastTestPromise = result
         return result
     }
 }
