@@ -380,7 +380,7 @@ private class StateFlowImpl<T>(
         throw UnsupportedOperationException("MutableStateFlow.resetReplayCache is not supported")
     }
 
-    override suspend fun collect(collector: FlowCollector<T>) {
+    override suspend fun collect(collector: FlowCollector<T>): Nothing {
         val slot = allocateSlot()
         try {
             if (collector is SubscribedFlowCollector) collector.onSubscription()
