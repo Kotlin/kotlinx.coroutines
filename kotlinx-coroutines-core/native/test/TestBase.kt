@@ -8,6 +8,7 @@ public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 
 public actual open class TestBase actual constructor() {
+    public actual val isBoundByJsTestTimeout = false
     private var actionIndex = 0
     private var finished = false
     private var error: Throwable? = null

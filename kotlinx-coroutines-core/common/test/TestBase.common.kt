@@ -14,6 +14,14 @@ public expect val isStressTest: Boolean
 public expect val stressTestMultiplier: Int
 
 public expect open class TestBase constructor() {
+    /*
+     * In common tests we emulate parameterized tests
+     * by iterating over parameters space in the single @Test method.
+     * This kind of tests is too slow for JS and does not fit into
+     * the default Mocha timeout, so we're using this flag to bail-out
+     * and run such tests only on JVM and K/N.
+     */
+    public val isBoundByJsTestTimeout: Boolean
     public fun error(message: Any, cause: Throwable? = null): Nothing
     public fun expect(index: Int)
     public fun expectUnreached()

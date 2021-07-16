@@ -50,6 +50,7 @@ public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roun
  * ```
  */
 public actual open class TestBase actual constructor() {
+    public actual val isBoundByJsTestTimeout = false
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
     private var error = AtomicReference<Throwable>()
