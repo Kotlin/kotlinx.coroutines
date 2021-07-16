@@ -387,25 +387,13 @@ public fun Job0(parent: Job? = null): Job = Job(parent)
 /**
  * A handle to an allocated object that can be disposed to make it eligible for garbage collection.
  */
-public interface DisposableHandle {
+public fun interface DisposableHandle {
     /**
      * Disposes the corresponding object, making it eligible for garbage collection.
      * Repeated invocation of this function has no effect.
      */
     public fun dispose()
 }
-
-/**
- * @suppress **This an internal API and should not be used from general code.**
- */
-@Suppress("FunctionName")
-@InternalCoroutinesApi
-public inline fun DisposableHandle(crossinline block: () -> Unit): DisposableHandle =
-    object : DisposableHandle {
-        override fun dispose() {
-            block()
-        }
-    }
 
 // -------------------- Parent-child communication --------------------
 
