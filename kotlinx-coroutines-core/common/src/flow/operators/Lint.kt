@@ -83,7 +83,8 @@ public val FlowCollector<*>.coroutineContext: CoroutineContext
     get() = noImpl()
 
 @Deprecated(
-    message = "SharedFlow never completes, so this operator has no effect.",
+    message = "SharedFlow never completes, so this operator typically has not effect, it can only " +
+        "catch exceptions from 'onSubscribe' operator",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this")
 )

@@ -602,6 +602,7 @@ class SharedFlowTest : TestBase() {
     }
 
     @Test
+    @Suppress("DEPRECATION") // 'catch'
     fun onSubscriptionThrows() = runTest {
         expect(1)
         val sh = MutableSharedFlow<String>(1)
