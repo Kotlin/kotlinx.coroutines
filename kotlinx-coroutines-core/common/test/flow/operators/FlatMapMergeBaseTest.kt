@@ -90,5 +90,5 @@ abstract class FlatMapMergeBaseTest : FlatMapBaseTest() {
     }
 
     @Test
-    abstract fun testFlatMapConcurrency()
+    abstract fun testFlatMapConcurrency(): TestResult
 }

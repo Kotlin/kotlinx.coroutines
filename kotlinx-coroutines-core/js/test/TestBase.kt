@@ -9,6 +9,9 @@ import kotlin.js.*
 public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 
+@Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
+public actual typealias TestResult = Promise<Unit>
+
 public actual open class TestBase actual constructor() {
     public actual val isBoundByJsTestTimeout = true
     private var actionIndex = 0
@@ -18,7 +21,7 @@ public actual open class TestBase actual constructor() {
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
-     * complete successfully even if this exception is consumed somewhere in the test.
+     * complete successfully even if this exception is consumed so  mewhere in the test.
      */
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun error(message: Any, cause: Throwable? = null): Nothing {
@@ -77,7 +80,7 @@ public actual open class TestBase actual constructor() {
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    ): dynamic {
+    ): TestResult {
         var exCount = 0
         var ex: Throwable? = null
         /*

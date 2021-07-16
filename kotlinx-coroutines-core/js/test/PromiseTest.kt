@@ -74,4 +74,16 @@ class PromiseTest : TestBase() {
         assertSame(d2, deferred)
         assertEquals("OK", d2.await())
     }
+
+    @Test
+    fun testLeverageTestResult(): TestResult {
+        // Cannot use expect(..) here
+        var seq = 0
+        val result = runTest {
+            ++seq
+        }
+        return result.then {
+            if (seq != 1) error("Unexpected result: $seq")
+        }
+    }
 }

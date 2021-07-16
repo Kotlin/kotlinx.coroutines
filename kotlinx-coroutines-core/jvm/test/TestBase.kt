@@ -30,6 +30,9 @@ public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMu
 
 public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roundToInt()
 
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+public actual typealias TestResult = Unit
+
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
  * thread can be written. Use it like this:
@@ -188,7 +191,7 @@ public actual open class TestBase actual constructor() {
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    ) {
+    ): TestResult {
         var exCount = 0
         var ex: Throwable? = null
         try {
