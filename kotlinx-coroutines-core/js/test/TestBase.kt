@@ -10,7 +10,7 @@ public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 
 public actual open class TestBase actual constructor() {
-    public actual val isJs = true
+    public actual val isBoundByJsTestTimeout = true
     private var actionIndex = 0
     private var finished = false
     private var error: Throwable? = null
@@ -72,7 +72,6 @@ public actual open class TestBase actual constructor() {
         finished = false
     }
 
-    // todo: The dynamic (promise) result is a work-around for missing suspend tests, see KT-22228
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
@@ -81,6 +80,25 @@ public actual open class TestBase actual constructor() {
     ): dynamic {
         var exCount = 0
         var ex: Throwable? = null
+        /*
+         * This is an additional sanity check against `runTest` mis-usage on JS.
+         * The only way to write an async test on JS is to return Promise from the test function.
+         * _Just_ launching promise and returning `Unit` won't suffice as the underlying test framework
+         * won't be able to detect an asynchronous failure in a timely manner.
+         * We cannot detect such situations, but we can detect the most common erroneous pattern
+         * in our code base, an attempt to use multiple `runTest` in the same `@Test` method,
+         * which typically is a premise to the same error:
+         * ```
+         * @Test
+         * fun incorrectTestForJs() { // <- promise is not returned
+         *     for (parameter in parameters) {
+         *         runTest {
+         *             runTestForParameter(parameter)
+         *         }
+         *     }
+         * }
+         * ```
+         */
         if (lastTestPromise != null) {
             error("Attempt to run multiple asynchronous test within one @Test method")
         }

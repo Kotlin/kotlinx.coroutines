@@ -440,7 +440,7 @@ class SharedFlowTest : TestBase() {
 
     @Test
     fun testDifferentBufferedFlowCapacities() = runTest {
-        if (isJs) return@runTest // Too slow for JS, bounded by 2 sec. default JS timeout
+        if (isBoundByJsTestTimeout) return@runTest // Too slow for JS, bounded by 2 sec. default JS timeout
         for (replay in 0..10) {
             for (extraBufferCapacity in 0..5) {
                 if (replay == 0 && extraBufferCapacity == 0) continue // test only buffered shared flows
@@ -679,7 +679,7 @@ class SharedFlowTest : TestBase() {
 
     @Test
     fun testStateFlowModel() = runTest {
-        if (isJs) return@runTest // Too slow for JS, bounded by 2 sec. default JS timeout
+        if (isBoundByJsTestTimeout) return@runTest // Too slow for JS, bounded by 2 sec. default JS timeout
         val stateFlow = MutableStateFlow<Data?>(null)
         val expect = modelLog(stateFlow)
         val sharedFlow = MutableSharedFlow<Data?>(
