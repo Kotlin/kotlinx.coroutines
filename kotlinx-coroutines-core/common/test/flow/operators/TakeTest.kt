@@ -88,9 +88,8 @@ class TakeTest : TestBase() {
                 emit(1)
             }
         }.take(2)
-            .map {
+            .map<Int, Int> {
                 throw TestException()
-                42
             }.catch { emit(42) }
 
         assertEquals(42, flow.single())
