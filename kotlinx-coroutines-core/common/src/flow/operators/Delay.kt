@@ -348,3 +348,191 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
 @ExperimentalTime
 @FlowPreview
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
+
+/**
+ * Returns a flow that mirrors the source flow, but filters out values
+ * that follow an emitted value for the given [duration][timeoutMillis].
+ * This ensures that at most one value is emitted in [the specified time window][timeoutMillis].
+ * The first value is always emitted immediately.
+ *
+ * Example:
+ * ```
+ * flow {
+ *     emit(1)
+ *     delay(90)
+ *     emit(2)
+ *     delay(90)
+ *     emit(3)
+ *     delay(1010)
+ *     emit(4)
+ *     delay(1010)
+ *     emit(5)
+ * }.throttleFirst(1000)
+ * ```
+ * produces `1, 4, 5`.
+ */
+@FlowPreview
+public fun <T> Flow<T>.throttleFirst(timeoutMillis: Long): Flow<T> {
+    require(timeoutMillis > 0) { "Throttle timeout should be positive" }
+    return scopedFlow { downstream ->
+        val values = produce<Any?> {
+            // Actually Any, KT-30796
+            collect { send(it ?: NULL) }
+        }
+
+        var done = false
+        var ignoreValuesWindow: Job? = null
+
+        while (!done) {
+            select<Unit> {
+                values.onReceiveOrNull {
+                    if (it == null) {
+                        done = true
+                        ignoreValuesWindow?.cancel(ChildCancelledException())
+                    } else if (ignoreValuesWindow == null) {
+                        downstream.emit(NULL.unbox(it))
+                        ignoreValuesWindow = launch {
+                            delay(timeoutMillis)
+                        }
+                    }
+                }
+
+                ignoreValuesWindow?.onJoin?.invoke {
+                    ignoreValuesWindow = null
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Returns a flow that mirrors the source flow, but filters out values
+ * that follow an emitted value for the given [duration][timeout].
+ * This ensures that at most one value is emitted in [the specified time window][timeout].
+ * The first value is always emitted immediately.
+ *
+ * Example:
+ * ```
+ * flow {
+ *     emit(1)
+ *     delay(90)
+ *     emit(2)
+ *     delay(90)
+ *     emit(3)
+ *     delay(1010)
+ *     emit(4)
+ *     delay(1010)
+ *     emit(5)
+ * }.throttleFirst(1000.milliseconds)
+ * ```
+ * produces `1, 4, 5`.
+ */
+@ExperimentalTime
+@FlowPreview
+public fun <T> Flow<T>.throttleFirst(timeout: Duration): Flow<T> {
+    return throttleFirst(timeout.toDelayMillis())
+}
+
+/**
+ * Returns a flow that mirrors the source flow, but conflates values so that
+ * at most one value is emitted by time window of a given [duration][windowMillis].
+ * The first is always emitted immediately ; subsequent values may be delayed depending on the source's pace.
+ * If the source terminates while a value is being delayed (due to having already emitted a value in its time window),
+ * then that value is *not* emitted when the flow terminates.
+ *
+ * Example:
+ * ```
+ * flow {
+ *  emit(1)
+ *  delay(120)
+ *  emit(2)
+ *  delay(60)
+ *  emit(3)
+ *  delay(60)
+ *  emit(4)
+ *  delay(60)
+ *  emit(5)
+ *  delay(200)
+ *  emit(6)
+ *  delay(50)
+ *  emit(7)
+ * }.throttleLatest(100)
+ *  ```
+ *  produces
+ *  - `1` immediately,
+ *  - `2` after 100ms,
+ *  - `3` after 200ms (delayed by 40ms),
+ *  - `5` after 300ms (delayed by 20ms),
+ *  - `7` after 500ms.
+ */
+@FlowPreview
+public fun <T> Flow<T>.throttleLatest(windowMillis: Long): Flow<T> {
+    require(windowMillis > 0) { "Throttle window should be positive" }
+    return scopedFlow { downstream ->
+        val values = produce<Any?> {
+            // Actually Any, KT-30796
+            collect { send(it ?: NULL) }
+        }
+
+        val timeWindows = fixedPeriodTicker(windowMillis, 0)
+        var latestValue: Any? = null
+
+        while (latestValue !== DONE) {
+            select<Unit> {
+                if (latestValue != null) {
+                    timeWindows.onReceive {
+                        downstream.emit(NULL.unbox(latestValue))
+                        latestValue = null
+                    }
+                }
+
+                values.onReceiveOrNull {
+                    if (it == null) {
+                        latestValue = DONE
+                        timeWindows.cancel(ChildCancelledException())
+                    } else {
+                        latestValue = it
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Returns a flow that mirrors the source flow, but conflates values so that
+ * at most one value is emitted by time window of a given [duration][window].
+ * The first value is always emitted immediately ; subsequent values may be delayed depending on the source's pace.
+ * If the source terminates while a value is being delayed (due to having already emitted a value in its time window),
+ * then that value is *not* emitted when the flow terminates.
+ *
+ * Example:
+ * ```
+ * flow {
+ *  emit(1)
+ *  delay(120.milliseconds)
+ *  emit(2)
+ *  delay(60.milliseconds)
+ *  emit(3)
+ *  delay(60.milliseconds)
+ *  emit(4)
+ *  delay(60.milliseconds)
+ *  emit(5)
+ *  delay(200.milliseconds)
+ *  emit(6)
+ *  delay(50.milliseconds)
+ *  emit(7)
+ * }.throttleLatest(100.milliseconds)
+ *  ```
+ *  produces
+ *  - `1` immediately,
+ *  - `2` after 100ms,
+ *  - `3` after 200ms (delayed by 40ms),
+ *  - `5` after 300ms (delayed by 20ms),
+ *  - `7` after 500ms.
+ */
+@ExperimentalTime
+@FlowPreview
+public fun <T> Flow<T>.throttleLatest(window: Duration): Flow<T> {
+    return throttleLatest(window.toDelayMillis())
+}
