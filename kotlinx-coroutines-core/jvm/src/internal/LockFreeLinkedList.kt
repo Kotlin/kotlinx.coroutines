@@ -646,7 +646,7 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    public actual final override fun remove(): Boolean = error("head cannot be removed")
+    public actual final override fun remove(): Nothing = error("head cannot be removed")
 
     // optimization: because head is never removed, we don't have to read _next.value to check these:
     override val isRemoved: Boolean get() = false
