@@ -3,6 +3,7 @@
 
 <ihp version="2.0">
     <categories src="c.list"/>
+    <module name="coroutines"/>
     <topics dir="topics"/>
     <images dir="images" web-path="/img/kotlin-coroutines/"/>
     <vars src="v.list"/>
