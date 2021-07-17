@@ -4,12 +4,12 @@
 
 package kotlinx.coroutines.internal
 
-import kotlinx.atomicfu.LockFreedomTestEnvironment
-import kotlinx.coroutines.stressTestMultiplier
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.*
 import org.junit.Test
 import java.util.*
+import java.util.concurrent.atomic.*
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.*
 
 /**
@@ -18,6 +18,7 @@ import kotlin.test.*
  */
 class LockFreeLinkedListAtomicLFStressTest {
     private val env = LockFreedomTestEnvironment("LockFreeLinkedListAtomicLFStressTest")
+    private val _opSequence = atomic(0L)
 
     private data class Node(val i: Long) : LockFreeLinkedListNode()
 
@@ -120,23 +121,28 @@ class LockFreeLinkedListAtomicLFStressTest {
     }
 
     private fun addTwoOp(list1: LockFreeLinkedListHead, node1: Node, list2: LockFreeLinkedListHead, node2: Node) {
-        val add1 = list1.describeAddLast(node1)
-        val add2 = list2.describeAddLast(node2)
-        val op = object : AtomicOp<Any?>() {
-            init {
-                add1.atomicOp = this
-                add2.atomicOp = this
-            }
-            override fun prepare(affected: Any?): Any? =
-                add1.prepare(this) ?:
+        var result: Any?
+        do {
+            val add1 = list1.describeAddLast(node1)
+            val add2 = list2.describeAddLast(node2)
+            val op = object : AtomicOp<Any?>() {
+                override val opSequence = _opSequence.incrementAndGet()
+                init {
+                    add1.atomicOp = this
+                    add2.atomicOp = this
+                }
+                override fun prepare(affected: Any?): Any? =
+                    add1.prepare(this) ?:
                     add2.prepare(this)
 
-            override fun complete(affected: Any?, failure: Any?) {
-                add1.complete(this, failure)
-                add2.complete(this, failure)
+                override fun complete(affected: Any?, failure: Any?) {
+                    add1.complete(this, failure)
+                    add2.complete(this, failure)
+                }
             }
-        }
-        assertTrue(op.perform(null) == null)
+            result = op.perform(null)
+        } while(result === RETRY_ATOMIC)
+        assertNull(result)
     }
 
     private fun tryRemoveOp(node: Node) {
@@ -147,23 +153,28 @@ class LockFreeLinkedListAtomicLFStressTest {
     }
 
     private fun removeTwoOp(list1: LockFreeLinkedListHead, list2: LockFreeLinkedListHead) {
-        val remove1 = list1.describeRemoveFirst()
-        val remove2 = list2.describeRemoveFirst()
-        val op = object : AtomicOp<Any?>() {
-            init {
-                remove1.atomicOp = this
-                remove2.atomicOp = this
-            }
-            override fun prepare(affected: Any?): Any? =
-                remove1.prepare(this) ?:
+        var result: Any?
+        do {
+            val remove1 = list1.describeRemoveFirst()
+            val remove2 = list2.describeRemoveFirst()
+            val op = object : AtomicOp<Any?>() {
+                override val opSequence = _opSequence.incrementAndGet()
+                init {
+                    remove1.atomicOp = this
+                    remove2.atomicOp = this
+                }
+                override fun prepare(affected: Any?): Any? =
+                    remove1.prepare(this) ?:
                     remove2.prepare(this)
 
-            override fun complete(affected: Any?, failure: Any?) {
-                remove1.complete(this, failure)
-                remove2.complete(this, failure)
+                override fun complete(affected: Any?, failure: Any?) {
+                    remove1.complete(this, failure)
+                    remove2.complete(this, failure)
+                }
             }
-        }
-        val success = op.perform(null) == null
+            result = op.perform(null)
+        } while (result === RETRY_ATOMIC)
+        val success = result == null
         if (success) removed.addAndGet(2)
     }
 }
