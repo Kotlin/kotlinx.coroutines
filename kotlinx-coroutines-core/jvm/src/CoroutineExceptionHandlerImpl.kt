@@ -16,25 +16,51 @@ import kotlin.coroutines.*
  *
  * We are explicitly using the `ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
  * form of the ServiceLoader call to enable R8 optimization when compiled on Android.
+ *
  */
-private val handlers: List<CoroutineExceptionHandler> = ServiceLoader.load(
-        CoroutineExceptionHandler::class.java,
-        CoroutineExceptionHandler::class.java.classLoader
-).iterator().asSequence().toList()
+//private val handlers: List<CoroutineExceptionHandler> = ServiceLoader.load(
+//        CoroutineExceptionHandler::class.java,
+//        CoroutineExceptionHandler::class.java.classLoader
+//).iterator().asSequence().toList()
 
-internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
-    // use additional extension handlers
-    for (handler in handlers) {
-        try {
-            handler.handleException(context, exception)
-        } catch (t: Throwable) {
-            // Use thread's handler if custom handler failed to handle exception
-            val currentThread = Thread.currentThread()
-            currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, handlerException(exception, t))
+internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) =
+    ExceptionHandler.handleException(context, exception)
+
+/*
+ * State encapsulation over the list of lazily-loaded [CoroutineExceptionHandler] list
+ * for easier state manipulation and <clinit> errors prevention.
+ */
+private object ExceptionHandler {
+
+    private var handlers: List<CoroutineExceptionHandler>? = null
+
+    @Synchronized // synchronize over lazy 'handlers'. No DCL because exception handler is not that performance-sensitive
+    public fun handleException(context: CoroutineContext, exception: Throwable) {
+        // TODO report error from loadHandlers as well?
+        // Try to load handlers once, but retry next time if any failure occurred (I/O due to overload storage or recoverable OOM)
+        val loadedHandlers = handlers ?: loadHandlers() ?: emptyList()
+        handlers = loadedHandlers
+        for (handler in loadedHandlers) {
+            try {
+                handler.handleException(context, exception)
+            } catch (t: Throwable) {
+                // Use thread's handler if custom handler failed to handle exception
+                val currentThread = Thread.currentThread()
+                currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, handlerException(exception, t))
+            }
         }
+
+        // use thread's handler anyway, SL-loaded CEH are supplementary to uncaught exception handlers.
+        val currentThread = Thread.currentThread()
+        currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
+        // TODO try/catch over uncaughtExceptionHandler as well and print to the console as last-ditch?
     }
 
-    // use thread's handler
-    val currentThread = Thread.currentThread()
-    currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
+    // Failure may occur e.g. when OOM is handled
+    private fun loadHandlers() = kotlin.runCatching {
+        ServiceLoader.load(
+            CoroutineExceptionHandler::class.java,
+            CoroutineExceptionHandler::class.java.classLoader
+        ).iterator().asSequence().toList()
+    }.getOrNull()
 }
