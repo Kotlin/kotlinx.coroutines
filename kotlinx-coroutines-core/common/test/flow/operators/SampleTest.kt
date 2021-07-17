@@ -298,4 +298,19 @@ class SampleTest : TestBase() {
         assertEquals(listOf("A", "B", "D"), result)
         finish(5)
     }
+
+    @Test
+    public fun testTrailingElement() = withVirtualTime {
+        expect(1)
+        val flow = flow {
+            expect(3)
+            emit("A")
+            expect(4)
+        }
+
+        expect(2)
+        val result = flow.sample(1000, preserveLatest = true).toList()
+        assertEquals(listOf("A"), result)
+        finish(5)
+    }
 }
