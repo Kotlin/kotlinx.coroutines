@@ -35,7 +35,7 @@ public fun CancellableContinuation<*>.cancelFutureOnCancellation(future: Future<
 private class CancelFutureOnCompletion(
     private val future: Future<*>
 ) : JobNode() {
-    override fun invoke(cause: Throwable?) {
+    override fun invokeOnce(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
         // interruption flag and it will cause spurious failures elsewhere
         if (cause != null) future.cancel(false)
