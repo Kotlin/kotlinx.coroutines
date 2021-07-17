@@ -9,14 +9,9 @@ import kotlinx.coroutines.sync.*
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
-import org.junit.*
 
 class MutexLincheckTest : AbstractLincheckTest() {
     private val mutex = Mutex()
-
-    override fun modelCheckingTest() {
-        // Ignored via empty body as the only way
-    }
 
     @Operation
     fun tryLock() = mutex.tryLock()
