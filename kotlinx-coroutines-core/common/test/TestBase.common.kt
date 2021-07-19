@@ -12,6 +12,7 @@ import kotlin.test.*
 
 public expect val isStressTest: Boolean
 public expect val stressTestMultiplier: Int
+public expect val stressTestMultiplierSqrt: Int
 
 public expect open class TestBase constructor() {
     public fun error(message: Any, cause: Throwable? = null): Nothing
