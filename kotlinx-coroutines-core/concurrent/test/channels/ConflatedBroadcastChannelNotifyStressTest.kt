@@ -1,12 +1,11 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import org.junit.Test
-import java.util.concurrent.atomic.*
 import kotlin.test.*
 
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
@@ -17,10 +16,10 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
 
     private val broadcast = ConflatedBroadcastChannel<Int>()
 
-    private val sendersCompleted = AtomicInteger()
-    private val receiversCompleted = AtomicInteger()
-    private val sentTotal = AtomicInteger()
-    private val receivedTotal = AtomicInteger()
+    private val sendersCompleted = atomic(0)
+    private val receiversCompleted = atomic(0)
+    private val sentTotal = atomic(0)
+    private val receivedTotal = atomic(0)
 
     @Test
     fun testStressNotify()= runBlocking {
@@ -57,7 +56,7 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
             var seconds = 0
             while (true) {
                 delay(1000)
-                println("${++seconds}: Sent ${sentTotal.get()}, received ${receivedTotal.get()}")
+                println("${++seconds}: Sent ${sentTotal.value}, received ${receivedTotal.value}")
             }
         }
         try {
@@ -71,13 +70,13 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
         }
         progressJob.cancel()
         println("Tested with nSenders=$nSenders, nReceivers=$nReceivers")
-        println("Completed successfully ${sendersCompleted.get()} sender coroutines")
-        println("Completed successfully ${receiversCompleted.get()} receiver coroutines")
-        println("                  Sent ${sentTotal.get()} events")
-        println("              Received ${receivedTotal.get()} events")
-        assertEquals(nSenders, sendersCompleted.get())
-        assertEquals(nReceivers, receiversCompleted.get())
-        assertEquals(nEvents, sentTotal.get())
+        println("Completed successfully ${sendersCompleted.value} sender coroutines")
+        println("Completed successfully ${receiversCompleted.value} receiver coroutines")
+        println("                  Sent ${sentTotal.value} events")
+        println("              Received ${receivedTotal.value} events")
+        assertEquals(nSenders, sendersCompleted.value)
+        assertEquals(nReceivers, receiversCompleted.value)
+        assertEquals(nEvents, sentTotal.value)
     }
 
     private suspend fun waitForEvent(): Int =
