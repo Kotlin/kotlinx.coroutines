@@ -12,6 +12,7 @@ import kotlin.test.*
 
 public expect val isStressTest: Boolean
 public expect val stressTestMultiplier: Int
+public expect val stressTestMultiplierSqrt: Int
 
 /**
  * The result of a multiplatform asynchronous test.

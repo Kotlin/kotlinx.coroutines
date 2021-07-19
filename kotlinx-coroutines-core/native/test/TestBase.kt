@@ -8,6 +8,7 @@ import kotlinx.atomicfu.*
 
 public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
+public actual val stressTestMultiplierSqrt: Int = 1
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit
