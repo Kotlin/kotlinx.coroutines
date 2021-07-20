@@ -32,7 +32,18 @@ public open class LinkedListNode {
         this._prev = node
     }
 
+    /*
+     * Remove that is invoked as a virtual function with a
+     * potentially augmented behaviour.
+     * I.g. `LockFreeLinkedListHead` throws, while `SendElementWithUndeliveredHandler`
+     * invokes handler on remove
+     */
     public open fun remove(): Boolean {
+        return removeImpl()
+    }
+
+    @PublishedApi
+    internal fun removeImpl(): Boolean {
         if (_removed) return false
         val prev = this._prev
         val next = this._next
@@ -76,7 +87,7 @@ public open class LinkedListNode {
     public fun removeFirstOrNull(): Node? {
         val next = _next
         if (next === this) return null
-        check(next.remove()) { "Should remove" }
+        check(next.removeImpl()) { "Should remove" }
         return next
     }
 
@@ -85,7 +96,7 @@ public open class LinkedListNode {
         if (next === this) return null
         if (next !is T) return null
         if (predicate(next)) return next
-        check(next.remove()) { "Should remove" }
+        check(next.removeImpl()) { "Should remove" }
         return next
     }
 }

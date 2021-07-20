@@ -123,4 +123,19 @@ class ChannelUndeliveredElementTest : TestBase() {
             check(!_cancelled.getAndSet(true)) { "Already cancelled" }
         }
     }
+
+    @Test
+    fun testHandlerIsNotInvoked() = runTest { // #2826
+        val channel = Channel<Unit> {
+            expectUnreached()
+        }
+
+        expect(1)
+        launch {
+            expect(2)
+            channel.receive()
+        }
+        channel.send(Unit)
+        finish(3)
+    }
 }
