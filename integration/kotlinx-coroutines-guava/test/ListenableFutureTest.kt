@@ -555,11 +555,7 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testUnhandledExceptionOnExternalCancellation() = runTest(
-        unhandled = listOf(
-            { it -> it is TestException } // exception is unhandled because there is no parent
-        )
-    ) {
+    fun testUnhandledExceptionOnExternalCancellation() = runTest {
         expect(1)
         // No parent here (NonCancellable), so nowhere to propagate exception
         val result = future(NonCancellable + Dispatchers.Unconfined) {
@@ -567,7 +563,7 @@ class ListenableFutureTest : TestBase() {
                 delay(Long.MAX_VALUE)
             } finally {
                 expect(2)
-                throw TestException() // this exception cannot be handled
+                throw TestException() // this exception cannot be handled and is set to be lost.
             }
         }
         result.cancel(true)
@@ -774,5 +770,40 @@ class ListenableFutureTest : TestBase() {
             children.forEach { it.join() }
             assertEquals(count, completed.get())
         }
+    }
+
+    @Test
+    fun stressTestFutureDoesNotReportToCoroutineExceptionHandler() = runTest {
+        repeat(1000) {
+            supervisorScope { // Don't propagate failures in children to parent and other children.
+                val innerFuture = SettableFuture.create<Unit>()
+                val outerFuture = async { innerFuture.await() }
+
+                withContext(Dispatchers.Default) {
+                    launch { innerFuture.setException(TestException("can be lost")) }
+                    launch { outerFuture.cancel() }
+                    // nothing should be reported to CoroutineExceptionHandler, otherwise `Future.cancel` contract violation.
+                }
+            }
+        }
+    }
+
+    @Test
+    fun futurePropagatesExceptionToParentAfterCancellation() = runTest {
+        val latch = CompletableDeferred<Boolean>()
+        val parent = Job()
+        val scope = CoroutineScope(parent)
+        val exception = TestException("propagated to parent")
+        val future = scope.future {
+            withContext(NonCancellable) {
+                latch.await()
+                throw exception
+            }
+        }
+        future.cancel(true)
+        latch.complete(true)
+        parent.join()
+        assertTrue(parent.isCancelled)
+        assertEquals(exception, parent.getCancellationException().cause)
     }
 }
