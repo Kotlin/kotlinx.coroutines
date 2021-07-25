@@ -96,8 +96,10 @@ kotlin {
                     freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
                 }
             }
-            testRuns {
-                background { setExecutionSourceFrom(binaries.backgroundDebugTest) }
+            if (!(it instanceof org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget) || (it instanceof org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests)) {
+                testRuns {
+                    background { setExecutionSourceFrom(binaries.backgroundDebugTest) }
+                }
             }
         }
     }
