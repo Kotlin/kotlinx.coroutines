@@ -8,7 +8,6 @@
 
 package kotlinx.coroutines
 
-import java.util.concurrent.locks.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
 
@@ -99,3 +98,11 @@ private class BlockingCoroutine<T>(
         return state as T
     }
 }
+
+@Suppress("NOTHING_TO_INLINE")
+internal actual inline fun <T, R> startAbstractCoroutine(
+    start: CoroutineStart,
+    receiver: R,
+    coroutine: AbstractCoroutine<T>,
+    noinline block: suspend R.() -> T
+) = startCoroutineImpl(start, receiver, coroutine, null, block)

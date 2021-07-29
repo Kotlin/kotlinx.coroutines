@@ -123,6 +123,6 @@ public abstract class AbstractCoroutine<in T>(
      * * [LAZY] does nothing.
      */
     public fun <R> start(start: CoroutineStart, receiver: R, block: suspend R.() -> T) {
-        start(block, receiver, this)
+        startAbstractCoroutine(start, receiver, this, block)
     }
 }

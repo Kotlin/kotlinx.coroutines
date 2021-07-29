@@ -7,6 +7,7 @@ package kotlinx.coroutines
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 /**
  * Runs new coroutine and **blocks** current thread _interruptibly_ until its completion.
@@ -77,4 +78,54 @@ private class BlockingCoroutine<T>(
         (state as? CompletedExceptionally)?.let { throw it.cause }
         state as T
     }
+}
+
+internal fun runEventLoop(eventLoop: EventLoop?, isCompleted: () -> Boolean) {
+    try {
+        eventLoop?.incrementUseCount()
+        val thread = currentThread()
+        while (!isCompleted()) {
+            val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
+            if (isCompleted()) break
+            thread.parkNanos(parkNanos)
+        }
+    } finally { // paranoia
+        eventLoop?.decrementUseCount()
+    }
+}
+
+internal actual fun <T, R> startAbstractCoroutine(
+    start: CoroutineStart,
+    receiver: R,
+    coroutine: AbstractCoroutine<T>,
+    block: suspend R.() -> T
+) = startCoroutine(start, receiver, coroutine, null, block)
+
+private fun <T, R> startCoroutine(
+    start: CoroutineStart,
+    receiver: R,
+    completion: Continuation<T>,
+    onCancellation: ((cause: Throwable) -> Unit)?,
+    block: suspend R.() -> T
+) {
+    val curThread = currentThread()
+    val newThread = completion.context[ContinuationInterceptor].thread()
+    if (newThread != curThread) {
+        check(start != CoroutineStart.UNDISPATCHED) {
+            "Cannot start an undispatched coroutine in another thread $newThread from current $curThread"
+        }
+        if (start != CoroutineStart.LAZY) {
+            newThread.execute {
+                startCoroutineImpl(start, receiver, completion, onCancellation, block)
+            }
+        }
+        return
+    }
+    startCoroutineImpl(start, receiver, completion, onCancellation, block)
+}
+
+private fun ContinuationInterceptor?.thread(): Thread = when (this) {
+    null -> Dispatchers.Default.thread()
+    is ThreadBoundInterceptor -> thread
+    else -> currentThread() // fallback
 }

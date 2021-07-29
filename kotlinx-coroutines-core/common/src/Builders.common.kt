@@ -167,7 +167,7 @@ public suspend fun <T> withContext(
         }
         // SLOW PATH -- use new dispatcher
         val coroutine = DispatchedCoroutine(newContext, uCont)
-        block.startCoroutineCancellable(coroutine, coroutine)
+        coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
         coroutine.getResult()
     }
 }
@@ -264,4 +264,24 @@ internal class DispatchedCoroutine<in T>(
         @Suppress("UNCHECKED_CAST")
         return state as T
     }
+}
+
+internal expect fun <T, R> startAbstractCoroutine(
+    start: CoroutineStart,
+    receiver: R,
+    coroutine: AbstractCoroutine<T>,
+    block: suspend R.() -> T
+)
+
+internal fun <T, R> startCoroutineImpl(
+    start: CoroutineStart,
+    receiver: R,
+    completion: Continuation<T>,
+    onCancellation: ((cause: Throwable) -> Unit)?,
+    block: suspend R.() -> T
+) = when (start) {
+    CoroutineStart.DEFAULT -> block.startCoroutineCancellable(receiver, completion, onCancellation)
+    CoroutineStart.ATOMIC -> block.startCoroutine(receiver, completion)
+    CoroutineStart.UNDISPATCHED -> block.startCoroutineUndispatched(receiver, completion)
+    CoroutineStart.LAZY -> Unit // will start lazily
 }

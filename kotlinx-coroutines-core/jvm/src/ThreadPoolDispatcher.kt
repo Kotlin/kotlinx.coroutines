@@ -30,8 +30,13 @@ import java.util.concurrent.atomic.AtomicInteger
  * @param name the base name of the created thread.
  */
 @ObsoleteCoroutinesApi
-public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
+public actual fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
+
+/**
+ * A coroutine dispatcher that is confined to a single thread.
+ */
+public actual typealias SingleThreadDispatcher = ExecutorCoroutineDispatcher
 
 /**
  * Creates a coroutine execution context with the fixed-size thread-pool and built-in [yield] support.
