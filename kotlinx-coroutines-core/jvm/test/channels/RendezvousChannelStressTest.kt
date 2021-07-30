@@ -7,7 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import org.junit.*
 
-class RandevouzChannelStressTest : TestBase() {
+class RendezvousChannelStressTest : TestBase() {
 
     @Test
     fun testStress() = runTest {
