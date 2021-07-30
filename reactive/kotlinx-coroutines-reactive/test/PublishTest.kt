@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.*
 import org.junit.Test
 import org.reactivestreams.*
 import java.util.concurrent.*
@@ -308,13 +309,15 @@ class PublishTest : TestBase() {
         }
 
         expect(1)
+        val collectorLatch = Mutex(true)
         val job = launch {
             published.asFlow().buffer(0).collect {
                 expect(4)
+                collectorLatch.unlock()
                 hang { expect(6) }
             }
         }
-        yield()
+        collectorLatch.lock()
         expect(5)
         job.cancelAndJoin()
         latch.await()
