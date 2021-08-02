@@ -8,19 +8,27 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 
-private fun takeEventLoop(): EventLoopImpl =
-    ThreadLocalEventLoop.currentOrNull() as? EventLoopImpl ?:
-        error("There is no event loop. Use runBlocking { ... } to start one.")
 
 internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
-    override fun dispatch(context: CoroutineContext, block: Runnable) =
-        takeEventLoop().dispatch(context, block)
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
-        takeEventLoop().scheduleResumeAfterDelay(timeMillis, continuation)
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        takeEventLoop().invokeOnTimeout(timeMillis, block, context)
 
-    actual fun enqueue(task: Runnable): Unit = loopWasShutDown()
+    private val worker = Worker.start(name = "Dispatchers.Default")
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) =
+        worker.executeAfter(0L) { block.run() }
+
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        // TODO proper toMicros
+        worker.executeAfter(timeMillis * 1000)
+        { with(continuation) { resumeUndispatched(Unit) } }
+    }
+
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+        // No API to cancel on timeout
+        worker.executeAfter(timeMillis * 1000) { block.run() }
+        return NonDisposableHandle
+    }
+
+    actual fun enqueue(task: Runnable): Unit = worker.executeAfter(0L) { task.run() }
 }
 
 internal fun loopWasShutDown(): Nothing = error("Cannot execute task because event loop was shut down")
