@@ -18,7 +18,7 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
         current.execute(TransferMode.SAFE, {}) {} // send an empty task to unpark the waiting event loop
     }
 
-    // TODO verify loop was shut down is an okay behaviour
+    // TODO actually reschedule
     protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask): Unit =
         loopWasShutDown()
 }

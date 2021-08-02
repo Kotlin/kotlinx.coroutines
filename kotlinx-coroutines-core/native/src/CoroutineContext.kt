@@ -11,24 +11,16 @@ import kotlin.native.concurrent.*
 
 internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
-    private val worker = Worker.start(name = "Dispatchers.Default")
+    private val delegate = SingleThreadDispatcherImpl(name = "Dispatchers.Default")
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
-        worker.executeAfter(0L) { block.run() }
+        delegate.dispatch(context, block)
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        // TODO proper toMicros
-        worker.executeAfter(timeMillis * 1000)
-        { with(continuation) { resumeUndispatched(Unit) } }
-    }
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) = delegate.scheduleResumeAfterDelay(timeMillis, continuation)
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        // No API to cancel on timeout
-        worker.executeAfter(timeMillis * 1000) { block.run() }
-        return NonDisposableHandle
-    }
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle = delegate.invokeOnTimeout(timeMillis, block, context)
 
-    actual fun enqueue(task: Runnable): Unit = worker.executeAfter(0L) { task.run() }
+    actual fun enqueue(task: Runnable): Unit = delegate.dispatch(EmptyCoroutineContext, task)
 }
 
 internal fun loopWasShutDown(): Nothing = error("Cannot execute task because event loop was shut down")
