@@ -49,20 +49,14 @@ private class WorkerCoroutineDispatcherImpl(name: String) : SingleThreadDispatch
         }
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        checkCurrentThread()
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
         (ThreadLocalEventLoop.eventLoop as Delay).scheduleResumeAfterDelay(timeMillis, continuation)
-    }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        checkCurrentThread()
-        return (ThreadLocalEventLoop.eventLoop as Delay).invokeOnTimeout(timeMillis, block, context)
-    }
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        (ThreadLocalEventLoop.eventLoop as Delay).invokeOnTimeout(timeMillis, block, context)
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        checkCurrentThread()
+    override fun dispatch(context: CoroutineContext, block: Runnable) =
         ThreadLocalEventLoop.eventLoop.dispatch(context, block)
-    }
 
     override fun close() {
         isClosed.value = true

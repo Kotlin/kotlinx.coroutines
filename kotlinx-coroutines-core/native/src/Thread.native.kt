@@ -40,8 +40,3 @@ internal open class WorkerThread(val worker: Worker = Worker.current) : Thread()
 internal interface ThreadBoundInterceptor {
     val thread: Thread
 }
-
-internal fun ThreadBoundInterceptor.checkCurrentThread() {
-    val current = currentThread()
-    check(current == thread) { "This dispatcher can be used only from a single thread $thread, but now in $current" }
-}
