@@ -4,8 +4,8 @@
 
 package kotlinx.coroutines
 
+import kotlinx.browser.*
 import kotlinx.coroutines.internal.*
-import kotlin.browser.*
 import kotlin.coroutines.*
 
 private external val navigator: dynamic

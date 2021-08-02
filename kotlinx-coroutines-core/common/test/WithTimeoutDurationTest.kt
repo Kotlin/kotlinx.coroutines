@@ -17,7 +17,7 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeout(10.seconds) {
+        val result = withTimeout(Duration.seconds(10)) {
             expect(2)
             "OK"
         }
@@ -31,7 +31,7 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testBasicSuspend() = runTest {
         expect(1)
-        val result = withTimeout(10.seconds) {
+        val result = withTimeout(Duration.seconds(10)) {
             expect(2)
             yield()
             expect(3)
@@ -54,7 +54,7 @@ class WithTimeoutDurationTest : TestBase() {
         }
         expect(2)
         // test that it does not yield to the above job when started
-        val result = withTimeout(1.seconds) {
+        val result = withTimeout(Duration.seconds(1)) {
             expect(3)
             yield() // yield only now
             expect(5)
@@ -74,7 +74,7 @@ class WithTimeoutDurationTest : TestBase() {
     fun testYieldBlockingWithTimeout() = runTest(
             expected = { it is CancellationException }
     ) {
-        withTimeout(100.milliseconds) {
+        withTimeout(Duration.milliseconds(100)) {
             while (true) {
                 yield()
             }
@@ -87,7 +87,7 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testWithTimeoutChildWait() = runTest {
         expect(1)
-        withTimeout(100.milliseconds) {
+        withTimeout(Duration.milliseconds(100)) {
             expect(2)
             // launch child with timeout
             launch {
@@ -102,7 +102,7 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeout(100.milliseconds) {
+        val result = withTimeout(Duration.milliseconds(100)) {
             bad
         }
         assertSame(bad, result)
@@ -118,9 +118,9 @@ class WithTimeoutDurationTest : TestBase() {
     fun testExceptionOnTimeout() = runTest {
         expect(1)
         try {
-            withTimeout(100.milliseconds) {
+            withTimeout(Duration.milliseconds(100)) {
                 expect(2)
-                delay(1000.milliseconds)
+                delay(Duration.milliseconds(1000))
                 expectUnreached()
                 "OK"
             }
@@ -135,10 +135,10 @@ class WithTimeoutDurationTest : TestBase() {
             expected = { it is CancellationException }
     ) {
         expect(1)
-        withTimeout(100.milliseconds) {
+        withTimeout(Duration.milliseconds(100)) {
             expect(2)
             try {
-                delay(1000.milliseconds)
+                delay(Duration.milliseconds(1000))
             } catch (e: CancellationException) {
                 finish(3)
             }
@@ -151,10 +151,10 @@ class WithTimeoutDurationTest : TestBase() {
     fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
         try {
-            withTimeout(100.milliseconds) {
+            withTimeout(Duration.milliseconds(100)) {
                 expect(2)
                 try {
-                    delay(1000.milliseconds)
+                    delay(Duration.milliseconds(1000))
                 } catch (e: CancellationException) {
                     expect(3)
                     throw TestException()
@@ -172,7 +172,7 @@ class WithTimeoutDurationTest : TestBase() {
     fun testNegativeTimeout() = runTest {
         expect(1)
         try {
-            withTimeout(-1.milliseconds) {
+            withTimeout(-Duration.milliseconds(1)) {
                 expectUnreached()
                 "OK"
             }
@@ -187,7 +187,7 @@ class WithTimeoutDurationTest : TestBase() {
         expect(1)
         try {
             expect(2)
-            withTimeout(1.seconds) {
+            withTimeout(Duration.seconds(1)) {
                 expect(3)
                 throw TestException()
             }

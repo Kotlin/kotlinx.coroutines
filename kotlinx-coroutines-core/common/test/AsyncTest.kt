@@ -43,7 +43,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testSimpleException() = runTest(expected = { it is TestException }) {
         expect(1)
-        val d = async {
+        val d = async<Unit> {
             finish(3)
             throw TestException()
         }
@@ -170,7 +170,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testDeferAndYieldException() = runTest(expected = { it is TestException }) {
         expect(1)
-        val d = async {
+        val d = async<Unit> {
             expect(3)
             yield() // no effect, parent waiting
             finish(4)

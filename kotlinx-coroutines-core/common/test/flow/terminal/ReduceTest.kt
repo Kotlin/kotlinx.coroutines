@@ -30,7 +30,7 @@ class ReduceTest : TestBase() {
     fun testNullableReduce() = runTest {
         val flow = flowOf(1, null, null, 2)
         var invocations = 0
-        val sum = flow.reduce { acc, value ->
+        val sum = flow.reduce { _, value ->
             ++invocations
             value
         }
@@ -67,7 +67,6 @@ class ReduceTest : TestBase() {
                 latch.receive()
                 expect(4)
                 throw TestException()
-                42 // Workaround for KT-30642, return type should not be Nothing
             }
         }
         finish(6)

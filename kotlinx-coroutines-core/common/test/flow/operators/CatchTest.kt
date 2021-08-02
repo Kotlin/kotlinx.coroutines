@@ -133,7 +133,7 @@ class CatchTest : TestBase() {
             .flowOn(d2)
             // flowOn with a different dispatcher introduces asynchrony so that all exceptions in the
             // upstream flows are handled before they go downstream
-            .onEach { value ->
+            .onEach {
                 expectUnreached() // already cancelled
             }
             .catch { e ->

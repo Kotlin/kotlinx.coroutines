@@ -105,7 +105,7 @@ public actual open class TestBase actual constructor() {
         if (lastTestPromise != null) {
             error("Attempt to run multiple asynchronous test within one @Test method")
         }
-        val result = GlobalScope.promise(block = block, context = CoroutineExceptionHandler { context, e ->
+        val result = GlobalScope.promise(block = block, context = CoroutineExceptionHandler { _, e ->
             if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
             exCount++
             when {
