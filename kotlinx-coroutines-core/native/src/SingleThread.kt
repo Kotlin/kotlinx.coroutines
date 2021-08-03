@@ -25,18 +25,22 @@ internal class SingleThreadDispatcherImpl(name: String) : SingleThreadDispatcher
         worker.executeAfter(0L) { block.run() }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        // TODO proper toMicros
-        worker.executeAfter(timeMillis * 1000)
+        worker.executeAfter(timeMillis.toMicrosSafe())
         { with(continuation) { resumeUndispatched(Unit) } }
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         // No API to cancel on timeout
-        worker.executeAfter(timeMillis * 1000) { block.run() }
+        worker.executeAfter(timeMillis.toMicrosSafe()) { block.run() }
         return NonDisposableHandle
     }
 
     override fun close() {
         worker.requestTermination().result // Note: calling "result" blocks
+    }
+
+    private fun Long.toMicrosSafe(): Long {
+        val result = this * 1000
+        return if (result > this) result else Long.MAX_VALUE
     }
 }

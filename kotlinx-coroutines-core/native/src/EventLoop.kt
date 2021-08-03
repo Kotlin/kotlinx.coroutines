@@ -25,8 +25,9 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
 }
 
 internal class EventLoopImpl: EventLoopImplBase() {
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        scheduleInvokeOnTimeout(timeMillis, block)
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+        return DefaultDelay.invokeOnTimeout(timeMillis, block, context)
+    }
 }
 
 internal actual fun createEventLoop(): EventLoop = EventLoopImpl()
