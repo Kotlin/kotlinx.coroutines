@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.internal
 
+import kotlinx.atomicfu.*
 import kotlinx.atomicfu.locks.withLock as withLock2
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
@@ -14,3 +15,17 @@ internal actual inline fun <T> ReentrantLock.withLock(action: () -> T): T = this
 internal actual fun <E> subscriberList(): MutableList<E> = CopyOnWriteList<E>()
 
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet()
+
+// "Suppress-supporting throwable" is currently used for tests only
+internal open class SuppressSupportingThrowableImpl : Throwable() {
+    private val _suppressed = atomic<Array<Throwable>>(emptyArray())
+
+    val suppressed: Array<Throwable>
+        get() = _suppressed.value
+
+    fun addSuppressed(other: Throwable) {
+        _suppressed.update { current ->
+            current + other
+        }
+    }
+}
