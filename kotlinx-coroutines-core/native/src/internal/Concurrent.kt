@@ -4,14 +4,12 @@
 
 package kotlinx.coroutines.internal
 
-internal actual typealias ReentrantLock = NoOpLock
+import kotlinx.atomicfu.locks.withLock as withLock2
 
-internal actual inline fun <T> ReentrantLock.withLock(action: () -> T) = action()
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+internal actual typealias ReentrantLock = kotlinx.atomicfu.locks.SynchronizedObject
 
-internal class NoOpLock {
-    fun tryLock() = true
-    fun unlock(): Unit {}
-}
+internal actual inline fun <T> ReentrantLock.withLock(action: () -> T): T = this.withLock2(action)
 
 internal actual fun <E> subscriberList(): MutableList<E> = CopyOnWriteList<E>()
 
