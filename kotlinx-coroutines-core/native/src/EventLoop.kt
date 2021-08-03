@@ -4,13 +4,24 @@
 
 package kotlinx.coroutines
 
+import kotlinx.cinterop.*
+import platform.posix.*
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 import kotlin.system.*
 
-internal actual abstract class EventLoopImplPlatform: EventLoop() {
-    protected actual fun unpark() { /* does nothing */ }
-    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask): Unit =
-        loopWasShutDown()
+internal actual abstract class EventLoopImplPlatform : EventLoop() {
+
+    private val current = Worker.current
+
+    protected actual fun unpark() {
+        current.execute(TransferMode.SAFE, {}) {} // send an empty task to unpark the waiting event loop
+    }
+
+    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask): Unit {
+        DefaultExecutor.invokeOnTimeout(now, delayedTask, EmptyCoroutineContext)
+        Unit
+    }
 }
 
 internal class EventLoopImpl: EventLoopImplBase() {
