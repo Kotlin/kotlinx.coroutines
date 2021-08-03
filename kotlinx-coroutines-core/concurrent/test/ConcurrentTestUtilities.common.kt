@@ -4,8 +4,18 @@
 
 package kotlinx.coroutines.exceptions
 
+import kotlinx.coroutines.*
+
 internal expect open class SuppressSupportingThrowable() : Throwable
 expect val Throwable.suppressed: Array<Throwable>
 expect fun Throwable.printStackTrace()
 
 expect fun randomWait()
+
+inline fun SingleThreadDispatcher.use(block: (SingleThreadDispatcher) -> Unit) {
+    try {
+        block(this)
+    } finally {
+        close()
+    }
+}
