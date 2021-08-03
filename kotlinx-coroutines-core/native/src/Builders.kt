@@ -7,6 +7,7 @@ package kotlinx.coroutines
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 /**
  * Runs new coroutine and **blocks** current thread _interruptibly_ until its completion.
@@ -33,7 +34,7 @@ import kotlin.coroutines.*
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val contextInterceptor = context[ContinuationInterceptor]
     val eventLoop: EventLoop?
-    var newContext: CoroutineContext = context // todo: kludge for data flow analysis error
+    val newContext: CoroutineContext
     if (contextInterceptor == null) {
         // create or use private event loop if no dispatcher is specified
         eventLoop = ThreadLocalEventLoop.eventLoop
@@ -57,17 +58,14 @@ private class BlockingCoroutine<T>(
     override val isScopedCoroutine: Boolean get() = true
 
     @Suppress("UNCHECKED_CAST")
-    fun joinBlocking(): T = memScoped {
+    fun joinBlocking(): T {
         try {
             eventLoop?.incrementUseCount()
-            val timespec = alloc<timespec>()
             while (true) {
                 val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                 // note: process next even may loose unpark flag, so check if completed before parking
                 if (isCompleted) break
-                timespec.tv_sec = (parkNanos / 1000000000L).convert() // 1e9 ns -> sec
-                timespec.tv_nsec = (parkNanos % 1000000000L).convert() // % 1e9
-                nanosleep(timespec.ptr, null)
+                Worker.current.park(parkNanos / 1000L)
             }
         } finally { // paranoia
             eventLoop?.decrementUseCount()
@@ -75,6 +73,6 @@ private class BlockingCoroutine<T>(
         // now return result
         val state = state.unboxState()
         (state as? CompletedExceptionally)?.let { throw it.cause }
-        state as T
+        return state as T
     }
 }
