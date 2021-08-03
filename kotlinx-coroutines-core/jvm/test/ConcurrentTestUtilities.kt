@@ -27,3 +27,4 @@ internal actual typealias SuppressSupportingThrowable = Throwable
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 actual fun Throwable.printStackTrace() = printStackTrace()
 
+actual fun currentThreadName(): String = Thread.currentThread().name

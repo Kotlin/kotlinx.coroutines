@@ -2,10 +2,12 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:OptIn(ExperimentalContracts::class)
 package kotlinx.coroutines
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 
@@ -32,6 +34,9 @@ import kotlin.native.concurrent.*
  * @param block the coroutine code.
  */
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
     val contextInterceptor = context[ContinuationInterceptor]
     val eventLoop: EventLoop?
     val newContext: CoroutineContext
@@ -55,7 +60,17 @@ private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val eventLoop: EventLoop?
 ) : AbstractCoroutine<T>(parentContext, true, true) {
+    private val joinWorker = Worker.current
+
     override val isScopedCoroutine: Boolean get() = true
+
+    override fun afterCompletion(state: Any?) {
+        // wake up blocked thread
+        if (joinWorker != Worker.current) {
+            // Unpark waiting worker
+            joinWorker.execute(TransferMode.SAFE, {}) {} // send an empty task to unpark the waiting event loop
+        }
+    }
 
     @Suppress("UNCHECKED_CAST")
     fun joinBlocking(): T {
@@ -65,7 +80,7 @@ private class BlockingCoroutine<T>(
                 val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                 // note: process next even may loose unpark flag, so check if completed before parking
                 if (isCompleted) break
-                Worker.current.park(parkNanos / 1000L)
+                joinWorker.park(parkNanos / 1000L)
             }
         } finally { // paranoia
             eventLoop?.decrementUseCount()
