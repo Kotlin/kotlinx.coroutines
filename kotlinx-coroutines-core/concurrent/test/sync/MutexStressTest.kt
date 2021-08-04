@@ -1,22 +1,23 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.exceptions.*
 import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 class MutexStressTest : TestBase() {
     @Test
-    fun testStress() = runBlocking(Dispatchers.Default) {
+    fun testStress() = runBlocking {
         val n = 1000 * stressTestMultiplier
         val k = 100
         var shared = 0
         val mutex = Mutex()
         val jobs = List(n) {
-            launch {
+            launch(Dispatchers.Default) {
                 repeat(k) {
                     mutex.lock()
                     shared++
@@ -26,6 +27,31 @@ class MutexStressTest : TestBase() {
         }
         jobs.forEach { it.join() }
         assertEquals(n * k, shared)
+    }
+
+    @Test
+    fun testNativeSpecificStress() = runBlocking {
+        /*
+         * Dispatchers.Default is still single-threaded, so here we're doing actual concurrency
+         */
+        val n = 100_000 * stressTestMultiplier
+        var shared = 0
+        val mutex = Mutex()
+        val job = launch(Dispatchers.Default) {
+            repeat(n) {
+                mutex.lock()
+                shared++
+                mutex.unlock()
+            }
+        }
+
+        repeat(n) {
+            mutex.lock()
+            shared++
+            mutex.unlock()
+        }
+        job.join()
+        assertEquals(n * 2, shared)
     }
 
     @Test
