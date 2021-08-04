@@ -4,6 +4,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.Symbol
 import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
 import kotlin.math.*
 import kotlin.native.concurrent.*
 
@@ -195,7 +196,7 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
             cleanNonSelectedAlternatives(-1)
             throw e
         }
-        val i = selectedAlternativeIndex()
+        val i = selectedAlternativeIndex(state.value!!)
         cleanNonSelectedAlternatives(i)
         cleanState()
         val result = processResult(i, resumeResult)
@@ -247,7 +248,25 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
         }
         return suspendCancellableCoroutineReusable { cont ->
             this.cont = cont
-            this.state.value = STATE_WAITING
+            while (true) {
+                val objForSelect = extractFromStackOrClose() ?: break
+                val i = selectedAlternativeIndex(objForSelect)
+                // Try to register again
+                val regFunc = alternatives[i + 1] as RegistrationFunction
+                val param = alternatives[i + 3]
+                regFunc(objForSelect, this, param)
+                if (state.value === STATE_REG) {
+                    // successfully registered
+                    alternatives[i + 5] = resultOrOnCompleteAction.also { resultOrOnCompleteAction = null }
+                } else {
+                    state.value = objForSelect
+                    // rendezvous happened
+                    val res = resultOrOnCompleteAction.also { resultOrOnCompleteAction = null }
+                    cont.resume(res)
+                    break
+                }
+            }
+            state.compareAndSet(STATE_REG, STATE_WAITING)
         }
     }
 
@@ -281,8 +300,7 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
     /**
      * Return an index of the selected alternative in `alternatives` array.
      */
-    private fun selectedAlternativeIndex(): Int {
-        val objForSelect = state.value!!
+    private fun selectedAlternativeIndex(objForSelect: Any): Int {
         for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
             if (alternatives[i] === objForSelect) return i
         }
@@ -293,9 +311,16 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
         from?.waitingFor = this
         try {
             var curState: Any? = this.state.value
+            var t = 0
             while (curState === STATE_REG) {
-                // TODO backoff + Thread.onSpinWait
                 if (from != null && shouldBreakDeadlock(from, from, from.id)) return false
+                if (true || ++t == 128) {
+                    if (reregisterSelect(objForSelect)) {
+                        return false
+                    } else {
+                        state.compareAndSet(STATE_REG, STATE_WAITING)
+                    }
+                }
                 curState = this.state.value
             }
             if (curState != STATE_WAITING) return false
@@ -305,6 +330,26 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
             return true
         } finally {
             from?.waitingFor = null
+        }
+    }
+
+    private class Node(val objForSelect: Any?, val next: Node?)
+    private val stack = atomic<Node?>(null)
+    private val CLOSED = Node(null, null)
+
+    private fun reregisterSelect(objForSelect: Any): Boolean {
+        stack.loop { cur ->
+            if (cur === CLOSED) return false
+            if (stack.compareAndSet(cur, Node(objForSelect, cur))) return true
+        }
+    }
+    private fun extractFromStackOrClose(): Any? {
+        stack.loop { cur ->
+            if (cur === null) {
+                if (stack.compareAndSet(null, CLOSED)) return null
+            } else {
+                if (stack.compareAndSet(cur, cur.next)) return cur.objForSelect
+            }
         }
     }
 

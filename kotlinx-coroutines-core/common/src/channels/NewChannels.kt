@@ -90,8 +90,7 @@ public class BufferedChannel<E>(capacity: Int) {
                 segm.cleanPrev()
                 if (trySendWithoutSuspension(segm, i)) return
             } else {
-                sendSuspend(segm, i, s)
-                return
+                if(sendSuspend(segm, i, s)) return
             }
         }
     }
@@ -102,43 +101,46 @@ public class BufferedChannel<E>(capacity: Int) {
     }
 
     private fun trySendWithoutSuspension(segm: ChannelSegment, i: Int, select: NewSelectInstance<*>? = null): Boolean {
-        val w = segm.getAndUpdateWaiter(i) { w ->
+        var w = segm.getAndUpdateWaiter(i) { w ->
             when {
                 w === null || w === BUFFERING -> BUFFERED // buffering or elimination
                 w === BROKEN -> BROKEN // do not change
+                w === BROKEN_2 -> BROKEN_2 // do not change
                 else -> DONE // SelectInstance or CancellableContinuation
             }
         }
+        if (w is ExpandBufferDesc) w = w.cont
         when {
             w === null || w === BUFFERING -> return true
             w === BROKEN -> return false
-            w is Receiver -> {
-                return if (w.cont.tryResume()) {
+            w === BROKEN_2 -> return false
+            w is CancellableContinuation<*> -> {
+                return if (w.tryResumeReceive()) {
                     true
                 } else {
                     segm.setElementLazy(i, null)
                     false
                 }
             }
-            w is ReceiverSelect -> { // rendezvous
+            w is NewSelectInstance<*> -> { // rendezvous
                 val element = segm.getElement(i)
                 segm.setElementLazy(i, null)
-                return w.select.trySelect(objForSelect = this@BufferedChannel, result = element, from = select)
+                return w.trySelect(objForSelect = this@BufferedChannel, result = element, from = select)
             }
             else -> error("Unexpected waiter: $w")
         }
     }
 
-    private suspend fun sendSuspend(segm: ChannelSegment, i: Int, s: Long) = suspendCancellableCoroutineReusable<Unit> { cont ->
-        val state = segm.getAndSetWaiterConditionally(i, cont) { it !== BROKEN && it !== BUFFERING}
-        if (state === BROKEN) cont.resumeWithException(sendException)
+    private suspend fun sendSuspend(segm: ChannelSegment, i: Int, s: Long) = suspendCancellableCoroutineReusable<Boolean> { cont ->
+        val state = segm.getAndSetWaiterConditionally(i, cont) { it !== BROKEN && it !== BROKEN_2 && it !== BUFFERING }
+        if (state === BROKEN || state === BROKEN_2) cont.resume(false)
         if (state === BUFFERING) {
             // already resumed, buffered by race
-            segm.setWaiter(i, BUFFERED)
-            cont.resume(Unit)
+            if (segm.casWaiter(i, BUFFERING, BUFFERED)) cont.resume(true)
+            else cont.resume(false)
         }
         if (s < bufferEnd.value) {
-            if (segm.casWaiter(i, cont, BUFFERED)) cont.resume(Unit)
+            if (segm.casWaiter(i, cont, BUFFERED)) cont.resume(true)
         }
     }
 
@@ -193,13 +195,29 @@ public class BufferedChannel<E>(capacity: Int) {
         read_waiter@while (true) {
             w = segm.getWaiter(i)
             when {
-                w === null || w === BUFFERING -> continue@read_waiter
+                w === null -> {
+                    if (segm.casWaiter(i, null, BROKEN_2)) {
+                        expandBuffer()
+                        return FAILED_RESULT
+                    }
+                }
+                w === BUFFERING -> {
+                    if (segm.casWaiter(i, BUFFERING, BROKEN_2)) {
+                        expandBuffer()
+                        return FAILED_RESULT
+                    }
+                }
+                w === RESUMING -> continue@read_waiter // TODO how to fix this part?
                 w === BROKEN -> return FAILED_RESULT
                 else -> if (segm.casWaiter(i, w, RESUMING)) break@read_waiter
             }
         }
         val element = segm.getElement(i) as E
         segm.setElementLazy(i, null)
+        val helpExpandBuffer = w is ExpandBufferDesc
+        if (w is ExpandBufferDesc) {
+            w = w.cont
+        }
         when {
             w === BUFFERED -> {
                 segm.setWaiter(i, DONE)
@@ -209,13 +227,14 @@ public class BufferedChannel<E>(capacity: Int) {
                 return element
             } // buffered
             w is CancellableContinuation<*> -> {
-                if (w.tryResume()) {
+                if (w.tryResumeSend()) {
                     segm.setWaiter(i, DONE)
                     select?.selectInRegPhase(element)
                     expandBuffer()
                     return element
                 } else {
-                    segm.setWaiter(i, BROKEN)
+                    if (!segm.casWaiter(i, RESUMING, BROKEN)) expandBuffer()
+                    if (helpExpandBuffer) expandBuffer()
                     return FAILED_RESULT
                 }
             }
@@ -226,7 +245,8 @@ public class BufferedChannel<E>(capacity: Int) {
                     expandBuffer()
                     return element
                 } else {
-                    segm.setWaiter(i, BROKEN)
+                    if (!segm.casWaiter(i, RESUMING, BROKEN)) expandBuffer()
+                    if (helpExpandBuffer) expandBuffer()
                     return FAILED_RESULT
                 }
             }
@@ -238,14 +258,16 @@ public class BufferedChannel<E>(capacity: Int) {
         update_waiter@while (true) {
             val w = segm.getWaiter(i)
             when {
-                w === null -> if (segm.casWaiter(i, w, Receiver(cont))) break@update_waiter
+                w === null -> if (segm.casWaiter(i, w, cont)) break@update_waiter
                 w === BROKEN -> {
                     cont.resumeWithException(receiveException)
                     break@update_waiter
                 }
                 w === BUFFERING -> {
-                    if (senders.value > r) continue@update_waiter
-                    if (segm.casWaiter(i, w, Receiver(cont))) break@update_waiter
+//                    if (senders.value > r) continue@update_waiter
+                    if (segm.casWaiter(i, w, cont)) {
+                        break@update_waiter
+                    }
                 }
                 w === BUFFERED -> {
                     cont.resume(Unit)
@@ -267,8 +289,7 @@ public class BufferedChannel<E>(capacity: Int) {
                 val w = cur.getWaiter(i)
                 val e = cur.getElement(i)
                 val wString = when {
-                    w is Receiver -> "R"
-                    w is CancellableContinuation<*> -> "S"
+                    w is CancellableContinuation<*> -> "cont"
                     else -> w.toString()
                 }
                 val eString = e.toString()
@@ -285,30 +306,28 @@ public class BufferedChannel<E>(capacity: Int) {
         return "S=${senders.value},R=${receivers.value},B=${bufferEnd.value},data=${data},dataStart=$dataStart"
     }
 
-    private class Receiver(val cont: CancellableContinuation<Unit>)
-    private class ReceiverSelect(val select: NewSelectInstance<*>)
-
     private fun expandBuffer() {
         if (rendezvous || unlimited) return
         try_again@while (true) {
             var segm = bufferEndSegment.value
             val b = bufferEnd.getAndIncrement()
             val s = senders.value
-            if (s < b) return
+            if (s <= b) return
             val id = b / SEGMENT_SIZE
             val i = (b % SEGMENT_SIZE).toInt()
             segm = bufferEndSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
             while (true) {
                 val state = segm.getWaiter(i)
                 when {
-                    state === null -> return
-                    state === RESUMING -> continue
+                    state === null -> if (segm.casWaiter(i, null, BUFFERING)) return
                     state === BROKEN -> continue@try_again
+                    state === BROKEN_2 -> return
                     state === DONE || state === BUFFERED -> return // already resumed by `receive`
-                    state is Receiver || state is ReceiverSelect -> return
-                    segm.casWaiter(i, state, BUFFERING) -> when (state) {
+                    state === RESUMING -> if (segm.casWaiter(i, RESUMING, EXPAND_BUFFER)) return
+                    receivers.value > b -> if (segm.casWaiter(i, state, ExpandBufferDesc(state))) return
+                    segm.casWaiter(i, state, RESUMING) -> when (state) { // cont or select
                         is CancellableContinuation<*> -> {
-                            if (state.tryResume()) {
+                            if (state.tryResumeSend()) {
                                 segm.setWaiter(i, BUFFERED)
                                 return
                             } else {
@@ -373,11 +392,10 @@ public class BufferedChannel<E>(capacity: Int) {
                     return
                 }
             } else {
-                val state = segm.getAndSetWaiterConditionally(i, select) { it !== BROKEN && it !== BUFFERING }
-                if (state === BROKEN) TODO("closing")
+                val state = segm.getAndSetWaiterConditionally(i, select) { it !== BROKEN && it !== BROKEN_2 && it !== BUFFERING }
+                if (state === BROKEN || state === BROKEN_2) continue@try_again
                 if (state === BUFFERING) {
-                    // already resumed, buffered by race
-                    segm.setWaiter(i, BUFFERED)
+                    if (!segm.casWaiter(i, BUFFERING, BUFFERED)) continue@try_again
                     select.selectInRegPhase(Unit)
                 }
                 select.invokeOnCompletion { segm.setElementLazy(i, null) }
@@ -404,14 +422,14 @@ public class BufferedChannel<E>(capacity: Int) {
                 update_waiter@while (true) {
                     val w = segm.getWaiter(i)
                     when {
-                        w === null -> if (segm.casWaiter(i, w, ReceiverSelect(select))) break@update_waiter
+                        w === null -> if (segm.casWaiter(i, w, select)) break@update_waiter
                         w === BROKEN -> {
                             TODO()
                             break@update_waiter
                         }
                         w === BUFFERING -> {
                             if (senders.value > r) continue@update_waiter
-                            if (segm.casWaiter(i, w, ReceiverSelect(select))) {
+                            if (segm.casWaiter(i, w, select)) {
                                 break@update_waiter
                             }
                         }
@@ -651,12 +669,22 @@ internal class ChannelSegment(id: Long, prev: ChannelSegment?, pointers: Int): S
 
 private fun createSegment(id: Long, prev: ChannelSegment?) = ChannelSegment(id, prev, 0)
 
-private fun CancellableContinuation<*>.tryResume(): Boolean {
+private fun CancellableContinuation<*>.tryResumeReceive(): Boolean {
     this as CancellableContinuation<Unit>
     val token = tryResume(Unit) ?: return false
     completeResume(token)
     return true
 }
+
+private fun CancellableContinuation<*>.tryResumeSend(): Boolean {
+    this as CancellableContinuation<Boolean>
+    val token = tryResume(true) ?: return false
+    completeResume(token)
+    return true
+}
+
+private class ExpandBufferDesc(val cont: Any)
+private class ReceiveDesc(val cont: CancellableContinuation<*>)
 
 // Number of waiters in each segment
 private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)
@@ -672,8 +700,9 @@ private val RESUMING = Symbol("RESUMING")
 private val BUFFERING = Symbol("BUFFERING")
 private val BUFFERED = Symbol("BUFFERED")
 private val BROKEN = Symbol("BROKEN")
+private val BROKEN_2 = Symbol("BROKEN_2")
 private val DONE = Symbol("DONE")
-private val ELIMINATED = Symbol("ELIMINATED")
+private val EXPAND_BUFFER = Symbol("EXPAND_BUFFER")
 
 
 // Special values for `CLOSE_HANDLER`

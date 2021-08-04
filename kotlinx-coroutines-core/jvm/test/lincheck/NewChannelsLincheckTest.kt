@@ -13,33 +13,53 @@ abstract class BufferedChannelLincheckTestBase(
     private val sequentialSpecification: Class<*>
 ) : AbstractLincheckTest() {
 
-    @Operation(cancellableOnSuspension = true, causesBlocking = true, allowExtraSuspension = true)
-    suspend fun send(value: Int) = c.send(value)
+    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
+    suspend fun send(value: Int): Any = try {
+        c.send(value)
+    } catch (e: NumberedCloseException) {
+        e.msg
+    }
 
-    @Operation(cancellableOnSuspension = true, causesBlocking = true, allowExtraSuspension = true)
-    suspend fun sendViaSelect(value: Int) = newSelect<Unit> {
-        c.onSend(value) {}
+    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
+    suspend fun sendViaSelect(value: Int): Any = try {
+        newSelect<Unit> { c.onSend(value) {} }
+    } catch (e: NumberedCloseException) {
+        e.msg
     }
 
 //    @Operation
     fun trySend(value: Int) = c.offer(value)
 
-    @Operation(cancellableOnSuspension = true)
-    suspend fun receive() = c.receive()
+    @Operation(cancellableOnSuspension = true, blocking = true)
+    suspend fun receive(): Any = try {
+        c.receive()
+    } catch (e: NumberedCloseException) {
+        e.msg
+    }
 
-    @Operation(cancellableOnSuspension = true, causesBlocking = true)
-    suspend fun receiveViaSelect() = newSelect<Int> {
-        c.onReceive { it }
+    @Operation(cancellableOnSuspension = true, blocking = true)
+    suspend fun receiveViaSelect(): Any = try {
+        newSelect<Int> { c.onReceive { it } }
+    } catch (e: NumberedCloseException) {
+        e.msg
     }
 
 //    @Operation
     fun tryReceive() = c.poll()
+
+//    @Operation
+    fun close(token: Int) = c.close(NumberedCloseException(token))
 
     @StateRepresentation
     fun stateRepresentation() = c.toString()
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
         actorsBefore(0).sequentialSpecification(sequentialSpecification)
+
+}
+
+private class NumberedCloseException(number: Int): Throwable() {
+    val msg = "Closed($number)"
 }
 
 class BufferedChannelRendezvousLincheckTest : BufferedChannelLincheckTestBase(
