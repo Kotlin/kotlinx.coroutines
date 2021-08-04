@@ -12,6 +12,8 @@ expect fun Throwable.printStackTrace()
 
 expect fun randomWait()
 
+expect fun currentThreadName(): String
+
 inline fun SingleThreadDispatcher.use(block: (SingleThreadDispatcher) -> Unit) {
     try {
         block(this)

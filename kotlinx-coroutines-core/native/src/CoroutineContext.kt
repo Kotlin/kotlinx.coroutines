@@ -23,12 +23,9 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
     actual fun enqueue(task: Runnable): Unit = delegate.dispatch(EmptyCoroutineContext, task)
 }
 
-internal fun loopWasShutDown(): Nothing = error("Cannot execute task because event loop was shut down")
-
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
     DefaultExecutor
 
-@SharedImmutable
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {

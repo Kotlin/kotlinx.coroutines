@@ -32,3 +32,4 @@ actual val Throwable.suppressed: Array<Throwable>
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 actual fun Throwable.printStackTrace() = printStackTrace()
 
+actual fun currentThreadName(): String = Worker.current.name
