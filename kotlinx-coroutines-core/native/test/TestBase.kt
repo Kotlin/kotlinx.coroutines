@@ -10,6 +10,8 @@ public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 public actual val stressTestMultiplierSqrt: Int = 1
 
+public actual val isNative = true
+
 public actual open class TestBase actual constructor() {
     private var actionIndex = atomic(0)
     private var finished = atomic(false)

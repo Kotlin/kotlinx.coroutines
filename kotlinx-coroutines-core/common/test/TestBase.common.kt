@@ -14,6 +14,8 @@ public expect val isStressTest: Boolean
 public expect val stressTestMultiplier: Int
 public expect val stressTestMultiplierSqrt: Int
 
+public expect val isNative: Boolean
+
 public expect open class TestBase constructor() {
     public fun error(message: Any, cause: Throwable? = null): Nothing
     public fun expect(index: Int)
