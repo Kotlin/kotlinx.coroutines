@@ -21,6 +21,8 @@ public expect val stressTestMultiplierSqrt: Int
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 public expect class TestResult
 
+public expect val isNative: Boolean
+
 public expect open class TestBase constructor() {
     /*
      * In common tests we emulate parameterized tests
