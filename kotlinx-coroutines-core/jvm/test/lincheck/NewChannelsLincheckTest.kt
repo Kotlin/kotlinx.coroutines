@@ -4,7 +4,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
+import org.jetbrains.kotlinx.lincheck.paramgen.*
+import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
 import org.junit.*
+import kotlin.random.*
 import kotlin.test.*
 import kotlin.test.Test
 
@@ -133,7 +136,73 @@ class NewSelectMemoryLeakStressTest : TestBase() {
     private fun bigValue(): ByteArray = ByteArray(4096)
 }
 
-class NewSelectDeadlockStressTest : TestBase() {
+class NewSelectLicnheckTest : AbstractLincheckTest() {
+    private val c1 = BufferedChannel<Unit>(Channel.RENDEZVOUS)
+    private val c2 = BufferedChannel<Unit>(Channel.RENDEZVOUS)
+
+    @Operation
+    suspend fun select(@Param(gen = ThreadIdGen::class) threadId: Int): Unit = when (threadId) {
+        1 -> {
+            newSelect {
+                c1.onSend(Unit) {}
+                c2.onReceive {}
+            }
+        }
+        2 -> {
+            newSelect {
+                c1.onReceive {}
+                c2.onSend(Unit) {}
+            }
+        }
+        else -> error("unexpected thread id: $threadId")
+    }
+
+    override fun extractState() = Unit
+
+    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean) =
+        actorsBefore(0).actorsAfter(0).threads(2)
+
+    override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
+        checkObstructionFreedom()
+}
+
+class NewSelectUntilLicnheckTest : AbstractLincheckTest() {
+    private val c1 = BufferedChannel<Unit>(1)
+    private val c2 = BufferedChannel<Unit>(1)
+    private var i1 = 0
+    private var i2 = 0
+
+    @Operation(cancellableOnSuspension = false, allowExtraSuspension = true)
+    suspend fun selectUntil2(@Param(gen = ThreadIdGen::class) threadId: Int): Unit = when (threadId) {
+        1 -> {
+            newSelectUntil({ i1 < 2 }) {
+                c1.onSend(Unit) { i1++ }
+                c2.onReceive { i1++ }
+            }
+        }
+        2 -> {
+            newSelectUntil({ i2 < 2 }) {
+                c1.onReceive { i2++ }
+                c2.onSend(Unit) { i2++ }
+            }
+        }
+        else -> error("unexpected thread id: $threadId")
+    }
+
+    @StateRepresentation
+    fun stateRepresentation(): String = "Channel 1: $c1; Channel 2: $c2"
+
+    override fun extractState() = Unit
+
+    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean) =
+        actorsBefore(0).actorsAfter(0)
+       .threads(2).actorsPerThread(1)
+
+    override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
+        checkObstructionFreedom()
+}
+
+class NewSelectStressTest : TestBase() {
     private val pool = newFixedThreadPoolContext(2, "SelectDeadlockStressTest")
     private val nSeconds = 3 * stressTestMultiplier
 
@@ -152,7 +221,54 @@ class NewSelectDeadlockStressTest : TestBase() {
         launchSendReceive(c2, c1, s2)
         for (i in 1..nSeconds) {
             delay(1000)
-            println("$i: First: $s1; Second: $s2")
+            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${c1.sendersCounter.toDouble() / s1.sendIndex} and ${c2.sendersCounter.toDouble() / s2.sendIndex}")
+        }
+        coroutineContext.cancelChildren()
+    }
+
+    @org.junit.Test
+    fun testStressSelectLoop() = runTest {
+        val c1 = BufferedChannel<Long>(Channel.RENDEZVOUS)
+        val c2 = BufferedChannel<Long>(Channel.RENDEZVOUS)
+        val s1 = Stats()
+        val s2 = Stats()
+        launchSendReceiveSelectLoop(c1, c2, s1)
+        launchSendReceiveSelectLoop(c2, c1, s2)
+        for (i in 1..nSeconds) {
+            delay(1000)
+            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${c1.sendersCounter.toDouble() / s1.sendIndex} and ${c2.sendersCounter.toDouble() / s2.sendIndex}")
+        }
+        coroutineContext.cancelChildren()
+    }
+
+    @org.junit.Test
+    fun testStressWithDummy() = runTest {
+        val c = BufferedChannel<Long>(Channel.RENDEZVOUS)
+        val dummy1 = BufferedChannel<Long>(Channel.RENDEZVOUS)
+        val dummy2 = BufferedChannel<Long>(Channel.RENDEZVOUS)
+        val s1 = Stats()
+        val s2 = Stats()
+        launchSendReceive(c, dummy1, s1)
+        launchSendReceive(dummy2, c, s2)
+        for (i in 1..nSeconds) {
+            delay(1000)
+            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${(c.sendersCounter.toDouble() + dummy1.receiversCounter) / s1.sendIndex}")
+        }
+        coroutineContext.cancelChildren()
+    }
+
+    @org.junit.Test
+    fun testStressWithDummyLoop() = runTest {
+        val c = BufferedChannel<Long>(Channel.RENDEZVOUS)
+        val dummy1 = BufferedChannel<Long>(Channel.RENDEZVOUS)
+        val dummy2 = BufferedChannel<Long>(Channel.RENDEZVOUS)
+        val s1 = Stats()
+        val s2 = Stats()
+        launchSendReceiveSelectLoop(c, dummy1, s1)
+        launchSendReceiveSelectLoop(dummy2, c, s2)
+        for (i in 1..nSeconds) {
+            delay(1000)
+            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${(c.sendersCounter.toDouble() + dummy1.receiversCounter) / s1.sendIndex}")
         }
         coroutineContext.cancelChildren()
     }
@@ -170,11 +286,31 @@ class NewSelectDeadlockStressTest : TestBase() {
             newSelect<Unit> {
                 c1.onSend(s.sendIndex) {
                     s.sendIndex++
+                    doGeomDistWork()
                 }
                 c2.onReceive { i ->
                     assertEquals(s.receiveIndex, i)
                     s.receiveIndex++
+                    doGeomDistWork()
                 }
+            }
+        }
+    }
+
+    private fun doGeomDistWork() {
+        while (Random.nextInt(1000) != 0) {}
+    }
+
+    private fun CoroutineScope.launchSendReceiveSelectLoop(c1: BufferedChannel<Long>, c2: BufferedChannel<Long>, s: Stats) = launch(pool) {
+        newSelectUntil({ true }) {
+            c1.onSend(s.sendIndex) {
+                s.sendIndex++
+                doGeomDistWork()
+            }
+            c2.onReceive { i ->
+//                assertEquals(s.receiveIndex, i)
+                s.receiveIndex++
+                doGeomDistWork()
             }
         }
     }

@@ -6,40 +6,11 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 
-/**
- * This is a common implementation for both rendezvous and buffered channels.
- * Intuitively, the buffered channel allows process first `capacity` [send]s
- * without suspension, storing elements into a virtual buffer.
- * Here a high-level algorithm overview is presented.
- *
- * Each [send] or [receive] operation (other operations are ignored since they are similar)
- * starts by acquiring a ticket, which serves as an index into an infinite array of cells.
- * In order to determine whether the operation should suspend or immediately make a rendezvous
- * or send an element to the virtual buffer, we maintain the following counters atomically:
- *   * `senders` references the cell to work with on the next [send], equals to
- *      the total number of [send] operations on this channel;
- *   * `receivers` references the cell to work with on the next [receive], equals to
- *      the total number of [receive] operations on this channel;
- *   * `bufferEnd` references the end of the virtual buffer.
- * Note, that the `bufferEnd` counter is required since a suspended coroutine or
- * select`-related operation can be cancelled, so it is wrong that `bufferEnd == receivers + capacity`.
- *
- * Depending on these counter values, we can decide whether the operation should suspend or not
- * (these are values in the beginning of the operation):
- *   * [send] -- suspends on `senders > bufferEnd`, stores element on `receivers <= senders <= bufferEnd`,
- *               and makes a rendezvous on `senders < receivers`;
- *   * [receive] -- suspends on `receivers >= senders`, and makes a rendezvous on `receivers < senders`.
- *
- * We update the required counters and take a snapshot at the beginning of each operation.
- * Each [send] operation increments the `senders` counter, while each [receive] increments both
- * `receivers` and `bufferEnd` counters. If [receive] suspends, than it just moves the buffer forward,
- * while on making a rendezvous it
- */
+
 public class BufferedChannel<E>(capacity: Int) {
     init {
         require(capacity >= 0) { "Invalid channel capacity: $capacity, should be >=0" }
     }
-
     private val unlimited = capacity == Channel.UNLIMITED
     private val rendezvous = capacity == Channel.RENDEZVOUS
 
@@ -50,6 +21,9 @@ public class BufferedChannel<E>(capacity: Int) {
     private val senders = atomic(0L)
     private val receivers = atomic(0L)
     private val bufferEnd = atomic(capacity.toLong())
+
+    public val receiversCounter: Long get() = receivers.value
+    public val sendersCounter: Long get() = senders.value
 
     private val sendSegment: AtomicRef<ChannelSegment>
     private val receiveSegment: AtomicRef<ChannelSegment>
@@ -88,7 +62,7 @@ public class BufferedChannel<E>(capacity: Int) {
             val doNotSuspend = unlimited || s < receivers.value || (!rendezvous && s < bufferEnd.value)
             if (doNotSuspend) { // rendezvous or buffering
                 segm.cleanPrev()
-                if (trySendWithoutSuspension(segm, i)) return
+                if (trySendWithoutSuspension(segm = segm, i = i, element = element)) return
             } else {
                 if(sendSuspend(segm, i, s)) return
             }
@@ -100,7 +74,7 @@ public class BufferedChannel<E>(capacity: Int) {
         segm.setElementLazy(i, element)
     }
 
-    private fun trySendWithoutSuspension(segm: ChannelSegment, i: Int, select: NewSelectInstance<*>? = null): Boolean {
+    private fun trySendWithoutSuspension(segm: ChannelSegment, i: Int, element: E, select: NewSelectInstance<*>? = null): Boolean {
         var w = segm.getAndUpdateWaiter(i) { w ->
             when {
                 w === null || w === BUFFERING -> BUFFERED // buffering or elimination
@@ -112,18 +86,15 @@ public class BufferedChannel<E>(capacity: Int) {
         if (w is ExpandBufferDesc) w = w.cont
         when {
             w === null || w === BUFFERING -> return true
-            w === BROKEN -> return false
-            w === BROKEN_2 -> return false
+            w === BROKEN || w === BROKEN_2 -> {
+                segm.setElementLazy(i, null)
+                return false
+            }
             w is CancellableContinuation<*> -> {
-                return if (w.tryResumeReceive()) {
-                    true
-                } else {
-                    segm.setElementLazy(i, null)
-                    false
-                }
+                segm.setElementLazy(i, null)
+                return w.tryResumeReceive(element)
             }
             w is NewSelectInstance<*> -> { // rendezvous
-                val element = segm.getElement(i)
                 segm.setElementLazy(i, null)
                 return w.trySelect(objForSelect = this@BufferedChannel, result = element, from = select)
             }
@@ -184,8 +155,7 @@ public class BufferedChannel<E>(capacity: Int) {
                 if (element === FAILED_RESULT) continue
                 return element
             } else {
-                receiveSuspend(segm, i, r)
-                return segm.getElement(i)
+                return receiveSuspend(segm, i, r)
             }
         }
     }
@@ -254,7 +224,7 @@ public class BufferedChannel<E>(capacity: Int) {
         }
     }
 
-    private suspend fun receiveSuspend(segm: ChannelSegment, i: Int, r: Long) = suspendCancellableCoroutineReusable<Unit> { cont ->
+    private suspend fun receiveSuspend(segm: ChannelSegment, i: Int, r: Long) = suspendCancellableCoroutineReusable<Any?> { cont ->
         update_waiter@while (true) {
             val w = segm.getWaiter(i)
             when {
@@ -270,7 +240,9 @@ public class BufferedChannel<E>(capacity: Int) {
                     }
                 }
                 w === BUFFERED -> {
-                    cont.resume(Unit)
+                    val element = segm.getElement(i)
+                    segm.setElementLazy(i, null)
+                    cont.resume(element)
                     // TODO: re-read the state
                     break@update_waiter
                 }
@@ -387,7 +359,7 @@ public class BufferedChannel<E>(capacity: Int) {
             val doNotSuspend = unlimited || s < receivers.value || (!rendezvous && s < bufferEnd.value)
             if (doNotSuspend) { // rendezvous or buffering
                 segm.cleanPrev()
-                if (trySendWithoutSuspension(segm = segm, i = i, select = select)) {
+                if (trySendWithoutSuspension(segm = segm, i = i, element = element, select = select)) {
                     select.selectInRegPhase(Unit)
                     return
                 }
@@ -669,9 +641,9 @@ internal class ChannelSegment(id: Long, prev: ChannelSegment?, pointers: Int): S
 
 private fun createSegment(id: Long, prev: ChannelSegment?) = ChannelSegment(id, prev, 0)
 
-private fun CancellableContinuation<*>.tryResumeReceive(): Boolean {
-    this as CancellableContinuation<Unit>
-    val token = tryResume(Unit) ?: return false
+private fun CancellableContinuation<*>.tryResumeReceive(element: Any?): Boolean {
+    this as CancellableContinuation<Any?>
+    val token = tryResume(element) ?: return false
     completeResume(token)
     return true
 }
@@ -684,7 +656,6 @@ private fun CancellableContinuation<*>.tryResumeSend(): Boolean {
 }
 
 private class ExpandBufferDesc(val cont: Any)
-private class ReceiveDesc(val cont: CancellableContinuation<*>)
 
 // Number of waiters in each segment
 private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)
