@@ -7,18 +7,19 @@
                  name="Kotlin coroutines"
                  start-page="coroutines-guide.md">
 
-    <toc-element id="coroutines-guide.md"/>
-    <toc-element id="coroutines-basics.md" accepts-web-file-names="basics.html,coroutines-basic-jvm.html"/>
-    <toc-element toc-title="Intro to coroutines and channels – hands-on tutorial" href="https://play.kotlinlang.org/hands-on/Introduction%20to%20Coroutines%20and%20Channels/"/>
-    <toc-element id="cancellation-and-timeouts.md"/>
-    <toc-element id="composing-suspending-functions.md"/>
-    <toc-element id="coroutine-context-and-dispatchers.md"/>
-    <toc-element id="flow.md"/>
-    <toc-element id="channels.md"/>
-    <toc-element id="exception-handling.md"/>
-    <toc-element id="shared-mutable-state-and-concurrency.md"/>
-    <toc-element id="select-expression.md"/>
-    <toc-element id="debug-coroutines-with-idea.md"/>
-    <toc-element id="debug-flow-with-idea.md"/>
-
+    <chunk include-id="coroutines">
+        <toc-element id="coroutines-guide.md"/>
+        <toc-element id="coroutines-basics.md" accepts-web-file-names="basics.html,coroutines-basic-jvm.html"/>
+        <toc-element toc-title="Intro to coroutines and channels – hands-on tutorial" href="https://play.kotlinlang.org/hands-on/Introduction%20to%20Coroutines%20and%20Channels/"/>
+        <toc-element id="cancellation-and-timeouts.md"/>
+        <toc-element id="composing-suspending-functions.md"/>
+        <toc-element id="coroutine-context-and-dispatchers.md"/>
+        <toc-element id="flow.md"/>
+        <toc-element id="channels.md"/>
+        <toc-element id="exception-handling.md"/>
+        <toc-element id="shared-mutable-state-and-concurrency.md"/>
+        <toc-element id="select-expression.md"/>
+        <toc-element id="debug-coroutines-with-idea.md"/>
+        <toc-element id="debug-flow-with-idea.md"/>
+    </chunk>
 </product-profile>
