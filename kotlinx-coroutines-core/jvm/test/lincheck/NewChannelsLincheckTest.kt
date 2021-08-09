@@ -2,30 +2,37 @@ package kotlinx.coroutines.lincheck
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.koval_europar.*
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
+import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
+import org.jetbrains.kotlinx.lincheck.verifier.*
 import org.junit.*
 import kotlin.random.*
 import kotlin.test.*
 import kotlin.test.Test
 
 abstract class BufferedChannelLincheckTestBase(
-    private val c: BufferedChannel<Int>,
+    private val c: Channel<Int?>,
     private val sequentialSpecification: Class<*>
 ) : AbstractLincheckTest() {
 
     @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
     suspend fun send(value: Int): Any = try {
-        c.send(value)
+        c.send(null)
     } catch (e: NumberedCloseException) {
         e.msg
     }
 
-    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
+//    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
     suspend fun sendViaSelect(value: Int): Any = try {
-        newSelect<Unit> { c.onSend(value) {} }
+        when (c) {
+            is BufferedChannel<Int?> -> newSelect<Unit> { c.onSendNew(value) {} }
+            is RendezvousChannelEuropar<Int?> -> selectEuropar<Unit> { c.onSendEuropar(value) {}  }
+            else -> c.send(value)
+        }
     } catch (e: NumberedCloseException) {
         e.msg
     }
@@ -34,15 +41,19 @@ abstract class BufferedChannelLincheckTestBase(
     fun trySend(value: Int) = c.offer(value)
 
     @Operation(cancellableOnSuspension = true, blocking = true)
-    suspend fun receive(): Any = try {
-        c.receive()
+    suspend fun receive(): Any? = try {
+        c.receive().also { if (it != null) error("") }
     } catch (e: NumberedCloseException) {
         e.msg
     }
 
-    @Operation(cancellableOnSuspension = true, blocking = true)
-    suspend fun receiveViaSelect(): Any = try {
-        newSelect<Int> { c.onReceive { it } }
+//    @Operation(cancellableOnSuspension = true, blocking = true)
+    suspend fun receiveViaSelect(): Any? = try {
+        when (c) {
+            is BufferedChannel<Int?> -> newSelect<Int?> { c.onReceiveNew { it } }
+            is RendezvousChannelEuropar<Int?> -> selectEuropar<Int?> { c.onReceiveEuropar { it }  }
+            else -> c.receive()
+        }
     } catch (e: NumberedCloseException) {
         e.msg
     }
@@ -58,7 +69,9 @@ abstract class BufferedChannelLincheckTestBase(
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
         actorsBefore(0).sequentialSpecification(sequentialSpecification)
+            .verifier(EpsilonVerifier::class.java)
 
+    override fun ModelCheckingOptions.customize(isStressTest: Boolean) = verboseTrace()
 }
 
 private class NumberedCloseException(number: Int): Throwable() {
@@ -67,6 +80,25 @@ private class NumberedCloseException(number: Int): Throwable() {
 
 class BufferedChannelRendezvousLincheckTest : BufferedChannelLincheckTestBase(
     c = BufferedChannel(Channel.RENDEZVOUS),
+    sequentialSpecification = SequentialRendezvousChannel::class.java
+)
+
+class EuroParChannelRendezvousLincheckTest : BufferedChannelLincheckTestBase(
+    c = RendezvousChannelEuropar(),
+    sequentialSpecification = SequentialRendezvousChannel::class.java
+)
+
+class EuroParChannelUnlimitedLincheckTest : BufferedChannelLincheckTestBase(
+    c = object : RendezvousChannelEuropar<Int?>() {
+        override suspend fun send(element: Int?) {
+            offerUnlimited(element)
+        }
+    },
+    sequentialSpecification = SequentialUnlimitedChannel::class.java
+)
+
+class MSQueueChannelRendezvousLincheckTest : BufferedChannelLincheckTestBase(
+    c = RendezvousChannelMSQueue(),
     sequentialSpecification = SequentialRendezvousChannel::class.java
 )
 
@@ -98,11 +130,11 @@ class NewSelectMemoryLeakStressTest : TestBase() {
             data.send(value)
             val bigValue = bigValue() // new instance
             newSelect {
-                leak.onSend("LEAK") {
+                leak.onSendNew("LEAK") {
                     println("Capture big value into this lambda: $bigValue")
                     expectUnreached()
                 }
-                data.onReceive { received ->
+                data.onReceiveNew { received ->
                     assertEquals(value, received)
                     expect(value + 2)
                 }
@@ -119,11 +151,11 @@ class NewSelectMemoryLeakStressTest : TestBase() {
         repeat(nRepeat) { value ->
             val bigValue = bigValue() // new instance
             newSelect<Unit> {
-                leak.onReceive {
+                leak.onReceiveNew {
                     println("Capture big value into this lambda: $bigValue")
                     expectUnreached()
                 }
-                data.onSend(value) {
+                data.onSendNew(value) {
                     expect(value + 2)
                 }
             }
@@ -144,14 +176,14 @@ class NewSelectLicnheckTest : AbstractLincheckTest() {
     suspend fun select(@Param(gen = ThreadIdGen::class) threadId: Int): Unit = when (threadId) {
         1 -> {
             newSelect {
-                c1.onSend(Unit) {}
-                c2.onReceive {}
+                c1.onSendNew(Unit) {}
+                c2.onReceiveNew {}
             }
         }
         2 -> {
             newSelect {
-                c1.onReceive {}
-                c2.onSend(Unit) {}
+                c1.onReceiveNew {}
+                c2.onSendNew(Unit) {}
             }
         }
         else -> error("unexpected thread id: $threadId")
@@ -176,14 +208,14 @@ class NewSelectUntilLicnheckTest : AbstractLincheckTest() {
     suspend fun selectUntil2(@Param(gen = ThreadIdGen::class) threadId: Int): Unit = when (threadId) {
         1 -> {
             newSelectUntil({ i1 < 2 }) {
-                c1.onSend(Unit) { i1++ }
-                c2.onReceive { i1++ }
+                c1.onSendNew(Unit) { i1++ }
+                c2.onReceiveNew { i1++ }
             }
         }
         2 -> {
             newSelectUntil({ i2 < 2 }) {
-                c1.onReceive { i2++ }
-                c2.onSend(Unit) { i2++ }
+                c1.onReceiveNew { i2++ }
+                c2.onSendNew(Unit) { i2++ }
             }
         }
         else -> error("unexpected thread id: $threadId")
@@ -221,8 +253,7 @@ class NewSelectStressTest : TestBase() {
         launchSendReceive(c2, c1, s2)
         for (i in 1..nSeconds) {
             delay(1000)
-            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${c1.sendersCounter.toDouble() / s1.sendIndex} and ${c2.sendersCounter.toDouble() / s2.sendIndex};" +
-                "trySelect() success: ${c1.trySelectSuccess}; trySelect() fails: ${c1.trySelectFails}")
+            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${c1.sendersCounter.toDouble() / s1.sendIndex} and ${c2.sendersCounter.toDouble() / s2.sendIndex};")
         }
         coroutineContext.cancelChildren()
     }
@@ -253,8 +284,7 @@ class NewSelectStressTest : TestBase() {
         launchSendReceive(dummy2, c, s2)
         for (i in 1..nSeconds) {
             delay(1000)
-            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${c.sendersCounter.toDouble() / s1.sendIndex} and ${c.sendersCounter.toDouble() / s2.sendIndex};" +
-                "trySelect() success: ${c.trySelectSuccess}; trySelect() fails: ${c.trySelectFails}")
+            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${c.sendersCounter.toDouble() / s1.sendIndex} and ${c.sendersCounter.toDouble() / s2.sendIndex};")
         }
         coroutineContext.cancelChildren()
     }
@@ -286,11 +316,11 @@ class NewSelectStressTest : TestBase() {
         while (true) {
             if (s.sendIndex % 1000 == 0L) yield()
             newSelect<Unit> {
-                c1.onSend(s.sendIndex) {
+                c1.onSendNew(s.sendIndex) {
                     s.sendIndex++
                     doGeomDistWork()
                 }
-                c2.onReceive { i ->
+                c2.onReceiveNew { i ->
                     assertEquals(s.receiveIndex, i)
                     s.receiveIndex++
                     doGeomDistWork()
@@ -305,11 +335,11 @@ class NewSelectStressTest : TestBase() {
 
     private fun CoroutineScope.launchSendReceiveSelectLoop(c1: BufferedChannel<Long>, c2: BufferedChannel<Long>, s: Stats) = launch(pool) {
         newSelectUntil({ true }) {
-            c1.onSend(s.sendIndex) {
+            c1.onSendNew(s.sendIndex) {
                 s.sendIndex++
                 doGeomDistWork()
             }
-            c2.onReceive { i ->
+            c2.onReceiveNew { i ->
 //                assertEquals(s.receiveIndex, i)
                 s.receiveIndex++
                 doGeomDistWork()
@@ -332,7 +362,7 @@ class NewSelectBufferedChannelTest : TestBase() {
         yield() // to launched coroutine
         expect(3)
         newSelect<Unit> {
-            channel.onSend("OK") {
+            channel.onSendNew("OK") {
                 expect(4)
             }
         }
@@ -344,13 +374,13 @@ class NewSelectBufferedChannelTest : TestBase() {
         expect(1)
         val channel = BufferedChannel<String>(1)
         newSelect<Unit> {
-            channel.onSend("OK") {
+            channel.onSendNew("OK") {
                 expect(2)
             }
         }
         expect(3)
         newSelect<Unit> {
-            channel.onReceive { v ->
+            channel.onReceiveNew { v ->
                 expect(4)
                 assertEquals("OK", v)
             }
@@ -373,7 +403,7 @@ class NewSelectBufferedChannelTest : TestBase() {
         channel.send("BUF")
         expect(3)
         newSelect<Unit> {
-            channel.onSend("OK") {
+            channel.onSendNew("OK") {
                 expect(7)
             }
         }
@@ -387,7 +417,7 @@ class NewSelectBufferedChannelTest : TestBase() {
         channel.send("OK")
         expect(2)
         newSelect<Unit> {
-            channel.onReceive { v ->
+            channel.onReceiveNew { v ->
                 expect(3)
                 assertEquals("OK", v)
             }
@@ -406,7 +436,7 @@ class NewSelectBufferedChannelTest : TestBase() {
         }
         expect(2)
         newSelect<Unit> {
-            channel.onReceive { v ->
+            channel.onReceiveNew { v ->
                 expect(5)
                 assertEquals("OK", v)
             }
@@ -423,7 +453,7 @@ class NewSelectBufferedChannelTest : TestBase() {
         launch {
             expect(4)
             newSelect<Unit> {
-                channel.onReceive { v ->
+                channel.onReceiveNew { v ->
                     expect(5)
                     assertEquals(42, v)
                     expect(6)
@@ -445,7 +475,7 @@ class NewSelectBufferedChannelTest : TestBase() {
         launch {
             expect(4)
             newSelect<Unit> {
-                channel.onReceive { v ->
+                channel.onReceiveNew { v ->
                     expect(5)
                     assertEquals(42, v)
                     expect(6)

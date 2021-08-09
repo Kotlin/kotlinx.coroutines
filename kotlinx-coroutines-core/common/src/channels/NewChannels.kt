@@ -7,7 +7,7 @@ import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 
 
-public class BufferedChannel<E>(capacity: Int) {
+public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     init {
         require(capacity >= 0) { "Invalid channel capacity: $capacity, should be >=0" }
     }
@@ -43,7 +43,10 @@ public class BufferedChannel<E>(capacity: Int) {
     // ## Send and Receive ##
     // ######################
 
-    public fun offer(element: E): Boolean {
+    protected open fun onReceiveEnqueued() {}
+    protected open fun onReceiveDequeued() {}
+
+    public override fun offer(element: E): Boolean {
         // Is there a chance to perform this offer?
         val possible = unlimited || senders.value < receivers.value || (!rendezvous && senders.value < bufferEnd.value)
         if (!possible) return false
@@ -88,7 +91,7 @@ public class BufferedChannel<E>(capacity: Int) {
         }
     }
 
-    public suspend fun send(element: E) {
+    public override suspend fun send(element: E) {
         while (true) {
             checkNotClosedForSend()
             var segm = sendSegment.value
@@ -152,12 +155,13 @@ public class BufferedChannel<E>(capacity: Int) {
                     segm.casState(i, state, state.waiter)
                 }
                 state is CancellableContinuation<*> -> {
-                    if (segm.casState(i, state, DONE)) return state.tryResumeReceive(element)
+                    if (segm.casState(i, state, DONE)) return state.tryResumeReceive(element).also {
+                        onReceiveDequeued()
+                    }
                 }
                 state is NewSelectInstance<*> -> {
                     if (segm.casState(i, state, DONE)) return state.trySelect(this, element).also {
-                        if (it) _trySelectSuccess.incrementAndGet() else _trySelectFails.incrementAndGet()
-
+                        onReceiveDequeued()
                     }
                 }
                 else -> error("Unexpected state: $state")
@@ -202,7 +206,7 @@ public class BufferedChannel<E>(capacity: Int) {
         if (closed.value) throw sendException
     }
 
-    public fun poll(): E? {
+    public override fun poll(): E? {
         // Is there a chance to perform this poll?
         if (receivers.value >= senders.value) return null
         var element: Any? = NULL_ELEMENT
@@ -224,7 +228,7 @@ public class BufferedChannel<E>(capacity: Int) {
             oRendezvousFailed = { segm, i -> receiveSuspend(segm, i) }
         )
 
-    public suspend fun receive(): E {
+    public override suspend fun receive(): E {
         while (true) {
             var segm = receiveSegment.value
             val r = this.receivers.getAndIncrement()
@@ -305,14 +309,11 @@ public class BufferedChannel<E>(capacity: Int) {
                         }
                         return if (success) {
                             segm.setState(i, DONE)
-                            _trySelectSuccess.incrementAndGet()
                             expandBuffer()
                             element
                         } else {
-                            _trySelectFails.incrementAndGet()
                             if (!segm.casState(i, RESUMING_SENDER, CANCELLED) || helpExpandBuffer)
                                 expandBuffer()
-                            expandBuffer()
                             FAILED_RESULT
                         }
                     }
@@ -320,12 +321,6 @@ public class BufferedChannel<E>(capacity: Int) {
             }
         }
     }
-
-    private val _trySelectSuccess = atomic(0L)
-    private val _trySelectFails = atomic(0L)
-
-    public val trySelectSuccess: Long get() = _trySelectSuccess.value
-    public val trySelectFails: Long get() = _trySelectFails.value
 
     private suspend fun receiveSuspend(segm: ChannelSegment<E>, i: Int) = suspendCancellableCoroutineReusable<E> { cont ->
         storeReceiver(
@@ -346,6 +341,7 @@ public class BufferedChannel<E>(capacity: Int) {
             val state = segm.getState(i)
             when {
                 state === null -> if (segm.casState(i, state, waiter)) {
+                    onReceiveEnqueued()
                     cancellationSetup(waiter)
                     break
                 }
@@ -403,14 +399,14 @@ public class BufferedChannel<E>(capacity: Int) {
     // ## Select Expression ##
     // #######################
 
-    public val onSend: NewSelectClause2<E, BufferedChannel<E>>
+    public val onSendNew: NewSelectClause2<E, BufferedChannel<E>>
         get() = NewSelectClause2Impl(
         objForSelect = this@BufferedChannel,
         regFunc = BufferedChannel<*>::registerSelectForSend as RegistrationFunction,
         processResFunc = BufferedChannel<*>::processResultSelectSend as ProcessResultFunction
     )
 
-    public val onReceive: NewSelectClause1<E>
+    public val onReceiveNew: NewSelectClause1<E>
         get() = NewSelectClause1Impl(
         objForSelect = this@BufferedChannel,
         regFunc = BufferedChannel<*>::registerSelectForReceive as RegistrationFunction,
@@ -484,7 +480,7 @@ public class BufferedChannel<E>(capacity: Int) {
     // Stores the close handler.
     private val closeHandler = atomic<Any?>(null)
 
-    public fun close(cause: Throwable?): Boolean {
+    public override fun close(cause: Throwable?): Boolean {
         val closedByThisOperation = closeCause.compareAndSet(NO_CLOSE_CAUSE, cause)
         closed.value = true
         removeWaitingRequests()
@@ -505,7 +501,7 @@ public class BufferedChannel<E>(capacity: Int) {
         closeHandler(closeCause)
     }
 
-    public fun invokeOnClose(handler: (cause: Throwable?) -> Unit) {
+    public override fun invokeOnClose(handler: (cause: Throwable?) -> Unit) {
         if (closeHandler.compareAndSet(null, handler)) {
             // Handler has been successfully set, finish the operation.
             return
@@ -582,7 +578,7 @@ public class BufferedChannel<E>(capacity: Int) {
     // ######################
 
     // TODO make it extension function after `receiveOrClosed` is added.
-    public fun iterator(): ChannelIterator<E> = object : ChannelIterator<E> {
+    public override fun iterator(): ChannelIterator<E> = object : ChannelIterator<E> {
         private var result: Any? = NO_RESULT // NO_RESULT | E (next element) | CLOSED
         override suspend fun hasNext(): Boolean {
             if (result != NO_RESULT) return checkNotClosed(result)
@@ -647,6 +643,45 @@ public class BufferedChannel<E>(capacity: Int) {
         }
         while (data.isNotEmpty() && data.last() == "(null,null)") data.removeLast()
         return "S=${senders.value},R=${receivers.value},B=${bufferEnd.value},data=${data},dataStart=$dataStart"
+    }
+
+    @ExperimentalCoroutinesApi
+    override val isClosedForSend: Boolean
+        get() = TODO("Not yet implemented")
+    override val onSend: SelectClause2<E, SendChannel<E>>
+        get() = TODO("Not yet implemented")
+
+    override fun trySend(element: E): ChannelResult<Unit> {
+        TODO("Not yet implemented")
+    }
+
+    @ExperimentalCoroutinesApi
+    override val isClosedForReceive: Boolean
+        get() = TODO("Not yet implemented")
+
+    @ExperimentalCoroutinesApi
+    override val isEmpty: Boolean
+        get() = TODO("Not yet implemented")
+    override val onReceive: SelectClause1<E>
+        get() = TODO("Not yet implemented")
+
+    override suspend fun receiveCatching(): ChannelResult<E> {
+        TODO("Not yet implemented")
+    }
+
+    override val onReceiveCatching: SelectClause1<ChannelResult<E>>
+        get() = TODO("Not yet implemented")
+
+    override fun tryReceive(): ChannelResult<E> {
+        TODO("Not yet implemented")
+    }
+
+    override fun cancel(cause: CancellationException?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun cancel(cause: Throwable?): Boolean {
+        TODO("Not yet implemented")
     }
 }
 

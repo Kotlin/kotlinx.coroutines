@@ -62,6 +62,14 @@ dependencies {
     compile("com.typesafe.akka:akka-actor_2.12:2.5.0")
     compile(project(":kotlinx-coroutines-core"))
 
+    compile("org.nield:kotlin-statistics:1.2.1")
+
     // add jmh dependency on main
     "jmhImplementation"(sourceSets.main.get().runtimeClasspath)
+}
+
+task("runBfsChannelBenchmark", JavaExec::class) {
+    main = "macrobenchmarks.BfsChannelBenchmark"
+    args = listOf("-Xmx10G")
+    classpath = sourceSets["main"].runtimeClasspath
 }
