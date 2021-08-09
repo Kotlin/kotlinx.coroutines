@@ -9,7 +9,8 @@ import kotlin.coroutines.*
 internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher =
     NativeMainDispatcher(default)
 
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultExecutor
+// TODO use actual number of cores, prevent `close` call
+internal actual fun createDefaultDispatcher(): CoroutineDispatcher = newFixedThreadPoolContext(8, "Dispatchers.Default")
 
 private class NativeMainDispatcher(private val delegate: CoroutineDispatcher) : MainCoroutineDispatcher() {
     override val immediate: MainCoroutineDispatcher
