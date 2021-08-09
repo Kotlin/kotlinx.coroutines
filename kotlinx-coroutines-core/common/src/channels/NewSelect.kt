@@ -118,7 +118,7 @@ public interface NewSelectInstance<in R> {
      * If this another operation is [SelectInstance] then it should be passed as [from] parameter. Returns `true` if
      * the rendezvous succeeds, `false` otherwise.
      */
-    public fun trySelect(objForSelect: Any, result: Any?, from: NewSelectInstance<*>? = null): Boolean
+    public fun trySelect(objForSelect: Any, result: Any?): Boolean
 
     /**
      * This function should be called if this `select` is registered as a waiter. A function which removes the waiter
@@ -299,7 +299,7 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
         error("Object for select $objForSelect is not found")
     }
 
-    override fun trySelect(objForSelect: Any, result: Any?, from: NewSelectInstance<*>?): Boolean {
+    override fun trySelect(objForSelect: Any, result: Any?): Boolean {
         if (!tryRendezvousOrReregister(objForSelect)) return false
         this.clauseResult.value = result
         val resumeToken = cont.tryResume(Unit) ?: return false

@@ -298,7 +298,7 @@ class NewSelectStressTest : TestBase() {
     }
 
     private fun doGeomDistWork() {
-        while (Random.nextInt(1000) != 0) {}
+        while (Random.nextInt(100) != 0) {}
     }
 
     private fun CoroutineScope.launchSendReceiveSelectLoop(c1: BufferedChannel<Long>, c2: BufferedChannel<Long>, s: Stats) = launch(pool) {
