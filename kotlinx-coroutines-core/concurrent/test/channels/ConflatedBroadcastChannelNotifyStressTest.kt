@@ -11,7 +11,7 @@ import kotlin.test.*
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     private val nSenders = 2
     private val nReceivers = 3
-    private val nEvents = 500_000 * stressTestMultiplier
+    private val nEvents = 500_000 * stressTestMultiplier / stressTestNativeDivisor
     private val timeLimit = 30_000L * stressTestMultiplier // 30 sec
 
     private val broadcast = ConflatedBroadcastChannel<Int>()

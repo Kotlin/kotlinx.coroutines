@@ -22,6 +22,8 @@ public expect val stressTestMultiplierSqrt: Int
 public expect class TestResult
 
 public expect val isNative: Boolean
+// "Speedup" native stress tests
+public val stressTestNativeDivisor = if (isNative) 10 else 1
 
 public expect open class TestBase constructor() {
     /*

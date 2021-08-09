@@ -30,7 +30,6 @@ public actual val isNative = false
  */
 public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
 
-public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roundToInt()
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit

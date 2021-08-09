@@ -10,14 +10,39 @@ import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 class MutexStressTest : TestBase() {
+
+    private val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
+
     @Test
-    fun testStress() = runBlocking {
-        val n = 1000 * stressTestMultiplier
+    fun testDefaulDispatcher() = testBody(Dispatchers.Default)
+
+    @Test
+    fun testSingleThreadContext() {
+        val ctx = newSingleThreadContext("testSingleThreadContext")
+        testBody(ctx)
+        ctx.close()
+    }
+
+    @Test
+    fun testMultiThreadedContextWithSingleWorker() {
+        val ctx = newFixedThreadPoolContext(1, "testMultiThreadedContextWithSingleWorker")
+        testBody(ctx)
+        ctx.close()
+    }
+
+    @Test
+    fun testMultiThreadedContext() {
+        val ctx = newFixedThreadPoolContext(8, "testMultiThreadedContext")
+        testBody(ctx)
+        ctx.close()
+    }
+
+    private fun testBody(dispatcher: CoroutineDispatcher) = runBlocking {
         val k = 100
         var shared = 0
         val mutex = Mutex()
         val jobs = List(n) {
-            launch(Dispatchers.Default) {
+            launch(dispatcher) {
                 repeat(k) {
                     mutex.lock()
                     shared++
@@ -27,31 +52,6 @@ class MutexStressTest : TestBase() {
         }
         jobs.forEach { it.join() }
         assertEquals(n * k, shared)
-    }
-
-    @Test
-    fun testNativeSpecificStress() = runBlocking {
-        /*
-         * Dispatchers.Default is still single-threaded, so here we're doing actual concurrency
-         */
-        val n = 100_000 * stressTestMultiplier
-        var shared = 0
-        val mutex = Mutex()
-        val job = launch(Dispatchers.Default) {
-            repeat(n) {
-                mutex.lock()
-                shared++
-                mutex.unlock()
-            }
-        }
-
-        repeat(n) {
-            mutex.lock()
-            shared++
-            mutex.unlock()
-        }
-        job.join()
-        assertEquals(n * 2, shared)
     }
 
     @Test

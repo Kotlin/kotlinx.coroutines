@@ -10,9 +10,10 @@ import kotlinx.coroutines.sync.*
 import kotlin.test.*
 
 class SemaphoreStressTest : TestBase() {
+
     @Test
     fun testStressTestAsMutex() = runBlocking {
-        val n = 1_000 * stressTestMultiplier
+        val n = 1_000 * stressTestMultiplier / stressTestNativeDivisor
         val k = 100
         var shared = 0
         val semaphore = Semaphore(1)
@@ -31,7 +32,7 @@ class SemaphoreStressTest : TestBase() {
 
     @Test
     fun testStress() = runBlocking {
-        val n = 10_000 * stressTestMultiplier
+        val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
         val k = 100
         val semaphore = Semaphore(10)
         val jobs = List(n) {
@@ -50,7 +51,7 @@ class SemaphoreStressTest : TestBase() {
         /*
          * Dispatchers.Default is still single-threaded, so here we're doing actual concurrency
          */
-        val n = 100_000 * stressTestMultiplier
+        val n = 100_000 * stressTestMultiplier / stressTestNativeDivisor
         var shared = 0
         val semaphore = Semaphore(1)
         val job = launch(Dispatchers.Default) {
@@ -73,7 +74,7 @@ class SemaphoreStressTest : TestBase() {
 
     @Test
     fun testStressCancellation() = runBlocking {
-        val n = 10_000 * stressTestMultiplier
+        val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
         val semaphore = Semaphore(1)
         semaphore.acquire()
         repeat(n) {
@@ -94,7 +95,7 @@ class SemaphoreStressTest : TestBase() {
      */
     @Test
     fun testStressReleaseCancelRace() = runTest {
-        val n = 10_000 * stressTestMultiplier
+        val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
         val semaphore = Semaphore(1, 1)
         newSingleThreadContext("SemaphoreStressTest").use { pool ->
             repeat (n) {

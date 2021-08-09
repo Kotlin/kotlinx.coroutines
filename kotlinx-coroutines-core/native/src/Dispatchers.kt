@@ -9,8 +9,7 @@ import kotlin.coroutines.*
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
     public actual val Main: MainCoroutineDispatcher = createMainDispatcher(Default)
-    public actual val Unconfined: CoroutineDispatcher get() = kotlinx.coroutines.Unconfined // Avoid freezing
+    public actual val Unconfined: CoroutineDispatcher get() = kotlinx.coroutines.Unconfined
 }
-
 internal expect fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher
 

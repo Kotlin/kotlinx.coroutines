@@ -10,5 +10,5 @@ class SingleThreadDispatcherConcurrencyTest : AbstractDispatcherConcurrencyTest(
     override val dispatcher: CoroutineDispatcher = newSingleThreadContext("SingleThreadDispatcherConcurrencyTest")
 
     @AfterTest
-    fun shutDown() = (dispatcher as SingleThreadDispatcher).close()
+    fun shutDown() = (dispatcher as MultithreadedDispatcher).close()
 }

@@ -11,7 +11,7 @@ class RandevouzChannelStressTest : TestBase() {
 
     @Test
     fun testStress() = runTest {
-        val n = 100_000 * stressTestMultiplier
+        val n = 100_000 * stressTestMultiplier / stressTestNativeDivisor
         val q = Channel<Int>(Channel.RENDEZVOUS)
         val sender = launch {
             for (i in 1..n) q.send(i)

@@ -6,12 +6,10 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.native.concurrent.*
-
 
 internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
-    private val delegate = SingleThreadDispatcherImpl(name = "Dispatchers.Default")
+    private val delegate = WorkerDispatcher(name = "Dispatchers.Default")
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
         delegate.dispatch(context, block)
@@ -22,9 +20,6 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
     actual fun enqueue(task: Runnable): Unit = delegate.dispatch(EmptyCoroutineContext, task)
 }
-
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
-    DefaultExecutor
 
 internal actual val DefaultDelay: Delay = DefaultExecutor
 

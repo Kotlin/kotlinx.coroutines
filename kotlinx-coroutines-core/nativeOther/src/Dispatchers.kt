@@ -9,6 +9,8 @@ import kotlin.coroutines.*
 internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher =
     NativeMainDispatcher(default)
 
+internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultExecutor
+
 private class NativeMainDispatcher(private val delegate: CoroutineDispatcher) : MainCoroutineDispatcher() {
     override val immediate: MainCoroutineDispatcher
         get() = throw UnsupportedOperationException("Immediate dispatching is not supported on this platform")

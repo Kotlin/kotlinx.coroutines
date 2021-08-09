@@ -5,13 +5,16 @@
 package kotlinx.coroutines
 
 @ExperimentalCoroutinesApi
-public expect fun newSingleThreadContext(name: String): SingleThreadDispatcher
+public expect fun newSingleThreadContext(name: String): MultithreadedDispatcher
+
+@ExperimentalCoroutinesApi
+public expect fun newFixedThreadPoolContext(nThreads: Int, name: String): MultithreadedDispatcher
 
 /**
  * A coroutine dispatcher that is confined to a single thread.
  */
 @ExperimentalCoroutinesApi
-public expect abstract class SingleThreadDispatcher : CoroutineDispatcher {
+public expect abstract class MultithreadedDispatcher : CoroutineDispatcher {
 
     /**
      * Closes this coroutine dispatcher and shuts down its thread.
