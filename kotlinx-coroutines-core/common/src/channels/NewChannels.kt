@@ -312,6 +312,7 @@ public class BufferedChannel<E>(capacity: Int) {
                             _trySelectFails.incrementAndGet()
                             if (!segm.casState(i, RESUMING_SENDER, CANCELLED) || helpExpandBuffer)
                                 expandBuffer()
+                            expandBuffer()
                             FAILED_RESULT
                         }
                     }
