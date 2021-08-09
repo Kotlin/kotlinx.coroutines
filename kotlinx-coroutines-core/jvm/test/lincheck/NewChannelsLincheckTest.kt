@@ -221,7 +221,8 @@ class NewSelectStressTest : TestBase() {
         launchSendReceive(c2, c1, s2)
         for (i in 1..nSeconds) {
             delay(1000)
-            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${c1.sendersCounter.toDouble() / s1.sendIndex} and ${c2.sendersCounter.toDouble() / s2.sendIndex}")
+            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${c1.sendersCounter.toDouble() / s1.sendIndex} and ${c2.sendersCounter.toDouble() / s2.sendIndex};" +
+                "trySelect() success: ${c1.trySelectSuccess}; trySelect() fails: ${c1.trySelectFails}")
         }
         coroutineContext.cancelChildren()
     }
@@ -252,7 +253,8 @@ class NewSelectStressTest : TestBase() {
         launchSendReceive(dummy2, c, s2)
         for (i in 1..nSeconds) {
             delay(1000)
-            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${(c.sendersCounter.toDouble() + dummy1.receiversCounter) / s1.sendIndex}")
+            println("$i: First: $s1; Second: $s2; Slots per send/receive: ${c.sendersCounter.toDouble() / s1.sendIndex} and ${c.sendersCounter.toDouble() / s2.sendIndex};" +
+                "trySelect() success: ${c.trySelectSuccess}; trySelect() fails: ${c.trySelectFails}")
         }
         coroutineContext.cancelChildren()
     }
@@ -298,7 +300,7 @@ class NewSelectStressTest : TestBase() {
     }
 
     private fun doGeomDistWork() {
-        while (Random.nextInt(100) != 0) {}
+        while (Random.nextInt(200) != 0) {}
     }
 
     private fun CoroutineScope.launchSendReceiveSelectLoop(c1: BufferedChannel<Long>, c2: BufferedChannel<Long>, s: Stats) = launch(pool) {

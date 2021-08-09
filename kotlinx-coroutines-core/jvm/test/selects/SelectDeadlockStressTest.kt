@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.junit.*
 import org.junit.Test
+import kotlin.random.*
 import kotlin.test.*
 
 /**
@@ -51,12 +52,18 @@ class SelectDeadlockStressTest : TestBase() {
             select<Unit> {
                 c1.onSend(s.sendIndex) {
                     s.sendIndex++
+                    doGeomDistWork()
                 }
                 c2.onReceive { i ->
                     assertEquals(s.receiveIndex, i)
                     s.receiveIndex++
+                    doGeomDistWork()
                 }
             }
         }
     }
+}
+
+private fun doGeomDistWork() {
+    while (Random.nextInt(200) != 0) {}
 }

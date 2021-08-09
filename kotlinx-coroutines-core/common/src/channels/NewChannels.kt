@@ -58,8 +58,7 @@ public class BufferedChannel<E>(capacity: Int) {
         return success
     }
 
-    public suspend fun
-        send(element: E): Unit =
+    public suspend fun send2(element: E): Unit =
         trySendRendezvous(element, onRendezvous = {}) { segm, i, s ->
             sendSuspend(element, segm, i, s)
         }
@@ -85,6 +84,26 @@ public class BufferedChannel<E>(capacity: Int) {
                 }
             } else {
                 return oRendezvousFailed(segm, i, s)
+            }
+        }
+    }
+
+    public suspend fun send(element: E) {
+        while (true) {
+            checkNotClosedForSend()
+            var segm = sendSegment.value
+            val s = senders.getAndIncrement()
+            val id = s / SEGMENT_SIZE
+            val i = (s % SEGMENT_SIZE).toInt()
+            segm = sendSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            val doNotSuspend = unlimited || s < receivers.value || (!rendezvous && s < bufferEnd.value)
+            if (doNotSuspend) { // rendezvous or buffering
+                segm.cleanPrev()
+                if (trySendWithoutSuspension(segm = segm, i = i, element = element)) {
+                    return
+                }
+            } else {
+                return sendSuspend(element, segm, i, s)
             }
         }
     }
@@ -136,7 +155,10 @@ public class BufferedChannel<E>(capacity: Int) {
                     if (segm.casState(i, state, DONE)) return state.tryResumeReceive(element)
                 }
                 state is NewSelectInstance<*> -> {
-                    if (segm.casState(i, state, DONE)) return state.trySelect(this, element)
+                    if (segm.casState(i, state, DONE)) return state.trySelect(this, element).also {
+                        if (it) _trySelectSuccess.incrementAndGet() else _trySelectFails.incrementAndGet()
+
+                    }
                 }
                 else -> error("Unexpected state: $state")
             }
@@ -196,12 +218,28 @@ public class BufferedChannel<E>(capacity: Int) {
         return if (element === NULL_ELEMENT) null else element as E
     }
 
-    public suspend fun receive(): E =
+    public suspend fun receive2(): E =
         tryReceiveRendezvous(
             onRendezvous = {},
             oRendezvousFailed = { segm, i -> receiveSuspend(segm, i) }
         )
 
+    public suspend fun receive(): E {
+        while (true) {
+            var segm = receiveSegment.value
+            val r = this.receivers.getAndIncrement()
+            val id = r / SEGMENT_SIZE
+            val i = (r % SEGMENT_SIZE).toInt()
+            segm = receiveSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            if (r < senders.value) {
+                val element = tryReceiveWithoutSuspension(segm, i)
+                if (element === FAILED_RESULT) continue
+                return element as E
+            } else {
+                return receiveSuspend(segm, i)
+            }
+        }
+    }
 
     private inline fun tryReceiveRendezvousImpl(
         onRendezvous: (element: E) -> Unit,
@@ -267,9 +305,11 @@ public class BufferedChannel<E>(capacity: Int) {
                         }
                         return if (success) {
                             segm.setState(i, DONE)
+                            _trySelectSuccess.incrementAndGet()
                             expandBuffer()
                             element
                         } else {
+                            _trySelectFails.incrementAndGet()
                             if (!segm.casState(i, RESUMING_SENDER, CANCELLED) || helpExpandBuffer)
                                 expandBuffer()
                             FAILED_RESULT
@@ -279,6 +319,12 @@ public class BufferedChannel<E>(capacity: Int) {
             }
         }
     }
+
+    private val _trySelectSuccess = atomic(0L)
+    private val _trySelectFails = atomic(0L)
+
+    public val trySelectSuccess: Long get() = _trySelectSuccess.value
+    public val trySelectFails: Long get() = _trySelectFails.value
 
     private suspend fun receiveSuspend(segm: ChannelSegment<E>, i: Int) = suspendCancellableCoroutineReusable<E> { cont ->
         storeReceiver(

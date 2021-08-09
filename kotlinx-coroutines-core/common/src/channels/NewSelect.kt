@@ -134,7 +134,7 @@ public interface NewSelectInstance<in R> {
 
 @PublishedApi
 internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<R> {
-    lateinit var cont: CancellableContinuation<Unit>
+    private var cont: CancellableContinuation<Unit>? = null
 
     // 0: objForSelect
     // 1: RegistrationFunction
@@ -157,29 +157,55 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
     }
 
     suspend fun doSelect(): R =
-        selectAlternativeIteration(first = true).also {
-            cleanNonSelectedAlternatives()
-            cleanBuilder()
-        }
+        selectAlternativeIteration(first = true, cleanOnCompletion = true)
 
-    suspend fun selectAlternativeIteration(first: Boolean): R {
-        try {
-            selectAlternative(first)
-        } catch (e: Throwable) {
-            cleanNonSelectedAlternatives()
-            cleanBuilder()
-            throw e
+    suspend fun selectAlternativeIteration(first: Boolean, cleanOnCompletion: Boolean): R {
+        if (trySelectAlternative(first)) {
+            val objForSelect = getObjForSelect()
+            val i = selectedAlternativeIndex(objForSelect)
+            val result = processResult(i)
+            val param = alternatives[i + 3]
+            val block = alternatives[i + 4]
+            if (cleanOnCompletion) {
+                cleanNonSelectedAlternatives()
+                cleanBuilder()
+            }
+            return if (param === PARAM_CLAUSE_0) {
+                block as suspend () -> R
+                block()
+            } else {
+                block as suspend (Any?) -> R
+                block(result)
+            }
+        } else {
+            return selectAlternativeIterationSuspend(cleanOnCompletion)
         }
+    }
+
+    private suspend fun selectAlternativeIterationSuspend(cleanOnCompletion: Boolean): R {
+        selectAlternativeSuspend()
         val objForSelect = getObjForSelect()
         val i = selectedAlternativeIndex(objForSelect)
         val result = processResult(i)
-        return invokeSelectedAlternativeAction(i, result)
+        val param = alternatives[i + 3]
+        val block = alternatives[i + 4]
+        if (cleanOnCompletion) {
+            cleanNonSelectedAlternatives()
+            cleanBuilder()
+        }
+        return if (param === PARAM_CLAUSE_0) {
+            block as suspend () -> R
+            block()
+        } else {
+            block as suspend (Any?) -> R
+            block(result)
+        }
     }
 
     suspend inline fun doSelectUntil(condition: () -> Boolean) {
         var first = true
         while (condition()) {
-            selectAlternativeIteration(first)
+            selectAlternativeIteration(first = first, cleanOnCompletion = false)
             first = false
         }
         cleanNonSelectedAlternatives()
@@ -187,7 +213,8 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
     }
 
     fun cleanBuilder() {
-        alternatives.clear()
+        this.alternatives.clear()
+        this.cont = null
     }
 
     private fun processResult(i: Int): Any? {
@@ -227,27 +254,29 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
         }
     }
 
-    private suspend fun selectAlternative(first: Boolean = true) {
+    private fun trySelectAlternative(first: Boolean = true): Boolean {
         if (first) {
             for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
-                if (!registerAlternative(i)) return
+                if (!registerAlternative(i)) return true
             }
         } else {
             while (true) {
                 val objForSelect = extractFromStack() ?: break
                 val i = selectedAlternativeIndex(objForSelect)
-                if (!registerAlternative(i)) return
+                if (!registerAlternative(i)) return true
             }
         }
-        suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
-            this.cont = cont
-            while (true) {
-                val objForSelect = extractFromStackOrMarkWaiting() ?: break
-                val i = selectedAlternativeIndex(objForSelect)
-                if (!registerAlternative(i)) {
-                    cont.resume(Unit)
-                    break
-                }
+        return false
+    }
+
+    private suspend fun selectAlternativeSuspend() = suspendCancellableCoroutineReusable<Unit> { cont ->
+        this.cont = cont
+        while (true) {
+            val objForSelect = extractFromStackOrMarkWaiting() ?: break
+            val i = selectedAlternativeIndex(objForSelect)
+            if (!registerAlternative(i)) {
+                cont.resume(Unit)
+                break
             }
         }
     }
@@ -302,8 +331,8 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
     override fun trySelect(objForSelect: Any, result: Any?): Boolean {
         if (!tryRendezvousOrReregister(objForSelect)) return false
         this.clauseResult.value = result
-        val resumeToken = cont.tryResume(Unit) ?: return false
-        cont.completeResume(resumeToken)
+        val resumeToken = cont?.tryResume(Unit) ?: return false
+        cont!!.completeResume(resumeToken)
         return true
     }
 
