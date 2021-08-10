@@ -60,7 +60,7 @@ private class MultiWorkerDispatcher(name: String, workersCount: Int) : Multithre
         workers.forEach { w -> w.executeAfter(0L) { workerRunLoop() } }
     }
 
-    private fun workerRunLoop() = runBlocking<Unit> {
+    private fun workerRunLoop() = runBlocking {
         for (task in tasksQueue) {
             // TODO error handling
             task.run()
@@ -68,6 +68,7 @@ private class MultiWorkerDispatcher(name: String, workersCount: Int) : Multithre
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
+        // TODO handle rejections
         tasksQueue.trySend(block)
     }
 

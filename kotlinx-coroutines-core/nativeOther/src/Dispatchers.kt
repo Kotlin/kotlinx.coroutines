@@ -10,7 +10,7 @@ internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoro
     NativeMainDispatcher(default)
 
 // TODO use actual number of cores, prevent `close` call
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher = newFixedThreadPoolContext(8, "Dispatchers.Default")
+internal actual fun createDefaultDispatcher(): CoroutineDispatcher = newFixedThreadPoolContext(4, "Dispatchers.Default")
 
 private class NativeMainDispatcher(private val delegate: CoroutineDispatcher) : MainCoroutineDispatcher() {
     override val immediate: MainCoroutineDispatcher
