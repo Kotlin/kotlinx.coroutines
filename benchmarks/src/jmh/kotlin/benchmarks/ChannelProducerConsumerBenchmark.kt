@@ -45,9 +45,9 @@ open class ChannelProducerConsumerBenchmark {
     @Param("false", "true")
     private var _3_withSelect: Boolean = false
 
-    @Param("1", "2", "4") // local machine
+//    @Param("1", "2", "4") // local machine
 //    @Param("1", "2", "4", "8", "12") // local machine
-//    @Param("1", "2", "4", "8", "16", "32", "64", "128", "144") // dasquad
+    @Param("1", "2", "4", "8", "16", "32", "64", "128", "144") // dasquad
 //    @Param("1", "2", "4", "8", "16", "32", "64", "96") // Google Cloud
     private var _4_parallelism: Int = 0
 
@@ -190,7 +190,7 @@ enum class ChannelCreator(val create: () -> Channel<Int>) {
     KOTLIN_BUFFERED_64({ Channel(64) } ),
     KOVAL_RENDEZVOUS({ RendezvousChannelEuropar() } ),
     MSQUEUE_RENDEZVOUS({ RendezvousChannelMSQueue() } ),
-    BUFFERED_RENDEZVOUS({ BufferedChannel(kotlinx.coroutines.channels.Channel.RENDEZVOUS) } ),
+    BUFFERED_RENDEZVOUS({ BufferedChannel(Channel.RENDEZVOUS) } ),
     BUFFERED_BUFFERED_64({ BufferedChannel(64) } )
 }
 
