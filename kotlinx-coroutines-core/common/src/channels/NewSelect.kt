@@ -1,8 +1,11 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package kotlinx.coroutines.channels
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 
@@ -134,7 +137,7 @@ public interface NewSelectInstance<in R> {
 
 @PublishedApi
 internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<R> {
-    private var cont: CancellableContinuation<Unit>? = null
+    private val cont = atomic<Any?>(null)
 
     // 0: objForSelect
     // 1: RegistrationFunction
@@ -157,25 +160,20 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
     }
 
     suspend fun doSelect(): R =
-        selectAlternativeIteration(first = true, cleanOnCompletion = true)
+        selectAlternativeIteration(cleanOnCompletion = true)
 
-    suspend fun selectAlternativeIteration(first: Boolean, cleanOnCompletion: Boolean): R {
-        if (trySelectAlternative(first)) {
-            val objForSelect = getObjForSelect()
-            val i = selectedAlternativeIndex(objForSelect)
-            val result = processResult(i)
-            val param = alternatives[i + 3]
-            val block = alternatives[i + 4]
+    suspend fun selectAlternativeIteration(cleanOnCompletion: Boolean): R {
+        if (trySelectAlternative()) {
+            val block = this.block!!
             if (cleanOnCompletion) {
-                cleanNonSelectedAlternatives()
+                cleanNonSelectedAlternatives(getObjForSelect())
                 cleanBuilder()
             }
-            return if (param === PARAM_CLAUSE_0) {
-                block as suspend () -> R
+            return if (block is suspend () -> R) {
                 block()
             } else {
                 block as suspend (Any?) -> R
-                block(result)
+                block(clauseResult.value)
             }
         } else {
             return selectAlternativeIterationSuspend(cleanOnCompletion)
@@ -190,7 +188,7 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
         val param = alternatives[i + 3]
         val block = alternatives[i + 4]
         if (cleanOnCompletion) {
-            cleanNonSelectedAlternatives()
+            cleanNonSelectedAlternatives(objForSelect)
             cleanBuilder()
         }
         return if (param === PARAM_CLAUSE_0) {
@@ -205,16 +203,17 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
     suspend inline fun doSelectUntil(condition: () -> Boolean) {
         var first = true
         while (condition()) {
-            selectAlternativeIteration(first = first, cleanOnCompletion = false)
+            selectAlternativeIteration(cleanOnCompletion = false)
             first = false
         }
-        cleanNonSelectedAlternatives()
+        cleanNonSelectedAlternatives(getObjForSelect())
         cleanBuilder()
     }
 
     fun cleanBuilder() {
         this.alternatives.clear()
-        this.cont = null
+        this.cont.value = null
+        this.block = null
     }
 
     private fun processResult(i: Int): Any? {
@@ -231,13 +230,21 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
         processResFunc: ProcessResultFunction,
         param: Any?,
         block: Any
-    ) {
-        alternatives.add(objForSelect)
-        alternatives.add(regFunc)
-        alternatives.add(processResFunc)
-        alternatives.add(param)
-        alternatives.add(block)
-        alternatives.add(null)
+    ): Boolean {
+        if (clauseResult.value !== NULL) return true
+        regFunc(objForSelect, this, param)
+        if (clauseResult.value === NULL) { // registered as waiter
+            alternatives.add(objForSelect)
+            alternatives.add(regFunc)
+            alternatives.add(processResFunc)
+            alternatives.add(param)
+            alternatives.add(block)
+            alternatives.add(onCompleteAction.also { onCompleteAction = null })
+            return true
+        } else { // rendezvous?
+            storeObjForSelect(objForSelect)
+            return false
+        }
     }
 
     private fun registerAlternative(i: Int): Boolean {
@@ -254,41 +261,34 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
         }
     }
 
-    private fun trySelectAlternative(first: Boolean = true): Boolean {
-        if (first) {
-            for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
-                if (!registerAlternative(i)) return true
-            }
-        } else {
-            while (true) {
-                val objForSelect = extractFromStack() ?: break
-                val i = selectedAlternativeIndex(objForSelect)
-                if (!registerAlternative(i)) return true
+    private fun trySelectAlternative(): Boolean {
+        if (clauseResult.value !== NULL) return true
+        while (true) {
+            val objForSelect = extractFromStackOrMarkWaiting() ?: break
+            val i = selectedAlternativeIndex(objForSelect)
+            if (!registerAlternative(i)) {
+                this.clauseResult.value = processResult(i)
+                this.block = alternatives[i + 4] as Function<R>
+                return true
             }
         }
         return false
     }
 
     private suspend fun selectAlternativeSuspend() = suspendCancellableCoroutineReusable<Unit> { cont ->
-        this.cont = cont
-        while (true) {
-            val objForSelect = extractFromStackOrMarkWaiting() ?: break
-            val i = selectedAlternativeIndex(objForSelect)
-            if (!registerAlternative(i)) {
-                cont.resume(Unit)
-                break
-            }
-        }
+        if (!this.cont.compareAndSet(null, cont)) cont.resume(Unit)
     }
 
     /**
      * This function removes this `SelectInstance` from the
      * waiting queues of other alternatives.
      */
-    fun cleanNonSelectedAlternatives() {
-        val curState = state.getAndUpdate { DONE }
-        clean@ for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
+    fun cleanNonSelectedAlternatives(selectedObject: Any?) {
+        val curState = state.getAndSet(DONE)
+        clean@ for (i in 0 until alternatives.size / ALTERNATIVE_SIZE) {
+            val i = i * ALTERNATIVE_SIZE
             val objForSelect = alternatives[i]
+            if (selectedObject === objForSelect) continue
             var cur: Any = curState
             check@ while (true) {
                 if (cur === objForSelect) continue@clean
@@ -331,9 +331,13 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
     override fun trySelect(objForSelect: Any, result: Any?): Boolean {
         if (!tryRendezvousOrReregister(objForSelect)) return false
         this.clauseResult.value = result
-        val resumeToken = cont?.tryResume(Unit) ?: return false
-        cont!!.completeResume(resumeToken)
-        return true
+        if (this.cont.value === null && this.cont.compareAndSet(null, DONE)) return true
+        this.cont.value!!.let { cont ->
+            cont as CancellableContinuation<Unit>
+            val resumeToken = cont.tryResume(Unit) ?: return false
+            cont.completeResume(resumeToken)
+            return true
+        }
     }
 
 
@@ -368,7 +372,7 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
         }
     }
 
-    private fun getObjForSelect(): Any {
+     fun getObjForSelect(): Any {
         var cur: Any = state.value
         while (cur is Node) cur = cur.next!!
         return cur
@@ -389,14 +393,28 @@ internal class NewSelectBuilderImpl<R> : NewSelectBuilder<R>, NewSelectInstance<
 
     private class Node(var objForSelect: Any?, var next: Any?)
 
-    override fun NewSelectClause0.invoke(block: suspend () -> R) =
-        addAlternative(objForSelect, regFunc, processResFunc, PARAM_CLAUSE_0, block)
+    private var block: Function<R>? = null
 
-    override fun <Q> NewSelectClause1<Q>.invoke(block: suspend (Q) -> R) =
-        addAlternative(objForSelect, regFunc, processResFunc, PARAM_CLAUSE_1, block)
+    override fun NewSelectClause0.invoke(block: suspend () -> R) {
+        if (!addAlternative(objForSelect, regFunc, processResFunc, PARAM_CLAUSE_0, block)) {
+            clauseResult.value = processResFunc(objForSelect, null, clauseResult.value)
+            this@NewSelectBuilderImpl.block = block
+        }
+    }
 
-    override fun <P, Q> NewSelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) =
-        addAlternative(objForSelect, regFunc, processResFunc, param, block)
+    override fun <Q> NewSelectClause1<Q>.invoke(block: suspend (Q) -> R) {
+        if (!addAlternative(objForSelect, regFunc, processResFunc, PARAM_CLAUSE_1, block)) {
+            clauseResult.value = processResFunc(objForSelect, null, clauseResult.value)
+            this@NewSelectBuilderImpl.block = block
+        }
+    }
+
+    override fun <P, Q> NewSelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) {
+        if (!addAlternative(objForSelect, regFunc, processResFunc, param, block)) {
+            clauseResult.value = processResFunc(objForSelect, param, clauseResult.value)
+            this@NewSelectBuilderImpl.block = block
+        }
+    }
 
     override fun onTimeout(timeMillis: Long, block: suspend () -> R) = TODO("Not supported yet")
 }

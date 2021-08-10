@@ -13,7 +13,6 @@ import java.util.concurrent.*
 import kotlin.math.*
 
 private const val CLASS_NAME = "macrobenchmarks.chat.RunChat"
-private val jvmOptions = listOf<String>(/*"-Xmx64m", "-XX:+PrintGC"*/)
 
 public fun main() {
     val configurationsList = allConfigurations
@@ -30,7 +29,7 @@ public fun main() {
     for ((benchmark, configuration) in configurationsList.withIndex()) {
         println("${round(benchmark / configurationsList.size.toDouble() * 10000) / 100}% done, running benchmark #${benchmark + 1} with configuration ${configuration.configurationToString()}")
 
-        val exitValue = runProcess(CLASS_NAME, jvmOptions, configuration.configurationToArgsArray())
+        val exitValue = runProcess(CLASS_NAME, JVM_OPTIONS, configuration.configurationToArgsArray())
         if (exitValue != 0) {
             println("The benchmark couldn't complete properly, will end running benchmarks")
             return

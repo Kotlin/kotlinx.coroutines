@@ -3,6 +3,7 @@ package kotlinx.coroutines.lincheck
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.channels.koval_europar.*
+import kotlinx.coroutines.scheduling.*
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
@@ -26,7 +27,7 @@ abstract class BufferedChannelLincheckTestBase(
         e.msg
     }
 
-    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
+//    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
     suspend fun sendViaSelect(value: Int): Any = try {
         when (c) {
             is BufferedChannel<Int?> -> newSelect<Unit> { c.onSendNew(value) {} }
@@ -47,7 +48,7 @@ abstract class BufferedChannelLincheckTestBase(
         e.msg
     }
 
-    @Operation(cancellableOnSuspension = true, blocking = true)
+//    @Operation(cancellableOnSuspension = true, blocking = true)
     suspend fun receiveViaSelect(): Any? = try {
         when (c) {
             is BufferedChannel<Int?> -> newSelect<Int?> { c.onReceiveNew { it } }
@@ -70,7 +71,7 @@ abstract class BufferedChannelLincheckTestBase(
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
         actorsBefore(0).sequentialSpecification(sequentialSpecification)
 
-    override fun ModelCheckingOptions.customize(isStressTest: Boolean) = verboseTrace()
+//    override fun ModelCheckingOptions.customize(isStressTest: Boolean) = verboseTrace()
 }
 
 private class NumberedCloseException(number: Int): Throwable() {
@@ -233,9 +234,75 @@ class NewSelectUntilLicnheckTest : AbstractLincheckTest() {
         checkObstructionFreedom()
 }
 
+class ChannelStressTest : TestBase() {
+    private val pool = ExperimentalCoroutineDispatcher(THREADS, THREADS, "ChannelStressTest")
+    private val nSeconds = 30//3 * stressTestMultiplier
+    private val c = BufferedChannel<Int>(0)
+    private val c2 = Channel<Int>(0)
+
+    @org.junit.Test
+    fun testStress() = runTest {
+        var sends = 0
+        var receives = 0
+        repeat(THREADS / 2) {
+            launch(pool) {
+                repeat(Int.MAX_VALUE) {
+                    if (Random.nextInt(61) == 0) yield()
+                    c.send(it)
+                    sends++
+                }
+            }
+            launch(pool) {
+                repeat(Int.MAX_VALUE) {
+                    if (Random.nextInt(61) == 0) yield()
+                    c.receive()
+                    receives++
+                }
+            }
+        }
+        delay(1000L * nSeconds)
+        coroutineContext.cancelChildren()
+        println("SENDS: $sends; RECEIVES: $receives")
+    }
+
+    @org.junit.Test
+    fun testStressKotlin() = runTest {
+        var sends = 0
+        var receives = 0
+        repeat(THREADS / 2) {
+            launch(pool) {
+                repeat(Int.MAX_VALUE) {
+                    if (Random.nextInt(61) == 0) yield()
+                    c2.send(it)
+                    sends++
+                }
+            }
+            launch(pool) {
+                repeat(Int.MAX_VALUE) {
+                    if (Random.nextInt(61) == 0) yield()
+                    c2.receive()
+                    receives++
+                }
+            }
+        }
+        delay(1000L * nSeconds)
+        coroutineContext.cancelChildren()
+        println("SENDS: $sends; RECEIVES: $receives")
+    }
+
+    @After
+    fun tearDown() {
+        pool.close()
+    }
+
+    private companion object {
+        const val THREADS = 2
+    }
+}
+
 class NewSelectStressTest : TestBase() {
     private val pool = newFixedThreadPoolContext(2, "SelectDeadlockStressTest")
-    private val nSeconds = 3 * stressTestMultiplier
+    private val nSeconds = 30//3 * stressTestMultiplier
 
     @After
     fun tearDown() {
@@ -244,8 +311,8 @@ class NewSelectStressTest : TestBase() {
 
     @org.junit.Test
     fun testStress() = runTest {
-        val c1 = BufferedChannel<Long>(Channel.RENDEZVOUS)
-        val c2 = BufferedChannel<Long>(Channel.RENDEZVOUS)
+        val c1 = BufferedChannel<Long>(64)
+        val c2 = BufferedChannel<Long>(64)
         val s1 = Stats()
         val s2 = Stats()
         launchSendReceive(c1, c2, s1)
@@ -329,7 +396,7 @@ class NewSelectStressTest : TestBase() {
     }
 
     private fun doGeomDistWork() {
-        while (Random.nextInt(200) != 0) {}
+//        while (Random.nextInt(10) != 0) {}
     }
 
     private fun CoroutineScope.launchSendReceiveSelectLoop(c1: BufferedChannel<Long>, c2: BufferedChannel<Long>, s: Stats) = launch(pool) {

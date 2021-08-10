@@ -48,17 +48,16 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
 
     public override fun offer(element: E): Boolean {
         // Is there a chance to perform this offer?
-        val possible = unlimited || senders.value < receivers.value || (!rendezvous && senders.value < bufferEnd.value)
-        if (!possible) return false
-        var success = true
-        trySendRendezvous(element, onRendezvous = {}) { segm, i, s ->
-            success = false
-            if (!storeSender(segm, i, element, s, waiter = OFFER,
-                    onRendezvous = { success = true },
-                    cancellationSetup = {})
-            ) return offer(element)
+        while (true) {
+            val possible = unlimited || senders.value.let { it < receivers.value || !rendezvous && it < bufferEnd.value }
+            if (!possible) return false
+            trySendRendezvous(element, onRendezvous = { return true }) { segm, i, s ->
+                if (storeSender(segm, i, element, s, waiter = OFFER,
+                        onRendezvous = { return true },
+                        cancellationSetup = {})
+                ) return false
+            }
         }
-        return success
     }
 
     public suspend fun send2(element: E): Unit =
@@ -77,7 +76,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
-            segm = sendSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            segm = findSegmentSend(id, segm)
             if (segm.id != id) {
                 senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
                 continue
@@ -95,6 +94,9 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
     }
 
+    private fun findSegmentSend(id: Long, start: ChannelSegment<E>) =
+        sendSegment.findSegmentAndMoveForward(id, start, ::createSegment).segment
+
     public override suspend fun send(element: E) {
         while (true) {
             checkNotClosedForSend()
@@ -102,7 +104,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
-            segm = sendSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            segm = findSegmentSend(id, segm)
             if (segm.id != id) {
                 senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
                 continue
@@ -125,21 +127,28 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         i: Int,
         s: Long
     ) = suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
-        if (storeSender(segm, i, element, s, cont,
-                onRendezvous = { cont.resume(Unit) },
-                cancellationSetup = { cont.invokeOnCancellation { segm.onCancellation(i) } }
-            )) return@sc
-        var tryAgain = true
-        while (tryAgain) {
-            tryAgain = false
-            trySendRendezvous(element, onRendezvous = { cont.resume(Unit) }) { segm, i, s ->
-                if (!storeSender(segm, i, element, s, waiter = cont,
-                        onRendezvous = { cont.resume(Unit) },
-                        cancellationSetup = { cont.invokeOnCancellation { segm.onCancellation(i) } }
-                    )) { tryAgain = true }
-            }
+        if (storeSenderSuspend(cont, element, segm, i, s)) return@sc
+        while (true) {
+            trySendRendezvous(element,
+                onRendezvous = { cont.resume(Unit); return@sc },
+                oRendezvousFailed = { segm, i, s ->
+                    if (storeSenderSuspend(cont, element, segm, i, s)) { return@sc }
+                }
+            )
         }
     }
+
+    private fun storeSenderSuspend(
+        cont: CancellableContinuation<Unit>,
+        element: E,
+        segm: ChannelSegment<E>,
+        i: Int,
+        s: Long
+    ) = storeSender(
+        segm, i, element, s, waiter = cont,
+        onRendezvous = { cont.resume(Unit) },
+        cancellationSetup = { cont.invokeOnCancellation { segm.onCancellation(i) } }
+    )
 
     private fun trySendWithoutSuspension(
         segm: ChannelSegment<E>,
@@ -217,7 +226,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         tryReceiveRendezvousUnit(
             onRendezvous = { e -> element = e},
             oRendezvousFailed = { segm, i ->
-                storeReceiver(segm, i, waiter = BROKEN,
+                storeReceiver(segm, i, waiter = CANCELLED,
                     onElimination = { w, e -> element = e },
                     cancellationSetup = {}
                 )
@@ -238,7 +247,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val r = this.receivers.getAndIncrement()
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
-            segm = receiveSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            segm = findSegmentReceive(id, segm)
             if (segm.id != id) {
                 receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
                 continue
@@ -262,7 +271,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val r = this.receivers.getAndIncrement()
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
-            segm = receiveSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            segm = findSegmentReceive(id, segm)
             if (segm.id != id) {
                 receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
                 continue
@@ -277,6 +286,9 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             }
         }
     }
+
+    private fun findSegmentReceive(id: Long, start: ChannelSegment<E>) =
+        receiveSegment.findSegmentAndMoveForward(id, start, ::createSegment).segment
 
     private inline fun tryReceiveRendezvous(
         onRendezvous: (element: E) -> Unit,
@@ -338,7 +350,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         storeReceiver(
             segm, i, cont,
             onElimination = { w, e -> w.resume(e) },
-            cancellationSetup = {/* cont.invokeOnCancellation { segm.onCancellation(i, CANCELLED_RECEIVER) } */}
+            cancellationSetup = { cont.invokeOnCancellation { segm.onCancellation(i) } }
         )
     }
 
@@ -380,7 +392,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             if (s <= b) return
             val id = b / SEGMENT_SIZE
             val i = (b % SEGMENT_SIZE).toInt()
-            segm = bufferEndSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            segm = findSegmentBuffer(id, segm)
             if (segm.id != id) {
                 bufferEnd.compareAndSet(b + 1, segm.id * SEGMENT_SIZE)
                 continue@try_again
@@ -411,6 +423,9 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
     }
 
+    private fun findSegmentBuffer(id: Long, start: ChannelSegment<E>) =
+        bufferEndSegment.findSegmentAndMoveForward(id, start, ::createSegment).segment
+
     // #######################
     // ## Select Expression ##
     // #######################
@@ -430,32 +445,30 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     )
 
     private fun registerSelectForSend(select: NewSelectInstance<*>, element: Any?) {
-        var tryAgain = true
-        while (tryAgain) {
-            tryAgain = false
+        while (true) {
             trySendRendezvous(
                 element = element as E,
-                onRendezvous = { select.selectInRegPhase(Unit) },
+                onRendezvous = { select.selectInRegPhase(Unit); return },
                 oRendezvousFailed = { segm, i, s ->
-                    if (!storeSender(segm, i, element, s, waiter = select,
-                            onRendezvous = { select.selectInRegPhase(Unit) },
+                    if (storeSender(
+                            segm, i, element, s,
+                            waiter = select,
+                            onRendezvous = { select.selectInRegPhase(Unit); return },
                             cancellationSetup = { select.invokeOnCompletion { segm.onCancellation(i) } }
-                        )) { tryAgain = true }
+                        )) return
                 })
         }
     }
 
     private fun registerSelectForReceive(select: NewSelectInstance<*>, ignoredParam: Any?): Unit =
         tryReceiveRendezvousUnit(
-            onRendezvous = { e -> select.selectInRegPhase(e) },
-            oRendezvousFailed = {segm, i ->
-                storeReceiver(segm, i, waiter = select,
-                    onElimination = { w, e -> select.selectInRegPhase(e) },
-                    cancellationSetup = {
-                        select.invokeOnCompletion {
-                            segm.onCancellation(i)
-                        }
-                    }
+            onRendezvous = { e -> select.selectInRegPhase(e); },
+            oRendezvousFailed = { segm, i ->
+                storeReceiver(
+                    segm, i,
+                    waiter = select,
+                    onElimination = { w, e -> select.selectInRegPhase(e); },
+                    cancellationSetup = { select.invokeOnCompletion { segm.onCancellation(i) } }
                 )
             }
         )
@@ -738,12 +751,13 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
 
     fun onCancellation(i: Int) {
         setElementLazy(i, null)
-        setState(i, CANCELLED)
+//        setState(i, CANCELLED)
         onSlotCleaned()
     }
 
     inline fun getAndUpdateWaiter(index: Int, updateFunc: (Any?) -> Any?) = data[index * 2 + 1].getAndUpdate(updateFunc)
 }
+
 private fun <E> createSegment(id: Long, prev: ChannelSegment<E>?) = ChannelSegment(id, prev, 0)
 
 private fun CancellableContinuation<*>.tryResumeReceive(element: Any?): Boolean {
@@ -775,6 +789,7 @@ private val CANCELLED = Symbol("CANCELLED")
 private val BROKEN = Symbol("BROKEN")
 private val DONE = Symbol("DONE")
 private val OFFER = Symbol("OFFER")
+private val EXPAND_BUFFER = Symbol("EXPAND_BUFFER")
 
 
 // Special values for `CLOSE_HANDLER`

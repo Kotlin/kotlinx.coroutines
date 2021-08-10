@@ -54,10 +54,10 @@ public class SelectInstance<RESULT> : SelectBuilder<RESULT> {
 
     public fun setState(state: Any) { _state.value = state }
 
-    override fun <FUNC_RESULT> Param0RegInfo<FUNC_RESULT>.invoke(block: (FUNC_RESULT) -> RESULT) {
+    public override fun <FUNC_RESULT> Param0RegInfo<FUNC_RESULT>.invoke(block: (FUNC_RESULT) -> RESULT) {
         addAlternative(this, null, block)
     }
-    override fun <PARAM, FUNC_RESULT> Param1RegInfo<FUNC_RESULT>.invoke(param: PARAM, block: (FUNC_RESULT) -> RESULT) {
+    public override fun <PARAM, FUNC_RESULT> Param1RegInfo<FUNC_RESULT>.invoke(param: PARAM, block: (FUNC_RESULT) -> RESULT) {
         addAlternative(this, param, block)
     }
     private fun <FUNC_RESULT> addAlternative(regInfo: RegInfo<*>, param: Any?, block: (FUNC_RESULT) -> RESULT) {

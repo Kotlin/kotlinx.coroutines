@@ -71,13 +71,12 @@ dependencies {
 
 task("runBfsChannelBenchmark", JavaExec::class) {
     main = "macrobenchmarks.BfsChannelBenchmark"
-    args = listOf("-Xmx10G")
+    args = listOf("-Xmx3G")
     classpath = sourceSets["main"].runtimeClasspath
 }
 
 task("runInMemoryChatBenchmark", JavaExec::class) {
     main = "macrobenchmarks.chat.InMemoryChatBenchmark"
-    args = listOf("-Xmx10G")
     classpath = sourceSets["main"].runtimeClasspath
 }
 
