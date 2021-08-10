@@ -52,7 +52,6 @@ public enum class ChannelCreator(public val create: () -> Channel<Message?>) {
     KOTLIN_RENDEZVOUS({ Channel(Channel.RENDEZVOUS) } ),
     KOTLIN_BUFFERED_64({ Channel(64) } ),
     KOVAL_RENDEZVOUS({ kotlinx.coroutines.channels.koval_europar.RendezvousChannelEuropar() } ),
-    MSQUEUE_RENDEZVOUS({ kotlinx.coroutines.channels.koval_europar.RendezvousChannelMSQueue() } ),
     BUFFERED_RENDEZVOUS({ BufferedChannel(Channel.RENDEZVOUS) } ),
     BUFFERED_BUFFERED_64({ BufferedChannel(64) } )
 }
