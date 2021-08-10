@@ -163,7 +163,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     if (segm.casState(i, state, BUFFERED)) return true
                     segm.setElementLazy(i, null)
                 }
-                state === BROKEN || state === CANCELLED -> return false
+                state === BROKEN || state === CANCELLED || state === INTERRUPTED -> return false
                 state is ExpandBufferDesc -> {
                     segm.casState(i, state, state.waiter)
                 }
@@ -326,9 +326,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                         val helpExpandBuffer = state is ExpandBufferDesc
                         val waiter = if (state is ExpandBufferDesc) state.waiter else state
                         val element = segm.retrieveElement(i)
-                        val success = when (waiter) {
-                            is CancellableContinuation<*> -> waiter.tryResumeSend()
-                            is NewSelectInstance<*> -> waiter.trySelect(this@BufferedChannel, Unit)
+                        val success = when {
+                            waiter === INTERRUPTED -> false
+                            waiter is CancellableContinuation<*> -> waiter.tryResumeSend()
+                            waiter is NewSelectInstance<*> -> waiter.trySelect(this@BufferedChannel, Unit)
                             else -> error("Unexpected state: $state")
                         }
                         return if (success) {
@@ -405,9 +406,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     state === BROKEN || state === OFFER || state === BUFFERED || state === DONE -> return
                     receivers.value > b -> if (segm.casState(i, state, ExpandBufferDesc(state))) return
                     segm.casState(i, state, RESUMING_SENDER) -> { // cont or select
-                        val success = when (state) {
-                            is CancellableContinuation<*> -> state.tryResumeSend()
-                            is NewSelectInstance<*> -> state.trySelect(this@BufferedChannel, Unit)
+                        val success = when {
+                            state === INTERRUPTED -> false
+                            state is CancellableContinuation<*> -> state.tryResumeSend()
+                            state is NewSelectInstance<*> -> state.trySelect(this@BufferedChannel, Unit)
                             else -> error("Unexpected waiter: $state")
                         }
                         if (success) {
@@ -733,9 +735,6 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
     inline fun setState(index: Int, value: Any?) {
         data[index * 2 + 1].value = value
     }
-    inline fun setStateLazy(index: Int, value: Any?) {
-        data[index * 2 + 1].lazySet(value)
-    }
     inline fun casState(index: Int, from: Any?, to: Any?) = data[index * 2 + 1].compareAndSet(from, to)
 
     fun storeElement(i: Int, element: E) {
@@ -751,11 +750,15 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
 
     fun onCancellation(i: Int) {
         setElementLazy(i, null)
-//        setState(i, CANCELLED)
-        onSlotCleaned()
+        val new = data[i * 2 + 1].updateAndGet {
+            when {
+                it === RESUMING_SENDER || it === CANCELLED  -> return
+                it is ExpandBufferDesc -> ExpandBufferDesc(INTERRUPTED)
+                else -> INTERRUPTED
+            }
+        }
+        if (new === CANCELLED) onSlotCleaned()
     }
-
-    inline fun getAndUpdateWaiter(index: Int, updateFunc: (Any?) -> Any?) = data[index * 2 + 1].getAndUpdate(updateFunc)
 }
 
 private fun <E> createSegment(id: Long, prev: ChannelSegment<E>?) = ChannelSegment(id, prev, 0)
@@ -789,7 +792,7 @@ private val CANCELLED = Symbol("CANCELLED")
 private val BROKEN = Symbol("BROKEN")
 private val DONE = Symbol("DONE")
 private val OFFER = Symbol("OFFER")
-private val EXPAND_BUFFER = Symbol("EXPAND_BUFFER")
+private val INTERRUPTED = Symbol("INTERRUPTED")
 
 
 // Special values for `CLOSE_HANDLER`
