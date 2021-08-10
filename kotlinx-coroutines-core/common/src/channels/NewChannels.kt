@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 
 public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
@@ -51,7 +52,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         while (true) {
             val possible = unlimited || senders.value.let { it < receivers.value || !rendezvous && it < bufferEnd.value }
             if (!possible) return false
-            trySendRendezvous(element, onRendezvous = { return true }) { segm, i, s ->
+            trySendRendezvous(this.sendSegment.value, element, onRendezvous = { return true }) { segm, i, s ->
                 if (storeSender(segm, i, element, s, waiter = OFFER,
                         onRendezvous = { return true },
                         cancellationSetup = {})
@@ -61,22 +62,23 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     }
 
     public suspend fun send2(element: E): Unit =
-        trySendRendezvous(element, onRendezvous = {}) { segm, i, s ->
+        trySendRendezvous(this.sendSegment.value, element, onRendezvous = {}) { segm, i, s ->
             sendSuspend(element, segm, i, s)
         }
 
     private inline fun trySendRendezvous(
+        startSegment: ChannelSegment<E>,
         element: E,
         onRendezvous: () -> Unit,
         oRendezvousFailed: (segm: ChannelSegment<E>, i: Int, s: Long) -> Unit
     ) {
+        var segm = startSegment
         while (true) {
             checkNotClosedForSend()
-            var segm = sendSegment.value
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
-            segm = findSegmentSend(id, segm)
+            if (segm.id != id) segm = findSegmentSend(id, segm)
             if (segm.id != id) {
                 senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
                 continue
@@ -98,13 +100,13 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         sendSegment.findSegmentAndMoveForward(id, start, ::createSegment).segment
 
     public override suspend fun send(element: E) {
+        var segm = sendSegment.value
         while (true) {
             checkNotClosedForSend()
-            var segm = sendSegment.value
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
-            segm = findSegmentSend(id, segm)
+            if (segm.id != id) segm = findSegmentSend(id, segm)
             if (segm.id != id) {
                 senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
                 continue
@@ -129,7 +131,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     ) = suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
         if (storeSenderSuspend(cont, element, segm, i, s)) return@sc
         while (true) {
-            trySendRendezvous(element,
+            trySendRendezvous(segm, element,
                 onRendezvous = { cont.resume(Unit); return@sc },
                 oRendezvousFailed = { segm, i, s ->
                     if (storeSenderSuspend(cont, element, segm, i, s)) { return@sc }
@@ -242,12 +244,12 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         )
 
     public override suspend fun receive(): E {
+        var segm = receiveSegment.value
         while (true) {
-            var segm = receiveSegment.value
             val r = this.receivers.getAndIncrement()
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
-            segm = findSegmentReceive(id, segm)
+            if (segm.id != id) segm = findSegmentReceive(id, segm)
             if (segm.id != id) {
                 receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
                 continue
@@ -271,7 +273,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val r = this.receivers.getAndIncrement()
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
-            segm = findSegmentReceive(id, segm)
+            if (segm.id != id) segm = findSegmentReceive(id, segm)
             if (segm.id != id) {
                 receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
                 continue
@@ -386,14 +388,14 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
 
     private fun expandBuffer() {
         if (rendezvous || unlimited) return
+        var segm = bufferEndSegment.value
         try_again@while (true) {
-            var segm = bufferEndSegment.value
             val b = bufferEnd.getAndIncrement()
             val s = senders.value
             if (s <= b) return
             val id = b / SEGMENT_SIZE
             val i = (b % SEGMENT_SIZE).toInt()
-            segm = findSegmentBuffer(id, segm)
+            if (segm.id != id) segm = findSegmentBuffer(id, segm)
             if (segm.id != id) {
                 bufferEnd.compareAndSet(b + 1, segm.id * SEGMENT_SIZE)
                 continue@try_again
@@ -449,6 +451,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     private fun registerSelectForSend(select: NewSelectInstance<*>, element: Any?) {
         while (true) {
             trySendRendezvous(
+                startSegment = this.sendSegment.value,
                 element = element as E,
                 onRendezvous = { select.selectInRegPhase(Unit); return },
                 oRendezvousFailed = { segm, i, s ->
@@ -777,7 +780,7 @@ private fun CancellableContinuation<*>.tryResumeSend(): Boolean {
     return true
 }
 
-private class ExpandBufferDesc(val waiter: Any) {
+private class ExpandBufferDesc(@JvmField val waiter: Any) {
     override fun toString() = "ExpandBufferDesc($waiter)"
 }
 

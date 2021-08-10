@@ -236,24 +236,24 @@ class NewSelectUntilLicnheckTest : AbstractLincheckTest() {
 
 class ChannelStressTest : TestBase() {
     private val pool = ExperimentalCoroutineDispatcher(THREADS, THREADS, "ChannelStressTest")
-    private val nSeconds = 5//3 * stressTestMultiplier
-    private val c = BufferedChannel<Int>(0)
-    private val c2 = Channel<Int>(0)
+    private val nSeconds = 2//3 * stressTestMultiplier
+    private val c = BufferedChannel<Int>(16)
+    private val c2 = Channel<Int>(16)
 
     @org.junit.Test
-    fun testStress() = runTest {
+    fun testStress() = repeat(4) { runTest {
         var sends = 0
         repeat(THREADS / 2) {
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
-                    if (Random.nextInt(61) == 0) yield()
+                    if (Random.nextInt(1001) == 0) yield()
                     c.send(it)
                     sends++
                 }
             }
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
-                    if (Random.nextInt(61) == 0) yield()
+                    if (Random.nextInt(1001) == 0) yield()
                     c.receive()
                 }
             }
@@ -261,22 +261,22 @@ class ChannelStressTest : TestBase() {
         delay(1000L * nSeconds)
         coroutineContext.cancelChildren()
         println("TRANSFERS: $sends")
-    }
+    } }
 
     @org.junit.Test
-    fun testStressKotlin() = runTest {
+    fun testStressKotlin() = repeat(4) { runTest {
         var sends = 0
         repeat(THREADS / 2) {
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
-                    if (Random.nextInt(61) == 0) yield()
+                    if (Random.nextInt(1001) == 0) yield()
                     c2.send(it)
                     sends++
                 }
             }
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
-                    if (Random.nextInt(61) == 0) yield()
+                    if (Random.nextInt(1001) == 0) yield()
                     c2.receive()
                 }
             }
@@ -284,7 +284,7 @@ class ChannelStressTest : TestBase() {
         delay(1000L * nSeconds)
         coroutineContext.cancelChildren()
         println("TRANSFERS: $sends")
-    }
+    } }
 
     @After
     fun tearDown() {
