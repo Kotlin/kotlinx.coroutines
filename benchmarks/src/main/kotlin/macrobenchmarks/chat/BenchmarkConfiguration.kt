@@ -14,15 +14,15 @@ import kotlin.collections.ArrayList
 /**
  * Execution time of each benchmark.
  */
-public const val BENCHMARK_TIME_MS: Long = 2_000L
+public const val BENCHMARK_TIME_MS: Long = 3_000L
 /**
  * Warm up iterations count
  */
-public const val WARM_UP_ITERATIONS: Int = 2
+public const val WARM_UP_ITERATIONS: Int = 3
 /**
  * Benchmark iterations count
  */
-public const val ITERATIONS: Int = 4
+public const val ITERATIONS: Int = 10
 /**
  * CSV file containing the configurations and final metrics of the executed benchmarks
  */
@@ -33,31 +33,27 @@ public const val BENCHMARK_OUTPUT_FILE: String = "out/results_in_memory_chat.csv
 /**
  * Underlying thread pool size for coroutines.
  */
-private val THREADS = listOf(1)
-//private val THREADS = listOf(1, 4, 8, 16, 32, 64, 128, 144)
+//private val THREADS = listOf(1)
+private val THREADS = listOf(1, 4, 8, 16, 32, 64, 128, 144)
 /**
  * Chat users count.
  */
-private val USER_COUNT = listOf(10_000)
+private val USER_COUNT = listOf(1_000, 10_000)
 /**
  * Maximum percentage of all chat users a user can be friends with.
  */
-private val MAX_FRIENDS_PERCENTAGE = listOf(0.5)
+private val MAX_FRIENDS_PERCENTAGE = listOf(0.2, 0.5)
 /**
  * The average amount work that will be executed on CPU.
  */
 private val AVERAGE_WORK = listOf(100)
-/**
- * Options for benchmark jvm instances
- */
-public val JVM_OPTIONS: List<String> = listOf<String>("-Xmx512m", "-XX:+PrintGC")
 
 public enum class ChannelCreator(public val create: () -> Channel<Message?>) {
     KOTLIN_RENDEZVOUS({ Channel(Channel.RENDEZVOUS) } ),
-//    KOTLIN_BUFFERED_64({ Channel(64) } ),
-//    KOVAL_RENDEZVOUS({ kotlinx.coroutines.channels.koval_europar.RendezvousChannelEuropar() } ),
+    KOTLIN_BUFFERED_64({ Channel(64) } ),
+    KOVAL_RENDEZVOUS({ kotlinx.coroutines.channels.koval_europar.RendezvousChannelEuropar() } ),
     BUFFERED_RENDEZVOUS({ BufferedChannel(Channel.RENDEZVOUS) } ),
-//    BUFFERED_BUFFERED_64({ BufferedChannel(64) } )
+    BUFFERED_BUFFERED_64({ BufferedChannel(64) } )
 }
 
 public enum class DispatcherTypes(public val create: (parallelism: Int) -> CoroutineDispatcher) {

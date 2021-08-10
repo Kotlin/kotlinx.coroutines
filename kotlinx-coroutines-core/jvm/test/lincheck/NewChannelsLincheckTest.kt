@@ -236,14 +236,13 @@ class NewSelectUntilLicnheckTest : AbstractLincheckTest() {
 
 class ChannelStressTest : TestBase() {
     private val pool = ExperimentalCoroutineDispatcher(THREADS, THREADS, "ChannelStressTest")
-    private val nSeconds = 30//3 * stressTestMultiplier
+    private val nSeconds = 5//3 * stressTestMultiplier
     private val c = BufferedChannel<Int>(0)
     private val c2 = Channel<Int>(0)
 
     @org.junit.Test
     fun testStress() = runTest {
         var sends = 0
-        var receives = 0
         repeat(THREADS / 2) {
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
@@ -256,19 +255,17 @@ class ChannelStressTest : TestBase() {
                 repeat(Int.MAX_VALUE) {
                     if (Random.nextInt(61) == 0) yield()
                     c.receive()
-                    receives++
                 }
             }
         }
         delay(1000L * nSeconds)
         coroutineContext.cancelChildren()
-        println("SENDS: $sends; RECEIVES: $receives")
+        println("TRANSFERS: $sends")
     }
 
     @org.junit.Test
     fun testStressKotlin() = runTest {
         var sends = 0
-        var receives = 0
         repeat(THREADS / 2) {
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
@@ -281,13 +278,12 @@ class ChannelStressTest : TestBase() {
                 repeat(Int.MAX_VALUE) {
                     if (Random.nextInt(61) == 0) yield()
                     c2.receive()
-                    receives++
                 }
             }
         }
         delay(1000L * nSeconds)
         coroutineContext.cancelChildren()
-        println("SENDS: $sends; RECEIVES: $receives")
+        println("TRANSFERS: $sends")
     }
 
     @After
