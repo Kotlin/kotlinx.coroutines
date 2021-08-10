@@ -14,7 +14,7 @@ class MutexStressTest : TestBase() {
     private val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
 
     @Test
-    fun testDefaulDispatcher() = testBody(Dispatchers.Default)
+    fun testDefaultDispatcher() = testBody(Dispatchers.Default)
 
     @Test
     fun testSingleThreadContext() {
