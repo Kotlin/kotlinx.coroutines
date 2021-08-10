@@ -76,6 +76,10 @@ private fun runBenchmarkIteration(iteration: Int,
 
     createUsers(users, mean, poissonDistribution, Random(42), configuration)
 
+    val msg = Message(0, 0L)
+    runBlocking {
+        users.forEach { it.messageChannel.send(msg) }
+    }
     Thread.sleep(BENCHMARK_TIME_MS)
 
     runBlocking {

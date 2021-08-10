@@ -28,7 +28,7 @@ import java.util.*
  */
 public class User(private val id: Long,
            public val activity: Double,
-           private val messageChannel: Channel<Message?>,
+           public val messageChannel: Channel<Message?>,
            private val averageWork: Int) {
     public var sentMessages: Long = 0L
         private set
@@ -36,7 +36,7 @@ public class User(private val id: Long,
         private set
 
     private val random = Random(id)
-    private var messagesToSent: Double = activity
+    private var messagesToSent: Double = 0.0
 
     private lateinit var friends: List<User>
     private lateinit var cumSumFriends : DoubleArray
@@ -55,8 +55,8 @@ public class User(private val id: Long,
     }
 
     public fun startUser() {
-        var yieldLoopCounter = 0L
         runCoroutine = CoroutineScope(context).launch {
+            var yieldLoopCounter = 0L
             while (!stopped) {
                 // if we can send a message, send it, otherwise wait on receive and receive a message
                 if (messagesToSent >= 1) {
