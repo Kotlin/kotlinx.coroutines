@@ -20,3 +20,5 @@ private class NativeMainDispatcher(private val delegate: CoroutineDispatcher) : 
     override fun dispatchYield(context: CoroutineContext, block: Runnable) = delegate.dispatchYield(context, block)
     override fun toString(): String = toStringInternalImpl() ?: delegate.toString()
 }
+
+internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()

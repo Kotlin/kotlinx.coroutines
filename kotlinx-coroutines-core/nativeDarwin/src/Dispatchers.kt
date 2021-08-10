@@ -20,8 +20,10 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DarwinGloba
 
 private object DarwinGlobalQueueDispatcher : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.convert(), 0)) {
-            block.run()
+        platformAutoreleasePool {
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.convert(), 0)) {
+                block.run()
+            }
         }
     }
 }
@@ -36,8 +38,10 @@ private class DarwinMainDispatcher(
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !(invokeImmediately && isMainThread())
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        dispatch_async(dispatch_get_main_queue()) {
-            block.run()
+        platformAutoreleasePool {
+            dispatch_async(dispatch_get_main_queue()) {
+                block.run()
+            }
         }
     }
     
@@ -99,3 +103,5 @@ private class Timer : DisposableHandle {
         CFRelease(timer)
     }
 }
+
+internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit): Unit = autoreleasepool { block() }

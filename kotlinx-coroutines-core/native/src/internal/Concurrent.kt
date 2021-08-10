@@ -16,6 +16,7 @@ internal actual fun <E> subscriberList(): MutableList<E> = CopyOnWriteList<E>()
 
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet()
 
+
 // "Suppress-supporting throwable" is currently used for tests only
 internal open class SuppressSupportingThrowableImpl : Throwable() {
     private val _suppressed = atomic<Array<Throwable>>(emptyArray())
