@@ -5,15 +5,16 @@
 package benchmarks
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.koval_europar.*
 import kotlinx.coroutines.selects.select
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 import java.lang.Integer.max
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.Phaser
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
 
 
 /**
@@ -25,18 +26,18 @@ import java.util.concurrent.TimeUnit
  *
  * Please, be patient, this benchmark takes quite a lot of time to complete.
  */
-@Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
-@Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Warmup(iterations = 3, time = 1, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(value = 3)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class ChannelProducerConsumerBenchmark {
     @Param
-    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.FORK_JOIN
+    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.DEFAULT
 
     @Param
-    private var _1_channel: ChannelCreator = ChannelCreator.RENDEZVOUS
+    private var _1_channel: ChannelCreator = ChannelCreator.KOTLIN_RENDEZVOUS
 
     @Param("0", "1000")
     private var _2_coroutines: Int = 0
@@ -61,10 +62,18 @@ open class ChannelProducerConsumerBenchmark {
     }
 
     @Benchmark
-    fun spmc() {
+    fun scmp() {
         if (_2_coroutines != 0) return
         val producers = max(1, _4_parallelism - 1)
         val consumers = 1
+        run(producers, consumers)
+    }
+
+    @Benchmark
+    fun spmc() {
+        if (_2_coroutines != 0) return
+        val producers = 1
+        val consumers = max(1, _4_parallelism - 1)
         run(producers, consumers)
     }
 
@@ -104,9 +113,31 @@ open class ChannelProducerConsumerBenchmark {
 
     private suspend fun produce(element: Int, dummy: Channel<Int>?) {
         if (_3_withSelect) {
-            select<Unit> {
-                channel.onSend(element) {}
-                dummy!!.onReceive {}
+            val channel = this.channel
+            when (channel) {
+                is RendezvousChannelMSQueue -> {
+                    channel.receive()
+                }
+                is RendezvousChannelEuropar<Int> -> {
+                    dummy as RendezvousChannelEuropar<Int>
+                    selectEuropar<Unit> {
+                        channel.onSendEuropar(element) {}
+                        dummy.onReceiveEuropar {}
+                    }
+                }
+                is BufferedChannel<Int> -> {
+                    dummy as BufferedChannel<Int>
+                    newSelect<Unit> {
+                        channel.onSendNew(element) {}
+                        dummy.onReceiveNew { }
+                    }
+                }
+                else -> {
+                    select<Unit> {
+                        channel.onSend(element) {}
+                        dummy!!.onReceive {}
+                    }
+                }
             }
         } else {
             channel.send(element)
@@ -116,9 +147,31 @@ open class ChannelProducerConsumerBenchmark {
 
     private suspend fun consume(dummy: Channel<Int>?) {
         if (_3_withSelect) {
-            select<Unit> {
-                channel.onReceive {}
-                dummy!!.onReceive {}
+            val channel = this.channel
+            when (channel) {
+                is RendezvousChannelMSQueue -> {
+                    channel.receive()
+                }
+                is RendezvousChannelEuropar<Int> -> {
+                    dummy as RendezvousChannelEuropar<Int>
+                    selectEuropar<Unit> {
+                        channel.onReceiveEuropar {}
+                        dummy.onReceiveEuropar {}
+                    }
+                }
+                is BufferedChannel<Int> -> {
+                    dummy as BufferedChannel<Int>
+                    newSelect<Unit> {
+                        channel.onReceiveNew {}
+                        dummy.onReceiveNew { }
+                    }
+                }
+                else -> {
+                    select<Unit> {
+                        channel.onReceive {}
+                        dummy!!.onReceive {}
+                    }
+                }
             }
         } else {
             channel.receive()
@@ -128,19 +181,17 @@ open class ChannelProducerConsumerBenchmark {
 }
 
 enum class DispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
-    FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() })
+//    FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() }),
+    DEFAULT({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
 }
 
-enum class ChannelCreator(private val capacity: Int) {
-    RENDEZVOUS(Channel.RENDEZVOUS),
-//    BUFFERED_1(1),
-    BUFFERED_2(2),
-//    BUFFERED_4(4),
-    BUFFERED_32(32),
-    BUFFERED_128(128),
-    BUFFERED_UNLIMITED(Channel.UNLIMITED);
-
-    fun create(): Channel<Int> = Channel(capacity)
+enum class ChannelCreator(val create: () -> Channel<Int>) {
+    KOTLIN_RENDEZVOUS({ Channel(Channel.RENDEZVOUS) } ),
+    KOTLIN_BUFFERED_64({ Channel(64) } ),
+    KOVAL_RENDEZVOUS({ RendezvousChannelEuropar() } ),
+    MSQUEUE_RENDEZVOUS({ RendezvousChannelMSQueue() } ),
+    BUFFERED_RENDEZVOUS({ BufferedChannel(kotlinx.coroutines.channels.Channel.RENDEZVOUS) } ),
+    BUFFERED_BUFFERED_64({ BufferedChannel(64) } )
 }
 
 private fun doWork(): Unit = Blackhole.consumeCPU(ThreadLocalRandom.current().nextLong(WORK_MIN, WORK_MAX))

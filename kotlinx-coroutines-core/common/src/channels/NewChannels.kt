@@ -78,6 +78,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
             segm = sendSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            if (segm.id != id) {
+                senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
+                continue
+            }
             val doNotSuspend = unlimited || s < receivers.value || (!rendezvous && s < bufferEnd.value)
             if (doNotSuspend) { // rendezvous or buffering
                 segm.cleanPrev()
@@ -99,6 +103,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
             segm = sendSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            if (segm.id != id) {
+                senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
+                continue
+            }
             val doNotSuspend = unlimited || s < receivers.value || (!rendezvous && s < bufferEnd.value)
             if (doNotSuspend) { // rendezvous or buffering
                 segm.cleanPrev()
@@ -119,9 +127,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     ) = suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
         if (storeSender(segm, i, element, s, cont,
                 onRendezvous = { cont.resume(Unit) },
-                cancellationSetup = { cont.invokeOnCancellation { segm.onCancellation(i,
-                    CANCELLED
-                ) } }
+                cancellationSetup = { cont.invokeOnCancellation { segm.onCancellation(i) } }
             )) return@sc
         var tryAgain = true
         while (tryAgain) {
@@ -129,9 +135,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             trySendRendezvous(element, onRendezvous = { cont.resume(Unit) }) { segm, i, s ->
                 if (!storeSender(segm, i, element, s, waiter = cont,
                         onRendezvous = { cont.resume(Unit) },
-                        cancellationSetup = { cont.invokeOnCancellation { segm.onCancellation(i,
-                            CANCELLED
-                        ) }}
+                        cancellationSetup = { cont.invokeOnCancellation { segm.onCancellation(i) } }
                     )) { tryAgain = true }
             }
         }
@@ -213,7 +217,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         tryReceiveRendezvousUnit(
             onRendezvous = { e -> element = e},
             oRendezvousFailed = { segm, i ->
-                storeReceiver(segm, i, waiter = CANCELLED,
+                storeReceiver(segm, i, waiter = BROKEN,
                     onElimination = { w, e -> element = e },
                     cancellationSetup = {}
                 )
@@ -235,6 +239,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
             segm = receiveSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            if (segm.id != id) {
+                receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
+                continue
+            }
             if (r < senders.value) {
                 val element = tryReceiveWithoutSuspension(segm, i)
                 if (element === FAILED_RESULT) continue
@@ -255,6 +263,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
             segm = receiveSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            if (segm.id != id) {
+                receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
+                continue
+            }
             if (r < senders.value) {
                 val element = tryReceiveWithoutSuspension(segm, i)
                 if (element === FAILED_RESULT) continue
@@ -353,7 +365,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     onElimination(waiter, element)
                     break
                 }
-                else -> error("Unexpected waiter: $state")
+                else -> error("Unexpected state: $state")
             }
         }
         expandBuffer()
@@ -369,6 +381,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             val id = b / SEGMENT_SIZE
             val i = (b % SEGMENT_SIZE).toInt()
             segm = bufferEndSegment.findSegmentAndMoveForward(id, segm, ::createSegment).segment
+            if (segm.id != id) {
+                bufferEnd.compareAndSet(b + 1, segm.id * SEGMENT_SIZE)
+                continue@try_again
+            }
             while (true) {
                 val state = segm.getState(i)
                 when {
@@ -423,9 +439,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 oRendezvousFailed = { segm, i, s ->
                     if (!storeSender(segm, i, element, s, waiter = select,
                             onRendezvous = { select.selectInRegPhase(Unit) },
-                            cancellationSetup = { select.invokeOnCompletion { segm.onCancellation(i,
-                                CANCELLED
-                            ) }}
+                            cancellationSetup = { select.invokeOnCompletion { segm.onCancellation(i) } }
                         )) { tryAgain = true }
                 })
         }
@@ -437,9 +451,11 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             oRendezvousFailed = {segm, i ->
                 storeReceiver(segm, i, waiter = select,
                     onElimination = { w, e -> select.selectInRegPhase(e) },
-                    cancellationSetup = { select.invokeOnCompletion { segm.onCancellation(i,
-                        CANCELLED
-                    ) } }
+                    cancellationSetup = {
+                        select.invokeOnCompletion {
+                            segm.onCancellation(i)
+                        }
+                    }
                 )
             }
         )
@@ -720,9 +736,9 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
         return (if (element === NULL_ELEMENT) null else element) as E
     }
 
-    fun onCancellation(i: Int, cancelledState: Any) {
+    fun onCancellation(i: Int) {
         setElementLazy(i, null)
-//        setState(i, cancelledState)
+        setState(i, CANCELLED)
         onSlotCleaned()
     }
 
@@ -744,7 +760,9 @@ private fun CancellableContinuation<*>.tryResumeSend(): Boolean {
     return true
 }
 
-private class ExpandBufferDesc(val waiter: Any)
+private class ExpandBufferDesc(val waiter: Any) {
+    override fun toString() = "ExpandBufferDesc($waiter)"
+}
 
 // Number of cells in each segment
 private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)

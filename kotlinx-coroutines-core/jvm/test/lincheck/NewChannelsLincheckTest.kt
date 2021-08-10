@@ -21,12 +21,12 @@ abstract class BufferedChannelLincheckTestBase(
 
     @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
     suspend fun send(value: Int): Any = try {
-        c.send(null)
+        c.send(value)
     } catch (e: NumberedCloseException) {
         e.msg
     }
 
-//    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
+    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
     suspend fun sendViaSelect(value: Int): Any = try {
         when (c) {
             is BufferedChannel<Int?> -> newSelect<Unit> { c.onSendNew(value) {} }
@@ -42,12 +42,12 @@ abstract class BufferedChannelLincheckTestBase(
 
     @Operation(cancellableOnSuspension = true, blocking = true)
     suspend fun receive(): Any? = try {
-        c.receive().also { if (it != null) error("") }
+        c.receive()
     } catch (e: NumberedCloseException) {
         e.msg
     }
 
-//    @Operation(cancellableOnSuspension = true, blocking = true)
+    @Operation(cancellableOnSuspension = true, blocking = true)
     suspend fun receiveViaSelect(): Any? = try {
         when (c) {
             is BufferedChannel<Int?> -> newSelect<Int?> { c.onReceiveNew { it } }
@@ -69,7 +69,6 @@ abstract class BufferedChannelLincheckTestBase(
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
         actorsBefore(0).sequentialSpecification(sequentialSpecification)
-            .verifier(EpsilonVerifier::class.java)
 
     override fun ModelCheckingOptions.customize(isStressTest: Boolean) = verboseTrace()
 }
@@ -83,24 +82,24 @@ class BufferedChannelRendezvousLincheckTest : BufferedChannelLincheckTestBase(
     sequentialSpecification = SequentialRendezvousChannel::class.java
 )
 
-class EuroParChannelRendezvousLincheckTest : BufferedChannelLincheckTestBase(
-    c = RendezvousChannelEuropar(),
-    sequentialSpecification = SequentialRendezvousChannel::class.java
-)
-
-class EuroParChannelUnlimitedLincheckTest : BufferedChannelLincheckTestBase(
-    c = object : RendezvousChannelEuropar<Int?>() {
-        override suspend fun send(element: Int?) {
-            offerUnlimited(element)
-        }
-    },
-    sequentialSpecification = SequentialUnlimitedChannel::class.java
-)
-
-class MSQueueChannelRendezvousLincheckTest : BufferedChannelLincheckTestBase(
-    c = RendezvousChannelMSQueue(),
-    sequentialSpecification = SequentialRendezvousChannel::class.java
-)
+//class EuroParChannelRendezvousLincheckTest : BufferedChannelLincheckTestBase(
+//    c = RendezvousChannelEuropar(),
+//    sequentialSpecification = SequentialRendezvousChannel::class.java
+//)
+//
+//class EuroParChannelUnlimitedLincheckTest : BufferedChannelLincheckTestBase(
+//    c = object : RendezvousChannelEuropar<Int?>() {
+//        override suspend fun send(element: Int?) {
+//            offerUnlimited(element)
+//        }
+//    },
+//    sequentialSpecification = SequentialUnlimitedChannel::class.java
+//)
+//
+//class MSQueueChannelRendezvousLincheckTest : BufferedChannelLincheckTestBase(
+//    c = RendezvousChannelMSQueue(),
+//    sequentialSpecification = SequentialRendezvousChannel::class.java
+//)
 
 class BufferedChannel1LincheckTest : BufferedChannelLincheckTestBase(
     c = BufferedChannel(1),

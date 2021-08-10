@@ -63,6 +63,7 @@ dependencies {
     compile(project(":kotlinx-coroutines-core"))
 
     compile("org.nield:kotlin-statistics:1.2.1")
+    compile("org.apache.commons:commons-math3:3.0")
 
     // add jmh dependency on main
     "jmhImplementation"(sourceSets.main.get().runtimeClasspath)
@@ -73,3 +74,10 @@ task("runBfsChannelBenchmark", JavaExec::class) {
     args = listOf("-Xmx10G")
     classpath = sourceSets["main"].runtimeClasspath
 }
+
+task("runInMemoryChatBenchmark", JavaExec::class) {
+    main = "macrobenchmarks.chat.InMemoryChatBenchmark"
+    args = listOf("-Xmx10G")
+    classpath = sourceSets["main"].runtimeClasspath
+}
+

@@ -132,7 +132,7 @@ public open class ExperimentalCoroutineDispatcher(
 
     // for tests only
     @Synchronized
-    internal fun shutdown(timeout: Long) {
+    public fun shutdown(timeout: Long) {
         coroutineScheduler.shutdown(timeout)
     }
 

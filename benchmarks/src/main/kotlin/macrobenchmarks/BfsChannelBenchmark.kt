@@ -33,7 +33,7 @@ private val GRAPHS = listOf(
 /**
  * Number of iterations for each graph
  */
-private const val ITERATIONS = 10
+private const val ITERATIONS = 20
 /**
  * Number of coroutines to be used to execute bfs in parallel
  */
