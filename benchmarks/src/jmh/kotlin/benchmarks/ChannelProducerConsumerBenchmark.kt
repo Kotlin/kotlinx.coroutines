@@ -27,8 +27,8 @@ import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
  * Please, be patient, this benchmark takes quite a lot of time to complete.
  */
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Fork(value = 1)
+@Measurement(iterations = 20, time = 500, timeUnit = TimeUnit.MILLISECONDS)
+@Fork(value = 3)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
