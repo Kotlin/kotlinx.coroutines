@@ -55,7 +55,7 @@ public class User(private val id: Long,
     }
 
     public fun startUser() {
-        runCoroutine = CoroutineScope(context).launch {
+        runCoroutine = GlobalScope.launch(context) {
             var yieldLoopCounter = 0L
             while (!stopped) {
                 // if we can send a message, send it, otherwise wait on receive and receive a message

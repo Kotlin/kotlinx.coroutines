@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.*
 import kotlin.collections.ArrayList
 
 public lateinit var context: CoroutineDispatcher
-private const val SHOULD_PRINT_DEBUG_OUTPUT = true
+private const val SHOULD_PRINT_DEBUG_OUTPUT = false
 
 @Volatile
 public var stopped: Boolean = false
@@ -77,12 +77,12 @@ private fun runBenchmarkIteration(iteration: Int,
     createUsers(users, mean, poissonDistribution, Random(42), configuration)
 
     val msg = Message(0, 0L)
-    runBlocking {
+    runBlocking(context) {
         users.forEach { it.messageChannel.send(msg) }
     }
     Thread.sleep(BENCHMARK_TIME_MS)
 
-    runBlocking {
+    runBlocking(context) {
         stopUsers(users)
     }
 //    waitForCoroutines(users)
@@ -153,8 +153,8 @@ private fun addFriendsToUsers(configuration: BenchmarkConfiguration, users: List
 
 private suspend fun stopUsers(users: ArrayList<User>) {
     stopped = true
-    users.forEach { it.stopUser() }
-//    (context as ExperimentalCoroutineDispatcher).shutdown(1000_000)
+//    users.forEach { it.stopUser() }
+    (context as ExecutorCoroutineDispatcher).close()
 }
 
 private fun waitForCoroutines(users : ArrayList<User>) {

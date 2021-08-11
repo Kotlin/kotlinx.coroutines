@@ -18,11 +18,11 @@ public const val BENCHMARK_TIME_MS: Long = 2_000L
 /**
  * Warm up iterations count
  */
-public const val WARM_UP_ITERATIONS: Int = 5
+public const val WARM_UP_ITERATIONS: Int = 10
 /**
  * Benchmark iterations count
  */
-public const val ITERATIONS: Int = 10
+public const val ITERATIONS: Int = 20
 /**
  * CSV file containing the configurations and final metrics of the executed benchmarks
  */
