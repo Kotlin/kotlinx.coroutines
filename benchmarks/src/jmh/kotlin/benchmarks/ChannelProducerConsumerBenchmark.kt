@@ -27,17 +27,17 @@ import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
  * Please, be patient, this benchmark takes quite a lot of time to complete.
  */
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 20, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Fork(value = 3)
+@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
+@Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class ChannelProducerConsumerBenchmark {
     @Param
-    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.DEFAULT
+    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.EXECUTOR
 
     @Param
-    private var _1_channel: ChannelCreator = ChannelCreator.KOTLIN_RENDEZVOUS
+    private var _1_channel: ChannelCreator = ChannelCreator.BUFFERED_BUFFERED_64
 
     @Param("0", "1000")
     private var _2_coroutines: Int = 0
@@ -45,7 +45,7 @@ open class ChannelProducerConsumerBenchmark {
     @Param("false", "true")
     private var _3_withSelect: Boolean = false
 
-//    @Param("1", "2", "4") // local machine
+//    @Param("2") // local machine
 //    @Param("1", "2", "4", "8", "12") // local machine
     @Param("1", "2", "4", "8", "16", "32", "64", "128", "144") // dasquad
 //    @Param("1", "2", "4", "8", "16", "32", "64", "96") // Google Cloud
@@ -69,7 +69,7 @@ open class ChannelProducerConsumerBenchmark {
         run(producers, consumers)
     }
 
-    @Benchmark
+//    @Benchmark
     fun spmc() {
         if (_2_coroutines != 0) return
         val producers = 1
@@ -182,7 +182,8 @@ open class ChannelProducerConsumerBenchmark {
 
 enum class DispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
 //    FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-    DEFAULT({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
+//    DEFAULT({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) }),
+    EXECUTOR({ parallelism -> kotlinx.coroutines.newFixedThreadPoolContext(parallelism, "test") })
 }
 
 enum class ChannelCreator(val create: () -> Channel<Int>) {

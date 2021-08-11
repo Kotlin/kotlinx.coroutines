@@ -69,9 +69,9 @@ abstract class BufferedChannelLincheckTestBase(
     fun stateRepresentation() = c.toString()
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
-        actorsBefore(0).sequentialSpecification(sequentialSpecification)
+        actorsBefore(0).actorsAfter(0).sequentialSpecification(sequentialSpecification) //.actorsPerThread(3).actorsAfter(0)
 
-//    override fun ModelCheckingOptions.customize(isStressTest: Boolean) = verboseTrace()
+    override fun ModelCheckingOptions.customize(isStressTest: Boolean) = this.invocationsPerIteration(50_000).verboseTrace()
 }
 
 private class NumberedCloseException(number: Int): Throwable() {
@@ -237,46 +237,48 @@ class NewSelectUntilLicnheckTest : AbstractLincheckTest() {
 class ChannelStressTest : TestBase() {
     private val pool = ExperimentalCoroutineDispatcher(THREADS, THREADS, "ChannelStressTest")
     private val nSeconds = 2//3 * stressTestMultiplier
-    private val c = BufferedChannel<Int>(16)
-    private val c2 = Channel<Int>(16)
 
     @org.junit.Test
-    fun testStress() = repeat(4) { runTest {
+    fun testStress() = repeat(5) { runTest {
+        val c = BufferedChannel<Int>(16)
         var sends = 0
         repeat(THREADS / 2) {
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
-                    if (Random.nextInt(1001) == 0) yield()
+//                    if (Random.nextInt(1001) == 0) yield()
                     c.send(it)
                     sends++
                 }
             }
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
-                    if (Random.nextInt(1001) == 0) yield()
+//                    if (Random.nextInt(1001) == 0) yield()
                     c.receive()
                 }
             }
         }
         delay(1000L * nSeconds)
         coroutineContext.cancelChildren()
-        println("TRANSFERS: $sends")
+        println("TRANSFERS: $sends sendFast=${c.sendFast} sendSuspend=${c.sendSuspend} sendAttempts=${c.sendAttempts} " +
+            "sendSuspendAttempts=${c.sendSuspendAttempts} receiveFast=${c.receiveFast} receiveSuspend=${c.receiveSuspend} receiveAttemps=${c.receiveAttempts}")
     } }
 
     @org.junit.Test
     fun testStressKotlin() = repeat(4) { runTest {
+        val c2 = Channel<Int>(16)
+
         var sends = 0
         repeat(THREADS / 2) {
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
-                    if (Random.nextInt(1001) == 0) yield()
+//                    if (Random.nextInt(1001) == 0) yield()
                     c2.send(it)
                     sends++
                 }
             }
             launch(pool) {
                 repeat(Int.MAX_VALUE) {
-                    if (Random.nextInt(1001) == 0) yield()
+//                    if (Random.nextInt(1001) == 0) yield()
                     c2.receive()
                 }
             }

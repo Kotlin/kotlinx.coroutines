@@ -25,19 +25,22 @@ import kotlin.system.*
 
 
 private val GRAPHS = listOf(
-    RandomGraphCreator("RAND-1M-10M", nodes = 1_000_000, edges = 10_000_000),
+//    RandomGraphCreator("RAND-1M-10M", nodes = 1_000_000, edges = 10_000_000),
 //    RandomGraphCreator("RAND-1M*log(1M)", nodes = 1_000_000, edges = 19_931_569),
-    DownloadingGraphCreator("USA-DISTANCE", "http://users.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.W.gr.gz"),
+    DownloadingGraphCreator("USA-DISTANCE", "http://users.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.USA.gr.gz"),
     // !NB!: node indexes in a txt file should start at 0. Check it if you decide to change the url
-    DownloadingGraphCreator("INTERNET_TOPOLOGY", "http://snap.stanford.edu/data/as-skitter.txt.gz"))
+//    DownloadingGraphCreator("INTERNET_TOPOLOGY", "http://snap.stanford.edu/data/as-skitter.txt.gz"))
+//    DownloadingGraphCreator("LIVE-JOURNAL", "https://snap.stanford.edu/data/soc-LiveJournal1.txt.gz")
+//    DownloadingGraphCreator("TWITTER", "https://suitesparse-collection-website.herokuapp.com/MM/GAP/GAP-twitter.tar.gz")
+)
 /**
  * Number of iterations for each graph
  */
-private const val ITERATIONS = 20
+private const val ITERATIONS = 1
 /**
  * Number of coroutines to be used to execute bfs in parallel
  */
-private val PARALLELISM = listOf(1, 2, 4, 8, 16, 32, 64, 128, 144)
+private val PARALLELISM = listOf(12)
 /**
  * Benchmark output file
  */
@@ -64,10 +67,10 @@ private val GRAPH_CACHE_SERVICE_NAME = GraphCacheService::class.java.simpleName
 private val JVM_OPTIONS = listOf<String>(/*"-Xmx64m", "-XX:+PrintGC"*/)
 
 private val ALGORITHMS = mapOf<String, (parallelism: Int) -> Channel<Node?>> (
-    "Kotlin" to { parallelism -> TaskChannelKotlin(parallelism) },
-    "Our algorithm" to { parallelism -> TaskChannelNew(parallelism) },
-    "Koval" to { parallelism -> TaskChannelEuropar(parallelism) },
-    "MSQueue" to { parallelism -> TaskChannelEuropar(parallelism) }
+    //"Kotlin" to { parallelism -> TaskChannelKotlin(parallelism) },
+    "Our algorithm" to { parallelism -> TaskChannelNew(parallelism) }
+    //"Koval" to { parallelism -> TaskChannelEuropar(parallelism) },
+   // "MSQueue" to { parallelism -> TaskChannelEuropar(parallelism) }
 )
 /**
  * This benchmark tests channel as a working queue, as a queue under contention.

@@ -83,7 +83,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
                 continue
             }
-            val doNotSuspend = unlimited || s < receivers.value || (!rendezvous && s < bufferEnd.value)
+            val doNotSuspend = unlimited || (!rendezvous && s < bufferEnd.value)  || s < receivers.value
             if (doNotSuspend) { // rendezvous or buffering
                 segm.cleanPrev()
                 if (trySendWithoutSuspension(segm = segm, i = i, element = element)) {
@@ -99,9 +99,14 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     private fun findSegmentSend(id: Long, start: ChannelSegment<E>) =
         sendSegment.findSegmentAndMoveForward(id, start, ::createSegment).segment
 
+    public var sendFast: Int = 0
+    public var sendSuspend: Int = 0
+    public var sendAttempts: Int = 0
+
     public override suspend fun send(element: E) {
         var segm = sendSegment.value
         while (true) {
+            sendAttempts++
             checkNotClosedForSend()
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
@@ -111,17 +116,21 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
                 continue
             }
-            val doNotSuspend = unlimited || s < receivers.value || (!rendezvous && s < bufferEnd.value)
+            val doNotSuspend = unlimited  || (!rendezvous && s < bufferEnd.value) || s < receivers.value
             if (doNotSuspend) { // rendezvous or buffering
                 segm.cleanPrev()
                 if (trySendWithoutSuspension(segm = segm, i = i, element = element)) {
+                    sendFast++
                     return
                 }
             } else {
+                sendSuspend++
                 return sendSuspend(element, segm, i, s)
             }
         }
     }
+
+    public var sendSuspendAttempts: Int = 0
 
     private suspend fun sendSuspend(
         element: E,
@@ -131,6 +140,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     ) = suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
         if (storeSenderSuspend(cont, element, segm, i, s)) return@sc
         while (true) {
+            sendSuspendAttempts++
             trySendRendezvous(segm, element,
                 onRendezvous = { cont.resume(Unit); return@sc },
                 oRendezvousFailed = { segm, i, s ->
@@ -165,17 +175,19 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     if (segm.casState(i, state, BUFFERED)) return true
                     segm.setElementLazy(i, null)
                 }
-                state === BROKEN || state === CANCELLED || state === INTERRUPTED -> return false
+                state === BROKEN || state === INTERRUPTED_PROCESSED || state === INTERRUPTED -> return false
                 state is ExpandBufferDesc -> {
                     segm.casState(i, state, state.waiter)
                 }
                 state is CancellableContinuation<*> -> {
-                    if (segm.casState(i, state, DONE)) return state.tryResumeReceive(element).also {
+                    segm.setState(i, DONE)
+                    return state.tryResumeReceive(element).also {
                         onReceiveDequeued()
                     }
                 }
                 state is NewSelectInstance<*> -> {
-                    if (segm.casState(i, state, DONE)) return state.trySelect(this, element).also {
+                    segm.setState(i, DONE)
+                    return state.trySelect(this, element).also {
                         onReceiveDequeued()
                     }
                 }
@@ -209,11 +221,11 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 else -> error("Unexpected state: $state")
             }
         }
-        if (s < bufferEnd.value && segm.casState(i, waiter, BUFFERED)) {
-            onRendezvous(waiter)
-        } else {
+//        if (s < bufferEnd.value && segm.casState(i, waiter, BUFFERED)) {
+//            onRendezvous(waiter)
+//        } else {
             cancellationSetup(waiter)
-        }
+//        }
         return true
     }
 
@@ -228,7 +240,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         tryReceiveRendezvousUnit(
             onRendezvous = { e -> element = e},
             oRendezvousFailed = { segm, i ->
-                storeReceiver(segm, i, waiter = CANCELLED,
+                storeReceiver(segm, i, waiter = INTERRUPTED_PROCESSED,
                     onElimination = { w, e -> element = e },
                     cancellationSetup = {}
                 )
@@ -243,9 +255,14 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             oRendezvousFailed = { segm, i -> receiveSuspend(segm, i) }
         )
 
+    public var receiveAttempts: Int = 0
+    public var receiveSuspend: Int = 0
+    public var receiveFast: Int = 0
+
     public override suspend fun receive(): E {
         var segm = receiveSegment.value
         while (true) {
+            receiveAttempts++
             val r = this.receivers.getAndIncrement()
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
@@ -257,8 +274,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             if (r < senders.value) {
                 val element = tryReceiveWithoutSuspension(segm, i)
                 if (element === FAILED_RESULT) continue
+                receiveFast++
                 return element as E
             } else {
+                receiveSuspend++
                 return receiveSuspend(segm, i)
             }
         }
@@ -316,12 +335,14 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     expandBuffer()
                     return element
                 }
-                state === null || state === BUFFERING -> if (segm.casState(i, state, BROKEN)) {
-                    expandBuffer()
-                    return FAILED_RESULT
+                state === null || state === BUFFERING -> {
+                    if (segm.casState(i, state, BROKEN)) {
+                        expandBuffer()
+                        return FAILED_RESULT
+                    }
                 }
-                state === CANCELLED -> return FAILED_RESULT
-                state === OFFER -> if (segm.casState(i, state, CANCELLED)) return FAILED_RESULT
+                state === INTERRUPTED_PROCESSED -> return FAILED_RESULT
+                state === OFFER -> if (segm.casState(i, state, INTERRUPTED_PROCESSED)) return FAILED_RESULT
                 state === RESUMING_SENDER -> continue
                 else -> {
                     if (segm.casState(i, state, RESUMING_SENDER)) {
@@ -339,7 +360,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                             expandBuffer()
                             element
                         } else {
-                            if (!segm.casState(i, RESUMING_SENDER, CANCELLED) || helpExpandBuffer)
+                            if (!segm.casState(i, RESUMING_SENDER, INTERRUPTED_PROCESSED) || helpExpandBuffer)
                                 expandBuffer()
                             FAILED_RESULT
                         }
@@ -404,10 +425,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 val state = segm.getState(i)
                 when {
                     state === null -> if (segm.casState(i, null, BUFFERING)) return
-                    state === CANCELLED -> continue@try_again
+                    state === INTERRUPTED_PROCESSED -> continue@try_again
                     state === BROKEN || state === OFFER || state === BUFFERED || state === DONE -> return
                     receivers.value > b -> if (segm.casState(i, state, ExpandBufferDesc(state))) return
-                    segm.casState(i, state, RESUMING_SENDER) -> { // cont or select
+                    segm.casState(i, state, RESUMING_SENDER) -> {
                         val success = when {
                             state === INTERRUPTED -> false
                             state is CancellableContinuation<*> -> state.tryResumeSend()
@@ -418,7 +439,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                             segm.setState(i, BUFFERED)
                             return
                         } else {
-                            segm.setState(i, CANCELLED)
+                            segm.setState(i, INTERRUPTED_PROCESSED)
                             continue@try_again
                         }
                     }
@@ -753,14 +774,14 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
 
     fun onCancellation(i: Int) {
         setElementLazy(i, null)
-        val new = data[i * 2 + 1].updateAndGet {
+        data[i * 2 + 1].update {
             when {
-                it === RESUMING_SENDER || it === CANCELLED  -> return
-                it is ExpandBufferDesc -> ExpandBufferDesc(INTERRUPTED)
+                it === RESUMING_SENDER || it === INTERRUPTED_PROCESSED  -> return
+                it is ExpandBufferDesc -> return
                 else -> INTERRUPTED
             }
         }
-        if (new === CANCELLED) onSlotCleaned()
+        onSlotCleaned()
     }
 }
 
@@ -791,7 +812,7 @@ private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmen
 private val BUFFERING = Symbol("BUFFERING")
 private val BUFFERED = Symbol("BUFFERED")
 private val RESUMING_SENDER = Symbol("RESUMING_SENDER")
-private val CANCELLED = Symbol("CANCELLED")
+private val INTERRUPTED_PROCESSED = Symbol("INTERRUPTED_PROCESSED")
 private val BROKEN = Symbol("BROKEN")
 private val DONE = Symbol("DONE")
 private val OFFER = Symbol("OFFER")
