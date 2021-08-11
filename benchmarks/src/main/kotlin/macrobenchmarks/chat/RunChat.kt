@@ -153,8 +153,8 @@ private fun addFriendsToUsers(configuration: BenchmarkConfiguration, users: List
 
 private suspend fun stopUsers(users: ArrayList<User>) {
     stopped = true
-//    users.forEach { it.stopUser() }
-    (context as ExperimentalCoroutineDispatcher).shutdown(1000_000)
+    users.forEach { it.stopUser() }
+//    (context as ExperimentalCoroutineDispatcher).shutdown(1000_000)
 }
 
 private fun waitForCoroutines(users : ArrayList<User>) {

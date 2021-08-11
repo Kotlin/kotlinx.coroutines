@@ -14,11 +14,11 @@ import kotlin.collections.ArrayList
 /**
  * Execution time of each benchmark.
  */
-public const val BENCHMARK_TIME_MS: Long = 3_000L
+public const val BENCHMARK_TIME_MS: Long = 2_000L
 /**
  * Warm up iterations count
  */
-public const val WARM_UP_ITERATIONS: Int = 3
+public const val WARM_UP_ITERATIONS: Int = 5
 /**
  * Benchmark iterations count
  */
@@ -34,15 +34,15 @@ public const val BENCHMARK_OUTPUT_FILE: String = "out/results_in_memory_chat.csv
  * Underlying thread pool size for coroutines.
  */
 //private val THREADS = listOf(1)
-private val THREADS = listOf(1, 4, 8, 16, 32, 64, 128, 144)
+private val THREADS = listOf(1, 2, 4, 8, 16, 32, 64, 128, 144)
 /**
  * Chat users count.
  */
-private val USER_COUNT = listOf(1_000, 10_000)
+private val USER_COUNT = listOf(1_000)
 /**
  * Maximum percentage of all chat users a user can be friends with.
  */
-private val MAX_FRIENDS_PERCENTAGE = listOf(0.2, 0.5)
+private val MAX_FRIENDS_PERCENTAGE = listOf(0.2)
 /**
  * The average amount work that will be executed on CPU.
  */
@@ -58,7 +58,8 @@ public enum class ChannelCreator(public val create: () -> Channel<Message?>) {
 
 public enum class DispatcherTypes(public val create: (parallelism: Int) -> CoroutineDispatcher) {
 //    ForkJoin({ parallelism -> ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-    Experimental({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
+    EXECUTOR({ parallelism -> kotlinx.coroutines.newFixedThreadPoolContext(parallelism, "test") }),
+//    Experimental({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
 }
 
 public val allConfigurations: List<BenchmarkConfiguration>
