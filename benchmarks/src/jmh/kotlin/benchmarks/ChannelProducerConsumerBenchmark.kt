@@ -116,7 +116,7 @@ open class ChannelProducerConsumerBenchmark {
             val channel = this.channel
             when (channel) {
                 is RendezvousChannelMSQueue -> {
-                    channel.receive()
+                    channel.send(element)
                 }
                 is RendezvousChannelEuropar<Int> -> {
                     dummy as RendezvousChannelEuropar<Int>
