@@ -259,8 +259,7 @@ class ChannelStressTest : TestBase() {
         }
         delay(1000L * nSeconds)
         coroutineContext.cancelChildren()
-        println("TRANSFERS: $sends sendFast=${c.sendFast} sendSuspend=${c.sendSuspend} sendAttempts=${c.sendAttempts} " +
-            "sendSuspendAttempts=${c.sendSuspendAttempts} receiveFast=${c.receiveFast} receiveSuspend=${c.receiveSuspend} receiveAttemps=${c.receiveAttempts}")
+        println("TRANSFERS: $sends")
     } }
 
     @org.junit.Test

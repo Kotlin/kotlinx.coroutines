@@ -99,14 +99,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     private fun findSegmentSend(id: Long, start: ChannelSegment<E>) =
         sendSegment.findSegmentAndMoveForward(id, start, ::createSegment).segment
 
-    public var sendFast: Int = 0
-    public var sendSuspend: Int = 0
-    public var sendAttempts: Int = 0
 
     public override suspend fun send(element: E) {
         var segm = sendSegment.value
         while (true) {
-            sendAttempts++
             checkNotClosedForSend()
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
@@ -120,17 +116,13 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             if (doNotSuspend) { // rendezvous or buffering
                 segm.cleanPrev()
                 if (trySendWithoutSuspension(segm = segm, i = i, element = element)) {
-                    sendFast++
                     return
                 }
             } else {
-                sendSuspend++
                 return sendSuspend(element, segm, i, s)
             }
         }
     }
-
-    public var sendSuspendAttempts: Int = 0
 
     private suspend fun sendSuspend(
         element: E,
@@ -140,7 +132,6 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     ) = suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
         if (storeSenderSuspend(cont, element, segm, i, s)) return@sc
         while (true) {
-            sendSuspendAttempts++
             trySendRendezvous(segm, element,
                 onRendezvous = { cont.resume(Unit); return@sc },
                 oRendezvousFailed = { segm, i, s ->
@@ -255,14 +246,9 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             oRendezvousFailed = { segm, i -> receiveSuspend(segm, i) }
         )
 
-    public var receiveAttempts: Int = 0
-    public var receiveSuspend: Int = 0
-    public var receiveFast: Int = 0
-
     public override suspend fun receive(): E {
         var segm = receiveSegment.value
         while (true) {
-            receiveAttempts++
             val r = this.receivers.getAndIncrement()
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
@@ -274,10 +260,8 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             if (r < senders.value) {
                 val element = tryReceiveWithoutSuspension(segm, i)
                 if (element === FAILED_RESULT) continue
-                receiveFast++
                 return element as E
             } else {
-                receiveSuspend++
                 return receiveSuspend(segm, i)
             }
         }
