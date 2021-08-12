@@ -864,11 +864,6 @@ public abstract class kotlinx/coroutines/flow/AbstractFlow : kotlinx/coroutines/
 	public abstract fun collectSafely (Lkotlinx/coroutines/flow/SafeCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public abstract interface class kotlinx/coroutines/flow/ExceptionAwareFlowCollector : kotlinx/coroutines/flow/FlowCollector {
-	public abstract synthetic fun doNotImplementMe ()V
-	public abstract fun isFromDownstream (Ljava/lang/Throwable;)Z
-}
-
 public abstract interface class kotlinx/coroutines/flow/Flow {
 	public abstract fun collect (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
