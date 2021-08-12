@@ -27,14 +27,14 @@ import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
  * Please, be patient, this benchmark takes quite a lot of time to complete.
  */
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 15, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class ChannelProducerConsumerBenchmark {
     @Param
-    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.EXECUTOR
+    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.DEFAULT
 
     @Param
     private var _1_channel: ChannelCreator = ChannelCreator.BUFFERED_BUFFERED_64
@@ -182,8 +182,8 @@ open class ChannelProducerConsumerBenchmark {
 
 enum class DispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
 //    FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-//    DEFAULT({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) }),
-    EXECUTOR({ parallelism -> kotlinx.coroutines.newFixedThreadPoolContext(parallelism, "test") })
+    DEFAULT({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) }),
+//    EXECUTOR({ parallelism -> kotlinx.coroutines.newFixedThreadPoolContext(parallelism, "test") })
 }
 
 enum class ChannelCreator(val create: () -> Channel<Int>) {
@@ -199,4 +199,4 @@ private fun doWork(): Unit = Blackhole.consumeCPU(ThreadLocalRandom.current().ne
 
 private const val WORK_MIN = 50L
 private const val WORK_MAX = 100L
-private const val APPROX_BATCH_SIZE = 100000
+private const val APPROX_BATCH_SIZE = 10000
