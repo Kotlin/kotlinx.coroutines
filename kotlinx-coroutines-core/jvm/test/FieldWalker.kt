@@ -90,6 +90,9 @@ object FieldWalker {
                     cur = ref.parent
                     path += "[${ref.index}]"
                 }
+                else -> {
+                    // Nothing
+                }
             }
         }
         path.reverse()
