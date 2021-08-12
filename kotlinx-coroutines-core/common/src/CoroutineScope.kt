@@ -185,7 +185,7 @@ public val CoroutineScope.isActive: Boolean
  * }
  * ```
  *
- * In top-level code, when launching a concurrent operation operation from a non-suspending context, an appropriately
+ * In top-level code, when launching a concurrent operation from a non-suspending context, an appropriately
  * confined instance of [CoroutineScope] shall be used instead of a `GlobalScope`. See docs on [CoroutineScope] for
  * details.
  *
