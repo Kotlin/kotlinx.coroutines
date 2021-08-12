@@ -182,7 +182,7 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  * ### Deprecated
  *
  * **This API is deprecated.** The [BroadcastChannel] provides a complex channel-like API for hot flows.
- * [SharedFlow] is a easier-to-use and more flow-centric API for the same purposes, so using
+ * [SharedFlow] is an easier-to-use and more flow-centric API for the same purposes, so using
  * [shareIn] operator is preferred. It is not a direct replacement, so please
  * study [shareIn] documentation to see what kind of shared flow fits your use-case. As a rule of thumb:
  *
