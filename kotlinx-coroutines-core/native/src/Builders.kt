@@ -77,7 +77,13 @@ private class BlockingCoroutine<T>(
         try {
             eventLoop?.incrementUseCount()
             while (true) {
-                val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
+                var parkNanos: Long
+                // Workaround for bug in BE optimizer that cannot eliminate boxing here
+                if (eventLoop != null) {
+                    parkNanos = eventLoop.processNextEvent()
+                } else {
+                    parkNanos = Long.MAX_VALUE
+                }
                 // note: process next even may loose unpark flag, so check if completed before parking
                 if (isCompleted) break
                 joinWorker.park(parkNanos / 1000L)
