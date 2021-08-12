@@ -14,15 +14,15 @@ import kotlin.collections.ArrayList
 /**
  * Execution time of each benchmark.
  */
-public const val BENCHMARK_TIME_MS: Long = 2_000L
+public const val BENCHMARK_TIME_MS: Long = 500L
 /**
  * Warm up iterations count
  */
-public const val WARM_UP_ITERATIONS: Int = 10
+public const val WARM_UP_ITERATIONS: Int = 3
 /**
  * Benchmark iterations count
  */
-public const val ITERATIONS: Int = 20
+public const val ITERATIONS: Int = 5
 /**
  * CSV file containing the configurations and final metrics of the executed benchmarks
  */
@@ -38,15 +38,15 @@ private val THREADS = listOf(1, 2, 4, 8, 16, 32, 64, 128, 144)
 /**
  * Chat users count.
  */
-private val USER_COUNT = listOf(1_000)
+private val USER_COUNT = listOf(10_000)
 /**
  * Maximum percentage of all chat users a user can be friends with.
  */
-private val MAX_FRIENDS_PERCENTAGE = listOf(0.2)
+private val MAX_FRIENDS_PERCENTAGE = listOf(0.3)
 /**
  * The average amount work that will be executed on CPU.
  */
-private val AVERAGE_WORK = listOf(100)
+private val AVERAGE_WORK = listOf(500)
 
 public enum class ChannelCreator(public val create: () -> Channel<Message?>) {
     KOTLIN_RENDEZVOUS({ Channel(Channel.RENDEZVOUS) } ),
@@ -58,8 +58,8 @@ public enum class ChannelCreator(public val create: () -> Channel<Message?>) {
 
 public enum class DispatcherTypes(public val create: (parallelism: Int) -> CoroutineDispatcher) {
 //    ForkJoin({ parallelism -> ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-    EXECUTOR({ parallelism -> kotlinx.coroutines.newFixedThreadPoolContext(parallelism, "test") }),
-//    Experimental({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
+//    EXECUTOR({ parallelism -> kotlinx.coroutines.newFixedThreadPoolContext(parallelism, "test") }),
+    Experimental({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
 }
 
 public val allConfigurations: List<BenchmarkConfiguration>
