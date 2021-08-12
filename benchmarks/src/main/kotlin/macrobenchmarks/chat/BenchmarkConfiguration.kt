@@ -38,7 +38,7 @@ private val THREADS = listOf(1, 2, 4, 8, 16, 32, 64, 128, 144)
 /**
  * Chat users count.
  */
-private val USER_COUNT = listOf(10_000)
+private val USER_COUNT = listOf(1_000)
 /**
  * Maximum percentage of all chat users a user can be friends with.
  */
