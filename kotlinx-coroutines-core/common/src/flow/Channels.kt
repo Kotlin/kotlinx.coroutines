@@ -171,7 +171,7 @@ private class ChannelAsFlow<T>(
  */
 @Deprecated(
     level = DeprecationLevel.WARNING,
-    message = "'BroadcastChannel' is obsolete and all coreresponding operators are deprecated " +
+    message = "'BroadcastChannel' is obsolete and all corresponding operators are deprecated " +
         "in the favour of StateFlow and SharedFlow"
 ) // Since 1.5.0, was @FlowPreview, safe to remove in 1.7.0
 public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
