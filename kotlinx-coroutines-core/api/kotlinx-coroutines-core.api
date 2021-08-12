@@ -861,7 +861,12 @@ public final class kotlinx/coroutines/debug/internal/DebuggerInfo : java/io/Seri
 public abstract class kotlinx/coroutines/flow/AbstractFlow : kotlinx/coroutines/flow/CancellableFlow, kotlinx/coroutines/flow/Flow {
 	public fun <init> ()V
 	public final fun collect (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun collectSafely (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun collectSafely (Lkotlinx/coroutines/flow/SafeCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class kotlinx/coroutines/flow/ExceptionAwareFlowCollector : kotlinx/coroutines/flow/FlowCollector {
+	public abstract synthetic fun doNotImplementMe ()V
+	public abstract fun isFromDownstream (Ljava/lang/Throwable;)Z
 }
 
 public abstract interface class kotlinx/coroutines/flow/Flow {
@@ -1058,6 +1063,11 @@ public abstract interface class kotlinx/coroutines/flow/MutableStateFlow : kotli
 	public abstract fun compareAndSet (Ljava/lang/Object;Ljava/lang/Object;)Z
 	public abstract fun getValue ()Ljava/lang/Object;
 	public abstract fun setValue (Ljava/lang/Object;)V
+}
+
+public abstract interface class kotlinx/coroutines/flow/SafeCollector : kotlinx/coroutines/flow/FlowCollector {
+	public abstract synthetic fun doNotImplementMe ()V
+	public abstract fun isFromDownstream (Ljava/lang/Throwable;)Z
 }
 
 public abstract interface class kotlinx/coroutines/flow/SharedFlow : kotlinx/coroutines/flow/Flow {

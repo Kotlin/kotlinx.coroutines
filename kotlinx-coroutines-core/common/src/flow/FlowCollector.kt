@@ -19,3 +19,13 @@ public interface FlowCollector<in T> {
      */
     public suspend fun emit(value: T)
 }
+
+// Name TBD
+// Contracts: exception transparency preservation, context transparency preservation, isFromDownstream
+public interface SafeCollector<in T> : FlowCollector<T> {
+
+    public fun Throwable.isFromDownstream(): Boolean
+
+    @Deprecated(message = "", level = DeprecationLevel.HIDDEN)
+    public fun doNotImplementMe()
+}

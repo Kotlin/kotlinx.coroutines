@@ -10,10 +10,10 @@ import kotlinx.coroutines.internal.ScopeCoroutine
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-internal expect class SafeCollector<T>(
+internal expect class SafeCollectorImpl<T>(
     collector: FlowCollector<T>,
     collectContext: CoroutineContext
-) : FlowCollector<T> {
+) : SafeCollector<T> {
     internal val collector: FlowCollector<T>
     internal val collectContext: CoroutineContext
     internal val collectContextSize: Int
@@ -21,7 +21,7 @@ internal expect class SafeCollector<T>(
 }
 
 @JvmName("checkContext") // For prettier stack traces
-internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
+internal fun SafeCollectorImpl<*>.checkContext(currentContext: CoroutineContext) {
     val result = currentContext.fold(0) fold@{ count, element ->
         val key = element.key
         val collectElement = collectContext[key]
@@ -108,4 +108,10 @@ internal inline fun <T> unsafeFlow(@BuilderInference crossinline block: suspend 
             collector.block()
         }
     }
+}
+
+private class DownstreamExceptionElement(@JvmField val e: Throwable) : CoroutineContext.Element {
+    companion object Key : CoroutineContext.Key<DownstreamExceptionElement>
+
+    override val key: CoroutineContext.Key<*> = Key
 }

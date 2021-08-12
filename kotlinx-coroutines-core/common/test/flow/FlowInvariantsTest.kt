@@ -25,7 +25,7 @@ class FlowInvariantsTest : TestBase() {
     }
 
     private fun <T> abstractFlow(block: suspend FlowCollector<T>.() -> Unit): Flow<T> = object : AbstractFlow<T>() {
-        override suspend fun collectSafely(collector: FlowCollector<T>) {
+        override suspend fun collectSafely(collector: SafeCollector<T>) {
             collector.block()
         }
     }

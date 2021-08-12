@@ -53,11 +53,11 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  *
  * If you want to switch the context of execution of a flow, use the [flowOn] operator.
  */
-public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> = SafeFlow(block)
+public fun <T> flow(@BuilderInference block: suspend SafeCollector<T>.() -> Unit): Flow<T> = SafeFlow(block)
 
 // Named anonymous object
-private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : AbstractFlow<T>() {
-    override suspend fun collectSafely(collector: FlowCollector<T>) {
+private class SafeFlow<T>(private val block: suspend SafeCollector<T>.() -> Unit) : AbstractFlow<T>() {
+    override suspend fun collectSafely(collector: SafeCollector<T>) {
         collector.block()
     }
 }

@@ -207,7 +207,7 @@ public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
     @InternalCoroutinesApi
     public final override suspend fun collect(collector: FlowCollector<T>) {
-        val safeCollector = SafeCollector(collector, coroutineContext)
+        val safeCollector = SafeCollectorImpl(collector, coroutineContext)
         try {
             collectSafely(safeCollector)
         } finally {
@@ -228,5 +228,5 @@ public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
      *
      * @throws IllegalStateException if any of the invariants are violated.
      */
-    public abstract suspend fun collectSafely(collector: FlowCollector<T>)
+    public abstract suspend fun collectSafely(collector: SafeCollector<T>)
 }

@@ -8,10 +8,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 
-internal actual class SafeCollector<T> actual constructor(
+internal actual class SafeCollectorImpl<T> actual constructor(
     internal actual val collector: FlowCollector<T>,
     internal actual val collectContext: CoroutineContext
-) : FlowCollector<T> {
+) : SafeCollector<T> {
 
     // Note, it is non-capturing lambda, so no extra allocation during init of SafeCollector
     internal actual val collectContextSize = collectContext.fold(0) { count, _ -> count + 1 }
@@ -24,7 +24,17 @@ internal actual class SafeCollector<T> actual constructor(
             checkContext(currentContext)
             lastEmissionContext = currentContext
         }
+
         collector.emit(value)
+    }
+
+    override fun Throwable.isFromDownstream(): Boolean {
+        // TODO
+        return true
+    }
+
+    override fun doNotImplementMe() {
+        TODO()
     }
 
     public actual fun releaseIntercepted() {

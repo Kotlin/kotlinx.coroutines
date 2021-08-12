@@ -74,7 +74,7 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
 public fun <T> Flow<T>.onStart(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
-    val safeCollector = SafeCollector<T>(this, currentCoroutineContext())
+    val safeCollector = SafeCollectorImpl<T>(this, currentCoroutineContext())
     try {
         safeCollector.action()
     } finally {
@@ -156,7 +156,7 @@ public fun <T> Flow<T>.onCompletion(
         throw e
     }
     // Normal completion
-    val sc = SafeCollector(this, currentCoroutineContext())
+    val sc = SafeCollectorImpl(this, currentCoroutineContext())
     try {
         sc.action(null)
     } finally {
@@ -185,7 +185,7 @@ public fun <T> Flow<T>.onEmpty(
         emit(it)
     }
     if (isEmpty) {
-        val collector = SafeCollector(this, currentCoroutineContext())
+        val collector = SafeCollectorImpl(this, currentCoroutineContext())
         try {
             collector.action()
         } finally {

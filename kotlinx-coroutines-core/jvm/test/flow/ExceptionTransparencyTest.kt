@@ -74,4 +74,32 @@ class ExceptionTransparencyTest : TestBase() {
         assertTrue { e.message!!.contains("channelFlow") }
         finish(3)
     }
+
+    @Test
+    fun testExamples() = runTest {
+        try {
+            flow {
+                try {
+                    emit(42)
+                    throw TestException()
+                } catch (e: Throwable) {
+                    println("E1 " + e.isFromDownstream())
+                }
+            }.collect()
+        } catch (e: TestException) {
+            println("Caught")
+        }
+
+        try {
+            flow {
+                try {
+                    emit(42)
+                } catch (e: Throwable) {
+                    println("E2 " +  e.isFromDownstream())
+                }
+            }.onEach { throw TestException() }.collect()
+        } catch (e: TestException) {
+            println("Caught 2")
+        }
+    }
 }

@@ -18,10 +18,10 @@ private val emitFun =
  * in order to properly control 'intercepted()' lifecycle.
  */
 @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNCHECKED_CAST")
-internal actual class SafeCollector<T> actual constructor(
+internal actual class SafeCollectorImpl<T> actual constructor(
     @JvmField internal actual val collector: FlowCollector<T>,
     @JvmField internal actual val collectContext: CoroutineContext
-) : FlowCollector<T>, ContinuationImpl(NoOpContinuation, EmptyCoroutineContext), CoroutineStackFrame {
+) : SafeCollector<T>, ContinuationImpl(NoOpContinuation, EmptyCoroutineContext), CoroutineStackFrame {
 
     override val callerFrame: CoroutineStackFrame? get() = completion as? CoroutineStackFrame
 
@@ -123,12 +123,14 @@ internal actual class SafeCollector<T> actual constructor(
             """.trimIndent())
     }
 
-}
+    override fun Throwable.isFromDownstream(): Boolean {
+        val ctx = lastEmissionContext
+        return ctx is DownstreamExceptionElement && ctx.e == this // TODO also check stracktrace recovery
+    }
 
-internal class DownstreamExceptionElement(@JvmField val e: Throwable) : CoroutineContext.Element {
-    companion object Key : CoroutineContext.Key<DownstreamExceptionElement>
-
-    override val key: CoroutineContext.Key<*> = Key
+    override fun doNotImplementMe() {
+        TODO()
+    }
 }
 
 private object NoOpContinuation : Continuation<Any?> {
