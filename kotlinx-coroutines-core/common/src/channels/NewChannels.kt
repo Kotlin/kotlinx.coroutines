@@ -328,6 +328,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 state === INTERRUPTED_PROCESSED -> return FAILED_RESULT
                 state === OFFER -> if (segm.casState(i, state, INTERRUPTED_PROCESSED)) return FAILED_RESULT
                 state === RESUMING_SENDER -> continue
+                state === INTERRUPTED -> if (segm.casState(i, state, INTERRUPTED_PROCESSED)) return FAILED_RESULT
                 else -> {
                     if (segm.casState(i, state, RESUMING_SENDER)) {
                         val helpExpandBuffer = state is ExpandBufferDesc
@@ -412,9 +413,9 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     state === INTERRUPTED_PROCESSED -> continue@try_again
                     state === BROKEN || state === OFFER || state === BUFFERED || state === DONE -> return
                     receivers.value > b -> if (segm.casState(i, state, ExpandBufferDesc(state))) return
+                    state === INTERRUPTED -> continue@try_again
                     segm.casState(i, state, RESUMING_SENDER) -> {
                         val success = when {
-                            state === INTERRUPTED -> false
                             state is CancellableContinuation<*> -> state.tryResumeSend()
                             state is NewSelectInstance<*> -> state.trySelect(this@BufferedChannel, Unit)
                             else -> error("Unexpected waiter: $state")
@@ -796,12 +797,11 @@ private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmen
 private val BUFFERING = Symbol("BUFFERING")
 private val BUFFERED = Symbol("BUFFERED")
 private val RESUMING_SENDER = Symbol("RESUMING_SENDER")
-private val INTERRUPTED_PROCESSED = Symbol("INTERRUPTED_PROCESSED")
 private val BROKEN = Symbol("BROKEN")
 private val DONE = Symbol("DONE")
 private val OFFER = Symbol("OFFER")
 private val INTERRUPTED = Symbol("INTERRUPTED")
-
+private val INTERRUPTED_PROCESSED = Symbol("INTERRUPTED_PROCESSED")
 
 // Special values for `CLOSE_HANDLER`
 private val CLOSE_HANDLER_CLOSED = Symbol("CLOSE_HANDLER_CLOSED")
