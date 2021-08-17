@@ -91,6 +91,10 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     ) {
         var segm = startSegment
         while (true) {
+            if (closed.value) {
+                onClosed(sendException)
+                return
+            }
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
@@ -174,7 +178,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 state === BUFFERING -> {
                     if (segm.casState(i, state, BUFFERED)) return RENDEZVOUS
                 }
-                state === BROKEN || state === INTERRUPTED || state === INTERRUPTED_EB -> {
+                state === BROKEN || state === INTERRUPTED || state === INTERRUPTED_EB || state === CLOSED -> {
                     segm.setElementLazy(i, null)
                     return FAILED
                 }
@@ -240,7 +244,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 segm = findSegmentReceive(id, segm).let {
                     if (it.isClosed) {
                         onClosed(this.receiveException)
-                        error("unexpected")
+                        return CLOSED
                     } else it.segment
                 }
             }
@@ -327,6 +331,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     expandBuffer()
                     return FAILED
                 }
+                state === CLOSED -> return FAILED
                 state === RESUMING_EB -> continue // spin-wait
                 else -> {
                     if (segm.casState(i, state, RESUMING_R)) {
@@ -400,7 +405,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 state === null -> {
                     if (segm.casState(i, segm, BUFFERING)) return true
                 }
-                state === BUFFERED || state === BROKEN || state === DONE -> return true
+                state === BUFFERED || state === BROKEN || state === DONE || state == CLOSED -> return true
                 state === RESUMING_R -> if (segm.casState(i, state, RESUMING_R_EB)) return true
                 state === INTERRUPTED -> {
                     if (b >= receivers.value) return false
@@ -510,7 +515,8 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     public override fun close(cause: Throwable?): Boolean {
         val closedByThisOperation = closeCause.compareAndSet(NO_CLOSE_CAUSE, cause)
         closed.value = true
-        removeWaitingRequests()
+        val segm = closeQueue()
+        removeWaitingRequests(segm)
         return if (closedByThisOperation) {
             // onClosed() TODO
             invokeCloseHandler()
@@ -521,8 +527,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     private fun closeQueue(): ChannelSegment<E> {
         var segm = bufferEndSegment.value
         sendSegment.value.let { if (it.id > segm.id) segm = it }
-        segm.close()
-        return segm
+        return segm.close()
     }
 
     private fun invokeCloseHandler() {
@@ -584,28 +589,48 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
 //        }
 //    }
 
-    private fun removeWaitingRequests() {
-//        closeQueue()
-//        var cur: ChannelSegment? = tail
-//        while (cur != null) {
-//            for (i in SEGMENT_SIZE - 1 downTo 0) {
-//                val w = cur.getAndSetWaiterConditionally(i, BROKEN) { it !== BUFFERED_OR_DONE && it !== BROKEN }
-//                if (w === FAILED_RESULT || w === null) continue
-//                when (w) {
-//                    is CancellableContinuation<*> -> {
-//                        w as CancellableContinuation<Boolean>
-//                        cur.setElementLazy(i, CLOSED_RESULT)
-//                        w.resume(true)
-//                    }
-//                    is SelectInstance<*> -> {
-//                        w.trySelect(this, CLOSED_RESULT)
-//                    }
-//                    else -> error("Unknown waiter type: $w")
-//                }
-//            }
-//            cur = cur.prev.value
-//        }
+    private fun removeWaitingRequests(lastSegment: ChannelSegment<E>) {
+        var segm: ChannelSegment<E>? = lastSegment
+        var c = (lastSegment.id + 1) * SEGMENT_SIZE - 1
+        while (segm != null) {
+            for (i in SEGMENT_SIZE - 1 downTo 0) {
+                while (true) {
+                    val state = segm.getState(i)
+                    if (c < senders.value) break
+                    when {
+                        state === null || state === BUFFERING -> {
+                            if (segm.casState(i, state, CLOSED)) break
+                        }
+                        state is WaiterEB -> {
+                            if (segm.casState(i, state, CLOSED)) {
+                                if (state.waiter.closeReceiver()) expandBuffer()
+                                break
+                            }
+                        }
+                        state is CancellableContinuation<*> || state is NewSelectInstance<*> -> {
+                            if (segm.casState(i, state, CLOSED)) {
+                                if (state.closeReceiver()) expandBuffer()
+                                break
+                            }
+                        }
+                        else -> break
+                    }
+                }
+                c--
+            }
+            segm = segm.prev
+        }
     }
+
+    private fun Any.closeReceiver(): Boolean =
+        when {
+            this is CancellableContinuation<*> -> {
+                this.tryResumeWithException(receiveException)?.also { this.completeResume(it) }.let { it !== null }
+            }
+            this is NewSelectInstance<*> -> this.trySelect(this@BufferedChannel, CLOSED)
+            else -> error("Unexpected waiter: $this")
+        }
+
 
     // ######################
     // ## Iterator Support ##
@@ -787,7 +812,7 @@ private class WaiterEB(@JvmField val waiter: Any) {
 }
 
 // Number of cells in each segment
-private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)
+private val SEGMENT_SIZE = 2 // systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)
 
 // Cell states
 private val BUFFERING = Symbol("BUFFERING")
