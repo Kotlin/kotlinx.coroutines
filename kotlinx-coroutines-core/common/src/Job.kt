@@ -168,7 +168,7 @@ public interface Job : CoroutineContext.Element {
 
     /**
      * Starts coroutine related to this job (if any) if it was not started yet.
-     * The result `true` if this invocation actually started coroutine or `false`
+     * The result is `true` if this invocation actually started coroutine or `false`
      * if it was already started or completed.
      */
     public fun start(): Boolean
