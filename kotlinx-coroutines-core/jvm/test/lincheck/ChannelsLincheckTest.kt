@@ -200,7 +200,7 @@ abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierSta
     }
 
     fun cancel(token: Int) {
-        if (!close(token)) return
+        close(token)
         for ((s, _) in senders) s.resume(closedMessage!!)
         senders.clear()
         buffer.clear()

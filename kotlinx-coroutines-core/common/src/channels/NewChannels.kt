@@ -28,7 +28,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     private val receiveSegment: AtomicRef<ChannelSegment<E>>
     private val bufferEndSegment: AtomicRef<ChannelSegment<E>>
 
-    private val closed = atomic(false)
+    private val closeStatus = atomic(0) // 1 -- CLOSED, 2 -- CANCELLED
 
     init {
         val s = ChannelSegment<E>(0, null, 3)
@@ -91,7 +91,8 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     ) {
         var segm = startSegment
         while (true) {
-            if (closed.value) {
+            if (closeStatus.value > 0) {
+                if (closeStatus.value == 1) completeClose() else completeCancel()
                 onClosed(sendException)
                 return
             }
@@ -101,6 +102,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             if (segm.id != id) {
                 segm = findSegmentSend(id, segm).let {
                     if (it.isClosed) {
+                        if (closeStatus.value == 1) completeClose() else completeCancel()
                         onClosed(sendException)
                         return
                     } else it.segment
@@ -237,12 +239,18 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     ): Any? {
         var segm = startSegment
         while (true) {
+            if (closeStatus.value == 2) {
+                completeCancel()
+                onClosed(this.receiveException)
+                return CLOSED
+            }
             val r = this.receivers.getAndIncrement()
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
             if (segm.id != id) {
                 segm = findSegmentReceive(id, segm).let {
                     if (it.isClosed) {
+                        if (closeStatus.value == 1) completeClose() else completeCancel()
                         onClosed(this.receiveException)
                         return CLOSED
                     } else it.segment
@@ -321,8 +329,11 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     }
                 }
                 state === BUFFERED -> {
-                    expandBuffer()
-                    return segm.retrieveElement(i)
+                    val element = segm.retrieveElement(i)
+                    if (segm.getState(i) === BUFFERED) {
+                        expandBuffer()
+                        return element
+                    }
                 }
                 state === INTERRUPTED -> {
                     if (segm.casState(i, state, INTERRUPTED_R)) return FAILED
@@ -512,16 +523,44 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     // Stores the close handler.
     private val closeHandler = atomic<Any?>(null)
 
-    public override fun close(cause: Throwable?): Boolean {
+    private fun markClosed() {
+        closeStatus.update {
+            when (it) {
+                -1 -> 2
+                0 -> 1
+                else -> it
+            }
+        }
+    }
+
+    private fun markCancelled() {
+        closeStatus.value = 2
+    }
+
+    public override fun close(cause: Throwable?): Boolean = closeImpl(cause, false)
+
+    private fun closeImpl(cause: Throwable?, cancel: Boolean): Boolean {
+        if (cancel) {
+            closeStatus.compareAndSet(0, -1)
+        }
         val closedByThisOperation = closeCause.compareAndSet(NO_CLOSE_CAUSE, cause)
-        closed.value = true
-        val segm = closeQueue()
-        removeWaitingRequests(segm)
+        if (cancel) markCancelled() else markClosed()
+        completeClose()
         return if (closedByThisOperation) {
             // onClosed() TODO
             invokeCloseHandler()
             true
         } else false
+    }
+
+    private fun completeClose() {
+        val segm = closeQueue()
+        removeWaitingRequests(segm)
+    }
+
+    private fun completeCancel() {
+        completeClose()
+        removeRemainingBufferedElements()
     }
 
     private fun closeQueue(): ChannelSegment<E> {
@@ -568,26 +607,52 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
     }
 
-//    final override fun cancel(cause: Throwable?): Boolean = cancelImpl(cause)
-//    final override fun cancel() { cancelImpl(null) }
-//    final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
+    final override fun cancel(cause: Throwable?): Boolean = cancelImpl(cause)
+    final override fun cancel() { cancelImpl(null) }
+    final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
 
-//    public fun cancelImpl(cause: Throwable?): Boolean {
-//        val closedByThisOperation = close(cause)
-//        removeRemainingBufferedElements()
-//        return closedByThisOperation
-//    }
+    private fun cancelImpl(cause: Throwable?): Boolean {
+        val closedByThisOperation = closeImpl(cause, true)
+        removeRemainingBufferedElements()
+        return closedByThisOperation
+    }
 
-//    private fun removeRemainingBufferedElements() {
-//        var cur: ChannelSegment? = tail
-//        while (cur !== null) {
-//            for (i in SEGMENT_SIZE - 1 downTo 0) {
-//                cur.setWaiterConditionally(i, BROKEN) { it !== BROKEN }
-//                cur.onSlotCleaned()
-//            }
-//            cur = cur.prev.value
-//        }
-//    }
+    private fun removeRemainingBufferedElements() {
+        var segm: ChannelSegment<E> = sendSegment.value
+        while (true) {
+            segm = segm.next ?: break
+        }
+        var c = (segm.id + 1) * SEGMENT_SIZE - 1
+        while (true) {
+            for (i in SEGMENT_SIZE - 1 downTo 0) {
+                while (true) {
+                    val state = segm.getState(i)
+                    if (receivers.value > c) return
+                    when {
+                        state === BUFFERED || state === BUFFERING || state === null -> if (segm.casState(i, state, CLOSED)) {
+                            segm.onCancellation(i)
+                            break
+                        }
+                        state is WaiterEB -> {
+                            if (segm.casState(i, state, CLOSED)) {
+                                state.waiter.closeReceiver()
+                                break
+                            }
+                        }
+                        state is CancellableContinuation<*> || state is NewSelectInstance<*> -> {
+                            if (segm.casState(i, state, CLOSED)) {
+                                state.closeReceiver()
+                                break
+                            }
+                        }
+                        else -> break
+                    }
+                }
+                c--
+            }
+            segm = segm.prev ?: break
+        }
+    }
 
     private fun removeWaitingRequests(lastSegment: ChannelSegment<E>) {
         var segm: ChannelSegment<E>? = lastSegment
@@ -603,13 +668,13 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                         }
                         state is WaiterEB -> {
                             if (segm.casState(i, state, CLOSED)) {
-                                if (state.waiter.closeReceiver()) expandBuffer()
+                                if (state.waiter.closeSender()) expandBuffer()
                                 break
                             }
                         }
                         state is CancellableContinuation<*> || state is NewSelectInstance<*> -> {
                             if (segm.casState(i, state, CLOSED)) {
-                                if (state.closeReceiver()) expandBuffer()
+                                if (state.closeSender()) expandBuffer()
                                 break
                             }
                         }
@@ -622,12 +687,15 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
     }
 
-    private fun Any.closeReceiver(): Boolean =
-        when {
-            this is CancellableContinuation<*> -> {
-                this.tryResumeWithException(receiveException)?.also { this.completeResume(it) }.let { it !== null }
+    private fun Any.closeReceiver() = closeWaiter(receiveException)
+    private fun Any.closeSender() = closeWaiter(sendException)
+
+    private fun Any.closeWaiter(exception: Throwable): Boolean =
+        when (this) {
+            is CancellableContinuation<*> -> {
+                this.tryResumeWithException(exception)?.also { this.completeResume(it) }.let { it !== null }
             }
-            this is NewSelectInstance<*> -> this.trySelect(this@BufferedChannel, CLOSED)
+            is NewSelectInstance<*> -> this.trySelect(this@BufferedChannel, CLOSED)
             else -> error("Unexpected waiter: $this")
         }
 
@@ -734,14 +802,6 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     override fun tryReceive(): ChannelResult<E> {
         TODO("Not yet implemented")
     }
-
-    override fun cancel(cause: CancellationException?) {
-        TODO("Not yet implemented")
-    }
-
-    override fun cancel(cause: Throwable?): Boolean {
-        TODO("Not yet implemented")
-    }
 }
 
 /**
@@ -782,7 +842,7 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
         data[i * 2 + 1].update {
             if (it === RESUMING_R || it === RESUMING_EB || it === RESUMING_R_EB ||
                 it === INTERRUPTED || it === INTERRUPTED_R || it === INTERRUPTED_EB ||
-                it is WaiterEB
+                it === CLOSED || it is WaiterEB
             ) return
             INTERRUPTED
         }
