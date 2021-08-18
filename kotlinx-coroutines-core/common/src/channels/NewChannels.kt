@@ -2,6 +2,9 @@ package kotlinx.coroutines.channels
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ChannelResult.Companion.closed
+import kotlinx.coroutines.channels.ChannelResult.Companion.failure
+import kotlinx.coroutines.channels.ChannelResult.Companion.success
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
@@ -48,21 +51,20 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
     protected open fun onReceiveEnqueued() {}
     protected open fun onReceiveDequeued() {}
 
-    public override fun offer(element: E): Boolean {
+    override fun trySend(element: E): ChannelResult<Unit> {
         val possible = unlimited || senders.value.let { it < receivers.value || !rendezvous && it < bufferEnd.value }
-        if (!possible) return false
+        if (!possible && closeStatus.value == 0) return failure()
         sendImpl(
             element = element,
             startSegment = this.sendSegment.value,
             waiter = INTERRUPTED,
-            onRendezvous = { return true },
-            onSuspend = { _, _ -> return false },
-            onClosed = { throw sendException },
+            onRendezvous = { return success(Unit) },
+            onSuspend = { _, _ -> return failure() },
+            onClosed = { exception -> return closed(exception) },
             onNoWaiter = { _, _, _, _ -> error("unexpected") }
         )
         error("unexpected")
     }
-
 
     public override suspend fun send(element: E): Unit =
         sendImpl(
@@ -216,13 +218,26 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
 
     override suspend fun receive(): E {
         return receiveImpl(
-            receiveSegment.value,
-            null,
-            { e -> return e },
-            { _, _ -> error("unexpected") },
-            { e -> throw e },
-            { segm, i, r -> receiveSuspend(segm, i, r) }
+            startSegment = receiveSegment.value,
+            waiter = null,
+            onRendezvous = { e -> return e },
+            onSuspend = { _, _ -> error("unexpected") },
+            onClosed = { e -> throw e },
+            onNoWaiter = { segm, i, r -> receiveSuspend(segm, i, r) }
         ) as E
+    }
+
+    override fun tryReceive(): ChannelResult<E> {
+        if (receivers.value >= senders.value && closeStatus.value == 0) return failure()
+        receiveImpl(
+            startSegment = receiveSegment.value,
+            waiter = INTERRUPTED,
+            onRendezvous = { element -> return success(element) },
+            onSuspend = { _, _ -> return failure() },
+            onClosed = { exception -> return closed(exception)},
+            onNoWaiter = {_, _, _ -> error("unexpected") }
+        )
+        error("unreachable")
     }
 
     private inline fun receiveImpl(
@@ -342,6 +357,8 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     expandBuffer()
                     return FAILED
                 }
+                state === INTERRUPTED_R -> return FAILED
+                state === BROKEN -> return FAILED
                 state === CLOSED -> return FAILED
                 state === RESUMING_EB -> continue // spin-wait
                 else -> {
@@ -774,34 +791,104 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
 
     @ExperimentalCoroutinesApi
     override val isClosedForSend: Boolean
-        get() = TODO("Not yet implemented")
-    override val onSend: SelectClause2<E, SendChannel<E>>
-        get() = TODO("Not yet implemented")
+        get() = closeStatus.value > 0
 
-    override fun trySend(element: E): ChannelResult<Unit> {
-        TODO("Not yet implemented")
+    @ExperimentalCoroutinesApi
+    override val isClosedForReceive: Boolean get() {
+        closeStatus.value.let {
+            if (it == 0 || it == -1) return false
+            if (it == 2) {
+                completeCancel()
+                return true
+            }
+        }
+        // The channel is closed but not cancelled.
+        // Are there elements to retrieve?
+        completeClose()
+        return !hasElements()
     }
 
     @ExperimentalCoroutinesApi
-    override val isClosedForReceive: Boolean
-        get() = TODO("Not yet implemented")
+    override val isEmpty: Boolean get() {
+        val hasElements = hasElements()
+        closeStatus.value.let {
+            if (it == 0 || it == -1) return !hasElements
+            if (it == 1) completeClose() else completeCancel()
+        }
+        return false
+    }
 
-    @ExperimentalCoroutinesApi
-    override val isEmpty: Boolean
-        get() = TODO("Not yet implemented")
-    override val onReceive: SelectClause1<E>
-        get() = TODO("Not yet implemented")
+    private fun hasElements(): Boolean {
+        var segm = receiveSegment.value
+        while (true) {
+            if (closeStatus.value == 2) {
+                completeCancel()
+                return false
+            }
+            val s = senders.value
+            val r = receivers.value
+            if (s <= r) return false
+            val id = r / SEGMENT_SIZE
+            val i = (r % SEGMENT_SIZE).toInt()
+            if (segm.id != id) {
+                segm = findSegmentReceive(id, segm).let {
+                    if (it.isClosed) {
+                        if (closeStatus.value == 1) completeClose() else completeCancel()
+                        return false
+                    } else it.segment
+                }
+            }
+            if (segm.id != id) {
+                receivers.compareAndSet(r, segm.id * SEGMENT_SIZE)
+                continue
+            }
+            if (!isCellEmpty(segm, i, r)) return true
+            receivers.compareAndSet(r, r + 1)
+        }
+    }
+
+    private fun isCellEmpty(
+        segm: ChannelSegment<E>,
+        i: Int,
+        r: Long
+    ): Boolean {
+        while (true) {
+            val state = segm.getState(i)
+            when {
+                state === null || state === BUFFERING -> {
+                    if (segm.casState(i, state, BROKEN)) {
+                        expandBuffer()
+                        return true
+                    }
+                }
+                state === BUFFERED -> {
+                    return false
+                }
+                state === INTERRUPTED -> {
+                    if (segm.casState(i, state, INTERRUPTED_R)) return true
+                }
+                state === INTERRUPTED_EB -> return true
+                state === INTERRUPTED_R -> return true
+                state === CLOSED -> return true
+                state === DONE -> return true
+                state === BROKEN -> return true
+                state === RESUMING_EB -> continue // spin-wait
+                else -> return receivers.value != r
+            }
+        }
+    }
+
 
     override suspend fun receiveCatching(): ChannelResult<E> {
         TODO("Not yet implemented")
     }
 
+    override val onSend: SelectClause2<E, SendChannel<E>>
+        get() = TODO("Not yet implemented")
+    override val onReceive: SelectClause1<E>
+        get() = TODO("Not yet implemented")
     override val onReceiveCatching: SelectClause1<ChannelResult<E>>
         get() = TODO("Not yet implemented")
-
-    override fun tryReceive(): ChannelResult<E> {
-        TODO("Not yet implemented")
-    }
 }
 
 /**
@@ -870,6 +957,8 @@ private fun CancellableContinuation<*>.tryResumeSend(): Boolean {
 private class WaiterEB(@JvmField val waiter: Any) {
     override fun toString() = "ExpandBufferDesc($waiter)"
 }
+
+private class ReceiveOrCatching(@JvmField val receiver: Any)
 
 // Number of cells in each segment
 private val SEGMENT_SIZE = 2 // systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)
