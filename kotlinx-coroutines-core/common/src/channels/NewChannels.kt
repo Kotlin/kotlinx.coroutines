@@ -196,12 +196,21 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
     }
 
-    private fun Any.tryResumeReceiver(element: E): Boolean = when {
-        this is NewSelectInstance<*> -> {
+    private fun Any.tryResumeReceiver(element: E): Boolean = when(this) {
+        is NewSelectInstance<*> -> {
             this.trySelect(this@BufferedChannel, element)
         }
-        this is CancellableContinuation<*> -> {
-            this as CancellableContinuation<Any?>
+        is ReceiveCatching<*> -> {
+            this as ReceiveCatching<E>
+            this.receiver.tryResume(success(element)).let {
+                if (it !== null) {
+                    this.receiver.completeResume(it)
+                    true
+                } else false
+            }
+        }
+        is CancellableContinuation<*> -> {
+            this as CancellableContinuation<E>
             tryResume(element).let {
                 if (it !== null) {
                     completeResume(it)
@@ -216,16 +225,25 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         sendSegment.findSegmentAndMoveForward(id, start, ::createSegment)
 
 
-    override suspend fun receive(): E {
-        return receiveImpl(
+    override suspend fun receive(): E =
+        receiveImpl(
             startSegment = receiveSegment.value,
             waiter = null,
             onRendezvous = { e -> return e },
             onSuspend = { _, _ -> error("unexpected") },
             onClosed = { e -> throw e },
             onNoWaiter = { segm, i, r -> receiveSuspend(segm, i, r) }
-        ) as E
-    }
+        )
+
+    override suspend fun receiveCatching(): ChannelResult<E> =
+        receiveImpl(
+            startSegment = receiveSegment.value,
+            waiter = null,
+            onRendezvous = { element -> return success(element) },
+            onSuspend = { _, _ -> error("unexpected") },
+            onClosed = { exception -> return closed(exception) },
+            onNoWaiter = { segm, i, r -> receiveCatchingSuspend(segm, i, r) }
+        )
 
     override fun tryReceive(): ChannelResult<E> {
         if (receivers.value >= senders.value && closeStatus.value == 0) return failure()
@@ -237,10 +255,9 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             onClosed = { exception -> return closed(exception)},
             onNoWaiter = {_, _, _ -> error("unexpected") }
         )
-        error("unreachable")
     }
 
-    private inline fun receiveImpl(
+    private inline fun <R> receiveImpl(
         startSegment: ChannelSegment<E>,
         waiter: Any?,
         onRendezvous: (element: E) -> Unit,
@@ -250,14 +267,14 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             segm: ChannelSegment<E>,
             i: Int,
             r: Long
-        ) -> E
-    ): Any? {
+        ) -> R
+    ): R {
         var segm = startSegment
         while (true) {
             if (closeStatus.value == 2) {
                 completeCancel()
                 onClosed(this.receiveException)
-                return CLOSED
+                return CLOSED as R
             }
             val r = this.receivers.getAndIncrement()
             val id = r / SEGMENT_SIZE
@@ -267,7 +284,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                     if (it.isClosed) {
                         if (closeStatus.value == 1) completeClose() else completeCancel()
                         onClosed(this.receiveException)
-                        return CLOSED
+                        return CLOSED as R
                     } else it.segment
                 }
             }
@@ -279,13 +296,12 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             when {
                 result === SUSPEND -> {
                     onSuspend(segm, i)
-                    return SUSPEND
+                    return SUSPEND as R
                 }
                 result === FAILED -> continue
                 result !== NO_WAITER -> { // element
-                    result as E
-                    onRendezvous(result)
-                    return result
+                    onRendezvous(result as E)
+                    return result as R
                 }
                 result === NO_WAITER -> {
                     return onNoWaiter(segm, i, r)
@@ -305,7 +321,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                 cont.invokeOnCancellation { segm.onCancellation(i) }
             }
             result === FAILED -> {
-                receiveImpl(
+                receiveImpl<Any?>(
                     startSegment = receiveSegment.value,
                     waiter = cont,
                     onRendezvous = { element -> cont.resume(element) },
@@ -316,6 +332,33 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
             }
             else -> {
                 cont.resume(result as E)
+            }
+        }
+    }
+
+    private suspend fun receiveCatchingSuspend(
+        segm: ChannelSegment<E>,
+        i: Int,
+        r: Long
+    ) = suspendCancellableCoroutineReusable<ChannelResult<E>> { cont ->
+        val waiter = ReceiveCatching(cont)
+        val result = updateCellReceive(segm, i, r, waiter)
+        when {
+            result === SUSPEND -> {
+                cont.invokeOnCancellation { segm.onCancellation(i) }
+            }
+            result === FAILED -> {
+                receiveImpl<Any?>(
+                    startSegment = receiveSegment.value,
+                    waiter = waiter,
+                    onRendezvous = { element -> cont.resume(success(element)) },
+                    onSuspend = { segm, i -> cont.invokeOnCancellation { segm.onCancellation(i) } },
+                    onClosed = { e -> cont.resume(closed(receiveException)) },
+                    onNoWaiter = { _, _, _ -> error("unexpected") }
+                )
+            }
+            else -> {
+                cont.resume(success(result as E))
             }
         }
     }
@@ -493,7 +536,7 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         )
 
     private fun registerSelectForReceive(select: NewSelectInstance<*>, ignoredParam: Any?): Unit {
-        receiveImpl(
+        receiveImpl<Any?>(
             startSegment = receiveSegment.value,
             waiter = select,
             onRendezvous = { elem -> select.selectInRegPhase(elem) },
@@ -652,13 +695,13 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                         }
                         state is WaiterEB -> {
                             if (segm.casState(i, state, CLOSED)) {
-                                state.waiter.closeReceiver()
+                                state.waiter.closeSender()
                                 break
                             }
                         }
-                        state is CancellableContinuation<*> || state is NewSelectInstance<*> -> {
+                        state is CancellableContinuation<*> || state is NewSelectInstance<*>  -> {
                             if (segm.casState(i, state, CLOSED)) {
-                                state.closeReceiver()
+                                state.closeSender()
                                 break
                             }
                         }
@@ -685,13 +728,13 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
                         }
                         state is WaiterEB -> {
                             if (segm.casState(i, state, CLOSED)) {
-                                if (state.waiter.closeSender()) expandBuffer()
+                                if (state.waiter.closeReceiver()) expandBuffer()
                                 break
                             }
                         }
-                        state is CancellableContinuation<*> || state is NewSelectInstance<*> -> {
+                        state is CancellableContinuation<*> || state is ReceiveCatching<*> || state is NewSelectInstance<*> -> {
                             if (segm.casState(i, state, CLOSED)) {
-                                if (state.closeSender()) expandBuffer()
+                                if (state.closeReceiver()) expandBuffer()
                                 break
                             }
                         }
@@ -711,6 +754,9 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         when (this) {
             is CancellableContinuation<*> -> {
                 this.tryResumeWithException(exception)?.also { this.completeResume(it) }.let { it !== null }
+            }
+            is ReceiveCatching<*> -> {
+                this.receiver.tryResume(closed(exception))?.also { this.receiver.completeResume(it) }.let { it !== null }
             }
             is NewSelectInstance<*> -> this.trySelect(this@BufferedChannel, CLOSED)
             else -> error("Unexpected waiter: $this")
@@ -878,11 +924,6 @@ public open class BufferedChannel<E>(capacity: Int) : Channel<E> {
         }
     }
 
-
-    override suspend fun receiveCatching(): ChannelResult<E> {
-        TODO("Not yet implemented")
-    }
-
     override val onSend: SelectClause2<E, SendChannel<E>>
         get() = TODO("Not yet implemented")
     override val onReceive: SelectClause1<E>
@@ -940,28 +981,14 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
 
 private fun <E> createSegment(id: Long, prev: ChannelSegment<E>?) = ChannelSegment(id, prev, 0)
 
-private fun CancellableContinuation<*>.tryResumeReceive(element: Any?): Boolean {
-    this as CancellableContinuation<Any?>
-    val token = tryResume(element) ?: return false
-    completeResume(token)
-    return true
-}
-
-private fun CancellableContinuation<*>.tryResumeSend(): Boolean {
-    this as CancellableContinuation<Unit>
-    val token = tryResume(Unit) ?: return false
-    completeResume(token)
-    return true
-}
-
 private class WaiterEB(@JvmField val waiter: Any) {
     override fun toString() = "ExpandBufferDesc($waiter)"
 }
 
-private class ReceiveOrCatching(@JvmField val receiver: Any)
+private class ReceiveCatching<E>(@JvmField val receiver: CancellableContinuation<ChannelResult<E>>)
 
 // Number of cells in each segment
-private val SEGMENT_SIZE = 2 // systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)
+private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)
 
 // Cell states
 private val BUFFERING = Symbol("BUFFERING")

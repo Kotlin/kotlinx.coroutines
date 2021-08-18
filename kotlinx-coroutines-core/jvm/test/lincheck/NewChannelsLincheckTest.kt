@@ -9,14 +9,13 @@ import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
-import org.jetbrains.kotlinx.lincheck.verifier.*
+import org.jetbrains.kotlinx.lincheck.strategy.stress.*
 import org.junit.*
-import kotlin.random.*
 import kotlin.test.*
 import kotlin.test.Test
 
 abstract class BufferedChannelLincheckTestBase(
-    private val c: Channel<Int?>,
+    protected val c: Channel<Int?>,
     private val sequentialSpecification: Class<*>
 ) : AbstractLincheckTest() {
 
@@ -27,19 +26,25 @@ abstract class BufferedChannelLincheckTestBase(
         e.msg
     }
 
-//    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
+    // @Operation TODO: `trySend()` is not linearizable as it can fail due to postponed buffer expansion
+    //            TODO: or make a rendezvous with `tryReceive`, such an elimination is disallowed
+    fun trySend(value: Int): Any = c.trySend(value)
+        .onSuccess { return true }
+        .onFailure {
+            return if (it is NumberedCloseException) it.msg
+            else false
+        }
+
+    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
     suspend fun sendViaSelect(value: Int): Any = try {
         when (c) {
-            is BufferedChannel<Int?> -> newSelect<Unit> { c.onSendNew(value) {} }
-            is RendezvousChannelEuropar<Int?> -> selectEuropar<Unit> { c.onSendEuropar(value) {}  }
+            is BufferedChannel<Int?> -> newSelect { c.onSendNew(value) {} }
+            is RendezvousChannelEuropar<Int?> -> selectEuropar { c.onSendEuropar(value) {} }
             else -> c.send(value)
         }
     } catch (e: NumberedCloseException) {
         e.msg
     }
-
-//    @Operation
-    fun trySend(value: Int) = c.offer(value)
 
     @Operation(cancellableOnSuspension = true, blocking = true)
     suspend fun receive(): Any? = try {
@@ -48,33 +53,50 @@ abstract class BufferedChannelLincheckTestBase(
         e.msg
     }
 
-//    @Operation(cancellableOnSuspension = true, blocking = true)
+    //    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true, blocking = true)
+    suspend fun receiveCatching(): Any? = c.receiveCatching()
+        .onSuccess { return it }
+        .onClosed { e -> return (e as NumberedCloseException).msg }
+
+    @Operation(blocking = true)
+    fun tryReceive(): Any? = c.tryReceive()
+        .onSuccess { return it }
+        .onFailure { return if (it is NumberedCloseException) it.msg else null }
+
+    @Operation(cancellableOnSuspension = true, blocking = true)
     suspend fun receiveViaSelect(): Any? = try {
         when (c) {
-            is BufferedChannel<Int?> -> newSelect<Int?> { c.onReceiveNew { it } }
-            is RendezvousChannelEuropar<Int?> -> selectEuropar<Int?> { c.onReceiveEuropar { it }  }
+            is BufferedChannel<Int?> -> newSelect { c.onReceiveNew { it } }
+            is RendezvousChannelEuropar<Int?> -> selectEuropar { c.onReceiveEuropar { it } }
             else -> c.receive()
         }
     } catch (e: NumberedCloseException) {
         e.msg
     }
 
-//    @Operation
-    fun tryReceive() = c.poll()
-
-//    @Operation
+    @Operation
     fun close(token: Int) = c.close(NumberedCloseException(token))
+
+    @Operation
+    fun cancel(token: Int) = c.cancel(NumberedCloseException(token))
+
+    @Operation
+    fun isClosedForSend() = c.isClosedForSend
+
+    @Operation
+    fun isClosedForReceive() = c.isClosedForReceive
+
+    @Operation
+    fun isEmpty() = c.isEmpty
 
     @StateRepresentation
     fun stateRepresentation() = c.toString()
 
-    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
-        actorsBefore(0).actorsAfter(0).sequentialSpecification(sequentialSpecification) //.actorsPerThread(3).actorsAfter(0)
-
-    override fun ModelCheckingOptions.customize(isStressTest: Boolean) = this.invocationsPerIteration(50_000).verboseTrace()
+    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O = threads(2).actorsBefore(0).actorsAfter(0)
+        .sequentialSpecification(sequentialSpecification) //.actorsPerThread(3).actorsAfter(0)
 }
 
-private class NumberedCloseException(number: Int): Throwable() {
+private class NumberedCloseException(number: Int) : CancellationException() {
     val msg = "Closed($number)"
 }
 
@@ -228,7 +250,7 @@ class NewSelectUntilLicnheckTest : AbstractLincheckTest() {
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean) =
         actorsBefore(0).actorsAfter(0)
-       .threads(2).actorsPerThread(1)
+            .threads(2).actorsPerThread(1)
 
     override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
         checkObstructionFreedom()
@@ -239,53 +261,57 @@ class ChannelStressTest : TestBase() {
     private val nSeconds = 2//3 * stressTestMultiplier
 
     @org.junit.Test
-    fun testStress() = repeat(5) { runTest {
-        val c = BufferedChannel<Int>(16)
-        var sends = 0
-        repeat(THREADS / 2) {
-            launch(pool) {
-                repeat(Int.MAX_VALUE) {
+    fun testStress() = repeat(5) {
+        runTest {
+            val c = BufferedChannel<Int>(16)
+            var sends = 0
+            repeat(THREADS / 2) {
+                launch(pool) {
+                    repeat(Int.MAX_VALUE) {
 //                    if (Random.nextInt(1001) == 0) yield()
-                    c.send(it)
-                    sends++
+                        c.send(it)
+                        sends++
+                    }
+                }
+                launch(pool) {
+                    repeat(Int.MAX_VALUE) {
+//                    if (Random.nextInt(1001) == 0) yield()
+                        c.receive()
+                    }
                 }
             }
-            launch(pool) {
-                repeat(Int.MAX_VALUE) {
-//                    if (Random.nextInt(1001) == 0) yield()
-                    c.receive()
-                }
-            }
+            delay(1000L * nSeconds)
+            coroutineContext.cancelChildren()
+            println("TRANSFERS: $sends")
         }
-        delay(1000L * nSeconds)
-        coroutineContext.cancelChildren()
-        println("TRANSFERS: $sends")
-    } }
+    }
 
     @org.junit.Test
-    fun testStressKotlin() = repeat(4) { runTest {
-        val c2 = Channel<Int>(16)
+    fun testStressKotlin() = repeat(4) {
+        runTest {
+            val c2 = Channel<Int>(16)
 
-        var sends = 0
-        repeat(THREADS / 2) {
-            launch(pool) {
-                repeat(Int.MAX_VALUE) {
+            var sends = 0
+            repeat(THREADS / 2) {
+                launch(pool) {
+                    repeat(Int.MAX_VALUE) {
 //                    if (Random.nextInt(1001) == 0) yield()
-                    c2.send(it)
-                    sends++
+                        c2.send(it)
+                        sends++
+                    }
+                }
+                launch(pool) {
+                    repeat(Int.MAX_VALUE) {
+//                    if (Random.nextInt(1001) == 0) yield()
+                        c2.receive()
+                    }
                 }
             }
-            launch(pool) {
-                repeat(Int.MAX_VALUE) {
-//                    if (Random.nextInt(1001) == 0) yield()
-                    c2.receive()
-                }
-            }
+            delay(1000L * nSeconds)
+            coroutineContext.cancelChildren()
+            println("TRANSFERS: $sends")
         }
-        delay(1000L * nSeconds)
-        coroutineContext.cancelChildren()
-        println("TRANSFERS: $sends")
-    } }
+    }
 
     @After
     fun tearDown() {
@@ -375,28 +401,33 @@ class NewSelectStressTest : TestBase() {
         override fun toString(): String = "send=$sendIndex, received=$receiveIndex"
     }
 
-    private fun CoroutineScope.launchSendReceive(c1: BufferedChannel<Long>, c2: BufferedChannel<Long>, s: Stats) = launch(pool) {
-        while (true) {
-            if (s.sendIndex % 1000 == 0L) yield()
-            newSelect<Unit> {
-                c1.onSendNew(s.sendIndex) {
-                    s.sendIndex++
-                    doGeomDistWork()
-                }
-                c2.onReceiveNew { i ->
-                    assertEquals(s.receiveIndex, i)
-                    s.receiveIndex++
-                    doGeomDistWork()
+    private fun CoroutineScope.launchSendReceive(c1: BufferedChannel<Long>, c2: BufferedChannel<Long>, s: Stats) =
+        launch(pool) {
+            while (true) {
+                if (s.sendIndex % 1000 == 0L) yield()
+                newSelect<Unit> {
+                    c1.onSendNew(s.sendIndex) {
+                        s.sendIndex++
+                        doGeomDistWork()
+                    }
+                    c2.onReceiveNew { i ->
+                        assertEquals(s.receiveIndex, i)
+                        s.receiveIndex++
+                        doGeomDistWork()
+                    }
                 }
             }
         }
-    }
 
     private fun doGeomDistWork() {
 //        while (Random.nextInt(10) != 0) {}
     }
 
-    private fun CoroutineScope.launchSendReceiveSelectLoop(c1: BufferedChannel<Long>, c2: BufferedChannel<Long>, s: Stats) = launch(pool) {
+    private fun CoroutineScope.launchSendReceiveSelectLoop(
+        c1: BufferedChannel<Long>,
+        c2: BufferedChannel<Long>,
+        s: Stats
+    ) = launch(pool) {
         newSelectUntil({ true }) {
             c1.onSendNew(s.sendIndex) {
                 s.sendIndex++

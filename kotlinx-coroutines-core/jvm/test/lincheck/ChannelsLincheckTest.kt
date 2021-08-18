@@ -167,6 +167,8 @@ abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierSta
         receivers.add(cont)
     }
 
+    suspend fun receiveCatching() = receive()
+
     fun tryReceive(): Any? {
         if (buffer.isNotEmpty()) {
             val el = buffer.removeAt(0)
