@@ -81,7 +81,7 @@ private class SubscriptionChannel<T> :
     private val _subscription = atomic<Disposable?>(null)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
+    override fun onClosedIdempotent() {
         _subscription.getAndSet(null)?.dispose() // dispose exactly once
     }
 

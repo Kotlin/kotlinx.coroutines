@@ -13,11 +13,7 @@ import kotlinx.coroutines.internal.*
  *
  * Use `Channel()` factory function to conveniently create an instance of rendezvous channel.
  *
- * This implementation is fully lock-free.
+ * This implementation is non-blocking.
  **/
-internal open class RendezvousChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
-    protected final override val isBufferAlwaysEmpty: Boolean get() = true
-    protected final override val isBufferEmpty: Boolean get() = true
-    protected final override val isBufferAlwaysFull: Boolean get() = true
-    protected final override val isBufferFull: Boolean get() = true
-}
+internal open class RendezvousChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) :
+    BufferedChannel<E>(capacity = 0, onUndeliveredElement = onUndeliveredElement)

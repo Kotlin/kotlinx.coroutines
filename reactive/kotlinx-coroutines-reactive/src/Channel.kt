@@ -87,7 +87,7 @@ private class SubscriptionChannel<T>(
     }
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
+    override fun onClosedIdempotent() {
         _subscription.getAndSet(null)?.cancel() // cancel exactly once
     }
 
