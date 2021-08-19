@@ -65,7 +65,7 @@ context of the main `runBlocking` coroutine which runs in the `main` thread.
 [Dispatchers.Unconfined] is a special dispatcher that also appears to run in the `main` thread, but it is,
 in fact, a different mechanism that is explained later.
 
-The default dispatcher that is used when no other dispatcher is explicitly specified in the scope.
+The default dispatcher is used when no other dispatcher is explicitly specified in the scope.
 It is represented by [Dispatchers.Default] and uses a shared background pool of threads.
   
 [newSingleThreadContext] creates a thread for the coroutine to run. 
