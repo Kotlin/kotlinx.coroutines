@@ -77,9 +77,6 @@ private val ALGORITHMS = mapOf<String, (parallelism: Int) -> Channel<Node?>> (
  * The benchmark creates or downloads graphs, then executes parallel BFS using channel as a queue, executes sequential BFS,
  * compares the results and computes execution times.
  * We use graph caching service to avoid parsing the text files and creating graph objects from scratch in each benchmark.
- *
- * TODO: this benchmark can be painfully slow without synchronization on methods
- * [kotlinx.coroutines.internal.LockFreeLinkedListNode.remove] (or other channels fixes).
  */
 public fun main() {
     // Create a new output CSV file and write the header
@@ -245,7 +242,9 @@ private inline fun AtomicInt.updateIfLower(distance: Int): Boolean = loop { cur 
  * This channel implementation does not suspend on sends and closes itself if the number of waiting receivers exceeds [maxWaitingReceivers].
  */
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
-private class TaskChannelKotlin<E>(private val maxWaitingReceivers: Int) : LinkedListChannel<E?>({}) {
+private class TaskChannelKotlin<E>(private val maxWaitingReceivers: Int)
+    : BufferedChannel<E?>(capacity = Channel.UNLIMITED, onUndeliveredElement = null)
+{
     private val waitingReceivers = atomic(0)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")

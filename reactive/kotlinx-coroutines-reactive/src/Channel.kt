@@ -52,7 +52,7 @@ internal fun <T> Publisher<T>.toChannel(request: Int = 1): ReceiveChannel<T> {
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(null), Subscriber<T> {
+) : BufferedChannel<T>(capacity = Channel.UNLIMITED, onUndeliveredElement = null), Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }

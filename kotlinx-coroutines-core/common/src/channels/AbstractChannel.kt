@@ -341,14 +341,7 @@ internal abstract class AbstractSendChannel<E>(
          */
         closedList.forEachReversed { it.resumeReceiveClosed(closed) }
         // and do other post-processing
-        onClosedIdempotent(closed)
     }
-
-    /**
-     * Invoked when channel is closed as the last action of [close] invocation.
-     * This method should be idempotent and can be called multiple times.
-     */
-    protected open fun onClosedIdempotent(closed: LockFreeLinkedListNode) {}
 
     /**
      * Retrieves first receiving waiter from the queue or returns closed token.
@@ -686,14 +679,6 @@ internal abstract class AbstractChannel<E>(
             // Add to the list only **after** successful removal
             list += previous as Send
         }
-        onCancelIdempotentList(list, closed)
-    }
-
-    /**
-     * This method is overridden by [LinkedListChannel] to handle cancellation of [SendBuffered] elements from the list.
-     */
-    protected open fun onCancelIdempotentList(list: InlineList<Send>, closed: Closed<*>) {
-        list.forEachReversed { it.resumeSendClosed(closed) }
     }
 
     public final override fun iterator(): ChannelIterator<E> = Itr(this)

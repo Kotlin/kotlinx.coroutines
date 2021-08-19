@@ -10,7 +10,7 @@ import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-public open class BufferedChannel<E>(
+internal open class BufferedChannel<E>(
     capacity: Int,
     private val onUndeliveredElement: OnUndeliveredElement<E>? = null
 ) : Channel<E> {
@@ -682,15 +682,18 @@ public open class BufferedChannel<E>(
      */
     protected open fun onClosedIdempotent() {}
 
+    protected open fun onCancel(wasClosed: Boolean) {}
+
     final override fun cancel(cause: Throwable?): Boolean = cancelImpl(cause)
     final override fun cancel() { cancelImpl(null) }
     final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
 
     private fun cancelImpl(cause: Throwable?): Boolean {
         val cause = cause ?: CancellationException("$classSimpleName was cancelled")
-        val closedByThisOperation = closeImpl(cause, true)
+        val wasClosed = closeImpl(cause, true)
         removeRemainingBufferedElements()
-        return closedByThisOperation
+        onCancel(wasClosed)
+        return wasClosed
     }
 
     private fun removeRemainingBufferedElements() {

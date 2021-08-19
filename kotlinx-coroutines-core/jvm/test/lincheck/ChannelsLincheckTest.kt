@@ -23,13 +23,13 @@ class RendezvousChannelLincheckTest : ChannelLincheckTestBase(
 )
 class SequentialRendezvousChannel : SequentialIntChannelBase(RENDEZVOUS)
 
-class Array1ChannelLincheckTest : ChannelLincheckTestBase(
+class Buffered1ChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(1),
     sequentialSpecification = SequentialArray1RendezvousChannel::class.java
 )
 class SequentialArray1RendezvousChannel : SequentialIntChannelBase(1)
 
-class Array2ChannelLincheckTest : ChannelLincheckTestBase(
+class Buffered2ChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(2),
     sequentialSpecification = SequentialArray2RendezvousChannel::class.java
 )
@@ -48,21 +48,23 @@ class ConflatedChannelLincheckTest : ChannelLincheckTestBase(
 class SequentialConflatedChannel : SequentialIntChannelBase(CONFLATED)
 
 @Param.Params(
-    Param(name = "value", gen = IntGen::class, conf = "1:5"),
-    Param(name = "closeToken", gen = IntGen::class, conf = "1:3")
+    Param(name = "value", gen = IntGen::class, conf = "1:9"),
+    Param(name = "closeToken", gen = IntGen::class, conf = "1:9")
 )
 abstract class ChannelLincheckTestBase(
     private val c: Channel<Int>,
     private val sequentialSpecification: Class<*>
 ) : AbstractLincheckTest() {
-    @Operation(promptCancellation = true)
+
+    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
     suspend fun send(@Param(name = "value") value: Int): Any = try {
         c.send(value)
     } catch (e: NumberedCancellationException) {
         e.testResult
     }
 
-    @Operation
+    // @Operation TODO: `trySend()` is not linearizable as it can fail due to postponed buffer expansion
+    //            TODO: or make a rendezvous with `tryReceive`, such an elimination is disallowed
     fun trySend(@Param(name = "value") value: Int): Any = c.trySend(value)
             .onSuccess { return true }
             .onFailure {
@@ -70,28 +72,33 @@ abstract class ChannelLincheckTestBase(
                 else false
             }
 
-    // TODO: this operation should be (and can be!) linearizable, but is not
-    // @Operation
+    // TODO: select is not implemented yet
+    // @Operation(cancellableOnSuspension = true, allowExtraSuspension = true)
     suspend fun sendViaSelect(@Param(name = "value") value: Int): Any = try {
         select<Unit> { c.onSend(value) {} }
     } catch (e: NumberedCancellationException) {
         e.testResult
     }
 
-    @Operation(promptCancellation = true)
+    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true, blocking = true)
     suspend fun receive(): Any = try {
         c.receive()
     } catch (e: NumberedCancellationException) {
         e.testResult
     }
 
-    @Operation
+    @Operation(cancellableOnSuspension = true, allowExtraSuspension = true, blocking = true)
+    suspend fun receiveCatching(): Any = c.receiveCatching()
+        .onSuccess { return it }
+        .onClosed { e -> return (e as NumberedCancellationException).testResult }
+
+    @Operation(blocking = true)
     fun tryReceive(): Any? =
         c.tryReceive()
             .onSuccess { return it }
             .onFailure { return if (it is NumberedCancellationException) it.testResult else null }
 
-    // TODO: this operation should be (and can be!) linearizable, but is not
+    // TODO: select is not implemented yet
     // @Operation
     suspend fun receiveViaSelect(): Any = try {
         select<Int> { c.onReceive { it } }
@@ -102,18 +109,16 @@ abstract class ChannelLincheckTestBase(
     @Operation(causesBlocking = true)
     fun close(@Param(name = "closeToken") token: Int): Boolean = c.close(NumberedCancellationException(token))
 
-    // TODO: this operation should be (and can be!) linearizable, but is not
-    // @Operation
+    @Operation
     fun cancel(@Param(name = "closeToken") token: Int) = c.cancel(NumberedCancellationException(token))
 
-    // @Operation
-    fun isClosedForReceive() = c.isClosedForReceive
-
-    // @Operation
+    @Operation
     fun isClosedForSend() = c.isClosedForSend
 
-    // TODO: this operation should be (and can be!) linearizable, but is not
-    // @Operation
+    @Operation
+    fun isClosedForReceive() = c.isClosedForReceive
+
+    @Operation
     fun isEmpty() = c.isEmpty
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =

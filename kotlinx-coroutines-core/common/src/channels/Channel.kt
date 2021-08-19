@@ -774,7 +774,7 @@ public fun <E> Channel(
     when (capacity) {
         RENDEZVOUS -> {
             if (onBufferOverflow == BufferOverflow.SUSPEND)
-                RendezvousChannel(onUndeliveredElement) // an efficient implementation of rendezvous channel
+                BufferedChannel(RENDEZVOUS, onUndeliveredElement) // an efficient implementation of rendezvous channel
             else
                 ArrayChannel(1, onBufferOverflow, onUndeliveredElement) // support buffer overflow with buffered channel
         }
@@ -784,7 +784,7 @@ public fun <E> Channel(
             }
             ConflatedChannel(onUndeliveredElement)
         }
-        UNLIMITED -> LinkedListChannel(onUndeliveredElement) // ignores onBufferOverflow: it has buffer, but it never overflows
+        UNLIMITED -> BufferedChannel(UNLIMITED, onUndeliveredElement) // ignores onBufferOverflow: it has buffer, but it never overflows
         BUFFERED -> ArrayChannel( // uses default capacity with SUSPEND
             if (onBufferOverflow == BufferOverflow.SUSPEND) CHANNEL_DEFAULT_CAPACITY else 1,
             onBufferOverflow, onUndeliveredElement
