@@ -184,7 +184,7 @@ internal open class BufferedChannel<E>(
                 state === BUFFERING -> {
                     if (segm.casState(i, state, BUFFERED)) return RENDEZVOUS
                 }
-                state === BROKEN || state === INTERRUPTED || state === INTERRUPTED_EB || state === CLOSED -> {
+                state === BROKEN || state === INTERRUPTED || state === INTERRUPTED_EB || state === INTERRUPTED_R || state === CLOSED -> {
                     segm.setElementLazy(i, null)
                     return FAILED
                 }
@@ -853,7 +853,9 @@ internal open class BufferedChannel<E>(
 
     @ExperimentalCoroutinesApi
     override val isClosedForSend: Boolean
-        get() = closeStatus.value > 0
+        get() = (closeStatus.value > 0).also {
+            if (it) completeClose()
+        }
 
     @ExperimentalCoroutinesApi
     override val isClosedForReceive: Boolean get() {
@@ -887,8 +889,8 @@ internal open class BufferedChannel<E>(
                 completeCancel()
                 return false
             }
-            val s = senders.value
             val r = receivers.value
+            val s = senders.value
             if (s <= r) return false
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()

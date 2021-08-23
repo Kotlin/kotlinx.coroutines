@@ -25,15 +25,15 @@ class SequentialRendezvousChannel : SequentialIntChannelBase(RENDEZVOUS)
 
 class Buffered1ChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(1),
-    sequentialSpecification = SequentialArray1RendezvousChannel::class.java
+    sequentialSpecification = SequentialBuffered1Channel::class.java
 )
-class SequentialArray1RendezvousChannel : SequentialIntChannelBase(1)
+class SequentialBuffered1Channel : SequentialIntChannelBase(1)
 
 class Buffered2ChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(2),
-    sequentialSpecification = SequentialArray2RendezvousChannel::class.java
+    sequentialSpecification = SequentialBuffered2Channel::class.java
 )
-class SequentialArray2RendezvousChannel : SequentialIntChannelBase(2)
+class SequentialBuffered2Channel : SequentialIntChannelBase(2)
 
 class UnlimitedChannelLincheckTest : ChannelLincheckTestBase(
     c = Channel(UNLIMITED),
@@ -99,7 +99,7 @@ abstract class ChannelLincheckTestBase(
             .onFailure { return if (it is NumberedCancellationException) it.testResult else null }
 
     // TODO: select is not implemented yet
-    // @Operation
+//    @Operation
     suspend fun receiveViaSelect(): Any = try {
         select<Int> { c.onReceive { it } }
     } catch (e: NumberedCancellationException) {
@@ -115,10 +115,10 @@ abstract class ChannelLincheckTestBase(
     @Operation
     fun isClosedForSend() = c.isClosedForSend
 
-    @Operation
+    // @Operation TODO
     fun isClosedForReceive() = c.isClosedForReceive
 
-    @Operation
+    // @Operation TODO
     fun isEmpty() = c.isEmpty
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
