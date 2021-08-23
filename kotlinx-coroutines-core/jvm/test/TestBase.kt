@@ -51,7 +51,10 @@ public actual typealias TestResult = Unit
  * }
  * ```
  */
-public actual open class TestBase actual constructor() {
+public actual open class TestBase(private var disableOutCheck: Boolean)  {
+
+    actual constructor(): this(false)
+
     public actual val isBoundByJsTestTimeout = false
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
@@ -162,8 +165,10 @@ public actual open class TestBase actual constructor() {
             e.printStackTrace()
             uncaughtExceptions.add(e)
         }
-        previousOut = System.out
-        System.setOut(TestOutputStream)
+        if (!disableOutCheck) {
+            previousOut = System.out
+            System.setOut(TestOutputStream)
+        }
     }
 
     @After
@@ -175,7 +180,7 @@ public actual open class TestBase actual constructor() {
         }
         // Shutdown all thread pools
         shutdownPoolsAfterTest()
-        // Check that that are now leftover threads
+        // Check that are now leftover threads
         runCatching {
             checkTestThreads(threadsBefore)
         }.onFailure {
@@ -183,7 +188,9 @@ public actual open class TestBase actual constructor() {
         }
         // Restore original uncaught exception handler
         Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler)
-        System.setOut(previousOut)
+        if (!disableOutCheck) {
+            System.setOut(previousOut)
+        }
         if (uncaughtExceptions.isNotEmpty()) {
             makeError("Expected no uncaught exceptions, but got $uncaughtExceptions")
         }
