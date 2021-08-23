@@ -120,23 +120,15 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
  *
  * To avoid that (especially in a more complex scenarios), we do not conflate subscription updates.
  */
-private class SubscriptionCountStateFlow(initialValue: Int) : StateFlow<Int> {
-    private val sharedFlow = SharedFlowImpl<Int>(1, Int.MAX_VALUE, BufferOverflow.DROP_OLDEST)
-        .also { it.tryEmit(initialValue) }
-
-    override val replayCache: List<Int>
-        get() = sharedFlow.replayCache
+private class SubscriptionCountStateFlow(initialValue: Int) : StateFlow<Int>,
+    SharedFlowImpl<Int>(1, Int.MAX_VALUE, BufferOverflow.DROP_OLDEST)
+{
+    init { tryEmit(initialValue) }
 
     override val value: Int
-        get() = synchronized(sharedFlow) {
-            sharedFlow.lastReplayedLocked
-        }
+        get() = synchronized(this) { lastReplayedLocked }
 
-    fun increment(delta: Int) = synchronized(sharedFlow) {
-        sharedFlow.tryEmit(sharedFlow.lastReplayedLocked + delta)
-    }
-
-    override suspend fun collect(collector: FlowCollector<Int>) {
-        sharedFlow.collect(collector)
+    fun increment(delta: Int) = synchronized(this) {
+        tryEmit(lastReplayedLocked + delta)
     }
 }

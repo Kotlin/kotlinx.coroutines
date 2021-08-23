@@ -277,7 +277,7 @@ internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     }
 }
 
-internal class SharedFlowImpl<T>(
+internal open class SharedFlowImpl<T>(
     private val replay: Int,
     private val bufferCapacity: Int,
     private val onBufferOverflow: BufferOverflow
@@ -340,7 +340,7 @@ internal class SharedFlowImpl<T>(
      * A tweak for SubscriptionCountStateFlow to get the latest value.
      */
     @Suppress("UNCHECKED_CAST")
-    val lastReplayedLocked: T
+    protected val lastReplayedLocked: T
         get() = buffer!!.getBufferAt(replayIndex + replaySize - 1) as T
 
     @Suppress("UNCHECKED_CAST")
