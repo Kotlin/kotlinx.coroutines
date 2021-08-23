@@ -167,7 +167,7 @@ normally and is only used by the debugger. To exclude it at no loss of functiona
 `android` block in your Gradle file for the application subproject:
 ```groovy
 packagingOptions {
-  exclude "DebugProbesKt.bin"
+    resources.excludes += "DebugProbesKt.bin"
 }
 ```
 
