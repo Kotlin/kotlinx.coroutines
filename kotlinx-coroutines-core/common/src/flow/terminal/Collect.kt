@@ -44,7 +44,7 @@ public suspend fun Flow<*>.collect(): Unit = collect(NopCollector)
  *     .launchIn(uiScope)
  * ```
  *
- * Note that resulting value of [launchIn] is not used the provided scope takes care of cancellation.
+ * Note that the resulting value of [launchIn] is not used and the provided scope takes care of cancellation.
  */
 public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
     collect() // tail-call
