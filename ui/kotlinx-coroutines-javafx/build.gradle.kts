@@ -52,6 +52,12 @@ val jdk8Test by tasks.registering(Test::class) {
     dependsOn(checkJdk8)
 }
 
+tasks.jar {
+    manifest {
+        attributes["Automatic-Module-Name"] = "kotlinx.coroutines.javafx"
+    }
+}
+
 tasks.build {
     dependsOn(jdk8Test)
 }
