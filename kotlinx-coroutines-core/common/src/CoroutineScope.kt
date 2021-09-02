@@ -12,7 +12,7 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
 /**
- * Defines a scope for new coroutines. Every **coroutine builder** (like [launch], [async], etc)
+ * Defines a scope for new coroutines. Every **coroutine builder** (like [launch], [async], etc.)
  * is an extension on [CoroutineScope] and inherits its [coroutineContext][CoroutineScope.coroutineContext]
  * to automatically propagate all its elements and cancellation.
  *
@@ -28,8 +28,8 @@ import kotlin.coroutines.intrinsics.*
  * By convention, the [context of a scope][CoroutineScope.coroutineContext] should contain an instance of a
  * [job][Job] to enforce the discipline of **structured concurrency** with propagation of cancellation.
  *
- * Every coroutine builder (like [launch], [async], etc)
- * and every scoping function (like [coroutineScope], [withContext], etc) provides _its own_ scope
+ * Every coroutine builder (like [launch], [async], and others)
+ * and every scoping function (like [coroutineScope] and [withContext]) provides _its own_ scope
  * with its own [Job] instance into the inner block of code it runs.
  * By convention, they all wait for all the coroutines inside their block to complete before completing themselves,
  * thus enforcing the structured concurrency. See [Job] documentation for more details.
