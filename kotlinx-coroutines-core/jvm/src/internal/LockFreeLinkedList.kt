@@ -259,7 +259,7 @@ public actual open class LockFreeLinkedListNode {
     // Helps with removal of this node
     public actual fun helpRemove() {
         // Note: this node must be already removed
-        (next as Removed).ref.correctPrev(null)
+        (next as Removed).ref.helpRemovePrev()
     }
 
     // Helps with removal of nodes that are previous to this

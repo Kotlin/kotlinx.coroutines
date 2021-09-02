@@ -7,11 +7,10 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
 import org.junit.*
-import java.lang.Math.*
+import java.io.*
 import java.util.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
-import kotlin.math.*
 import kotlin.test.*
 
 private val VERBOSE = systemProp("test.verbose", false)
@@ -23,12 +22,15 @@ public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?
 
 public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
 
+private const val SHUTDOWN_TIMEOUT = 1_000L // 1s at most to wait per thread
+
 /**
  * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
  */
 public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
 
-public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roundToInt()
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+public actual typealias TestResult = Unit
 
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
@@ -49,7 +51,11 @@ public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roun
  * }
  * ```
  */
-public actual open class TestBase actual constructor() {
+public actual open class TestBase(private var disableOutCheck: Boolean)  {
+
+    actual constructor(): this(false)
+
+    public actual val isBoundByJsTestTimeout = false
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
     private var error = AtomicReference<Throwable>()
@@ -58,9 +64,15 @@ public actual open class TestBase actual constructor() {
     private lateinit var threadsBefore: Set<Thread>
     private val uncaughtExceptions = Collections.synchronizedList(ArrayList<Throwable>())
     private var originalUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
-    private val SHUTDOWN_TIMEOUT = 1_000L // 1s at most to wait per thread
+    /*
+     * System.out that we redefine in order to catch any debugging/diagnostics
+     * 'println' from main source set.
+     * NB: We do rely on the name 'previousOut' in the FieldWalker in order to skip its
+     * processing
+     */
+    private lateinit var previousOut: PrintStream
 
-    /**
+        /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
      * complete successfully even if this exception is consumed somewhere in the test.
      */
@@ -113,7 +125,7 @@ public actual open class TestBase actual constructor() {
     }
 
     /**
-     * Asserts that this it the last action in the test. It must be invoked by any test that used [expect].
+     * Asserts that this is the last action in the test. It must be invoked by any test that used [expect].
      */
     public actual fun finish(index: Int) {
         expect(index)
@@ -133,6 +145,16 @@ public actual open class TestBase actual constructor() {
         finished.set(false)
     }
 
+    private object TestOutputStream : PrintStream(object : OutputStream() {
+        override fun write(b: Int) {
+            error("Detected unexpected call to 'println' from source code")
+        }
+    })
+
+    fun println(message: Any?) {
+        previousOut.println(message)
+    }
+
     @Before
     fun before() {
         initPoolsBeforeTest()
@@ -142,6 +164,10 @@ public actual open class TestBase actual constructor() {
             println("Exception in thread $t: $e") // The same message as in default handler
             e.printStackTrace()
             uncaughtExceptions.add(e)
+        }
+        if (!disableOutCheck) {
+            previousOut = System.out
+            System.setOut(TestOutputStream)
         }
     }
 
@@ -154,7 +180,7 @@ public actual open class TestBase actual constructor() {
         }
         // Shutdown all thread pools
         shutdownPoolsAfterTest()
-        // Check that that are now leftover threads
+        // Check that are now leftover threads
         runCatching {
             checkTestThreads(threadsBefore)
         }.onFailure {
@@ -162,6 +188,9 @@ public actual open class TestBase actual constructor() {
         }
         // Restore original uncaught exception handler
         Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler)
+        if (!disableOutCheck) {
+            System.setOut(previousOut)
+        }
         if (uncaughtExceptions.isNotEmpty()) {
             makeError("Expected no uncaught exceptions, but got $uncaughtExceptions")
         }
@@ -187,7 +216,7 @@ public actual open class TestBase actual constructor() {
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    ) {
+    ): TestResult {
         var exCount = 0
         var ex: Throwable? = null
         try {

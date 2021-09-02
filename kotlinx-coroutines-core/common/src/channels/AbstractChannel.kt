@@ -136,6 +136,7 @@ internal abstract class AbstractSendChannel<E>(
         return sendSuspend(element)
     }
 
+    @Suppress("DEPRECATION")
     override fun offer(element: E): Boolean {
         // Temporary migration for offer users who rely on onUndeliveredElement
         try {

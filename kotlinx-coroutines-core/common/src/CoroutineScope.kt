@@ -49,7 +49,7 @@ import kotlin.coroutines.intrinsics.*
  * * `CoroutineScope()` uses [Dispatchers.Default] for its coroutines.
  * * `MainScope()` uses [Dispatchers.Main] for its coroutines.
  *
- * **The key part of custom usage of `CustomScope` is cancelling it and the end of the lifecycle.**
+ * **The key part of custom usage of `CustomScope` is cancelling it at the end of the lifecycle.**
  * The [CoroutineScope.cancel] extension function shall be used when the entity that was launching coroutines
  * is no longer needed. It cancels all the coroutines that might still be running on behalf of it.
  *
@@ -185,7 +185,7 @@ public val CoroutineScope.isActive: Boolean
  * }
  * ```
  *
- * In top-level code, when launching a concurrent operation operation from a non-suspending context, an appropriately
+ * In top-level code, when launching a concurrent operation from a non-suspending context, an appropriately
  * confined instance of [CoroutineScope] shall be used instead of a `GlobalScope`. See docs on [CoroutineScope] for
  * details.
  *

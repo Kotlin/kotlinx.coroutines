@@ -364,6 +364,7 @@ only downwards. This can easily be demonstrated using the following example:
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
+//sampleStart
     val supervisor = SupervisorJob()
     with(CoroutineScope(coroutineContext + supervisor)) {
         // launch the first child -- its exception is ignored for this example (don't do this in practice!)
@@ -389,8 +390,10 @@ fun main() = runBlocking {
         supervisor.cancel()
         secondChild.join()
     }
+//sampleEnd
 }
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-supervision-01.kt).
 >
@@ -418,6 +421,7 @@ import kotlin.coroutines.*
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
+//sampleStart
     try {
         supervisorScope {
             val child = launch {
@@ -436,8 +440,10 @@ fun main() = runBlocking {
     } catch(e: AssertionError) {
         println("Caught an assertion error")
     }
+//sampleEnd
 }
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-supervision-02.kt).
 >
@@ -468,6 +474,7 @@ import kotlin.coroutines.*
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("CoroutineExceptionHandler got $exception") 
     }
@@ -479,8 +486,10 @@ fun main() = runBlocking {
         println("The scope is completing")
     }
     println("The scope is completed")
+//sampleEnd
 }
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-supervision-03.kt).
 >

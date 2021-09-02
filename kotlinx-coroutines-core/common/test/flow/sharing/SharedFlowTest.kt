@@ -439,7 +439,8 @@ class SharedFlowTest : TestBase() {
     }
 
     @Test
-    fun testDifferentBufferedFlowCapacities() {
+    fun testDifferentBufferedFlowCapacities() = runTest {
+        if (isBoundByJsTestTimeout) return@runTest // Too slow for JS, bounded by 2 sec. default JS timeout
         for (replay in 0..10) {
             for (extraBufferCapacity in 0..5) {
                 if (replay == 0 && extraBufferCapacity == 0) continue // test only buffered shared flows
@@ -456,7 +457,7 @@ class SharedFlowTest : TestBase() {
         }
     }
 
-    private fun testBufferedFlow(sh: MutableSharedFlow<Int>, replay: Int) = runTest {
+    private suspend fun testBufferedFlow(sh: MutableSharedFlow<Int>, replay: Int) = withContext(Job()) {
         reset()
         expect(1)
         val n = 100 // initially emitted to fill buffer
@@ -601,6 +602,7 @@ class SharedFlowTest : TestBase() {
     }
 
     @Test
+    @Suppress("DEPRECATION") // 'catch'
     fun onSubscriptionThrows() = runTest {
         expect(1)
         val sh = MutableSharedFlow<String>(1)
@@ -678,6 +680,7 @@ class SharedFlowTest : TestBase() {
 
     @Test
     fun testStateFlowModel() = runTest {
+        if (isBoundByJsTestTimeout) return@runTest // Too slow for JS, bounded by 2 sec. default JS timeout
         val stateFlow = MutableStateFlow<Data?>(null)
         val expect = modelLog(stateFlow)
         val sharedFlow = MutableSharedFlow<Data?>(

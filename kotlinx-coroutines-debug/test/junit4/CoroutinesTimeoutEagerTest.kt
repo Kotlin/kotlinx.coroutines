@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.runners.model.*
 
-class CoroutinesTimeoutEagerTest : TestBase() {
+class CoroutinesTimeoutEagerTest : TestBase(disableOutCheck = true) {
 
     @Rule
     @JvmField
