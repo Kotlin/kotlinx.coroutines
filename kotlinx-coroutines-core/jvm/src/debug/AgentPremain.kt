@@ -4,13 +4,12 @@
 
 package kotlinx.coroutines.debug
 
-import kotlinx.coroutines.debug.internal.DebugProbesImpl
-import kotlinx.coroutines.debug.internal.AgentInstallationType
+import android.annotation.*
+import kotlinx.coroutines.debug.internal.*
 import sun.misc.*
 import java.lang.instrument.*
 import java.lang.instrument.ClassFileTransformer
 import java.security.*
-import android.annotation.*
 
 /*
  * This class is loaded if and only if kotlinx-coroutines-core was used as -javaagent argument,
@@ -25,7 +24,7 @@ internal object AgentPremain {
     }.getOrNull() ?: DebugProbesImpl.enableCreationStackTraces
 
     @JvmStatic
-    public fun premain(args: String?, instrumentation: Instrumentation) {
+    fun premain(args: String?, instrumentation: Instrumentation) {
         AgentInstallationType.isInstalledStatically = true
         instrumentation.addTransformer(DebugProbesTransformer)
         DebugProbesImpl.enableCreationStackTraces = enableCreationStackTraces
