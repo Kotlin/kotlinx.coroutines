@@ -82,7 +82,7 @@ internal object DebugProbesImpl {
     public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
         startWeakRefCleanerThread()
-        if (AgentPremain.isInstalledStatically) return
+        if (AgentInstallationType.isInstalledStatically) return
         dynamicAttach?.invoke(true) // attach
     }
 
@@ -92,7 +92,7 @@ internal object DebugProbesImpl {
         stopWeakRefCleanerThread()
         capturedCoroutinesMap.clear()
         callerInfoCache.clear()
-        if (AgentPremain.isInstalledStatically) return
+        if (AgentInstallationType.isInstalledStatically) return
         dynamicAttach?.invoke(false) // detach
     }
 
