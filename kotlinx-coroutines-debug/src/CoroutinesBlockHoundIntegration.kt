@@ -135,7 +135,7 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
      */
     private fun BlockHound.Builder.allowBlockingCallsInConflatedChannel() {
         for (method in listOf("offerInternal", "offerSelectInternal", "pollInternal", "pollSelectInternal",
-            "onCancelIdempotent"))
+            "onCancelIdempotent", "isEmpty", "enqueueReceiveInternal"))
         {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ConflatedChannel", method)
         }
