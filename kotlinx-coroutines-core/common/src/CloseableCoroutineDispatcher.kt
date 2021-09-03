@@ -21,7 +21,7 @@ public expect abstract class CloseableCoroutineDispatcher() : CoroutineDispatche
      * After the successful call to [close], no new tasks will
      * be accepted to be [dispatched][dispatch], but previously dispatched tasks will be run.
      *
-     * Invocations of `close` on already closed dispatcher have no effect.
+     * Invocations of `close` are idempotent and thread-safe.
      */
     public abstract fun close()
 }
