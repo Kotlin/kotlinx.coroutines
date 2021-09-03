@@ -5,7 +5,7 @@
 package kotlinx.coroutines
 
 /**
- * [CoroutineDispatcher] that provides method to close it,
+ * [CoroutineDispatcher] that provides a method to close it,
  * causing the rejection of any new tasks and cleanup of all underlying resources
  * associated with the current dispatcher.
  * Examples of closeable dispatchers are dispatchers backed by `java.lang.Executor` and
@@ -18,8 +18,8 @@ public expect abstract class CloseableCoroutineDispatcher() : CoroutineDispatche
 
     /**
      * Initiate the closing sequence of the coroutine dispatcher.
-     * After the successful call to [close], no new tasks will
-     * be accepted to be [dispatched][dispatch], but previously dispatched tasks will be run.
+     * After a successful call to [close], no new tasks will
+     * be accepted to be [dispatched][dispatch], but the previously dispatched tasks will be run.
      *
      * Invocations of `close` are idempotent and thread-safe.
      */
