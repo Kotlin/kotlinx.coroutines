@@ -25,7 +25,7 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
 internal fun loopWasShutDown(): Nothing = error("Cannot execute task because event loop was shut down")
 
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
+internal fun createDefaultDispatcher(): CoroutineDispatcher =
     DefaultExecutor
 
 @SharedImmutable

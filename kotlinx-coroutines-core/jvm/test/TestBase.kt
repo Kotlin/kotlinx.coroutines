@@ -199,15 +199,12 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
     }
 
     fun initPoolsBeforeTest() {
-        CommonPool.usePrivatePool()
         DefaultScheduler.usePrivateScheduler()
     }
 
     fun shutdownPoolsAfterTest() {
-        CommonPool.shutdown(SHUTDOWN_TIMEOUT)
         DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
         DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
-        CommonPool.restore()
         DefaultScheduler.restore()
     }
 

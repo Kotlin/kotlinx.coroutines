@@ -26,7 +26,6 @@ private val OUT_ENABLED = systemProp("guide.tests.sout", false)
 fun <R> test(name: String, block: () -> R): List<String> = outputException(name) {
     try {
         captureOutput(name, stdoutEnabled = OUT_ENABLED) { log ->
-            CommonPool.usePrivatePool()
             DefaultScheduler.usePrivateScheduler()
             DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
             resetCoroutineId()
@@ -39,7 +38,6 @@ fun <R> test(name: String, block: () -> R): List<String> = outputException(name)
             } finally {
                 // the shutdown
                 log.println("--- shutting down")
-                CommonPool.shutdown(SHUTDOWN_TIMEOUT)
                 DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
                 shutdownDispatcherPools(SHUTDOWN_TIMEOUT)
                 DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
@@ -47,7 +45,6 @@ fun <R> test(name: String, block: () -> R): List<String> = outputException(name)
             checkTestThreads(threadsBefore) // check thread if the main completed successfully
         }
     } finally {
-        CommonPool.restore()
         DefaultScheduler.restore()
     }
 }
