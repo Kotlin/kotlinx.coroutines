@@ -279,6 +279,7 @@ public final class kotlinx/coroutines/Dispatchers {
 	public static final fun getIO ()Lkotlinx/coroutines/CoroutineDispatcher;
 	public static final fun getMain ()Lkotlinx/coroutines/MainCoroutineDispatcher;
 	public static final fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun shutdown ()V
 }
 
 public final class kotlinx/coroutines/DispatchersKt {

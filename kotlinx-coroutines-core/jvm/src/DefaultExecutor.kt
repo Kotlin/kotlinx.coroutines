@@ -17,13 +17,13 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
         incrementUseCount() // this event loop is never completed
     }
 
-    private const val DEFAULT_KEEP_ALIVE = 1000L // in milliseconds
+    private const val DEFAULT_KEEP_ALIVE_MS = 1000L // in milliseconds
 
     private val KEEP_ALIVE_NANOS = TimeUnit.MILLISECONDS.toNanos(
         try {
-            java.lang.Long.getLong("kotlinx.coroutines.DefaultExecutor.keepAlive", DEFAULT_KEEP_ALIVE)
+            java.lang.Long.getLong("kotlinx.coroutines.DefaultExecutor.keepAlive", DEFAULT_KEEP_ALIVE_MS)
         } catch (e: SecurityException) {
-            DEFAULT_KEEP_ALIVE
+            DEFAULT_KEEP_ALIVE_MS
         })
 
     @Suppress("ObjectPropertyName")
@@ -37,13 +37,26 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     private const val ACTIVE = 1
     private const val SHUTDOWN_REQ = 2
     private const val SHUTDOWN_ACK = 3
+    private const val SHUTDOWN = 4
 
     @Volatile
     private var debugStatus: Int = FRESH
 
+    private val isShutDown: Boolean get() = debugStatus == SHUTDOWN
+
     private val isShutdownRequested: Boolean get() {
         val debugStatus = debugStatus
         return debugStatus == SHUTDOWN_REQ || debugStatus == SHUTDOWN_ACK
+    }
+
+    actual override fun enqueue(task: Runnable) {
+        if (isShutDown) throw RejectedExecutionException("DefaultExecutor was shut down")
+        super.enqueue(task)
+    }
+
+    override fun shutdown() {
+        debugStatus = SHUTDOWN
+        super.shutdown()
     }
 
     /**
@@ -118,9 +131,8 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
         return true
     }
 
-    // used for tests
-    @Synchronized
-    fun shutdown(timeout: Long) {
+    @Synchronized // used _only_ for tests
+    fun shutdownForTests(timeout: Long) {
         val deadline = System.currentTimeMillis() + timeout
         if (!isShutdownRequested) debugStatus = SHUTDOWN_REQ
         // loop while there is anything to do immediately or deadline passes

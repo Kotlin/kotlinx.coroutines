@@ -22,6 +22,12 @@ internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_N
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
     if (useCoroutinesScheduler) DefaultScheduler else CommonPool
 
+internal fun shutdownDefaultDispatchers() {
+    // Shutdown IO and, maybe, default
+    DefaultScheduler.shutdown()
+    if (!useCoroutinesScheduler) CommonPool.shutdown(0L)
+}
+
 /**
  * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
  * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on).

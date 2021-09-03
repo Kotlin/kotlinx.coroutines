@@ -115,7 +115,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         }
     }
 
-    protected open fun shutdown() {}
+    open fun shutdown() {}
 }
 
 @ThreadLocal
@@ -279,7 +279,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 
     public final override fun dispatch(context: CoroutineContext, block: Runnable) = enqueue(block)
 
-    public fun enqueue(task: Runnable) {
+    open fun enqueue(task: Runnable) {
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()

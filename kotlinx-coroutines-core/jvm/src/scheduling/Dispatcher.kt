@@ -14,6 +14,7 @@ import kotlin.coroutines.*
  * Default instance of coroutine dispatcher.
  */
 internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
+    @JvmField
     val IO: CoroutineDispatcher = LimitingDispatcher(
         this,
         systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)),
@@ -21,6 +22,12 @@ internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
         TASK_PROBABLY_BLOCKING
     )
 
+    // Shuts down the dispatcher, used only by Dispatchers.shutdown()
+    internal fun shutdown() {
+        super.close()
+    }
+
+    // Overridden in case anyone writes (Dispatchers.Default as ExecutorCoroutineDispatcher).close()
     override fun close() {
         throw UnsupportedOperationException("$DEFAULT_DISPATCHER_NAME cannot be closed")
     }
