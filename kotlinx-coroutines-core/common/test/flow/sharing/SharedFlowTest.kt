@@ -798,4 +798,24 @@ class SharedFlowTest : TestBase() {
         job.join()
         finish(5)
     }
+
+    @Test
+    fun testSubscriptionCount() = runTest {
+        val flow = MutableSharedFlow<Int>()
+        fun startSubscriber() = launch(start = CoroutineStart.UNDISPATCHED) { flow.collect() }
+
+        assertEquals(0, flow.subscriptionCount.first())
+
+        val j1 = startSubscriber()
+        assertEquals(1, flow.subscriptionCount.first())
+
+        val j2 = startSubscriber()
+        assertEquals(2, flow.subscriptionCount.first())
+
+        j1.cancelAndJoin()
+        assertEquals(1, flow.subscriptionCount.first())
+
+        j2.cancelAndJoin()
+        assertEquals(0, flow.subscriptionCount.first())
+    }
 }
