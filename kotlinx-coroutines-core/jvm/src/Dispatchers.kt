@@ -127,8 +127,10 @@ public actual object Dispatchers {
      * application-level code and its invocation is irreversible.
      * The invocation of shutdown affects most of the coroutines machinery and
      * leaves the coroutines framework in an inoperable state.
-     * An invocation of shutdown method while having pending tasks or active coroutines
-     * will leave them in a permanent dormant state, preventing them from completion or execution.
+     * The shutdown method should only be invoked when there are no pending tasks or active coroutines.
+     * Otherwise, the behavior is unspecified: the call to `shutdown` may throw an exception without completing
+     * the shutdown, or it may finish successfully, but the remaining jobs will be in a permanent dormant state,
+     * never completing nor executing.
      *
      * The main goal of the shutdown is to stop all background threads associated with the coroutines
      * framework in order to make kotlinx.coroutines classes unloadable by Java Virtual Machine.
