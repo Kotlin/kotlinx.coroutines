@@ -42,7 +42,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     @Volatile
     private var debugStatus: Int = FRESH
 
-    private val isShutDown: Boolean get() = debugStatus == SHUTDOWN
+    val isShutDown: Boolean get() = debugStatus == SHUTDOWN
 
     private val isShutdownRequested: Boolean get() {
         val debugStatus = debugStatus
@@ -50,8 +50,19 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     }
 
     actual override fun enqueue(task: Runnable) {
-        if (isShutDown) throw RejectedExecutionException("DefaultExecutor was shut down")
+        if (isShutDown) shutdownError()
         super.enqueue(task)
+    }
+
+     override fun reschedule(now: Long, delayedTask: DelayedTask) {
+         // Reschedule on default executor can only be invoked after Dispatchers.shutdown
+         shutdownError()
+    }
+
+    private fun shutdownError() {
+        throw RejectedExecutionException("DefaultExecutor was shut down. " +
+            "This error indicates that Dispatchers.shutdown() was invoked prior to completion of exiting coroutines, leaving coroutines in incomplete state. " +
+            "Please refer to Dispatchers.shutdown documentation for more details")
     }
 
     override fun shutdown() {
