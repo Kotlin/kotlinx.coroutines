@@ -4,7 +4,10 @@
 
 package kotlinx.coroutines
 
-import org.junit.*
+import org.junit.Test
+import java.util.concurrent.*
+import kotlin.coroutines.*
+import kotlin.test.*
 
 class LimitedParallelismTest : TestBase() {
 
@@ -28,6 +31,25 @@ class LimitedParallelismTest : TestBase() {
         }
         val j2 = launch(view2) { j1.cancel() }
         joinAll(j1, j2)
+        executor.close()
+    }
+
+    @Test
+    fun testUnhandledException() = runTest {
+        var caughtException: Throwable? = null
+        val executor = Executors.newFixedThreadPool(
+            1
+        ) {
+            Thread(it).also {
+                it.uncaughtExceptionHandler = Thread.UncaughtExceptionHandler { _, e -> caughtException = e }
+            }
+        }.asCoroutineDispatcher()
+        val view = executor.limitedParallelism(1)
+        view.dispatch(EmptyCoroutineContext, Runnable { throw TestException() })
+        withContext(view) {
+            // Verify it is in working state and establish happens-before
+        }
+        assertTrue { caughtException is TestException }
         executor.close()
     }
 }

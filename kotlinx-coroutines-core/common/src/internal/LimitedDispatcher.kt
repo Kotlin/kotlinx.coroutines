@@ -33,7 +33,11 @@ internal class LimitedDispatcher(
         while (true) {
             val task = queue.removeFirstOrNull()
             if (task != null) {
-                task.run()
+                try {
+                    task.run()
+                } catch (e: Throwable) {
+                    handleCoroutineException(EmptyCoroutineContext, e)
+                }
                 // 16 is our out-of-thin-air constant to emulate fairness. Used in JS dispatchers as well
                 if (++fairnessCounter >= 16 && dispatcher.isDispatchNeeded(EmptyCoroutineContext)) {
                     // Do "yield" to let other views to execute their runnable as well
@@ -62,8 +66,7 @@ internal class LimitedDispatcher(
         }
 
         /*
-         * Protect against race when the worker is finished
-         * right after our check
+         * Protect against race when the worker is finished right after our check.
          */
         @Suppress("CAST_NEVER_SUCCEEDS")
         synchronized(this as SynchronizedObject) {
