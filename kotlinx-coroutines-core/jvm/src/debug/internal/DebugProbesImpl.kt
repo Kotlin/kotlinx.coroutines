@@ -164,6 +164,50 @@ internal object DebugProbesImpl {
         }
 
     /*
+     * This method optimises the number of packages sent by the IDEA debugger
+     * to a client VM to speed up fetching of coroutine information.
+     * The return value is an array of objects, which consists of four elements:
+     * 1) A string in a JSON format that stores information that is needed to display
+     *    every coroutine in the coroutine panel in the IDEA debugger.
+     * 2) An array of last observed threads.
+     * 3) An array of last observed frames.
+     * 4) An array of DebugCoroutineInfo.
+     */
+    @OptIn(ExperimentalStdlibApi::class)
+    public fun dumpCoroutinesInfoAsJSONAndReferences(): Array<Any> {
+        fun String.surroundWithQuotes() =
+            "\"$this\""
+
+        val lastObservedThreadRefs = mutableListOf<Thread?>()
+        val lastObservedFrameRefs = mutableListOf<CoroutineStackFrame?>()
+        val coroutinesInfoAsJson = mutableListOf<String>()
+        val coroutinesInfo = dumpCoroutinesInfo()
+        for (info in coroutinesInfo) {
+            val context = info.context
+            coroutinesInfoAsJson.add(
+                """
+                {
+                   name: ${context[CoroutineName.Key]?.name?.surroundWithQuotes()},
+                   id: ${context[CoroutineId.Key]?.id},
+                   dispatcher: ${context[CoroutineDispatcher.Key].toString().surroundWithQuotes()},
+                   sequenceNumber: ${info.sequenceNumber},
+                   state: ${info.state.surroundWithQuotes()}
+                } 
+                """.trimIndent()
+            )
+            lastObservedFrameRefs.add(info.lastObservedFrame)
+            lastObservedThreadRefs.add(info.lastObservedThread)
+        }
+
+        return arrayOf(
+            "[${coroutinesInfoAsJson.joinToString()}]",
+            lastObservedThreadRefs.toTypedArray(),
+            lastObservedFrameRefs.toTypedArray(),
+            coroutinesInfo.toTypedArray()
+        )
+    }
+
+    /*
      * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
      */
     public fun dumpCoroutinesInfo(): List<DebugCoroutineInfo> =
