@@ -213,7 +213,7 @@ Channel 'a' is closed
 
 <!--- TEST -->
 
-There are couple of observations to make out of it. 
+There are a couple of observations to make out of it. 
 
 First of all, `select` is _biased_ to the first clause. When several clauses are selectable at the same time, 
 the first one among them gets selected. Here, both channels are constantly producing strings, so `a` channel,
@@ -228,7 +228,7 @@ channel is already closed.
 Select expression has [onSend][SendChannel.onSend] clause that can be used for a great good in combination 
 with a biased nature of selection.
 
-Let us write an example of producer of integers that sends its values to a `side` channel when 
+Let us write an example of a producer of integers that sends its values to a `side` channel when 
 the consumers on its primary channel cannot keep up with it:
 
 ```kotlin
