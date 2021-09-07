@@ -6,7 +6,6 @@ package kotlinx.coroutines.debug.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
@@ -173,38 +172,40 @@ internal object DebugProbesImpl {
      * 3) An array of last observed frames.
      * 4) An array of DebugCoroutineInfo.
      *
-     * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC. 
+     * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
      */
-    @OptIn(ExperimentalStdlibApi::class)
+    @ExperimentalStdlibApi
     public fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> {
-        fun String.surroundWithQuotes() =
-            "\"$this\""
+        fun Any.toStringWithQuotes() = "\"$this\""
 
-        val lastObservedThreadRefs = mutableListOf<Thread?>()
-        val lastObservedFrameRefs = mutableListOf<CoroutineStackFrame?>()
-        val coroutinesInfoAsJson = mutableListOf<String>()
         val coroutinesInfo = dumpCoroutinesInfo()
+        val size = coroutinesInfo.size
+        val lastObservedThreads = ArrayList<Thread?>(size)
+        val lastObservedFrames = ArrayList<CoroutineStackFrame?>(size)
+        val coroutinesInfoAsJson = ArrayList<String>(size)
         for (info in coroutinesInfo) {
             val context = info.context
+            val name = context[CoroutineName.Key]?.name?.toStringWithQuotes()
+            val dispatcher = context[CoroutineDispatcher.Key]?.toStringWithQuotes()
             coroutinesInfoAsJson.add(
                 """
                 {
-                   name: ${context[CoroutineName.Key]?.name?.surroundWithQuotes()},
-                   id: ${context[CoroutineId.Key]?.id},
-                   dispatcher: ${context[CoroutineDispatcher.Key].toString().surroundWithQuotes()},
-                   sequenceNumber: ${info.sequenceNumber},
-                   state: ${info.state.surroundWithQuotes()}
+                   "name": $name,
+                   "id": ${context[CoroutineId.Key]?.id},
+                   "dispatcher": $dispatcher,
+                   "sequenceNumber": ${info.sequenceNumber},
+                   "state": "${info.state}"
                 } 
                 """.trimIndent()
             )
-            lastObservedFrameRefs.add(info.lastObservedFrame)
-            lastObservedThreadRefs.add(info.lastObservedThread)
+            lastObservedFrames.add(info.lastObservedFrame)
+            lastObservedThreads.add(info.lastObservedThread)
         }
 
         return arrayOf(
             "[${coroutinesInfoAsJson.joinToString()}]",
-            lastObservedThreadRefs.toTypedArray(),
-            lastObservedFrameRefs.toTypedArray(),
+            lastObservedThreads.toTypedArray(),
+            lastObservedFrames.toTypedArray(),
             coroutinesInfo.toTypedArray()
         )
     }
