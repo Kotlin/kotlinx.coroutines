@@ -172,9 +172,11 @@ internal object DebugProbesImpl {
      * 2) An array of last observed threads.
      * 3) An array of last observed frames.
      * 4) An array of DebugCoroutineInfo.
+     *
+     * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC. 
      */
     @OptIn(ExperimentalStdlibApi::class)
-    public fun dumpCoroutinesInfoAsJSONAndReferences(): Array<Any> {
+    public fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> {
         fun String.surroundWithQuotes() =
             "\"$this\""
 
