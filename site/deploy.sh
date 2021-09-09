@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+#
+
 # Abort on first error
 set -e
 
 # Directories
 SITE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="$SITE_DIR/.."
-BUILD_DIR="$SITE_DIR/build"
-DIST_DIR="$BUILD_DIR/dist"
+BUILD_DIR="$ROOT_DIR/build"
+DIST_DIR="$BUILD_DIR/dokka/htmlMultiModule"
 PAGES_DIR="$BUILD_DIR/pages"
 
 # Init options
@@ -24,7 +28,7 @@ else
 fi
 
 # Makes sure that site is built
-"$ROOT_DIR/gradlew" $GRADLE_OPT site
+"$ROOT_DIR/gradlew" $GRADLE_OPT dokkaHtmlMultiModule
 
 # Cleanup dist directory (and ignore errors)
 rm -rf "$PAGES_DIR" || true
@@ -42,27 +46,8 @@ cd "$PAGES_DIR"
 # Remove non-.html files
 git rm `find . -type f -not -name '*.html' -not -name '.git'` > /dev/null
 
-# Replace "experimental" .html files with links to the corresponding non-experimental version
-# or remove them if there is no corresponding non-experimental file
-echo "Redirecting experimental pages"
-git_add=()
-git_rm=()
-for file in `find . -type f -name '*.html'` ; do
-    match=nothing_is_found
-    if [[ $file =~ \.experimental ]] ; then
-        match="${file//\.experimental/}"
-    fi
-    if [[ -f "$DIST_DIR/$match" ]] ; then
-        # redirect to non-experimental version
-        echo "<html><script>window.onload = function() { window.location.href = \"/kotlinx.coroutines${match#.}\" }</script></html>" > "$file"
-        git_add+=("$file")
-    else
-        # redirect not found -- remove the file
-        git_rm+=("$file")
-    fi
-done
-git add "${git_add[@]}"
-git rm "${git_rm[@]}" > /dev/null
+# Remove all the old documentation
+git rm -r * > /dev/null
 
 # Copy new documentation from dist
 cp -r "$DIST_DIR"/* "$PAGES_DIR"

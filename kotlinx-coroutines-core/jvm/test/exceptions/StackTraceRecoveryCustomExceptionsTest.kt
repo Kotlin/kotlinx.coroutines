@@ -5,6 +5,7 @@
 package kotlinx.coroutines.exceptions
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.junit.Test
 import kotlin.test.*
 
@@ -70,5 +71,57 @@ class StackTraceRecoveryCustomExceptionsTest : TestBase() {
             assertTrue(cause is WithDefault)
             assertEquals("custom", cause.message)
         }
+    }
+
+    class WrongMessageException(token: String) : RuntimeException("Token $token")
+
+    @Test
+    fun testWrongMessageException() = runTest {
+        val result = runCatching {
+            coroutineScope<Unit> {
+                throw WrongMessageException("OK")
+            }
+        }
+        val ex = result.exceptionOrNull() ?: error("Expected to fail")
+        assertTrue(ex is WrongMessageException)
+        assertEquals("Token OK", ex.message)
+    }
+
+    @Test
+    fun testWrongMessageExceptionInChannel() = runTest {
+        val result = produce<Unit>(SupervisorJob() + Dispatchers.Unconfined) {
+            throw WrongMessageException("OK")
+        }
+        val ex = runCatching {
+            @Suppress("ControlFlowWithEmptyBody")
+            for (unit in result) {
+                // Iterator has a special code path
+            }
+        }.exceptionOrNull() ?: error("Expected to fail")
+        assertTrue(ex is WrongMessageException)
+        assertEquals("Token OK", ex.message)
+    }
+
+    class CopyableWithCustomMessage(
+        message: String?,
+        cause: Throwable? = null
+    ) : RuntimeException(message, cause),
+        CopyableThrowable<CopyableWithCustomMessage> {
+
+        override fun createCopy(): CopyableWithCustomMessage {
+            return CopyableWithCustomMessage("Recovered: [$message]", cause)
+        }
+    }
+
+    @Test
+    fun testCustomCopyableMessage() = runTest {
+        val result = runCatching {
+            coroutineScope<Unit> {
+                throw CopyableWithCustomMessage("OK")
+            }
+        }
+        val ex = result.exceptionOrNull() ?: error("Expected to fail")
+        assertTrue(ex is CopyableWithCustomMessage)
+        assertEquals("Recovered: [OK]", ex.message)
     }
 }

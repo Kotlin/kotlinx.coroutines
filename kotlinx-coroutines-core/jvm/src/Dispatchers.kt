@@ -21,7 +21,7 @@ public const val IO_PARALLELISM_PROPERTY_NAME: String = "kotlinx.coroutines.io.p
 public actual object Dispatchers {
     /**
      * The default [CoroutineDispatcher] that is used by all standard builders like
-     * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
+     * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc.
      * if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
      *
      * It is backed by a shared pool of threads on JVM. By default, the maximal level of parallelism used
@@ -29,7 +29,7 @@ public actual object Dispatchers {
      * Level of parallelism X guarantees that no more than X tasks can be executed in this dispatcher in parallel.
      */
     @JvmStatic
-    public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
+    public actual val Default: CoroutineDispatcher = DefaultScheduler
 
     /**
      * A coroutine dispatcher that is confined to the Main thread operating with UI objects.
@@ -107,12 +107,40 @@ public actual object Dispatchers {
      *
      * ### Implementation note
      *
-     * This dispatcher shares threads with a [Default][Dispatchers.Default] dispatcher, so using
-     * `withContext(Dispatchers.IO) { ... }` does not lead to an actual switching to another thread &mdash;
-     * typically execution continues in the same thread.
+     * This dispatcher shares threads with the [Default][Dispatchers.Default] dispatcher, so using
+     * `withContext(Dispatchers.IO) { ... }` when already running on the [Default][Dispatchers.Default]
+     * dispatcher does not lead to an actual switching to another thread &mdash; typically execution
+     * continues in the same thread.
      * As a result of thread sharing, more than 64 (default parallelism) threads can be created (but not used)
      * during operations over IO dispatcher.
      */
     @JvmStatic
     public val IO: CoroutineDispatcher = DefaultScheduler.IO
+
+    /**
+     * Shuts down built-in dispatchers, such as [Default] and [IO],
+     * stopping all the threads associated with them and making them reject all new tasks.
+     * Dispatcher used as a fallback for time-related operations (`delay`, `withTimeout`)
+     * and to handle rejected tasks from other dispatchers is also shut down.
+     *
+     * This is a **delicate** API. It is not supposed to be called from a general
+     * application-level code and its invocation is irreversible.
+     * The invocation of shutdown affects most of the coroutines machinery and
+     * leaves the coroutines framework in an inoperable state.
+     * The shutdown method should only be invoked when there are no pending tasks or active coroutines.
+     * Otherwise, the behavior is unspecified: the call to `shutdown` may throw an exception without completing
+     * the shutdown, or it may finish successfully, but the remaining jobs will be in a permanent dormant state,
+     * never completing nor executing.
+     *
+     * The main goal of the shutdown is to stop all background threads associated with the coroutines
+     * framework in order to make kotlinx.coroutines classes unloadable by Java Virtual Machine.
+     * It is only recommended to be used in containerized environments (OSGi, Gradle plugins system,
+     * IDEA plugins) at the end of the container lifecycle.
+     */
+    @DelicateCoroutinesApi
+    public fun shutdown() {
+        DefaultExecutor.shutdown()
+        // Also shuts down Dispatchers.IO
+        DefaultScheduler.shutdown()
+    }
 }

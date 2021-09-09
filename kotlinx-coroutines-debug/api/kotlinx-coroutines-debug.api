@@ -61,3 +61,8 @@ public final class kotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion {
 	public static synthetic fun seconds$default (Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion;JZZILjava/lang/Object;)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
 }
 
+public abstract interface annotation class kotlinx/coroutines/debug/junit5/CoroutinesTimeout : java/lang/annotation/Annotation {
+	public abstract fun cancelOnTimeout ()Z
+	public abstract fun testTimeoutMs ()J
+}
+

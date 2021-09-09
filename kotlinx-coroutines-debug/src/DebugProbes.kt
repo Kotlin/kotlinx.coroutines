@@ -134,7 +134,7 @@ public object DebugProbes {
      *
      * Coroutine "coroutine#42":StandaloneCoroutine{Active}@58fdd99, state: SUSPENDED
      *     at MyClass$awaitData.invokeSuspend(MyClass.kt:37)
-     *     at _COROUTINE._CREATION._(CoroutineDebugging.kt)
+     * (Coroutine creation stacktrace)
      *     at MyClass.createIoRequest(MyClass.kt:142)
      *     at MyClass.fetchData(MyClass.kt:154)
      *     at MyClass.showData(MyClass.kt:31)
@@ -143,10 +143,3 @@ public object DebugProbes {
      */
     public fun dumpCoroutines(out: PrintStream = System.out): Unit = DebugProbesImpl.dumpCoroutines(out)
 }
-
-// Stubs which are injected as coroutine probes. Require direct match of signatures
-internal fun probeCoroutineResumed(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineResumed(frame)
-
-internal fun probeCoroutineSuspended(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineSuspended(frame)
-internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> =
-    DebugProbesImpl.probeCoroutineCreated(completion)

@@ -4,6 +4,7 @@
 pluginManagement {
     val build_snapshot_train: String? by settings
     repositories {
+        maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
         val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
         if (cacheRedirectorEnabled) {
             println("Redirecting repositories for buildSrc buildscript")

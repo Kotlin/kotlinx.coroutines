@@ -101,7 +101,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         firstBarrier.await()
         secondBarrier.await()
         blockingTasks.joinAll()
-        checkPoolThreadsCreated(21..22)
+        checkPoolThreadsCreated(21 /* blocking tasks + 1 for CPU */..20 + CORES_COUNT)
     }
 
     @Test
@@ -122,7 +122,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         barrier.await()
         blockingTasks.joinAll()
         // There may be race when multiple CPU threads are trying to lazily created one more
-        checkPoolThreadsCreated(104..120)
+        checkPoolThreadsCreated(101..100 + CORES_COUNT)
     }
 
     @Test

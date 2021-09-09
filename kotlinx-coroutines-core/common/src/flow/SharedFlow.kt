@@ -68,6 +68,13 @@ import kotlin.native.concurrent.*
  * the `onBufferOverflow` parameter, which is equal to one of the entries of the [BufferOverflow] enum. When a strategy other
  * than [SUSPENDED][BufferOverflow.SUSPEND] is configured, emissions to the shared flow never suspend.
  *
+ * **Buffer overflow condition can happen only when there is at least one subscriber that is not ready to accept
+ * the new value.**  In the absence of subscribers only the most recent `replay` values are stored and the buffer
+ * overflow behavior is never triggered and has no effect. In particular, in the absence of subscribers emitter never
+ * suspends despite [BufferOverflow.SUSPEND] option and [BufferOverflow.DROP_LATEST] option does not have effect either.
+ * Essentially, the behavior in the absence of subscribers is always similar to [BufferOverflow.DROP_OLDEST],
+ * but the buffer is just of `replay` size (without any `extraBufferCapacity`).
+ *
  * ### Unbuffered shared flow
  *
  * A default implementation of a shared flow that is created with `MutableSharedFlow()` constructor function
@@ -80,7 +87,7 @@ import kotlin.native.concurrent.*
  * ### SharedFlow vs BroadcastChannel
  *
  * Conceptually shared flow is similar to [BroadcastChannel][BroadcastChannel]
- * and is designed to completely replace `BroadcastChannel` in the future.
+ * and is designed to completely replace it.
  * It has the following important differences:
  *
  * * `SharedFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows
@@ -191,6 +198,8 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      *     }
      *     .launchIn(scope) // launch it
      * ```
+     *
+     * Implementation note: the resulting flow **does not** conflate subscription count.
      */
     public val subscriptionCount: StateFlow<Int>
 
@@ -221,9 +230,12 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
  * @param replay the number of values replayed to new subscribers (cannot be negative, defaults to zero).
  * @param extraBufferCapacity the number of values buffered in addition to `replay`.
  *   [emit][MutableSharedFlow.emit] does not suspend while there is a buffer space remaining (optional, cannot be negative, defaults to zero).
- * @param onBufferOverflow configures an action on buffer overflow (optional, defaults to
- *   [suspending][BufferOverflow.SUSPEND] attempts to [emit][MutableSharedFlow.emit] a value,
- *   supported only when `replay > 0` or `extraBufferCapacity > 0`).
+ * @param onBufferOverflow configures an [emit][MutableSharedFlow.emit] action on buffer overflow. Optional, defaults to
+ *   [suspending][BufferOverflow.SUSPEND] attempts to emit a value.
+ *   Values other than [BufferOverflow.SUSPEND] are supported only when `replay > 0` or `extraBufferCapacity > 0`.
+ *   **Buffer overflow can happen only when there is at least one subscriber that is not ready to accept
+ *   the new value.** In the absence of subscribers only the most recent [replay] values are stored and
+ *   the buffer overflow behavior is never triggered and has no effect.
  */
 @Suppress("FunctionName", "UNCHECKED_CAST")
 public fun <T> MutableSharedFlow(
@@ -243,7 +255,7 @@ public fun <T> MutableSharedFlow(
 
 // ------------------------------------ Implementation ------------------------------------
 
-private class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
+internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     @JvmField
     var index = -1L // current "to-be-emitted" index, -1 means the slot is free now
 
@@ -265,7 +277,7 @@ private class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     }
 }
 
-private class SharedFlowImpl<T>(
+internal open class SharedFlowImpl<T>(
     private val replay: Int,
     private val bufferCapacity: Int,
     private val onBufferOverflow: BufferOverflow
@@ -323,6 +335,13 @@ private class SharedFlowImpl<T>(
             for (i in 0 until replaySize) result += buffer.getBufferAt(replayIndex + i) as T
             result
         }
+
+    /*
+     * A tweak for SubscriptionCountStateFlow to get the latest value.
+     */
+    @Suppress("UNCHECKED_CAST")
+    protected val lastReplayedLocked: T
+        get() = buffer!!.getBufferAt(replayIndex + replaySize - 1) as T
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun collect(collector: FlowCollector<T>) {
@@ -459,7 +478,7 @@ private class SharedFlowImpl<T>(
         // outside of the lock: register dispose on cancellation
         emitter?.let { cont.disposeOnCancellation(it) }
         // outside of the lock: resume slots if needed
-        for (cont in resumes) cont?.resume(Unit)
+        for (r in resumes) r?.resume(Unit)
     }
 
     private fun cancelEmitter(emitter: Emitter) = synchronized(this) {

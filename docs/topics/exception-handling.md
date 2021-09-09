@@ -19,9 +19,16 @@ exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.r
 
 It can be demonstrated by a simple example that creates root coroutines using the [GlobalScope]:
 
+> [GlobalScope] is a delicate API that can backfire in non-trivial ways. Creating a root coroutine for the
+> whole application is one of the rare legitimate uses for `GlobalScope`, so you must explicitly opt-in into 
+> using `GlobalScope` with `@OptIn(DelicateCoroutinesApi::class)`.
+>
+{type="note"}
+
 ```kotlin
 import kotlinx.coroutines.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
     val job = GlobalScope.launch { // root coroutine with launch
         println("Throwing exception from launch")
@@ -90,6 +97,7 @@ so its `CoroutineExceptionHandler` has no effect either.
 ```kotlin
 import kotlinx.coroutines.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
 //sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
@@ -184,6 +192,7 @@ which is demonstrated by the following example.
 ```kotlin
 import kotlinx.coroutines.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
 //sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
@@ -242,6 +251,7 @@ import kotlinx.coroutines.exceptions.*
 import kotlinx.coroutines.*
 import java.io.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
         println("CoroutineExceptionHandler got $exception with suppressed ${exception.suppressed.contentToString()}")
@@ -292,6 +302,7 @@ Cancellation exceptions are transparent and are unwrapped by default:
 import kotlinx.coroutines.*
 import java.io.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
 //sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->
@@ -353,6 +364,7 @@ only downwards. This can easily be demonstrated using the following example:
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
+//sampleStart
     val supervisor = SupervisorJob()
     with(CoroutineScope(coroutineContext + supervisor)) {
         // launch the first child -- its exception is ignored for this example (don't do this in practice!)
@@ -378,8 +390,10 @@ fun main() = runBlocking {
         supervisor.cancel()
         secondChild.join()
     }
+//sampleEnd
 }
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-supervision-01.kt).
 >
@@ -407,6 +421,7 @@ import kotlin.coroutines.*
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
+//sampleStart
     try {
         supervisorScope {
             val child = launch {
@@ -425,8 +440,10 @@ fun main() = runBlocking {
     } catch(e: AssertionError) {
         println("Caught an assertion error")
     }
+//sampleEnd
 }
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-supervision-02.kt).
 >
@@ -457,6 +474,7 @@ import kotlin.coroutines.*
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("CoroutineExceptionHandler got $exception") 
     }
@@ -468,8 +486,10 @@ fun main() = runBlocking {
         println("The scope is completing")
     }
     println("The scope is completed")
+//sampleEnd
 }
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-supervision-03.kt).
 >
@@ -497,7 +517,7 @@ The scope is completed
 [CoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/index.html
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
 [Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html
-[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
+[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/cancel.html
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [SupervisorJob()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-supervisor-job.html
 [Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job.html

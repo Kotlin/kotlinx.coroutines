@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.flow.internal
 
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
@@ -26,12 +27,12 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     protected var nCollectors = 0 // number of allocated (!free) slots
         private set
     private var nextIndex = 0 // oracle for the next free slot index
-    private var _subscriptionCount: MutableStateFlow<Int>? = null // init on first need
+    private var _subscriptionCount: SubscriptionCountStateFlow? = null // init on first need
 
     val subscriptionCount: StateFlow<Int>
         get() = synchronized(this) {
             // allocate under lock in sync with nCollectors variable
-            _subscriptionCount ?: MutableStateFlow(nCollectors).also {
+            _subscriptionCount ?: SubscriptionCountStateFlow(nCollectors).also {
                 _subscriptionCount = it
             }
         }
@@ -43,7 +44,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     @Suppress("UNCHECKED_CAST")
     protected fun allocateSlot(): S {
         // Actually create slot under lock
-        var subscriptionCount: MutableStateFlow<Int>? = null
+        var subscriptionCount: SubscriptionCountStateFlow? = null
         val slot = synchronized(this) {
             val slots = when (val curSlots = slots) {
                 null -> createSlotArray(2).also { slots = it }
@@ -74,7 +75,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     @Suppress("UNCHECKED_CAST")
     protected fun freeSlot(slot: S) {
         // Release slot under lock
-        var subscriptionCount: MutableStateFlow<Int>? = null
+        var subscriptionCount: SubscriptionCountStateFlow? = null
         val resumes = synchronized(this) {
             nCollectors--
             subscriptionCount = _subscriptionCount // retrieve under lock if initialized
@@ -83,10 +84,10 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
             (slot as AbstractSharedFlowSlot<Any>).freeLocked(this)
         }
         /*
-           Resume suspended coroutines.
-           This can happens when the subscriber that was freed was a slow one and was holding up buffer.
-           When this subscriber was freed, previously queued emitted can now wake up and are resumed here.
-        */
+         * Resume suspended coroutines.
+         * This can happen when the subscriber that was freed was a slow one and was holding up buffer.
+         * When this subscriber was freed, previously queued emitted can now wake up and are resumed here.
+         */
         for (cont in resumes) cont?.resume(Unit)
         // decrement subscription count
         subscriptionCount?.increment(-1)
@@ -97,5 +98,37 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
         slots?.forEach { slot ->
             if (slot != null) block(slot)
         }
+    }
+}
+
+/**
+ * [StateFlow] that represents the number of subscriptions.
+ *
+ * It is exposed as a regular [StateFlow] in our public API, but it is implemented as [SharedFlow] undercover to
+ * avoid conflations of consecutive updates because the subscription count is very sensitive to it.
+ *
+ * The importance of non-conflating can be demonstrated with the following example:
+ * ```
+ * val shared = flowOf(239).stateIn(this, SharingStarted.Lazily, 42) // stateIn for the sake of the initial value
+ * println(shared.first())
+ * yield()
+ * println(shared.first())
+ * ```
+ * If the flow is shared within the same dispatcher (e.g. Main) or with a slow/throttled one,
+ * the `SharingStarted.Lazily` will never be able to start the source: `first` sees the initial value and immediately
+ * unsubscribes, leaving the asynchronous `SharingStarted` with conflated zero.
+ *
+ * To avoid that (especially in a more complex scenarios), we do not conflate subscription updates.
+ */
+private class SubscriptionCountStateFlow(initialValue: Int) : StateFlow<Int>,
+    SharedFlowImpl<Int>(1, Int.MAX_VALUE, BufferOverflow.DROP_OLDEST)
+{
+    init { tryEmit(initialValue) }
+
+    override val value: Int
+        get() = synchronized(this) { lastReplayedLocked }
+
+    fun increment(delta: Int) = synchronized(this) {
+        tryEmit(lastReplayedLocked + delta)
     }
 }

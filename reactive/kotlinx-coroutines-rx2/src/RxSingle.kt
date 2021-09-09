@@ -50,15 +50,17 @@ private class RxSingleCoroutine<T: Any>(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         try {
-            if (!subscriber.tryOnError(cause)) {
-                handleUndeliverableException(cause, context)
+            if (subscriber.tryOnError(cause)) {
+                return
             }
         } catch (e: Throwable) {
-            handleUndeliverableException(e, context)
+            cause.addSuppressed(e)
         }
+        handleUndeliverableException(cause, context)
     }
 }
 
+/** @suppress */
 @Deprecated(
     message = "CoroutineScope.rxSingle is deprecated in favour of top-level rxSingle",
     level = DeprecationLevel.HIDDEN,

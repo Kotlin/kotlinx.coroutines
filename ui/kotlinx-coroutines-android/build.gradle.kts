@@ -2,10 +2,6 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.jetbrains.dokka.DokkaConfiguration.ExternalDocumentationLink
-import org.jetbrains.dokka.gradle.DokkaTask
-import java.net.URL
-
 configurations {
     create("r8")
 }
@@ -22,7 +18,7 @@ dependencies {
     testImplementation("org.robolectric:robolectric:${version("robolectric")}")
     testImplementation("org.smali:baksmali:${version("baksmali")}")
 
-    "r8"("com.android.tools.build:builder:4.0.0-alpha06") // Contains r8-2.0.4-dev
+    "r8"("com.android.tools.build:builder:7.1.0-alpha01")
 }
 
 val optimizedDexDir = File(buildDir, "dex-optim/")
@@ -64,3 +60,46 @@ tasks.test {
 externalDocumentationLink(
     url = "https://developer.android.com/reference/"
 )
+/*
+ * Task used by our ui/android tests to test minification results and keep track of size of the binary.
+ */
+open class RunR8 : JavaExec() {
+
+    @OutputDirectory
+    lateinit var outputDex: File
+
+    @InputFile
+    lateinit var inputConfig: File
+
+    @InputFile
+    val inputConfigCommon: File = File("testdata/r8-test-common.pro")
+
+    @InputFiles
+    val jarFile: File = project.tasks.named<Zip>("jar").get().archivePath
+
+    init {
+        classpath = project.configurations["r8"]
+        main = "com.android.tools.r8.R8"
+    }
+
+    override fun exec() {
+        // Resolve classpath only during execution
+        val arguments = mutableListOf(
+            "--release",
+            "--no-desugaring",
+            "--min-api", "26",
+            "--output", outputDex.absolutePath,
+            "--pg-conf", inputConfig.absolutePath
+        )
+        arguments.addAll(project.configurations["runtimeClasspath"].files.map { it.absolutePath })
+        arguments.add(jarFile.absolutePath)
+
+        args = arguments
+
+        project.delete(outputDex)
+        outputDex.mkdirs()
+
+        super.exec()
+    }
+}
+

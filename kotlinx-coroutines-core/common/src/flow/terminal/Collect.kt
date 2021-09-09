@@ -44,7 +44,7 @@ public suspend fun Flow<*>.collect(): Unit = collect(NopCollector)
  *     .launchIn(uiScope)
  * ```
  *
- * Note that resulting value of [launchIn] is not used the provided scope takes care of cancellation.
+ * Note that the resulting value of [launchIn] is not used and the provided scope takes care of cancellation.
  */
 public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
     collect() // tail-call
@@ -127,5 +127,7 @@ public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit)
  * Collects all the values from the given [flow] and emits them to the collector.
  * It is a shorthand for `flow.collect { value -> emit(value) }`.
  */
-@BuilderInference
-public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>): Unit = flow.collect(this)
+public suspend fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) {
+    ensureActive()
+    flow.collect(this)
+}

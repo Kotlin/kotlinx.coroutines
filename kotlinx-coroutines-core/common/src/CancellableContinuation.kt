@@ -81,6 +81,10 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Same as [tryResume] but with [onCancellation] handler that called if and only if the value is not
      * delivered to the caller because of the dispatch in the process, so that atomicity delivery
      * guaranteed can be provided by having a cancellation fallback.
+     *
+     * Implementation note: current implementation always returns RESUME_TOKEN or `null`
+     *
+     * @suppress  **This is unstable API and it is subject to change.**
      */
     @InternalCoroutinesApi
     public fun tryResume(value: T, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any?

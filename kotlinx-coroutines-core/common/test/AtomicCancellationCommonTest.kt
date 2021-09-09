@@ -140,7 +140,7 @@ class AtomicCancellationCommonTest : TestBase() {
         val mutex = Mutex(true) // locked mutex
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            val result = select<String> { // suspends
+            select<String> { // suspends
                 mutex.onLock {
                     expect(4)
                     "OK"

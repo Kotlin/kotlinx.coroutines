@@ -70,8 +70,18 @@ class FailFastOnStartTest : TestBase() {
         val actor = actor<Int>(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
         actor.send(1)
     }
-    
+
     private fun mainException(e: Throwable): Boolean {
         return e is IllegalStateException && e.message?.contains("Module with the Main dispatcher is missing") ?: false
+    }
+
+    @Test
+    fun testProduceNonChild() = runTest(expected = ::mainException) {
+        produce<Int>(Job() + Dispatchers.Main) { fail() }
+    }
+
+    @Test
+    fun testAsyncNonChild() = runTest(expected = ::mainException) {
+        async<Int>(Job() + Dispatchers.Main) { fail() }
     }
 }

@@ -17,7 +17,7 @@ class ScopedBuildersTest : DebugTestBase() {
         yield()
         verifyDump(
             "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@16612a51, state: RUNNING\n" +
-             "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+             "\t(Coroutine creation stacktrace)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n",
 
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@6b53e23f, state: SUSPENDED\n" +
@@ -25,7 +25,7 @@ class ScopedBuildersTest : DebugTestBase() {
                 "\tat kotlinx.coroutines.debug.ScopedBuildersTest.doWithContext(ScopedBuildersTest.kt:47)\n" +
                 "\tat kotlinx.coroutines.debug.ScopedBuildersTest\$doInScope\$2.invokeSuspend(ScopedBuildersTest.kt:41)\n" +
                 "\tat kotlinx.coroutines.debug.ScopedBuildersTest\$testNestedScopes\$1\$job\$1.invokeSuspend(ScopedBuildersTest.kt:30)\n" +
-            "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+            "\t(Coroutine creation stacktrace)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)")
         job.cancelAndJoin()
         finish(4)

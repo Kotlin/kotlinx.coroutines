@@ -94,7 +94,7 @@ export JDK_18="$JAVA_HOME"
 
 ### Running the Knit tool
 
-* Use [Knit](https://github.com/Kotlin/kotlinx-knit/blob/master/README.md) for updates to documentation:
+* Use [Knit](https://github.com/Kotlin/kotlinx-knit/blob/main/README.md) for updates to documentation:
   * Run `./gradlew knit` to update example files, links, tables of content.
   * Commit updated documents and examples together with other changes.
 

@@ -11,6 +11,7 @@ import java.io.*
 import java.util.stream.*
 import kotlin.test.*
 
+@Ignore
 class R8ServiceLoaderOptimizationTest : TestBase() {
     private val r8Dex = File(System.getProperty("dexPath")!!).asDexFile()
     private val r8DexNoOptim = File(System.getProperty("noOptimDexPath")!!).asDexFile()

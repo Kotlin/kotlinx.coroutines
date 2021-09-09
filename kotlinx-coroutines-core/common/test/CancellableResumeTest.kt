@@ -82,7 +82,7 @@ class CancellableResumeTest : TestBase() {
             cont.invokeOnCancellation { expect(3) }
             ctx.cancel()
             expect(4)
-            cont.resume("OK") { cause ->
+            cont.resume("OK") {
                 expect(5)
             }
             finish(6)
@@ -108,7 +108,7 @@ class CancellableResumeTest : TestBase() {
             }
             ctx.cancel()
             expect(4)
-            cont.resume("OK") { cause ->
+            cont.resume("OK") {
                 expect(5)
                 throw TestException3("FAIL") // onCancellation block fails with exception
             }

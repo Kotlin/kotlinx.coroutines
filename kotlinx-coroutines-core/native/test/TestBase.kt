@@ -7,7 +7,11 @@ package kotlinx.coroutines
 public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+public actual typealias TestResult = Unit
+
 public actual open class TestBase actual constructor() {
+    public actual val isBoundByJsTestTimeout = false
     private var actionIndex = 0
     private var finished = false
     private var error: Throwable? = null
@@ -70,11 +74,11 @@ public actual open class TestBase actual constructor() {
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    ) {
+    ): TestResult {
         var exCount = 0
         var ex: Throwable? = null
         try {
-            runBlocking(block = block, context = CoroutineExceptionHandler { context, e ->
+            runBlocking(block = block, context = CoroutineExceptionHandler { _, e ->
                 if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
                 exCount++
                 when {

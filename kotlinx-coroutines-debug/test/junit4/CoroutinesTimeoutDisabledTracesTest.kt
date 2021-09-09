@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.runners.model.*
 
-class CoroutinesTimeoutDisabledTracesTest : TestBase() {
+class CoroutinesTimeoutDisabledTracesTest : TestBase(disableOutCheck = true) {
 
     @Rule
     @JvmField
@@ -22,7 +22,7 @@ class CoroutinesTimeoutDisabledTracesTest : TestBase() {
                 "at kotlinx.coroutines.debug.junit4.CoroutinesTimeoutDisabledTracesTest.hangForever",
                 "at kotlinx.coroutines.debug.junit4.CoroutinesTimeoutDisabledTracesTest.waitForHangJob"
             ),
-            notExpectedOutParts = listOf("coroutineCreation"),
+            notExpectedOutParts = listOf("Coroutine creation stacktrace"),
             error = TestTimedOutException::class.java
         )
     )

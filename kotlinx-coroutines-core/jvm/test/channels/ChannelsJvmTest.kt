@@ -25,7 +25,6 @@ class ChannelsJvmTest : TestBase() {
         assertEquals(45, runBlocking { sum.await() })
     }
 
-    // Uncomment lines when migrated to 1.5, these are bugs in inline classes codegen
     @Test
     fun testTrySendBlockingClosedChannel() {
         run {
@@ -33,7 +32,7 @@ class ChannelsJvmTest : TestBase() {
             channel.trySendBlocking(Unit)
                 .onSuccess { expectUnreached() }
                 .onFailure { assertTrue(it is ClosedSendChannelException) }
-//                .also { assertTrue { it.isClosed } }
+                .also { assertTrue { it.isClosed } }
         }
 
         run {
@@ -41,7 +40,7 @@ class ChannelsJvmTest : TestBase() {
             channel.trySendBlocking(Unit)
                 .onSuccess { expectUnreached() }
                 .onFailure { assertTrue(it is TestException) }
-//                .also { assertTrue { it.isClosed } }
+                .also { assertTrue { it.isClosed } }
         }
 
         run {
@@ -49,8 +48,7 @@ class ChannelsJvmTest : TestBase() {
             channel.trySendBlocking(Unit)
                 .onSuccess { expectUnreached() }
                 .onFailure { assertTrue(it is TestCancellationException) }
-//                .also { assertTrue { it.isClosed } }
+                .also { assertTrue { it.isClosed } }
         }
     }
-
 }

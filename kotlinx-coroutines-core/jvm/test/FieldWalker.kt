@@ -11,7 +11,6 @@ import java.util.*
 import java.util.Collections.*
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
-import kotlin.collections.ArrayList
 import kotlin.test.*
 
 object FieldWalker {
@@ -90,6 +89,7 @@ object FieldWalker {
                     cur = ref.parent
                     path += "[${ref.index}]"
                 }
+                else -> error("Should not be reached")
             }
         }
         path.reverse()
@@ -154,8 +154,9 @@ object FieldWalker {
         while (true) {
             val fields = type.declaredFields.filter {
                 !it.type.isPrimitive
-                        && (statics || !Modifier.isStatic(it.modifiers))
-                        && !(it.type.isArray && it.type.componentType.isPrimitive)
+                    && (statics || !Modifier.isStatic(it.modifiers))
+                    && !(it.type.isArray && it.type.componentType.isPrimitive)
+                    && it.name != "previousOut" // System.out from TestBase that we store in a field to restore later
             }
             fields.forEach { it.isAccessible = true } // make them all accessible
             result.addAll(fields)
