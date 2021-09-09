@@ -43,7 +43,7 @@ public expect open class LockFreeLinkedListNode() {
 public expect open class LockFreeLinkedListHead() : LockFreeLinkedListNode {
     public val isEmpty: Boolean
     public inline fun <reified T : LockFreeLinkedListNode> forEach(block: (T) -> Unit)
-    public final override fun remove(): Boolean // Actual return type is Nothing, KT-27534
+    public final override fun remove(): Nothing
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */

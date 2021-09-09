@@ -6,7 +6,6 @@ package kotlinx.coroutines.debug.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
@@ -162,6 +161,60 @@ internal object DebugProbesImpl {
                     else owner.info.context?.let { context -> create(owner, context) }
                 }
         }
+
+    /*
+     * This method optimises the number of packages sent by the IDEA debugger
+     * to a client VM to speed up fetching of coroutine information.
+     *
+     * The return value is an array of objects, which consists of four elements:
+     * 1) A string in a JSON format that stores information that is needed to display
+     *    every coroutine in the coroutine panel in the IDEA debugger.
+     * 2) An array of last observed threads.
+     * 3) An array of last observed frames.
+     * 4) An array of DebugCoroutineInfo.
+     *
+     * ### Implementation note
+     * For methods like `dumpCoroutinesInfo` JDWP provides `com.sun.jdi.ObjectReference`
+     * that does a roundtrip to client VM for *each* field or property read.
+     * To avoid that, we serialize most of the critical for UI data into a primitives
+     * to save an exponential number of roundtrips.
+     *
+     * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
+     */
+    @OptIn(ExperimentalStdlibApi::class)
+    public fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> {
+        fun Any.toStringWithQuotes() = "\"$this\""
+        val coroutinesInfo = dumpCoroutinesInfo()
+        val size = coroutinesInfo.size
+        val lastObservedThreads = ArrayList<Thread?>(size)
+        val lastObservedFrames = ArrayList<CoroutineStackFrame?>(size)
+        val coroutinesInfoAsJson = ArrayList<String>(size)
+        for (info in coroutinesInfo) {
+            val context = info.context
+            val name = context[CoroutineName.Key]?.name?.toStringWithQuotes()
+            val dispatcher = context[CoroutineDispatcher.Key]?.toStringWithQuotes()
+            coroutinesInfoAsJson.add(
+                """
+                {
+                   "name": $name,
+                   "id": ${context[CoroutineId.Key]?.id},
+                   "dispatcher": $dispatcher,
+                   "sequenceNumber": ${info.sequenceNumber},
+                   "state": "${info.state}"
+                } 
+                """.trimIndent()
+            )
+            lastObservedFrames.add(info.lastObservedFrame)
+            lastObservedThreads.add(info.lastObservedThread)
+        }
+
+        return arrayOf(
+            "[${coroutinesInfoAsJson.joinToString()}]",
+            lastObservedThreads.toTypedArray(),
+            lastObservedFrames.toTypedArray(),
+            coroutinesInfo.toTypedArray()
+        )
+    }
 
     /*
      * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.

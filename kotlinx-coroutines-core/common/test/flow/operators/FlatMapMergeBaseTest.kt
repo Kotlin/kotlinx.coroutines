@@ -72,7 +72,7 @@ abstract class FlatMapMergeBaseTest : FlatMapBaseTest() {
             emit(2)
             expectUnreached()
         }.flatMap {
-            if (it == 1) flow<Int> {
+            if (it == 1) flow {
                 expect(5)
                 latch.send(Unit)
                 hang { expect(7) }

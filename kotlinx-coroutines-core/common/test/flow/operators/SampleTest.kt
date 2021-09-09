@@ -250,7 +250,6 @@ class SampleTest : TestBase() {
             expect(2)
             yield()
             throw TestException()
-            it
         }
 
         assertFailsWith<TestException>(flow)

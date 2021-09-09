@@ -197,8 +197,16 @@ private fun <T> CoroutineScope.launchSharing(
     shared: MutableSharedFlow<T>,
     started: SharingStarted,
     initialValue: T
-): Job =
-    launch(context) { // the single coroutine to rule the sharing
+): Job {
+    /*
+     * Conditional start: in the case when sharing and subscribing happens in the same dispatcher, we want to
+     * have the following invariants preserved:
+     * * Delayed sharing strategies have a chance to immediately observe consecutive subscriptions.
+     *   E.g. in the cases like `flow.shareIn(...); flow.take(1)` we want sharing strategy to see the initial subscription
+     * * Eager sharing does not start immediately, so the subscribers have actual chance to subscribe _prior_ to sharing.
+     */
+    val start = if (started == SharingStarted.Eagerly) CoroutineStart.DEFAULT else CoroutineStart.UNDISPATCHED
+    return launch(context, start = start) { // the single coroutine to rule the sharing
         // Optimize common built-in started strategies
         when {
             started === SharingStarted.Eagerly -> {
@@ -230,6 +238,7 @@ private fun <T> CoroutineScope.launchSharing(
             }
         }
     }
+}
 
 // -------------------------------- stateIn --------------------------------
 

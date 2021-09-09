@@ -37,6 +37,9 @@ public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closea
     public abstract override fun close()
 }
 
+@ExperimentalCoroutinesApi
+public actual typealias CloseableCoroutineDispatcher = ExecutorCoroutineDispatcher
+
 /**
  * Converts an instance of [ExecutorService] to an implementation of [ExecutorCoroutineDispatcher].
  *
