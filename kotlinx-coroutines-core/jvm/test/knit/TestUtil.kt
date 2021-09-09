@@ -27,7 +27,7 @@ fun <R> test(name: String, block: () -> R): List<String> = outputException(name)
     try {
         captureOutput(name, stdoutEnabled = OUT_ENABLED) { log ->
             DefaultScheduler.usePrivateScheduler()
-            DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+            DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
             resetCoroutineId()
             val threadsBefore = currentThreads()
             try {
@@ -40,7 +40,7 @@ fun <R> test(name: String, block: () -> R): List<String> = outputException(name)
                 log.println("--- shutting down")
                 DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
                 shutdownDispatcherPools(SHUTDOWN_TIMEOUT)
-                DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
+                DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
             }
             checkTestThreads(threadsBefore) // check thread if the main completed successfully
         }

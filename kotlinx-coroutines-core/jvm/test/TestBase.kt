@@ -204,7 +204,7 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
 
     fun shutdownPoolsAfterTest() {
         DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
-        DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+        DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
         DefaultScheduler.restore()
     }
 
