@@ -29,7 +29,7 @@ public actual object Dispatchers {
      * Level of parallelism X guarantees that no more than X tasks can be executed in this dispatcher in parallel.
      */
     @JvmStatic
-    public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
+    public actual val Default: CoroutineDispatcher = DefaultScheduler
 
     /**
      * A coroutine dispatcher that is confined to the Main thread operating with UI objects.
