@@ -80,7 +80,7 @@ class FlowContextOptimizationsTest : TestBase() {
         }
             .flowOn(CoroutineName("Name"))
             .collect { value ->
-                assertEquals(null, currentContext[CoroutineName]?.name)
+                assertNull(currentContext[CoroutineName]?.name)
                 if (value == 1) expect(2)
                 else expect(4)
             }
@@ -102,8 +102,8 @@ class FlowContextOptimizationsTest : TestBase() {
             .flowOn(CoroutineName("Name2"))
             .flowOn(CoroutineName("Name3") + CustomContextElement("OK")) // but this is not lost
             .collect { value ->
-                assertEquals(null, currentContext[CoroutineName]?.name)
-                assertEquals(null, currentContext[CustomContextElement]?.str)
+                assertNull(currentContext[CoroutineName]?.name)
+                assertNull(currentContext[CustomContextElement]?.str)
                 if (value == 1) expect(2)
                 else expect(4)
             }

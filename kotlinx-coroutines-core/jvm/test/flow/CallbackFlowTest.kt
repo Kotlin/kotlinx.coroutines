@@ -36,10 +36,10 @@ class CallbackFlowTest : TestBase() {
     fun testThrowingConsumer() = runTest {
         var i = 0
         val api = CallbackApi {
-            runCatching {  it.offer(++i) }
+            it.trySend(++i)
         }
 
-        val flow = channelFlow<Int> {
+        val flow = callbackFlow<Int> {
             api.start(channel)
             awaitClose {
                 api.stop()
@@ -77,13 +77,13 @@ class CallbackFlowTest : TestBase() {
         var i = 0
         val api = CallbackApi {
             if (i < 5) {
-                it.offer(++i)
+                it.trySend(++i)
             } else {
                 it.close(RuntimeException())
             }
         }
 
-        val flow = callbackFlow<Int>() {
+        val flow = callbackFlow<Int> {
             api.start(channel)
             awaitClose {
                 api.stop()
@@ -118,7 +118,7 @@ class CallbackFlowTest : TestBase() {
         }
     }
 
-    private fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = callbackFlow {
+    private fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = channelFlow {
         launch {
             collect { send(it) }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // Need InlineOnly for efficient bytecode on Android
@@ -33,7 +33,7 @@ import kotlin.internal.InlineOnly
  * Debugging facilities are implemented by [newCoroutineContext][CoroutineScope.newCoroutineContext] function that
  * is used in all coroutine builders to create context of a new coroutine.
  */
-public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
+public const val DEBUG_PROPERTY_NAME: String = "kotlinx.coroutines.debug"
 
 /**
  * Name of the boolean property that controls stacktrace recovery (enabled by default) on JVM.
@@ -49,46 +49,19 @@ public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 internal const val STACKTRACE_RECOVERY_PROPERTY_NAME = "kotlinx.coroutines.stacktrace.recovery"
 
 /**
- * Throwable which can be cloned during stacktrace recovery in a class-specific way.
- * For additional information about stacktrace recovery see [STACKTRACE_RECOVERY_PROPERTY_NAME]
- *
- * Example of usage:
- * ```
- * class BadResponseCodeException(val responseCode: Int) : Exception(), CopyableThrowable<BadResponseCodeException> {
- *
- *  override fun createCopy(): BadResponseCodeException {
- *    val result = BadResponseCodeException(responseCode)
- *    result.initCause(this)
- *    return result
- *  }
- * ```
- */
-@ExperimentalCoroutinesApi
-public interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable<T> {
-
-    /**
-     * Creates a copy of the current instance.
-     * For better debuggability, it is recommended to use original exception as [cause][Throwable.cause] of the resulting one.
-     * Stacktrace of copied exception will be overwritten by stacktrace recovery machinery by [Throwable.setStackTrace] call.
-     * An exception can opt-out of copying by returning `null` from this function.
-     */
-    public fun createCopy(): T?
-}
-
-/**
  * Automatic debug configuration value for [DEBUG_PROPERTY_NAME].
  */
-public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
+public const val DEBUG_PROPERTY_VALUE_AUTO: String = "auto"
 
 /**
  * Debug turned on value for [DEBUG_PROPERTY_NAME].
  */
-public const val DEBUG_PROPERTY_VALUE_ON = "on"
+public const val DEBUG_PROPERTY_VALUE_ON: String = "on"
 
 /**
  * Debug turned on value for [DEBUG_PROPERTY_NAME].
  */
-public const val DEBUG_PROPERTY_VALUE_OFF = "off"
+public const val DEBUG_PROPERTY_VALUE_OFF: String = "off"
 
 // @JvmField: Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
 internal val ASSERTIONS_ENABLED = CoroutineId::class.java.desiredAssertionStatus()

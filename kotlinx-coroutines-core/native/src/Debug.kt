@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -13,6 +13,6 @@ internal actual val Any.hexAddress: String get() = abs(id().let { if (it == Int.
 internal actual val Any.classSimpleName: String get() = this::class.simpleName ?: "Unknown"
 
 @SymbolName("Kotlin_Any_hashCode")
-external fun Any.id(): Int // Note: can return negative value on K/N
+public external fun Any.id(): Int // Note: can return negative value on K/N
 
 internal actual inline fun assert(value: () -> Boolean) {}

@@ -6,6 +6,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.internal.*
 import kotlin.test.*
 
 class FirstTest : TestBase() {
@@ -82,5 +83,97 @@ class FirstTest : TestBase() {
 
         assertEquals(1, flow.first())
         finish(2)
+    }
+
+    @Test
+    fun testFirstOrNull() = runTest {
+        val flow = flowOf(1, 2, 3)
+        assertEquals(1, flow.firstOrNull())
+    }
+
+    @Test
+    fun testFirstOrNullWithPredicate() = runTest {
+        val flow = flowOf(1, 2, 3)
+        assertEquals(1, flow.firstOrNull { it > 0 })
+        assertEquals(2, flow.firstOrNull { it > 1 })
+        assertNull(flow.firstOrNull { it > 3 })
+    }
+
+    @Test
+    fun testFirstOrNullCancellation() = runTest {
+        val latch = Channel<Unit>()
+        val flow = flow {
+            coroutineScope {
+                launch {
+                    latch.send(Unit)
+                    hang { expect(1) }
+                }
+                emit(1)
+                emit(2)
+            }
+        }
+
+
+        val result = flow.firstOrNull {
+            latch.receive()
+            true
+        }
+        assertEquals(1, result)
+        finish(2)
+    }
+
+    @Test
+    fun testFirstOrNullWithEmptyFlow() = runTest {
+        assertNull(emptyFlow<Int>().firstOrNull())
+        assertNull(emptyFlow<Int>().firstOrNull { true })
+    }
+
+    @Test
+    fun testFirstOrNullWithNullElement() = runTest {
+        assertNull(flowOf<String?>(null).firstOrNull())
+        assertNull(flowOf<String?>(null).firstOrNull { true })
+    }
+
+    @Test
+    fun testFirstOrNullWhenErrorCancelsUpstream() = runTest {
+        val latch = Channel<Unit>()
+        val flow = flow {
+            coroutineScope {
+                launch {
+                    latch.send(Unit)
+                    hang { expect(1) }
+                }
+                emit(1)
+            }
+        }
+
+        assertFailsWith<TestException> {
+            flow.firstOrNull {
+                latch.receive()
+                throw TestException()
+            }
+        }
+
+        assertEquals(1, flow.firstOrNull())
+        finish(2)
+    }
+
+    @Test
+    fun testBadClass() = runTest {
+        val instance = BadClass()
+        val flow = flowOf(instance)
+        assertSame(instance, flow.first())
+        assertSame(instance, flow.firstOrNull())
+        assertSame(instance, flow.first { true })
+        assertSame(instance, flow.firstOrNull { true })
+    }
+
+    @Test
+    fun testAbortFlowException() = runTest {
+        val flow = flow<Int> {
+            throw AbortFlowException(NopCollector) // Emulate cancellation
+        }
+
+        assertFailsWith<CancellationException> { flow.first() }
     }
 }

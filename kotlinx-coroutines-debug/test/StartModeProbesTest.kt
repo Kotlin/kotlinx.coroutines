@@ -5,7 +5,7 @@
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
-import org.junit.*
+import kotlinx.coroutines.channels.*
 import org.junit.Test
 import kotlin.test.*
 
@@ -137,5 +137,17 @@ class StartModeProbesTest : DebugTestBase() {
             expect(2)
             delay(Long.MAX_VALUE)
         }
+    }
+
+    @Test
+    fun testLazy() = runTest({ it is CancellationException }) {
+        launch(start = CoroutineStart.LAZY) {  }
+        actor<Int>(start = CoroutineStart.LAZY) {  }
+        broadcast<Int>(start = CoroutineStart.LAZY) {  }
+        async(start = CoroutineStart.LAZY) { 1 }
+        verifyPartialDump(5, "BlockingCoroutine",
+            "LazyStandaloneCoroutine", "LazyActorCoroutine",
+            "LazyBroadcastCoroutine", "LazyDeferredCoroutine")
+        cancel()
     }
 }

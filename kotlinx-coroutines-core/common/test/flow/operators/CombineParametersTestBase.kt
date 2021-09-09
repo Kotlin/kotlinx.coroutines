@@ -99,13 +99,13 @@ class CombineParametersTest : TestBase() {
     }
 
     @Test
-    fun testEmptyVararg() = runTest {
+    fun testSingleVararg() = runTest {
         val list = combine(flowOf(1, 2, 3)) { args: Array<Any?> -> args[0] }.toList()
         assertEquals(listOf(1, 2, 3), list)
     }
 
     @Test
-    fun testEmptyVarargTransform() = runTest {
+    fun testSingleVarargTransform() = runTest {
         val list = combineTransform(flowOf(1, 2, 3)) { args: Array<Any?> -> emit(args[0]) }.toList()
         assertEquals(listOf(1, 2, 3), list)
     }
@@ -131,7 +131,15 @@ class CombineParametersTest : TestBase() {
     }
 
     @Test
-    fun testEmpty() = runTest {
+    fun testTransformEmptyIterable() = runTest {
+        val value = combineTransform(emptyList()) { args: Array<Int> ->
+            emit(args[0] + args[1])
+        }.singleOrNull()
+        assertNull(value)
+    }
+
+    @Test
+    fun testTransformEmptyVararg() = runTest {
         val value = combineTransform { args: Array<Int> ->
             emit(args[0] + args[1])
         }.singleOrNull()
@@ -140,25 +148,46 @@ class CombineParametersTest : TestBase() {
 
     @Test
     fun testEmptyIterable() = runTest {
-        val value = combineTransform(emptyList()) { args: Array<Int> ->
-            emit(args[0] + args[1])
+        val value = combine(emptyList()) { args: Array<Int> ->
+            args[0] + args[1]
         }.singleOrNull()
         assertNull(value)
     }
 
     @Test
-    fun testEmptyReified() = runTest {
-        val value = combineTransform { args: Array<Int> ->
-            emit(args[0] + args[1])
+    fun testEmptyVararg() = runTest {
+        val value = combine { args: Array<Int> ->
+            args[0] + args[1]
         }.singleOrNull()
         assertNull(value)
     }
 
     @Test
-    fun testEmptyIterableReified() = runTest {
-        val value = combineTransform(emptyList()) { args: Array<Int> ->
-            emit(args[0] + args[1])
-        }.singleOrNull()
-        assertNull(value)
+    fun testFairnessInVariousConfigurations() = runTest {
+        // Test various configurations
+        for (flowsCount in 2..5) {
+            for (flowSize in 1..5) {
+                val flows = List(flowsCount) { (1..flowSize).asFlow() }
+                val combined = combine(flows) { it.joinToString(separator = "") }.toList()
+                val expected = List(flowSize) { (it +  1).toString().repeat(flowsCount) }
+                assertEquals(expected, combined, "Count: $flowsCount, size: $flowSize")
+            }
+        }
+    }
+
+    @Test
+    fun testEpochOverflow() = runTest {
+        val flow = (0..1023).asFlow()
+        val result = flow.combine(flow) { a, b -> a + b }.toList()
+        assertEquals(List(1024) { it * 2 } , result)
+    }
+
+    @Test
+    fun testArrayType() = runTest {
+        val arr = flowOf(1)
+        combine(listOf(arr, arr)) {
+            println(it[0])
+            it[0]
+        }.toList().also { println(it) }
     }
 }

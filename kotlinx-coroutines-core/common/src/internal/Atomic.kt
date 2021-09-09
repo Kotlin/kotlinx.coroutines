@@ -1,11 +1,14 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
+import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 /**
  * The most abstract operation that can be in process. Other threads observing an instance of this
@@ -19,10 +22,25 @@ public abstract class OpDescriptor {
      * object that indicates the failure reason.
      */
     abstract fun perform(affected: Any?): Any?
+
+    /**
+     * Returns reference to atomic operation that this descriptor is a part of or `null`
+     * if not a part of any [AtomicOp].
+     */
+    abstract val atomicOp: AtomicOp<*>?
+
+    override fun toString(): String = "$classSimpleName@$hexAddress" // debug
+
+    fun isEarlierThan(that: OpDescriptor): Boolean {
+        val thisOp = atomicOp ?: return false
+        val thatOp = that.atomicOp ?: return false
+        return thisOp.opSequence < thatOp.opSequence
+    }
 }
 
 @SharedImmutable
-private val NO_DECISION: Any = Symbol("NO_DECISION")
+@JvmField
+internal val NO_DECISION: Any = Symbol("NO_DECISION")
 
 /**
  * Descriptor for multi-word atomic operation.
@@ -35,17 +53,35 @@ private val NO_DECISION: Any = Symbol("NO_DECISION")
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 public abstract class AtomicOp<in T> : OpDescriptor() {
     private val _consensus = atomic<Any?>(NO_DECISION)
 
+    // Returns NO_DECISION when there is not decision yet
+    val consensus: Any? get() = _consensus.value
+
     val isDecided: Boolean get() = _consensus.value !== NO_DECISION
 
-    fun tryDecide(decision: Any?): Boolean {
-        assert { decision !== NO_DECISION }
-        return _consensus.compareAndSet(NO_DECISION, decision)
-    }
+    /**
+     * Sequence number of this multi-word operation for deadlock resolution.
+     * An operation with lower number aborts itself with (using [RETRY_ATOMIC] error symbol) if it encounters
+     * the need to help the operation with higher sequence number and then restarts
+     * (using higher `opSequence` to ensure progress).
+     * Simple operations that cannot get into the deadlock always return zero here.
+     *
+     * See https://github.com/Kotlin/kotlinx.coroutines/issues/504
+     */
+    open val opSequence: Long get() = 0L
 
-    private fun decide(decision: Any?): Any? = if (tryDecide(decision)) decision else _consensus.value
+    override val atomicOp: AtomicOp<*> get() = this
+
+    fun decide(decision: Any?): Any? {
+        assert { decision !== NO_DECISION }
+        val current = _consensus.value
+        if (current !== NO_DECISION) return current
+        if (_consensus.compareAndSet(NO_DECISION, decision)) return decision
+        return _consensus.value
+    }
 
     abstract fun prepare(affected: T): Any? // `null` if Ok, or failure reason
 
@@ -59,7 +95,7 @@ public abstract class AtomicOp<in T> : OpDescriptor() {
         if (decision === NO_DECISION) {
             decision = decide(prepare(affected as T))
         }
-
+        // complete operation
         complete(affected as T, decision)
         return decision
     }
@@ -71,6 +107,15 @@ public abstract class AtomicOp<in T> : OpDescriptor() {
  * @suppress **This is unstable API and it is subject to change.**
  */
 public abstract class AtomicDesc {
+    lateinit var atomicOp: AtomicOp<*> // the reference to parent atomicOp, init when AtomicOp is created
     abstract fun prepare(op: AtomicOp<*>): Any? // returns `null` if prepared successfully
     abstract fun complete(op: AtomicOp<*>, failure: Any?) // decision == null if success
 }
+
+/**
+ * It is returned as an error by [AtomicOp] implementations when they detect potential deadlock
+ * using [AtomicOp.opSequence] numbers.
+ */
+@JvmField
+@SharedImmutable
+internal val RETRY_ATOMIC: Any = Symbol("RETRY_ATOMIC")

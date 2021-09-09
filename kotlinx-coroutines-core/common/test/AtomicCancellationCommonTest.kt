@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -29,6 +29,38 @@ class AtomicCancellationCommonTest : TestBase() {
         expect(2)
         job.cancel()
         expect(3)
+    }
+
+    @Test
+    fun testUndispatchedLaunch() = runTest {
+        expect(1)
+        assertFailsWith<CancellationException> {
+            withContext(Job()) {
+                cancel()
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    expect(2)
+                    yield()
+                    expectUnreached()
+                }
+            }
+        }
+        finish(3)
+    }
+
+    @Test
+    fun testUndispatchedLaunchWithUnconfinedContext() = runTest {
+        expect(1)
+        assertFailsWith<CancellationException> {
+            withContext(Dispatchers.Unconfined + Job()) {
+                cancel()
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    expect(2)
+                    yield()
+                    expectUnreached()
+                }
+            }
+        }
+        finish(3)
     }
 
     @Test
@@ -87,23 +119,23 @@ class AtomicCancellationCommonTest : TestBase() {
     }
 
     @Test
-    fun testLockAtomicCancel() = runTest {
+    fun testLockCancellable() = runTest {
         expect(1)
         val mutex = Mutex(true) // locked mutex
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             mutex.lock() // suspends
-            expect(4) // should execute despite cancellation
+            expectUnreached() // should NOT execute because of cancellation
         }
         expect(3)
         mutex.unlock() // unlock mutex first
         job.cancel() // cancel the job next
         yield() // now yield
-        finish(5)
+        finish(4)
     }
 
     @Test
-    fun testSelectLockAtomicCancel() = runTest {
+    fun testSelectLockCancellable() = runTest {
         expect(1)
         val mutex = Mutex(true) // locked mutex
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -114,13 +146,12 @@ class AtomicCancellationCommonTest : TestBase() {
                     "OK"
                 }
             }
-            assertEquals("OK", result)
-            expect(5) // should execute despite cancellation
+            expectUnreached() // should NOT execute because of cancellation
         }
         expect(3)
         mutex.unlock() // unlock mutex first
         job.cancel() // cancel the job next
         yield() // now yield
-        finish(6)
+        finish(4)
     }
 }

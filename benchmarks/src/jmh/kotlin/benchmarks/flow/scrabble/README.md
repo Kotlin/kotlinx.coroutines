@@ -27,16 +27,20 @@ The package (split into two sourcesets, `kotlin` and `java`), contains different
      
 ### Results
 
-Benchmark results for throughput mode, Java `1.8.162`.
-Full command: `taskset -c 0,1 java -jar benchmarks.jar -f 2 -jvmArgsPrepend "-XX:+UseParallelGC" .*Scrabble.*`.
+Benchmark results for throughput mode, Java `1.8.0_172` 
+running on `Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz`
+under `Darwin Kernel Version 18.7.0`.
+Full command: `java -jar benchmarks.jar -f 2 -jvmArgsPrepend "-XX:+UseParallelGC" '.*Scrabble.*'`.
 
 ```
-FlowPlaysScrabbleBase.play    avgt   14   94.845 ± 1.345  ms/op
-FlowPlaysScrabbleOpt.play     avgt   14   20.587 ± 0.173  ms/op
+Benchmark                     Mode  Cnt   Score   Error  Units  
 
-RxJava2PlaysScrabble.play     avgt   14  114.253 ± 3.450  ms/op
-RxJava2PlaysScrabbleOpt.play  avgt   14   30.795 ± 0.144  ms/op
+FlowPlaysScrabbleBase.play    avgt   14  62.480 ± 1.018  ms/op
+FlowPlaysScrabbleOpt.play     avgt   14  13.958 ± 0.278  ms/op
 
-SaneFlowPlaysScrabble.play    avgt   14   18.825 ± 0.231  ms/op
-SequencePlaysScrabble.play    avgt   14   13.787 ± 0.111  ms/op
+RxJava2PlaysScrabble.play     avgt   14  88.456 ± 0.950  ms/op
+RxJava2PlaysScrabbleOpt.play  avgt   14  23.653 ± 0.379  ms/op
+
+SaneFlowPlaysScrabble.play    avgt   14  13.608 ± 0.332  ms/op
+SequencePlaysScrabble.play    avgt   14   9.824 ± 0.190  ms/op
 ```

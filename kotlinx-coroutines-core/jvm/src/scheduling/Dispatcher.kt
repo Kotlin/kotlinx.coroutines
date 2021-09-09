@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.scheduling
@@ -14,13 +14,18 @@ import kotlin.coroutines.*
  * Default instance of coroutine dispatcher.
  */
 internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
-    val IO = blocking(systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)))
+    val IO: CoroutineDispatcher = LimitingDispatcher(
+        this,
+        systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)),
+        "Dispatchers.IO",
+        TASK_PROBABLY_BLOCKING
+    )
 
     override fun close() {
-        throw UnsupportedOperationException("$DEFAULT_SCHEDULER_NAME cannot be closed")
+        throw UnsupportedOperationException("$DEFAULT_DISPATCHER_NAME cannot be closed")
     }
 
-    override fun toString(): String = DEFAULT_SCHEDULER_NAME
+    override fun toString(): String = DEFAULT_DISPATCHER_NAME
 
     @InternalCoroutinesApi
     @Suppress("UNUSED")
@@ -32,20 +37,20 @@ internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
  */
 // TODO make internal (and rename) after complete integration
 @InternalCoroutinesApi
-open class ExperimentalCoroutineDispatcher(
+public open class ExperimentalCoroutineDispatcher(
     private val corePoolSize: Int,
     private val maxPoolSize: Int,
     private val idleWorkerKeepAliveNs: Long,
     private val schedulerName: String = "CoroutineScheduler"
 ) : ExecutorCoroutineDispatcher() {
-    constructor(
+    public constructor(
         corePoolSize: Int = CORE_POOL_SIZE,
         maxPoolSize: Int = MAX_POOL_SIZE,
         schedulerName: String = DEFAULT_SCHEDULER_NAME
     ) : this(corePoolSize, maxPoolSize, IDLE_WORKER_KEEP_ALIVE_NS, schedulerName)
 
     @Deprecated(message = "Binary compatibility for Ktor 1.0-beta", level = DeprecationLevel.HIDDEN)
-    constructor(
+    public constructor(
         corePoolSize: Int = CORE_POOL_SIZE,
         maxPoolSize: Int = MAX_POOL_SIZE
     ) : this(corePoolSize, maxPoolSize, IDLE_WORKER_KEEP_ALIVE_NS)
@@ -60,17 +65,21 @@ open class ExperimentalCoroutineDispatcher(
         try {
             coroutineScheduler.dispatch(block)
         } catch (e: RejectedExecutionException) {
+            // CoroutineScheduler only rejects execution when it is being closed and this behavior is reserved
+            // for testing purposes, so we don't have to worry about cancelling the affected Job here.
             DefaultExecutor.dispatch(context, block)
         }
 
     override fun dispatchYield(context: CoroutineContext, block: Runnable): Unit =
         try {
-            coroutineScheduler.dispatch(block, fair = true)
+            coroutineScheduler.dispatch(block, tailDispatch = true)
         } catch (e: RejectedExecutionException) {
+            // CoroutineScheduler only rejects execution when it is being closed and this behavior is reserved
+            // for testing purposes, so we don't have to worry about cancelling the affected Job here.
             DefaultExecutor.dispatchYield(context, block)
         }
 
-    override fun close() = coroutineScheduler.close()
+    override fun close(): Unit = coroutineScheduler.close()
 
     override fun toString(): String {
         return "${super.toString()}[scheduler = $coroutineScheduler]"
@@ -85,7 +94,7 @@ open class ExperimentalCoroutineDispatcher(
      */
     public fun blocking(parallelism: Int = BLOCKING_DEFAULT_PARALLELISM): CoroutineDispatcher {
         require(parallelism > 0) { "Expected positive parallelism level, but have $parallelism" }
-        return LimitingDispatcher(this, parallelism, TaskMode.PROBABLY_BLOCKING)
+        return LimitingDispatcher(this, parallelism, null, TASK_PROBABLY_BLOCKING)
     }
 
     /**
@@ -98,14 +107,16 @@ open class ExperimentalCoroutineDispatcher(
     public fun limited(parallelism: Int): CoroutineDispatcher {
         require(parallelism > 0) { "Expected positive parallelism level, but have $parallelism" }
         require(parallelism <= corePoolSize) { "Expected parallelism level lesser than core pool size ($corePoolSize), but have $parallelism" }
-        return LimitingDispatcher(this, parallelism, TaskMode.NON_BLOCKING)
+        return LimitingDispatcher(this, parallelism, null, TASK_NON_BLOCKING)
     }
 
-    internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean) {
+    internal fun dispatchWithContext(block: Runnable, context: TaskContext, tailDispatch: Boolean) {
         try {
-            coroutineScheduler.dispatch(block, context, fair)
+            coroutineScheduler.dispatch(block, context, tailDispatch)
         } catch (e: RejectedExecutionException) {
-            // Context shouldn't be lost here to properly invoke before/after task
+            // CoroutineScheduler only rejects execution when it is being closed and this behavior is reserved
+            // for testing purposes, so we don't have to worry about cancelling the affected Job here.
+            // TaskContext shouldn't be lost here to properly invoke before/after task
             DefaultExecutor.enqueue(coroutineScheduler.createTask(block, context))
         }
     }
@@ -130,9 +141,10 @@ open class ExperimentalCoroutineDispatcher(
 }
 
 private class LimitingDispatcher(
-    val dispatcher: ExperimentalCoroutineDispatcher,
-    val parallelism: Int,
-    override val taskMode: TaskMode
+    private val dispatcher: ExperimentalCoroutineDispatcher,
+    private val parallelism: Int,
+    private val name: String?,
+    override val taskMode: Int
 ) : ExecutorCoroutineDispatcher(), TaskContext, Executor {
 
     private val queue = ConcurrentLinkedQueue<Runnable>()
@@ -147,7 +159,7 @@ private class LimitingDispatcher(
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = dispatch(block, false)
 
-    private fun dispatch(block: Runnable, fair: Boolean) {
+    private fun dispatch(block: Runnable, tailDispatch: Boolean) {
         var taskToSchedule = block
         while (true) {
             // Commit in-flight tasks slot
@@ -155,7 +167,7 @@ private class LimitingDispatcher(
 
             // Fast path, if parallelism limit is not reached, dispatch task and return
             if (inFlight <= parallelism) {
-                dispatcher.dispatchWithContext(taskToSchedule, this, fair)
+                dispatcher.dispatchWithContext(taskToSchedule, this, tailDispatch)
                 return
             }
 
@@ -185,8 +197,12 @@ private class LimitingDispatcher(
         }
     }
 
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+        dispatch(block, tailDispatch = true)
+    }
+
     override fun toString(): String {
-        return "${super.toString()}[dispatcher = $dispatcher]"
+        return name ?: "${super.toString()}[dispatcher = $dispatcher]"
     }
 
     /**

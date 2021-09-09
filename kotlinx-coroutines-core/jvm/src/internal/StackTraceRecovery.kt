@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("UNCHECKED_CAST")
@@ -7,6 +7,8 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
+import _COROUTINE.ARTIFICIAL_FRAME_PACKAGE_NAME
+import _COROUTINE.ArtificialStackFrames
 import java.util.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -17,6 +19,8 @@ import kotlin.coroutines.intrinsics.*
  */
 private const val baseContinuationImplClass = "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
 private const val stackTraceRecoveryClass = "kotlinx.coroutines.internal.StackTraceRecoveryKt"
+
+private val ARTIFICIAL_FRAME = ArtificialStackFrames().coroutineBoundary()
 
 private val baseContinuationImplClassName = runCatching {
     Class.forName(baseContinuationImplClass).canonicalName
@@ -42,7 +46,7 @@ private fun <E : Throwable> E.sanitizeStackTrace(): E {
     val adjustment = if (endIndex == -1) 0 else size - endIndex
     val trace = Array(size - lastIntrinsic - adjustment) {
         if (it == 0) {
-            artificialFrame("Coroutine boundary")
+            ARTIFICIAL_FRAME
         } else {
             stackTrace[startIndex + it - 1]
         }
@@ -52,7 +56,8 @@ private fun <E : Throwable> E.sanitizeStackTrace(): E {
     return this
 }
 
-internal actual fun <E : Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E {
+@Suppress("NOTHING_TO_INLINE") // Inline for better R8 optimization
+internal actual inline fun <E : Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E {
     if (!RECOVER_STACK_TRACES || continuation !is CoroutineStackFrame) return exception
     return recoverFromStackFrame(exception, continuation)
 }
@@ -66,14 +71,15 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
 
     // Try to create an exception of the same type and get stacktrace from continuation
     val newException = tryCopyException(cause) ?: return exception
+    // Verify that the new exception has the same message as the original one (bail out if not, see #1631)
+    if (newException.message != cause.message) return exception
+    // Update stacktrace
     val stacktrace = createStackTrace(continuation)
     if (stacktrace.isEmpty()) return exception
-
     // Merge if necessary
     if (cause !== exception) {
         mergeRecoveredTraces(recoveredStacktrace, stacktrace)
     }
-
     // Take recovered stacktrace, merge it with existing one if necessary and return
     return createFinalException(cause, newException, stacktrace)
 }
@@ -89,13 +95,13 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
  * IllegalStateException
  *   at foo
  *   at kotlin.coroutines.resumeWith
- *   (Coroutine boundary)
+ *   at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
  *   at bar
  *   ...real stackTrace...
  * caused by "IllegalStateException" (original one)
  */
 private fun <E : Throwable> createFinalException(cause: E, result: E, resultStackTrace: ArrayDeque<StackTraceElement>): E {
-    resultStackTrace.addFirst(artificialFrame("Coroutine boundary"))
+    resultStackTrace.addFirst(ARTIFICIAL_FRAME)
     val causeTrace = cause.stackTrace
     val size = causeTrace.frameIndex(baseContinuationImplClassName)
     if (size == -1) {
@@ -154,8 +160,11 @@ internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothin
     }
 }
 
-internal actual fun <E : Throwable> unwrap(exception: E): E {
-    if (!RECOVER_STACK_TRACES) return exception
+@Suppress("NOTHING_TO_INLINE") // Inline for better R8 optimizations
+internal actual inline fun <E : Throwable> unwrap(exception: E): E =
+    if (!RECOVER_STACK_TRACES) exception else unwrapImpl(exception)
+
+internal fun <E : Throwable> unwrapImpl(exception: E): E {
     val cause = exception.cause
     // Fast-path to avoid array cloning
     if (cause == null || cause.javaClass != exception.javaClass) {
@@ -182,12 +191,7 @@ private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<Stac
     return stack
 }
 
-/**
- * @suppress
- */
-@InternalCoroutinesApi
-public fun artificialFrame(message: String) = java.lang.StackTraceElement("\b\b\b($message", "\b", "\b", -1)
-internal fun StackTraceElement.isArtificial() = className.startsWith("\b\b\b")
+internal fun StackTraceElement.isArtificial() = className.startsWith(ARTIFICIAL_FRAME_PACKAGE_NAME)
 private fun Array<StackTraceElement>.frameIndex(methodName: String) = indexOfFirst { methodName == it.className }
 
 private fun StackTraceElement.elementWiseEquals(e: StackTraceElement): Boolean {
@@ -204,3 +208,8 @@ internal actual typealias CoroutineStackFrame = kotlin.coroutines.jvm.internal.C
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias StackTraceElement = java.lang.StackTraceElement
+
+internal actual fun Throwable.initCause(cause: Throwable) {
+    // Resolved to member, verified by test
+    initCause(cause)
+}

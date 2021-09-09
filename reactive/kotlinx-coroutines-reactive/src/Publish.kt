@@ -1,9 +1,6 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
@@ -13,21 +10,18 @@ import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
-import kotlin.internal.LowPriorityInOverloadResolution
+import kotlin.internal.*
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
- * Every time the returned publisher is subscribed, it starts a new coroutine.
- * Coroutine emits items with `send`. Unsubscribing cancels running coroutine.
+ * Every time the returned flux is subscribed, it starts a new coroutine in the specified [context].
+ * Coroutine emits ([Subscriber.onNext]) values with `send`, completes ([Subscriber.onComplete])
+ * when the coroutine completes or channel is explicitly closed and emits error ([Subscriber.onError])
+ * if coroutine throws an exception or closes channel with a cause.
+ * Unsubscribing cancels running coroutine.
  *
  * Invocations of `send` are suspended appropriately when subscribers apply back-pressure and to ensure that
  * `onNext` is not invoked concurrently.
- *
- * | **Coroutine action**                         | **Signal to subscriber**
- * | -------------------------------------------- | ------------------------
- * | `send`                                       | `onNext`
- * | Normal completion or `close` without cause   | `onComplete`
- * | Failure with exception or `close` with cause | `onError`
  *
  * Coroutine context can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
@@ -43,69 +37,59 @@ public fun <T> publish(
 ): Publisher<T> {
     require(context[Job] === null) { "Publisher context cannot contain job in it." +
             "Its lifecycle should be managed via subscription. Had $context" }
-    return publishInternal(GlobalScope, context, block)
+    return publishInternal(GlobalScope, context, DEFAULT_HANDLER, block)
 }
-
-@Deprecated(
-    message = "CoroutineScope.publish is deprecated in favour of top-level publish",
-    level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("publish(context, block)")
-) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
-@LowPriorityInOverloadResolution
-public fun <T> CoroutineScope.publish(
-    context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> = publishInternal(this, context, block)
 
 /** @suppress For internal use from other reactive integration modules only */
 @InternalCoroutinesApi
 public fun <T> publishInternal(
     scope: CoroutineScope, // support for legacy publish in scope
     context: CoroutineContext,
+    exceptionOnCancelHandler: (Throwable, CoroutineContext) -> Unit,
     block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
     // specification requires NPE on null subscriber
     if (subscriber == null) throw NullPointerException("Subscriber cannot be null")
     val newContext = scope.newCoroutineContext(context)
-    val coroutine = PublisherCoroutine(newContext, subscriber)
+    val coroutine = PublisherCoroutine(newContext, subscriber, exceptionOnCancelHandler)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
+private val DEFAULT_HANDLER: (Throwable, CoroutineContext) -> Unit = { t, ctx -> if (t !is CancellationException) handleCoroutineException(ctx, t) }
 
 @Suppress("CONFLICTING_JVM_DECLARATIONS", "RETURN_TYPE_MISMATCH_ON_INHERITANCE")
 @InternalCoroutinesApi
 public class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
-    private val subscriber: Subscriber<T>
-) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
+    private val subscriber: Subscriber<T>,
+    private val exceptionOnCancelHandler: (Throwable, CoroutineContext) -> Unit
+) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
     private val mutex = Mutex(locked = true)
-
     private val _nRequested = atomic(0L) // < 0 when closed (CLOSED or SIGNALLED)
 
     @Volatile
     private var cancelled = false // true when Subscription.cancel() is invoked
 
     override val isClosedForSend: Boolean get() = isCompleted
-    override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
-    override fun invokeOnClose(handler: (Throwable?) -> Unit) =
+    override fun invokeOnClose(handler: (Throwable?) -> Unit): Nothing =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
 
-    override fun offer(element: T): Boolean {
-        if (!mutex.tryLock()) return false
+    override fun trySend(element: T): ChannelResult<Unit> {
+        if (!mutex.tryLock()) return ChannelResult.failure()
         doLockedNext(element)
-        return true
+        return ChannelResult.success(Unit)
     }
 
     public override suspend fun send(element: T) {
         // fast-path -- try send without suspension
-        if (offer(element)) return
+        if (trySend(element).isSuccess) return
         // slow-path does suspend
         return sendSuspend(element)
     }
@@ -198,7 +182,7 @@ public class PublisherCoroutine<in T>(
                 // Specification requires that after cancellation requested we don't call onXXX
                 if (cancelled) {
                     // If the parent had failed to handle our exception, then we must not lose this exception
-                    if (cause != null && !handled) handleCoroutineException(context, cause)
+                    if (cause != null && !handled) exceptionOnCancelHandler(cause, context)
                     return
                 }
 
@@ -217,7 +201,7 @@ public class PublisherCoroutine<in T>(
                          */
                         subscriber.onError(cause)
                         if (!handled && cause.isFatal()) {
-                            handleCoroutineException(context, cause)
+                            exceptionOnCancelHandler(cause, context)
                         }
                     } else {
                         subscriber.onComplete()
@@ -290,3 +274,13 @@ public class PublisherCoroutine<in T>(
 
     private fun Throwable.isFatal() = this is VirtualMachineError || this is ThreadDeath || this is LinkageError
 }
+
+@Deprecated(
+    message = "CoroutineScope.publish is deprecated in favour of top-level publish",
+    level = DeprecationLevel.HIDDEN,
+    replaceWith = ReplaceWith("publish(context, block)")
+) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
+public fun <T> CoroutineScope.publish(
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> = publishInternal(this, context, DEFAULT_HANDLER, block)

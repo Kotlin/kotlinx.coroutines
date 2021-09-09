@@ -44,7 +44,7 @@ class TransformLatestTest : TestBase() {
     }
 
     @Test
-    fun testSwitchRendevouzBuffer() = runTest {
+    fun testSwitchRendezvousBuffer() = runTest {
         val flow = flowOf(1, 2, 3, 4, 5)
         flow.transformLatest {
             emit(it)
@@ -155,18 +155,6 @@ class TransformLatestTest : TestBase() {
     @Test
     fun testTake() = runTest {
         val flow = flowOf(1, 2, 3, 4, 5).transformLatest { emit(it) }
-        assertEquals(listOf(1), flow.take(1).toList())
-    }
-
-    @Test
-    @Ignore // TODO separate branch and/or discuss
-    fun testTakeUpstreamCancellation() = runTest {
-        val flow = flow {
-            emit(1)
-            expectUnreached()
-            emit(2)
-            emit(3)
-        }.transformLatest { emit(it) }
         assertEquals(listOf(1), flow.take(1).toList())
     }
 }

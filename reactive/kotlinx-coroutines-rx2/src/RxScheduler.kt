@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.rx2
@@ -17,7 +17,6 @@ public fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = Sch
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary [Scheduler].
- * @param scheduler a scheduler.
  */
 public class SchedulerCoroutineDispatcher(
     /**
@@ -39,7 +38,7 @@ public class SchedulerCoroutineDispatcher(
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val disposable = scheduler.scheduleDirect(block, timeMillis, TimeUnit.MILLISECONDS)
         return DisposableHandle { disposable.dispose() }
     }

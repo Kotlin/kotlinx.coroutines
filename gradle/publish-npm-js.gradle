@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 def prop(name, defVal) {
@@ -14,11 +14,15 @@ def distTag(version) {
     return "latest"
 }
 
-def npmTemplateDir = file("$projectDir/js/npm")
+def npmTemplateDir = file("$projectDir/npm")
 def npmDeployDir = file("$buildDir/npm")
 
 def authToken = prop("kotlin.npmjs.auth.token", "")
 def dryRun = prop("dryRun", "false")
+
+def jsLegacy = kotlin.targets.hasProperty("jsLegacy")
+        ? kotlin.targets.jsLegacy
+        : kotlin.targets.js
 
 // Note: publish transformed files using dependency on sourceSets.main.output
 task preparePublishNpm(type: Copy) {
@@ -30,7 +34,7 @@ task preparePublishNpm(type: Copy) {
         }
     }
     // we must publish output that is transformed by atomicfu
-    from(kotlin.targets.js.compilations.main.output.allOutputs)
+    from(jsLegacy.compilations.main.output.allOutputs)
     into npmDeployDir
 }
 

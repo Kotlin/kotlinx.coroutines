@@ -6,11 +6,9 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.*
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsNot
-import org.junit.Assert.assertThat
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.*
 
 class SchedulerTest : TestBase() {
     @Before
@@ -24,11 +22,11 @@ class SchedulerTest : TestBase() {
         val mainThread = Thread.currentThread()
         withContext(Schedulers.io().asCoroutineDispatcher()) {
             val t1 = Thread.currentThread()
-            assertThat(t1, IsNot(IsEqual(mainThread)))
+            assertNotSame(t1, mainThread)
             expect(2)
             delay(100)
             val t2 = Thread.currentThread()
-            assertThat(t2, IsNot(IsEqual(mainThread)))
+            assertNotSame(t2, mainThread)
             expect(3)
         }
         finish(4)

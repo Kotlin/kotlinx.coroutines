@@ -1,10 +1,12 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 private fun takeEventLoop(): EventLoopImpl =
     ThreadLocalEventLoop.currentOrNull() as? EventLoopImpl ?:
@@ -15,8 +17,8 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
         takeEventLoop().dispatch(context, block)
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
         takeEventLoop().scheduleResumeAfterDelay(timeMillis, continuation)
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
-        takeEventLoop().invokeOnTimeout(timeMillis, block)
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        takeEventLoop().invokeOnTimeout(timeMillis, block, context)
 
     actual fun enqueue(task: Runnable): Unit = loopWasShutDown()
 }
@@ -26,6 +28,7 @@ internal fun loopWasShutDown(): Nothing = error("Cannot execute task because eve
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
     DefaultExecutor
 
+@SharedImmutable
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
@@ -36,5 +39,13 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 
 // No debugging facilities on native
 internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T = block()
+internal actual inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T = block()
 internal actual fun Continuation<*>.toDebugString(): String = toString()
 internal actual val CoroutineContext.coroutineName: String? get() = null // not supported on native
+
+internal actual class UndispatchedCoroutine<in T> actual constructor(
+    context: CoroutineContext,
+    uCont: Continuation<T>
+) : ScopeCoroutine<T>(context, uCont) {
+    override fun afterResume(state: Any?) = uCont.resumeWith(recoverResult(state, uCont))
+}

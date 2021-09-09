@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
@@ -306,7 +306,7 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectReceiveOrClosedWaitClosed() = runTest {
+    fun testSelectReceiveCatchingWaitClosed() = runTest {
         expect(1)
         val channel = Channel<String>(Channel.RENDEZVOUS)
         launch {
@@ -316,10 +316,10 @@ class SelectRendezvousChannelTest : TestBase() {
         }
         expect(2)
         select<Unit> {
-            channel.onReceiveOrClosed {
+            channel.onReceiveCatching {
                 expect(5)
                 assertTrue(it.isClosed)
-                assertNull(it.closeCause)
+                assertNull(it.exceptionOrNull())
             }
         }
 
@@ -327,7 +327,7 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectReceiveOrClosedWaitClosedWithCause() = runTest {
+    fun testSelectReceiveCatchingWaitClosedWithCause() = runTest {
         expect(1)
         val channel = Channel<String>(Channel.RENDEZVOUS)
         launch {
@@ -337,10 +337,10 @@ class SelectRendezvousChannelTest : TestBase() {
         }
         expect(2)
         select<Unit> {
-            channel.onReceiveOrClosed {
+            channel.onReceiveCatching {
                 expect(5)
                 assertTrue(it.isClosed)
-                assertTrue(it.closeCause is TestException)
+                assertTrue(it.exceptionOrNull() is TestException)
             }
         }
 
@@ -348,16 +348,31 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectReceiveOrClosed() = runTest {
+    fun testSelectReceiveCatchingForClosedChannel() = runTest {
+        val channel = Channel<Unit>()
+        channel.close()
+        expect(1)
+        select<Unit> {
+            expect(2)
+            channel.onReceiveCatching {
+                assertTrue(it.isClosed)
+                assertNull(it.exceptionOrNull())
+                finish(3)
+            }
+        }
+    }
+
+    @Test
+    fun testSelectReceiveCatching() = runTest {
         val channel = Channel<Int>(Channel.RENDEZVOUS)
         val iterations = 10
         expect(1)
         val job = launch {
             repeat(iterations) {
                 select<Unit> {
-                    channel.onReceiveOrClosed { v ->
+                    channel.onReceiveCatching { v ->
                         expect(4 + it * 2)
-                        assertEquals(it, v.value)
+                        assertEquals(it, v.getOrThrow())
                     }
                 }
             }
@@ -375,15 +390,15 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectReceiveOrClosedDispatch() = runTest {
+    fun testSelectReceiveCatchingDispatch() = runTest {
         val c = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(3)
             val res = select<String> {
-                c.onReceiveOrClosed { v ->
+                c.onReceiveCatching { v ->
                     expect(6)
-                    assertEquals(42, v.value)
+                    assertEquals(42, v.getOrThrow())
                     yield() // back to main
                     expect(8)
                     "OK"
@@ -429,7 +444,41 @@ class SelectRendezvousChannelTest : TestBase() {
     // only for debugging
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion
-        if (!trySelect(null)) return
+        if (!trySelect()) return
         block.startCoroutineUnintercepted(this)
+    }
+
+    @Test
+    fun testSelectSendAndReceive() = runTest {
+        val c = Channel<Int>()
+        assertFailsWith<IllegalStateException> {
+            select<Unit> {
+                c.onSend(1) { expectUnreached() }
+                c.onReceive { expectUnreached() }
+            }
+        }
+        checkNotBroken(c)
+    }
+
+    @Test
+    fun testSelectReceiveAndSend() = runTest {
+        val c = Channel<Int>()
+        assertFailsWith<IllegalStateException> {
+            select<Unit> {
+                c.onReceive { expectUnreached() }
+                c.onSend(1) { expectUnreached() }
+            }
+        }
+        checkNotBroken(c)
+    }
+
+    // makes sure the channel is not broken
+    private suspend fun checkNotBroken(c: Channel<Int>) {
+        coroutineScope {
+            launch {
+                c.send(42)
+            }
+            assertEquals(42, c.receive())
+        }
     }
 }

@@ -1,8 +1,10 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
+
+import kotlinx.coroutines.internal.*
 
 /**
  * Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
@@ -13,7 +15,7 @@ package kotlinx.coroutines.channels
  *
  * This implementation is fully lock-free.
  **/
-internal open class RendezvousChannel<E> : AbstractChannel<E>() {
+internal open class RendezvousChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = true

@@ -1,10 +1,11 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -23,7 +24,7 @@ class ProduceTest : TestBase() {
         expect(4)
         check(c.receive() == 2)
         expect(5)
-        check(c.receiveOrNull() == null)
+        assertNull(c.receiveCatching().getOrNull())
         finish(7)
     }
 
@@ -48,7 +49,7 @@ class ProduceTest : TestBase() {
         expect(4)
         c.cancel()
         expect(5)
-        assertFailsWith<CancellationException> { c.receiveOrNull() }
+        assertFailsWith<CancellationException> { c.receiveCatching().getOrThrow() }
         expect(6)
         yield() // to produce
         finish(8)
@@ -75,7 +76,7 @@ class ProduceTest : TestBase() {
         expect(4)
         c.cancel(TestCancellationException())
         try {
-            assertNull(c.receiveOrNull())
+            c.receive()
             expectUnreached()
         } catch (e: TestCancellationException) {
             expect(5)
@@ -92,6 +93,27 @@ class ProduceTest : TestBase() {
     @Test
     fun testCancelOnCompletion() = runTest {
         cancelOnCompletion(coroutineContext)
+    }
+
+    @Test
+    fun testCancelWhenTheChannelIsClosed() = runTest {
+        val channel = produce<Int> {
+            send(1)
+            close()
+            expect(2)
+            launch {
+                expect(3)
+                hang { expect(5) }
+            }
+        }
+
+        expect(1)
+        channel.receive()
+        yield()
+        expect(4)
+        channel.cancel()
+        (channel as Job).join()
+        finish(6)
     }
 
     @Test
@@ -143,15 +165,26 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testAwaitIllegalState() = runTest {
-        val channel = produce<Int> {  }
-        @Suppress("RemoveExplicitTypeArguments") // KT-31525
+        val channel = produce<Int> { }
         assertFailsWith<IllegalStateException> { (channel as ProducerScope<*>).awaitClose() }
+        callbackFlow<Unit> {
+            expect(1)
+            launch {
+                expect(2)
+                assertFailsWith<IllegalStateException> {
+                    awaitClose { expectUnreached() }
+                    expectUnreached()
+                }
+            }
+            close()
+        }.collect()
+        finish(3)
     }
 
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
         val source = Channel<Int>()
         expect(1)
-        val produced = produce<Int>(coroutineContext, onCompletion = source.consumes()) {
+        val produced = produce<Int>(coroutineContext, onCompletion = { source.cancelConsumed(it) }) {
             expect(2)
             source.receive()
         }

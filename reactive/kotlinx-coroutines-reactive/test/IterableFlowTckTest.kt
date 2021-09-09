@@ -8,16 +8,18 @@ package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.flow.*
 import org.junit.*
+import org.junit.Ignore
+import org.junit.Test
 import org.reactivestreams.*
 import org.reactivestreams.tck.*
 
-import org.junit.Assert.*
 import org.reactivestreams.Subscription
 import org.reactivestreams.Subscriber
 import java.util.ArrayList
 import java.util.concurrent.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ForkJoinPool.commonPool
+import kotlin.test.*
 
 class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
 

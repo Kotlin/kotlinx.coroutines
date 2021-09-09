@@ -1,9 +1,9 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.channel10
+// This file was automatically generated from channels.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleChannel10
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -11,9 +11,9 @@ import kotlinx.coroutines.channels.*
 fun main() = runBlocking<Unit> {
     val tickerChannel = ticker(delayMillis = 100, initialDelayMillis = 0) // create ticker channel
     var nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
-    println("Initial element is available immediately: $nextElement") // initial delay hasn't passed yet
+    println("Initial element is available immediately: $nextElement") // no initial delay
 
-    nextElement = withTimeoutOrNull(50) { tickerChannel.receive() } // all subsequent elements has 100ms delay
+    nextElement = withTimeoutOrNull(50) { tickerChannel.receive() } // all subsequent elements have 100ms delay
     println("Next element is not ready in 50 ms: $nextElement")
 
     nextElement = withTimeoutOrNull(60) { tickerChannel.receive() }

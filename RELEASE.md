@@ -12,21 +12,23 @@ To release new `<version>` of `kotlinx-coroutines`:
    `git merge origin/master`   
 
 4. Search & replace `<old-version>` with `<version>` across the project files. Should replace in:
-   * [`README.md`](README.md) (native, core, test, debug, modules)
-   * [`coroutines-guide.md`](docs/coroutines-guide.md)
-   * [`gradle.properties`](gradle.properties)
-   * [`ui/kotlinx-coroutines-android/example-app/gradle.properties`](ui/kotlinx-coroutines-android/example-app/gradle.properties)    
-   * [`ui/kotlinx-coroutines-android/animation-app/gradle.properties`](ui/kotlinx-coroutines-android/animation-app/gradle.properties)    
+   * Docs
+     * [`README.md`](README.md) (native, core, test, debug, modules)
+     * [`kotlinx-coroutines-debug/README.md`](kotlinx-coroutines-debug/README.md)
+     * [`kotlinx-coroutines-test/README.md`](kotlinx-coroutines-test/README.md)
+     * [`coroutines-guide-ui.md`](ui/coroutines-guide-ui.md)
+   * Properties   
+     * [`gradle.properties`](gradle.properties)  
    * Make sure to **exclude** `CHANGES.md` from replacements.
    
-   As an alternative approach you can use `./bump_version.sh old_version new_version`
+   As an alternative approach you can use `./bump-version.sh old_version new_version`
   
 5. Write release notes in [`CHANGES.md`](CHANGES.md):
    * Use old releases as example of style.
    * Write each change on a single line (don't wrap with CR).
    * Study commit message from previous release.
 
-6. Create branch for this release:
+6. Create the branch for this release:
    `git checkout -b version-<version>`
 
 7. Commit updated files to a new version branch:<br>
@@ -53,28 +55,24 @@ To release new `<version>` of `kotlinx-coroutines`:
    * Create a release named `<version>`. 
    * Cut & paste lines from [`CHANGES.md`](CHANGES.md) into description.    
 
-3. Build and publish documentation for web-site: <br>
+3. Build and publish documentation for web-site
+   (make sure you have [Docker](https://www.docker.com/) installed first): <br>
    `site/deploy.sh <version> push`
    
-4. In [Bintray](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) admin interface:
-   * Publish artifacts of the new version.
-   * Wait until newly published version becomes the most recent.
-   * Sync to Maven Central.
+4. In [Nexus](https://oss.sonatype.org/#stagingRepositories) admin interface:
+   * Close the repository and wait for it to verify.
+   * Release the repository.
    
 5. Announce new release in [Slack](https://kotlinlang.slack.com)   
 
-6. Create a ticket to update coroutines version on [try.kotlinlang.org](try.kotlinlang.org).
-   * Use [KT-30870](https://youtrack.jetbrains.com/issue/KT-30870) as a template
-   * This step should be skipped for eap versions that are not merged to `master`
-
-7. Switch into `develop` branch:<br>
+6. Switch into `develop` branch:<br>
    `git checkout develop`
  
-8. Fetch the latest `master`:<br>
+7. Fetch the latest `master`:<br>
    `git fetch` 
    
-9. Merge release from `master`:<br>
+8. Merge release from `master`:<br>
    `git merge origin/master`
    
-10. Push updates to `develop`:<br>
+9. Push updates to `develop`:<br>
    `git push`      

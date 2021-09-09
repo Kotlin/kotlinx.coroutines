@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -27,7 +27,7 @@ import kotlin.jvm.*
  *     .collect() // trigger collection of the flow
  * ```
  */
-public suspend fun Flow<*>.collect() = collect(NopCollector)
+public suspend fun Flow<*>.collect(): Unit = collect(NopCollector)
 
 /**
  * Terminal flow operator that [launches][launch] the [collection][collect] of the given flow in the [scope].
@@ -46,7 +46,6 @@ public suspend fun Flow<*>.collect() = collect(NopCollector)
  *
  * Note that resulting value of [launchIn] is not used the provided scope takes care of cancellation.
  */
-@ExperimentalCoroutinesApi // tentatively stable in 1.3.0
 public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
     collect() // tail-call
 }
@@ -80,7 +79,6 @@ public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value
  *
  * See also [collect] and [withIndex].
  */
-@ExperimentalCoroutinesApi
 public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend (index: Int, value: T) -> Unit): Unit =
     collect(object : FlowCollector<T> {
         private var index = 0
@@ -89,8 +87,8 @@ public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend
 
 /**
  * Terminal flow operator that collects the given flow with a provided [action].
- * The crucial difference from [collect] is that when the original flow emits a new value, [action] block for previous
- * value is cancelled.
+ * The crucial difference from [collect] is that when the original flow emits a new value
+ * then the [action] block for the previous value is cancelled.
  *
  * It can be demonstrated by the following example:
  *
@@ -108,7 +106,6 @@ public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend
  *
  * prints "Collecting 1, Collecting 2, 2 collected"
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit) {
     /*
      * Implementation note:
@@ -130,5 +127,5 @@ public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit)
  * Collects all the values from the given [flow] and emits them to the collector.
  * It is a shorthand for `flow.collect { value -> emit(value) }`.
  */
-@ExperimentalCoroutinesApi
-public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) = flow.collect(this)
+@BuilderInference
+public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>): Unit = flow.collect(this)

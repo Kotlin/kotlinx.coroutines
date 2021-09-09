@@ -1,12 +1,11 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlin.coroutines.*
-import kotlin.jvm.*
 
 /**
  * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values
@@ -19,6 +18,8 @@ import kotlin.jvm.*
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  */
 public suspend fun <T> awaitAll(vararg deferreds: Deferred<T>): List<T> =
     if (deferreds.isEmpty()) emptyList() else AwaitAll(deferreds).await()
@@ -34,6 +35,8 @@ public suspend fun <T> awaitAll(vararg deferreds: Deferred<T>): List<T> =
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  */
 public suspend fun <T> Collection<Deferred<T>>.awaitAll(): List<T> =
     if (isEmpty()) emptyList() else AwaitAll(toTypedArray()).await()
@@ -42,8 +45,11 @@ public suspend fun <T> Collection<Deferred<T>>.awaitAll(): List<T> =
  * Suspends current coroutine until all given jobs are complete.
  * This method is semantically equivalent to joining all given jobs one by one with `jobs.forEach { it.join() }`.
  *
- * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  */
 public suspend fun joinAll(vararg jobs: Job): Unit = jobs.forEach { it.join() }
 
@@ -51,8 +57,11 @@ public suspend fun joinAll(vararg jobs: Job): Unit = jobs.forEach { it.join() }
  * Suspends current coroutine until all given jobs are complete.
  * This method is semantically equivalent to joining all given jobs one by one with `forEach { it.join() }`.
  *
- * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  */
 public suspend fun Collection<Job>.joinAll(): Unit = forEach { it.join() }
 
@@ -62,17 +71,17 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
     suspend fun await(): List<T> = suspendCancellableCoroutine { cont ->
         // Intricate dance here
         // Step 1: Create nodes and install them as completion handlers, they may fire!
-        val nodes = Array<AwaitAllNode>(deferreds.size) { i ->
+        val nodes = Array(deferreds.size) { i ->
             val deferred = deferreds[i]
             deferred.start() // To properly await lazily started deferreds
-            AwaitAllNode(cont, deferred).apply {
+            AwaitAllNode(cont).apply {
                 handle = deferred.invokeOnCompletion(asHandler)
             }
         }
         val disposer = DisposeHandlersOnCancel(nodes)
         // Step 2: Set disposer to each node
         nodes.forEach { it.disposer = disposer }
-        // Here we know that if any code the nodes complete, it will dipsose the rest
+        // Here we know that if any code the nodes complete, it will dispose the rest
         // Step 3: Now we can check if continuation is complete
         if (cont.isCompleted) {
             // it is already complete while handlers were being installed -- dispose them all
@@ -91,11 +100,13 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
         override fun toString(): String = "DisposeHandlersOnCancel[$nodes]"
     }
 
-    private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>, job: Job) : JobNode<Job>(job) {
+    private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>) : JobNode() {
         lateinit var handle: DisposableHandle
 
-        @Volatile
-        var disposer: DisposeHandlersOnCancel? = null
+        private val _disposer = atomic<DisposeHandlersOnCancel?>(null)
+        var disposer: DisposeHandlersOnCancel?
+            get() = _disposer.value
+            set(value) { _disposer.value = value }
         
         override fun invoke(cause: Throwable?) {
             if (cause != null) {
@@ -103,9 +114,8 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
                 if (token != null) {
                     continuation.completeResume(token)
                     // volatile read of disposer AFTER continuation is complete
-                    val disposer = this.disposer
                     // and if disposer was already set (all handlers where already installed, then dispose them all)
-                    if (disposer != null) disposer.disposeAll()
+                    disposer?.disposeAll()
                 }
             } else if (notCompletedCount.decrementAndGet() == 0) {
                 continuation.resume(deferreds.map { it.getCompleted() })

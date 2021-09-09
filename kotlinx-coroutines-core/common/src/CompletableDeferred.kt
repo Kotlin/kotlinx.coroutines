@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("DEPRECATION_ERROR")
 
@@ -16,8 +16,11 @@ import kotlinx.coroutines.selects.*
  *
  * An instance of completable deferred can be created by `CompletableDeferred()` function in _active_ state.
  *
- * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
+ * All functions on this interface are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
+ *
+ * **The `CompletableDeferred` interface is not stable for inheritance in 3rd party libraries**,
+ * as new methods might be added to this interface in the future, but is stable for use.
  */
 public interface CompletableDeferred<T> : Deferred<T> {
     /**
@@ -46,6 +49,18 @@ public interface CompletableDeferred<T> : Deferred<T> {
 }
 
 /**
+ * Completes this deferred value with the value or exception in the given [result]. Returns `true` if this deferred
+ * was completed as a result of this invocation and `false` otherwise (if it was already completed).
+ *
+ * Subsequent invocations of this function have no effect and always produce `false`.
+ *
+ * This function transitions this deferred in the same ways described by [CompletableDeferred.complete] and
+ * [CompletableDeferred.completeExceptionally].
+ */
+public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>): Boolean =
+    result.fold({ complete(it) }, { completeExceptionally(it) })
+
+/**
  * Creates a [CompletableDeferred] in an _active_ state.
  * It is optionally a child of a [parent] job.
  */
@@ -65,7 +80,7 @@ public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = Completab
 private class CompletableDeferredImpl<T>(
     parent: Job?
 ) : JobSupport(true), CompletableDeferred<T>, SelectClause1<T> {
-    init { initParentJobInternal(parent) }
+    init { initParentJob(parent) }
     override val onCancelComplete get() = true
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T

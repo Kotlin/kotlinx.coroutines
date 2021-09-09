@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -19,14 +19,14 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * Name of the property that defines the value of [DEFAULT_CONCURRENCY].
  */
 @FlowPreview
-public const val DEFAULT_CONCURRENCY_PROPERTY_NAME = "kotlinx.coroutines.flow.defaultConcurrency"
+public const val DEFAULT_CONCURRENCY_PROPERTY_NAME: String = "kotlinx.coroutines.flow.defaultConcurrency"
 
 /**
  * Default concurrency limit that is used by [flattenMerge] and [flatMapMerge] operators.
  * It is 16 by default and can be changed on JVM using [DEFAULT_CONCURRENCY_PROPERTY_NAME] property.
  */
 @FlowPreview
-public val DEFAULT_CONCURRENCY = systemProp(DEFAULT_CONCURRENCY_PROPERTY_NAME,
+public val DEFAULT_CONCURRENCY: Int = systemProp(DEFAULT_CONCURRENCY_PROPERTY_NAME,
     16, 1, Int.MAX_VALUE
 )
 
@@ -34,7 +34,7 @@ public val DEFAULT_CONCURRENCY = systemProp(DEFAULT_CONCURRENCY_PROPERTY_NAME,
  * Transforms elements emitted by the original flow by applying [transform], that returns another flow,
  * and then concatenating and flattening these flows.
  *
- * This method is is a shortcut for `map(transform).flattenConcat()`. See [flattenConcat].
+ * This method is a shortcut for `map(transform).flattenConcat()`. See [flattenConcat].
  *
  * Note that even though this operator looks very familiar, we discourage its usage in a regular application-specific flows.
  * Most likely, suspending operation in [map] operator will be sufficient and linear transformations are much easier to reason about.
@@ -82,6 +82,42 @@ public fun <T> Flow<Flow<T>>.flattenConcat(): Flow<T> = flow {
 }
 
 /**
+ * Merges the given flows into a single flow without preserving an order of elements.
+ * All flows are merged concurrently, without limit on the number of simultaneously collected flows.
+ *
+ * ### Operator fusion
+ *
+ * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Iterable<Flow<T>>.merge(): Flow<T> {
+    /*
+     * This is a fuseable implementation of the following operator:
+     * channelFlow {
+     *    forEach { flow ->
+     *        launch {
+     *            flow.collect { send(it) }
+     *        }
+     *    }
+     * }
+     */
+    return ChannelLimitedFlowMerge(this)
+}
+
+/**
+ * Merges the given flows into a single flow without preserving an order of elements.
+ * All flows are merged concurrently, without limit on the number of simultaneously collected flows.
+ *
+ * ### Operator fusion
+ *
+ * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
+ * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
+ */
+@ExperimentalCoroutinesApi
+public fun <T> merge(vararg flows: Flow<T>): Flow<T> = flows.asIterable().merge()
+
+/**
  * Flattens the given flow of flows into a single flow with a [concurrency] limit on the number of
  * concurrently collected flows.
  *
@@ -92,6 +128,9 @@ public fun <T> Flow<Flow<T>>.flattenConcat(): Flow<T> = flow {
  *
  * Applications of [flowOn], [buffer], [produceIn], and [broadcastIn] _after_ this operator are fused with
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
+ *
+ * When [concurrency] is greater than 1, this operator is [buffered][buffer] by default
+ * and size of its output buffer can be changed by applying subsequent [buffer] operator.
  *
  * @param concurrency controls the number of in-flight flows, at most [concurrency] flows are collected
  * at the same time. By default it is equal to [DEFAULT_CONCURRENCY].
@@ -169,7 +208,7 @@ public inline fun <T, R> Flow<T>.flatMapLatest(@BuilderInference crossinline tra
  *     "Computed $value"
  * }
  * ```
- * will print "Started computing 1" and "Started computing 2", but the resulting flow will contain only "Computed 2" value.
+ * will print "Started computing a" and "Started computing b", but the resulting flow will contain only "Computed b" value.
  *
  * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
  */

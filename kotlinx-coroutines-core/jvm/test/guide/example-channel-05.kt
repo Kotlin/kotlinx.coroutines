@@ -1,16 +1,16 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.channel05
+// This file was automatically generated from channels.md by Knit tool. Do not edit.
+package kotlinx.coroutines.guide.exampleChannel05
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
 fun main() = runBlocking {
     var cur = numbersFrom(2)
-    for (i in 1..10) {
+    repeat(10) {
         val prime = cur.receive()
         println(prime)
         cur = filter(cur, prime)

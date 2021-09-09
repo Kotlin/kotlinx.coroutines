@@ -1,19 +1,26 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 apply from: rootProject.file('gradle/node-js.gradle')
 
 kotlin {
-    targets {
-        fromPreset(presets.js, 'js')
+    js {
+        moduleName = project.name
+
+        // In 1.4.x it has in `both` and `legacy` mode and js() is of type `KotlinJsTarget`
+        // `irTarget` is non-null in `both` mode
+        // and contains appropriate `irTarget` with type `KotlinJsIrTarget`
+        // `irTarget` is null in `legacy` mode
+        if (it.irTarget != null) {
+            irTarget.nodejs()
+            irTarget.compilations['main']?.dependencies {
+                api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
+            }
+        }
     }
 
     sourceSets {
-        jsMain.dependencies {
-            api "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-        }
-
         jsTest.dependencies {
             api "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
         }
@@ -23,7 +30,15 @@ kotlin {
 // When source sets are configured
 apply from: rootProject.file('gradle/test-mocha-js.gradle')
 
-compileKotlinJs {
+def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
+        ? compileKotlinJsLegacy
+        : compileKotlinJs
+
+def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
+        ? compileTestKotlinJsLegacy
+        : compileTestKotlinJs
+
+compileJsLegacy.configure {
     kotlinOptions.metaInfo = true
     kotlinOptions.sourceMap = true
     kotlinOptions.moduleKind = 'umd'
@@ -35,18 +50,22 @@ compileKotlinJs {
     }
 }
 
-compileTestKotlinJs {
+compileTestJsLegacy.configure {
     kotlinOptions.metaInfo = true
     kotlinOptions.sourceMap = true
     kotlinOptions.moduleKind = 'umd'
 }
 
-task populateNodeModules(type: Copy, dependsOn: compileTestKotlinJs) {
+
+task populateNodeModules(type: Copy, dependsOn: compileTestJsLegacy) {
     // we must copy output that is transformed by atomicfu
-    from(kotlin.targets.js.compilations.main.output.allOutputs)
+    from(kotlin.js().compilations.main.output.allOutputs)
     into "$node.nodeModulesDir/node_modules"
 
-    def configuration = configurations.jsTestRuntimeClasspath
+    def configuration = configurations.hasProperty("jsLegacyTestRuntimeClasspath")
+            ? configurations.jsLegacyTestRuntimeClasspath
+            : configurations.jsTestRuntimeClasspath
+
     from(files {
         configuration.collect { File file ->
             file.name.endsWith(".jar") ?

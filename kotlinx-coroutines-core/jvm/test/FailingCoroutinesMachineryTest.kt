@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -15,8 +15,21 @@ import kotlin.test.*
 @RunWith(Parameterized::class)
 class FailingCoroutinesMachineryTest(
     private val element: CoroutineContext.Element,
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: TestDispatcher
 ) : TestBase() {
+    class TestDispatcher(val name: String, val block: () -> CoroutineDispatcher) {
+        private var _value: CoroutineDispatcher? = null
+
+        val value: CoroutineDispatcher
+            get() = _value ?: block().also { _value = it }
+
+        override fun toString(): String = name
+
+        fun reset() {
+            runCatching { (_value as? ExecutorCoroutineDispatcher)?.close() }
+            _value = null
+        }
+    }
 
     private var caught: Throwable? = null
     private val latch = CountDownLatch(1)
@@ -75,7 +88,7 @@ class FailingCoroutinesMachineryTest(
 
     @After
     fun tearDown() {
-        runCatching { (dispatcher as? ExecutorCoroutineDispatcher)?.close() }
+        dispatcher.reset()
         if (lazyOuterDispatcher.isInitialized()) lazyOuterDispatcher.value.close()
     }
 
@@ -84,14 +97,14 @@ class FailingCoroutinesMachineryTest(
         @Parameterized.Parameters(name = "Element: {0}, dispatcher: {1}")
         fun dispatchers(): List<Array<Any>> {
             val elements = listOf<Any>(FailingRestore, FailingUpdate)
-            val dispatchers = listOf<Any>(
-                Dispatchers.Unconfined,
-                Dispatchers.Default,
-                Executors.newFixedThreadPool(1).asCoroutineDispatcher(),
-                Executors.newScheduledThreadPool(1).asCoroutineDispatcher(),
-                ThrowingDispatcher, ThrowingDispatcher2
+            val dispatchers = listOf<TestDispatcher>(
+                TestDispatcher("Dispatchers.Unconfined") { Dispatchers.Unconfined },
+                TestDispatcher("Dispatchers.Default") { Dispatchers.Default },
+                TestDispatcher("Executors.newFixedThreadPool(1)") { Executors.newFixedThreadPool(1).asCoroutineDispatcher() },
+                TestDispatcher("Executors.newScheduledThreadPool(1)") { Executors.newScheduledThreadPool(1).asCoroutineDispatcher() },
+                TestDispatcher("ThrowingDispatcher") { ThrowingDispatcher },
+                TestDispatcher("ThrowingDispatcher2") { ThrowingDispatcher2 }
             )
-
             return elements.flatMap { element ->
                 dispatchers.map { dispatcher ->
                     arrayOf(element, dispatcher)
@@ -102,13 +115,13 @@ class FailingCoroutinesMachineryTest(
 
     @Test
     fun testElement() = runTest {
-        launch(NonCancellable + dispatcher + exceptionHandler + element) {}
+        launch(NonCancellable + dispatcher.value + exceptionHandler + element) {}
         checkException()
     }
 
     @Test
     fun testNestedElement() = runTest {
-        launch(NonCancellable + dispatcher + exceptionHandler) {
+        launch(NonCancellable + dispatcher.value + exceptionHandler) {
             launch(element) {  }
         }
         checkException()
@@ -117,7 +130,7 @@ class FailingCoroutinesMachineryTest(
     @Test
     fun testNestedDispatcherAndElement() = runTest {
         launch(lazyOuterDispatcher.value + NonCancellable + exceptionHandler) {
-            launch(element + dispatcher) {  }
+            launch(element + dispatcher.value) {  }
         }
         checkException()
     }

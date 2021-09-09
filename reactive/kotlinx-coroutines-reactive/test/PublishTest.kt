@@ -5,10 +5,9 @@
 package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import org.reactivestreams.*
+import kotlin.test.*
 
 class PublishTest : TestBase() {
     @Test
@@ -45,7 +44,7 @@ class PublishTest : TestBase() {
             }
             override fun onNext(t: Int) {
                 expect(6)
-                assertThat(t, IsEqual(42))
+                assertEquals(42, t)
             }
             override fun onComplete() { expect(8) }
             override fun onError(t: Throwable?) { expectUnreached() }
@@ -72,8 +71,8 @@ class PublishTest : TestBase() {
             override fun onComplete() { expectUnreached() }
             override fun onError(t: Throwable) {
                 expect(6)
-                assertThat(t, IsInstanceOf(RuntimeException::class.java))
-                assertThat(t.message, IsEqual("OK"))
+                assertTrue(t is RuntimeException)
+                assertEquals("OK", t.message)
             }
         })
         expect(4)

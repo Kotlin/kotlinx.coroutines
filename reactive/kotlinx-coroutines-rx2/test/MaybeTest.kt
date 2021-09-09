@@ -6,14 +6,15 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
+import io.reactivex.exceptions.*
 import io.reactivex.functions.*
 import io.reactivex.internal.functions.Functions.*
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
 import org.junit.*
-import org.junit.Assert.*
+import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import kotlin.test.*
 
 class MaybeTest : TestBase() {
     @Before
@@ -31,7 +32,7 @@ class MaybeTest : TestBase() {
         expect(2)
         maybe.subscribe { value ->
             expect(5)
-            assertThat(value, IsEqual("OK"))
+            assertEquals("OK", value)
         }
         expect(3)
         yield() // to started coroutine
@@ -66,8 +67,8 @@ class MaybeTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            Assert.assertThat(error, IsInstanceOf(RuntimeException::class.java))
-            Assert.assertThat(error.message, IsEqual("OK"))
+            assertTrue(error is RuntimeException)
+            assertEquals("OK", error.message)
         })
         expect(3)
         yield() // to started coroutine
@@ -251,11 +252,11 @@ class MaybeTest : TestBase() {
     fun testUnhandledException() = runTest {
         expect(1)
         var disposable: Disposable? = null
-        val eh = CoroutineExceptionHandler { _, t ->
-            assertTrue(t is TestException)
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is TestException)
             expect(5)
         }
-        val maybe = rxMaybe(currentDispatcher() + eh) {
+        val maybe = rxMaybe(currentDispatcher()) {
             expect(4)
             disposable!!.dispose() // cancel our own subscription, so that delay will get cancelled
             try {
@@ -264,32 +265,50 @@ class MaybeTest : TestBase() {
                 throw TestException() // would not be able to handle it since mono is disposed
             }
         }
-        maybe.subscribe(object : MaybeObserver<Unit> {
-            override fun onSubscribe(d: Disposable) {
-                expect(2)
-                disposable = d
-            }
-            override fun onComplete() { expectUnreached() }
-            override fun onSuccess(t: Unit) { expectUnreached() }
-            override fun onError(t: Throwable) { expectUnreached() }
-        })
-        expect(3)
-        yield() // run coroutine
-        finish(6)
+        withExceptionHandler(handler) {
+            maybe.subscribe(object : MaybeObserver<Unit> {
+                override fun onSubscribe(d: Disposable) {
+                    expect(2)
+                    disposable = d
+                }
+
+                override fun onComplete() {
+                    expectUnreached()
+                }
+
+                override fun onSuccess(t: Unit) {
+                    expectUnreached()
+                }
+
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+            })
+            expect(3)
+            yield() // run coroutine
+            finish(6)
+        }
     }
 
     @Test
     fun testFatalExceptionInSubscribe() = runTest {
-        GlobalScope.rxMaybe(Dispatchers.Unconfined + CoroutineExceptionHandler{ _, e -> assertTrue(e is LinkageError); expect(2)}) {
-            expect(1)
-            42
-        }.subscribe({ throw LinkageError() })
-        finish(3)
+        val handler = { e: Throwable ->
+            assertTrue(e is UndeliverableException && e.cause is LinkageError)
+            expect(2)
+        }
+
+        withExceptionHandler(handler) {
+            rxMaybe(Dispatchers.Unconfined) {
+                expect(1)
+                42
+            }.subscribe({ throw LinkageError() })
+            finish(3)
+        }
     }
 
     @Test
     fun testFatalExceptionInSingle() = runTest {
-        GlobalScope.rxMaybe(Dispatchers.Unconfined) {
+        rxMaybe(Dispatchers.Unconfined) {
             throw LinkageError()
         }.subscribe({ expectUnreached()  }, { expect(1); assertTrue(it is LinkageError) })
         finish(2)

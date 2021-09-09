@@ -22,6 +22,27 @@ class TakeTest : TestBase() {
     }
 
     @Test
+    fun testIllegalArgument() {
+        assertFailsWith<IllegalArgumentException> { flowOf(1).take(0) }
+        assertFailsWith<IllegalArgumentException> { flowOf(1).take(-1) }
+    }
+
+    @Test
+    fun testTakeSuspending() = runTest {
+        val flow = flow {
+            emit(1)
+            yield()
+            emit(2)
+            yield()
+        }
+
+        assertEquals(3, flow.take(2).sum())
+        assertEquals(3, flow.take(Int.MAX_VALUE).sum())
+        assertEquals(1, flow.take(1).single())
+        assertEquals(2, flow.drop(1).take(1).single())
+    }
+
+    @Test
     fun testEmptyFlow() = runTest {
         val sum = emptyFlow<Int>().take(10).sum()
         assertEquals(0, sum)
@@ -109,5 +130,19 @@ class TakeTest : TestBase() {
                 expect(1)
             }
         finish(2)
+    }
+
+    @Test
+    fun testNestedTake() = runTest {
+        val inner = flow {
+            emit(1)
+            expectUnreached()
+        }.take(1)
+        val outer = flow {
+            while(true) {
+                emitAll(inner)
+            }
+        }
+        assertEquals(listOf(1, 1, 1), outer.take(3).toList())
     }
 }

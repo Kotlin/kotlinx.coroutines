@@ -277,6 +277,33 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
+    fun testAtomicStart() = runTest {
+        try {
+            coroutineScope {
+                val job = coroutineContext[Job]!!
+                val flow = flow {
+                    expect(3)
+                    emit(1)
+                }
+                    .onCompletion { expect(4) }
+                    .flowOn(wrapperDispatcher())
+                    .onCompletion { expect(5) }
+
+                launch {
+                    expect(1)
+                    flow.collect()
+                }
+                launch {
+                    expect(2)
+                    job.cancel()
+                }
+            }
+        } catch (e: CancellationException) {
+            finish(6)
+        }
+    }
+
+    @Test
     fun testException() = runTest {
         val flow = flow {
             emit(314)
@@ -312,6 +339,22 @@ class FlowOnTest : TestBase() {
         fun consume(value: Int) {
             contextName = NamedDispatchers.nameOr("main")
             assertEquals(expected, value)
+        }
+    }
+
+    @Test
+    fun testCancelledFlowOn() = runTest {
+        assertFailsWith<CancellationException> {
+            coroutineScope {
+                val scope = this
+                flow {
+                    emit(Unit) // emit to buffer
+                    scope.cancel() // now cancel outer scope
+                }.flowOn(wrapperDispatcher()).collect {
+                    // should not be reached, because cancelled before it runs
+                    expectUnreached()
+                }
+            }
         }
     }
 }
