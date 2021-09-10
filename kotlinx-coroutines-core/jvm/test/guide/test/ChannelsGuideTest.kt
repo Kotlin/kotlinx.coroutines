@@ -7,6 +7,7 @@ package kotlinx.coroutines.guide.test
 
 import kotlinx.coroutines.knit.*
 import org.junit.Test
+import org.junit.Ignore
 
 class ChannelsGuideTest {
     @Test
@@ -114,6 +115,7 @@ class ChannelsGuideTest {
     }
 
     @Test
+    @Ignore
     fun testExampleChannel10() {
         test("ExampleChannel10") { kotlinx.coroutines.guide.exampleChannel10.main() }.verifyLines(
             "Initial element is available immediately: kotlin.Unit",
