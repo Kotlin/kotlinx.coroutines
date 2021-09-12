@@ -263,6 +263,7 @@ fun main() = runBlocking {
 }
 //sampleEnd
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
 >
