@@ -613,8 +613,6 @@ Next element is available immediately after large consumer delay: kotlin.Unit
 Next element is ready in 50ms after consumer pause in 150ms: kotlin.Unit
 ```
 
-<!--- TEST -->
-
 Note that [ticker] is aware of possible consumer pauses and, by default, adjusts next produced element 
 delay if a pause occurs, trying to maintain a fixed rate of produced elements.
  
