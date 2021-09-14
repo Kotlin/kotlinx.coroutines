@@ -75,18 +75,65 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
      * @param oldState the value returned by the previous invocation of [updateThreadContext].
      */
     public fun restoreThreadContext(context: CoroutineContext, oldState: S)
+}
+
+/**
+ * A [ThreadContextElement] copied whenever a child coroutine inherits a context containing it.
+ *
+ * When an API uses a _mutable_ `ThreadLocal` for consistency, a [CopyableThreadContextElement]
+ * can give coroutines "coroutine-safe" write access to that `ThreadLocal`.
+ *
+ * A write made to a `ThreadLocal` with a matching [CopyableThreadContextElement] by a coroutine
+ * will be visible to _itself_ and any child coroutine launched _after_ that write.
+ *
+ * Writes will not be visible to the parent coroutine, peer coroutines, or coroutines that happen
+ * to use the same thread. Writes made to the `ThreadLocal` by the parent coroutine _after_
+ * launching a child coroutine will not be visible to that child coroutine.
+ *
+ * This can be used to allow a coroutine to use a mutable ThreadLocal API transparently and
+ * correctly, regardless of the coroutine's structured concurrency.
+ *
+ * ```
+ * class TraceContextElement(val traceData: TraceData?) : CopyableThreadContextElement<TraceData?> {
+ *     companion object Key : CoroutineContext.Key<ThreadTraceContextElement>
+ *     override val key: CoroutineContext.Key<ThreadTraceContextElement>
+ *         get() = Key
+ *
+ *     override fun updateThreadContext(context: CoroutineContext): TraceData? {
+ *         val oldState = traceThreadLocal.get()
+ *         traceThreadLocal.set(data)
+ *         return oldState
+ *     }
+ *
+ *     override fun restoreThreadContext(context: CoroutineContext, oldData: TraceData?) {
+ *         traceThreadLocal.set(oldState)
+ *     }
+ *
+ *     override fun copyForChildCoroutine(): CopyableThreadContextElement<MyData?> {
+ *         // Copy from the ThreadLocal source of truth at child coroutine launch time. This makes
+ *         // writes between resumption of the parent coroutine and the launch of the child
+ *         // coroutine visible to the child.
+ *         return CopyForChildCoroutineElement(traceThreadLocal.get())
+ *     }
+ * }
+ * ```
+ *
+ * A coroutine using this mechanism can safely call Java code that assumes it's called using a
+ * `Thread`.
+ */
+public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
 
     /**
-     * Returns a [ThreadContextElement] to use in place of `this` ThreadContextElement in a child
-     * coroutine when `this` ThreadContextElement is inherited.
+     * Returns a [CopyableThreadContextElement] to replace of `this` `CopyableThreadContextElement` in the child
+     * coroutine's context that is under construction.
      *
-     * Implement this method to return a new instance of this `ThreadContextElement` if access to it should be
-     * isolated to a single coroutine.
+     * This function is called on the element each time a new coroutine inherits a context containing it,
+     * and the returned value is folded into the context for the child.
      *
      * Since this method is called whenever a new coroutine is launched in a context containing this
-     * `ThreadContextElement`, implementations of this method are performance-sensitive.
+     * [CopyableThreadContextElement], implementations are performance-sensitive.
      */
-    public fun copyForChildCoroutine(): ThreadContextElement<S> = this // default impl does not copy
+    public fun copyForChildCoroutine(): CopyableThreadContextElement<S>
 }
 
 /**

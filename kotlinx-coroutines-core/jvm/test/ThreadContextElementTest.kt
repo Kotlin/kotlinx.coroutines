@@ -190,7 +190,7 @@ class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
 /**
  * A [ThreadContextElement] that implements copy semantics in [copyForChildCoroutine].
  */
-class CopyForChildCoroutineElement(val data: MyData?) : ThreadContextElement<MyData?> {
+class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextElement<MyData?> {
     companion object Key : CoroutineContext.Key<CopyForChildCoroutineElement>
 
     override val key: CoroutineContext.Key<CopyForChildCoroutineElement>
@@ -217,7 +217,7 @@ class CopyForChildCoroutineElement(val data: MyData?) : ThreadContextElement<MyD
      * will be reflected in the parent coroutine's [CopyForChildCoroutineElement] when it yields the
      * thread and calls [restoreThreadContext].
      */
-    override fun copyForChildCoroutine(): ThreadContextElement<MyData?> {
+    override fun copyForChildCoroutine(): CopyableThreadContextElement<MyData?> {
         return CopyForChildCoroutineElement(myThreadLocal.get())
     }
 }

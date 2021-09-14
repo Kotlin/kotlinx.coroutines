@@ -24,22 +24,21 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 }
 
 /**
- * Returns a new [ThreadContextElement.copyForChildCoroutine] on each [ThreadContextElement]
- * [ThreadContextElement], returning a new `CoroutineContext` with those values incorporated.
+ * Returns the [CoroutineContext] for a child coroutine to inherit.
  *
- * Returns an equivalent but not reference-equal [CoroutineContext] if [this] has one or more
- * [ThreadContextElement] in it, and no [ThreadContextElement] overrides
- * [ThreadContextElement.copyForChildCoroutine].
+ * If any [CopyableThreadContextElement] is in the [this], calls
+ * [CopyableThreadContextElement.copyForChildCoroutine] on each, returning a new [CoroutineContext]
+ * by folding the returned copied elements into [this].
  *
- * Returns [this] if `this` has no [ThreadContextElement] in it.
+ * Returns [this] if `this` has zero [CopyableThreadContextElement] in it.
  */
 private fun CoroutineContext.foldCopiesForChildCoroutine(): CoroutineContext {
     val jobElementCount = fold(0) { count, it ->
-        count + if (it is ThreadContextElement<*>) 1 else 0
+        count + if (it is CopyableThreadContextElement<*>) 1 else 0
     }
     if (jobElementCount == 0) return this
     return fold<CoroutineContext>(EmptyCoroutineContext) { combined, it ->
-        combined + if (it is ThreadContextElement<*>) it.copyForChildCoroutine() else it
+        combined + if (it is CopyableThreadContextElement<*>) it.copyForChildCoroutine() else it
     }
 }
 
