@@ -242,3 +242,4 @@ private inline fun <ThreadLocalT, OutputT> ThreadLocal<ThreadLocalT>.setForBlock
     block()
     set(priorValue)
 }
+
