@@ -93,6 +93,9 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * This can be used to allow a coroutine to use a mutable ThreadLocal API transparently and
  * correctly, regardless of the coroutine's structured concurrency.
  *
+ * This example adapts a `ThreadLocal` method trace to be "coroutine local" while the method trace
+ * is in a coroutine:
+ *
  * ```
  * class TraceContextElement(val traceData: TraceData?) : CopyableThreadContextElement<TraceData?> {
  *     companion object Key : CoroutineContext.Key<ThreadTraceContextElement>
@@ -111,8 +114,8 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  *
  *     override fun copyForChildCoroutine(): CopyableThreadContextElement<MyData?> {
  *         // Copy from the ThreadLocal source of truth at child coroutine launch time. This makes
- *         // writes between resumption of the parent coroutine and the launch of the child
- *         // coroutine visible to the child.
+ *         // ThreadLocal writes between resumption of the parent coroutine and the launch of the
+ *         // child coroutine visible to the child.
  *         return CopyForChildCoroutineElement(traceThreadLocal.get())
  *     }
  * }
@@ -124,11 +127,11 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
 public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
 
     /**
-     * Returns a [CopyableThreadContextElement] to replace of `this` `CopyableThreadContextElement` in the child
+     * Returns a [CopyableThreadContextElement] to replace `this` `CopyableThreadContextElement` in the child
      * coroutine's context that is under construction.
      *
      * This function is called on the element each time a new coroutine inherits a context containing it,
-     * and the returned value is folded into the context for the child.
+     * and the returned value is folded into the context given to the child.
      *
      * Since this method is called whenever a new coroutine is launched in a context containing this
      * [CopyableThreadContextElement], implementations are performance-sensitive.
