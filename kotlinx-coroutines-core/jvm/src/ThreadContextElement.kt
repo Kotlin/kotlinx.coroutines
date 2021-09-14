@@ -75,6 +75,18 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
      * @param oldState the value returned by the previous invocation of [updateThreadContext].
      */
     public fun restoreThreadContext(context: CoroutineContext, oldState: S)
+
+    /**
+     * Returns a [ThreadContextElement] to use in place of `this` ThreadContextElement in a child
+     * coroutine when `this` ThreadContextElement is inherited.
+     *
+     * Implement this method to return a new instance of this `ThreadContextElement` if access to it should be
+     * isolated to a single coroutine.
+     *
+     * Since this method is called whenever a new coroutine is launched in a context containing this
+     * `ThreadContextElement`, implementations of this method are performance-sensitive.
+     */
+    public fun copyForChildCoroutine(): ThreadContextElement<S> = this // default impl does not copy
 }
 
 /**
