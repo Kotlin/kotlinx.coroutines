@@ -186,7 +186,6 @@ class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
     }
 }
 
-
 /**
  * A [ThreadContextElement] that implements copy semantics in [copyForChildCoroutine].
  */
