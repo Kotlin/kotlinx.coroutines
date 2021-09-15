@@ -210,7 +210,7 @@ private typealias Block1<T, R> = suspend (T) -> R
 private typealias Fun2<T, R> = Function2<T, Continuation<R>, Any?>
 
 // todo: SuspendFunction impl is a hack to workaround the absence of proper suspend fun implementation ability
-@Suppress("SUPERTYPE_IS_SUSPEND_FUNCTION_TYPE", "INCONSISTENT_TYPE_PARAMETER_VALUES")
+@Suppress("SUPERTYPE_IS_SUSPEND_FUNCTION_TYPE", "INCONSISTENT_TYPE_PARAMETER_VALUES", "MIXING_SUSPEND_AND_NON_SUSPEND_SUPERTYPES")
 private class ShareableBlock<T, R>(
     block: Block1<T, R>
 ) : ShareableObject<Block1<T, R>>(block), Block1<T, R>, Fun2<T, R> {
