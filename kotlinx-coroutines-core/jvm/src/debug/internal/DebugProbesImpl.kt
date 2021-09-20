@@ -183,7 +183,6 @@ internal object DebugProbesImpl {
      */
     @OptIn(ExperimentalStdlibApi::class)
     public fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> {
-        fun Any.toStringWithQuotes() = "\"$this\""
         val coroutinesInfo = dumpCoroutinesInfo()
         val size = coroutinesInfo.size
         val lastObservedThreads = ArrayList<Thread?>(size)
@@ -196,11 +195,11 @@ internal object DebugProbesImpl {
             coroutinesInfoAsJson.add(
                 """
                 {
-                   "name": $name,
-                   "id": ${context[CoroutineId.Key]?.id},
-                   "dispatcher": $dispatcher,
-                   "sequenceNumber": ${info.sequenceNumber},
-                   "state": "${info.state}"
+                    "name": $name,
+                    "id": ${context[CoroutineId.Key]?.id},
+                    "dispatcher": $dispatcher,
+                    "sequenceNumber": ${info.sequenceNumber},
+                    "state": "${info.state}"
                 } 
                 """.trimIndent()
             )
@@ -215,6 +214,30 @@ internal object DebugProbesImpl {
             coroutinesInfo.toTypedArray()
         )
     }
+
+    /*
+     * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
+     */
+    public fun enhanceStackTraceWithThreadDumpAsJson(info: DebugCoroutineInfo): String {
+        val stackTraceElements = enhanceStackTraceWithThreadDump(info, info.lastObservedStackTrace)
+        val stackTraceElementsInfoAsJson = mutableListOf<String>()
+        for (element in stackTraceElements) {
+            stackTraceElementsInfoAsJson.add(
+                """
+                {
+                    "declaringClass": "${element.className}",
+                    "methodName": "${element.methodName}",
+                    "fileName": ${element.fileName?.toStringWithQuotes()},
+                    "lineNumber": ${element.lineNumber}
+                }
+                """.trimIndent()
+            )
+        }
+
+        return "[${stackTraceElementsInfoAsJson.joinToString()}]"
+    }
+
+    private fun Any.toStringWithQuotes() = "\"$this\""
 
     /*
      * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
