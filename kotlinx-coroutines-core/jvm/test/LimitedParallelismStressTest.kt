@@ -33,10 +33,31 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
     }
 
     @Test
-    fun testLimited() = runTest {
+    fun testLimitedExecutor() = runTest {
         val view = executor.limitedParallelism(targetParallelism)
         repeat(iterations) {
             launch(view) {
+                checkParallelism()
+            }
+        }
+    }
+
+    @Test
+    fun testLimitedDispatchersIo() = runTest {
+        val view = Dispatchers.IO.limitedParallelism(targetParallelism)
+        repeat(iterations) {
+            launch(view) {
+                checkParallelism()
+            }
+        }
+    }
+
+    @Test
+    fun testLimitedDispatchersIoDispatchYield() = runTest {
+        val view = Dispatchers.IO.limitedParallelism(targetParallelism)
+        repeat(iterations) {
+            launch(view) {
+                yield()
                 checkParallelism()
             }
         }

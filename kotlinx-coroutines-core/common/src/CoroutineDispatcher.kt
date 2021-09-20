@@ -87,7 +87,7 @@ public abstract class CoroutineDispatcher :
      * private val fileWriterDispatcher = backgroundDispatcher.limitedParallelism(1)
      * ```
      * Note how in this example, the application have the executor with 4 threads, but the total sum of all limits
-     * is 5. Yet at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism.
+     * is 6. Yet at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism.
      */
     @ExperimentalCoroutinesApi
     public open fun limitedParallelism(parallelism: Int): CoroutineDispatcher {

@@ -23,9 +23,11 @@ internal class LimitedDispatcher(
 
     private val queue = LockFreeTaskQueue<Runnable>(singleConsumer = false)
 
-    @InternalCoroutinesApi
-    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
-        dispatcher.dispatchYield(context, block)
+    @ExperimentalCoroutinesApi
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        if (parallelism >= this.parallelism) return this
+        return super.limitedParallelism(parallelism)
     }
 
     override fun run() {
@@ -59,25 +61,47 @@ internal class LimitedDispatcher(
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        // Add task to queue so running workers will be able to see that
-        queue.addLast(block)
-        if (runningWorkers >= parallelism) {
-            return
+        dispatchInternal(block) {
+            if (dispatcher.isDispatchNeeded(EmptyCoroutineContext)) {
+                dispatcher.dispatch(EmptyCoroutineContext, this)
+            } else {
+                run()
+            }
         }
+    }
 
+    @InternalCoroutinesApi
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+        dispatchInternal(block) {
+            dispatcher.dispatchYield(context, this)
+        }
+    }
+
+    private inline fun dispatchInternal(block: Runnable, dispatch: () -> Unit) {
+        // Add task to queue so running workers will be able to see that
+        if (tryAdd(block)) return
         /*
-         * Protect against race when the worker is finished right after our check.
+         * Protect against the race when the number of workers is enough,
+         * but one (because of synchronized serialization) attempts to complete,
+         * and we just observed the number of running workers smaller than the actual
+         * number (hit right between `--runningWorkers` and `++runningWorkers` in `run()`)
          */
+        if (enoughWorkers()) return
+        dispatch()
+    }
+
+    private fun enoughWorkers(): Boolean {
         @Suppress("CAST_NEVER_SUCCEEDS")
         synchronized(this as SynchronizedObject) {
-            if (runningWorkers >= parallelism) return
+            if (runningWorkers >= parallelism) return true
             ++runningWorkers
+            return false
         }
-        if (dispatcher.isDispatchNeeded(EmptyCoroutineContext)) {
-            dispatcher.dispatch(EmptyCoroutineContext, this)
-        } else {
-            run()
-        }
+    }
+
+    private fun tryAdd(block: Runnable): Boolean {
+        queue.addLast(block)
+        return runningWorkers >= parallelism
     }
 }
 
