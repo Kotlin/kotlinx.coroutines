@@ -11,8 +11,6 @@ import java.util.concurrent.*
 
 // TODO most of these fields will be moved to 'object ExperimentalDispatcher'
 
-// User-visible name
-internal const val DEFAULT_DISPATCHER_NAME = "Dispatchers.Default"
 // Internal debuggability name + thread name prefixes
 internal const val DEFAULT_SCHEDULER_NAME = "DefaultDispatcher"
 
@@ -20,11 +18,6 @@ internal const val DEFAULT_SCHEDULER_NAME = "DefaultDispatcher"
 @JvmField
 internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
     "kotlinx.coroutines.scheduler.resolution.ns", 100000L
-)
-
-@JvmField
-internal val BLOCKING_DEFAULT_PARALLELISM = systemProp(
-    "kotlinx.coroutines.scheduler.blocking.parallelism", 16
 )
 
 // NOTE: we coerce default to at least two threads to give us chances that multi-threading problems
@@ -39,10 +32,7 @@ internal val CORE_POOL_SIZE = systemProp(
 @JvmField
 internal val MAX_POOL_SIZE = systemProp(
     "kotlinx.coroutines.scheduler.max.pool.size",
-    (AVAILABLE_PROCESSORS * 128).coerceIn(
-        CORE_POOL_SIZE,
-        CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE
-    ),
+    CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE,
     maxValue = CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE
 )
 
@@ -76,6 +66,15 @@ internal object NonBlockingContext : TaskContext {
        // Nothing for non-blocking context
     }
 }
+
+internal object BlockingContext : TaskContext {
+    override val taskMode: Int = TASK_PROBABLY_BLOCKING
+
+    override fun afterTask() {
+        // Nothing for non-blocking context
+    }
+}
+
 
 internal abstract class Task(
     @JvmField var submissionTime: Long,
