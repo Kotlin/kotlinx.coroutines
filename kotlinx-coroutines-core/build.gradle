@@ -215,10 +215,11 @@ jvmJar { setupManifest(it) }
  */
 metadataJar { setupManifest(it) }
 
-static def setupManifest(Jar jar) {
+def setupManifest(Jar jar) {
     jar.manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Retransform-Classes": "true"
+        attributes "Specification-Version": rootProject.version
     }
 }
 
