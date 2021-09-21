@@ -59,22 +59,17 @@ internal interface TaskContext {
     fun afterTask()
 }
 
-internal object NonBlockingContext : TaskContext {
-    override val taskMode: Int = TASK_NON_BLOCKING
-
-    override fun afterTask() {
-       // Nothing for non-blocking context
-    }
-}
-
-internal object BlockingContext : TaskContext {
-    override val taskMode: Int = TASK_PROBABLY_BLOCKING
-
+private class TaskContextImpl(override val taskMode: Int): TaskContext {
     override fun afterTask() {
         // Nothing for non-blocking context
     }
 }
 
+@JvmField
+internal val NonBlockingContext: TaskContext = TaskContextImpl(TASK_NON_BLOCKING)
+
+@JvmField
+internal val BlockingContext: TaskContext = TaskContextImpl(TASK_PROBABLY_BLOCKING)
 
 internal abstract class Task(
     @JvmField var submissionTime: Long,
