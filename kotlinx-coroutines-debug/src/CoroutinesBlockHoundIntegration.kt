@@ -19,6 +19,7 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowServiceLoaderInvocationsOnInit()
         allowBlockingCallsInReflectionImpl()
         allowBlockingCallsInDebugProbes()
+        allowBlockingCallsInWorkQueue()
         // Stacktrace recovery cache is guarded by lock
         allowBlockingCallsInside("kotlinx.coroutines.internal.ExceptionsConstructorKt", "tryCopyException")
         /* The predicates that define that BlockHound should only report blocking calls from threads that are part of
@@ -60,6 +61,14 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         {
             allowBlockingCallsInside("kotlinx.coroutines.debug.internal.DebugProbesImpl", method)
         }
+    }
+
+    /**
+     * Allow blocking calls inside [kotlinx.coroutines.scheduling.WorkQueue]
+     */
+    private fun BlockHound.Builder.allowBlockingCallsInWorkQueue() {
+        /** uses [Thread.yield] in a benign way. */
+        allowBlockingCallsInside("kotlinx.coroutines.scheduling.WorkQueue", "addLast")
     }
 
     /**
