@@ -7,6 +7,7 @@ package kotlinx.coroutines.guide.test
 
 import kotlinx.coroutines.knit.*
 import org.junit.Test
+import org.junit.Ignore
 
 class ChannelsGuideTest {
     @Test
@@ -110,6 +111,19 @@ class ChannelsGuideTest {
             "pong Ball(hits=2)",
             "ping Ball(hits=3)",
             "pong Ball(hits=4)"
+        )
+    }
+
+    @Test
+    @Ignore
+    fun testExampleChannel10() {
+        test("ExampleChannel10") { kotlinx.coroutines.guide.exampleChannel10.main() }.verifyLines(
+            "Initial element is available immediately: kotlin.Unit",
+            "Next element is not ready in 50 ms: null",
+            "Next element is ready in 100 ms: kotlin.Unit",
+            "Consumer pauses for 150ms",
+            "Next element is available immediately after large consumer delay: kotlin.Unit",
+            "Next element is ready in 50ms after consumer pause in 150ms: kotlin.Unit"
         )
     }
 }
