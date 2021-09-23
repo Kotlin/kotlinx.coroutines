@@ -17,11 +17,12 @@ import java.util.concurrent.atomic.AtomicInteger
  * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
  * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  *
- * **NOTE: This API will be replaced in the future**. A different API to create thread-limited thread pools
- * that is based on a shared thread-pool and does not require the resulting dispatcher to be explicitly closed
- * will be provided, thus avoiding potential thread leaks and also significantly improving performance, due
- * to coroutine-oriented scheduling policy and thread-switch minimization.
- * See [issue #261](https://github.com/Kotlin/kotlinx.coroutines/issues/261) for details.
+ * This is a **delicate** API. The result of this method is a closeable resource with the
+ * associated native resources (threads). It should not be allocated in place,
+ * should be closed at the end of its lifecycle, and has non-trivial memory and CPU footprint.
+ * If you do not need a separate thread-pool, but only have to limit effective parallelism of the dispatcher,
+ * it is recommended to use [CoroutineDispatcher.limitedParallelism] instead.
+ *
  * If you need a completely separate thread-pool with scheduling policy that is based on the standard
  * JDK executors, use the following expression:
  * `Executors.newSingleThreadExecutor().asCoroutineDispatcher()`.
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * @param name the base name of the created thread.
  */
-@ObsoleteCoroutinesApi
+@DelicateCoroutinesApi
 public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
 
@@ -43,11 +44,12 @@ public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
  * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
  * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  *
- * **NOTE: This API will be replaced in the future**. A different API to create thread-limited thread pools
- * that is based on a shared thread-pool and does not require the resulting dispatcher to be explicitly closed
- * will be provided, thus avoiding potential thread leaks and also significantly improving performance, due
- * to coroutine-oriented scheduling policy and thread-switch minimization.
- * See [issue #261](https://github.com/Kotlin/kotlinx.coroutines/issues/261) for details.
+ * This is a **delicate** API. The result of this method is a closeable resource with the
+ * associated native resources (threads). It should not be allocated in place,
+ * should be closed at the end of its lifecycle, and has non-trivial memory and CPU footprint.
+ * If you do not need a separate thread-pool, but only have to limit effective parallelism of the dispatcher,
+ * it is recommended to use [CoroutineDispatcher.limitedParallelism] instead.
+ *
  * If you need a completely separate thread-pool with scheduling policy that is based on the standard
  * JDK executors, use the following expression:
  * `Executors.newFixedThreadPool().asCoroutineDispatcher()`.
@@ -56,7 +58,7 @@ public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
  * @param nThreads the number of threads.
  * @param name the base name of the created threads.
  */
-@ObsoleteCoroutinesApi
+@DelicateCoroutinesApi
 public fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     val threadNo = AtomicInteger()
