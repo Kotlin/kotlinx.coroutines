@@ -245,6 +245,40 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
             }
         }
     }
+
+    def project = it
+    if (project.name in sourceless) {
+        return
+    }
+
+    def versionFileTask = project.tasks.register("versionFileTask") {
+        def name = project.name.replace("-", "_")
+        def versionFile = project.layout.buildDirectory.file("${name}.version")
+        it.outputs.file(versionFile)
+
+        it.doLast {
+            versionFile.get().asFile.text = "version=${version}"
+        }
+    }
+
+    List<String> jarTasks
+    if (it.name == "kotlinx-coroutines-core") {
+        jarTasks = ["jvmJar", "metadataJar"]
+    } else if (it.name == "kotlinx-coroutines-debug") {
+        // We shadow debug module instead of just packaging it
+        jarTasks = ["shadowJar"]
+    } else {
+        jarTasks = ["jar"]
+    }
+
+    for (name in jarTasks) {
+        project.tasks.named(name, Jar) {
+            it.dependsOn versionFileTask
+            it.from(versionFileTask) {
+                into("META-INF")
+            }
+        }
+    }
 }
 
 // Report Kotlin compiler version when building project

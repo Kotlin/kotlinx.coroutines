@@ -8,7 +8,7 @@ import org.junit.*
 import org.junit.Assert.assertTrue
 import java.util.jar.*
 
-class MavenPublicationValidator {
+class MavenPublicationAtomicfuValidator {
     private val ATOMIC_FU_REF = "Lkotlinx/atomicfu/".toByteArray()
 
     @Test

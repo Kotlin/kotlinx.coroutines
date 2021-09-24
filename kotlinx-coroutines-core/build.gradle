@@ -219,7 +219,6 @@ def setupManifest(Jar jar) {
     jar.manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Retransform-Classes": "true"
-        attributes "Specification-Version": rootProject.version
     }
 }
 
