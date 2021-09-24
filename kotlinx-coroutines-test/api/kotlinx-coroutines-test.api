@@ -51,7 +51,7 @@ public final class kotlinx/coroutines/test/TestCoroutineDispatcher : kotlinx/cor
 
 public final class kotlinx/coroutines/test/TestCoroutineExceptionHandler : kotlin/coroutines/AbstractCoroutineContextElement, kotlinx/coroutines/CoroutineExceptionHandler, kotlinx/coroutines/test/UncaughtExceptionCaptor {
 	public fun <init> ()V
-	public fun cleanupTestCoroutinesCaptor ()V
+	public fun cleanupTestCoroutines ()V
 	public fun getUncaughtExceptions ()Ljava/util/List;
 	public fun handleException (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)V
 }
@@ -68,9 +68,10 @@ public final class kotlinx/coroutines/test/TestCoroutineScheduler : kotlin/corou
 public final class kotlinx/coroutines/test/TestCoroutineScheduler$Key : kotlin/coroutines/CoroutineContext$Key {
 }
 
-public abstract interface class kotlinx/coroutines/test/TestCoroutineScope : kotlinx/coroutines/CoroutineScope, kotlinx/coroutines/test/UncaughtExceptionCaptor {
+public abstract interface class kotlinx/coroutines/test/TestCoroutineScope : kotlinx/coroutines/CoroutineScope {
 	public abstract fun cleanupTestCoroutines ()V
 	public abstract fun getTestScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
+	public abstract fun reportException (Ljava/lang/Throwable;)V
 }
 
 public final class kotlinx/coroutines/test/TestCoroutineScope$DefaultImpls {
@@ -85,6 +86,7 @@ public final class kotlinx/coroutines/test/TestCoroutineScopeKt {
 	public static final fun createTestCoroutineScope (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/test/TestCoroutineScope;
 	public static synthetic fun createTestCoroutineScope$default (Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/test/TestCoroutineScope;
 	public static final fun getCurrentTime (Lkotlinx/coroutines/test/TestCoroutineScope;)J
+	public static final fun getUncaughtExceptions (Lkotlinx/coroutines/test/TestCoroutineScope;)Ljava/util/List;
 	public static final fun pauseDispatcher (Lkotlinx/coroutines/test/TestCoroutineScope;)V
 	public static final fun pauseDispatcher (Lkotlinx/coroutines/test/TestCoroutineScope;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun resumeDispatcher (Lkotlinx/coroutines/test/TestCoroutineScope;)V
@@ -104,8 +106,13 @@ public final class kotlinx/coroutines/test/TestDispatchers {
 	public static final fun setMain (Lkotlinx/coroutines/Dispatchers;Lkotlinx/coroutines/CoroutineDispatcher;)V
 }
 
+public final class kotlinx/coroutines/test/TestExceptionHandlerKt {
+	public static final fun TestExceptionHandler (Lkotlinx/coroutines/test/TestCoroutineScope;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/CoroutineExceptionHandler;
+	public static synthetic fun TestExceptionHandler$default (Lkotlinx/coroutines/test/TestCoroutineScope;Lkotlin/jvm/functions/Function3;ILjava/lang/Object;)Lkotlinx/coroutines/CoroutineExceptionHandler;
+}
+
 public abstract interface class kotlinx/coroutines/test/UncaughtExceptionCaptor {
-	public abstract fun cleanupTestCoroutinesCaptor ()V
+	public abstract fun cleanupTestCoroutines ()V
 	public abstract fun getUncaughtExceptions ()Ljava/util/List;
 }
 

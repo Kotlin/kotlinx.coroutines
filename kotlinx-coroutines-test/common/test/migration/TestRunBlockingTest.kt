@@ -235,12 +235,13 @@ class TestRunBlockingTest {
     fun callingAsyncFunction_executesAsyncBlockImmediately() = runBlockingTest {
         assertRunsFast {
             var executed = false
-            async {
+            val deferred = async {
                 delay(SLOW)
                 executed = true
             }
             advanceTimeBy(SLOW)
 
+            assertTrue(deferred.isCompleted)
             assertTrue(executed)
         }
     }
@@ -303,15 +304,6 @@ class TestRunBlockingTest {
     fun runBlockingTestBuilder_throwsOnBadDispatcher() {
         assertFailsWith<IllegalArgumentException> {
             runBlockingTest(Dispatchers.Default) {
-
-            }
-        }
-    }
-
-    @Test
-    fun runBlockingTestBuilder_throwsOnBadHandler() {
-        assertFailsWith<IllegalArgumentException> {
-            runBlockingTest(CoroutineExceptionHandler { _, _ -> }) {
 
             }
         }
@@ -426,15 +418,6 @@ class TestRunBlockingTest {
     @Test
     fun testOverrideExceptionHandler() = runBlockingTest(exceptionHandler) {
         assertSame(coroutineContext[CoroutineExceptionHandler], exceptionHandler)
-    }
-
-    @Test
-    fun testOverrideExceptionHandlerError() {
-        assertFailsWith<IllegalArgumentException> {
-            runBlockingTest(CoroutineExceptionHandler { _, _ -> }) {
-                fail("Unreached")
-            }
-        }
     }
 }
 

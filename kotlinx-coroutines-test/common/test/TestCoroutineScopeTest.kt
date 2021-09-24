@@ -124,7 +124,6 @@ class TestCoroutineScopeTest {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]
             StandardTestDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
-            CoroutineExceptionHandler { _, _ -> }, // not an `UncaughtExceptionCaptor`
         )
     }
 }

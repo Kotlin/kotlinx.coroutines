@@ -5,21 +5,33 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**
  * A scope which provides detailed control over the execution of coroutines for tests.
  */
 @ExperimentalCoroutinesApi
-public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor {
+public interface TestCoroutineScope: CoroutineScope {
     /**
      * Called after the test completes.
      *
-     * Calls [UncaughtExceptionCaptor.cleanupTestCoroutinesCaptor] and [DelayController.cleanupTestCoroutines].
-     * If a new job was created for this scope, the job is completed.
+     * * It checks that there were no uncaught exceptions reported via [reportException]. If there were any, then the
+     *   first one is thrown, whereas the rest are printed to the standard output or the standard error output
+     *   (see [Throwable.printStackTrace]).
+     * * It runs the tasks pending in the scheduler at the current time. If there are any uncompleted tasks afterwards,
+     *   it fails with [UncompletedCoroutinesError].
+     * * It checks whether some new child [Job]s were created but not completed since this [TestCoroutineScope] was
+     *   created. If so, it fails with [UncompletedCoroutinesError].
+     *
+     * For backwards compatibility, if the [CoroutineExceptionHandler] is an [UncaughtExceptionCaptor], its
+     * [TestCoroutineExceptionHandler.cleanupTestCoroutines] behavior is performed.
+     * Likewise, if the [ContinuationInterceptor] is a [DelayController], its [DelayController.cleanupTestCoroutines]
+     * is called.
      *
      * @throws Throwable the first uncaught exception, if there are any uncaught exceptions.
      * @throws UncompletedCoroutinesError if any pending tasks are active.
+     * @throws IllegalStateException if called more than once.
      */
     @ExperimentalCoroutinesApi
     public fun cleanupTestCoroutines()
@@ -31,15 +43,39 @@ public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor {
     public val testScheduler: TestCoroutineScheduler
         get() = coroutineContext[TestCoroutineScheduler]
             ?: throw UnsupportedOperationException("This scope does not have a TestCoroutineScheduler linked to it")
+
+    /**
+     * Reports an exception so that it is thrown on [cleanupTestCoroutines].
+     *
+     * If several exceptions are reported, only the first one will be thrown, and the other ones will be printed to the
+     * console.
+     *
+     * @throws IllegalStateException with the [Throwable.cause] set to [throwable] if [cleanupTestCoroutines] was
+     * already called.
+     */
+    @ExperimentalCoroutinesApi
+    public fun reportException(throwable: Throwable)
 }
 
 private class TestCoroutineScopeImpl (
     override val coroutineContext: CoroutineContext,
     val ownJob: CompletableJob?
-):
-    TestCoroutineScope,
-    UncaughtExceptionCaptor by coroutineContext.uncaughtExceptionCaptor
+): TestCoroutineScope
 {
+    private val lock = SynchronizedObject()
+    private var exceptions = mutableListOf<Throwable>()
+    private var cleanedUp = false
+
+    override fun reportException(throwable: Throwable) {
+        synchronized(lock) {
+            if (cleanedUp)
+                throw IllegalStateException(
+                    "Attempting to report an uncaught exception after the test coroutine scope was already cleaned up",
+                    throwable)
+            exceptions.add(throwable)
+        }
+    }
+
     override val testScheduler: TestCoroutineScheduler
         get() = coroutineContext[TestCoroutineScheduler]!!
 
@@ -47,7 +83,16 @@ private class TestCoroutineScopeImpl (
     val initialJobs = coroutineContext.activeJobs()
 
     override fun cleanupTestCoroutines() {
-        coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
+        synchronized(lock) {
+            if (cleanedUp)
+                throw IllegalStateException("Attempting to clean up a test coroutine scope more than once.")
+            cleanedUp = true
+        }
+        exceptions.apply {
+            drop(1).forEach { it.printStackTrace() }
+            singleOrNull()?.let { throw it }
+        }
+        (coroutineContext[CoroutineExceptionHandler] as? UncaughtExceptionCaptor)?.cleanupTestCoroutines()
         val delayController = coroutineContext.delayController
         if (delayController != null) {
             delayController.cleanupTestCoroutines()
@@ -79,13 +124,13 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
  */
 @Deprecated("This constructs a `TestCoroutineScope` with a deprecated `CoroutineDispatcher` by default. " +
     "Please use `createTestCoroutineScope` instead.",
-    ReplaceWith("createTestCoroutineScope(TestCoroutineDispatcher() + context)",
+    ReplaceWith("createTestCoroutineScope(TestCoroutineDispatcher() + TestCoroutineExceptionHandler() + context)",
         "kotlin.coroutines.EmptyCoroutineContext"),
     level = DeprecationLevel.WARNING
 )
 public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
     val scheduler = context[TestCoroutineScheduler] ?: TestCoroutineScheduler()
-    return createTestCoroutineScope(TestCoroutineDispatcher(scheduler) + context)
+    return createTestCoroutineScope(TestCoroutineDispatcher(scheduler) + TestCoroutineExceptionHandler() + context)
 }
 
 /**
@@ -128,14 +173,8 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
         }
         else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
     }
-    val exceptionHandler = context[CoroutineExceptionHandler].run {
-        this?.let {
-            require(this is UncaughtExceptionCaptor) {
-                "coroutineExceptionHandler must implement UncaughtExceptionCaptor: $context"
-            }
-        }
-        this ?: TestCoroutineExceptionHandler()
-    }
+    val exceptionHandler = context[CoroutineExceptionHandler]
+        ?: TestExceptionHandler { _, throwable -> reportException(throwable) }
     val job: Job
     val ownJob: CompletableJob?
     if (context[Job] == null) {
@@ -146,16 +185,8 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
         job = context[Job]!!
     }
     return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job, ownJob)
+        .also { (exceptionHandler as? TestExceptionHandlerContextElement)?.tryRegisterTestCoroutineScope(it) }
 }
-
-private inline val CoroutineContext.uncaughtExceptionCaptor: UncaughtExceptionCaptor
-    get() {
-        val handler = this[CoroutineExceptionHandler]
-        return handler as? UncaughtExceptionCaptor ?: throw IllegalArgumentException(
-            "TestCoroutineScope requires a UncaughtExceptionCaptor such as " +
-                "TestCoroutineExceptionHandler as the CoroutineExceptionHandler"
-        )
-    }
 
 private inline val CoroutineContext.delayController: DelayController?
     get() {
@@ -247,6 +278,24 @@ public fun TestCoroutineScope.pauseDispatcher() {
 public fun TestCoroutineScope.resumeDispatcher() {
     delayControllerForPausing.resumeDispatcher()
 }
+
+/**
+ * List of uncaught coroutine exceptions, for backward compatibility.
+ *
+ * The returned list is a copy of the exceptions caught during execution.
+ * During [TestCoroutineScope.cleanupTestCoroutines] the first element of this list is rethrown if it is not empty.
+ *
+ * Exceptions are only collected in this list if the [UncaughtExceptionCaptor] is in the test context.
+ */
+@Deprecated(
+    "This list is only populated if `UncaughtExceptionCaptor` is in the test context, and so can be " +
+        "easily misused. It is only present for backward compatibility and will be removed in the subsequent " +
+        "releases. If you need to check the list of exceptions, please consider creating your own " +
+        "`CoroutineExceptionHandler`.",
+    level = DeprecationLevel.WARNING)
+public val TestCoroutineScope.uncaughtExceptions: List<Throwable>
+    get() = (coroutineContext[CoroutineExceptionHandler] as? UncaughtExceptionCaptor)?.uncaughtExceptions
+        ?: emptyList()
 
 private val TestCoroutineScope.delayControllerForPausing: DelayController
     get() = coroutineContext.delayController
