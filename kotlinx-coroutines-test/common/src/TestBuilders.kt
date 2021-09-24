@@ -308,11 +308,11 @@ private const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
 
 private class TestBodyCoroutine<T>(
     private val testScope: TestCoroutineScope,
-) : AbstractCoroutine<T>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope,
-    UncaughtExceptionCaptor by testScope.coroutineContext.uncaughtExceptionCaptor
+) : AbstractCoroutine<T>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope
 {
     override val testScheduler get() = testScope.testScheduler
 
     override fun cleanupTestCoroutines() = testScope.cleanupTestCoroutines()
 
+    override fun reportException(throwable: Throwable) = testScope.reportException(throwable)
 }
