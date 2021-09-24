@@ -246,18 +246,18 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
         }
     }
 
-    def project = it
-    if (project.name in sourceless) {
+    def thisProject = it
+    if (thisProject.name in sourceless) {
         return
     }
 
-    def versionFileTask = project.tasks.register("versionFileTask") {
-        def name = project.name.replace("-", "_")
-        def versionFile = project.layout.buildDirectory.file("${name}.version")
+    def versionFileTask = thisProject.tasks.register("versionFileTask") {
+        def name = thisProject.name.replace("-", "_")
+        def versionFile = thisProject.layout.buildDirectory.file("${name}.version")
         it.outputs.file(versionFile)
 
         it.doLast {
-            versionFile.get().asFile.text = "version=${version}"
+            versionFile.get().asFile.text = version.toString()
         }
     }
 
@@ -272,7 +272,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     }
 
     for (name in jarTasks) {
-        project.tasks.named(name, Jar) {
+        thisProject.tasks.named(name, Jar) {
             it.dependsOn versionFileTask
             it.from(versionFileTask) {
                 into("META-INF")

@@ -26,17 +26,15 @@ class MavenPublicationVersionValidator {
     private fun JarFile.checkForVersion(file: String) {
         val actualFile = "META-INF/$file"
         val version = System.getenv("version")
-        try {
+        use {
             for (e in entries()) {
                 if (e.name == actualFile) {
                     val string = getInputStream(e).readAllBytes().decodeToString()
-                    assertEquals("version=$version", string)
+                    assertEquals(version, string)
                     return
                 }
             }
             error("File $file not found")
-        } finally {
-            close()
         }
     }
 }
