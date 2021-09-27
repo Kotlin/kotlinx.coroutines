@@ -8,7 +8,7 @@ import kotlinx.html.div
 import kotlinx.html.dom.*
 import kotlinx.html.js.onClickFunction
 import org.w3c.dom.*
-import kotlin.browser.*
+import kotlinx.browser.*
 import kotlin.coroutines.*
 import kotlin.math.*
 import kotlin.random.Random
