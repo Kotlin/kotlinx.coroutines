@@ -18,6 +18,19 @@ tasks.withType(DokkaTaskPartial.class) {
         }
     }
 }
+tasks {
+    compileKotlin {
+        kotlinOptions {
+            languageVersion = "1.7"
+        }
+    }
+
+    compileTestKotlin {
+        kotlinOptions {
+            languageVersion = "1.7"
+        }
+    }
+}
 
 task testNG(type: Test) {
     useTestNG()
