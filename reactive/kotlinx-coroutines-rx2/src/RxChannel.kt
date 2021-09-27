@@ -23,7 +23,7 @@ import kotlinx.coroutines.reactive.*
 @Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.ERROR) // Will be hidden in 1.5
 public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
-    subscribe(channel)
+    subscribe(channel as MaybeObserver<T>)
     return channel
 }
 
@@ -38,7 +38,7 @@ public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
 @Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.ERROR) // Will be hidden in 1.5
 public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
-    subscribe(channel)
+    subscribe(channel as Observer<T>)
     return channel
 }
 
@@ -63,20 +63,20 @@ public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit): 
 @PublishedApi
 internal fun <T> MaybeSource<T>.toChannel(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
-    subscribe(channel)
+    subscribe(channel as MaybeObserver<T>)
     return channel
 }
 
 @PublishedApi
 internal fun <T> ObservableSource<T>.toChannel(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
-    subscribe(channel)
+    subscribe(channel as Observer<T>)
     return channel
 }
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(null), Observer<T>, MaybeObserver<T>
+    LinkedListChannel<T>(null), Observer<T & Any>, MaybeObserver<T & Any>
 {
     private val _subscription = atomic<Disposable?>(null)
 
@@ -90,12 +90,12 @@ private class SubscriptionChannel<T> :
         _subscription.value = sub
     }
 
-    override fun onSuccess(t: T) {
+    override fun onSuccess(t: T & Any) {
         trySend(t)
         close(cause = null)
     }
 
-    override fun onNext(t: T) {
+    override fun onNext(t: T & Any) {
         trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
