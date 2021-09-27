@@ -9,7 +9,7 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 /**
- * The result of .limitedParallelism(x) call, dispatcher
+ * The result of .limitedParallelism(x) call, a dispatcher
  * that wraps the given dispatcher, but limits the parallelism level, while
  * trying to emulate fairness.
  */
@@ -41,10 +41,10 @@ internal class LimitedDispatcher(
                     handleCoroutineException(EmptyCoroutineContext, e)
                 }
                 // 16 is our out-of-thin-air constant to emulate fairness. Used in JS dispatchers as well
-                if (++fairnessCounter >= 16 && dispatcher.isDispatchNeeded(EmptyCoroutineContext)) {
+                if (++fairnessCounter >= 16 && dispatcher.isDispatchNeeded(this)) {
                     // Do "yield" to let other views to execute their runnable as well
                     // Note that we do not decrement 'runningWorkers' as we still committed to do our part of work
-                    dispatcher.dispatch(EmptyCoroutineContext, this)
+                    dispatcher.dispatch(this, this)
                     return
                 }
                 continue
@@ -62,8 +62,8 @@ internal class LimitedDispatcher(
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         dispatchInternal(block) {
-            if (dispatcher.isDispatchNeeded(EmptyCoroutineContext)) {
-                dispatcher.dispatch(EmptyCoroutineContext, this)
+            if (dispatcher.isDispatchNeeded(this)) {
+                dispatcher.dispatch(this, this)
             } else {
                 run()
             }
@@ -73,33 +73,33 @@ internal class LimitedDispatcher(
     @InternalCoroutinesApi
     override fun dispatchYield(context: CoroutineContext, block: Runnable) {
         dispatchInternal(block) {
-            dispatcher.dispatchYield(context, this)
+            dispatcher.dispatchYield(this, this)
         }
     }
 
     private inline fun dispatchInternal(block: Runnable, dispatch: () -> Unit) {
         // Add task to queue so running workers will be able to see that
-        if (tryAdd(block)) return
+        if (addAndTryDispatching(block)) return
         /*
          * Protect against the race when the number of workers is enough,
          * but one (because of synchronized serialization) attempts to complete,
          * and we just observed the number of running workers smaller than the actual
          * number (hit right between `--runningWorkers` and `++runningWorkers` in `run()`)
          */
-        if (enoughWorkers()) return
+        if (!tryAllocateWorker()) return
         dispatch()
     }
 
-    private fun enoughWorkers(): Boolean {
+    private fun tryAllocateWorker(): Boolean {
         @Suppress("CAST_NEVER_SUCCEEDS")
         synchronized(this as SynchronizedObject) {
-            if (runningWorkers >= parallelism) return true
+            if (runningWorkers >= parallelism) return false
             ++runningWorkers
-            return false
+            return true
         }
     }
 
-    private fun tryAdd(block: Runnable): Boolean {
+    private fun addAndTryDispatching(block: Runnable): Boolean {
         queue.addLast(block)
         return runningWorkers >= parallelism
     }

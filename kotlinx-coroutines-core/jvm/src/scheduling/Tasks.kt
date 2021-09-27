@@ -9,8 +9,6 @@ import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 
 
-// TODO most of these fields will be moved to 'object ExperimentalDispatcher'
-
 // Internal debuggability name + thread name prefixes
 internal const val DEFAULT_SCHEDULER_NAME = "DefaultDispatcher"
 
@@ -20,15 +18,20 @@ internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
     "kotlinx.coroutines.scheduler.resolution.ns", 100000L
 )
 
-// NOTE: we coerce default to at least two threads to give us chances that multi-threading problems
-// get reproduced even on a single-core machine, but support explicit setting of 1 thread scheduler if needed.
+/**
+ * The maximum number of threads allocated for CPU-bound tasks at the default set of dispatchers.
+ *
+ * NOTE: we coerce default to at least two threads to give us chances that multi-threading problems
+ * get reproduced even on a single-core machine, but support explicit setting of 1 thread scheduler if needed
+ */
 @JvmField
 internal val CORE_POOL_SIZE = systemProp(
     "kotlinx.coroutines.scheduler.core.pool.size",
-    AVAILABLE_PROCESSORS.coerceAtLeast(2), // !!! at least two here
+    AVAILABLE_PROCESSORS.coerceAtLeast(2),
     minValue = CoroutineScheduler.MIN_SUPPORTED_POOL_SIZE
 )
 
+/** The maximum number of threads allocated for blocking tasks at the default set of dispatchers. */
 @JvmField
 internal val MAX_POOL_SIZE = systemProp(
     "kotlinx.coroutines.scheduler.max.pool.size",

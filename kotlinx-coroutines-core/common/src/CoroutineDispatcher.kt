@@ -73,7 +73,7 @@ public abstract class CoroutineDispatcher :
      * ### Limitations
      *
      * The default implementation of `limitedParallelism` does not support direct dispatchers,
-     * such as execute the given runnable in place during [dispatch] calls. For direct dispatchers,
+     * such as executing the given runnable in place during [dispatch] calls. For direct dispatchers,
      * it is recommended to override this method and provide a domain-specific implementation.
      *
      * ### Example of usage
@@ -86,8 +86,11 @@ public abstract class CoroutineDispatcher :
      * // At most 1 thread will be doing IO
      * private val fileWriterDispatcher = backgroundDispatcher.limitedParallelism(1)
      * ```
-     * Note how in this example, the application have the executor with 4 threads, but the total sum of all limits
      * is 6. Yet at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism.
+     *
+     * Note that this example was structured in such a way that it illustrates the parallelism guarantees.
+     * In practice, it is usually better to use [Dispatchers.IO] or [Dispatchers.Default] instead of creating a
+     * `backgroundDispatcher`. It is both possible and advised to call `limitedParallelism` on them.
      */
     @ExperimentalCoroutinesApi
     public open fun limitedParallelism(parallelism: Int): CoroutineDispatcher {

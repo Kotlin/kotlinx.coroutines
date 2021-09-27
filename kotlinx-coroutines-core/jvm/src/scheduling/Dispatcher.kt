@@ -43,7 +43,7 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
 // Dispatchers.IO
 internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor {
 
-    internal val default = UnlimitedIoScheduler.limitedParallelism(
+    private val default = UnlimitedIoScheduler.limitedParallelism(
         systemProp(
             IO_PARALLELISM_PROPERTY_NAME,
             64.coerceAtLeast(AVAILABLE_PROCESSORS)

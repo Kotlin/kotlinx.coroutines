@@ -102,12 +102,13 @@ public actual object Dispatchers {
      *
      * ### Elasticity for limited parallelism
      *
-     * `Dispatchers.IO` has a unique property of elasticity: its slices
+     * `Dispatchers.IO` has a unique property of elasticity: its views
      * obtained with [CoroutineDispatcher.limitedParallelism] are
-     * not restricted by the `Dispatchers.IO` parallelism and conceptually
-     * are obtained from the unlimited backing pool of threads, the same
-     * `Dispatchers.IO` was created from, meaning that it still shares
-     * threads and resources with its slices internally.
+     * not restricted by the `Dispatchers.IO` parallelism. Conceptually, there is
+     * a dispatcher backed by an unlimited pool of threads, and both `Dispatchers.IO`
+     * and views of `Dispatchers.IO` are actually views of that dispatcher. In practice
+     * this means that, despite not abiding by `Dispatchers.IO`'s parallelism
+     * restrictions, its views share threads and resources with it.
      *
      * In the following example
      * ```
@@ -116,13 +117,13 @@ public actual object Dispatchers {
      * // 60 threads for MongoDB connection
      * val myMongoDbDispatcher = Dispatchers.IO.limitedParallelism(60)
      * ```
-     * the system may have up to `64 + 100 + 60` threads during peak loads,
-     * but during its steady state it has a minimum viable number of threads shared
+     * the system may have up to `64 + 100 + 60` threads dedicated to blocking tasks during peak loads,
+     * but during its steady state there is only a small number of threads shared
      * among `Dispatchers.IO`, `myMysqlDbDispatcher` and `myMongoDbDispatcher`.
      *
      * ### Implementation note
      *
-     * This dispatcher and its slices share threads with the [Default][Dispatchers.Default] dispatcher, so using
+     * This dispatcher and its views share threads with the [Default][Dispatchers.Default] dispatcher, so using
      * `withContext(Dispatchers.IO) { ... }` when already running on the [Default][Dispatchers.Default]
      * dispatcher does not lead to an actual switching to another thread &mdash; typically execution
      * continues in the same thread.

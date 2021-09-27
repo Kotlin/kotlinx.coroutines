@@ -8,6 +8,7 @@ import org.junit.*
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
+import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 
@@ -28,6 +29,7 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
 
     private fun checkParallelism() {
         val value = parallelism.incrementAndGet()
+        Thread.yield()
         assertTrue { value <= targetParallelism }
         parallelism.decrementAndGet()
     }
@@ -64,14 +66,18 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
     }
 
     @Test
-    fun testUnconfined() = runTest {
-        val view = Dispatchers.Unconfined.limitedParallelism(targetParallelism)
+    fun testLimitedExecutorReachesTargetParallelism() = runTest {
+        val view = executor.limitedParallelism(targetParallelism)
         repeat(iterations) {
-            launch(executor) {
-                withContext(view) {
-                    checkParallelism()
+            val barrier = CyclicBarrier(targetParallelism + 1)
+            repeat(targetParallelism) {
+                launch(view) {
+                    barrier.await()
                 }
             }
+            // Successfully awaited parallelism + 1
+            barrier.await()
+            coroutineContext.job.children.toList().joinAll()
         }
     }
 }

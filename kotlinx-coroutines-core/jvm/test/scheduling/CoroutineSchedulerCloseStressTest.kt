@@ -29,7 +29,6 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
 
     private lateinit var closeableDispatcher: SchedulerCoroutineDispatcher
     private lateinit var dispatcher: CoroutineDispatcher
-    private var closeIndex = -1
 
     private val started = atomic(0)
     private val finished = atomic(0)
@@ -59,10 +58,10 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
         assertEquals(N_COROS, finished.value)
     }
 
+    // Index and level are used only for debugging purpose
     private fun CoroutineScope.launchChild(index: Int, level: Int): Job = launch(start = CoroutineStart.ATOMIC) {
         started.incrementAndGet()
         try {
-            if (index == closeIndex) closeableDispatcher.close()
             if (level < MAX_LEVEL) {
                 launchChild(2 * index + 1, level + 1)
                 launchChild(2 * index + 2, level + 1)
