@@ -62,11 +62,7 @@ internal class LimitedDispatcher(
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         dispatchInternal(block) {
-            if (dispatcher.isDispatchNeeded(this)) {
-                dispatcher.dispatch(this, this)
-            } else {
-                run()
-            }
+            dispatcher.dispatch(this, this)
         }
     }
 

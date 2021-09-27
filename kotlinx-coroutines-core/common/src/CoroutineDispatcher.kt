@@ -73,8 +73,10 @@ public abstract class CoroutineDispatcher :
      * ### Limitations
      *
      * The default implementation of `limitedParallelism` does not support direct dispatchers,
-     * such as executing the given runnable in place during [dispatch] calls. For direct dispatchers,
-     * it is recommended to override this method and provide a domain-specific implementation.
+     * such as executing the given runnable in place during [dispatch] calls.
+     * Any dispatcher that may return `false` from [isDispatchNeeded] is considered direct.
+     * For direct dispatchers, it is recommended to override this method
+     * and provide a domain-specific implementation or to throw an [IllegalStateException].
      *
      * ### Example of usage
      * ```
