@@ -2,13 +2,13 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+import kotlinx.browser.*
 import kotlinx.coroutines.*
 import kotlinx.html.*
 import kotlinx.html.div
 import kotlinx.html.dom.*
 import kotlinx.html.js.onClickFunction
 import org.w3c.dom.*
-import kotlin.browser.*
 import kotlin.coroutines.*
 import kotlin.math.*
 import kotlin.random.Random
