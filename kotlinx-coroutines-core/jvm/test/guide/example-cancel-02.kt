@@ -8,13 +8,13 @@ package kotlinx.coroutines.guide.exampleCancel02
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-    val startTime = currentTimeMillis()
+    val startTime = System.currentTimeMillis()
     val job = launch(Dispatchers.Default) {
         var nextPrintTime = startTime
         var i = 0
         while (i < 5) { // computation loop, just wastes CPU
             // print a message twice a second
-            if (currentTimeMillis() >= nextPrintTime) {
+            if (System.currentTimeMillis() >= nextPrintTime) {
                 println("job: I'm sleeping ${i++} ...")
                 nextPrintTime += 500L
             }
