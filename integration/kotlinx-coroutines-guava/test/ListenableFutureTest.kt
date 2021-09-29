@@ -704,23 +704,6 @@ class ListenableFutureTest : TestBase() {
         assertEquals(testException, thrown.cause)
     }
 
-    @Test
-    fun stressTestJobListenableFutureIsCancelledDoesNotThrow() = runTest {
-        repeat(1000) {
-            val deferred = CompletableDeferred<String>()
-            val asListenableFuture = deferred.asListenableFuture()
-            // We heed two threads to test a race condition.
-            withContext(Dispatchers.Default) {
-                val cancellationJob = launch {
-                    asListenableFuture.cancel(false)
-                }
-                while (!cancellationJob.isCompleted) {
-                    asListenableFuture.isCancelled // Shouldn't throw.
-                }
-            }
-        }
-    }
-
     private inline fun <reified T: Throwable> ListenableFuture<*>.checkFutureException() {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!
@@ -773,22 +756,6 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun stressTestFutureDoesNotReportToCoroutineExceptionHandler() = runTest {
-        repeat(1000) {
-            supervisorScope { // Don't propagate failures in children to parent and other children.
-                val innerFuture = SettableFuture.create<Unit>()
-                val outerFuture = async { innerFuture.await() }
-
-                withContext(Dispatchers.Default) {
-                    launch { innerFuture.setException(TestException("can be lost")) }
-                    launch { outerFuture.cancel() }
-                    // nothing should be reported to CoroutineExceptionHandler, otherwise `Future.cancel` contract violation.
-                }
-            }
-        }
-    }
-
-    @Test
     fun futurePropagatesExceptionToParentAfterCancellation() = runTest {
         val latch = CompletableDeferred<Boolean>()
         val parent = Job()
@@ -805,5 +772,40 @@ class ListenableFutureTest : TestBase() {
         parent.join()
         assertTrue(parent.isCancelled)
         assertEquals(exception, parent.getCancellationException().cause)
+    }
+
+    // Stress tests.
+
+    @Test
+    fun testFutureDoesNotReportToCoroutineExceptionHandler() = runTest {
+        repeat(1000) {
+            supervisorScope { // Don't propagate failures in children to parent and other children.
+                val innerFuture = SettableFuture.create<Unit>()
+                val outerFuture = async { innerFuture.await() }
+
+                withContext(Dispatchers.Default) {
+                    launch { innerFuture.setException(TestException("can be lost")) }
+                    launch { outerFuture.cancel() }
+                    // nothing should be reported to CoroutineExceptionHandler, otherwise `Future.cancel` contract violation.
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testJobListenableFutureIsCancelledDoesNotThrow() = runTest {
+        repeat(1000) {
+            val deferred = CompletableDeferred<String>()
+            val asListenableFuture = deferred.asListenableFuture()
+            // We heed two threads to test a race condition.
+            withContext(Dispatchers.Default) {
+                val cancellationJob = launch {
+                    asListenableFuture.cancel(false)
+                }
+                while (!cancellationJob.isCompleted) {
+                    asListenableFuture.isCancelled // Shouldn't throw.
+                }
+            }
+        }
     }
 }
