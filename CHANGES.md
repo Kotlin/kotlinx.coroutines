@@ -1,5 +1,15 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.5.2
+
+* Kotlin is updated to 1.5.30.
+* New native targets for Apple Silicon are introduced.
+* Fixed a bug when `onUndeliveredElement` was incorrectly called on a properly received elements on JS (#2826).
+* Fixed `Dispatchers.Default` on React Native, it now fully relies on `setTimeout` instead of stub `process.nextTick`. Thanks to @Legion2 (#2843).
+* Optimizations of `Mutex` implementation (#2581).
+* `Mutex` implementation is made completely lock-free as stated (#2590).
+* Various documentation and guides improvements. Thanks to @MasoodFallahpoor and @Pihanya.
+
 ## Version 1.5.1
 
 * Atomic `update`, `getAndUpdate`, and `updateAndGet` operations of `MutableStateFlow` (#2720).

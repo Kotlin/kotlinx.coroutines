@@ -279,6 +279,7 @@ public final class kotlinx/coroutines/Dispatchers {
 	public static final fun getIO ()Lkotlinx/coroutines/CoroutineDispatcher;
 	public static final fun getMain ()Lkotlinx/coroutines/MainCoroutineDispatcher;
 	public static final fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun shutdown ()V
 }
 
 public final class kotlinx/coroutines/DispatchersKt {
@@ -367,7 +368,6 @@ public final class kotlinx/coroutines/Job$Key : kotlin/coroutines/CoroutineConte
 }
 
 public final class kotlinx/coroutines/JobKt {
-	public static final fun DisposableHandle (Lkotlin/jvm/functions/Function0;)Lkotlinx/coroutines/DisposableHandle;
 	public static final fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableJob;
 	public static final synthetic fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 	public static synthetic fun Job$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableJob;

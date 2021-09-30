@@ -198,6 +198,8 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      *     }
      *     .launchIn(scope) // launch it
      * ```
+     *
+     * Implementation note: the resulting flow **does not** conflate subscription count.
      */
     public val subscriptionCount: StateFlow<Int>
 
@@ -253,7 +255,7 @@ public fun <T> MutableSharedFlow(
 
 // ------------------------------------ Implementation ------------------------------------
 
-private class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
+internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     @JvmField
     var index = -1L // current "to-be-emitted" index, -1 means the slot is free now
 
@@ -275,7 +277,7 @@ private class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     }
 }
 
-private class SharedFlowImpl<T>(
+internal open class SharedFlowImpl<T>(
     private val replay: Int,
     private val bufferCapacity: Int,
     private val onBufferOverflow: BufferOverflow
@@ -333,6 +335,13 @@ private class SharedFlowImpl<T>(
             for (i in 0 until replaySize) result += buffer.getBufferAt(replayIndex + i) as T
             result
         }
+
+    /*
+     * A tweak for SubscriptionCountStateFlow to get the latest value.
+     */
+    @Suppress("UNCHECKED_CAST")
+    protected val lastReplayedLocked: T
+        get() = buffer!!.getBufferAt(replayIndex + replaySize - 1) as T
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun collect(collector: FlowCollector<T>) {

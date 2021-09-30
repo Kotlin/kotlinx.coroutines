@@ -19,6 +19,8 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowServiceLoaderInvocationsOnInit()
         allowBlockingCallsInReflectionImpl()
         allowBlockingCallsInDebugProbes()
+        // Stacktrace recovery cache is guarded by lock
+        allowBlockingCallsInside("kotlinx.coroutines.internal.ExceptionsConstructorKt", "tryCopyException")
         /* The predicates that define that BlockHound should only report blocking calls from threads that are part of
         the coroutine thread pool and currently execute a CPU-bound coroutine computation. */
         addDynamicThreadPredicate { isSchedulerWorker(it) }
@@ -133,7 +135,7 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
      */
     private fun BlockHound.Builder.allowBlockingCallsInConflatedChannel() {
         for (method in listOf("offerInternal", "offerSelectInternal", "pollInternal", "pollSelectInternal",
-            "onCancelIdempotent"))
+            "onCancelIdempotent", "isEmpty", "enqueueReceiveInternal"))
         {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ConflatedChannel", method)
         }

@@ -4,12 +4,12 @@
 
 package kotlinx.coroutines.debug
 
-import kotlinx.coroutines.debug.internal.DebugProbesImpl
+import android.annotation.*
+import kotlinx.coroutines.debug.internal.*
 import sun.misc.*
 import java.lang.instrument.*
 import java.lang.instrument.ClassFileTransformer
 import java.security.*
-import android.annotation.*
 
 /*
  * This class is loaded if and only if kotlinx-coroutines-core was used as -javaagent argument,
@@ -19,15 +19,13 @@ import android.annotation.*
 @SuppressLint("all")
 internal object AgentPremain {
 
-    public var isInstalledStatically = false
-
     private val enableCreationStackTraces = runCatching {
         System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()
     }.getOrNull() ?: DebugProbesImpl.enableCreationStackTraces
 
     @JvmStatic
-    public fun premain(args: String?, instrumentation: Instrumentation) {
-        isInstalledStatically = true
+    fun premain(args: String?, instrumentation: Instrumentation) {
+        AgentInstallationType.isInstalledStatically = true
         instrumentation.addTransformer(DebugProbesTransformer)
         DebugProbesImpl.enableCreationStackTraces = enableCreationStackTraces
         DebugProbesImpl.install()
@@ -52,7 +50,7 @@ internal object AgentPremain {
              * on the fly (-> get rid of ASM dependency).
              * You can verify its content either by using javap on it or looking at out integration test module.
              */
-            isInstalledStatically = true
+            AgentInstallationType.isInstalledStatically = true
             return loader.getResourceAsStream("DebugProbesKt.bin").readBytes()
         }
     }

@@ -210,4 +210,30 @@ class ShareInTest : TestBase() {
             stop()
         }
     }
+
+    @Test
+    fun testShouldStart() = runTest {
+        val flow = flow {
+            expect(2)
+            emit(1)
+            expect(3)
+        }.shareIn(this, SharingStarted.Lazily)
+
+        expect(1)
+        flow.onSubscription { throw CancellationException("") }
+            .catch { e -> assertTrue { e is CancellationException } }
+            .collect()
+        yield()
+        finish(4)
+    }
+
+    @Test
+    fun testShouldStartScalar() = runTest {
+        val j = Job()
+        val shared = flowOf(239).stateIn(this + j, SharingStarted.Lazily, 42)
+        assertEquals(42, shared.first())
+        yield()
+        assertEquals(239, shared.first())
+        j.cancel()
+    }
 }

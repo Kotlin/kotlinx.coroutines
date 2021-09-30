@@ -48,7 +48,6 @@ internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : Coroutine
         originalDispatcher.dispatch(context, block)
     }
 
-    @ExperimentalCoroutinesApi
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = originalDispatcher.isDispatchNeeded(context)
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {

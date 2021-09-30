@@ -58,6 +58,7 @@ task npmTest(type: Test) {
 }
 
 task mavenTest(type: Test) {
+    environment "version", version
     def sourceSet = sourceSets.mavenTest
     dependsOn(project(':').getTasksByName("publishToMavenLocal", true))
     testClassesDirs = sourceSet.output.classesDirs
