@@ -110,7 +110,6 @@ public class PublisherCoroutine<in T>(
             block(this)
         }
 
-        // TODO discuss it
         launch(start = CoroutineStart.UNDISPATCHED) {
             mutex.lock()
             // Already selected -- bail out

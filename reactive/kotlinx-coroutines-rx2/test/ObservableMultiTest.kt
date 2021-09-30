@@ -51,7 +51,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testConcurrentStressOnSend() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable {
+        val observable = rxObservable<Int> {
             newCoroutineContext(coroutineContext)
             // concurrent emitters (many coroutines)
             val jobs = List(n) {

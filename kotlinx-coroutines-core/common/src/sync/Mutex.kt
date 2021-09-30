@@ -52,8 +52,7 @@ public interface Mutex {
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
-     * This function can be used in [select] invocation with [onLock] clause.
-     * Use [tryLock] to try acquire lock without waiting.
+     * Use [tryLock] to try acquiring a lock without waiting.
      *
      * This function is fair; suspended callers are resumed in first-in-first-out order.
      *
@@ -63,10 +62,10 @@ public interface Mutex {
     public suspend fun lock(owner: Any? = null)
 
     /**
-     * Clause for [select] expression of [lock] suspending function that selects when the mutex is locked.
-     * Additional parameter for the clause in the `owner` (see [lock]) and when the clause is selected
-     * the reference to this mutex is passed into the corresponding block.
+     * Deprecated for removal without built-in replacement.
      */
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Mutex.onLock deprecated without replacement. " +
+        "For additional details please refer to #2794")
     public val onLock: SelectClause2<Any?, Mutex>
 
     /**

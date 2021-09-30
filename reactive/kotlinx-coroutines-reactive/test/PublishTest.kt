@@ -296,12 +296,10 @@ class PublishTest : TestBase() {
             expect(2)
             // Collector is ready
             send(1)
-            expect(3)
             try {
                 send(2)
                 expectUnreached()
             } catch (e: CancellationException) {
-                expect(7)
                 // publisher cancellation is async
                 latch.countDown()
                 throw e
@@ -312,15 +310,14 @@ class PublishTest : TestBase() {
         val collectorLatch = Mutex(true)
         val job = launch {
             published.asFlow().buffer(0).collect {
-                expect(4)
                 collectorLatch.unlock()
-                hang { expect(6) }
+                hang { expect(4) }
             }
         }
         collectorLatch.lock()
-        expect(5)
+        expect(3)
         job.cancelAndJoin()
         latch.await()
-        finish(8)
+        finish(5)
     }
 }
