@@ -46,4 +46,5 @@ dependencies {
     implementation(kotlin("gradle-plugin", version("kotlin")))
     implementation("org.jetbrains.dokka:dokka-gradle-plugin:${version("dokka")}")
     implementation("org.jetbrains.dokka:dokka-core:${version("dokka")}")
+    implementation("ru.vyarus:gradle-animalsniffer-plugin:1.5.3") // Android API check
 }

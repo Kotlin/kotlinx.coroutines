@@ -2,21 +2,13 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.gradle.util.VersionNumber
-import org.jetbrains.dokka.gradle.DokkaTaskPartial
-import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 
 apply plugin: 'jdk-convention'
 apply from: rootProject.file("gradle/opt-in.gradle")
-
-def coreModule = "kotlinx-coroutines-core"
-// Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'kotlinx-coroutines-bom', 'integration-testing']
-def internal = ['kotlinx.coroutines', 'benchmarks', 'integration-testing']
-// Not published
-def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
 
 buildscript {
     /*
@@ -61,6 +53,7 @@ buildscript {
         classpath "org.jetbrains.kotlinx:kotlinx-knit:$knit_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
         classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
+        classpath "ru.vyarus:gradle-animalsniffer-plugin:1.5.3" // Android API check
 
         // JMH plugins
         classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
@@ -96,7 +89,7 @@ allprojects {
         kotlin_version = rootProject.properties['kotlin_snapshot_version']
     }
 
-    ext.unpublished = unpublished
+    ext.unpublished = Projects.unpublished
 
     // This project property is set during nightly stress test
     def stressTest = project.properties['stressTest']
@@ -108,6 +101,8 @@ allprojects {
 }
 
 apply plugin: "binary-compatibility-validator"
+apply plugin: 'base'
+
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
     if (build_snapshot_train) {
@@ -131,20 +126,20 @@ allprojects {
 }
 
 // Add dependency to core source sets. Core is configured in kx-core/build.gradle
-configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
-    evaluationDependsOn(":$coreModule")
+configure(subprojects.findAll { !Projects.sourceless.contains(it.name) && it.name != Projects.coreModule }) {
+    evaluationDependsOn(":$Projects.coreModule")
     def platform = PlatformKt.platformOf(it)
     apply plugin: "kotlin-${platform}-conventions"
     dependencies {
         // See comment below for rationale, it will be replaced with "project" dependency
-        api project(":$coreModule")
+        api project(":$Projects.coreModule")
         // the only way IDEA can resolve test classes
-        testImplementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+        testImplementation project(":$Projects.coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
     }
 }
 
 // Configure subprojects with Kotlin sources
-configure(subprojects.findAll { !sourceless.contains(it.name) }) {
+configure(subprojects.findAll { !Projects.sourceless.contains(it.name) }) {
     // Use atomicfu plugin, it also adds all the necessary dependencies
     apply plugin: 'kotlinx-atomicfu'
 
@@ -194,9 +189,9 @@ if (build_snapshot_train) {
 
 // Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
 configure(subprojects.findAll {
-    !sourceless.contains(it.name) &&
+    !Projects.sourceless.contains(it.name) &&
             it.name != "benchmarks" &&
-            it.name != coreModule &&
+            it.name != Projects.coreModule &&
             it.name != "example-frontend-js"
 }) {
     // Pure JS and pure MPP doesn't have this notion and are configured separately
@@ -209,7 +204,7 @@ configure(subprojects.findAll {
     }
 }
 
-def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
+def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$Projects.coreModule/"
 def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
 apply plugin: "org.jetbrains.dokka"
 
@@ -222,7 +217,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != "kotlinx-coroutines-bom") {
-        if (it.name != coreModule) {
+        if (it.name != Projects.coreModule) {
             tasks.withType(DokkaTaskPartial.class) {
                 dokkaSourceSets.configureEach {
                     externalDocumentationLink {
@@ -235,7 +230,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     }
 
     def thisProject = it
-    if (thisProject.name in sourceless) {
+    if (thisProject.name in Projects.sourceless) {
         return
     }
 
@@ -284,7 +279,7 @@ def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm"
 
 task deploy(dependsOn: publishTasks)
 
-apply plugin: 'base'
+apply plugin: 'animalsniffer-convention'
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
 

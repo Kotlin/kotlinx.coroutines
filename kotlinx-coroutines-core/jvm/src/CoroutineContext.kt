@@ -5,7 +5,6 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.scheduling.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 
@@ -140,6 +139,7 @@ internal actual val CoroutineContext.coroutineName: String? get() {
 
 private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 
+@IgnoreJreRequirement // desugared hashcode implementation
 internal data class CoroutineId(
     val id: Long
 ) : ThreadContextElement<String>, AbstractCoroutineContextElement(CoroutineId) {
