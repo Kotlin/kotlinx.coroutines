@@ -24,7 +24,6 @@ import kotlin.math.*
  *
  * @see DelayController
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public class TestCoroutineDispatcher: CoroutineDispatcher(), Delay, DelayController {
     private var dispatchImmediately = true
         set(value) {

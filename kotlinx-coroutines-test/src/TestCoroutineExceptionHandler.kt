@@ -10,7 +10,6 @@ import kotlin.coroutines.*
 /**
  * Access uncaught coroutine exceptions captured during test execution.
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public interface UncaughtExceptionCaptor {
     /**
      * List of uncaught coroutine exceptions.
@@ -34,7 +33,6 @@ public interface UncaughtExceptionCaptor {
 /**
  * An exception handler that captures uncaught exceptions in tests.
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public class TestCoroutineExceptionHandler :
     AbstractCoroutineContextElement(CoroutineExceptionHandler), UncaughtExceptionCaptor, CoroutineExceptionHandler
 {

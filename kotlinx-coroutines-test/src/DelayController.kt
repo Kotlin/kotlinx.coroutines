@@ -12,14 +12,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  *
  * Testing libraries may expose this interface to tests instead of [TestCoroutineDispatcher].
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public interface DelayController {
     /**
      * Returns the current virtual clock-time as it is known to this Dispatcher.
      *
      * @return The virtual clock-time
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public val currentTime: Long
 
     /**
@@ -57,7 +55,6 @@ public interface DelayController {
      * @param delayTimeMillis The amount of time to move the CoroutineContext's clock forward.
      * @return The amount of delay-time that this Dispatcher's clock has been forwarded.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public fun advanceTimeBy(delayTimeMillis: Long): Long
 
     /**
@@ -68,7 +65,6 @@ public interface DelayController {
      *
      * @return the amount of delay-time that this Dispatcher's clock has been forwarded in milliseconds.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public fun advanceUntilIdle(): Long
 
     /**
@@ -76,7 +72,6 @@ public interface DelayController {
      *
      * Calling this function will never advance the clock.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public fun runCurrent()
 
     /**
@@ -85,7 +80,6 @@ public interface DelayController {
      * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
      * coroutines.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     @Throws(UncompletedCoroutinesError::class)
     public fun cleanupTestCoroutines()
 
@@ -98,7 +92,6 @@ public interface DelayController {
      * This is useful when testing functions that start a coroutine. By pausing the dispatcher assertions or
      * setup may be done between the time the coroutine is created and started.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public suspend fun pauseDispatcher(block: suspend () -> Unit)
 
     /**
@@ -107,7 +100,6 @@ public interface DelayController {
      * When paused, the dispatcher will not execute any coroutines automatically, and you must call [runCurrent] or
      * [advanceTimeBy], or [advanceUntilIdle] to execute coroutines.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public fun pauseDispatcher()
 
     /**
@@ -117,7 +109,6 @@ public interface DelayController {
      * time and execute coroutines scheduled in the future use, one of [advanceTimeBy],
      * or [advanceUntilIdle].
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
     public fun resumeDispatcher()
 }
 
@@ -125,5 +116,4 @@ public interface DelayController {
  * Thrown when a test has completed and there are tasks that are not completed or cancelled.
  */
 // todo: maybe convert into non-public class in 1.3.0 (need use-cases for a public exception type)
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public class UncompletedCoroutinesError(message: String, cause: Throwable? = null): AssertionError(message, cause)

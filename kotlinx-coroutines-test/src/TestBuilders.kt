@@ -41,7 +41,6 @@ import kotlin.coroutines.*
  *        then they must implement [DelayController] and [TestCoroutineExceptionHandler] respectively.
  * @param testBody The code of the unit-test.
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
     val (safeContext, dispatcher) = context.checkArguments()
     val startingJobs = safeContext.activeJobs()
@@ -68,14 +67,12 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineScope].
  */
 // todo: need documentation on how this extension is supposed to be used
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(coroutineContext, block)
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(this, block)
 

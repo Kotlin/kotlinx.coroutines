@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.internal.*
  *
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
-@ExperimentalCoroutinesApi
 public fun Dispatchers.setMain(dispatcher: CoroutineDispatcher) {
     require(dispatcher !is TestMainDispatcher) { "Dispatchers.setMain(Dispatchers.Main) is prohibited, probably Dispatchers.resetMain() should be used instead" }
     val mainDispatcher = Dispatchers.Main
@@ -30,7 +29,6 @@ public fun Dispatchers.setMain(dispatcher: CoroutineDispatcher) {
  *
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
-@ExperimentalCoroutinesApi
 public fun Dispatchers.resetMain() {
     val mainDispatcher = Dispatchers.Main
     require(mainDispatcher is TestMainDispatcher) { "TestMainDispatcher is not set as main dispatcher, have $mainDispatcher instead." }
