@@ -3,6 +3,7 @@
  */
 
 val experimentalAnnotations = listOf(
+    "kotlin.Experimental",
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlinx.coroutines.InternalCoroutinesApi"
 )

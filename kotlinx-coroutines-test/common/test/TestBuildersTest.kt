@@ -58,7 +58,7 @@ class TestBuildersTest {
     }
 
     @Test
-    fun scopeRunBlocking_disablesImmedateOnExit() {
+    fun scopeRunBlocking_disablesImmediatelyOnExit() {
         val scope = TestCoroutineScope()
         scope.runBlockingTest {
             assertRunsFast {
