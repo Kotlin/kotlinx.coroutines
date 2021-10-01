@@ -74,28 +74,6 @@ class TestRunBlockingTest {
     }
 
     @Test
-    fun kryak() {
-        class ClassUnderTest(private val mainScope: CoroutineScope, private val bgDispatcher: CoroutineDispatcher) {
-            fun doSomething() {
-                mainScope.launch {
-                    val data = withContext(bgDispatcher) {
-                        delay(1000)
-                        42
-                    }
-                    println(data)
-                }
-            }
-        }
-
-        val testBgDispatcher = TestCoroutineDispatcher()
-        val testScope = TestCoroutineScope()
-        val subject = ClassUnderTest(testScope, testBgDispatcher)
-
-        subject.doSomething()
-        testScope.advanceUntilIdle()
-    }
-
-    @Test
     fun whenUsingTimeout_triggersWhenWaiting() {
         assertFailsWith<TimeoutCancellationException> {
             runBlockingTest {

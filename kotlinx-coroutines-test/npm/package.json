@@ -19,8 +19,5 @@
     "coroutines",
     "JetBrains",
     "test"
-  ],
-  "dependencies": {
-    "kotlinx-coroutines-core": "~$version"
-  }
+  ]
 }
