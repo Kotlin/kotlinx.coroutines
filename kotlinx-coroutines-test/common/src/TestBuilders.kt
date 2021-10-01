@@ -80,19 +80,16 @@ public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineS
     runBlockingTest(this, block)
 
 private fun CoroutineContext.checkArguments(): Pair<CoroutineContext, DelayController> {
-    // TODO optimize it
-    val dispatcher = get(ContinuationInterceptor).run {
-        this?.let { require(this is DelayController) { "Dispatcher must implement DelayController: $this" } }
-        this ?: TestCoroutineDispatcher()
+    val dispatcher = when (val dispatcher = get(ContinuationInterceptor)) {
+        is DelayController -> dispatcher
+        null -> TestCoroutineDispatcher()
+        else -> throw IllegalArgumentException("Dispatcher must implement DelayController: $dispatcher")
     }
-
-    val exceptionHandler =  get(CoroutineExceptionHandler).run {
-        this?.let {
-            require(this is UncaughtExceptionCaptor) { "coroutineExceptionHandler must implement UncaughtExceptionCaptor: $this" }
-        }
-        this ?: TestCoroutineExceptionHandler()
+    val exceptionHandler = when (val handler = get(CoroutineExceptionHandler)) {
+        is UncaughtExceptionCaptor -> handler
+        null -> TestCoroutineExceptionHandler()
+        else -> throw IllegalArgumentException("coroutineExceptionHandler must implement UncaughtExceptionCaptor: $handler")
     }
-
     val job = get(Job) ?: SupervisorJob()
-    return Pair(this + dispatcher + exceptionHandler + job, dispatcher as DelayController)
+    return Pair(this + dispatcher + exceptionHandler + job, dispatcher)
 }

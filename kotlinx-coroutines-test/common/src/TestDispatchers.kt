@@ -8,17 +8,18 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.internal.*
+import kotlin.jvm.*
 
 /**
  * Sets the given [dispatcher] as an underlying dispatcher of [Dispatchers.Main].
- * All consecutive usages of [Dispatchers.Main] will use given [dispatcher] under the hood.
+ * All subsequent usages of [Dispatchers.Main] will use given [dispatcher] under the hood.
  *
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
 @ExperimentalCoroutinesApi
 public fun Dispatchers.setMain(dispatcher: CoroutineDispatcher) {
     require(dispatcher !is TestMainDispatcher) { "Dispatchers.setMain(Dispatchers.Main) is prohibited, probably Dispatchers.resetMain() should be used instead" }
-    val mainDispatcher = Dispatchers.Main
+    val mainDispatcher = Main
     require(mainDispatcher is TestMainDispatcher) { "TestMainDispatcher is not set as main dispatcher, have $mainDispatcher instead." }
     mainDispatcher.setDispatcher(dispatcher)
 }
@@ -32,7 +33,7 @@ public fun Dispatchers.setMain(dispatcher: CoroutineDispatcher) {
  */
 @ExperimentalCoroutinesApi
 public fun Dispatchers.resetMain() {
-    val mainDispatcher = Dispatchers.Main
+    val mainDispatcher = Main
     require(mainDispatcher is TestMainDispatcher) { "TestMainDispatcher is not set as main dispatcher, have $mainDispatcher instead." }
     mainDispatcher.resetDispatcher()
 }

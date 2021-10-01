@@ -31,7 +31,7 @@ private class TestCoroutineScopeImpl (
     DelayController by coroutineContext.delayController
 {
     override fun cleanupTestCoroutines() {
-        coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutines()
+        coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
         coroutineContext.delayController.cleanupTestCoroutines()
     }
 }

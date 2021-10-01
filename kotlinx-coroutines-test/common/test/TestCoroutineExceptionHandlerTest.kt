@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.test
 
-import org.junit.Test
 import kotlin.test.*
 
 class TestCoroutineExceptionHandlerTest {
