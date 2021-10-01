@@ -157,7 +157,7 @@ Notice the following differences in the code with the [Flow] from the earlier ex
 * Values are _emitted_ from the flow using [emit][FlowCollector.emit] function.
 * Values are _collected_ from the flow using [collect][collect] function.  
 
-> We can replace [delay] with `Thread.sleep` in the body of `foo`'s `flow { ... }` and see that the main
+> We can replace [delay] with `Thread.sleep` in the body of `simple`'s `flow { ... }` and see that the main
 > thread is blocked in this case. 
 >
 {type="note"}

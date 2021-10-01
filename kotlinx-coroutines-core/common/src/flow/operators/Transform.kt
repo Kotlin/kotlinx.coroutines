@@ -93,7 +93,7 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  * Note that initial value should be immutable (or should not be mutated) as it is shared between different collectors.
  * For example:
  * ```
- * flowOf(1, 2, 3).scan(emptyList<Int>()) { acc, value -> acc + value }.toList()
+ * flowOf(1, 2, 3).runningFold(emptyList<Int>()) { acc, value -> acc + value }.toList()
  * ```
  * will produce `[], [1], [1, 2], [1, 2, 3]]`.
  */

@@ -30,7 +30,7 @@ open class SequencePlaysScrabble : ShakespearePlaysScrabble() {
         val bonusForDoubleLetter: (String) -> Int = { word: String ->
             toBeMaxed(word)
                 .map { letterScores[it - 'a'.toInt()] }
-                .max()!!
+                .maxOrNull()!!
         }
 
         val score3: (String) -> Int = { word: String ->

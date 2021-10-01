@@ -415,10 +415,6 @@ private class StateFlowImpl<T>(
         fuseStateFlow(context, capacity, onBufferOverflow)
 }
 
-internal fun MutableStateFlow<Int>.increment(delta: Int) {
-    update { it + delta }
-}
-
 internal fun <T> StateFlow<T>.fuseStateFlow(
     context: CoroutineContext,
     capacity: Int,
