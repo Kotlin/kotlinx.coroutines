@@ -19,7 +19,7 @@ kotlin {
             resources.srcDir("$platform/test-resources")
         }
         languageSettings {
-            experimentalAnnotations.forEach { useExperimentalAnnotation(it) }
+            experimentalAnnotations.forEach { optIn(it) }
         }
     }
 }
