@@ -756,19 +756,22 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun futurePropagatesExceptionToParentAfterCancellation() = runTest {
-        val latch = CompletableDeferred<Boolean>()
+    fun testFuturePropagatesExceptionToParentAfterCancellation() = runTest {
+        val throwLatch = CompletableDeferred<Boolean>()
+        val cancelLatch = CompletableDeferred<Boolean>()
         val parent = Job()
         val scope = CoroutineScope(parent)
         val exception = TestException("propagated to parent")
         val future = scope.future {
+            cancelLatch.complete(true)
             withContext(NonCancellable) {
-                latch.await()
+                throwLatch.await()
                 throw exception
             }
         }
+        cancelLatch.await()
         future.cancel(true)
-        latch.complete(true)
+        throwLatch.complete(true)
         parent.join()
         assertTrue(parent.isCancelled)
         assertEquals(exception, parent.getCancellationException().cause)
