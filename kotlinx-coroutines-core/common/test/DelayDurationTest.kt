@@ -10,6 +10,7 @@ package kotlinx.coroutines
 
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalTime
