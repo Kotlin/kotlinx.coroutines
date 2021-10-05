@@ -10,6 +10,8 @@ package kotlinx.coroutines
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalTime
 class WithTimeoutOrNullDurationTest : TestBase() {

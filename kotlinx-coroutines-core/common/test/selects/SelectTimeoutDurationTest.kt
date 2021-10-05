@@ -7,6 +7,8 @@ package kotlinx.coroutines.selects
 import kotlinx.coroutines.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalTime
 class SelectTimeoutDurationTest : TestBase() {

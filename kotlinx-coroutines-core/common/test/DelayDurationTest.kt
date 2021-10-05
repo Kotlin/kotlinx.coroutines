@@ -10,6 +10,7 @@ package kotlinx.coroutines
 
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
 
 @ExperimentalTime
 class DelayDurationTest : TestBase() {

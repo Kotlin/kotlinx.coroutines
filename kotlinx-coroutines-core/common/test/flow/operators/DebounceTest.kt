@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class DebounceTest : TestBase() {
     @Test

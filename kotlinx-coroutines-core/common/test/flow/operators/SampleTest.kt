@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class SampleTest : TestBase() {
     @Test
