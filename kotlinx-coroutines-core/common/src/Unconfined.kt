@@ -14,7 +14,7 @@ internal object Unconfined : CoroutineDispatcher() {
 
     @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
-      throw IllegalStateException("limitedParallelism is not supported for Dispatchers.Unconfined")
+        throw UnsupportedOperationException("limitedParallelism is not supported for Dispatchers.Unconfined")
     }
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false

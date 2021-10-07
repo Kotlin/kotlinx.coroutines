@@ -76,7 +76,7 @@ public abstract class CoroutineDispatcher :
      * such as executing the given runnable in place during [dispatch] calls.
      * Any dispatcher that may return `false` from [isDispatchNeeded] is considered direct.
      * For direct dispatchers, it is recommended to override this method
-     * and provide a domain-specific implementation or to throw an [IllegalStateException].
+     * and provide a domain-specific implementation or to throw an [UnsupportedOperationException].
      *
      * ### Example of usage
      * ```
