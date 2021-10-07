@@ -19,11 +19,11 @@ internal class TestMainDispatcher(private var delegate: CoroutineDispatcher):
     override val immediate: MainCoroutineDispatcher
         get() = (delegate as? MainCoroutineDispatcher)?.immediate ?: this
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        delegate.dispatch(context, block)
-    }
+    override fun dispatch(context: CoroutineContext, block: Runnable) = delegate.dispatch(context, block)
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = delegate.isDispatchNeeded(context)
+
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) = delegate.dispatchYield(context, block)
 
     fun setDispatcher(dispatcher: CoroutineDispatcher) {
         delegate = dispatcher
