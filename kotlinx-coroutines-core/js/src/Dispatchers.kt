@@ -15,10 +15,12 @@ public actual object Dispatchers {
     private val mainDispatcher = JsMainDispatcher(Default, false)
     private var injectedMainDispatcher: MainCoroutineDispatcher? = null
 
+    @PublishedApi
     internal fun injectMain(dispatcher: MainCoroutineDispatcher) {
         injectedMainDispatcher = dispatcher
     }
 
+    @PublishedApi
     internal fun resetInjectedMain() {
         injectedMainDispatcher = null
     }

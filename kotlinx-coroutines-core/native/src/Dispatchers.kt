@@ -17,10 +17,12 @@ public actual object Dispatchers {
 
     private val mainDispatcher = NativeMainDispatcher(Default)
 
+    @PublishedApi
     internal fun injectMain(dispatcher: MainCoroutineDispatcher) {
         injectedMainDispatcher = dispatcher
     }
 
+    @PublishedApi
     internal fun resetInjectedMain() {
         injectedMainDispatcher = null
     }
