@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 apply plugin: 'jdk-convention'
-apply from: rootProject.file("gradle/opt-in.gradle")
 
 def coreModule = "kotlinx-coroutines-core"
 def testModule = "kotlinx-coroutines-test"
@@ -168,7 +167,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name) }) {
 
     // Configure options for all Kotlin compilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
-        kotlinOptions.freeCompilerArgs += optInAnnotations.collect { "-Xopt-in=" + it }
+        kotlinOptions.freeCompilerArgs += OptInPresetKt.optInAnnotations.collect { "-Xopt-in=" + it }
         kotlinOptions.freeCompilerArgs += "-progressive"
         // Disable KT-36770 for RxJava2 integration
         kotlinOptions.freeCompilerArgs += "-XXLanguage:-ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated"

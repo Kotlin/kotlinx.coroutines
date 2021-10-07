@@ -9,17 +9,5 @@ val experimentalAnnotations = listOf(
 )
 
 kotlin {
-    sourceSets.all {
-        val srcDir = if (name.endsWith("Main")) "src" else "test"
-        val platform = name.dropLast(4)
-        kotlin.srcDir("$platform/$srcDir")
-        if (name == "jvmMain") {
-            resources.srcDir("$platform/resources")
-        } else if (name == "jvmTest") {
-            resources.srcDir("$platform/test-resources")
-        }
-        languageSettings {
-            experimentalAnnotations.forEach { optIn(it) }
-        }
-    }
+    sourceSets.all { configureMultiplatform() }
 }
