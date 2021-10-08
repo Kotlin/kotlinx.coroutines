@@ -1,11 +1,13 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:JvmName("TestDispatchers")
 
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.internal.*
+import kotlin.jvm.*
 
 /**
  * Sets the given [dispatcher] as an underlying dispatcher of [Dispatchers.Main].
