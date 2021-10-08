@@ -5,6 +5,7 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**
@@ -16,7 +17,7 @@ public interface UncaughtExceptionCaptor {
      * List of uncaught coroutine exceptions.
      *
      * The returned list is a copy of the currently caught exceptions.
-     * During [cleanupTestCoroutines] the first element of this list is rethrown if it is not empty.
+     * During [cleanupTestCoroutinesCaptor] the first element of this list is rethrown if it is not empty.
      */
     public val uncaughtExceptions: List<Throwable>
 
@@ -28,7 +29,7 @@ public interface UncaughtExceptionCaptor {
      *
      * @throws Throwable the first uncaught exception, if there are any uncaught exceptions.
      */
-    public fun cleanupTestCoroutines()
+    public fun cleanupTestCoroutinesCaptor()
 }
 
 /**
@@ -39,21 +40,22 @@ public class TestCoroutineExceptionHandler :
     AbstractCoroutineContextElement(CoroutineExceptionHandler), UncaughtExceptionCaptor, CoroutineExceptionHandler
 {
     private val _exceptions = mutableListOf<Throwable>()
+    private val _lock = SynchronizedObject()
 
     /** @suppress **/
     override fun handleException(context: CoroutineContext, exception: Throwable) {
-        synchronized(_exceptions) {
+        synchronized(_lock) {
             _exceptions += exception
         }
     }
 
     /** @suppress **/
     override val uncaughtExceptions: List<Throwable>
-        get() = synchronized(_exceptions) { _exceptions.toList() }
+        get() = synchronized(_lock) { _exceptions.toList() }
 
     /** @suppress **/
-    override fun cleanupTestCoroutines() {
-        synchronized(_exceptions) {
+    override fun cleanupTestCoroutinesCaptor() {
+        synchronized(_lock) {
             val exception = _exceptions.firstOrNull() ?: return
             // log the rest
             _exceptions.drop(1).forEach { it.printStackTrace() }

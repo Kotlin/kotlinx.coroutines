@@ -5,13 +5,12 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import org.junit.Test
 import kotlin.test.*
 
 class TestCoroutineScopeTest {
     @Test
     fun whenGivenInvalidExceptionHandler_throwsException() {
-        val handler = CoroutineExceptionHandler {  _, _ -> Unit }
+        val handler = CoroutineExceptionHandler {  _, _ -> }
         assertFails {
             TestCoroutineScope(handler)
         }
@@ -20,7 +19,7 @@ class TestCoroutineScopeTest {
     @Test
     fun whenGivenInvalidDispatcher_throwsException() {
         assertFails {
-            TestCoroutineScope(newSingleThreadContext("incorrect call"))
+            TestCoroutineScope(Dispatchers.Default)
         }
     }
 }

@@ -1,14 +1,29 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.test
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import org.junit.*
-import kotlin.coroutines.*
+import kotlin.test.*
 
-class TestRunBlockingOrderTest : TestBase() {
+class TestRunBlockingOrderTest {
+
+    private val actionIndex = atomic(0)
+    private val finished = atomic(false)
+
+    private fun expect(index: Int) {
+        val wasIndex = actionIndex.incrementAndGet()
+        // println("expect($index), wasIndex=$wasIndex")
+        check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
+    }
+
+    private fun finish(index: Int) {
+        expect(index)
+        check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
+    }
+
     @Test
     fun testLaunchImmediate() = runBlockingTest {
         expect(1)

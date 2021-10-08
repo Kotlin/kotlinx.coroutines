@@ -4,12 +4,11 @@
 
 package kotlinx.coroutines.test
 
-import org.junit.Test
 import kotlin.test.*
 
 class TestCoroutineExceptionHandlerTest {
     @Test
-    fun whenExceptionsCaught_avaliableViaProperty() {
+    fun whenExceptionsCaught_availableViaProperty() {
         val subject = TestCoroutineExceptionHandler()
         val expected = IllegalArgumentException()
         subject.handleException(subject, expected)

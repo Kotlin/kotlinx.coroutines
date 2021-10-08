@@ -4,14 +4,13 @@
 
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.gradle.util.VersionNumber
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
-import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 
 apply plugin: 'jdk-convention'
-apply from: rootProject.file("gradle/opt-in.gradle")
 
 def coreModule = "kotlinx-coroutines-core"
+def testModule = "kotlinx-coroutines-test"
+def multiplatform = [coreModule, testModule]
 // Not applicable for Kotlin plugin
 def sourceless = ['kotlinx.coroutines', 'kotlinx-coroutines-bom', 'integration-testing']
 def internal = ['kotlinx.coroutines', 'benchmarks', 'integration-testing']
@@ -112,7 +111,7 @@ apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
     if (build_snapshot_train) {
         ignoredProjects.remove("example-frontend-js")
-        ignoredProjects.add("kotlinx-coroutines-core")
+        ignoredProjects.add(coreModule)
     }
     ignoredPackages += "kotlinx.coroutines.internal"
 }
@@ -133,13 +132,31 @@ allprojects {
 // Add dependency to core source sets. Core is configured in kx-core/build.gradle
 configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
-    def platform = PlatformKt.platformOf(it)
-    apply plugin: "kotlin-${platform}-conventions"
-    dependencies {
-        // See comment below for rationale, it will be replaced with "project" dependency
-        api project(":$coreModule")
-        // the only way IDEA can resolve test classes
-        testImplementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+    if (it.name in multiplatform) {
+        apply plugin: "kotlin-multiplatform"
+        apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
+        apply from: rootProject.file("gradle/compile-common.gradle")
+
+        if (rootProject.ext["native_targets_enabled"] as Boolean) {
+            apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
+        }
+
+        apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
+        apply from: rootProject.file("gradle/publish-npm-js.gradle")
+        kotlin.sourceSets.commonMain.dependencies {
+            api project(":$coreModule")
+        }
+        kotlin.sourceSets.jvmTest.dependencies {
+            implementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+        }
+    } else {
+        def platform = PlatformKt.platformOf(it)
+        apply plugin: "kotlin-${platform}-conventions"
+        dependencies {
+            api project(":$coreModule")
+            // the only way IDEA can resolve test classes
+            testImplementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+        }
     }
 }
 
@@ -150,7 +167,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name) }) {
 
     // Configure options for all Kotlin compilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
-        kotlinOptions.freeCompilerArgs += optInAnnotations.collect { "-Xopt-in=" + it }
+        kotlinOptions.freeCompilerArgs += OptInPresetKt.optInAnnotations.collect { "-Xopt-in=" + it }
         kotlinOptions.freeCompilerArgs += "-progressive"
         // Disable KT-36770 for RxJava2 integration
         kotlinOptions.freeCompilerArgs += "-XXLanguage:-ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated"
@@ -177,7 +194,7 @@ if (build_snapshot_train) {
     }
 
     println "Manifest of kotlin-compiler-embeddable.jar for coroutines"
-    configure(subprojects.findAll { it.name == "kotlinx-coroutines-core" }) {
+    configure(subprojects.findAll { it.name == coreModule }) {
         configurations.matching { it.name == "kotlinCompilerClasspath" }.all {
             resolvedConfiguration.getFiles().findAll { it.name.contains("kotlin-compiler-embeddable") }.each {
                 def manifest = zipTree(it).matching {
@@ -194,9 +211,8 @@ if (build_snapshot_train) {
 
 // Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
 configure(subprojects.findAll {
-    !sourceless.contains(it.name) &&
+    !sourceless.contains(it.name) && !multiplatform.contains(it.name) &&
             it.name != "benchmarks" &&
-            it.name != coreModule &&
             it.name != "example-frontend-js"
 }) {
     // Pure JS and pure MPP doesn't have this notion and are configured separately
@@ -250,7 +266,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     }
 
     List<String> jarTasks
-    if (it.name == "kotlinx-coroutines-core") {
+    if (it.name in multiplatform) {
         jarTasks = ["jvmJar", "metadataJar"]
     } else if (it.name == "kotlinx-coroutines-debug") {
         // We shadow debug module instead of just packaging it
@@ -324,12 +340,12 @@ allprojects { subProject ->
             .matching {
                 // Excluding substituted project itself because of circular dependencies, but still do it
                 // for "*Test*" configurations
-                subProject.name != "kotlinx-coroutines-core" || it.name.contains("Test")
+                subProject.name != coreModule || it.name.contains("Test")
             }
             .configureEach { conf ->
                 conf.resolutionStrategy.dependencySubstitution {
-                    substitute(module("org.jetbrains.kotlinx:kotlinx-coroutines-core"))
-                            .using(project(":kotlinx-coroutines-core"))
+                    substitute(module("org.jetbrains.kotlinx:$coreModule"))
+                            .using(project(":$coreModule"))
                             .because("Because Kotlin compiler embeddable leaks coroutines into the runtime classpath, " +
                                     "triggering all sort of incompatible class changes errors")
                 }

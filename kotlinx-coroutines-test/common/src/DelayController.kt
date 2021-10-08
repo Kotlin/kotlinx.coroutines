@@ -126,4 +126,4 @@ public interface DelayController {
  */
 // todo: maybe convert into non-public class in 1.3.0 (need use-cases for a public exception type)
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public class UncompletedCoroutinesError(message: String, cause: Throwable? = null): AssertionError(message, cause)
+public class UncompletedCoroutinesError(message: String): AssertionError(message)

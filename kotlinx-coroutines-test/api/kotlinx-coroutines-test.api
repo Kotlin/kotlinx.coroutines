@@ -36,7 +36,7 @@ public final class kotlinx/coroutines/test/TestCoroutineDispatcher : kotlinx/cor
 
 public final class kotlinx/coroutines/test/TestCoroutineExceptionHandler : kotlin/coroutines/AbstractCoroutineContextElement, kotlinx/coroutines/CoroutineExceptionHandler, kotlinx/coroutines/test/UncaughtExceptionCaptor {
 	public fun <init> ()V
-	public fun cleanupTestCoroutines ()V
+	public fun cleanupTestCoroutinesCaptor ()V
 	public fun getUncaughtExceptions ()Ljava/util/List;
 	public fun handleException (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)V
 }
@@ -56,12 +56,11 @@ public final class kotlinx/coroutines/test/TestDispatchers {
 }
 
 public abstract interface class kotlinx/coroutines/test/UncaughtExceptionCaptor {
-	public abstract fun cleanupTestCoroutines ()V
+	public abstract fun cleanupTestCoroutinesCaptor ()V
 	public abstract fun getUncaughtExceptions ()Ljava/util/List;
 }
 
 public final class kotlinx/coroutines/test/UncompletedCoroutinesError : java/lang/AssertionError {
-	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;)V
 }
 

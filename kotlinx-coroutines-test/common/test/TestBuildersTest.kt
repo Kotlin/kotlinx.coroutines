@@ -5,7 +5,6 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -59,7 +58,7 @@ class TestBuildersTest {
     }
 
     @Test
-    fun scopeRunBlocking_disablesImmedateOnExit() {
+    fun scopeRunBlocking_disablesImmediatelyOnExit() {
         val scope = TestCoroutineScope()
         scope.runBlockingTest {
             assertRunsFast {

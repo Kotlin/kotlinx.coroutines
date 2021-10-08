@@ -12,7 +12,7 @@ apply plugin: 'signing'
 
 // ------------- tasks
 
-def isMultiplatform = project.name == "kotlinx-coroutines-core"
+def isMultiplatform = project.name == "kotlinx-coroutines-core" || project.name == "kotlinx-coroutines-test"
 def isBom = project.name == "kotlinx-coroutines-bom"
 
 if (!isBom) {

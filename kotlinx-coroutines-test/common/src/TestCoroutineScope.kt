@@ -14,7 +14,7 @@ import kotlin.coroutines.*
 public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor, DelayController {
     /**
      * Call after the test completes.
-     * Calls [UncaughtExceptionCaptor.cleanupTestCoroutines] and [DelayController.cleanupTestCoroutines].
+     * Calls [UncaughtExceptionCaptor.cleanupTestCoroutinesCaptor] and [DelayController.cleanupTestCoroutines].
      *
      * @throws Throwable the first uncaught exception, if there are any uncaught exceptions.
      * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
@@ -31,7 +31,7 @@ private class TestCoroutineScopeImpl (
     DelayController by coroutineContext.delayController
 {
     override fun cleanupTestCoroutines() {
-        coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutines()
+        coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
         coroutineContext.delayController.cleanupTestCoroutines()
     }
 }

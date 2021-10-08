@@ -70,19 +70,8 @@ if (rootProject.ext.native_targets_enabled) {
  * because JMV-only projects depend on core, thus core should always be initialized before configuration.
  */
 kotlin {
-    configure(sourceSets) {
-        def srcDir = name.endsWith('Main') ? 'src' : 'test'
-        def platform = name[0..-5]
-        kotlin.srcDirs = ["$platform/$srcDir"]
-        if (name == "jvmMain") {
-            resources.srcDirs = ["$platform/resources"]
-        } else if (name == "jvmTest") {
-            resources.srcDirs = ["$platform/test-resources"]
-        }
-        languageSettings {
-            progressiveMode = true
-            optInAnnotations.each { useExperimentalAnnotation(it) }
-        }
+    sourceSets.forEach {
+        SourceSetsKt.configureMultiplatform(it)
     }
 
     configure(targets) {
