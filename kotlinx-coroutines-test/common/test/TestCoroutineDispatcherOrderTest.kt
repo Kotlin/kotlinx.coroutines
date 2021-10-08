@@ -15,7 +15,6 @@ class TestCoroutineDispatcherOrderTest {
 
     private fun expect(index: Int) {
         val wasIndex = actionIndex.incrementAndGet()
-        // println("expect($index), wasIndex=$wasIndex")
         check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
     }
 

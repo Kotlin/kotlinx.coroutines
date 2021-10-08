@@ -6,10 +6,26 @@ package kotlinx.coroutines
 
 import kotlin.coroutines.*
 
+/** Not inside [Dispatchers], as otherwise mutating this throws an `InvalidMutabilityException`. */
+private var injectedMainDispatcher: MainCoroutineDispatcher? = null
+
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
-    public actual val Main: MainCoroutineDispatcher = NativeMainDispatcher(Default)
+    public actual val Main: MainCoroutineDispatcher
+        get() = injectedMainDispatcher ?: mainDispatcher
     public actual val Unconfined: CoroutineDispatcher get() = kotlinx.coroutines.Unconfined // Avoid freezing
+
+    private val mainDispatcher = NativeMainDispatcher(Default)
+
+    @PublishedApi
+    internal fun injectMain(dispatcher: MainCoroutineDispatcher) {
+        injectedMainDispatcher = dispatcher
+    }
+
+    @PublishedApi
+    internal fun resetInjectedMain() {
+        injectedMainDispatcher = null
+    }
 }
 
 private class NativeMainDispatcher(val delegate: CoroutineDispatcher) : MainCoroutineDispatcher() {

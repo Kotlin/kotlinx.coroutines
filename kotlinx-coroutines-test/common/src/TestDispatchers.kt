@@ -1,10 +1,13 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:JvmName("TestDispatchers")
 
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.test.internal.*
+import kotlin.jvm.*
 
 /**
  * Sets the given [dispatcher] as an underlying dispatcher of [Dispatchers.Main].
@@ -13,7 +16,10 @@ import kotlinx.coroutines.*
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
 @ExperimentalCoroutinesApi
-public expect fun Dispatchers.setMain(dispatcher: CoroutineDispatcher)
+public fun Dispatchers.setMain(dispatcher: CoroutineDispatcher) {
+    require(dispatcher !is TestMainDispatcher) { "Dispatchers.setMain(Dispatchers.Main) is prohibited, probably Dispatchers.resetMain() should be used instead" }
+    getTestMainDispatcher().setDispatcher(dispatcher)
+}
 
 /**
  * Resets state of the [Dispatchers.Main] to the original main dispatcher.
@@ -23,4 +29,6 @@ public expect fun Dispatchers.setMain(dispatcher: CoroutineDispatcher)
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
 @ExperimentalCoroutinesApi
-public expect fun Dispatchers.resetMain()
+public fun Dispatchers.resetMain() {
+    getTestMainDispatcher().resetDispatcher()
+}
