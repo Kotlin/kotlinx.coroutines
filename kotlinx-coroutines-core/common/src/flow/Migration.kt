@@ -260,7 +260,7 @@ public fun <T> Flow<T>.skip(count: Int): Flow<T> = noImpl()
 @Deprecated(
     level = DeprecationLevel.ERROR,
     message = "Flow analogue of 'forEach' is 'collect'",
-    replaceWith = ReplaceWith("collect(block)")
+    replaceWith = ReplaceWith("collect(action)")
 )
 public fun <T> Flow<T>.forEach(action: suspend (value: T) -> Unit): Unit = noImpl()
 

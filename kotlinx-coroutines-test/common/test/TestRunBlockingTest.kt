@@ -5,7 +5,6 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
 import kotlin.test.*
 
 class TestRunBlockingTest {
@@ -53,22 +52,14 @@ class TestRunBlockingTest {
     }
 
     @Test
-    fun incorrectlyCalledRunblocking_doesNotHaveSameInterceptor() = runBlockingTest {
-        // this code is an error as a production test, please do not use this as an example
-
-        // this test exists to document this error condition, if it's possible to make this code work please update
-        val outerInterceptor = coroutineContext[ContinuationInterceptor]
-        // runBlocking always requires an argument to pass the context in tests
-        runBlocking {
-            assertNotSame(coroutineContext[ContinuationInterceptor], outerInterceptor)
-        }
-    }
-
-    @Test(expected = TimeoutCancellationException::class)
-    fun whenUsingTimeout_triggersWhenDelayed() = runBlockingTest {
-        assertRunsFast {
-            withTimeout(SLOW) {
-                delay(SLOW)
+    fun whenUsingTimeout_triggersWhenDelayed() {
+        assertFailsWith<TimeoutCancellationException> {
+            runBlockingTest {
+                assertRunsFast {
+                    withTimeout(SLOW) {
+                        delay(SLOW)
+                    }
+                }
             }
         }
     }
@@ -82,12 +73,16 @@ class TestRunBlockingTest {
         }
     }
 
-    @Test(expected = TimeoutCancellationException::class)
-    fun whenUsingTimeout_triggersWhenWaiting() = runBlockingTest {
-        val uncompleted = CompletableDeferred<Unit>()
-        assertRunsFast {
-            withTimeout(SLOW) {
-                uncompleted.await()
+    @Test
+    fun whenUsingTimeout_triggersWhenWaiting() {
+        assertFailsWith<TimeoutCancellationException> {
+            runBlockingTest {
+                val uncompleted = CompletableDeferred<Unit>()
+                assertRunsFast {
+                    withTimeout(SLOW) {
+                        uncompleted.await()
+                    }
+                }
             }
         }
     }
@@ -114,16 +109,20 @@ class TestRunBlockingTest {
         }
     }
 
-    @Test(expected = TimeoutCancellationException::class)
-    fun whenUsingTimeout_inAsync_triggersWhenDelayed() = runBlockingTest {
-        val deferred = async {
-            withTimeout(SLOW) {
-                delay(SLOW)
-            }
-        }
+    @Test
+    fun whenUsingTimeout_inAsync_triggersWhenDelayed() {
+        assertFailsWith<TimeoutCancellationException> {
+            runBlockingTest {
+                val deferred = async {
+                    withTimeout(SLOW) {
+                        delay(SLOW)
+                    }
+                }
 
-        assertRunsFast {
-            deferred.await()
+                assertRunsFast {
+                    deferred.await()
+                }
+            }
         }
     }
 
@@ -141,18 +140,21 @@ class TestRunBlockingTest {
         }
     }
 
-    @Test(expected = TimeoutCancellationException::class)
-    fun whenUsingTimeout_inLaunch_triggersWhenDelayed() = runBlockingTest {
-        val job= launch {
-            withTimeout(1) {
-                delay(SLOW + 1)
-                3
-            }
-        }
+    @Test
+    fun whenUsingTimeout_inLaunch_triggersWhenDelayed() {
+        assertFailsWith<TimeoutCancellationException> {
+            runBlockingTest {
+                val job = launch {
+                    withTimeout(1) {
+                        delay(SLOW + 1)
+                    }
+                }
 
-        assertRunsFast {
-            job.join()
-            throw job.getCancellationException()
+                assertRunsFast {
+                    job.join()
+                    throw job.getCancellationException()
+                }
+            }
         }
     }
 
@@ -170,36 +172,48 @@ class TestRunBlockingTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun throwingException_throws() = runBlockingTest {
-        assertRunsFast {
-            delay(SLOW)
-            throw IllegalArgumentException("Test")
+    @Test
+    fun throwingException_throws() {
+        assertFailsWith<IllegalArgumentException> {
+            runBlockingTest {
+                assertRunsFast {
+                    delay(SLOW)
+                    throw IllegalArgumentException("Test")
+                }
+            }
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun throwingException_inLaunch_throws() = runBlockingTest {
-        val job = launch {
-            delay(SLOW)
-            throw IllegalArgumentException("Test")
-        }
+    @Test
+    fun throwingException_inLaunch_throws() {
+        assertFailsWith<IllegalArgumentException> {
+            runBlockingTest {
+                val job = launch {
+                    delay(SLOW)
+                    throw IllegalArgumentException("Test")
+                }
 
-        assertRunsFast {
-            job.join()
-            throw job.getCancellationException().cause ?: assertFails { "expected exception" }
+                assertRunsFast {
+                    job.join()
+                    throw job.getCancellationException().cause ?: assertFails { "expected exception" }
+                }
+            }
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun throwingException__inAsync_throws() = runBlockingTest {
-        val deferred = async {
-            delay(SLOW)
-            throw IllegalArgumentException("Test")
-        }
+    @Test
+    fun throwingException__inAsync_throws() {
+        assertFailsWith<IllegalArgumentException> {
+            runBlockingTest {
+                val deferred: Deferred<Unit> = async {
+                    delay(SLOW)
+                    throw IllegalArgumentException("Test")
+                }
 
-        assertRunsFast {
-            deferred.await()
+                assertRunsFast {
+                    deferred.await()
+                }
+            }
         }
     }
 
@@ -273,25 +287,33 @@ class TestRunBlockingTest {
         job.join()
     }
 
-    @Test(expected = UncompletedCoroutinesError::class)
-    fun whenACoroutineLeaks_errorIsThrown() = runBlockingTest {
-        val uncompleted = CompletableDeferred<Unit>()
-        launch {
-            uncompleted.await()
+    @Test
+    fun whenACoroutineLeaks_errorIsThrown() {
+        assertFailsWith<UncompletedCoroutinesError> {
+            runBlockingTest {
+                val uncompleted = CompletableDeferred<Unit>()
+                launch {
+                    uncompleted.await()
+                }
+            }
         }
     }
 
-    @Test(expected = java.lang.IllegalArgumentException::class)
+    @Test
     fun runBlockingTestBuilder_throwsOnBadDispatcher() {
-        runBlockingTest(newSingleThreadContext("name")) {
+        assertFailsWith<IllegalArgumentException> {
+            runBlockingTest(Dispatchers.Default) {
 
+            }
         }
     }
 
-    @Test(expected = java.lang.IllegalArgumentException::class)
+    @Test
     fun runBlockingTestBuilder_throwsOnBadHandler() {
-        runBlockingTest(CoroutineExceptionHandler { _, _ -> Unit} ) {
+        assertFailsWith<IllegalArgumentException> {
+            runBlockingTest(CoroutineExceptionHandler { _, _ -> }) {
 
+            }
         }
     }
 
@@ -338,36 +360,48 @@ class TestRunBlockingTest {
     }
 
 
-    @Test(expected = IllegalAccessError::class)
-    fun testWithTestContextThrowingAnAssertionError() = runBlockingTest {
-        val expectedError = IllegalAccessError("hello")
+    @Test
+    fun testWithTestContextThrowingAnAssertionError() {
+        assertFailsWith<TestException> {
+            runBlockingTest {
+                val expectedError = TestException("hello")
 
-        val job = launch {
-            throw expectedError
-        }
+                val job = launch {
+                    throw expectedError
+                }
 
-        // don't rethrow or handle the exception
-    }
-
-    @Test(expected = IllegalAccessError::class)
-    fun testExceptionHandlingWithLaunch() = runBlockingTest {
-        val expectedError = IllegalAccessError("hello")
-
-        launch {
-            throw expectedError
-        }
-    }
-
-    @Test(expected = IllegalAccessError::class)
-    fun testExceptions_notThrownImmediately() = runBlockingTest {
-        val expectedException = IllegalAccessError("hello")
-        val result = runCatching {
-            launch {
-                throw expectedException
+                // don't rethrow or handle the exception
             }
         }
-        runCurrent()
-        assertEquals(true, result.isSuccess)
+    }
+
+    @Test
+    fun testExceptionHandlingWithLaunch() {
+        assertFailsWith<TestException> {
+            runBlockingTest {
+                val expectedError = TestException("hello")
+
+                launch {
+                    throw expectedError
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testExceptions_notThrownImmediately() {
+        assertFailsWith<TestException> {
+            runBlockingTest {
+                val expectedException = TestException("hello")
+                val result = runCatching {
+                    launch {
+                        throw expectedException
+                    }
+                }
+                runCurrent()
+                assertEquals(true, result.isSuccess)
+            }
+        }
     }
 
 
@@ -380,9 +414,13 @@ class TestRunBlockingTest {
         assertNotSame(coroutineContext[CoroutineExceptionHandler], exceptionHandler)
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun testPartialDispatcherOverride() = runBlockingTest(Dispatchers.Unconfined) {
-        fail("Unreached")
+    @Test
+    fun testPartialDispatcherOverride() {
+        assertFailsWith<IllegalArgumentException> {
+            runBlockingTest(Dispatchers.Unconfined) {
+                fail("Unreached")
+            }
+        }
     }
 
     @Test
@@ -390,8 +428,14 @@ class TestRunBlockingTest {
         assertSame(coroutineContext[CoroutineExceptionHandler], exceptionHandler)
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun testOverrideExceptionHandlerError() = runBlockingTest(CoroutineExceptionHandler { _, _ -> }) {
-        fail("Unreached")
+    @Test
+    fun testOverrideExceptionHandlerError() {
+        assertFailsWith<IllegalArgumentException> {
+            runBlockingTest(CoroutineExceptionHandler { _, _ -> }) {
+                fail("Unreached")
+            }
+        }
     }
 }
+
+private class TestException(message: String? = null): Exception(message)
