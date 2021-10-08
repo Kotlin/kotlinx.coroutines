@@ -61,7 +61,7 @@ public fun <T, R> Flow<T>.flatMapConcat(transform: suspend (value: T) -> Flow<R>
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
  *
  * @param concurrency controls the number of in-flight flows, at most [concurrency] flows are collected
- * at the same time. By default it is equal to [DEFAULT_CONCURRENCY].
+ * at the same time. By default, it is equal to [DEFAULT_CONCURRENCY].
  */
 @FlowPreview
 public fun <T, R> Flow<T>.flatMapMerge(
