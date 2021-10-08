@@ -8,7 +8,7 @@ import org.gradle.util.VersionNumber
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 
-//apply plugin: 'jdk-convention'
+apply plugin: 'jdk-convention'
 apply from: rootProject.file("gradle/opt-in.gradle")
 
 def coreModule = "kotlinx-coroutines-core"

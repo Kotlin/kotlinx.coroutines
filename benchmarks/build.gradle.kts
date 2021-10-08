@@ -62,21 +62,6 @@ dependencies {
     compile("com.typesafe.akka:akka-actor_2.12:2.5.0")
     compile(project(":kotlinx-coroutines-core"))
 
-    compile("org.nield:kotlin-statistics:1.2.1")
-    compile("org.apache.commons:commons-math3:3.0")
-
     // add jmh dependency on main
     "jmhImplementation"(sourceSets.main.get().runtimeClasspath)
 }
-
-task("runBfsChannelBenchmark", JavaExec::class) {
-    main = "macrobenchmarks.BfsChannelBenchmark"
-    args = listOf("-Xmx3G")
-    classpath = sourceSets["main"].runtimeClasspath
-}
-
-task("runInMemoryChatBenchmark", JavaExec::class) {
-    main = "macrobenchmarks.chat.InMemoryChatBenchmark"
-    classpath = sourceSets["main"].runtimeClasspath
-}
-
