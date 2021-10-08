@@ -1,6 +1,7 @@
 package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -21,6 +22,22 @@ class SemaphoreTest : TestBase() {
         semaphore.acquire()
         expect(2)
         semaphore.acquire()
+        finish(5)
+    }
+
+    @Test
+    fun testSimpleSelect() = runTest {
+        val semaphore = SemaphoreImpl(2, 0)
+        launch {
+            expect(3)
+            semaphore.release()
+            expect(4)
+        }
+        expect(1)
+        select<Unit> { semaphore.onAcquire {} }
+        select<Unit> { semaphore.onAcquire {} }
+        expect(2)
+        select<Unit> { semaphore.onAcquire {} }
         finish(5)
     }
 

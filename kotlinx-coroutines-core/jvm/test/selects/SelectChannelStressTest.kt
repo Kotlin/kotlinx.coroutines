@@ -70,7 +70,6 @@ class SelectChannelStressTest: TestBase() {
 
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion
-        if (!trySelect()) return
-        block.startCoroutineUnintercepted(this)
+        default(block)
     }
 }

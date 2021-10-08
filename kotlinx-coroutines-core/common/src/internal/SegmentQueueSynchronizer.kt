@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.SegmentQueueSynchronizer.*
 import kotlinx.coroutines.internal.SegmentQueueSynchronizer.CancellationMode.*
 import kotlinx.coroutines.internal.SegmentQueueSynchronizer.ResumeMode.*
+import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
 import kotlin.math.*
@@ -207,8 +208,17 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
         returnValue(value)
     }
 
+    protected fun createOnCancellation(value: T): (t: Throwable?) -> Unit =
+        { returnValue(value) }
+
+    internal fun suspend(cont: Continuation<T>): Boolean =
+        suspendInternal(cont)
+
+    internal fun suspend(select: SelectInstance<*>): Boolean =
+        suspendInternal(select)
+
     @Suppress("UNCHECKED_CAST")
-    internal fun suspend(cont: Continuation<T>): Boolean {
+    private fun suspendInternal(waiter: Any): Boolean {
         // Increment `suspendIdx` and find the segment
         // with the corresponding id. It is guaranteed
         // that this segment is not removed since at
@@ -221,13 +231,19 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
         assert { segment.id == suspendIdx / SEGMENT_SIZE }
         // Try to install the waiter into the cell - this is the regular path.
         val i = (suspendIdx % SEGMENT_SIZE).toInt()
-        if (segment.cas(i, null, cont)) {
+        if (segment.cas(i, null, waiter)) {
             // The continuation is successfully installed, and
             // `resume` cannot break the cell now, so this
             // suspension is successful.
             // Add a cancellation handler if required and finish.
-            if (cont is CancellableContinuation<*>) {
-                cont.invokeOnCancellation(SQSCancellationHandler(segment, i).asHandler)
+            when (waiter) {
+                is CancellableContinuation<*> -> {
+                    waiter.invokeOnCancellation(SQSCancellationHandler(segment, i).asHandler)
+                }
+                is SelectInstance<*> -> {
+                    waiter.invokeOnCompletion { SQSCancellationHandler(segment, i).asHandler.invokeIt(null) }
+                }
+                else -> error("Unexpected waiter: $waiter")
             }
             return true
         }
@@ -241,14 +257,15 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
             // The elimination is performed successfully,
             // complete with the value stored in the cell.
             value as T
-            when (cont) {
+            when (waiter) {
                 is CancellableContinuation<*> -> {
-                    cont as CancellableContinuation<T>
-                    cont.resume(value, { returnValue(value) }) // TODO do we really need this?
+                    waiter as CancellableContinuation<T>
+                    waiter.resume(value) { returnValue(value) }
                 }
-                else -> {
-                    cont.resume(value)
+                is SelectInstance<*> -> {
+                    waiter.selectInRegPhase(value)
                 }
+                else -> error("Unexpected waiter: $waiter")
             }
             return true
         }
@@ -359,17 +376,23 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
                     return TRY_RESUME_SUCCESS
                 }
                 // Does the cell store a cancellable continuation?
-                cellState is CancellableContinuation<*> -> {
+                cellState is CancellableContinuation<*> || cellState is SelectInstance<*> -> {
                     // Change the cell state to `RESUMED`, so
                     // the cancellation handler cannot be invoked
                     // even if the continuation becomes cancelled.
                     if (!segment.cas(i, cellState, RESUMED)) continue@modify_cell
                     // Try to resume the continuation.
-                    val token = (cellState as CancellableContinuation<T>).tryResume(value, null, { returnValue(value) })
-                    if (token != null) {
-                        // Hooray, the continuation is successfully resumed!
-                        cellState.completeResume(token)
+                    val resumed = if (cellState is SelectInstance<*>) {
+                        cellState.trySelect(this, value)
                     } else {
+                        cellState as CancellableContinuation<T>
+                        val token = cellState.tryResume(value, null, { returnValue(value) })
+                        if (token != null) {
+                            cellState.completeResume(token)
+                            true
+                        } else false
+                    }
+                    if (!resumed) {
                         // Unfortunately, the continuation resumption has failed.
                         // Fail the current `resume` if the simple cancellation mode is used.
                         if (cancellationMode === SIMPLE)
@@ -583,7 +606,7 @@ private class SQSSegment(id: Long, prev: SQSSegment?, pointers: Int) : Segment<S
             val cellState = get(index)
             when {
                 cellState === RESUMED -> return false
-                cellState is CancellableContinuation<*> -> {
+                cellState is CancellableContinuation<*> || cellState is SelectInstance<*> -> {
                     if (cas(index, cellState, CANCELLING)) return true
                 }
                 else -> {

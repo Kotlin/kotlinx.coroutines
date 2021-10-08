@@ -7,8 +7,8 @@ package kotlinx.coroutines.sync
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
-import kotlin.coroutines.*
 import kotlin.math.*
 
 /**
@@ -157,22 +157,51 @@ internal open class SemaphoreImpl(
     }
 
     private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
+        // Try to suspend.
+        if (suspend(cont)) return@sc
+        // The suspension has been failed
+        // due to the synchronous resumption mode.
+        // Restart the whole `acquire`.
+        acquire(cont)
+    }
+
+    @InternalCoroutinesApi
+    fun acquire(cont: CancellableContinuation<Unit>) = acquire(
+        waiter = cont,
+        suspend = { cont -> suspend(cont) },
+        onAcquired = { cont -> cont.resume(Unit, createOnCancellation(Unit)) }
+    )
+
+    private fun <W> acquire(waiter: W, suspend: (waiter: W) -> Boolean, onAcquired: (waiter: W) -> Unit) {
         while (true) {
-            // Try to suspend.
-            if (suspend(cont)) return@sc
-            // The suspension has been failed
-            // due to the synchronous resumption mode.
-            // Restart the whole `acquire`, and decrement
-            // the number of available permits at first.
+            // Decrement the number of available permits at first.
             val p = decPermits()
             // Is the permit acquired?
             if (p > 0) {
-                cont.resume(Unit)
-                return@sc
+                onAcquired(waiter)
+                return
             }
-            // Permit has not been acquired, go to
-            // the beginning of the loop and suspend.
+            // Permit has not been acquired, try to suspend.
+            if (suspend(waiter)) return
         }
+    }
+
+    val onAcquire: SelectClause1<Semaphore> get() = SelectClause1Impl(
+        objForSelect = this,
+        regFunc = SemaphoreImpl::onAcquireRegFunction as RegistrationFunction,
+        processResFunc = SemaphoreImpl::onAcquireProcessResultFunction as ProcessResultFunction
+    )
+
+    private fun onAcquireRegFunction(select: SelectInstance<*>, ignoredParam: Any?) {
+        acquire(
+            waiter = select,
+            suspend = { s -> suspend(s) },
+            onAcquired = { s -> s.selectInRegPhase(Unit) }
+        )
+    }
+
+    private fun onAcquireProcessResultFunction(param: Any?, result: Any?): Any? {
+        return this
     }
 
     /**

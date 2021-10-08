@@ -241,7 +241,7 @@ private inline fun AtomicInt.updateIfLower(distance: Int): Boolean = loop { cur 
 /**
  * This channel implementation does not suspend on sends and closes itself if the number of waiting receivers exceeds [maxWaitingReceivers].
  */
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class TaskChannelKotlin<E>(private val maxWaitingReceivers: Int)
     : BufferedChannel<E?>(capacity = Channel.UNLIMITED, onUndeliveredElement = null)
 {

@@ -175,11 +175,20 @@ internal open class BufferedChannel<E>(
                 state === null -> {
                     val rendezvous = unlimited || s < bufferEnd.value || s < receivers.value
                     if (rendezvous) {
-                        if (segm.casState(i, null, BUFFERED)) return RENDEZVOUS
+                        if (segm.casState(i, null, BUFFERED)) {
+                            if (s < receivers.value) {
+                                while (segm.getState(i) === BUFFERED) {}
+                            }
+                            return RENDEZVOUS
+                        }
                     } else {
                         if (waiter === null) return NO_WAITER
                         if (segm.casState(i, null, waiter)) return SUSPEND
                     }
+                }
+                state === STORING_WAITER -> if (segm.casState(i, state, BUFFERED)) {
+                    while (segm.getState(i) === BUFFERED) {}
+                    return RENDEZVOUS
                 }
                 state === BUFFERING -> {
                     if (segm.casState(i, state, BUFFERED)) return RENDEZVOUS
@@ -201,7 +210,7 @@ internal open class BufferedChannel<E>(
     private fun Any.tryResumeReceiver(element: E): Boolean {
         val onCancellation: ((cause: Throwable) -> Unit)? = onUndeliveredElement?.let { { _ -> it(element) }}
         return when(this) {
-            is NewSelectInstance<*> -> {
+            is SelectInstance<*> -> {
                 // TODO onUndeliveredElement
                 this.trySelect(this@BufferedChannel, element)
             }
@@ -245,9 +254,9 @@ internal open class BufferedChannel<E>(
         receiveImpl(
             startSegment = receiveSegment.value,
             waiter = null,
-            onRendezvous = { element -> return success(element) },
+            onRendezvous = { element -> onReceiveEnqueued(); return success(element); },
             onSuspend = { _, _ -> error("unexpected") },
-            onClosed = { return closed(getCause()) },
+            onClosed = { onReceiveEnqueued(); return closed(getCause()) },
             onNoWaiter = { segm, i, r -> receiveCatchingSuspend(segm, i, r) }
         )
 
@@ -325,19 +334,21 @@ internal open class BufferedChannel<E>(
         when {
             result === SUSPEND -> {
                 cont.invokeOnCancellation { segm.onCancellation(i) }
+                onReceiveEnqueued()
             }
             result === FAILED -> {
                 receiveImpl<Any?>(
                     startSegment = receiveSegment.value,
                     waiter = cont,
-                    onRendezvous = { element -> cont.resume(element) },
-                    onSuspend = { segm, i -> cont.invokeOnCancellation { segm.onCancellation(i) } },
-                    onClosed = { cont.resumeWithException(receiveException(getCause())) },
+                    onRendezvous = { element -> cont.resume(element); onReceiveEnqueued() },
+                    onSuspend = { segm, i -> cont.invokeOnCancellation { segm.onCancellation(i) }; onReceiveEnqueued() },
+                    onClosed = { cont.resumeWithException(receiveException(getCause())); onReceiveEnqueued() },
                     onNoWaiter = { _, _, _ -> error("unexpected") }
                 )
             }
             else -> {
                 cont.resume(result as E)
+                onReceiveEnqueued()
             }
         }
     }
@@ -351,19 +362,21 @@ internal open class BufferedChannel<E>(
         val result = updateCellReceive(segm, i, r, waiter)
         when {
             result === SUSPEND -> {
+                onReceiveEnqueued()
                 cont.invokeOnCancellation { segm.onCancellation(i) }
             }
             result === FAILED -> {
                 receiveImpl<Any?>(
                     startSegment = receiveSegment.value,
                     waiter = waiter,
-                    onRendezvous = { element -> cont.resume(success(element)) },
-                    onSuspend = { segm, i -> cont.invokeOnCancellation { segm.onCancellation(i) } },
-                    onClosed = { cont.resume(closed(getCause())) },
+                    onRendezvous = { element -> cont.resume(success(element)); onReceiveEnqueued() },
+                    onSuspend = { segm, i -> cont.invokeOnCancellation { segm.onCancellation(i) }; onReceiveEnqueued() },
+                    onClosed = { cont.resume(closed(getCause())); onReceiveEnqueued() },
                     onNoWaiter = { _, _, _ -> error("unexpected") }
                 )
             }
             else -> {
+                onReceiveEnqueued()
                 cont.resume(success(result as E))
             }
         }
@@ -386,9 +399,15 @@ internal open class BufferedChannel<E>(
                         }
                     } else {
                         if (waiter === null) return NO_WAITER
-                        if (segm.casState(i, state, waiter)) {
+                        if (segm.casState(i, state, STORING_WAITER)) {
                             expandBuffer()
-                            return SUSPEND
+                            if (segm.casState(i, STORING_WAITER, waiter)) return SUSPEND
+                            // BUFFERED otherwise
+                            val element = segm.retrieveElement(i)
+                            if (segm.getState(i) === BUFFERED) {
+                                segm.setState(i, DONE)
+                                return element
+                            }
                         }
                     }
                 }
@@ -396,6 +415,7 @@ internal open class BufferedChannel<E>(
                     val element = segm.retrieveElement(i)
                     if (segm.getState(i) === BUFFERED) {
                         expandBuffer()
+                        segm.setState(i, DONE)
                         return element
                     }
                 }
@@ -416,7 +436,6 @@ internal open class BufferedChannel<E>(
                         val sender = if (state is WaiterEB) state.waiter else state
                         if (sender.tryResumeSender()) {
                             segm.setState(i, DONE)
-                            expandBuffer()
                             return segm.retrieveElement(i)
                         } else {
                             if (!segm.casState(i, RESUMING_R, INTERRUPTED_R) || helpExpandBuffer)
@@ -430,7 +449,7 @@ internal open class BufferedChannel<E>(
     }
 
     private fun Any.tryResumeSender(): Boolean = when {
-        this is NewSelectInstance<*> -> {
+        this is SelectInstance<*> -> {
             this.trySelect(this@BufferedChannel, Unit)
         }
         this is CancellableContinuation<*> -> {
@@ -482,7 +501,8 @@ internal open class BufferedChannel<E>(
                 state === null -> {
                     if (segm.casState(i, segm, BUFFERING)) return true
                 }
-                state === BUFFERED || state === BROKEN || state === DONE || state == CLOSED -> return true
+                state === STORING_WAITER -> return true
+                state === BUFFERED || state === BROKEN || state === DONE || state === CLOSED -> return true
                 state === RESUMING_R -> if (segm.casState(i, state, RESUMING_R_EB)) return true
                 state === INTERRUPTED -> {
                     if (b >= receivers.value) return false
@@ -516,21 +536,28 @@ internal open class BufferedChannel<E>(
     // ## Select Expression ##
     // #######################
 
-    public val onSendNew: NewSelectClause2<E, BufferedChannel<E>>
-        get() = NewSelectClause2Impl(
+    public override val onSend: SelectClause2<E, BufferedChannel<E>>
+        get() = SelectClause2Impl(
             objForSelect = this@BufferedChannel,
             regFunc = BufferedChannel<*>::registerSelectForSend as RegistrationFunction,
             processResFunc = BufferedChannel<*>::processResultSelectSend as ProcessResultFunction
         )
 
-    public val onReceiveNew: NewSelectClause1<E>
-        get() = NewSelectClause1Impl(
+    public override val onReceive: SelectClause1<E>
+        get() = SelectClause1Impl(
             objForSelect = this@BufferedChannel,
             regFunc = BufferedChannel<*>::registerSelectForReceive as RegistrationFunction,
             processResFunc = BufferedChannel<*>::processResultSelectReceive as ProcessResultFunction
         )
 
-    private fun registerSelectForSend(select: NewSelectInstance<*>, element: Any?) =
+    override val onReceiveCatching: SelectClause1<ChannelResult<E>>
+        get() = SelectClause1Impl(
+            objForSelect = this@BufferedChannel,
+            regFunc = BufferedChannel<*>::registerSelectForReceive as RegistrationFunction,
+            processResFunc = BufferedChannel<*>::processResultSelectReceiveCatching as ProcessResultFunction
+        )
+
+    private fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
         sendImpl(
             element = element as E,
             startSegment = sendSegment.value,
@@ -540,8 +567,9 @@ internal open class BufferedChannel<E>(
             onClosed = { select.selectInRegPhase(CLOSED) },
             onNoWaiter = { _, _, _, _ -> error("unexpected") }
         )
+    }
 
-    private fun registerSelectForReceive(select: NewSelectInstance<*>, ignoredParam: Any?): Unit {
+    private fun registerSelectForReceive(select: SelectInstance<*>, ignoredParam: Any?) {
         receiveImpl<Any?>(
             startSegment = receiveSegment.value,
             waiter = select,
@@ -551,7 +579,6 @@ internal open class BufferedChannel<E>(
             onNoWaiter = { _, _, _ -> error("unexpected") }
         )
     }
-
 
     private fun processResultSelectSend(ignoredParam: Any?, selectResult: Any?): Any? =
         if (selectResult === CLOSED) throw sendException(getCause())
@@ -566,6 +593,10 @@ internal open class BufferedChannel<E>(
             if (closeCause.value !== null) throw receiveException(getCause())
             null
         } else selectResult
+
+    private fun processResultSelectReceiveCatching(ignoredParam: Any?, selectResult: Any?): Any? =
+        if (selectResult === CLOSED) closed(closeCause.value as Throwable?)
+        else success(selectResult as E)
 
 
     // ##############################
@@ -605,9 +636,9 @@ internal open class BufferedChannel<E>(
         closeStatus.value = 2
     }
 
-    public override fun close(cause: Throwable?): Boolean = closeImpl(cause, false)
+    override fun close(cause: Throwable?): Boolean = closeImpl(cause, false)
 
-    private fun closeImpl(cause: Throwable?, cancel: Boolean): Boolean {
+    protected open fun closeImpl(cause: Throwable?, cancel: Boolean): Boolean {
         if (cancel) {
             closeStatus.compareAndSet(0, -1)
         }
@@ -688,7 +719,7 @@ internal open class BufferedChannel<E>(
     final override fun cancel() { cancelImpl(null) }
     final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
 
-    private fun cancelImpl(cause: Throwable?): Boolean {
+    protected open fun cancelImpl(cause: Throwable?): Boolean {
         val cause = cause ?: CancellationException("$classSimpleName was cancelled")
         val wasClosed = closeImpl(cause, true)
         removeRemainingBufferedElements()
@@ -723,7 +754,7 @@ internal open class BufferedChannel<E>(
                                 break
                             }
                         }
-                        state is CancellableContinuation<*> || state is NewSelectInstance<*>  -> {
+                        state is CancellableContinuation<*> || state is SelectInstance<*>  -> {
                             if (segm.casState(i, state, CLOSED)) {
                                 state.closeSender()
                                 break
@@ -756,7 +787,7 @@ internal open class BufferedChannel<E>(
                                 break
                             }
                         }
-                        state is CancellableContinuation<*> || state is ReceiveCatching<*> || state is NewSelectInstance<*> -> {
+                        state is CancellableContinuation<*> || state is ReceiveCatching<*> || state is SelectInstance<*> -> {
                             if (segm.casState(i, state, CLOSED)) {
                                 if (state.closeReceiver()) expandBuffer()
                                 break
@@ -784,7 +815,7 @@ internal open class BufferedChannel<E>(
             is ReceiveCatching<*> -> {
                 this.receiver.tryResume(closed(cause))?.also { this.receiver.completeResume(it) }.let { it !== null }
             }
-            is NewSelectInstance<*> -> this.trySelect(this@BufferedChannel, CLOSED)
+            is SelectInstance<*> -> this.trySelect(this@BufferedChannel, CLOSED)
             else -> error("Unexpected waiter: $this")
         }
     }
@@ -941,13 +972,6 @@ internal open class BufferedChannel<E>(
             }
         }
     }
-
-    override val onSend: SelectClause2<E, SendChannel<E>>
-        get() = TODO("Not yet implemented")
-    override val onReceive: SelectClause1<E>
-        get() = TODO("Not yet implemented")
-    override val onReceiveCatching: SelectClause1<ChannelResult<E>>
-        get() = TODO("Not yet implemented")
 }
 
 /**
@@ -1019,6 +1043,8 @@ private val DONE = Symbol("DONE")
 private val INTERRUPTED = Symbol("INTERRUPTED")
 private val INTERRUPTED_R = Symbol("INTERRUPTED_R")
 private val INTERRUPTED_EB = Symbol("INTERRUPTED_EB")
+
+private val STORING_WAITER = Symbol("STORING_WAITER")
 
 // Special values for `CLOSE_HANDLER`
 private val CLOSE_HANDLER_CLOSED = Symbol("CLOSE_HANDLER_CLOSED")

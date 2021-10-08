@@ -9,7 +9,6 @@ import org.junit.*
 import java.util.concurrent.atomic.*
 
 class ConflatedChannelCloseStressTest : TestBase() {
-
     private val nSenders = 2
     private val testSeconds = 3 * stressTestMultiplier
 
@@ -74,6 +73,10 @@ class ConflatedChannelCloseStressTest : TestBase() {
         closer.cancel()
         // wait them to complete
         println("waiting for senders...")
+        launch {
+            delay(5_000)
+            println()
+        }
         senderJobs.forEach { it.join() }
         println("waiting for closer...")
         closerJob.join()

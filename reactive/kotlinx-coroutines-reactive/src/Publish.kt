@@ -68,7 +68,7 @@ public class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>,
     private val exceptionOnCancelHandler: (Throwable, CoroutineContext) -> Unit
-) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, Subscription {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
@@ -99,15 +99,17 @@ public class PublisherCoroutine<in T>(
     }
 
     override val onSend: SelectClause2<T, SendChannel<T>>
-        get() = this
+        get() = SelectClause2Impl(
+            mutex,
+            mutex.onLock.regFunc,
+            PublisherCoroutine<*>::onSendSelectProcessResult as ProcessResultFunction
+        )
 
-    // registerSelectSend
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-    override fun <R> registerSelectClause2(select: SelectInstance<R>, element: T, block: suspend (SendChannel<T>) -> R) {
-        mutex.onLock.registerSelectClause2(select, null) {
-            doLockedNext(element)?.let { throw it }
-            block(this)
-        }
+    private fun onSendSelectProcessResult(param: Any?, clauseResult: Any?): Any? {
+        mutex.onLock.processResFunc.invoke(mutex, param, clauseResult)
+        val element = param as T
+        doLockedNext(element)?.let { throw it }
+        return this
     }
 
     /*

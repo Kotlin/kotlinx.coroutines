@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.sync
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 

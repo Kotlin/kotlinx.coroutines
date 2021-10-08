@@ -65,6 +65,7 @@ abstract class ChannelLincheckTestBase(
 
     // @Operation TODO: `trySend()` is not linearizable as it can fail due to postponed buffer expansion
     //            TODO: or make a rendezvous with `tryReceive`, such an elimination is disallowed
+    @Operation
     fun trySend(@Param(name = "value") value: Int): Any = c.trySend(value)
             .onSuccess { return true }
             .onFailure {
@@ -106,13 +107,13 @@ abstract class ChannelLincheckTestBase(
         e.testResult
     }
 
-    @Operation(causesBlocking = true)
+//    @Operation(causesBlocking = true)
     fun close(@Param(name = "closeToken") token: Int): Boolean = c.close(NumberedCancellationException(token))
 
-    @Operation
+//    @Operation
     fun cancel(@Param(name = "closeToken") token: Int) = c.cancel(NumberedCancellationException(token))
 
-    @Operation
+//    @Operation
     fun isClosedForSend() = c.isClosedForSend
 
     // @Operation TODO

@@ -24,15 +24,15 @@ class ChannelFactoryTest : TestBase() {
 
     @Test
     fun testConflatedChannel() {
-        assertTrue(Channel<Int>(Channel.CONFLATED) is ConflatedChannel)
-        assertTrue(Channel<Int>(1, BufferOverflow.DROP_OLDEST) is ConflatedChannel)
+        assertTrue(Channel<Int>(Channel.CONFLATED) is ConflatedBufferedChannel)
+        assertTrue(Channel<Int>(1, BufferOverflow.DROP_OLDEST) is ConflatedBufferedChannel)
     }
 
     @Test
     fun testArrayChannel() {
-        assertTrue(Channel<Int>(1) is ArrayChannel)
-        assertTrue(Channel<Int>(1, BufferOverflow.DROP_LATEST) is ArrayChannel)
-        assertTrue(Channel<Int>(10) is ArrayChannel)
+        assertTrue(Channel<Int>(1) is BufferedChannel)
+        assertTrue(Channel<Int>(1, BufferOverflow.DROP_LATEST) is ConflatedBufferedChannel)
+        assertTrue(Channel<Int>(10) is BufferedChannel)
     }
 
     @Test
