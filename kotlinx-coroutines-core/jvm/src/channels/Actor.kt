@@ -181,6 +181,14 @@ private class LazyActorCoroutine<E>(
         return closed
     }
 
-    override val onSend: SelectClause2<E, SendChannel<E>>
-        get() = TODO()
+    override val onSend: SelectClause2<E, SendChannel<E>> get() = SelectClause2Impl(
+        objForSelect = this,
+        regFunc = LazyActorCoroutine<*>::onSendRegFunction as RegistrationFunction,
+        processResFunc = super.onSend.processResFunc
+    )
+
+    private fun onSendRegFunction(select: SelectInstance<*>, element: Any?) {
+        onStart()
+        super.onSend.regFunc(this, select, element)
+    }
 }

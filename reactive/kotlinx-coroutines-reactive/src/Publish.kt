@@ -105,10 +105,9 @@ public class PublisherCoroutine<in T>(
             PublisherCoroutine<*>::onSendSelectProcessResult as ProcessResultFunction
         )
 
-    private fun onSendSelectProcessResult(param: Any?, clauseResult: Any?): Any? {
-        mutex.onLock.processResFunc.invoke(mutex, param, clauseResult)
-        val element = param as T
-        doLockedNext(element)?.let { throw it }
+    private fun onSendSelectProcessResult(element: Any?, clauseResult: Any?): Any? {
+        mutex.onLock.processResFunc.invoke(mutex, element, clauseResult)
+        doLockedNext(element as T)?.let { throw it }
         return this
     }
 
