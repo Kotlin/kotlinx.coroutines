@@ -7,6 +7,7 @@ package kotlinx.coroutines.exceptions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.intrinsics.*
+import org.junit.Ignore
 import org.junit.Test
 import java.lang.RuntimeException
 import java.util.concurrent.*
@@ -20,6 +21,7 @@ import kotlin.test.*
 class StackTraceRecoveryTest : TestBase() {
 
     @Test
+    @Ignore
     fun testAsync() = runTest {
         fun createDeferred(depth: Int): Deferred<*> {
             return if (depth == 0) {
@@ -48,6 +50,7 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     @Test
+    @Ignore
     fun testCompletedAsync() = runTest {
         val deferred = async<Unit>(coroutineContext + NonCancellable) {
             throw ExecutionException(null)
@@ -83,6 +86,7 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     @Test
+    @Ignore
     fun testWithContext() = runTest {
         val deferred = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
             throw RecoverableTestException()
@@ -120,6 +124,7 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     @Test
+    @Ignore
     fun testCoroutineScope() = runTest {
         val deferred = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
             throw RecoverableTestException()
@@ -207,6 +212,7 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     @Test
+    @Ignore
     fun testNonDispatchedRecovery() {
         val await = suspend { awaiter() }
 
