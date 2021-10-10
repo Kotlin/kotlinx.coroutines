@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
+import kotlin.js.*
 import kotlin.math.*
 
 /**
@@ -166,6 +167,7 @@ internal open class SemaphoreImpl(
     }
 
     @InternalCoroutinesApi
+    @JsName("acquireInternal")
     fun acquire(cont: CancellableContinuation<Unit>) = acquire(
         waiter = cont,
         suspend = { cont -> suspend(cont) },
