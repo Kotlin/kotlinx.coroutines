@@ -167,13 +167,14 @@ internal open class SemaphoreImpl(
     }
 
     @InternalCoroutinesApi
-    @JsName("acquireInternal")
-    fun acquire(cont: CancellableContinuation<Unit>) = acquire(
+    @JsName("acquireCont")
+    protected fun acquire(cont: CancellableContinuation<Unit>) = acquire(
         waiter = cont,
         suspend = { cont -> suspend(cont) },
         onAcquired = { cont -> cont.resume(Unit, createOnCancellation(Unit)) }
     )
 
+    @JsName("acquireInternal")
     private fun <W> acquire(waiter: W, suspend: (waiter: W) -> Boolean, onAcquired: (waiter: W) -> Unit) {
         while (true) {
             // Decrement the number of available permits at first.
