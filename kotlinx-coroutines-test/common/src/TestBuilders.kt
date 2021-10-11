@@ -43,25 +43,16 @@ import kotlin.coroutines.*
  */
 @ExperimentalCoroutinesApi
 public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
-    val (safeContext, dispatcher) = context.checkTestScopeArguments()
-    val startingJobs = safeContext.activeJobs()
-    val scope = TestCoroutineScope(safeContext)
+    val scope = TestCoroutineScope(context)
+    val scheduler = scope.coroutineContext[TestCoroutineScheduler]!!
     val deferred = scope.async {
         scope.testBody()
     }
-    dispatcher.scheduler.advanceUntilIdle()
+    scheduler.advanceUntilIdle()
     deferred.getCompletionExceptionOrNull()?.let {
         throw it
     }
     scope.cleanupTestCoroutines()
-    val endingJobs = safeContext.activeJobs()
-    if ((endingJobs - startingJobs).isNotEmpty()) {
-        throw UncompletedCoroutinesError("Test finished with active jobs: $endingJobs")
-    }
-}
-
-private fun CoroutineContext.activeJobs(): Set<Job> {
-    return checkNotNull(this[Job]).children.filter { it.isActive }.toSet()
 }
 
 /**
@@ -78,33 +69,3 @@ public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.
 @ExperimentalCoroutinesApi
 public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(this, block)
-
-internal fun CoroutineContext.checkTestScopeArguments(): Pair<CoroutineContext, TestDispatcher> {
-    val scheduler: TestCoroutineScheduler
-    val dispatcher = when (val dispatcher = get(ContinuationInterceptor)) {
-        is TestDispatcher -> {
-            val ctxScheduler = get(TestCoroutineScheduler)
-            if (ctxScheduler == null) {
-                scheduler = dispatcher.scheduler
-            } else {
-                require(dispatcher.scheduler === ctxScheduler) {
-                    "Both a TestCoroutineScheduler $ctxScheduler and TestDispatcher $dispatcher linked to " +
-                        "another scheduler were passed."
-                }
-                scheduler = ctxScheduler
-            }
-            dispatcher
-        }
-        null -> {
-            scheduler = get(TestCoroutineScheduler) ?: TestCoroutineScheduler()
-            TestCoroutineDispatcher(scheduler)
-        }
-        else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
-    }
-    val exceptionHandler = get(CoroutineExceptionHandler).run {
-        this?.let { require(this is UncaughtExceptionCaptor) { "coroutineExceptionHandler must implement UncaughtExceptionCaptor: $this" } }
-        this ?: TestCoroutineExceptionHandler()
-    }
-    val job = get(Job) ?: SupervisorJob()
-    return Pair(this + scheduler + dispatcher + exceptionHandler + job, dispatcher)
-}
