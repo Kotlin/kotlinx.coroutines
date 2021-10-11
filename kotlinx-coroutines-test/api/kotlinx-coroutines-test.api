@@ -16,8 +16,10 @@ public final class kotlinx/coroutines/test/TestBuildersKt {
 	public static synthetic fun runBlockingTest$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
-public final class kotlinx/coroutines/test/TestCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay, kotlinx/coroutines/test/DelayController {
+public final class kotlinx/coroutines/test/TestCoroutineDispatcher : kotlinx/coroutines/test/TestDispatcher, kotlinx/coroutines/Delay, kotlinx/coroutines/test/SchedulerAsDelayController {
 	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun advanceTimeBy (J)J
 	public fun advanceUntilIdle ()J
 	public fun cleanupTestCoroutines ()V
@@ -25,6 +27,7 @@ public final class kotlinx/coroutines/test/TestCoroutineDispatcher : kotlinx/cor
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun dispatchYield (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun getCurrentTime ()J
+	public fun getScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
 	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 	public fun pauseDispatcher ()V
 	public fun pauseDispatcher (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -41,13 +44,45 @@ public final class kotlinx/coroutines/test/TestCoroutineExceptionHandler : kotli
 	public fun handleException (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)V
 }
 
-public abstract interface class kotlinx/coroutines/test/TestCoroutineScope : kotlinx/coroutines/CoroutineScope, kotlinx/coroutines/test/DelayController, kotlinx/coroutines/test/UncaughtExceptionCaptor {
+public final class kotlinx/coroutines/test/TestCoroutineScheduler : kotlin/coroutines/AbstractCoroutineContextElement, kotlin/coroutines/CoroutineContext$Element {
+	public static final field Key Lkotlinx/coroutines/test/TestCoroutineScheduler$Key;
+	public fun <init> ()V
+	public final fun advanceTimeBy (J)V
+	public final fun advanceUntilIdle ()V
+	public final fun getCurrentTime ()J
+	public final fun runCurrent ()V
+}
+
+public final class kotlinx/coroutines/test/TestCoroutineScheduler$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public abstract interface class kotlinx/coroutines/test/TestCoroutineScope : kotlinx/coroutines/CoroutineScope, kotlinx/coroutines/test/UncaughtExceptionCaptor {
+	public abstract fun advanceTimeBy (J)V
+	public abstract fun advanceUntilIdle ()V
 	public abstract fun cleanupTestCoroutines ()V
+	public abstract fun getCurrentTime ()J
+	public abstract fun getTestScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
+	public abstract fun pauseDispatcher ()V
+	public abstract fun pauseDispatcher (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun resumeDispatcher ()V
+	public abstract fun runCurrent ()V
+}
+
+public final class kotlinx/coroutines/test/TestCoroutineScope$DefaultImpls {
+	public static fun advanceTimeBy (Lkotlinx/coroutines/test/TestCoroutineScope;J)V
+	public static fun advanceUntilIdle (Lkotlinx/coroutines/test/TestCoroutineScope;)V
+	public static fun getCurrentTime (Lkotlinx/coroutines/test/TestCoroutineScope;)J
+	public static fun runCurrent (Lkotlinx/coroutines/test/TestCoroutineScope;)V
 }
 
 public final class kotlinx/coroutines/test/TestCoroutineScopeKt {
 	public static final fun TestCoroutineScope (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/test/TestCoroutineScope;
 	public static synthetic fun TestCoroutineScope$default (Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/test/TestCoroutineScope;
+}
+
+public abstract class kotlinx/coroutines/test/TestDispatcher : kotlinx/coroutines/CoroutineDispatcher {
+	public fun <init> ()V
+	public abstract fun getScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
 }
 
 public final class kotlinx/coroutines/test/TestDispatchers {

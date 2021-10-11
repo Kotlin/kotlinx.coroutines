@@ -128,7 +128,6 @@ class TestRunBlockingTest {
 
     @Test
     fun whenUsingTimeout_inAsync_doesNotTriggerWhenNotDelayed() = runBlockingTest {
-        val testScope = this
         val deferred = async {
             withTimeout(SLOW) {
                 delay(0)
@@ -195,7 +194,7 @@ class TestRunBlockingTest {
 
                 assertRunsFast {
                     job.join()
-                    throw job.getCancellationException().cause ?: assertFails { "expected exception" }
+                    throw job.getCancellationException().cause ?: AssertionError("expected exception")
                 }
             }
         }
@@ -239,7 +238,7 @@ class TestRunBlockingTest {
                 delay(SLOW)
                 executed = true
             }
-            advanceTimeBy(SLOW)
+            advanceTimeBy(SLOW + 1)
 
             assertTrue(executed)
         }
@@ -343,6 +342,7 @@ class TestRunBlockingTest {
             runCurrent()
             assertEquals(1, mutable)
             advanceTimeBy(SLOW)
+            runCurrent()
             assertEquals(2, mutable)
         }
     }
@@ -366,7 +366,7 @@ class TestRunBlockingTest {
             runBlockingTest {
                 val expectedError = TestException("hello")
 
-                val job = launch {
+                launch {
                     throw expectedError
                 }
 
