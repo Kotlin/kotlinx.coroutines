@@ -90,7 +90,6 @@ public fun <T> Flow<Flow<T>>.flattenConcat(): Flow<T> = flow {
  * Applications of [flowOn], [buffer], and [produceIn] _after_ this operator are fused with
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
  */
-@ExperimentalCoroutinesApi
 public fun <T> Iterable<Flow<T>>.merge(): Flow<T> {
     /*
      * This is a fuseable implementation of the following operator:
@@ -114,7 +113,6 @@ public fun <T> Iterable<Flow<T>>.merge(): Flow<T> {
  * Applications of [flowOn], [buffer], and [produceIn] _after_ this operator are fused with
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
  */
-@ExperimentalCoroutinesApi
 public fun <T> merge(vararg flows: Flow<T>): Flow<T> = flows.asIterable().merge()
 
 /**
