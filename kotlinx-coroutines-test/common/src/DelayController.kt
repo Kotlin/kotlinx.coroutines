@@ -10,9 +10,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 /**
  * Control the virtual clock time of a [CoroutineDispatcher].
  *
- * Testing libraries may expose this interface to tests instead of [TestCoroutineDispatcher].
+ * Testing libraries may expose this interface to the tests instead of [TestCoroutineDispatcher].
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+@Deprecated("Use `TestCoroutineScheduler` to control virtual time.",
+    level = DeprecationLevel.WARNING)
 public interface DelayController {
     /**
      * Returns the current virtual clock-time as it is known to this Dispatcher.
@@ -127,3 +129,54 @@ public interface DelayController {
 // todo: maybe convert into non-public class in 1.3.0 (need use-cases for a public exception type)
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public class UncompletedCoroutinesError(message: String): AssertionError(message)
+
+internal interface SchedulerAsDelayController: DelayController {
+    public val scheduler: TestCoroutineScheduler
+
+    /** @suppress */
+    @Deprecated("This property delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+        ReplaceWith("this.scheduler.currentTime"),
+        level = DeprecationLevel.WARNING)
+    override val currentTime: Long get() = scheduler.currentTime
+
+
+    /** @suppress */
+    @Deprecated("This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+        ReplaceWith("this.scheduler.advanceTimeBy(delayTimeMillis)"),
+        level = DeprecationLevel.WARNING)
+    override fun advanceTimeBy(delayTimeMillis: Long): Long {
+        val oldTime = scheduler.currentTime
+        scheduler.advanceTimeBy(delayTimeMillis)
+        scheduler.runCurrent()
+        return scheduler.currentTime - oldTime
+    }
+
+    /** @suppress */
+    @Deprecated("This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+        ReplaceWith("this.scheduler.advanceUntilIdle()"),
+        level = DeprecationLevel.WARNING)
+    override fun advanceUntilIdle(): Long {
+        val oldTime = scheduler.currentTime
+        scheduler.advanceUntilIdle()
+        return scheduler.currentTime - oldTime
+    }
+
+    /** @suppress */
+    @Deprecated("This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+        ReplaceWith("this.scheduler.runCurrent()"),
+        level = DeprecationLevel.WARNING)
+    override fun runCurrent(): Unit = scheduler.runCurrent()
+
+    /** @suppress */
+    @ExperimentalCoroutinesApi
+    override fun cleanupTestCoroutines() {
+        // process any pending cancellations or completions, but don't advance time
+        scheduler.runCurrent()
+        if (!scheduler.isIdle()) {
+            throw UncompletedCoroutinesError(
+                "Unfinished coroutines during teardown. Ensure all coroutines are" +
+                    " completed or cancelled by your test."
+            )
+        }
+    }
+}

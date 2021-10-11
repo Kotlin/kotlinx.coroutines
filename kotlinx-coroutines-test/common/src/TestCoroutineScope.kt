@@ -11,7 +11,7 @@ import kotlin.coroutines.*
  * A scope which provides detailed control over the execution of coroutines for tests.
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor, DelayController {
+public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor {
     /**
      * Call after the test completes.
      * Calls [UncaughtExceptionCaptor.cleanupTestCoroutinesCaptor] and [DelayController.cleanupTestCoroutines].
@@ -20,20 +20,93 @@ public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor, De
      * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
      * coroutines.
      */
-    public override fun cleanupTestCoroutines()
+    public fun cleanupTestCoroutines()
+
+    /**
+     * The delay-skipping scheduler used by the test dispatchers running the code in this scope.
+     */
+    @ExperimentalCoroutinesApi
+    public val testScheduler: TestCoroutineScheduler
+
+    /**
+     * The current virtual time on [testScheduler].
+     * @see TestCoroutineScheduler.currentTime
+     */
+    @ExperimentalCoroutinesApi
+    public val currentTime: Long
+        get() = testScheduler.currentTime
+
+    /**
+     * Advances the [testScheduler] by [delayTimeMillis].
+     *
+     * Historical note: this method used to also run the tasks scheduled on the next millisecond after the delay; this
+     * behavior is no longer present, so call [runCurrent] afterwards if you need those tasks to run.
+     *
+     * @see TestCoroutineScheduler.advanceTimeBy
+     */
+    @ExperimentalCoroutinesApi
+    public fun advanceTimeBy(delayTimeMillis: Long): Unit = testScheduler.advanceTimeBy(delayTimeMillis)
+
+    /**
+     * Advances the [testScheduler] to the point where there are no tasks remaining.
+     * @see TestCoroutineScheduler.advanceUntilIdle
+     */
+    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+    public fun advanceUntilIdle(): Unit = testScheduler.advanceUntilIdle()
+
+    /**
+     * Run any tasks that are pending at the current virtual time.
+     * @see TestCoroutineScheduler.runCurrent
+     */
+    @ExperimentalCoroutinesApi
+    public fun runCurrent(): Unit = testScheduler.runCurrent()
+
+    @ExperimentalCoroutinesApi
+    @Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
+        "Only `TestCoroutineDispatcher` supports pausing; pause it directly.", level = DeprecationLevel.WARNING)
+    public suspend fun pauseDispatcher(block: suspend () -> Unit)
+
+    @ExperimentalCoroutinesApi
+    @Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
+        "Only `TestCoroutineDispatcher` supports pausing; pause it directly.", level = DeprecationLevel.WARNING)
+    public fun pauseDispatcher()
+
+    @ExperimentalCoroutinesApi
+    @Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
+        "Only `TestCoroutineDispatcher` supports pausing; pause it directly.", level = DeprecationLevel.WARNING)
+    public fun resumeDispatcher()
 }
 
 private class TestCoroutineScopeImpl (
-    override val coroutineContext: CoroutineContext
+    override val coroutineContext: CoroutineContext,
+    override val testScheduler: TestCoroutineScheduler
 ):
     TestCoroutineScope,
-    UncaughtExceptionCaptor by coroutineContext.uncaughtExceptionCaptor,
-    DelayController by coroutineContext.delayController
+    UncaughtExceptionCaptor by coroutineContext.uncaughtExceptionCaptor
 {
     override fun cleanupTestCoroutines() {
         coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
-        coroutineContext.delayController.cleanupTestCoroutines()
+        coroutineContext.delayController?.cleanupTestCoroutines()
     }
+
+    @ExperimentalCoroutinesApi
+    override suspend fun pauseDispatcher(block: suspend () -> Unit) {
+        delayControllerForPausing.pauseDispatcher(block)
+    }
+
+    @ExperimentalCoroutinesApi
+    override fun pauseDispatcher() {
+        delayControllerForPausing.pauseDispatcher()
+    }
+
+    @ExperimentalCoroutinesApi
+    override fun resumeDispatcher() {
+        delayControllerForPausing.resumeDispatcher()
+    }
+
+    private val delayControllerForPausing: DelayController
+        get() = coroutineContext.delayController
+            ?: throw IllegalStateException("This scope isn't able to pause its dispatchers")
 }
 
 /**
@@ -46,12 +119,8 @@ private class TestCoroutineScopeImpl (
  */
 @Suppress("FunctionName")
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
-    var safeContext = context
-    if (context[ContinuationInterceptor] == null) safeContext += TestCoroutineDispatcher()
-    if (context[CoroutineExceptionHandler] == null) safeContext += TestCoroutineExceptionHandler()
-    return TestCoroutineScopeImpl(safeContext)
-}
+public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope =
+    context.checkTestScopeArguments().let { TestCoroutineScopeImpl(it.first, it.second.scheduler) }
 
 private inline val CoroutineContext.uncaughtExceptionCaptor: UncaughtExceptionCaptor
     get() {
@@ -62,11 +131,8 @@ private inline val CoroutineContext.uncaughtExceptionCaptor: UncaughtExceptionCa
         )
     }
 
-private inline val CoroutineContext.delayController: DelayController
+private inline val CoroutineContext.delayController: DelayController?
     get() {
         val handler = this[ContinuationInterceptor]
-        return handler as? DelayController ?: throw IllegalArgumentException(
-            "TestCoroutineScope requires a DelayController such as TestCoroutineDispatcher as " +
-                "the ContinuationInterceptor (Dispatcher)"
-        )
+        return handler as? DelayController
     }

@@ -10,7 +10,7 @@ import kotlin.test.*
 class MultithreadingTest : TestBase() {
 
     @Test
-    fun incorrectlyCalledRunblocking_doesNotHaveSameInterceptor() = runBlockingTest {
+    fun incorrectlyCalledRunBlocking_doesNotHaveSameInterceptor() = runBlockingTest {
         // this code is an error as a production test, please do not use this as an example
 
         // this test exists to document this error condition, if it's possible to make this code work please update

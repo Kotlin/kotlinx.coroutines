@@ -94,6 +94,7 @@ class TestBuildersTest {
         }
 
         scope.advanceTimeBy(1_000)
+        scope.runCurrent()
         scope.launch {
             assertRunsFast {
                 assertEquals(3, deferred.getCompleted())

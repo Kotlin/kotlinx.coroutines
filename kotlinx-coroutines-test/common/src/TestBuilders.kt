@@ -43,13 +43,13 @@ import kotlin.coroutines.*
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
 public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
-    val (safeContext, dispatcher) = context.checkArguments()
+    val (safeContext, dispatcher) = context.checkTestScopeArguments()
     val startingJobs = safeContext.activeJobs()
     val scope = TestCoroutineScope(safeContext)
     val deferred = scope.async {
         scope.testBody()
     }
-    dispatcher.advanceUntilIdle()
+    dispatcher.scheduler.advanceUntilIdle()
     deferred.getCompletionExceptionOrNull()?.let {
         throw it
     }
@@ -79,17 +79,32 @@ public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.
 public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(this, block)
 
-private fun CoroutineContext.checkArguments(): Pair<CoroutineContext, DelayController> {
+internal fun CoroutineContext.checkTestScopeArguments(): Pair<CoroutineContext, TestDispatcher> {
+    val scheduler: TestCoroutineScheduler
     val dispatcher = when (val dispatcher = get(ContinuationInterceptor)) {
-        is DelayController -> dispatcher
-        null -> TestCoroutineDispatcher()
-        else -> throw IllegalArgumentException("Dispatcher must implement DelayController: $dispatcher")
+        is TestDispatcher -> {
+            val ctxScheduler = get(TestCoroutineScheduler)
+            if (ctxScheduler == null) {
+                scheduler = dispatcher.scheduler
+            } else {
+                require(dispatcher.scheduler === ctxScheduler) {
+                    "Both a TestCoroutineScheduler $ctxScheduler and TestDispatcher $dispatcher linked to " +
+                        "another scheduler were passed."
+                }
+                scheduler = ctxScheduler
+            }
+            dispatcher
+        }
+        null -> {
+            scheduler = TestCoroutineScheduler()
+            TestCoroutineDispatcher(scheduler)
+        }
+        else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
     }
-    val exceptionHandler = when (val handler = get(CoroutineExceptionHandler)) {
-        is UncaughtExceptionCaptor -> handler
-        null -> TestCoroutineExceptionHandler()
-        else -> throw IllegalArgumentException("coroutineExceptionHandler must implement UncaughtExceptionCaptor: $handler")
+    val exceptionHandler = get(CoroutineExceptionHandler).run {
+        this?.let { require(this is UncaughtExceptionCaptor) { "coroutineExceptionHandler must implement UncaughtExceptionCaptor: $this" } }
+        this ?: TestCoroutineExceptionHandler()
     }
     val job = get(Job) ?: SupervisorJob()
-    return Pair(this + dispatcher + exceptionHandler + job, dispatcher)
+    return Pair(this + scheduler + dispatcher + exceptionHandler + job, dispatcher)
 }
