@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.reactor
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.coroutines.*
 import kotlinx.coroutines.reactive.*
 import reactor.util.context.*

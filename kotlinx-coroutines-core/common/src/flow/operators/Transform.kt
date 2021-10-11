@@ -85,7 +85,6 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform 
  *
  * This function is an alias to [runningFold] operator.
  */
-@ExperimentalCoroutinesApi
 public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = runningFold(initial, operation)
 
 /**
@@ -97,7 +96,6 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  * ```
  * will produce `[], [1], [1, 2], [1, 2, 3]]`.
  */
-@ExperimentalCoroutinesApi
 public fun <T, R> Flow<T>.runningFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
     var accumulator: R = initial
     emit(accumulator)
@@ -118,7 +116,6 @@ public fun <T, R> Flow<T>.runningFold(initial: R, @BuilderInference operation: s
  * ```
  * will produce `[1, 3, 6, 10]`
  */
-@ExperimentalCoroutinesApi
 public fun <T> Flow<T>.runningReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
     var accumulator: Any? = NULL
     collect { value ->
