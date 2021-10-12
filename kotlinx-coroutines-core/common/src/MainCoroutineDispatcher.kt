@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
+
 /**
  * Base class for special [CoroutineDispatcher] which is confined to application "Main" or "UI" thread
  * and used for any UI-based activities. Instance of `MainDispatcher` can be obtained by [Dispatchers.Main].
@@ -50,6 +52,12 @@ public abstract class MainCoroutineDispatcher : CoroutineDispatcher() {
      * reference in [Dispatchers] or a short class-name representation with address otherwise.
      */
     override fun toString(): String = toStringInternalImpl() ?: "$classSimpleName@$hexAddress"
+
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        // MainCoroutineDispatcher is single-threaded -- short-circuit any attempts to limit it
+        return this
+    }
 
     /**
      * Internal method for more specific [toString] implementations. It returns non-null

@@ -45,8 +45,8 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testCancelledAsTask() {
-        val deferred = GlobalScope.async {
+    fun testCancelledAsTask() = runTest {
+        val deferred = async(Dispatchers.Default) {
             delay(100)
         }.apply { cancel() }
 
@@ -60,8 +60,8 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testThrowingAsTask() {
-        val deferred = GlobalScope.async<Int> {
+    fun testThrowingAsTask() = runTest({ e -> e is TestException }) {
+        val deferred = async<Int>(Dispatchers.Default) {
             throw TestException("Fail")
         }
 

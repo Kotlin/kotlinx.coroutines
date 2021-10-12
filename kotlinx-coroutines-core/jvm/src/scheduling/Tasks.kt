@@ -9,10 +9,6 @@ import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 
 
-// TODO most of these fields will be moved to 'object ExperimentalDispatcher'
-
-// User-visible name
-internal const val DEFAULT_DISPATCHER_NAME = "Dispatchers.Default"
 // Internal debuggability name + thread name prefixes
 internal const val DEFAULT_SCHEDULER_NAME = "DefaultDispatcher"
 
@@ -22,27 +18,24 @@ internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
     "kotlinx.coroutines.scheduler.resolution.ns", 100000L
 )
 
-@JvmField
-internal val BLOCKING_DEFAULT_PARALLELISM = systemProp(
-    "kotlinx.coroutines.scheduler.blocking.parallelism", 16
-)
-
-// NOTE: we coerce default to at least two threads to give us chances that multi-threading problems
-// get reproduced even on a single-core machine, but support explicit setting of 1 thread scheduler if needed.
+/**
+ * The maximum number of threads allocated for CPU-bound tasks at the default set of dispatchers.
+ *
+ * NOTE: we coerce default to at least two threads to give us chances that multi-threading problems
+ * get reproduced even on a single-core machine, but support explicit setting of 1 thread scheduler if needed
+ */
 @JvmField
 internal val CORE_POOL_SIZE = systemProp(
     "kotlinx.coroutines.scheduler.core.pool.size",
-    AVAILABLE_PROCESSORS.coerceAtLeast(2), // !!! at least two here
+    AVAILABLE_PROCESSORS.coerceAtLeast(2),
     minValue = CoroutineScheduler.MIN_SUPPORTED_POOL_SIZE
 )
 
+/** The maximum number of threads allocated for blocking tasks at the default set of dispatchers. */
 @JvmField
 internal val MAX_POOL_SIZE = systemProp(
     "kotlinx.coroutines.scheduler.max.pool.size",
-    (AVAILABLE_PROCESSORS * 128).coerceIn(
-        CORE_POOL_SIZE,
-        CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE
-    ),
+    CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE,
     maxValue = CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE
 )
 
@@ -69,13 +62,17 @@ internal interface TaskContext {
     fun afterTask()
 }
 
-internal object NonBlockingContext : TaskContext {
-    override val taskMode: Int = TASK_NON_BLOCKING
-
+private class TaskContextImpl(override val taskMode: Int): TaskContext {
     override fun afterTask() {
-       // Nothing for non-blocking context
+        // Nothing for non-blocking context
     }
 }
+
+@JvmField
+internal val NonBlockingContext: TaskContext = TaskContextImpl(TASK_NON_BLOCKING)
+
+@JvmField
+internal val BlockingContext: TaskContext = TaskContextImpl(TASK_PROBABLY_BLOCKING)
 
 internal abstract class Task(
     @JvmField var submissionTime: Long,

@@ -11,6 +11,12 @@ import kotlin.jvm.*
  * A coroutine dispatcher that is not confined to any specific thread.
  */
 internal object Unconfined : CoroutineDispatcher() {
+
+    @ExperimentalCoroutinesApi
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        throw UnsupportedOperationException("limitedParallelism is not supported for Dispatchers.Unconfined")
+    }
+
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {

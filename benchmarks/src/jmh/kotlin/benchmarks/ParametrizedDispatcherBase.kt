@@ -30,7 +30,7 @@ abstract class ParametrizedDispatcherBase : CoroutineScope {
         coroutineContext = when {
             dispatcher == "fjp" -> ForkJoinPool.commonPool().asCoroutineDispatcher()
             dispatcher == "scheduler" -> {
-                ExperimentalCoroutineDispatcher(CORES_COUNT).also { closeable = it }
+                Dispatchers.Default
             }
             dispatcher.startsWith("ftp") -> {
                 newFixedThreadPoolContext(dispatcher.substring(4).toInt(), dispatcher).also { closeable = it }

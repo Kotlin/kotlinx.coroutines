@@ -115,6 +115,11 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         }
     }
 
+    final override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        return this
+    }
+
     open fun shutdown() {}
 }
 
@@ -525,4 +530,3 @@ internal expect fun nanoTime(): Long
 internal expect object DefaultExecutor {
     public fun enqueue(task: Runnable)
 }
-
