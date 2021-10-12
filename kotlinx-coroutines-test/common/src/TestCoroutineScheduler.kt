@@ -6,7 +6,10 @@ package kotlinx.coroutines.test
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -46,6 +49,9 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
         get() = synchronized(lock) { field }
         private set
 
+    /** A channel for notifying about the fact that a dispatch recently happened. */
+    private val dispatchEvents: Channel<Unit> = Channel(CONFLATED)
+
     /**
      * Registers a request for the scheduler to notify [dispatcher] at a virtual moment [timeDeltaMillis] milliseconds
      * later via [TestDispatcher.processEvent], which will be called with the provided [marker] object.
@@ -59,6 +65,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
         isCancelled: (T) -> Boolean
     ): DisposableHandle {
         require(timeDeltaMillis >= 0) { "Attempted scheduling an event earlier in time (with the time delta $timeDeltaMillis)" }
+        sendDispatchEvent()
         val count = count.getAndIncrement()
         return synchronized(lock) {
             val time = addClamping(currentTime, timeDeltaMillis)
@@ -162,6 +169,18 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             return presentEvents.all { it.isCancelled() }
         }
     }
+
+    /**
+     * Notifies this scheduler about a dispatch event.
+     */
+    internal fun sendDispatchEvent() {
+        dispatchEvents.trySend(Unit)
+    }
+
+    /**
+     * Consumes the knowledge that a dispatch event happened recently.
+     */
+    internal val onDispatchEvent: SelectClause1<Unit> get() = dispatchEvents.onReceive
 }
 
 // Some error-throwing functions for pretty stack traces
