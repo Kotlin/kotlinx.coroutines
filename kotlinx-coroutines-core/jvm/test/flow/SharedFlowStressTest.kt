@@ -71,7 +71,7 @@ class SharedFlowStressTest : TestBase() {
         var lastProduced = 0L
         var lastConsumed = 0L
         for (sec in 1..nSeconds) {
-            delay(1.seconds)
+            delay(Duration.seconds(1))
             val produced = totalProduced.value
             val consumed = totalConsumed.value
             println("$sec sec: produced = $produced; consumed = $consumed")
