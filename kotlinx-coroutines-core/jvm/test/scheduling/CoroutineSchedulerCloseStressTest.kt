@@ -22,15 +22,13 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
         fun params(): Collection<Array<Any>> = Mode.values().map { arrayOf<Any>(it) }
     }
 
-    private val N_REPEAT = 2 * stressTestMultiplier
     private val MAX_LEVEL = 5
     private val N_COROS = (1 shl (MAX_LEVEL + 1)) - 1
     private val N_THREADS = 4
     private val rnd = Random()
 
-    private lateinit var closeableDispatcher: ExperimentalCoroutineDispatcher
-    private lateinit var dispatcher: ExecutorCoroutineDispatcher
-    private var closeIndex = -1
+    private lateinit var closeableDispatcher: SchedulerCoroutineDispatcher
+    private lateinit var dispatcher: CoroutineDispatcher
 
     private val started = atomic(0)
     private val finished = atomic(0)
@@ -44,20 +42,12 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
         }
     }
 
-    @Test
-    fun testRacingClose() {
-        repeat(N_REPEAT) {
-            closeIndex = rnd.nextInt(N_COROS)
-            launchCoroutines()
-        }
-    }
-
     private fun launchCoroutines() = runBlocking {
-        closeableDispatcher = ExperimentalCoroutineDispatcher(N_THREADS)
+        closeableDispatcher = SchedulerCoroutineDispatcher(N_THREADS)
         dispatcher = when (mode) {
             Mode.CPU -> closeableDispatcher
-            Mode.CPU_LIMITED -> closeableDispatcher.limited(N_THREADS) as ExecutorCoroutineDispatcher
-            Mode.BLOCKING -> closeableDispatcher.blocking(N_THREADS) as ExecutorCoroutineDispatcher
+            Mode.CPU_LIMITED -> closeableDispatcher.limitedParallelism(N_THREADS)
+            Mode.BLOCKING -> closeableDispatcher.blocking(N_THREADS)
         }
         started.value = 0
         finished.value = 0
@@ -68,20 +58,16 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
         assertEquals(N_COROS, finished.value)
     }
 
+    // Index and level are used only for debugging purpose
     private fun CoroutineScope.launchChild(index: Int, level: Int): Job = launch(start = CoroutineStart.ATOMIC) {
         started.incrementAndGet()
         try {
-            if (index == closeIndex) closeableDispatcher.close()
             if (level < MAX_LEVEL) {
                 launchChild(2 * index + 1, level + 1)
                 launchChild(2 * index + 2, level + 1)
             } else {
                 if (rnd.nextBoolean()) {
                     delay(1000)
-                    val t = Thread.currentThread()
-                    if (!t.name.contains("DefaultDispatcher-worker")) {
-                        val a = 2
-                    }
                 } else {
                     yield()
                 }

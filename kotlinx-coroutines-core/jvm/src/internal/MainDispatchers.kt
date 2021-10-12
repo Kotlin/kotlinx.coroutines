@@ -93,6 +93,9 @@ private class MissingMainCoroutineDispatcher(
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
         missing()
 
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher =
+        missing()
+
     override suspend fun delay(time: Long) =
         missing()
 

@@ -86,7 +86,7 @@ public actual object Dispatchers {
      * Note that if you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
      * but still want to execute it in the current call-frame until its first suspension, then you can use
      * an optional [CoroutineStart] parameter in coroutine builders like
-     * [launch][CoroutineScope.launch] and [async][CoroutineScope.async] setting it to the
+     * [launch][CoroutineScope.launch] and [async][CoroutineScope.async] setting it to
      * the value of [CoroutineStart.UNDISPATCHED].
      */
     @JvmStatic
@@ -100,14 +100,30 @@ public actual object Dispatchers {
      * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
      * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
      *
-     * Moreover, the maximum configurable number of threads is capped by the
-     * `kotlinx.coroutines.scheduler.max.pool.size` system property.
-     * If you need a higher number of parallel threads,
-     * you should use a custom dispatcher backed by your own thread pool.
+     * ### Elasticity for limited parallelism
+     *
+     * `Dispatchers.IO` has a unique property of elasticity: its views
+     * obtained with [CoroutineDispatcher.limitedParallelism] are
+     * not restricted by the `Dispatchers.IO` parallelism. Conceptually, there is
+     * a dispatcher backed by an unlimited pool of threads, and both `Dispatchers.IO`
+     * and views of `Dispatchers.IO` are actually views of that dispatcher. In practice
+     * this means that, despite not abiding by `Dispatchers.IO`'s parallelism
+     * restrictions, its views share threads and resources with it.
+     *
+     * In the following example
+     * ```
+     * // 100 threads for MySQL connection
+     * val myMysqlDbDispatcher = Dispatchers.IO.limitedParallelism(100)
+     * // 60 threads for MongoDB connection
+     * val myMongoDbDispatcher = Dispatchers.IO.limitedParallelism(60)
+     * ```
+     * the system may have up to `64 + 100 + 60` threads dedicated to blocking tasks during peak loads,
+     * but during its steady state there is only a small number of threads shared
+     * among `Dispatchers.IO`, `myMysqlDbDispatcher` and `myMongoDbDispatcher`.
      *
      * ### Implementation note
      *
-     * This dispatcher shares threads with the [Default][Dispatchers.Default] dispatcher, so using
+     * This dispatcher and its views share threads with the [Default][Dispatchers.Default] dispatcher, so using
      * `withContext(Dispatchers.IO) { ... }` when already running on the [Default][Dispatchers.Default]
      * dispatcher does not lead to an actual switching to another thread &mdash; typically execution
      * continues in the same thread.
@@ -115,7 +131,7 @@ public actual object Dispatchers {
      * during operations over IO dispatcher.
      */
     @JvmStatic
-    public val IO: CoroutineDispatcher = DefaultScheduler.IO
+    public val IO: CoroutineDispatcher = DefaultIoScheduler
 
     /**
      * Shuts down built-in dispatchers, such as [Default] and [IO],
