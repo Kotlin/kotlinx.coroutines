@@ -42,7 +42,6 @@ import kotlin.coroutines.*
  *        then they must implement [DelayController] and [TestCoroutineExceptionHandler] respectively.
  * @param testBody The code of the unit-test.
  */
-@ExperimentalCoroutinesApi
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
 public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
     val scope = TestCoroutineScope(context)
@@ -61,14 +60,14 @@ public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, te
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineScope].
  */
 // todo: need documentation on how this extension is supposed to be used
-@ExperimentalCoroutinesApi
+@Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
 public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(coroutineContext, block)
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
  */
-@ExperimentalCoroutinesApi
+@Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
 public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(this, block)
 
@@ -164,10 +163,10 @@ public expect class TestResult
  */
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
-    dispatchTimeoutMs: Long = 10_000,
+    dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     testBody: suspend TestCoroutineScope.() -> Unit
 ): TestResult = createTestResult {
-    val testScope = TestCoroutineScope(context)
+    val testScope = TestCoroutineScope(context + RunningInRunTest())
     val scheduler = testScope.testScheduler
     val deferred = testScope.async {
         testScope.testBody()
@@ -207,3 +206,28 @@ public fun runTest(
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT") // actually suppresses `TestResult`
 internal expect fun createTestResult(testProcedure: suspend () -> Unit): TestResult
+
+/** TODO: docs */
+public fun TestCoroutineScope.runTest(
+    dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
+    block: suspend TestCoroutineScope.() -> Unit
+): TestResult {
+    val ctx = this.coroutineContext
+    if (ctx[RunningInRunTest] != null)
+        throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
+    return runTest(ctx, dispatchTimeoutMs, block)
+}
+
+/** TODO: docs */
+public fun TestDispatcher.runTest(
+    dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
+    block: suspend TestCoroutineScope.() -> Unit
+): TestResult =
+    runTest(this, dispatchTimeoutMs, block)
+
+/** A coroutine context element indicating that the coroutine is running inside `runTest`. */
+private class RunningInRunTest: AbstractCoroutineContextElement(RunningInRunTest), CoroutineContext.Element {
+    companion object Key : CoroutineContext.Key<RunningInRunTest>
+}
+
+private const val DEFAULT_DISPATCH_TIMEOUT_MS = 10_000L
