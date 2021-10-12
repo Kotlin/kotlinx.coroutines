@@ -38,4 +38,11 @@ class TestRunTest {
         assertEquals(42, answer)
     }
 
+    @Test
+    fun testNestedRunTestForbidden() = runTest {
+        assertFailsWith<IllegalStateException> {
+            runTest { }
+        }
+    }
+
 }
