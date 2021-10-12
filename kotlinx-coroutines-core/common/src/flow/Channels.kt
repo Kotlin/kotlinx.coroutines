@@ -217,7 +217,11 @@ public fun <T> Flow<T>.broadcastIn(
  * Creates a [produce] coroutine that collects the given flow.
  *
  * This transformation is **stateful**, it launches a [produce] coroutine
- * that collects the given flow and thus resulting channel should be properly closed or cancelled.
+ * that collects the given flow, and has the same behavior:
+ *
+ * * if collecting the flow throws, the channel will be closed with that exception
+ * * if the [ReceiveChannel] is cancelled, the collection of the flow will be cancelled
+ * * if collecting the flow completes normally, the [ReceiveChannel] will be closed normally
  *
  * A channel with [default][Channel.Factory.BUFFERED] buffer size is created.
  * Use [buffer] operator on the flow before calling `produceIn` to specify a value other than
