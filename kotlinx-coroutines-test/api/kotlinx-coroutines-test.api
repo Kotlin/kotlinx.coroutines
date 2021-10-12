@@ -14,6 +14,8 @@ public final class kotlinx/coroutines/test/TestBuildersKt {
 	public static final fun runBlockingTest (Lkotlinx/coroutines/test/TestCoroutineDispatcher;Lkotlin/jvm/functions/Function2;)V
 	public static final fun runBlockingTest (Lkotlinx/coroutines/test/TestCoroutineScope;Lkotlin/jvm/functions/Function2;)V
 	public static synthetic fun runBlockingTest$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun runTest (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun runTest$default (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
 public final class kotlinx/coroutines/test/TestCoroutineDispatcher : kotlinx/coroutines/test/TestDispatcher, kotlinx/coroutines/Delay, kotlinx/coroutines/test/SchedulerAsDelayController {
