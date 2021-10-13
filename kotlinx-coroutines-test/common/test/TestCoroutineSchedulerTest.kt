@@ -73,7 +73,7 @@ class TestCoroutineSchedulerTest {
     @Test
     fun testAdvanceTimeBy() = assertRunsFast {
         val scheduler = TestCoroutineScheduler()
-        val scope = TestCoroutineScope(scheduler)
+        val scope = createTestCoroutineScope(scheduler)
         var stage = 1
         scope.launch {
             delay(1_000)
@@ -127,7 +127,7 @@ class TestCoroutineSchedulerTest {
     @Test
     fun testRunCurrentNotDrainingQueue() = assertRunsFast {
         val scheduler = TestCoroutineScheduler()
-        val scope = TestCoroutineScope(scheduler)
+        val scope = createTestCoroutineScope(scheduler)
         var stage = 1
         scope.launch {
             delay(SLOW)
@@ -150,7 +150,7 @@ class TestCoroutineSchedulerTest {
     @Test
     fun testNestedAdvanceUntilIdle() = assertRunsFast {
         val scheduler = TestCoroutineScheduler()
-        val scope = TestCoroutineScope(scheduler)
+        val scope = createTestCoroutineScope(scheduler)
         var executed = false
         scope.launch {
             launch {
@@ -166,7 +166,7 @@ class TestCoroutineSchedulerTest {
     /** Tests [yield] scheduling tasks for future execution and not executing immediately. */
     @Test
     fun testYield() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         var stage = 0
         scope.launch {
             yield()
@@ -207,7 +207,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that timeouts get triggered. */
     @Test
     fun testSmallTimeouts() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope(TestCoroutineDispatcher())
         scope.checkTimeout(true) {
             val half = SLOW / 2
             delay(half)
@@ -218,7 +218,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that timeouts don't get triggered if the code finishes in time. */
     @Test
     fun testLargeTimeouts() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         scope.checkTimeout(false) {
             val half = SLOW / 2
             delay(half)
@@ -229,7 +229,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that timeouts get triggered if the code fails to finish in time asynchronously. */
     @Test
     fun testSmallAsynchronousTimeouts() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         val deferred = CompletableDeferred<Unit>()
         scope.launch {
             val half = SLOW / 2
@@ -245,7 +245,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that timeouts don't get triggered if the code finishes in time, even if it does so asynchronously. */
     @Test
     fun testLargeAsynchronousTimeouts() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         val deferred = CompletableDeferred<Unit>()
         scope.launch {
             val half = SLOW / 2

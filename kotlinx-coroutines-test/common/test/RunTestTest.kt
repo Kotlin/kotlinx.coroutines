@@ -156,7 +156,7 @@ class RunTestTest {
 
     @Test
     fun reproducer2405() = runTest {
-        val dispatcher = TestCoroutineDispatcher(testScheduler)
+        val dispatcher = StandardTestDispatcher(testScheduler)
         var collectedError = false
         withContext(dispatcher) {
             flow { emit(1) }
