@@ -20,6 +20,7 @@ public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor {
      * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
      * coroutines.
      */
+    @ExperimentalCoroutinesApi
     public fun cleanupTestCoroutines()
 
     /**
