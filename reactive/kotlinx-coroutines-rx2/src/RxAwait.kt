@@ -115,6 +115,7 @@ public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = awaitSingl
  * function immediately disposes of its subscription and resumes with [CancellationException].
  */
 public suspend fun <T> SingleSource<T>.await(): T = suspendCancellableCoroutine { cont ->
+    @Suppress("UNCHECKED_CAST")
     subscribe(object : SingleObserver<T & Any> {
         override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
         override fun onSuccess(t: T & Any) { cont.resume(t) }
@@ -212,6 +213,7 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
     mode: Mode,
     default: T? = null
 ): T = suspendCancellableCoroutine { cont ->
+    @Suppress("UNCHECKED_CAST")
     subscribe(object : Observer<T & Any> {
         private lateinit var subscription: Disposable
         private var value: T? = null

@@ -43,12 +43,12 @@ public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine
  */
 @Suppress("UNCHECKED_CAST")
 public suspend fun <T> MaybeSource<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
-    subscribe(object : MaybeObserver<T> {
+    subscribe(object : MaybeObserver<T & Any> {
         override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
         override fun onComplete() { cont.resume(null) }
-        override fun onSuccess(t: T) { cont.resume(t) }
+        override fun onSuccess(t: T & Any) { cont.resume(t) }
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
-    })
+    } as MaybeObserver<T>)
 }
 
 /**
@@ -120,11 +120,12 @@ public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = awaitSingl
  * function immediately disposes of its subscription and resumes with [CancellationException].
  */
 public suspend fun <T> SingleSource<T>.await(): T = suspendCancellableCoroutine { cont ->
-    subscribe(object : SingleObserver<T> {
+    @Suppress("UNCHECKED_CAST")
+    subscribe(object : SingleObserver<T & Any> {
         override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
-        override fun onSuccess(t: T) { cont.resume(t) }
+        override fun onSuccess(t: T & Any) { cont.resume(t) }
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
-    })
+    } as SingleObserver<T>)
 }
 
 // ------------------------ ObservableSource ------------------------
@@ -217,7 +218,8 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
     mode: Mode,
     default: T? = null
 ): T = suspendCancellableCoroutine { cont ->
-    subscribe(object : Observer<T> {
+    @Suppress("UNCHECKED_CAST")
+    subscribe(object : Observer<T & Any> {
         private lateinit var subscription: Disposable
         private var value: T? = null
         private var seenValue = false
@@ -227,7 +229,7 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
             cont.invokeOnCancellation { sub.dispose() }
         }
 
-        override fun onNext(t: T) {
+        override fun onNext(t: T & Any) {
             when (mode) {
                 Mode.FIRST, Mode.FIRST_OR_DEFAULT -> {
                     if (!seenValue) {
@@ -249,7 +251,6 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
             }
         }
 
-        @Suppress("UNCHECKED_CAST")
         override fun onComplete() {
             if (seenValue) {
                 if (cont.isActive) cont.resume(value as T)
@@ -268,6 +269,6 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
         override fun onError(e: Throwable) {
             cont.resumeWithException(e)
         }
-    })
+    } as Observer<T>)
 }
 
