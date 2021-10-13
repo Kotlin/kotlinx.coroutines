@@ -107,14 +107,14 @@ class ThreadContextElementTest : TestBase() {
 
     @Test
     fun testCopyableElementCopiedOnLaunch() = runTest {
-        var parentElement: MyElement? = null
-        var inheritedElement: MyElement? = null
+        var parentElement: CopyForChildCoroutineElement? = null
+        var inheritedElement: CopyForChildCoroutineElement? = null
 
         newSingleThreadContext("withContext").use {
             withContext(it + CopyForChildCoroutineElement(MyData())) {
-                parentElement = coroutineContext[MyElement.Key]
+                parentElement = coroutineContext[CopyForChildCoroutineElement.Key]
                 launch {
-                    inheritedElement = coroutineContext[MyElement.Key]
+                    inheritedElement = coroutineContext[CopyForChildCoroutineElement.Key]
                 }
             }
         }

@@ -33,10 +33,10 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
  * Returns [this] if `this` has zero [CopyableThreadContextElement] in it.
  */
 private fun CoroutineContext.foldCopiesForChildCoroutine(): CoroutineContext {
-    val jobElementCount = fold(0) { count, it ->
-        count + if (it is CopyableThreadContextElement<*>) 1 else 0
+    val hasToCopy = fold(false) { result, it ->
+        result || it is CopyableThreadContextElement<*>
     }
-    if (jobElementCount == 0) return this
+    if (!hasToCopy) return this
     return fold<CoroutineContext>(EmptyCoroutineContext) { combined, it ->
         combined + if (it is CopyableThreadContextElement<*>) it.copyForChildCoroutine() else it
     }

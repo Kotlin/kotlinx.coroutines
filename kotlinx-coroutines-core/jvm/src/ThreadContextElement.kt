@@ -124,6 +124,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * A coroutine using this mechanism can safely call Java code that assumes it's called using a
  * `Thread`.
  */
+@ExperimentalCoroutinesApi
 public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
 
     /**
