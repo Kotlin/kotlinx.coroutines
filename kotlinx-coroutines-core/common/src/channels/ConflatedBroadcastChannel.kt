@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
@@ -39,8 +40,8 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     }
 
     private val lock = ReentrantLock()
-
-    private var subscribers: List<ConflatedBufferedChannel<E>> = ArrayList()
+    
+    private val subscribers = atomic<List<ConflatedBufferedChannel<E>>>(emptyList())
     private var lastElement: Any? = NULL
 
     private var isClosed = false
@@ -83,21 +84,21 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         lastElement.let {
             if (it !== NULL) subscriber.trySend(it as E)
         }
-        subscribers = subscribers + subscriber
+        subscribers.update { it + subscriber }
         subscriber
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun closeSubscriber(subscriber: Subscriber) = lock.withLock {
-        check(subscriber in subscribers) { "The removing subscriber does not exist" }
-        subscribers = subscribers - subscriber
+    private fun closeSubscriber(subscriber: Subscriber) = subscribers.update {
+        check(subscriber in it) { "The removing subscriber does not exist" }
+        it - subscriber
     }
 
     @Suppress("UNCHECKED_CAST")
     public override fun close(cause: Throwable?): Boolean = lock.withLock {
         if (isClosed) return@withLock false
         isClosed = true
-        subscribers.forEach { it.close(cause) }
+        subscribers.value.forEach { it.close(cause) }
         onCloseHandler?.invoke(cause)
         return@withLock true
     }
@@ -137,7 +138,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     public override suspend fun send(element: E): Unit = lock.withLock {
         if (isClosed) throw closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)
         lastElement = element
-        subscribers.forEach { it.send(element) }
+        subscribers.value.forEach { it.trySend(element) }
     }
 
     /**
@@ -148,7 +149,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     public override fun trySend(element: E): ChannelResult<Unit> = lock.withLock {
         if (isClosed) return@withLock ChannelResult.closed(closeCause)
         lastElement = element
-        subscribers.forEach { it.trySend(element) }
+        subscribers.value.forEach { it.trySend(element) }
         return@withLock ChannelResult.success(Unit)
     }
 

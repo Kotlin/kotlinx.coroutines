@@ -75,7 +75,7 @@ internal open class BufferedChannel<E>(
             waiter = null,
             onRendezvous = {},
             onSuspend = { _, _ -> error("unexpected") },
-            onClosed = { throw sendException(getCause()) },
+            onClosed = { onUndeliveredElement?.invoke(element); throw sendException(getCause()) },
             onNoWaiter = { segm, i, elem, s -> sendSuspend(segm, i, elem, s) }
         )
 
@@ -146,7 +146,10 @@ internal open class BufferedChannel<E>(
                 cont.resume(Unit)
             }
             result === SUSPEND -> {
-                cont.invokeOnCancellation { segm.onCancellation(i) }
+                cont.invokeOnCancellation {
+                    onUndeliveredElement?.invoke(segm.retrieveElement(i))
+                    segm.onCancellation(i)
+                }
             }
             result === FAILED -> {
                 sendImpl(
@@ -751,12 +754,14 @@ internal open class BufferedChannel<E>(
                         state is WaiterEB -> {
                             if (segm.casState(i, state, CLOSED)) {
                                 state.waiter.closeSender()
+                                onUndeliveredElement?.invoke(segm.retrieveElement(i))
                                 break
                             }
                         }
                         state is CancellableContinuation<*> || state is SelectInstance<*>  -> {
                             if (segm.casState(i, state, CLOSED)) {
                                 state.closeSender()
+                                onUndeliveredElement?.invoke(segm.retrieveElement(i))
                                 break
                             }
                         }
@@ -1016,7 +1021,6 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
             ) return
             INTERRUPTED
         }
-        setElementLazy(i, null)
         onSlotCleaned()
     }
 }
