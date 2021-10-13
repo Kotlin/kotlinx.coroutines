@@ -4,6 +4,8 @@
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
+import java.util.concurrent.*
+import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -84,6 +86,16 @@ class MultithreadingTest : TestBase() {
         runBlocking {
             // just to ensure the above code terminates
             assertEquals(3, deferred.await())
+        }
+    }
+
+    @Test
+    fun testResumingFromAnotherThread() = runTest {
+        suspendCancellableCoroutine<Unit> { cont ->
+            thread {
+                Thread.sleep(10)
+                cont.resume(Unit)
+            }
         }
     }
 }
