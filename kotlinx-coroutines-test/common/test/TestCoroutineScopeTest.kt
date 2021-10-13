@@ -14,7 +14,7 @@ class TestCoroutineScopeTest {
     fun testCreateThrowsOnInvalidArguments() {
         for (ctx in invalidContexts) {
             assertFailsWith<IllegalArgumentException> {
-                TestCoroutineScope(ctx)
+                createTestCoroutineScope(ctx)
             }
         }
     }
@@ -24,19 +24,19 @@ class TestCoroutineScopeTest {
     fun testCreateProvidesScheduler() {
         // Creates a new scheduler.
         run {
-            val scope = TestCoroutineScope()
+            val scope = createTestCoroutineScope()
             assertNotNull(scope.coroutineContext[TestCoroutineScheduler])
         }
         // Reuses the scheduler that the dispatcher is linked to.
         run {
             val dispatcher = TestCoroutineDispatcher()
-            val scope = TestCoroutineScope(dispatcher)
+            val scope = createTestCoroutineScope(dispatcher)
             assertSame(dispatcher.scheduler, scope.coroutineContext[TestCoroutineScheduler])
         }
         // Uses the scheduler passed to it.
         run {
             val scheduler = TestCoroutineScheduler()
-            val scope = TestCoroutineScope(scheduler)
+            val scope = createTestCoroutineScope(scheduler)
             assertSame(scheduler, scope.coroutineContext[TestCoroutineScheduler])
             assertSame(scheduler, (scope.coroutineContext[ContinuationInterceptor] as TestDispatcher).scheduler)
         }
@@ -44,7 +44,7 @@ class TestCoroutineScopeTest {
         run {
             val scheduler = TestCoroutineScheduler()
             val dispatcher = TestCoroutineDispatcher(scheduler)
-            val scope = TestCoroutineScope(scheduler + dispatcher)
+            val scope = createTestCoroutineScope(scheduler + dispatcher)
             assertSame(scheduler, scope.coroutineContext[TestCoroutineScheduler])
             assertSame(dispatcher, scope.coroutineContext[ContinuationInterceptor])
         }
@@ -53,7 +53,7 @@ class TestCoroutineScopeTest {
     /** Tests that the cleanup procedure throws if there were uncompleted delays by the end. */
     @Test
     fun testPresentDelaysThrowing() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         var result = false
         scope.launch {
             delay(5)
@@ -67,7 +67,7 @@ class TestCoroutineScopeTest {
     /** Tests that the cleanup procedure throws if there were active jobs by the end. */
     @Test
     fun testActiveJobsThrowing() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         var result = false
         val deferred = CompletableDeferred<String>()
         scope.launch {
@@ -82,7 +82,7 @@ class TestCoroutineScopeTest {
     /** Tests that the cleanup procedure doesn't throw if it detects that the job is already cancelled. */
     @Test
     fun testCancelledDelaysNotThrowing() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         var result = false
         val deferred = CompletableDeferred<String>()
         val job = scope.launch {
@@ -98,7 +98,7 @@ class TestCoroutineScopeTest {
     /** Tests that the coroutine scope completes its job if the job was not passed to it as an argument. */
     @Test
     fun testCompletesOwnJob() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         var handlerCalled = false
         scope.coroutineContext.job.invokeOnCompletion {
             handlerCalled = true
@@ -115,7 +115,7 @@ class TestCoroutineScopeTest {
         job.invokeOnCompletion {
             handlerCalled = true
         }
-        val scope = TestCoroutineScope(job)
+        val scope = createTestCoroutineScope(job)
         scope.cleanupTestCoroutines()
         assertFalse(handlerCalled)
     }

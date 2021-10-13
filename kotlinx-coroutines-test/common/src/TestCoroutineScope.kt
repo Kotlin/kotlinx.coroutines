@@ -48,7 +48,18 @@ private class TestCoroutineScopeImpl (
 
     override fun cleanupTestCoroutines() {
         coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
-        coroutineContext.delayController?.cleanupTestCoroutines()
+        val delayController = coroutineContext.delayController
+        if (delayController != null) {
+            delayController.cleanupTestCoroutines()
+        } else {
+            testScheduler.runCurrent()
+            if (!testScheduler.isIdle()) {
+                throw UncompletedCoroutinesError(
+                    "Unfinished coroutines during teardown. Ensure all coroutines are" +
+                        " completed or cancelled by your test."
+                )
+            }
+        }
         val jobs = coroutineContext.activeJobs()
         if ((jobs - initialJobs).isNotEmpty()) {
             throw UncompletedCoroutinesError("Test finished with active jobs: $jobs")
@@ -62,12 +73,28 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
 }
 
 /**
+ * A coroutine scope for launching test coroutines using [TestCoroutineDispatcher].
+ *
+ * [createTestCoroutineScope] is a similar function that defaults to [StandardTestDispatcher].
+ */
+@Deprecated("This constructs a `TestCoroutineScope` with a deprecated `CoroutineDispatcher` by default. " +
+    "Please use `createTestCoroutineScope` instead.",
+    ReplaceWith("createTestCoroutineScope(TestCoroutineDispatcher() + context)",
+        "kotlin.coroutines.EmptyCoroutineContext"),
+    level = DeprecationLevel.WARNING
+)
+public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
+    val scheduler = context[TestCoroutineScheduler] ?: TestCoroutineScheduler()
+    return createTestCoroutineScope(TestCoroutineDispatcher(scheduler) + context)
+}
+
+/**
  * A coroutine scope for launching test coroutines.
  *
  * It ensures that all the test module machinery is properly initialized.
  * * If [context] doesn't define a [TestCoroutineScheduler] for orchestrating the virtual time used for delay-skipping,
  *   a new one is created, unless a [TestDispatcher] is provided, in which case [TestDispatcher.scheduler] is used.
- * * If [context] doesn't have a [ContinuationInterceptor], a [TestCoroutineDispatcher] is created.
+ * * If [context] doesn't have a [ContinuationInterceptor], a [StandardTestDispatcher] is created.
  * * If [context] does not provide a [CoroutineExceptionHandler], [TestCoroutineExceptionHandler] is created
  *   automatically.
  * * If [context] provides a [Job], that job is used for the new scope, but is not completed once the scope completes.
@@ -80,9 +107,8 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
  * @throws IllegalArgumentException if [context] has an [CoroutineExceptionHandler] that is not an
  * [UncaughtExceptionCaptor].
  */
-@Suppress("FunctionName")
 @ExperimentalCoroutinesApi
-public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
+public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
     val scheduler: TestCoroutineScheduler
     val dispatcher = when (val dispatcher = context[ContinuationInterceptor]) {
         is TestDispatcher -> {
@@ -98,7 +124,7 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
         }
         null -> {
             scheduler = context[TestCoroutineScheduler] ?: TestCoroutineScheduler()
-            TestCoroutineDispatcher(scheduler)
+            StandardTestDispatcher(scheduler)
         }
         else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
     }
@@ -174,7 +200,7 @@ public fun TestCoroutineScope.advanceTimeBy(delayTimeMillis: Long): Unit =
  * @see TestCoroutineScheduler.advanceUntilIdle
  */
 @ExperimentalCoroutinesApi
-public fun TestCoroutineScope.advanceUntilIdle(): Unit {
+public fun TestCoroutineScope.advanceUntilIdle() {
     coroutineContext.delayController?.advanceUntilIdle() ?: testScheduler.advanceUntilIdle()
 }
 
@@ -185,13 +211,14 @@ public fun TestCoroutineScope.advanceUntilIdle(): Unit {
  * @see TestCoroutineScheduler.runCurrent
  */
 @ExperimentalCoroutinesApi
-public fun TestCoroutineScope.runCurrent(): Unit {
+public fun TestCoroutineScope.runCurrent() {
     coroutineContext.delayController?.runCurrent() ?: testScheduler.runCurrent()
 }
 
 @ExperimentalCoroutinesApi
 @Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
-    "Only `TestCoroutineDispatcher` supports pausing; pause it directly.",
+    "Only `TestCoroutineDispatcher` supports pausing; pause it directly, or use a dispatcher that is always " +
+    "\"paused\", like `StandardTestDispatcher`.",
     ReplaceWith("(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher(block)",
         "kotlin.coroutines.ContinuationInterceptor"),
     DeprecationLevel.WARNING)
@@ -201,7 +228,8 @@ public suspend fun TestCoroutineScope.pauseDispatcher(block: suspend () -> Unit)
 
 @ExperimentalCoroutinesApi
 @Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
-    "Only `TestCoroutineDispatcher` supports pausing; pause it directly.",
+    "Only `TestCoroutineDispatcher` supports pausing; pause it directly, or use a dispatcher that is always " +
+        "\"paused\", like `StandardTestDispatcher`.",
     ReplaceWith("(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher()",
         "kotlin.coroutines.ContinuationInterceptor"),
 level = DeprecationLevel.WARNING)
@@ -211,7 +239,8 @@ public fun TestCoroutineScope.pauseDispatcher() {
 
 @ExperimentalCoroutinesApi
 @Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
-    "Only `TestCoroutineDispatcher` supports pausing; pause it directly.",
+    "Only `TestCoroutineDispatcher` supports pausing; pause it directly, or use a dispatcher that is always " +
+        "\"paused\", like `StandardTestDispatcher`.",
     ReplaceWith("(this.coroutineContext[ContinuationInterceptor]!! as DelayController).resumeDispatcher()",
         "kotlin.coroutines.ContinuationInterceptor"),
     level = DeprecationLevel.WARNING)

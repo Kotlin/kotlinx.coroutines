@@ -3,6 +3,7 @@
  */
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
@@ -97,5 +98,16 @@ class MultithreadingTest {
                 cont.resume(Unit)
             }
         }
+    }
+
+    /** Tests that [StandardTestDispatcher] is confined to the thread that interacts with the scheduler. */
+    @Test
+    fun testStandardTestDispatcherIsConfined() = runTest {
+        val initialThread = Thread.currentThread()
+        withContext(Dispatchers.IO) {
+            val ioThread = Thread.currentThread()
+            assertNotSame(initialThread, ioThread)
+        }
+        assertEquals(initialThread, Thread.currentThread())
     }
 }

@@ -5,6 +5,7 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -151,6 +152,24 @@ class RunTestTest {
                 throw RuntimeException()
             }
         }
+    }
+
+    @Test
+    fun reproducer2405() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        var collectedError = false
+        withContext(dispatcher) {
+            flow { emit(1) }
+                .combine(
+                    flow<String> { throw IllegalArgumentException() }
+                ) { int, string -> int.toString() + string }
+                .catch { emit("error") }
+                .collect {
+                    assertEquals("error", it)
+                    collectedError = true
+                }
+        }
+        assertTrue(collectedError)
     }
 
 }

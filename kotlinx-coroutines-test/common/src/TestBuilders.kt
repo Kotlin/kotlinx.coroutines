@@ -44,7 +44,7 @@ import kotlin.coroutines.*
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
 public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
-    val scope = TestCoroutineScope(context)
+    val scope = createTestCoroutineScope(TestCoroutineDispatcher() + context)
     val scheduler = scope.testScheduler
     val deferred = scope.async {
         scope.testBody()
@@ -157,10 +157,9 @@ public expect class TestResult
  *
  * [context] can be used to affect the environment of the code under test. Beside just being passed to the coroutine
  * scope created for the test, [context] also can be used to change how the test is executed.
- * See the [TestCoroutineScope] constructor documentation for details.
+ * See the [createTestCoroutineScope] documentation for details.
  *
- * @throws IllegalArgumentException if the [context] is invalid. See the [TestCoroutineScope] constructor docs for
- * details.
+ * @throws IllegalArgumentException if the [context] is invalid. See the [createTestCoroutineScope] docs for details.
  */
 @DelicateCoroutinesApi
 public fun runTest(
@@ -170,7 +169,7 @@ public fun runTest(
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    val testScope = TestCoroutineScope(context + RunningInRunTest())
+    val testScope = createTestCoroutineScope(context + RunningInRunTest())
     val scheduler = testScope.testScheduler
     return createTestResult {
         val deferred = testScope.async {

@@ -9,6 +9,15 @@ public abstract interface class kotlinx/coroutines/test/DelayController {
 	public abstract fun runCurrent ()V
 }
 
+public final class kotlinx/coroutines/test/StandardTestDispatcher : kotlinx/coroutines/test/TestDispatcher, kotlinx/coroutines/Delay {
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;Ljava/lang/String;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
+	public fun getScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class kotlinx/coroutines/test/TestBuildersKt {
 	public static final fun runBlockingTest (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)V
 	public static final fun runBlockingTest (Lkotlinx/coroutines/test/TestCoroutineDispatcher;Lkotlin/jvm/functions/Function2;)V
@@ -73,6 +82,8 @@ public final class kotlinx/coroutines/test/TestCoroutineScopeKt {
 	public static synthetic fun TestCoroutineScope$default (Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/test/TestCoroutineScope;
 	public static final fun advanceTimeBy (Lkotlinx/coroutines/test/TestCoroutineScope;J)V
 	public static final fun advanceUntilIdle (Lkotlinx/coroutines/test/TestCoroutineScope;)V
+	public static final fun createTestCoroutineScope (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/test/TestCoroutineScope;
+	public static synthetic fun createTestCoroutineScope$default (Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/test/TestCoroutineScope;
 	public static final fun getCurrentTime (Lkotlinx/coroutines/test/TestCoroutineScope;)J
 	public static final fun pauseDispatcher (Lkotlinx/coroutines/test/TestCoroutineScope;)V
 	public static final fun pauseDispatcher (Lkotlinx/coroutines/test/TestCoroutineScope;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -100,5 +111,15 @@ public abstract interface class kotlinx/coroutines/test/UncaughtExceptionCaptor 
 
 public final class kotlinx/coroutines/test/UncompletedCoroutinesError : java/lang/AssertionError {
 	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class kotlinx/coroutines/test/UnconfinedTestDispatcher : kotlinx/coroutines/test/TestDispatcher, kotlinx/coroutines/Delay {
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;Ljava/lang/String;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
+	public fun getScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
+	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
+	public fun toString ()Ljava/lang/String;
 }
 
