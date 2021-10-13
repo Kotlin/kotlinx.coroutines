@@ -23,12 +23,7 @@ import kotlin.jvm.*
  * @see DelayController
  */
 @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public class TestCoroutineDispatcher(
-    /**
-     * The scheduler that this dispatcher is linked to.
-     */
-    public override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler()
-):
+public class TestCoroutineDispatcher(public override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler()):
     TestDispatcher(), Delay, SchedulerAsDelayController
 {
     private var dispatchImmediately = true
@@ -41,7 +36,7 @@ public class TestCoroutineDispatcher(
         }
 
     override fun processEvent(time: Long, marker: Any) {
-        require(marker is Runnable)
+        check(marker is Runnable)
         marker.run()
     }
 

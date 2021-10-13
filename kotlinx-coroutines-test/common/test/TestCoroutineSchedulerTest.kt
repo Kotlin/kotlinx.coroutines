@@ -9,7 +9,8 @@ import kotlin.test.*
 
 class TestCoroutineSchedulerTest {
     @Test
-    fun contextPropagation() {
+    /** Tests that `TestCoroutineScheduler` attempts to detect if there are several instances of it. */
+    fun testContextElement() {
         runBlockingTest {
             assertFailsWith<IllegalStateException> {
                 withContext(TestCoroutineDispatcher()) {

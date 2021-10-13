@@ -57,27 +57,24 @@ public final class kotlinx/coroutines/test/TestCoroutineScheduler$Key : kotlin/c
 }
 
 public abstract interface class kotlinx/coroutines/test/TestCoroutineScope : kotlinx/coroutines/CoroutineScope, kotlinx/coroutines/test/UncaughtExceptionCaptor {
-	public abstract fun advanceTimeBy (J)V
-	public abstract fun advanceUntilIdle ()V
 	public abstract fun cleanupTestCoroutines ()V
-	public abstract fun getCurrentTime ()J
 	public abstract fun getTestScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
-	public abstract fun pauseDispatcher ()V
-	public abstract fun pauseDispatcher (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun resumeDispatcher ()V
-	public abstract fun runCurrent ()V
 }
 
 public final class kotlinx/coroutines/test/TestCoroutineScope$DefaultImpls {
-	public static fun advanceTimeBy (Lkotlinx/coroutines/test/TestCoroutineScope;J)V
-	public static fun advanceUntilIdle (Lkotlinx/coroutines/test/TestCoroutineScope;)V
-	public static fun getCurrentTime (Lkotlinx/coroutines/test/TestCoroutineScope;)J
-	public static fun runCurrent (Lkotlinx/coroutines/test/TestCoroutineScope;)V
+	public static fun getTestScheduler (Lkotlinx/coroutines/test/TestCoroutineScope;)Lkotlinx/coroutines/test/TestCoroutineScheduler;
 }
 
 public final class kotlinx/coroutines/test/TestCoroutineScopeKt {
 	public static final fun TestCoroutineScope (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/test/TestCoroutineScope;
 	public static synthetic fun TestCoroutineScope$default (Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/test/TestCoroutineScope;
+	public static final fun advanceTimeBy (Lkotlinx/coroutines/test/TestCoroutineScope;J)V
+	public static final fun advanceUntilIdle (Lkotlinx/coroutines/test/TestCoroutineScope;)V
+	public static final fun getCurrentTime (Lkotlinx/coroutines/test/TestCoroutineScope;)J
+	public static final fun pauseDispatcher (Lkotlinx/coroutines/test/TestCoroutineScope;)V
+	public static final fun pauseDispatcher (Lkotlinx/coroutines/test/TestCoroutineScope;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun resumeDispatcher (Lkotlinx/coroutines/test/TestCoroutineScope;)V
+	public static final fun runCurrent (Lkotlinx/coroutines/test/TestCoroutineScope;)V
 }
 
 public abstract class kotlinx/coroutines/test/TestDispatcher : kotlinx/coroutines/CoroutineDispatcher {

@@ -142,7 +142,7 @@ internal interface SchedulerAsDelayController: DelayController {
 
     /** @suppress */
     @Deprecated("This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
-        ReplaceWith("this.scheduler.advanceTimeBy(delayTimeMillis)"),
+        ReplaceWith("this.scheduler.apply { advanceTimeBy(delayTimeMillis); runCurrent() }"),
         level = DeprecationLevel.WARNING)
     override fun advanceTimeBy(delayTimeMillis: Long): Long {
         val oldTime = scheduler.currentTime
