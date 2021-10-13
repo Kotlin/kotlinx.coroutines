@@ -84,7 +84,7 @@ private class CompletableDeferredImpl<T>(
     override val onCancelComplete get() = true
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T> get() = TODO()
+    override val onAwait: SelectClause1<T> get() = onAwaitInternal as SelectClause1<T>
 
     override fun complete(value: T): Boolean =
         makeCompleting(value)

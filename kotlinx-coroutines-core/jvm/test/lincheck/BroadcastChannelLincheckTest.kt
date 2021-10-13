@@ -58,6 +58,6 @@ open class BroadcastChannelLincheckTestBase(
     override fun extractState() = c // inefficient but should work
 }
 
-class ConflatedBroadcastChannelLincheckTest : BroadcastChannelLincheckTestBase(
-    c = ConflatedBroadcastChannel()
+class ConflatedBroadcastChannelLincheckTest: BroadcastChannelLincheckTestBase(
+    c = ConflatedBroadcastChannel<Int>()
 )

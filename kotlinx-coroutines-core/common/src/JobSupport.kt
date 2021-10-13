@@ -1225,6 +1225,37 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cont.disposeOnCancellation(invokeOnCompletion(ResumeAwaitOnCompletion(cont).asHandler))
         cont.getResult()
     }
+
+    internal val onAwaitInternal: SelectClause1<*> get() = SelectClause1Impl<Any?>(
+        objForSelect = this,
+        regFunc = JobSupport::onAwaitInternalRegFunc as RegistrationFunction,
+        processResFunc = JobSupport::onAwaitInternalProcessResFunc as ProcessResultFunction
+    )
+
+    private fun onAwaitInternalRegFunc(select: SelectInstance<*>, ignoredParam: Any?) {
+        while (true) {
+            val state = this.state
+            if (state !is Incomplete) {
+                val result = if (state is CompletedExceptionally) state else state.unboxState()
+                select.selectInRegPhase(result)
+                return
+            }
+            if (startInternal(state) >= 0) break // break unless needs to retry
+        }
+        val disposableHandle = invokeOnCompletion {
+            val state = this.state
+            if (state !is Incomplete) {
+                val result = if (state is CompletedExceptionally) state else state.unboxState()
+                select.trySelect(this, result)
+            }
+        }
+        select.invokeOnCompletion { disposableHandle.dispose() }
+    }
+
+    private fun onAwaitInternalProcessResFunc(ignoredParam: Any?, result: Any?): Any? {
+        if (result is CompletedExceptionally) throw result.cause
+        return result
+    }
 }
 
 /*

@@ -99,7 +99,7 @@ private open class DeferredCoroutine<T>(
 ) : AbstractCoroutine<T>(parentContext, true, active = active), Deferred<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T> get() = TODO()
+    override val onAwait: SelectClause1<T> get() = onAwaitInternal as SelectClause1<T>
 }
 
 private class LazyDeferredCoroutine<T>(

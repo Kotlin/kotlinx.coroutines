@@ -40,7 +40,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     }
 
     private val lock = ReentrantLock()
-    
+
     private val subscribers = atomic<List<ConflatedBufferedChannel<E>>>(emptyList())
     private var lastElement: Any? = NULL
 
