@@ -6,7 +6,6 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
-import kotlin.jvm.*
 
 /**
  * [CoroutineDispatcher] that performs both immediate and lazy execution of coroutines in tests
@@ -35,6 +34,7 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
             }
         }
 
+    /** @suppress */
     override fun processEvent(time: Long, marker: Any) {
         check(marker is Runnable)
         marker.run()
@@ -51,23 +51,9 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
     }
 
     /** @suppress */
-    @InternalCoroutinesApi
     override fun dispatchYield(context: CoroutineContext, block: Runnable) {
         checkSchedulerInContext(scheduler, context)
         post(block)
-    }
-
-    /** @suppress */
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        checkSchedulerInContext(scheduler, continuation.context)
-        val timedRunnable = CancellableContinuationRunnable(continuation, this)
-        scheduler.registerEvent(this, timeMillis, timedRunnable, ::cancellableRunnableIsCancelled)
-    }
-
-    /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        checkSchedulerInContext(scheduler, context)
-        return scheduler.registerEvent(this, timeMillis, block) { false }
     }
 
     /** @suppress */
@@ -97,17 +83,3 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
         dispatchImmediately = true
     }
 }
-
-/**
- * This class exists to allow cleanup code to avoid throwing for cancelled continuations scheduled
- * in the future.
- */
-private class CancellableContinuationRunnable(
-    @JvmField val continuation: CancellableContinuation<Unit>,
-    private val dispatcher: CoroutineDispatcher
-) : Runnable {
-    override fun run() = with(dispatcher) { with(continuation) { resumeUndispatched(Unit) } }
-}
-
-private fun cancellableRunnableIsCancelled(runnable: CancellableContinuationRunnable): Boolean =
-    !runnable.continuation.isActive

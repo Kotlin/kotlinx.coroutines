@@ -39,6 +39,7 @@ public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCorouti
     private val count = atomic(0L)
 
     /** The current virtual time. */
+    @ExperimentalCoroutinesApi
     public var currentTime: Long = 0
         private set
 
