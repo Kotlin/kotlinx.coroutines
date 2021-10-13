@@ -87,6 +87,7 @@ public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineS
  * * Don't nest functions returning a [TestResult].
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
+@DelicateCoroutinesApi
 public expect class TestResult
 
 /**
@@ -161,44 +162,49 @@ public expect class TestResult
  * @throws IllegalArgumentException if the [context] is invalid. See the [TestCoroutineScope] constructor docs for
  * details.
  */
+@DelicateCoroutinesApi
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     testBody: suspend TestCoroutineScope.() -> Unit
-): TestResult = createTestResult {
-    val testScope = TestCoroutineScope(context + RunningInRunTest())
-    val scheduler = testScope.testScheduler
-    val deferred = testScope.async {
-        testScope.testBody()
-    }
-    var completed = false
-    while (!completed) {
-        scheduler.advanceUntilIdle()
-        if (deferred.isCompleted) {
-            /* don't even enter `withTimeout`; this allows to use a timeout of zero to check that there are no
-               non-trivial dispatches. */
-            completed = true
-            continue
+): TestResult {
+    if (context[RunningInRunTest] != null)
+        throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
+    return createTestResult {
+        val testScope = TestCoroutineScope(context + RunningInRunTest())
+        val scheduler = testScope.testScheduler
+        val deferred = testScope.async {
+            testScope.testBody()
         }
-        try {
-            withTimeout(dispatchTimeoutMs) {
-                select<Unit> {
-                    deferred.onAwait {
-                        completed = true
-                    }
-                    scheduler.onDispatchEvent {
-                        // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
+        var completed = false
+        while (!completed) {
+            scheduler.advanceUntilIdle()
+            if (deferred.isCompleted) {
+                /* don't even enter `withTimeout`; this allows to use a timeout of zero to check that there are no
+                   non-trivial dispatches. */
+                completed = true
+                continue
+            }
+            try {
+                withTimeout(dispatchTimeoutMs) {
+                    select<Unit> {
+                        deferred.onAwait {
+                            completed = true
+                        }
+                        scheduler.onDispatchEvent {
+                            // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
+                        }
                     }
                 }
+            } catch (e: TimeoutCancellationException) {
+                throw UncompletedCoroutinesError("The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
             }
-        } catch (e: TimeoutCancellationException) {
-            throw UncompletedCoroutinesError("The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
         }
+        deferred.getCompletionExceptionOrNull()?.let {
+            throw it
+        }
+        testScope.cleanupTestCoroutines()
     }
-    deferred.getCompletionExceptionOrNull()?.let {
-        throw it
-    }
-    testScope.cleanupTestCoroutines()
 }
 
 /**
@@ -207,18 +213,33 @@ public fun runTest(
 @Suppress("NO_ACTUAL_FOR_EXPECT") // actually suppresses `TestResult`
 internal expect fun createTestResult(testProcedure: suspend () -> Unit): TestResult
 
-/** TODO: docs */
+/**
+ * Runs a test in a [TestCoroutineScope] based on this one.
+ *
+ * Calls [runTest] using a coroutine context from this [TestCoroutineScope]. The [TestCoroutineScope] used to run
+ * [block] will be different from this one, but will reuse its [Job]; therefore, even if calling
+ * [TestCoroutineScope.cleanupTestCoroutines] on this scope were to complete its job, [runTest] won't complete it at the
+ * end of the test.
+ *
+ * Since this function returns [TestResult], in order to work correctly on the JS, its result must be returned
+ * immediately from the test body. See the docs for [TestResult] for details.
+ */
+@DelicateCoroutinesApi
 public fun TestCoroutineScope.runTest(
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     block: suspend TestCoroutineScope.() -> Unit
-): TestResult {
-    val ctx = this.coroutineContext
-    if (ctx[RunningInRunTest] != null)
-        throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    return runTest(ctx, dispatchTimeoutMs, block)
-}
+): TestResult =
+    runTest(coroutineContext, dispatchTimeoutMs, block)
 
-/** TODO: docs */
+/**
+ * Run a test using this [TestDispatcher].
+ *
+ * A convenience function that calls [runTest] with the given arguments.
+ *
+ * Since this function returns [TestResult], in order to work correctly on the JS, its result must be returned
+ * immediately from the test body. See the docs for [TestResult] for details.
+ */
+@DelicateCoroutinesApi
 public fun TestDispatcher.runTest(
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     block: suspend TestCoroutineScope.() -> Unit
@@ -230,4 +251,6 @@ private class RunningInRunTest: AbstractCoroutineContextElement(RunningInRunTest
     companion object Key : CoroutineContext.Key<RunningInRunTest>
 }
 
+/** The default timeout to use when waiting for asynchronous completions of the coroutines managed by
+ * a [TestCoroutineScheduler]. */
 private const val DEFAULT_DISPATCH_TIMEOUT_MS = 10_000L
