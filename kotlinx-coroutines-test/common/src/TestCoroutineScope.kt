@@ -27,54 +27,8 @@ public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor {
      */
     @ExperimentalCoroutinesApi
     public val testScheduler: TestCoroutineScheduler
-
-    /**
-     * The current virtual time on [testScheduler].
-     * @see TestCoroutineScheduler.currentTime
-     */
-    @ExperimentalCoroutinesApi
-    public val currentTime: Long
-        get() = testScheduler.currentTime
-
-    /**
-     * Advances the [testScheduler] by [delayTimeMillis].
-     *
-     * Historical note: this method used to also run the tasks scheduled on the next millisecond after the delay; this
-     * behavior is no longer present, so call [runCurrent] afterwards if you need those tasks to run.
-     *
-     * @see TestCoroutineScheduler.advanceTimeBy
-     */
-    @ExperimentalCoroutinesApi
-    public fun advanceTimeBy(delayTimeMillis: Long): Unit = testScheduler.advanceTimeBy(delayTimeMillis)
-
-    /**
-     * Advances the [testScheduler] to the point where there are no tasks remaining.
-     * @see TestCoroutineScheduler.advanceUntilIdle
-     */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-    public fun advanceUntilIdle(): Unit = testScheduler.advanceUntilIdle()
-
-    /**
-     * Run any tasks that are pending at the current virtual time.
-     * @see TestCoroutineScheduler.runCurrent
-     */
-    @ExperimentalCoroutinesApi
-    public fun runCurrent(): Unit = testScheduler.runCurrent()
-
-    @ExperimentalCoroutinesApi
-    @Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
-        "Only `TestCoroutineDispatcher` supports pausing; pause it directly.", level = DeprecationLevel.WARNING)
-    public suspend fun pauseDispatcher(block: suspend () -> Unit)
-
-    @ExperimentalCoroutinesApi
-    @Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
-        "Only `TestCoroutineDispatcher` supports pausing; pause it directly.", level = DeprecationLevel.WARNING)
-    public fun pauseDispatcher()
-
-    @ExperimentalCoroutinesApi
-    @Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
-        "Only `TestCoroutineDispatcher` supports pausing; pause it directly.", level = DeprecationLevel.WARNING)
-    public fun resumeDispatcher()
+        get() = coroutineContext[TestCoroutineScheduler]
+            ?: throw UnsupportedOperationException("This scope does not have a TestCoroutineScheduler linked to it")
 }
 
 private class TestCoroutineScopeImpl (
@@ -88,25 +42,6 @@ private class TestCoroutineScopeImpl (
         coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
         coroutineContext.delayController?.cleanupTestCoroutines()
     }
-
-    @ExperimentalCoroutinesApi
-    override suspend fun pauseDispatcher(block: suspend () -> Unit) {
-        delayControllerForPausing.pauseDispatcher(block)
-    }
-
-    @ExperimentalCoroutinesApi
-    override fun pauseDispatcher() {
-        delayControllerForPausing.pauseDispatcher()
-    }
-
-    @ExperimentalCoroutinesApi
-    override fun resumeDispatcher() {
-        delayControllerForPausing.resumeDispatcher()
-    }
-
-    private val delayControllerForPausing: DelayController
-        get() = coroutineContext.delayController
-            ?: throw IllegalStateException("This scope isn't able to pause its dispatchers")
 }
 
 /**
@@ -136,3 +71,89 @@ private inline val CoroutineContext.delayController: DelayController?
         val handler = this[ContinuationInterceptor]
         return handler as? DelayController
     }
+
+
+/**
+ * The current virtual time on [testScheduler][TestCoroutineScope.testScheduler].
+ * @see TestCoroutineScheduler.currentTime
+ */
+@ExperimentalCoroutinesApi
+public val TestCoroutineScope.currentTime: Long
+    get() = coroutineContext.delayController?.currentTime ?: testScheduler.currentTime
+
+/**
+ * Advances the [testScheduler][TestCoroutineScope.testScheduler] by [delayTimeMillis] and runs the tasks up to that
+ * moment (inclusive).
+ *
+ * @see TestCoroutineScheduler.advanceTimeBy
+ */
+@ExperimentalCoroutinesApi
+@Deprecated("The name of this function is misleading: it not only advances the time, but also runs the tasks " +
+    "scheduled *at* the ending moment.",
+    ReplaceWith("this.testScheduler.apply { advanceTimeBy(delayTimeMillis); runCurrent() }"),
+    DeprecationLevel.WARNING)
+public fun TestCoroutineScope.advanceTimeBy(delayTimeMillis: Long): Unit =
+    when (val controller = coroutineContext.delayController) {
+        null -> {
+            testScheduler.advanceTimeBy(delayTimeMillis)
+            testScheduler.runCurrent()
+        }
+        else -> {
+            controller.advanceTimeBy(delayTimeMillis)
+            Unit
+        }
+    }
+
+/**
+ * Advances the [testScheduler][TestCoroutineScope.testScheduler] to the point where there are no tasks remaining.
+ * @see TestCoroutineScheduler.advanceUntilIdle
+ */
+@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+public fun TestCoroutineScope.advanceUntilIdle(): Unit {
+    coroutineContext.delayController?.advanceUntilIdle() ?: testScheduler.advanceUntilIdle()
+}
+
+/**
+ * Run any tasks that are pending at the current virtual time, according to
+ * the [testScheduler][TestCoroutineScope.testScheduler].
+ *
+ * @see TestCoroutineScheduler.runCurrent
+ */
+@ExperimentalCoroutinesApi
+public fun TestCoroutineScope.runCurrent(): Unit {
+    coroutineContext.delayController?.runCurrent() ?: testScheduler.runCurrent()
+}
+
+@ExperimentalCoroutinesApi
+@Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
+    "Only `TestCoroutineDispatcher` supports pausing; pause it directly.",
+    ReplaceWith("(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher(block)",
+        "kotlin.coroutines.ContinuationInterceptor"),
+    DeprecationLevel.WARNING)
+public suspend fun TestCoroutineScope.pauseDispatcher(block: suspend () -> Unit) {
+    delayControllerForPausing.pauseDispatcher(block)
+}
+
+@ExperimentalCoroutinesApi
+@Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
+    "Only `TestCoroutineDispatcher` supports pausing; pause it directly.",
+    ReplaceWith("(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher()",
+        "kotlin.coroutines.ContinuationInterceptor"),
+level = DeprecationLevel.WARNING)
+public fun TestCoroutineScope.pauseDispatcher() {
+    delayControllerForPausing.pauseDispatcher()
+}
+
+@ExperimentalCoroutinesApi
+@Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
+    "Only `TestCoroutineDispatcher` supports pausing; pause it directly.",
+    ReplaceWith("(this.coroutineContext[ContinuationInterceptor]!! as DelayController).resumeDispatcher()",
+        "kotlin.coroutines.ContinuationInterceptor"),
+    level = DeprecationLevel.WARNING)
+public fun TestCoroutineScope.resumeDispatcher() {
+    delayControllerForPausing.resumeDispatcher()
+}
+
+private val TestCoroutineScope.delayControllerForPausing: DelayController
+    get() = coroutineContext.delayController
+        ?: throw IllegalStateException("This scope isn't able to pause its dispatchers")

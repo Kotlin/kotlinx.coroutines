@@ -238,7 +238,7 @@ class TestRunBlockingTest {
                 delay(SLOW)
                 executed = true
             }
-            advanceTimeBy(SLOW + 1)
+            advanceTimeBy(SLOW)
 
             assertTrue(executed)
         }
@@ -342,7 +342,6 @@ class TestRunBlockingTest {
             runCurrent()
             assertEquals(1, mutable)
             advanceTimeBy(SLOW)
-            runCurrent()
             assertEquals(2, mutable)
         }
     }
