@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.test
 
+import kotlinx.atomicfu.*
 import kotlin.test.*
 import kotlin.time.*
 
@@ -35,3 +36,32 @@ inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(Duration.secon
 expect fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult): TestResult
 
 class TestException(message: String? = null): Exception(message)
+
+/**
+ * A class inheriting from which allows to check the execution order inside tests.
+ *
+ * @see TestBase
+ */
+open class OrderedExecutionTestBase {
+    private val actionIndex = atomic(0)
+    private val finished = atomic(false)
+
+    /** Expect the next action to be [index] in order. */
+    protected fun expect(index: Int) {
+        val wasIndex = actionIndex.incrementAndGet()
+        check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
+    }
+
+    /** Expect this action to be final, with the given [index]. */
+    protected fun finish(index: Int) {
+        expect(index)
+        check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
+    }
+
+    @AfterTest
+    fun ensureFinishCalls() {
+        assertTrue(finished.value || actionIndex.value == 0, "Expected `finish` to be called")
+    }
+}
+
+internal fun <T> T.void() { }

@@ -86,8 +86,7 @@ public class UnconfinedTestDispatcher(
  *
  * One can additionally pass a [name] in order to more easily distinguish this dispatcher during debugging.
  *
- * @see UnconfinedTestDispatcher for a dispatcher that immediately enters [launch] and [async] blocks and is not
- * confined to any particular thread.
+ * @see UnconfinedTestDispatcher for a dispatcher that is not confined to any particular thread.
  */
 @ExperimentalCoroutinesApi
 public class StandardTestDispatcher(

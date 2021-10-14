@@ -44,12 +44,13 @@ private class TestCoroutineScopeImpl(
     private val initialJobs = coroutineContext.activeJobs()
 
     override fun cleanupTestCoroutines() {
-        coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
         val delayController = coroutineContext.delayController
         if (delayController != null) {
             delayController.cleanupTestCoroutines()
+            coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
         } else {
             testScheduler.runCurrent()
+            coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
             if (!testScheduler.isIdle()) {
                 throw UncompletedCoroutinesError(
                     "Unfinished coroutines during teardown. Ensure all coroutines are" +

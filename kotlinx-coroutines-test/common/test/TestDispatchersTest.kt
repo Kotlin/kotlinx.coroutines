@@ -3,24 +3,11 @@
  */
 package kotlinx.coroutines.test
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class TestDispatchersTest {
-    private val actionIndex = atomic(0)
-    private val finished = atomic(false)
-
-    private fun expect(index: Int) {
-        val wasIndex = actionIndex.incrementAndGet()
-        check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
-    }
-
-    private fun finish(index: Int) {
-        expect(index)
-        check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
-    }
+class TestDispatchersTest: OrderedExecutionTestBase() {
 
     @BeforeTest
     fun setUp() {

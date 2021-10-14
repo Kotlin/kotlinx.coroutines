@@ -29,7 +29,7 @@ class TestCoroutineScopeTest {
         }
         // Reuses the scheduler that the dispatcher is linked to.
         run {
-            val dispatcher = TestCoroutineDispatcher()
+            val dispatcher = StandardTestDispatcher()
             val scope = createTestCoroutineScope(dispatcher)
             assertSame(dispatcher.scheduler, scope.coroutineContext[TestCoroutineScheduler])
         }
@@ -43,7 +43,7 @@ class TestCoroutineScopeTest {
         // Doesn't touch the passed dispatcher and the scheduler if they match.
         run {
             val scheduler = TestCoroutineScheduler()
-            val dispatcher = TestCoroutineDispatcher(scheduler)
+            val dispatcher = StandardTestDispatcher(scheduler)
             val scope = createTestCoroutineScope(scheduler + dispatcher)
             assertSame(scheduler, scope.coroutineContext[TestCoroutineScheduler])
             assertSame(dispatcher, scope.coroutineContext[ContinuationInterceptor])
@@ -98,7 +98,7 @@ class TestCoroutineScopeTest {
     /** Tests that uncaught exceptions are thrown at the cleanup. */
     @Test
     fun testThrowsUncaughtExceptionsOnCleanup() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         val exception = TestException("test")
         scope.launch {
             throw exception
@@ -111,7 +111,7 @@ class TestCoroutineScopeTest {
     /** Tests that uncaught exceptions take priority over uncompleted jobs when throwing on cleanup. */
     @Test
     fun testUncaughtExceptionsPrioritizedOnCleanup() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         val exception = TestException("test")
         scope.launch {
             throw exception
@@ -127,7 +127,7 @@ class TestCoroutineScopeTest {
     companion object {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]
-            TestCoroutineDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
+            StandardTestDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
             CoroutineExceptionHandler { _, _ -> }, // not an `UncaughtExceptionCaptor`
         )
     }
