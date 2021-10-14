@@ -4,12 +4,11 @@
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
-import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class MultithreadingTest : TestBase() {
+class MultithreadingTest {
 
     @Test
     fun incorrectlyCalledRunBlocking_doesNotHaveSameInterceptor() = runBlockingTest {
@@ -24,7 +23,7 @@ class MultithreadingTest : TestBase() {
     }
 
     @Test
-    fun testSingleThreadExecutor() = runTest {
+    fun testSingleThreadExecutor() = runBlocking {
         val mainThread = Thread.currentThread()
         Dispatchers.setMain(Dispatchers.Unconfined)
         newSingleThreadContext("testSingleThread").use { threadPool ->
