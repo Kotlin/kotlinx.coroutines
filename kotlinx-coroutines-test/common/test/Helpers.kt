@@ -28,3 +28,8 @@ inline fun <T> assertRunsFast(timeout: Duration, block: () -> T): T {
  */
 @OptIn(ExperimentalTime::class)
 inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(Duration.seconds(2), block)
+
+/**
+ * Passes [test] as an argument to [block], but as a function returning not a [TestResult] but [Unit].
+*/
+expect fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult): TestResult

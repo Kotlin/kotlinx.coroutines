@@ -170,9 +170,9 @@ public fun runTest(
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
+    val testScope = TestCoroutineScope(context + RunningInRunTest())
+    val scheduler = testScope.testScheduler
     return createTestResult {
-        val testScope = TestCoroutineScope(context + RunningInRunTest())
-        val scheduler = testScope.testScheduler
         val deferred = testScope.async {
             testScope.testBody()
         }
@@ -197,6 +197,11 @@ public fun runTest(
                     }
                 }
             } catch (e: TimeoutCancellationException) {
+                try {
+                    testScope.cleanupTestCoroutines()
+                } catch (e: UncompletedCoroutinesError) {
+                    // we expect these and will instead throw a more informative exception just below.
+                }
                 throw UncompletedCoroutinesError("The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
             }
         }
