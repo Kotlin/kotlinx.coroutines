@@ -88,6 +88,7 @@ class MultithreadingTest {
         }
     }
 
+    /** Tests that resuming the coroutine of [runTest] asynchronously in reasonable time succeeds. */
     @Test
     fun testResumingFromAnotherThread() = runTest {
         suspendCancellableCoroutine<Unit> { cont ->

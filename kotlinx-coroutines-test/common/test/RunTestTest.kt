@@ -5,12 +5,14 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 import kotlin.time.*
 
-class TestRunTest {
+class RunTestTest {
 
+    /** Tests that [withContext] that sends work to other threads works in [runTest]. */
     @Test
     fun testWithContextDispatching() = runTest {
         var counter = 0
@@ -20,6 +22,7 @@ class TestRunTest {
         assertEquals(counter, 1)
     }
 
+    /** Tests that joining [GlobalScope.launch] works in [runTest]. */
     @Test
     fun testJoiningForkedJob() = runTest {
         var counter = 0
@@ -30,14 +33,16 @@ class TestRunTest {
         assertEquals(counter, 1)
     }
 
+    /** Tests [suspendCoroutine] not failing [runTest]. */
     @Test
-    fun testSuspendCancellableCoroutine() = runTest {
+    fun testSuspendCoroutine() = runTest {
         val answer = suspendCoroutine<Int> {
             it.resume(42)
         }
         assertEquals(42, answer)
     }
 
+    /** Tests that [runTest] attempts to detect it being run inside another [runTest] and failing in such scenarios. */
     @Test
     fun testNestedRunTestForbidden() = runTest {
         assertFailsWith<IllegalStateException> {
