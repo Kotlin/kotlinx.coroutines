@@ -65,12 +65,14 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
         isCancelled: (T) -> Boolean
     ): DisposableHandle {
         require(timeDeltaMillis >= 0) { "Attempted scheduling an event earlier in time (with the time delta $timeDeltaMillis)" }
-        sendDispatchEvent()
         val count = count.getAndIncrement()
         return synchronized(lock) {
             val time = addClamping(currentTime, timeDeltaMillis)
             val event = TestDispatchEvent(dispatcher, count, time, marker as Any) { isCancelled(marker) }
             events.addLast(event)
+            /** can't be moved above: otherwise, [onDispatchEvent] could consume the token sent here before there's
+             * actually anything in the event queue. */
+            sendDispatchEvent()
             DisposableHandle {
                 synchronized(lock) {
                     events.remove(event)
