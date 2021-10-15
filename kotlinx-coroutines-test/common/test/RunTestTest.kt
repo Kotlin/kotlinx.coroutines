@@ -120,4 +120,37 @@ class RunTestTest {
         }
     }
 
+    /** Tests that passing invalid contexts to [runTest] causes it to fail (on JS, without forking). */
+    @Test
+    fun testRunTestWithIllegalContext() {
+        for (ctx in TestCoroutineScopeTest.invalidContexts) {
+            assertFailsWith<IllegalArgumentException> {
+                runTest(ctx) { }
+            }
+        }
+    }
+
+    /** Tests that throwing exceptions in [runTest] fails the test with them. */
+    @Test
+    fun testThrowingInRunTestBody() = testResultMap({
+        assertFailsWith<RuntimeException> { it() }
+    }) {
+        runTest {
+            throw RuntimeException()
+        }
+    }
+
+    /** Tests that throwing exceptions in pending tasks [runTest] fails the test with them. */
+    @Test
+    fun testThrowingInRunTestPendingTask() = testResultMap({
+        assertFailsWith<RuntimeException> { it() }
+    }) {
+        runTest {
+            launch {
+                delay(SLOW)
+                throw RuntimeException()
+            }
+        }
+    }
+
 }
