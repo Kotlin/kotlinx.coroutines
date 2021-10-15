@@ -3,8 +3,6 @@
  */
 package kotlinx.coroutines.test
 
-import kotlinx.coroutines.*
-
 actual fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult) {
     block {
         test()

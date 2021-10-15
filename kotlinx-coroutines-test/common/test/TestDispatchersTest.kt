@@ -33,7 +33,7 @@ class TestDispatchersTest {
     }
 
     @Test
-    fun testImmediateDispatcher() = runBlockingTest {
+    fun testImmediateDispatcher() = runTest {
         Dispatchers.setMain(ImmediateDispatcher())
         expect(1)
         withContext(Dispatchers.Main) {

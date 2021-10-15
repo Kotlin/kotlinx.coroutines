@@ -5,13 +5,12 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
 import kotlin.test.*
 
 class TestCoroutineSchedulerTest {
     /** Tests that `TestCoroutineScheduler` attempts to detect if there are several instances of it. */
     @Test
-    fun testContextElement() = runBlockingTest {
+    fun testContextElement() = runTest {
         assertFailsWith<IllegalStateException> {
             withContext(TestCoroutineDispatcher()) {
             }
@@ -21,7 +20,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that, as opposed to [DelayController.advanceTimeBy] or [TestCoroutineScope.advanceTimeBy],
      * [TestCoroutineScheduler.advanceTimeBy] doesn't run the tasks scheduled at the target moment. */
     @Test
-    fun testAdvanceTimeByDoesNotRunCurrent() = runBlockingTest {
+    fun testAdvanceTimeByDoesNotRunCurrent() = runTest {
         var entered = false
         launch {
             delay(15)
@@ -45,7 +44,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that if [TestCoroutineScheduler.advanceTimeBy] encounters an arithmetic overflow, all the tasks scheduled
      * until the moment [Long.MAX_VALUE] get run. */
     @Test
-    fun testAdvanceTimeByEnormousDelays() = runBlockingTest {
+    fun testAdvanceTimeByEnormousDelays() = runTest {
         val initialDelay = 10L
         delay(initialDelay)
         assertEquals(initialDelay, currentTime)
@@ -99,7 +98,7 @@ class TestCoroutineSchedulerTest {
 
     /** Tests the basic functionality of [TestCoroutineScheduler.runCurrent]. */
     @Test
-    fun testRunCurrent() = runBlockingTest {
+    fun testRunCurrent() = runTest {
         var stage = 0
         launch {
             delay(1)
@@ -181,5 +180,80 @@ class TestCoroutineSchedulerTest {
         assertEquals(0, stage)
         stage = 1
         scope.runCurrent()
+    }
+
+    private fun TestCoroutineScope.checkTimeout(
+        timesOut: Boolean, timeoutMillis: Long = SLOW, block: suspend () -> Unit
+    ) = assertRunsFast {
+        var caughtException = false
+        launch {
+            try {
+                withTimeout(timeoutMillis) {
+                    block()
+                }
+            } catch (e: TimeoutCancellationException) {
+                caughtException = true
+            }
+        }
+        advanceUntilIdle()
+        cleanupTestCoroutines()
+        if (timesOut)
+            assertTrue(caughtException)
+        else
+            assertFalse(caughtException)
+    }
+
+    /** Tests that timeouts get triggered. */
+    @Test
+    fun testSmallTimeouts() {
+        val scope = TestCoroutineScope()
+        scope.checkTimeout(true) {
+            val half = SLOW / 2
+            delay(half)
+            delay(SLOW - half)
+        }
+    }
+
+    /** Tests that timeouts don't get triggered if the code finishes in time. */
+    @Test
+    fun testLargeTimeouts() {
+        val scope = TestCoroutineScope()
+        scope.checkTimeout(false) {
+            val half = SLOW / 2
+            delay(half)
+            delay(SLOW - half - 1)
+        }
+    }
+
+    /** Tests that timeouts get triggered if the code fails to finish in time asynchronously. */
+    @Test
+    fun testSmallAsynchronousTimeouts() {
+        val scope = TestCoroutineScope()
+        val deferred = CompletableDeferred<Unit>()
+        scope.launch {
+            val half = SLOW / 2
+            delay(half)
+            delay(SLOW - half)
+            deferred.complete(Unit)
+        }
+        scope.checkTimeout(true) {
+            deferred.await()
+        }
+    }
+
+    /** Tests that timeouts don't get triggered if the code finishes in time, even if it does so asynchronously. */
+    @Test
+    fun testLargeAsynchronousTimeouts() {
+        val scope = TestCoroutineScope()
+        val deferred = CompletableDeferred<Unit>()
+        scope.launch {
+            val half = SLOW / 2
+            delay(half)
+            delay(SLOW - half - 1)
+            deferred.complete(Unit)
+        }
+        scope.checkTimeout(false) {
+            deferred.await()
+        }
     }
 }
