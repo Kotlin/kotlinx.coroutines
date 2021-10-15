@@ -61,3 +61,5 @@ open class OrderedExecutionTestBase {
         assertTrue(finished.value || actionIndex.value == 0, "Expected `finish` to be called")
     }
 }
+
+internal fun <T> T.void() { }

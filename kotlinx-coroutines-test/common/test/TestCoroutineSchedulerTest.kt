@@ -193,6 +193,46 @@ class TestCoroutineSchedulerTest {
         scope.runCurrent()
     }
 
+    /** Tests that dispatching the delayed tasks is ordered by their waking times. */
+    @Test
+    fun testDelaysPriority() = forTestDispatchers {
+        val scope = createTestCoroutineScope(it)
+        var lastMeasurement = 0L
+        fun checkTime(time: Long) {
+            assertTrue(lastMeasurement < time)
+            assertEquals(time, scope.currentTime)
+            lastMeasurement = scope.currentTime
+        }
+        scope.launch {
+            launch {
+                delay(100)
+                checkTime(100)
+                val deferred = async {
+                    delay(70)
+                    checkTime(170)
+                }
+                delay(1)
+                checkTime(101)
+                deferred.await()
+                delay(1)
+                checkTime(171)
+            }
+            launch {
+                delay(200)
+                checkTime(200)
+            }
+            launch {
+                delay(150)
+                checkTime(150)
+                delay(22)
+                checkTime(172)
+            }
+            delay(201)
+        }
+        scope.advanceUntilIdle()
+        checkTime(201)
+    }
+
     private fun TestCoroutineScope.checkTimeout(
         timesOut: Boolean, timeoutMillis: Long = SLOW, block: suspend () -> Unit
     ) = assertRunsFast {
@@ -269,7 +309,13 @@ class TestCoroutineSchedulerTest {
     }
 
     private fun forTestDispatchers(block: (TestDispatcher) -> Unit): Unit =
-        listOf(TestCoroutineDispatcher(), StandardTestDispatcher(), UnconfinedTestDispatcher()).forEach {
+        @Suppress("DEPRECATION")
+        listOf(
+            TestCoroutineDispatcher(),
+            TestCoroutineDispatcher().also { it.pauseDispatcher() },
+            StandardTestDispatcher(),
+            UnconfinedTestDispatcher()
+        ).forEach {
             try {
                 block(it)
             } catch (e: Throwable) {

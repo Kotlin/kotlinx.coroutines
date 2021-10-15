@@ -10,18 +10,48 @@ import kotlin.test.*
 
 class StandardTestDispatcherTest: OrderedExecutionTestBase() {
 
+    private val scope = createTestCoroutineScope(StandardTestDispatcher())
+
+    @AfterTest
+    fun cleanup() = scope.cleanupTestCoroutines()
+
     /** Tests that the [StandardTestDispatcher] follows an execution order similar to `runBlocking`. */
     @Test
-    fun testFlowsNotSkippingValues() {
-        val scope = createTestCoroutineScope(StandardTestDispatcher())
-        scope.launch {
-            // https://github.com/Kotlin/kotlinx.coroutines/issues/1626#issuecomment-554632852
-            val list = flowOf(1).onStart { emit(0) }
-                .combine(flowOf("A")) { int, str -> "$str$int" }
-                .toList()
-            assertEquals(list, listOf("A0", "A1"))
+    fun testFlowsNotSkippingValues() = scope.launch {
+        // https://github.com/Kotlin/kotlinx.coroutines/issues/1626#issuecomment-554632852
+        val list = flowOf(1).onStart { emit(0) }
+            .combine(flowOf("A")) { int, str -> "$str$int" }
+            .toList()
+        assertEquals(list, listOf("A0", "A1"))
+    }.void()
+
+    /** Tests that each [launch] gets dispatched. */
+    @Test
+    fun testLaunchDispatched() = scope.launch {
+        expect(1)
+        launch {
+            expect(3)
         }
-        scope.cleanupTestCoroutines()
-    }
+        finish(2)
+    }.void()
+
+    /** Tests that dispatching is done in a predictable order and [yield] puts this task at the end of the queue. */
+    @Test
+    fun testYield() = scope.launch {
+        expect(1)
+        scope.launch {
+            expect(3)
+            yield()
+            expect(6)
+        }
+        scope.launch {
+            expect(4)
+            yield()
+            finish(7)
+        }
+        expect(2)
+        yield()
+        expect(5)
+    }.void()
 
 }
