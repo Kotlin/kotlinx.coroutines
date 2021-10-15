@@ -57,7 +57,7 @@ class RunTestTest {
             delay(2000)
         }
         val deferred = async {
-            val job = launch(TestCoroutineDispatcher(testScheduler)) {
+            val job = launch(StandardTestDispatcher(testScheduler)) {
                 launch {
                     delay(500)
                 }

@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("DEPRECATION")
 
 package kotlinx.coroutines.test
 
@@ -140,7 +141,7 @@ public interface DelayController {
 public class UncompletedCoroutinesError(message: String): AssertionError(message)
 
 internal interface SchedulerAsDelayController: DelayController {
-    public val scheduler: TestCoroutineScheduler
+    val scheduler: TestCoroutineScheduler
 
     /** @suppress */
     @Deprecated("This property delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
@@ -183,7 +184,7 @@ internal interface SchedulerAsDelayController: DelayController {
         scheduler.runCurrent()
         if (!scheduler.isIdle()) {
             throw UncompletedCoroutinesError(
-                "Unfinished coroutines during teardown. Ensure all coroutines are" +
+                "Unfinished coroutines during tear-down. Ensure all coroutines are" +
                     " completed or cancelled by your test."
             )
         }

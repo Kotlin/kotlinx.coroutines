@@ -7,6 +7,7 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class TestRunBlockingTest {
 
     @Test

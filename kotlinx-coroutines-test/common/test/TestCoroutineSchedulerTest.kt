@@ -12,7 +12,7 @@ class TestCoroutineSchedulerTest {
     @Test
     fun testContextElement() = runTest {
         assertFailsWith<IllegalStateException> {
-            withContext(TestCoroutineDispatcher()) {
+            withContext(StandardTestDispatcher()) {
             }
         }
     }
@@ -44,28 +44,35 @@ class TestCoroutineSchedulerTest {
     /** Tests that if [TestCoroutineScheduler.advanceTimeBy] encounters an arithmetic overflow, all the tasks scheduled
      * until the moment [Long.MAX_VALUE] get run. */
     @Test
-    fun testAdvanceTimeByEnormousDelays() = runTest {
-        val initialDelay = 10L
-        delay(initialDelay)
-        assertEquals(initialDelay, currentTime)
-        var enteredInfinity = false
-        launch {
-            delay(Long.MAX_VALUE - 1) // delay(Long.MAX_VALUE) does nothing
-            assertEquals(Long.MAX_VALUE, currentTime)
-            enteredInfinity = true
+    fun testAdvanceTimeByEnormousDelays() = forTestDispatchers {
+        assertRunsFast {
+            with (createTestCoroutineScope(it)) {
+                launch {
+                    val initialDelay = 10L
+                    delay(initialDelay)
+                    assertEquals(initialDelay, currentTime)
+                    var enteredInfinity = false
+                    launch {
+                        delay(Long.MAX_VALUE - 1) // delay(Long.MAX_VALUE) does nothing
+                        assertEquals(Long.MAX_VALUE, currentTime)
+                        enteredInfinity = true
+                    }
+                    var enteredNearInfinity = false
+                    launch {
+                        delay(Long.MAX_VALUE - initialDelay - 1)
+                        assertEquals(Long.MAX_VALUE - 1, currentTime)
+                        enteredNearInfinity = true
+                    }
+                    testScheduler.advanceTimeBy(Long.MAX_VALUE)
+                    assertFalse(enteredInfinity)
+                    assertTrue(enteredNearInfinity)
+                    assertEquals(Long.MAX_VALUE, currentTime)
+                    testScheduler.runCurrent()
+                    assertTrue(enteredInfinity)
+                }
+                testScheduler.advanceUntilIdle()
+            }
         }
-        var enteredNearInfinity = false
-        launch {
-            delay(Long.MAX_VALUE - initialDelay - 1)
-            assertEquals(Long.MAX_VALUE - 1, currentTime)
-            enteredNearInfinity = true
-        }
-        testScheduler.advanceTimeBy(Long.MAX_VALUE)
-        assertFalse(enteredInfinity)
-        assertTrue(enteredNearInfinity)
-        assertEquals(Long.MAX_VALUE, currentTime)
-        testScheduler.runCurrent()
-        assertTrue(enteredInfinity)
     }
 
     /** Tests the basic functionality of [TestCoroutineScheduler.advanceTimeBy]. */
@@ -124,48 +131,52 @@ class TestCoroutineSchedulerTest {
 
     /** Tests that [TestCoroutineScheduler.runCurrent] will not run new tasks after the current time has advanced. */
     @Test
-    fun testRunCurrentNotDrainingQueue() = assertRunsFast {
-        val scheduler = TestCoroutineScheduler()
-        val scope = createTestCoroutineScope(scheduler)
-        var stage = 1
-        scope.launch {
-            delay(SLOW)
-            launch {
+    fun testRunCurrentNotDrainingQueue() = forTestDispatchers {
+        assertRunsFast {
+            val scheduler = it.scheduler
+            val scope = createTestCoroutineScope(it)
+            var stage = 1
+            scope.launch {
                 delay(SLOW)
-                stage = 3
+                launch {
+                    delay(SLOW)
+                    stage = 3
+                }
+                scheduler.advanceTimeBy(SLOW)
+                stage = 2
             }
             scheduler.advanceTimeBy(SLOW)
-            stage = 2
+            assertEquals(1, stage)
+            scheduler.runCurrent()
+            assertEquals(2, stage)
+            scheduler.runCurrent()
+            assertEquals(3, stage)
         }
-        scheduler.advanceTimeBy(SLOW)
-        assertEquals(1, stage)
-        scheduler.runCurrent()
-        assertEquals(2, stage)
-        scheduler.runCurrent()
-        assertEquals(3, stage)
     }
 
     /** Tests that [TestCoroutineScheduler.advanceUntilIdle] doesn't hang when itself running in a scheduler task. */
     @Test
-    fun testNestedAdvanceUntilIdle() = assertRunsFast {
-        val scheduler = TestCoroutineScheduler()
-        val scope = createTestCoroutineScope(scheduler)
-        var executed = false
-        scope.launch {
-            launch {
-                delay(SLOW)
-                executed = true
+    fun testNestedAdvanceUntilIdle() = forTestDispatchers {
+        assertRunsFast {
+            val scheduler = it.scheduler
+            val scope = createTestCoroutineScope(it)
+            var executed = false
+            scope.launch {
+                launch {
+                    delay(SLOW)
+                    executed = true
+                }
+                scheduler.advanceUntilIdle()
             }
             scheduler.advanceUntilIdle()
+            assertTrue(executed)
         }
-        scheduler.advanceUntilIdle()
-        assertTrue(executed)
     }
 
     /** Tests [yield] scheduling tasks for future execution and not executing immediately. */
     @Test
-    fun testYield() {
-        val scope = createTestCoroutineScope()
+    fun testYield() = forTestDispatchers {
+        val scope = createTestCoroutineScope(it)
         var stage = 0
         scope.launch {
             yield()
@@ -205,8 +216,8 @@ class TestCoroutineSchedulerTest {
 
     /** Tests that timeouts get triggered. */
     @Test
-    fun testSmallTimeouts() {
-        val scope = createTestCoroutineScope(TestCoroutineDispatcher())
+    fun testSmallTimeouts() = forTestDispatchers {
+        val scope = createTestCoroutineScope(it)
         scope.checkTimeout(true) {
             val half = SLOW / 2
             delay(half)
@@ -216,8 +227,8 @@ class TestCoroutineSchedulerTest {
 
     /** Tests that timeouts don't get triggered if the code finishes in time. */
     @Test
-    fun testLargeTimeouts() {
-        val scope = createTestCoroutineScope()
+    fun testLargeTimeouts() = forTestDispatchers {
+        val scope = createTestCoroutineScope(it)
         scope.checkTimeout(false) {
             val half = SLOW / 2
             delay(half)
@@ -227,8 +238,8 @@ class TestCoroutineSchedulerTest {
 
     /** Tests that timeouts get triggered if the code fails to finish in time asynchronously. */
     @Test
-    fun testSmallAsynchronousTimeouts() {
-        val scope = createTestCoroutineScope()
+    fun testSmallAsynchronousTimeouts() = forTestDispatchers {
+        val scope = createTestCoroutineScope(it)
         val deferred = CompletableDeferred<Unit>()
         scope.launch {
             val half = SLOW / 2
@@ -243,8 +254,8 @@ class TestCoroutineSchedulerTest {
 
     /** Tests that timeouts don't get triggered if the code finishes in time, even if it does so asynchronously. */
     @Test
-    fun testLargeAsynchronousTimeouts() {
-        val scope = createTestCoroutineScope()
+    fun testLargeAsynchronousTimeouts() = forTestDispatchers {
+        val scope = createTestCoroutineScope(it)
         val deferred = CompletableDeferred<Unit>()
         scope.launch {
             val half = SLOW / 2
@@ -256,4 +267,13 @@ class TestCoroutineSchedulerTest {
             deferred.await()
         }
     }
+
+    private fun forTestDispatchers(block: (TestDispatcher) -> Unit): Unit =
+        listOf(TestCoroutineDispatcher(), StandardTestDispatcher(), UnconfinedTestDispatcher()).forEach {
+            try {
+                block(it)
+            } catch (e: Throwable) {
+                throw RuntimeException("Test failed for dispatcher $it", e)
+            }
+        }
 }
