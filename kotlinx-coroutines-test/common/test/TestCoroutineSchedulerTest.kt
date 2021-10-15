@@ -70,7 +70,7 @@ class TestCoroutineSchedulerTest {
 
     /** Tests the basic functionality of [TestCoroutineScheduler.advanceTimeBy]. */
     @Test
-    fun testAdvanceTimeBy() {
+    fun testAdvanceTimeBy() = assertRunsFast {
         val scheduler = TestCoroutineScheduler()
         val scope = TestCoroutineScope(scheduler)
         var stage = 1
@@ -96,26 +96,89 @@ class TestCoroutineSchedulerTest {
         scope.cleanupTestCoroutines()
     }
 
+    /** Tests the basic functionality of [TestCoroutineScheduler.runCurrent]. */
+    @Test
+    fun testRunCurrent() = runBlockingTest {
+        var stage = 0
+        launch {
+            delay(1)
+            ++stage
+            delay(1)
+            stage += 10
+        }
+        launch {
+            delay(1)
+            ++stage
+            delay(1)
+            stage += 10
+        }
+        testScheduler.advanceTimeBy(1)
+        assertEquals(0, stage)
+        runCurrent()
+        assertEquals(2, stage)
+        testScheduler.advanceTimeBy(1)
+        assertEquals(2, stage)
+        runCurrent()
+        assertEquals(22, stage)
+    }
+
     /** Tests that [TestCoroutineScheduler.runCurrent] will not run new tasks after the current time has advanced. */
     @Test
-    fun testRunCurrentNotDrainingQueue() {
+    fun testRunCurrentNotDrainingQueue() = assertRunsFast {
         val scheduler = TestCoroutineScheduler()
         val scope = TestCoroutineScope(scheduler)
         var stage = 1
         scope.launch {
-            delay(1)
+            delay(SLOW)
             launch {
-                delay(1)
+                delay(SLOW)
                 stage = 3
             }
-            scheduler.advanceTimeBy(1)
+            scheduler.advanceTimeBy(SLOW)
             stage = 2
         }
-        scheduler.advanceTimeBy(1)
+        scheduler.advanceTimeBy(SLOW)
         assertEquals(1, stage)
         scheduler.runCurrent()
         assertEquals(2, stage)
         scheduler.runCurrent()
         assertEquals(3, stage)
+    }
+
+    /** Tests that [TestCoroutineScheduler.advanceUntilIdle] doesn't hang when itself running in a scheduler task. */
+    @Test
+    fun testNestedAdvanceUntilIdle() = assertRunsFast {
+        val scheduler = TestCoroutineScheduler()
+        val scope = TestCoroutineScope(scheduler)
+        var executed = false
+        scope.launch {
+            launch {
+                delay(SLOW)
+                executed = true
+            }
+            scheduler.advanceUntilIdle()
+        }
+        scheduler.advanceUntilIdle()
+        assertTrue(executed)
+    }
+
+    /** Tests [yield] scheduling tasks for future execution and not executing immediately. */
+    @Test
+    fun testYield() {
+        val scope = TestCoroutineScope()
+        var stage = 0
+        scope.launch {
+            yield()
+            assertEquals(1, stage)
+            stage = 2
+        }
+        scope.launch {
+            yield()
+            assertEquals(2, stage)
+            stage = 3
+        }
+        assertEquals(0, stage)
+        stage = 1
+        scope.runCurrent()
     }
 }
