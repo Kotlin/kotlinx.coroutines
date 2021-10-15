@@ -120,9 +120,11 @@ class TestCoroutineScopeTest {
         assertFalse(handlerCalled)
     }
 
-    private val invalidContexts = listOf(
-        Dispatchers.Default, // not a [TestDispatcher]
-        TestCoroutineDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
-        CoroutineExceptionHandler { _, _ -> }, // not an `UncaughtExceptionCaptor`
-    )
+    companion object {
+        internal val invalidContexts = listOf(
+            Dispatchers.Default, // not a [TestDispatcher]
+            TestCoroutineDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
+            CoroutineExceptionHandler { _, _ -> }, // not an `UncaughtExceptionCaptor`
+        )
+    }
 }
