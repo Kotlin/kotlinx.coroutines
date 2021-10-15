@@ -4,18 +4,13 @@
 
 package kotlinx.coroutines.test
 
-import kotlinx.coroutines.*
-
 actual fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult): TestResult =
-   GlobalScope.promise {
-       val promise = test()
-       promise.then(
-           {
-               block {
-               }
-       }, {
-               block {
-                   throw it
-               }
-       })
-   }
+    test().then(
+        {
+            block {
+            }
+        }, {
+            block {
+                throw it
+            }
+        })
