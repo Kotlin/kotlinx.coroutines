@@ -41,6 +41,7 @@ public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCorouti
     /** The current virtual time. */
     @ExperimentalCoroutinesApi
     public var currentTime: Long = 0
+        get() = synchronized(lock) { field }
         private set
 
     /**
@@ -96,19 +97,10 @@ public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCorouti
      */
     @ExperimentalCoroutinesApi
     public fun runCurrent() {
+        val timeMark = synchronized(lock) { currentTime }
         while (true) {
             val event = synchronized(lock) {
-                val timeMark = currentTime
-                val event = events.peek() ?: return
-                when {
-                    timeMark > event.time -> currentTimeAheadOfEvents()
-                    timeMark < event.time -> return
-                    else -> {
-                        val event2 = events.removeFirstOrNull()
-                        if (event !== event2) concurrentModificationUnderLock()
-                        event2
-                    }
-                }
+                events.removeFirstIf { it.time <= timeMark } ?: return
             }
             event.dispatcher.processEvent(event.time, event.marker)
         }
