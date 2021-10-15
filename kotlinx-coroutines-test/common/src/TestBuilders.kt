@@ -96,7 +96,7 @@ internal fun CoroutineContext.checkTestScopeArguments(): Pair<CoroutineContext, 
             dispatcher
         }
         null -> {
-            scheduler = TestCoroutineScheduler()
+            scheduler = get(TestCoroutineScheduler) ?: TestCoroutineScheduler()
             TestCoroutineDispatcher(scheduler)
         }
         else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
