@@ -4,22 +4,27 @@
 
 package kotlinx.coroutines.test
 
-import kotlinx.coroutines.*
 import kotlin.test.*
 import kotlin.time.*
 
-const val SLOW = 10_000L
+/**
+ * The number of milliseconds that is sure not to pass [assertRunsFast].
+ */
+const val SLOW = 100_000L
 
 /**
- * Assert a block completes within a second or fail the suite
+ * Asserts that a block completed within [timeout].
  */
 @OptIn(ExperimentalTime::class)
-suspend fun CoroutineScope.assertRunsFast(block: suspend CoroutineScope.() -> Unit) {
-    val start = TimeSource.Monotonic.markNow()
-    // don't need to be fancy with timeouts here since anything longer than a few ms is an error
-    block()
-    val duration = start.elapsedNow()
-    assertTrue("All tests must complete within 2000ms (use longer timeouts to cause failure)") {
-        duration.inWholeSeconds < 2
-    }
+inline fun <T> assertRunsFast(timeout: Duration, block: () -> T): T {
+    val result: T
+    val elapsed = TimeSource.Monotonic.measureTime { result = block() }
+    assertTrue("Should complete in $timeout, but took $elapsed") { elapsed < timeout }
+    return result
 }
+
+/**
+ * Asserts that a block completed within two seconds.
+ */
+@OptIn(ExperimentalTime::class)
+inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(Duration.seconds(2), block)
