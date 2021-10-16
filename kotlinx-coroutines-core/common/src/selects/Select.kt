@@ -214,6 +214,9 @@ public interface SelectInstance<in R> {
 @PublishedApi
 internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
     private val cont = atomic<Any?>(null)
+    @InternalCoroutinesApi
+    internal val continuation: CancellableContinuation<*>? get() =
+        cont.value as? CancellableContinuation<*>
 
     // 0: objForSelect
     // 1: RegistrationFunction
@@ -352,6 +355,9 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
 
     private suspend fun selectAlternativeSuspend() = suspendCancellableCoroutineReusable<Unit> { cont ->
         if (!this.cont.compareAndSet(null, cont)) cont.resume(Unit)
+        onTimeouts?.forEach {  it.selectClause.invoke(it.block) }.also {
+            onTimeouts = null
+        }
         cont.invokeOnCancellation { cleanNonSelectedAlternatives(null) }
     }
 
@@ -437,18 +443,7 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
         }
     }
 
-    private fun extractFromStack(): Any? = state.loop { curState ->
-        when {
-            curState === REG -> return null
-            curState is Node -> {
-                val updState = curState.next ?: REG
-                if (state.compareAndSet(curState, updState)) return curState.objForSelect
-            }
-            else -> if (state.compareAndSet(curState, REG)) return curState
-        }
-    }
-
-    fun getObjForSelect(): Any {
+    private fun getObjForSelect(): Any {
         var cur: Any = state.value
         while (cur is Node) cur = cur.next!!
         return cur
@@ -502,7 +497,11 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
         }
     }
 
-    override fun onTimeout(timeMillis: Long, block: suspend () -> R) = TODO("Not supported yet")
+    private var onTimeouts: MutableList<OnTimeout<R>>? = null
+    override fun onTimeout(timeMillis: Long, block: suspend () -> R) {
+        if (onTimeouts == null) onTimeouts = ArrayList()
+        onTimeouts!! += OnTimeout(timeMillis, block)
+    }
 }
 
 private val OBJ_FOR_SELECT_DEFAULT = Symbol("OBJ_FOR_SELECT_DEFAULT")
@@ -517,3 +516,21 @@ private val NULL = Symbol("NULL")
 
 internal val PARAM_CLAUSE_0 = Symbol("PARAM_CLAUSE_0")
 internal val PARAM_CLAUSE_1 = Symbol("PARAM_CLAUSE_1")
+
+private class OnTimeout<R>(val timeMillis: Long, val block: suspend () -> R) {
+    private fun register(select: SelectInstance<*>, ignoredParam: Any?) {
+        val action = Runnable {
+            select.trySelect(this@OnTimeout, Unit)
+        }
+        select as SelectBuilderImpl<*>
+        val context = select.continuation!!.context
+        val disposableHandle = context.delay.invokeOnTimeout(timeMillis, action, context)
+        select.invokeOnCompletion { disposableHandle.dispose() }
+    }
+
+    val selectClause: SelectClause0 get() =
+        SelectClause0Impl(
+            objForSelect = this,
+            regFunc = OnTimeout<*>::register as RegistrationFunction
+        )
+}
