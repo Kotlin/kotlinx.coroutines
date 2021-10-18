@@ -19,8 +19,10 @@ import kotlin.coroutines.*
  *
  * If [linkedScope] is `null`, the [CoroutineExceptionHandler] returned from this function has special behavior when
  * passed to [createTestCoroutineScope]: the newly-created scope is linked to this handler. If [linkedScope] is not
- * null, then the resulting [CoroutineExceptionHandler] will be linked to it, and passing it to [TestCoroutineScope]
- * will not lead to it re-linking.
+ * null, then the resulting [CoroutineExceptionHandler] will be linked to it.
+ *
+ * Passing an already-linked instance to [TestCoroutineScope] will lead to it making its own copy with the same
+ * [handler].
  */
 public fun TestExceptionHandler(
     linkedScope: TestCoroutineScope? = null,
@@ -30,22 +32,32 @@ public fun TestExceptionHandler(
 /** The [CoroutineExceptionHandler] corresponding to the given [handler]. */
 internal class TestExceptionHandlerContextElement(
     private val handler: TestCoroutineScope.(CoroutineContext, Throwable) -> Unit,
-    private var testCoroutineScope: TestCoroutineScope?
+    private var testCoroutineScope: TestCoroutineScope?,
+    private var owner: Any? = null
 ): AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler
 {
     private val lock = SynchronizedObject()
 
     /**
+     * Claims ownership of this [TestExceptionHandler], or returns its copy, owned and not linked to anything.
+     */
+    fun claimOwnershipOrCopy(owner: Any): TestExceptionHandlerContextElement = synchronized(lock) {
+        if (this.owner == null && testCoroutineScope == null) {
+            this.owner = owner
+            this
+        } else {
+            TestExceptionHandlerContextElement(handler, null, owner)
+        }
+    }
+
+    /**
      * Links a [TestCoroutineScope] to this, unless there's already one linked.
      */
-    fun tryRegisterTestCoroutineScope(scope: TestCoroutineScope): Boolean =
+    fun registerTestCoroutineScope(owner: Any, scope: TestCoroutineScope) =
         synchronized(lock) {
-            if (testCoroutineScope != null) {
-                false
-            } else {
-                testCoroutineScope = scope
-                true
-            }
+            check(this.owner === owner && testCoroutineScope == null)
+            testCoroutineScope = scope
+            this.owner = null
         }
 
     override fun handleException(context: CoroutineContext, exception: Throwable) {

@@ -175,6 +175,8 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
     }
     val exceptionHandler = context[CoroutineExceptionHandler]
         ?: TestExceptionHandler { _, throwable -> reportException(throwable) }
+    val handlerOwner = Any()
+    val linkedHandler = (exceptionHandler as? TestExceptionHandlerContextElement)?.claimOwnershipOrCopy(handlerOwner)
     val job: Job
     val ownJob: CompletableJob?
     if (context[Job] == null) {
@@ -185,7 +187,7 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
         job = context[Job]!!
     }
     return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job, ownJob)
-        .also { (exceptionHandler as? TestExceptionHandlerContextElement)?.tryRegisterTestCoroutineScope(it) }
+        .also { linkedHandler?.registerTestCoroutineScope(handlerOwner, it) }
 }
 
 private inline val CoroutineContext.delayController: DelayController?
