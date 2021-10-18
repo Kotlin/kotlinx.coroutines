@@ -63,3 +63,5 @@ open class OrderedExecutionTestBase {
 }
 
 internal fun <T> T.void() { }
+
+internal class TestException(message: String? = null): Exception(message)

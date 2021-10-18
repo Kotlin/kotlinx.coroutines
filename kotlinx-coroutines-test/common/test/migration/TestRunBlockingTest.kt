@@ -420,5 +420,3 @@ class TestRunBlockingTest {
         assertSame(coroutineContext[CoroutineExceptionHandler], exceptionHandler)
     }
 }
-
-private class TestException(message: String? = null): Exception(message)

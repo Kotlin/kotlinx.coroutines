@@ -69,9 +69,7 @@ private class TestCoroutineScopeImpl (
     override fun reportException(throwable: Throwable) {
         synchronized(lock) {
             if (cleanedUp)
-                throw IllegalStateException(
-                    "Attempting to report an uncaught exception after the test coroutine scope was already cleaned up",
-                    throwable)
+                throw ExceptionReportAfterCleanup(throwable)
             exceptions.add(throwable)
         }
     }
@@ -83,6 +81,17 @@ private class TestCoroutineScopeImpl (
     val initialJobs = coroutineContext.activeJobs()
 
     override fun cleanupTestCoroutines() {
+        (coroutineContext[CoroutineExceptionHandler] as? UncaughtExceptionCaptor)?.cleanupTestCoroutines()
+        val delayController = coroutineContext.delayController
+        var hasUncompletedJobs = false
+        if (delayController != null) {
+            delayController.cleanupTestCoroutines()
+        } else {
+            testScheduler.runCurrent()
+            if (!testScheduler.isIdle()) {
+                hasUncompletedJobs = true
+            }
+        }
         synchronized(lock) {
             if (cleanedUp)
                 throw IllegalStateException("Attempting to clean up a test coroutine scope more than once.")
@@ -92,18 +101,11 @@ private class TestCoroutineScopeImpl (
             drop(1).forEach { it.printStackTrace() }
             singleOrNull()?.let { throw it }
         }
-        (coroutineContext[CoroutineExceptionHandler] as? UncaughtExceptionCaptor)?.cleanupTestCoroutines()
-        val delayController = coroutineContext.delayController
-        if (delayController != null) {
-            delayController.cleanupTestCoroutines()
-        } else {
-            testScheduler.runCurrent()
-            if (!testScheduler.isIdle()) {
-                throw UncompletedCoroutinesError(
-                    "Unfinished coroutines during teardown. Ensure all coroutines are" +
-                        " completed or cancelled by your test."
-                )
-            }
+        if (hasUncompletedJobs) {
+            throw UncompletedCoroutinesError(
+                "Unfinished coroutines during teardown. Ensure all coroutines are" +
+                    " completed or cancelled by your test."
+            )
         }
         val jobs = coroutineContext.activeJobs()
         if ((jobs - initialJobs).isNotEmpty()) {
@@ -112,6 +114,11 @@ private class TestCoroutineScopeImpl (
         ownJob?.complete()
     }
 }
+
+internal class ExceptionReportAfterCleanup(cause: Throwable): IllegalStateException(
+    "Attempting to report an uncaught exception after the test coroutine scope was already cleaned up",
+    cause
+)
 
 private fun CoroutineContext.activeJobs(): Set<Job> {
     return checkNotNull(this[Job]).children.filter { it.isActive }.toSet()
@@ -173,10 +180,23 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
         }
         else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
     }
-    val exceptionHandler = context[CoroutineExceptionHandler]
-        ?: TestExceptionHandler { _, throwable -> reportException(throwable) }
+    val linkedHandler: TestExceptionHandlerContextElement?
+    val exceptionHandler: CoroutineExceptionHandler
     val handlerOwner = Any()
-    val linkedHandler = (exceptionHandler as? TestExceptionHandlerContextElement)?.claimOwnershipOrCopy(handlerOwner)
+    when (val exceptionHandlerInCtx = context[CoroutineExceptionHandler]) {
+        null -> {
+            linkedHandler = TestExceptionHandlerContextElement(
+                { _, throwable -> reportException(throwable) },
+                null,
+                handlerOwner)
+            exceptionHandler = linkedHandler
+        }
+        else -> {
+            linkedHandler = (exceptionHandlerInCtx as? TestExceptionHandlerContextElement
+                )?.claimOwnershipOrCopy(handlerOwner)
+            exceptionHandler = linkedHandler ?: exceptionHandlerInCtx
+        }
+    }
     val job: Job
     val ownJob: CompletableJob?
     if (context[Job] == null) {

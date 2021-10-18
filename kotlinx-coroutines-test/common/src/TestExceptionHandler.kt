@@ -19,10 +19,14 @@ import kotlin.coroutines.*
  *
  * If [linkedScope] is `null`, the [CoroutineExceptionHandler] returned from this function has special behavior when
  * passed to [createTestCoroutineScope]: the newly-created scope is linked to this handler. If [linkedScope] is not
- * null, then the resulting [CoroutineExceptionHandler] will be linked to it.
+ * null, then the resulting [CoroutineExceptionHandler] will be linked to it; however, it will *not* be part of the
+ * coroutine context of the [TestCoroutineScope], and this will only affect the receiver of [handler].
  *
  * Passing an already-linked instance to [TestCoroutineScope] will lead to it making its own copy with the same
  * [handler].
+ *
+ * Throwing inside [handler] is permitted. The thrown exception will we [reported][TestCoroutineScope.reportException]
+ * to the [TestCoroutineScope]. This is done so to simplify using assertions inside [handler].
  */
 public fun TestExceptionHandler(
     linkedScope: TestCoroutineScope? = null,
@@ -60,11 +64,23 @@ internal class TestExceptionHandlerContextElement(
             this.owner = null
         }
 
+    @Suppress("INVISIBLE_MEMBER")
     override fun handleException(context: CoroutineContext, exception: Throwable) {
-        synchronized(lock) {
+        val scope = synchronized(lock) {
             testCoroutineScope
                 ?: throw RuntimeException("Attempting to handle an exception using a `TestExceptionHandler` that is not linked to a `TestCoroutineScope`")
-        }.handler(context, exception)
-        /** it's okay if [handler] throws: [handleCoroutineException] deals with this. */
+        }
+        try {
+            scope.handler(context, exception)
+        } catch (e: ExceptionReportAfterCleanup) {
+            // can only be thrown if the test coroutine scope is already closed.
+            handleCoroutineExceptionImpl(context, e)
+        } catch (e: Throwable) {
+            try {
+                scope.reportException(e)
+            } catch (_: ExceptionReportAfterCleanup) {
+                handleCoroutineExceptionImpl(context, e)
+            }
+        }
     }
 }

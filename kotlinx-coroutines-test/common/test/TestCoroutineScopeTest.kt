@@ -120,6 +120,55 @@ class TestCoroutineScopeTest {
         assertFalse(handlerCalled)
     }
 
+    /** Tests that uncaught exceptions are thrown at the cleanup. */
+    @Test
+    fun testThrowsUncaughtExceptionsOnCleanup() {
+        val scope = createTestCoroutineScope(SupervisorJob())
+        val exception = TestException("test")
+        scope.launch {
+            throw exception
+        }
+        assertFailsWith<TestException> {
+            scope.cleanupTestCoroutines()
+        }
+    }
+
+    /** Tests that uncaught exceptions take priority over uncompleted jobs when throwing on cleanup. */
+    @Test
+    fun testUncaughtExceptionsPrioritizedOnCleanup() {
+        val scope = createTestCoroutineScope(SupervisorJob())
+        val exception = TestException("test")
+        scope.launch {
+            throw exception
+        }
+        scope.launch {
+            delay(1000)
+        }
+        assertFailsWith<TestException> {
+            scope.cleanupTestCoroutines()
+        }
+    }
+
+    /** Tests that cleaning up twice is forbidden. */
+    @Test
+    fun testClosingTwice() {
+        val scope = createTestCoroutineScope()
+        scope.cleanupTestCoroutines()
+        assertFailsWith<IllegalStateException> {
+            scope.cleanupTestCoroutines()
+        }
+    }
+
+    /** Tests that throwing after cleaning up is forbidden. */
+    @Test
+    fun testReportingAfterClosing() {
+        val scope = createTestCoroutineScope()
+        scope.cleanupTestCoroutines()
+        assertFailsWith<IllegalStateException> {
+            scope.reportException(TestException())
+        }
+    }
+
     companion object {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]
