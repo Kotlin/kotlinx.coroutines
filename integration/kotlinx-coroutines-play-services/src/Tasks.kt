@@ -8,6 +8,8 @@ package kotlinx.coroutines.tasks
 
 import com.google.android.gms.tasks.*
 import kotlinx.coroutines.*
+import java.lang.Runnable
+import java.util.concurrent.Executor
 import kotlin.coroutines.*
 
 /**
@@ -71,7 +73,8 @@ private fun <T> Task<T>.asDeferredImpl(cancellationTokenSource: CancellationToke
             deferred.completeExceptionally(e)
         }
     } else {
-        addOnCompleteListener {
+        // Run the callback directly to avoid unnecessarily scheduling on the main thread.
+        addOnCompleteListener(DirectExecutor) {
             val e = it.exception
             if (e == null) {
                 @Suppress("UNCHECKED_CAST")
@@ -114,7 +117,8 @@ public suspend fun <T> Task<T>.await(): T = awaitImpl(null)
  * leads to an unspecified behaviour.
  */
 @ExperimentalCoroutinesApi // Since 1.5.1, tentatively until 1.6.0
-public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenSource): T = awaitImpl(cancellationTokenSource)
+public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenSource): T =
+    awaitImpl(cancellationTokenSource)
 
 private suspend fun <T> Task<T>.awaitImpl(cancellationTokenSource: CancellationTokenSource?): T {
     // fast path
@@ -133,7 +137,8 @@ private suspend fun <T> Task<T>.awaitImpl(cancellationTokenSource: CancellationT
     }
 
     return suspendCancellableCoroutine { cont ->
-        addOnCompleteListener {
+        // Run the callback directly to avoid unnecessarily scheduling on the main thread.
+        addOnCompleteListener(DirectExecutor) {
             val e = it.exception
             if (e == null) {
                 @Suppress("UNCHECKED_CAST")
@@ -148,5 +153,14 @@ private suspend fun <T> Task<T>.awaitImpl(cancellationTokenSource: CancellationT
                 cancellationTokenSource.cancel()
             }
         }
+    }
+}
+
+/**
+ * An [Executor] that just directly executes the [Runnable].
+ */
+private object DirectExecutor : Executor {
+    override fun execute(r: Runnable) {
+        r.run()
     }
 }
