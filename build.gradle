@@ -2,20 +2,14 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
-apply plugin: 'jdk-convention'
+import static Projects.*
 
-def coreModule = "kotlinx-coroutines-core"
-def testModule = "kotlinx-coroutines-test"
-def multiplatform = [coreModule, testModule]
-// Not applicable for Kotlin plugin
-def sourceless = ['kotlinx.coroutines', 'kotlinx-coroutines-bom', 'integration-testing']
-def internal = ['kotlinx.coroutines', 'benchmarks', 'integration-testing']
-// Not published
-def unpublished = internal + ['example-frontend-js', 'android-unit-tests']
+apply plugin: 'jdk-convention'
 
 buildscript {
     /*
@@ -159,6 +153,8 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
         }
     }
 }
+
+apply plugin: "bom-conventions"
 
 // Configure subprojects with Kotlin sources
 configure(subprojects.findAll { !sourceless.contains(it.name) }) {
