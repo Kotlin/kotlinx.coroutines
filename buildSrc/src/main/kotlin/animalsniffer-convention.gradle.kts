@@ -5,11 +5,10 @@
 import ru.vyarus.gradle.plugin.animalsniffer.*
 
 subprojects {
-    // Skip benchmarks and bom -- not interested
+    // Skip JDK 8 projects or unpublished ones
     if (!shouldSniff()) return@subprojects
     apply(plugin = "ru.vyarus.animalsniffer")
     configure<AnimalSnifferExtension> {
-        // TODO use project.sourceSets on the newer gradle
         sourceSets = listOf((project.extensions.getByName("sourceSets") as SourceSetContainer).getByName("main"))
     }
     val signature: Configuration by configurations

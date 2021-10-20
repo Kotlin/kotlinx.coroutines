@@ -2,14 +2,16 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 import static Projects.*
 
 apply plugin: 'jdk-convention'
-apply from: rootProject.file("gradle/opt-in.gradle")
 
 buildscript {
     /*
@@ -90,7 +92,7 @@ allprojects {
         kotlin_version = rootProject.properties['kotlin_snapshot_version']
     }
 
-    ext.unpublished = Projects.unpublished
+    ext.unpublished = unpublished
 
     // This project property is set during nightly stress test
     def stressTest = project.properties['stressTest']
@@ -129,7 +131,7 @@ allprojects {
 // Add dependency to core source sets. Core is configured in kx-core/build.gradle
 configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
-    if (it.name in multiplatform) {
+    if (isMultiplatform(it)) {
         apply plugin: "kotlin-multiplatform"
         apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
         apply from: rootProject.file("gradle/compile-common.gradle")
@@ -160,13 +162,13 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
 apply plugin: "bom-conventions"
 
 // Configure subprojects with Kotlin sources
-configure(subprojects.findAll { !Projects.sourceless.contains(it.name) }) {
+configure(subprojects.findAll { !sourceless.contains(it.name) }) {
     // Use atomicfu plugin, it also adds all the necessary dependencies
     apply plugin: 'kotlinx-atomicfu'
 
     // Configure options for all Kotlin compilation tasks
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
-        kotlinOptions.freeCompilerArgs += OptInPresetKt.optInAnnotations.collect { "-Xopt-in=" + it }
+    tasks.withType(AbstractKotlinCompile).all {
+        kotlinOptions.freeCompilerArgs += OptInPreset.optInAnnotations.collect { "-Xopt-in=" + it }
         kotlinOptions.freeCompilerArgs += "-progressive"
         // Disable KT-36770 for RxJava2 integration
         kotlinOptions.freeCompilerArgs += "-XXLanguage:-ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated"
@@ -210,7 +212,7 @@ if (build_snapshot_train) {
 
 // Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
 configure(subprojects.findAll {
-    !sourceless.contains(it.name) && !multiplatform.contains(it.name) &&
+    !sourceless.contains(it.name) && !isMultiplatform(it) &&
             it.name != "benchmarks" &&
             it.name != "example-frontend-js"
 }) {
@@ -237,7 +239,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != "kotlinx-coroutines-bom") {
-        if (it.name != Projects.coreModule) {
+        if (it.name != coreModule) {
             tasks.withType(DokkaTaskPartial.class) {
                 dokkaSourceSets.configureEach {
                     externalDocumentationLink {
@@ -250,7 +252,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     }
 
     def thisProject = it
-    if (thisProject.name in Projects.sourceless) {
+    if (thisProject.name in sourceless) {
         return
     }
 
@@ -265,7 +267,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     }
 
     List<String> jarTasks
-    if (it.name in multiplatform) {
+    if (isMultiplatform(it)) {
         jarTasks = ["jvmJar", "metadataJar"]
     } else if (it.name == "kotlinx-coroutines-debug") {
         // We shadow debug module instead of just packaging it
@@ -285,7 +287,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 }
 
 // Report Kotlin compiler version when building project
-println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
+println("Using Kotlin compiler version: $KotlinCompilerVersion.VERSION")
 
 // --------------- Cache redirector ---------------
 
