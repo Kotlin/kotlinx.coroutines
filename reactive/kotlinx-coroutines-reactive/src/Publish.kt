@@ -6,6 +6,7 @@ package kotlinx.coroutines.reactive
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
@@ -104,9 +105,20 @@ public class PublisherCoroutine<in T>(
     // registerSelectSend
     @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
     override fun <R> registerSelectClause2(select: SelectInstance<R>, element: T, block: suspend (SendChannel<T>) -> R) {
-        mutex.onLock.registerSelectClause2(select, null) {
+        val clause =  suspend {
             doLockedNext(element)?.let { throw it }
             block(this)
+        }
+
+        launch(start = CoroutineStart.UNDISPATCHED) {
+            mutex.lock()
+            // Already selected -- bail out
+            if (!select.trySelect()) {
+                mutex.unlock()
+                return@launch
+            }
+
+            clause.startCoroutineCancellable(select.completion)
         }
     }
 

@@ -57,7 +57,6 @@ helper function. [NonCancellable] job object is provided to suppress cancellatio
 | [SendChannel][kotlinx.coroutines.channels.SendChannel]       | [send][kotlinx.coroutines.channels.SendChannel.send]            | [onSend][kotlinx.coroutines.channels.SendChannel.onSend]          | [trySend][kotlinx.coroutines.channels.SendChannel.trySend]
 | [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receive][kotlinx.coroutines.channels.ReceiveChannel.receive]   | [onReceive][kotlinx.coroutines.channels.ReceiveChannel.onReceive] | [tryReceive][kotlinx.coroutines.channels.ReceiveChannel.tryReceive]
 | [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [receiveCatching][kotlinx.coroutines.channels.receiveCatching]  | [onReceiveCatching][kotlinx.coroutines.channels.onReceiveCatching] | [tryReceive][kotlinx.coroutines.channels.ReceiveChannel.tryReceive]
-| [Mutex][kotlinx.coroutines.sync.Mutex]                       | [lock][kotlinx.coroutines.sync.Mutex.lock]                      | [onLock][kotlinx.coroutines.sync.Mutex.onLock]                    | [tryLock][kotlinx.coroutines.sync.Mutex.tryLock]
 | none                                                         | [delay][kotlinx.coroutines.delay]                               | [onTimeout][kotlinx.coroutines.selects.SelectBuilder.onTimeout]   | none
 
 # Package kotlinx.coroutines
@@ -121,8 +120,6 @@ Obsolete and deprecated module to test coroutines. Replaced with `kotlinx-corout
 
 [kotlinx.coroutines.sync.Mutex]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/index.html
 [kotlinx.coroutines.sync.Mutex.lock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/lock.html
-[kotlinx.coroutines.sync.Mutex.onLock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/on-lock.html
-[kotlinx.coroutines.sync.Mutex.tryLock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/try-lock.html
 
 <!--- INDEX kotlinx.coroutines.channels -->
 

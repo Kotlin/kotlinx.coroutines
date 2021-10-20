@@ -64,7 +64,6 @@ public interface SendChannel<in E> {
      */
     public val onSend: SelectClause2<E, SendChannel<E>>
 
-
     /**
      * Immediately adds the specified [element] to this channel, if this doesn't violate its capacity restrictions,
      * and returns the successful result. Otherwise, returns failed or closed result.

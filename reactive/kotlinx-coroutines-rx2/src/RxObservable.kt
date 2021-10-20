@@ -10,6 +10,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
@@ -95,9 +96,21 @@ private class RxObservableCoroutine<T : Any>(
         element: T,
         block: suspend (SendChannel<T>) -> R
     ) {
-        mutex.onLock.registerSelectClause2(select, null) {
+        val clause =  suspend {
             doLockedNext(element)?.let { throw it }
             block(this)
+        }
+
+        // This is the default replacement proposed in onLock replacement
+        launch(start = CoroutineStart.UNDISPATCHED) {
+            mutex.lock()
+            // Already selected -- bail out
+            if (!select.trySelect()) {
+                mutex.unlock()
+                return@launch
+            }
+
+            clause.startCoroutineCancellable(select.completion)
         }
     }
 
