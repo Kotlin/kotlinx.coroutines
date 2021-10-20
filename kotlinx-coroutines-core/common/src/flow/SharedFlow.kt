@@ -136,7 +136,7 @@ public interface SharedFlow<out T> : Flow<T> {
      * should be used.
      *
      * **A shared flow never completes**. A call to [Flow.collect] or any other terminal operator
-     * on a shared flow never complete normally.
+     * on a shared flow never completes normally.
      *
      * @see [Flow.collect]
      */
