@@ -153,4 +153,54 @@ class RunTestTest {
         }
     }
 
+    @Test
+    fun reproducer2405() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        var collectedError = false
+        withContext(dispatcher) {
+            flow { emit(1) }
+                .combine(
+                    flow<String> { throw IllegalArgumentException() }
+                ) { int, string -> int.toString() + string }
+                .catch { emit("error") }
+                .collect {
+                    assertEquals("error", it)
+                    collectedError = true
+                }
+        }
+        assertTrue(collectedError)
+    }
+
+    /** Tests that, once the test body has thrown, the child coroutines are cancelled. */
+    @Test
+    fun testChildrenCancellationOnTestBodyFailure() {
+        var job: Job? = null
+        testResultMap({
+            assertFailsWith<AssertionError> { it() }
+            assertTrue(job!!.isCancelled)
+        }, {
+            runTest {
+                job = launch {
+                    while (true) {
+                        delay(1000)
+                    }
+                }
+                throw AssertionError()
+            }
+        })
+    }
+
+    /** Tests that [runTest] reports [TimeoutCancellationException]. */
+    @Test
+    fun testTimeout() = testResultMap({
+        assertFailsWith<TimeoutCancellationException> { it() }
+    }, {
+        runTest {
+            withTimeout(50) {
+                launch {
+                    delay(1000)
+                }
+            }
+        }
+    })
 }
