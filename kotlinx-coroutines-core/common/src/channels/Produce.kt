@@ -133,7 +133,7 @@ internal fun <E> CoroutineScope.produce(
     return coroutine
 }
 
-internal open class ProducerCoroutine<E>(
+private class ProducerCoroutine<E>(
     parentContext: CoroutineContext, channel: Channel<E>
 ) : ChannelCoroutine<E>(parentContext, channel, true, active = true), ProducerScope<E> {
     override val isActive: Boolean

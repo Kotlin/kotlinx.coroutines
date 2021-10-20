@@ -36,4 +36,17 @@ class FlattenConcatTest : FlatMapBaseTest() {
         consumer.cancelAndJoin()
         finish(2)
     }
+
+    @Test
+    fun testCancellation() = runTest {
+        val flow = flow {
+            repeat(5) {
+                emit(flow {
+                    if (it == 2) throw CancellationException("")
+                    emit(1)
+                })
+            }
+        }
+        assertFailsWith<CancellationException>(flow.flattenConcat())
+    }
 }

@@ -61,7 +61,7 @@ public fun <T, R> Flow<T>.flatMapConcat(transform: suspend (value: T) -> Flow<R>
  * its concurrent merging so that only one properly configured channel is used for execution of merging logic.
  *
  * @param concurrency controls the number of in-flight flows, at most [concurrency] flows are collected
- * at the same time. By default it is equal to [DEFAULT_CONCURRENCY].
+ * at the same time. By default, it is equal to [DEFAULT_CONCURRENCY].
  */
 @FlowPreview
 public fun <T, R> Flow<T>.flatMapMerge(
@@ -71,8 +71,7 @@ public fun <T, R> Flow<T>.flatMapMerge(
     map(transform).flattenMerge(concurrency)
 
 /**
- * Flattens the given flow of flows into a single flow in a sequentially manner, without interleaving nested flows.
- * This method is conceptually identical to `flattenMerge(concurrency = 1)` but has faster implementation.
+ * Flattens the given flow of flows into a single flow in a sequential manner, without interleaving nested flows.
  *
  * Inner flows are collected by this operator *sequentially*.
  */
@@ -119,7 +118,7 @@ public fun <T> merge(vararg flows: Flow<T>): Flow<T> = flows.asIterable().merge(
  * Flattens the given flow of flows into a single flow with a [concurrency] limit on the number of
  * concurrently collected flows.
  *
- * If [concurrency] is more than 1, then inner flows are be collected by this operator *concurrently*.
+ * If [concurrency] is more than 1, then inner flows are collected by this operator *concurrently*.
  * With `concurrency == 1` this operator is identical to [flattenConcat].
  *
  * ### Operator fusion
@@ -131,7 +130,7 @@ public fun <T> merge(vararg flows: Flow<T>): Flow<T> = flows.asIterable().merge(
  * and size of its output buffer can be changed by applying subsequent [buffer] operator.
  *
  * @param concurrency controls the number of in-flight flows, at most [concurrency] flows are collected
- * at the same time. By default it is equal to [DEFAULT_CONCURRENCY].
+ * at the same time. By default, it is equal to [DEFAULT_CONCURRENCY].
  */
 @FlowPreview
 public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY): Flow<T> {
