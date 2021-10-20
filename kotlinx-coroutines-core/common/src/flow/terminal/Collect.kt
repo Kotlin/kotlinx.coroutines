@@ -77,8 +77,8 @@ public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value
  * Terminal flow operator that collects the given [SharedFlow] with the provided [action].
  * If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
  *
- * This is a counterpart of a regular [Flow.collect] extension with the only difference in return type,
- * so any code below `collect` will produce compilation warning.
+ * This is a counterpart of a regular [Flow.collect] extension, only different in the return type
+ * so that any code below `collect` produces a compilation warning.
  */
 public suspend inline fun <T> SharedFlow<T>.collect(crossinline action: suspend (value: T) -> Unit): Nothing {
     collect(object : FlowCollector<T> {
