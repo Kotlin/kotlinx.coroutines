@@ -18,7 +18,7 @@ class BlockingCoroutineDispatcherWorkSignallingStressTest : SchedulerTestBase() 
         val iterations = 1000 * stressTestMultiplier
         repeat(iterations) {
             // Create a dispatcher every iteration to increase probability of race
-            val dispatcher = ExperimentalCoroutineDispatcher(CORES_COUNT)
+            val dispatcher = SchedulerCoroutineDispatcher(CORES_COUNT)
             val blockingDispatcher = dispatcher.blocking(100)
 
             val blockingBarrier = CyclicBarrier(CORES_COUNT * 3 + 1)

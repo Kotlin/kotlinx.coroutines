@@ -6,6 +6,10 @@ package kotlinx.coroutines
 
 import kotlin.coroutines.*
 
+internal actual fun initializeDefaultExceptionHandlers() {
+    // Do nothing
+}
+
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
     // log exception
     console.error(exception)

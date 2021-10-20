@@ -4,12 +4,20 @@
 @file:JvmName("Projects")
 import org.gradle.api.*
 
-const val coreModule = "kotlinx-coroutines-core"
+fun Project.version(target: String): String =
+    property("${target}_version") as String
+
+val coreModule = "kotlinx-coroutines-core"
+val testModule = "kotlinx-coroutines-test"
+
+val multiplatform = setOf(coreModule, testModule)
 // Not applicable for Kotlin plugin
 val sourceless = setOf("kotlinx.coroutines", "kotlinx-coroutines-bom", "integration-testing")
 val internal = setOf("kotlinx.coroutines", "benchmarks", "integration-testing")
 // Not published
 val unpublished = internal + setOf("example-frontend-js", "android-unit-tests")
+
+val Project.isMultiplatform: Boolean get() = name in multiplatform
 
 // Projects that we do not check for Android API level 14 check due to various limitations
 val androidNonCompatibleProjects = setOf(
@@ -21,6 +29,3 @@ val androidNonCompatibleProjects = setOf(
     "kotlinx-coroutines-reactor",
     "kotlinx-coroutines-test"
 )
-
-fun Project.version(target: String): String =
-    property("${target}_version") as String

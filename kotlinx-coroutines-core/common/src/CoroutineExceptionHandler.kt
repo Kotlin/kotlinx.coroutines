@@ -1,12 +1,18 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable)
+
+/**
+ * JVM kludge: trigger loading of all the classes and service loading
+ * **before** any exception occur because it may be OOM, SOE or VerifyError
+ */
+internal expect fun initializeDefaultExceptionHandlers()
 
 /**
  * Helper function for coroutine builder implementations to handle uncaught and unexpected exceptions in coroutines,
