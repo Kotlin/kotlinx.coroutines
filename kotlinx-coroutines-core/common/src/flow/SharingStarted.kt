@@ -5,7 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.internal.IgnoreJreRequirement
 import kotlin.time.*
 
 /**
@@ -204,5 +204,6 @@ private class StartedWhileSubscribed(
             stopTimeout == other.stopTimeout &&
             replayExpiration == other.replayExpiration
 
+    @IgnoreJreRequirement // desugared hashcode implementation
     override fun hashCode(): Int = stopTimeout.hashCode() * 31 + replayExpiration.hashCode()
 }

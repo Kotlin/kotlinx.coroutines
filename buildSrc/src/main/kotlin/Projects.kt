@@ -2,7 +2,7 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:JvmName("Projects")
-import org.gradle.api.Project
+import org.gradle.api.*
 
 fun Project.version(target: String): String =
     property("${target}_version") as String
@@ -18,3 +18,14 @@ val internal = setOf("kotlinx.coroutines", "benchmarks", "integration-testing")
 val unpublished = internal + setOf("example-frontend-js", "android-unit-tests")
 
 val Project.isMultiplatform: Boolean get() = name in multiplatform
+
+// Projects that we do not check for Android API level 14 check due to various limitations
+val androidNonCompatibleProjects = setOf(
+    "kotlinx-coroutines-debug",
+    "kotlinx-coroutines-swing",
+    "kotlinx-coroutines-javafx",
+    "kotlinx-coroutines-jdk8",
+    "kotlinx-coroutines-jdk9",
+    "kotlinx-coroutines-reactor",
+    "kotlinx-coroutines-test"
+)

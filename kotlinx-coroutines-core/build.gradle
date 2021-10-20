@@ -90,6 +90,11 @@ kotlin {
             }
         }
     }
+
+    jvm {
+        // For animal sniffer
+        withJava()
+    }
 }
 
 configurations {

@@ -3,7 +3,9 @@
  */
 
 
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
@@ -54,6 +56,7 @@ buildscript {
         classpath "org.jetbrains.kotlinx:kotlinx-knit:$knit_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
         classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
+        classpath "ru.vyarus:gradle-animalsniffer-plugin:1.5.3" // Android API check
 
         // JMH plugins
         classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
@@ -101,6 +104,8 @@ allprojects {
 }
 
 apply plugin: "binary-compatibility-validator"
+apply plugin: 'base'
+
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
     if (build_snapshot_train) {
@@ -126,7 +131,7 @@ allprojects {
 // Add dependency to core source sets. Core is configured in kx-core/build.gradle
 configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
-    if (it.name in multiplatform) {
+    if (isMultiplatform(it)) {
         apply plugin: "kotlin-multiplatform"
         apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
         apply from: rootProject.file("gradle/compile-common.gradle")
@@ -162,8 +167,8 @@ configure(subprojects.findAll { !sourceless.contains(it.name) }) {
     apply plugin: 'kotlinx-atomicfu'
 
     // Configure options for all Kotlin compilation tasks
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
-        kotlinOptions.freeCompilerArgs += OptInPresetKt.optInAnnotations.collect { "-Xopt-in=" + it }
+    tasks.withType(AbstractKotlinCompile).all {
+        kotlinOptions.freeCompilerArgs += OptInPreset.optInAnnotations.collect { "-Xopt-in=" + it }
         kotlinOptions.freeCompilerArgs += "-progressive"
         // Disable KT-36770 for RxJava2 integration
         kotlinOptions.freeCompilerArgs += "-XXLanguage:-ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated"
@@ -207,7 +212,7 @@ if (build_snapshot_train) {
 
 // Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
 configure(subprojects.findAll {
-    !sourceless.contains(it.name) && !multiplatform.contains(it.name) &&
+    !sourceless.contains(it.name) && !isMultiplatform(it) &&
             it.name != "benchmarks" &&
             it.name != "example-frontend-js"
 }) {
@@ -262,7 +267,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     }
 
     List<String> jarTasks
-    if (it.name in multiplatform) {
+    if (isMultiplatform(it)) {
         jarTasks = ["jvmJar", "metadataJar"]
     } else if (it.name == "kotlinx-coroutines-debug") {
         // We shadow debug module instead of just packaging it
@@ -282,7 +287,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 }
 
 // Report Kotlin compiler version when building project
-println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
+println("Using Kotlin compiler version: $KotlinCompilerVersion.VERSION")
 
 // --------------- Cache redirector ---------------
 
@@ -296,7 +301,7 @@ def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm"
 
 task deploy(dependsOn: publishTasks)
 
-apply plugin: 'base'
+apply plugin: 'animalsniffer-convention'
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
 
