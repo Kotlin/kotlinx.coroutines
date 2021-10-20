@@ -172,4 +172,37 @@ class RunTestTest {
         assertTrue(collectedError)
     }
 
+    /** Tests that, once the test body has thrown, the child coroutines are cancelled. */
+    @Test
+    fun testChildrenCancellationOnTestBodyFailure() {
+        var job: Job? = null
+        testResultMap({
+            assertFailsWith<AssertionError> { it() }
+            assertTrue(job!!.isCancelled)
+        }, {
+            runTest {
+                job = launch {
+                    while (true) {
+                        delay(1000)
+                    }
+                }
+                throw AssertionError()
+            }
+        })
+    }
+
+    /** Tests that [runTest] reports [TimeoutCancellationException]. */
+    @Test
+    fun testTimeout() = testResultMap({
+        assertFailsWith<TimeoutCancellationException> { it() }
+    }, {
+        runTest {
+            withTimeout(50) {
+                launch {
+                    delay(1000)
+                }
+            }
+        }
+    })
+
 }

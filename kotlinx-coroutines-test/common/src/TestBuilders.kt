@@ -141,6 +141,18 @@ public expect class TestResult
  *
  * ### Failures
  *
+ * #### Test body failures
+ *
+ * If the test body finishes with an exception, then this exception will be thrown at the end of the test. Additionally,
+ * to prevent child coroutines getting stuck, the whole scope will be cancelled in this case.
+ *
+ * #### Reported exceptions
+ *
+ * Exceptions reported to the test coroutine scope via [TestCoroutineScope.reportException] will be thrown at the end.
+ * By default (without passing an explicit [TestExceptionHandler]), this includes all unhandled exceptions.
+ *
+ * #### Uncompleted coroutines
+ *
  * This method requires that all coroutines launched inside [testBody] complete, or are cancelled. Otherwise, the test
  * will be failed (which, on JVM and Native, means that [runTest] itself will throw [UncompletedCoroutinesError],
  * whereas on JS, the `Promise` will fail with it).
@@ -150,8 +162,6 @@ public expect class TestResult
  * for [dispatchTimeoutMs] milliseconds (by default, 10 seconds) from the moment when [TestCoroutineScheduler] becomes
  * idle before throwing [UncompletedCoroutinesError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
  * task during that time, the timer gets reset.
- *
- * Unhandled exceptions thrown by coroutines in the test will be rethrown at the end of the test.
  *
  * ### Configuration
  *
@@ -177,7 +187,23 @@ public fun runTest(
         }
         var completed = false
         while (!completed) {
-            scheduler.advanceUntilIdle()
+            while (scheduler.tryRunNextTask()) {
+                if (deferred.isCompleted && deferred.getCompletionExceptionOrNull() != null && testScope.isActive) {
+                    /**
+                     * Here, we already know how the test will finish: it will throw
+                     * [Deferred.getCompletionExceptionOrNull]. Therefore, we won't care if there are uncompleted jobs,
+                     * and may as well just exit right here. However, in order to lower the surprise factor, we
+                     * cancel the child jobs here and wait for them to finish instead of dropping them: there could be
+                     * some cleanup procedures involved, and not having finalizers run could mean leaking resources.
+                     *
+                     * Another approach to take if this turns out not to be enough and some child jobs still fail is to
+                     * only make at most a fixed number of [TestCoroutineScheduler.tryRunNextTask] once we detect the
+                     * failure with which the test will finish. This has the downside that there is still some
+                     * negligible risk of not running the finalizers.
+                     */
+                    testScope.cancel()
+                }
+            }
             if (deferred.isCompleted) {
                 /* don't even enter `withTimeout`; this allows to use a timeout of zero to check that there are no
                    non-trivial dispatches. */
