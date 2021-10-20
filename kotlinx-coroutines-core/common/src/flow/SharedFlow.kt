@@ -135,7 +135,7 @@ public interface SharedFlow<out T> : Flow<T> {
      * This method should never be used directly. To collect shared flow into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
      * should be used.
      *
-     * **Shared flow never completes**. A call to [Flow.collect] or any other terminal operator
+     * **A shared flow never completes**. A call to [Flow.collect] or any other terminal operator
      * on a shared flow never complete normally.
      *
      * @see [Flow.collect]
