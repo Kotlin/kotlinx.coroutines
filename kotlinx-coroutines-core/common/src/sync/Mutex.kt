@@ -369,7 +369,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     private abstract inner class LockWaiter(
         @JvmField val owner: Any?
     ) : LockFreeLinkedListNode(), DisposableHandle {
-        private val isTaken = atomic<Boolean>(false)
+        private val isTaken = atomic(false)
         fun take(): Boolean = isTaken.compareAndSet(false, true)
         final override fun dispose() { remove() }
         abstract fun tryResumeLockWaiter(): Boolean
