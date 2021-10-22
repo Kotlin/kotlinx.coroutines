@@ -152,7 +152,8 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
     })
 
     fun println(message: Any?) {
-        previousOut.println(message)
+        if (disableOutCheck) kotlin.io.println(message)
+        else previousOut.println(message)
     }
 
     @Before
