@@ -42,7 +42,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     @Volatile
     private var debugStatus: Int = FRESH
 
-    val isShutDown: Boolean get() = debugStatus == SHUTDOWN
+    private val isShutDown: Boolean get() = debugStatus == SHUTDOWN
 
     private val isShutdownRequested: Boolean get() {
         val debugStatus = debugStatus
