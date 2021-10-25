@@ -179,17 +179,16 @@ public fun runTest(
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    val testScope = createTestCoroutineScope(context + RunningInRunTest())
+    val testScope = TestBodyCoroutine<Unit>(createTestCoroutineScope(context + RunningInRunTest()))
     val scheduler = testScope.testScheduler
-    val deferred = TestBodyCoroutine<Unit>(testScope, active = true)
-    deferred.start(CoroutineStart.DEFAULT, deferred) {
+    testScope.start(CoroutineStart.DEFAULT, testScope) {
         testBody()
     }
     return createTestResult {
         var completed = false
         while (!completed) {
             scheduler.advanceUntilIdle()
-            if (deferred.isCompleted) {
+            if (testScope.isCompleted) {
                 /* don't even enter `withTimeout`; this allows to use a timeout of zero to check that there are no
                    non-trivial dispatches. */
                 completed = true
@@ -198,7 +197,7 @@ public fun runTest(
             try {
                 withTimeout(dispatchTimeoutMs) {
                     select<Unit> {
-                        deferred.onAwait {
+                        testScope.onJoin {
                             completed = true
                         }
                         scheduler.onDispatchEvent {
@@ -215,7 +214,7 @@ public fun runTest(
                 throw UncompletedCoroutinesError("The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
             }
         }
-        deferred.getCompletionExceptionOrNull()?.let {
+        testScope.getCompletionExceptionOrNull()?.let {
             try {
                 testScope.cleanupTestCoroutines()
             } catch (e: UncompletedCoroutinesError) {
@@ -239,7 +238,7 @@ internal expect fun createTestResult(testProcedure: suspend () -> Unit): TestRes
  * Runs a test in a [TestCoroutineScope] based on this one.
  *
  * Calls [runTest] using a coroutine context from this [TestCoroutineScope]. The [TestCoroutineScope] used to run
- * [block] will be different from this one, but will reuse its [Job]; therefore, even if calling
+ * [block] will be different from this one, but will use its [Job] as a parent; therefore, even if calling
  * [TestCoroutineScope.cleanupTestCoroutines] on this scope were to complete its job, [runTest] won't complete it at the
  * end of the test.
  *
@@ -279,16 +278,8 @@ private const val DEFAULT_DISPATCH_TIMEOUT_MS = 10_000L
 
 private class TestBodyCoroutine<T>(
     private val testScope: TestCoroutineScope,
-    active: Boolean
-) : AbstractCoroutine<T>(testScope.coroutineContext, true, active = active),
-    SelectClause1<T>, TestCoroutineScope
+) : AbstractCoroutine<T>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope
 {
-    val onAwait: SelectClause1<T> get() = this
-
-    @Suppress("INVISIBLE_MEMBER")
-    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectClause1Internal2(select, block)
-
     override val testScheduler get() = testScope.testScheduler
 
     override fun cleanupTestCoroutines() = testScope.cleanupTestCoroutines()
