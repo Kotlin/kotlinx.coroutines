@@ -44,7 +44,7 @@ import kotlin.coroutines.*
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
 public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
-    val scope = createTestCoroutineScope(TestCoroutineDispatcher() + context)
+    val scope = createTestCoroutineScope(TestCoroutineDispatcher() + SupervisorJob() + context)
     val scheduler = scope.testScheduler
     val deferred = scope.async {
         scope.testBody()
@@ -286,9 +286,10 @@ private class TestBodyCoroutine<T>(
     val onAwait: SelectClause1<T> get() = this
 
     @Suppress("INVISIBLE_MEMBER")
-    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) {
-        registerSelectClause1Internal(select, block)
-    }
+    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
+        registerSelectClause1Internal2(select, block)
+
+    override val testScheduler get() = testScope.testScheduler
 
     override fun cleanupTestCoroutines() = testScope.cleanupTestCoroutines()
 

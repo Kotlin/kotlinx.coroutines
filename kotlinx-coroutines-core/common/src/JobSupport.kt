@@ -1475,3 +1475,7 @@ internal class ChildContinuation(
     }
 }
 
+/** Workaround for https://youtrack.jetbrains.com/issue/KT-49409 */
+internal fun <T, R> JobSupport.registerSelectClause1Internal2(select: SelectInstance<R>, block: suspend (T) -> R) {
+    registerSelectClause1Internal(select, block)
+}
