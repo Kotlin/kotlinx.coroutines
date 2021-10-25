@@ -203,4 +203,16 @@ class RunTestTest {
             }
         }
     })
+
+    /** Checks that [runTest] throws the root cause and not [JobCancellationException] when a child coroutine throws. */
+    @Test
+    fun testRunTestThrowsRootCause() = testResultMap({
+        assertFailsWith<TestException> { it() }
+    }, {
+        runTest {
+            launch {
+                throw TestException()
+            }
+        }
+    })
 }

@@ -44,7 +44,7 @@ import kotlin.coroutines.*
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
 public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
-    val scope = TestCoroutineScope(context)
+    val scope = TestCoroutineScope(TestCoroutineDispatcher() + SupervisorJob() + context)
     val scheduler = scope.testScheduler
     val deferred = scope.async {
         scope.testBody()
@@ -180,32 +180,16 @@ public fun runTest(
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    val testScope = TestCoroutineScope(context + RunningInRunTest())
+    val testScope = TestBodyCoroutine<Unit>(TestCoroutineScope(context + RunningInRunTest()))
     val scheduler = testScope.testScheduler
+    testScope.start(CoroutineStart.DEFAULT, testScope) {
+        testBody()
+    }
     return createTestResult {
-        val deferred = testScope.async {
-            testScope.testBody()
-        }
         var completed = false
         while (!completed) {
-            while (scheduler.tryRunNextTask()) {
-                if (deferred.isCompleted && deferred.getCompletionExceptionOrNull() != null && testScope.isActive) {
-                    /**
-                     * Here, we already know how the test will finish: it will throw
-                     * [Deferred.getCompletionExceptionOrNull]. Therefore, we won't care if there are uncompleted jobs,
-                     * and may as well just exit right here. However, in order to lower the surprise factor, we
-                     * cancel the child jobs here and wait for them to finish instead of dropping them: there could be
-                     * some cleanup procedures involved, and not having finalizers run could mean leaking resources.
-                     *
-                     * Another approach to take if this turns out not to be enough and some child jobs still fail is to
-                     * only make at most a fixed number of [TestCoroutineScheduler.tryRunNextTask] once we detect the
-                     * failure with which the test will finish. This has the downside that there is still some
-                     * negligible risk of not running the finalizers.
-                     */
-                    testScope.cancel()
-                }
-            }
-            if (deferred.isCompleted) {
+            scheduler.advanceUntilIdle()
+            if (testScope.isCompleted) {
                 /* don't even enter `withTimeout`; this allows to use a timeout of zero to check that there are no
                    non-trivial dispatches. */
                 completed = true
@@ -214,7 +198,7 @@ public fun runTest(
             try {
                 withTimeout(dispatchTimeoutMs) {
                     select<Unit> {
-                        deferred.onAwait {
+                        testScope.onJoin {
                             completed = true
                         }
                         scheduler.onDispatchEvent {
@@ -231,7 +215,7 @@ public fun runTest(
                 throw UncompletedCoroutinesError("The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
             }
         }
-        deferred.getCompletionExceptionOrNull()?.let {
+        testScope.getCompletionExceptionOrNull()?.let {
             try {
                 testScope.cleanupTestCoroutines()
             } catch (e: UncompletedCoroutinesError) {
@@ -255,7 +239,7 @@ internal expect fun createTestResult(testProcedure: suspend () -> Unit): TestRes
  * Runs a test in a [TestCoroutineScope] based on this one.
  *
  * Calls [runTest] using a coroutine context from this [TestCoroutineScope]. The [TestCoroutineScope] used to run
- * [block] will be different from this one, but will reuse its [Job]; therefore, even if calling
+ * [block] will be different from this one, but will use its [Job] as a parent; therefore, even if calling
  * [TestCoroutineScope.cleanupTestCoroutines] on this scope were to complete its job, [runTest] won't complete it at the
  * end of the test.
  *
@@ -292,3 +276,14 @@ private class RunningInRunTest: AbstractCoroutineContextElement(RunningInRunTest
 /** The default timeout to use when waiting for asynchronous completions of the coroutines managed by
  * a [TestCoroutineScheduler]. */
 private const val DEFAULT_DISPATCH_TIMEOUT_MS = 10_000L
+
+private class TestBodyCoroutine<T>(
+    private val testScope: TestCoroutineScope,
+) : AbstractCoroutine<T>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope
+{
+    override val testScheduler get() = testScope.testScheduler
+
+    override fun cleanupTestCoroutines() = testScope.cleanupTestCoroutines()
+
+    override fun reportException(throwable: Throwable) = testScope.reportException(throwable)
+}
