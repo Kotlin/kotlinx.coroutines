@@ -10,7 +10,7 @@ import kotlin.coroutines.*
 /**
  * A scope which provides detailed control over the execution of coroutines for tests.
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+@ExperimentalCoroutinesApi
 public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor {
     /**
      * Call after the test completes.
@@ -54,7 +54,7 @@ private class TestCoroutineScopeImpl (
  * @param context an optional context that MAY provide [UncaughtExceptionCaptor] and/or [DelayController]
  */
 @Suppress("FunctionName")
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+@ExperimentalCoroutinesApi
 public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope =
     context.checkTestScopeArguments().let { TestCoroutineScopeImpl(it.first, it.second.scheduler) }
 
@@ -109,7 +109,7 @@ public fun TestCoroutineScope.advanceTimeBy(delayTimeMillis: Long): Unit =
  * Advances the [testScheduler][TestCoroutineScope.testScheduler] to the point where there are no tasks remaining.
  * @see TestCoroutineScheduler.advanceUntilIdle
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+@ExperimentalCoroutinesApi
 public fun TestCoroutineScope.advanceUntilIdle(): Unit {
     coroutineContext.delayController?.advanceUntilIdle() ?: testScheduler.advanceUntilIdle()
 }

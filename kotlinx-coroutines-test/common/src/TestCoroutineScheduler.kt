@@ -13,9 +13,9 @@ import kotlin.jvm.*
 /**
  * This is a scheduler for coroutines used in tests, providing the delay-skipping behavior.
  *
- * [Test dispatchers][TestCoroutineDispatcher] are parameterized with a scheduler. Several dispatchers can share the
- * same scheduler, in which case * their knowledge about the virtual time will be synchronized. When the dispatchers
- * require scheduling an event at a * later point in time, they notify the scheduler, which will establish the order of
+ * [Test dispatchers][TestDispatcher] are parameterized with a scheduler. Several dispatchers can share the
+ * same scheduler, in which case their knowledge about the virtual time will be synchronized. When the dispatchers
+ * require scheduling an event at a later point in time, they notify the scheduler, which will establish the order of
  * the tasks.
  *
  * The scheduler can be queried to advance the time (via [advanceTimeBy]), run all the scheduled tasks advancing the
@@ -26,6 +26,7 @@ import kotlin.jvm.*
 // TODO: maybe make this a `TimeSource`?
 public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCoroutineScheduler), CoroutineContext.Element {
 
+    /** @suppress */
     public companion object Key: CoroutineContext.Key<TestCoroutineScheduler>
 
     /** This heap stores the knowledge about which dispatchers are interested in which moments of virtual time. */
@@ -45,8 +46,8 @@ public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCorouti
         private set
 
     /**
-     * Registers a request for the scheduler to notify [dispatcher] at a virtual moment [timeDeltaMillis] milliseconds later
-     * via [TestDispatcher.processEvent], which will be called with the provided [marker] object.
+     * Registers a request for the scheduler to notify [dispatcher] at a virtual moment [timeDeltaMillis] milliseconds
+     * later via [TestDispatcher.processEvent], which will be called with the provided [marker] object.
      *
      * Returns the handler which can be used to cancel the registration.
      */
@@ -74,7 +75,7 @@ public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCorouti
      * Runs the enqueued tasks in the specified order, advancing the virtual time as needed until there are no more
      * tasks associated with the dispatchers linked to this scheduler.
      *
-     * A breaking change from [TestCoroutineDispatcher.advanceTimeBy] is that it no longer returns the total amount of
+     * A breaking change from [TestCoroutineDispatcher.advanceTimeBy] is that it no longer returns the total number of
      * milliseconds by which the execution of this method has advanced the virtual time. If you want to recreate that
      * functionality, query [currentTime] before and after the execution to achieve the same result.
      */
@@ -124,24 +125,22 @@ public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCorouti
      */
     @ExperimentalCoroutinesApi
     public fun advanceTimeBy(delayTimeMillis: Long) {
-        require(delayTimeMillis >= 0) { "" }
+        require(delayTimeMillis >= 0) { "Can not advance time by a negative delay: $delayTimeMillis" }
         val startingTime = currentTime
         val targetTime = addClamping(startingTime, delayTimeMillis)
         while (true) {
             val event = synchronized(lock) {
                 val timeMark = currentTime
-                val event = events.peek()
+                val event = events.removeFirstIf { targetTime > it.time }
                 when {
-                    event == null || targetTime <= event.time -> {
+                    event == null -> {
                         currentTime = targetTime
                         return
                     }
                     timeMark > event.time -> currentTimeAheadOfEvents()
                     else -> {
-                        val event2 = events.removeFirstOrNull()
-                        if (event !== event2) concurrentModificationUnderLock()
                         currentTime = event.time
-                        event2
+                        event
                     }
                 }
             }
@@ -166,7 +165,6 @@ public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCorouti
 
 // Some error-throwing functions for pretty stack traces
 private fun currentTimeAheadOfEvents(): Nothing = invalidSchedulerState()
-private fun concurrentModificationUnderLock(): Nothing = invalidSchedulerState()
 
 private fun invalidSchedulerState(): Nothing =
     throw IllegalStateException("The test scheduler entered an invalid state. Please report this at https://github.com/Kotlin/kotlinx.coroutines/issues.")
@@ -177,16 +175,13 @@ private class TestDispatchEvent<T>(
     private val count: Long,
     @JvmField val time: Long,
     @JvmField val marker: T,
-    val isCancelled: () -> Boolean
+    @JvmField val isCancelled: () -> Boolean
 ) : Comparable<TestDispatchEvent<*>>, ThreadSafeHeapNode {
     override var heap: ThreadSafeHeap<*>? = null
     override var index: Int = 0
 
-    override fun compareTo(other: TestDispatchEvent<*>) = if (time == other.time) {
-        count.compareTo(other.count)
-    } else {
-        time.compareTo(other.time)
-    }
+    override fun compareTo(other: TestDispatchEvent<*>) =
+        compareValuesBy(this, other, TestDispatchEvent<*>::time, TestDispatchEvent<*>::count)
 
     override fun toString() = "TestDispatchEvent(time=$time, dispatcher=$dispatcher)"
 }
