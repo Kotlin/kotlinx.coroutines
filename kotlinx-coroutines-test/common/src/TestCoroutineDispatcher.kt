@@ -21,7 +21,7 @@ import kotlin.coroutines.*
  *
  * @see DelayController
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+@ExperimentalCoroutinesApi
 public class TestCoroutineDispatcher(public override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler()):
     TestDispatcher(), Delay, SchedulerAsDelayController
 {
