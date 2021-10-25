@@ -181,29 +181,14 @@ public fun runTest(
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
     val testScope = createTestCoroutineScope(context + RunningInRunTest())
     val scheduler = testScope.testScheduler
+    val deferred = TestBodyCoroutine<Unit>(testScope, active = true)
+    deferred.start(CoroutineStart.DEFAULT, deferred) {
+        testBody()
+    }
     return createTestResult {
-        val deferred = testScope.async {
-            testScope.testBody()
-        }
         var completed = false
         while (!completed) {
-            while (scheduler.tryRunNextTask()) {
-                if (deferred.isCompleted && deferred.getCompletionExceptionOrNull() != null && testScope.isActive) {
-                    /**
-                     * Here, we already know how the test will finish: it will throw
-                     * [Deferred.getCompletionExceptionOrNull]. Therefore, we won't care if there are uncompleted jobs,
-                     * and may as well just exit right here. However, in order to lower the surprise factor, we
-                     * cancel the child jobs here and wait for them to finish instead of dropping them: there could be
-                     * some cleanup procedures involved, and not having finalizers run could mean leaking resources.
-                     *
-                     * Another approach to take if this turns out not to be enough and some child jobs still fail is to
-                     * only make at most a fixed number of [TestCoroutineScheduler.tryRunNextTask] once we detect the
-                     * failure with which the test will finish. This has the downside that there is still some
-                     * negligible risk of not running the finalizers.
-                     */
-                    testScope.cancel()
-                }
-            }
+            scheduler.advanceUntilIdle()
             if (deferred.isCompleted) {
                 /* don't even enter `withTimeout`; this allows to use a timeout of zero to check that there are no
                    non-trivial dispatches. */
@@ -291,3 +276,21 @@ private class RunningInRunTest: AbstractCoroutineContextElement(RunningInRunTest
 /** The default timeout to use when waiting for asynchronous completions of the coroutines managed by
  * a [TestCoroutineScheduler]. */
 private const val DEFAULT_DISPATCH_TIMEOUT_MS = 10_000L
+
+private class TestBodyCoroutine<T>(
+    private val testScope: TestCoroutineScope,
+    active: Boolean
+) : AbstractCoroutine<T>(testScope.coroutineContext, true, active = active),
+    SelectClause1<T>, TestCoroutineScope
+{
+    val onAwait: SelectClause1<T> get() = this
+
+    @Suppress("INVISIBLE_MEMBER")
+    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) {
+        registerSelectClause1Internal(select, block)
+    }
+
+    override fun cleanupTestCoroutines() = testScope.cleanupTestCoroutines()
+
+    override fun reportException(throwable: Throwable) = testScope.reportException(throwable)
+}

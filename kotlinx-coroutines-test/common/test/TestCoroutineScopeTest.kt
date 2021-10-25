@@ -123,7 +123,7 @@ class TestCoroutineScopeTest {
     /** Tests that uncaught exceptions are thrown at the cleanup. */
     @Test
     fun testThrowsUncaughtExceptionsOnCleanup() {
-        val scope = createTestCoroutineScope(SupervisorJob())
+        val scope = createTestCoroutineScope()
         val exception = TestException("test")
         scope.launch {
             throw exception
@@ -136,7 +136,7 @@ class TestCoroutineScopeTest {
     /** Tests that uncaught exceptions take priority over uncompleted jobs when throwing on cleanup. */
     @Test
     fun testUncaughtExceptionsPrioritizedOnCleanup() {
-        val scope = createTestCoroutineScope(SupervisorJob())
+        val scope = createTestCoroutineScope()
         val exception = TestException("test")
         scope.launch {
             throw exception

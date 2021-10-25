@@ -200,7 +200,7 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
     val job: Job
     val ownJob: CompletableJob?
     if (context[Job] == null) {
-        ownJob = SupervisorJob()
+        ownJob = Job()
         job = ownJob
     } else {
         ownJob = null
