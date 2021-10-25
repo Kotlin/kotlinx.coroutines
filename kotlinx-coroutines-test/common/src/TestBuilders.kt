@@ -143,13 +143,12 @@ public expect class TestResult
  *
  * #### Test body failures
  *
- * If the test body finishes with an exception, then this exception will be thrown at the end of the test. Additionally,
- * to prevent child coroutines getting stuck, the whole scope will be cancelled in this case.
+ * If the test body finishes with an exception, then this exception will be thrown at the end of the test.
  *
  * #### Reported exceptions
  *
  * Exceptions reported to the test coroutine scope via [TestCoroutineScope.reportException] will be thrown at the end.
- * By default (without passing an explicit [TestExceptionHandler]), this includes all unhandled exceptions.
+ * By default, unless an explicit [TestExceptionHandler] is passed, this includes all unhandled exceptions.
  *
  * #### Uncompleted coroutines
  *

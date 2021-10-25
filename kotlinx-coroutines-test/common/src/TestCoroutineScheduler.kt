@@ -84,7 +84,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /**
      * Runs the next enqueued task, advancing the virtual time to the time of its scheduled awakening.
      */
-    internal fun tryRunNextTask(): Boolean {
+    private fun tryRunNextTask(): Boolean {
         val event = synchronized(lock) {
             val event = events.removeFirstOrNull() ?: return false
             if (currentTime > event.time)
@@ -106,7 +106,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      */
     @ExperimentalCoroutinesApi
     public fun advanceUntilIdle() {
-        while (!events.isEmpty) {
+        while (!synchronized(lock) { events.isEmpty }) {
             tryRunNextTask()
         }
     }
