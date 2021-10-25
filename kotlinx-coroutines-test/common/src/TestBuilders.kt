@@ -232,6 +232,13 @@ public fun runTest(
             }
         }
         deferred.getCompletionExceptionOrNull()?.let {
+            try {
+                testScope.cleanupTestCoroutines()
+            } catch (e: UncompletedCoroutinesError) {
+                // it's normal that some jobs are not completed if the test body has failed, won't clutter the output
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
             throw it
         }
         testScope.cleanupTestCoroutines()
