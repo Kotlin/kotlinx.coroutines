@@ -1,0 +1,23 @@
+{
+  "name": "kotlinx-coroutines-test",
+  "version" : "$version",
+  "description" : "Test utilities for kotlinx-coroutines",
+  "main" : "kotlinx-coroutines-test.js",
+  "author": "JetBrains",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/Kotlin/kotlinx.coroutines",
+  "bugs": {
+    "url": "https://github.com/Kotlin/kotlinx.coroutines/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kotlin/kotlinx.coroutines.git"
+  },
+  "keywords": [
+    "Kotlin",
+    "async",
+    "coroutines",
+    "JetBrains",
+    "test"
+  ]
+}

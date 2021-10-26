@@ -5,22 +5,8 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.scheduling.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
-
-internal const val COROUTINES_SCHEDULER_PROPERTY_NAME = "kotlinx.coroutines.scheduler"
-
-internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_NAME).let { value ->
-    when (value) {
-        null, "", "on" -> true
-        "off" -> false
-        else -> error("System property '$COROUTINES_SCHEDULER_PROPERTY_NAME' has unrecognized value '$value'")
-    }
-}
-
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
-    if (useCoroutinesScheduler) DefaultScheduler else CommonPool
 
 /**
  * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
@@ -153,6 +139,7 @@ internal actual val CoroutineContext.coroutineName: String? get() {
 
 private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 
+@IgnoreJreRequirement // desugared hashcode implementation
 internal data class CoroutineId(
     val id: Long
 ) : ThreadContextElement<String>, AbstractCoroutineContextElement(CoroutineId) {

@@ -129,6 +129,19 @@ public interface SharedFlow<out T> : Flow<T> {
      * A snapshot of the replay cache.
      */
     public val replayCache: List<T>
+
+    /**
+     * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
+     * This method should never be used directly. To emit values from a shared flow into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
+     * should be used.
+     *
+     * **A shared flow never completes**. A call to [Flow.collect] or any other terminal operator
+     * on a shared flow never completes normally.
+     *
+     * @see [Flow.collect]
+     */
+    @InternalCoroutinesApi
+    override suspend fun collect(collector: FlowCollector<T>): Nothing
 }
 
 /**
@@ -198,6 +211,8 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      *     }
      *     .launchIn(scope) // launch it
      * ```
+     *
+     * Implementation note: the resulting flow **does not** conflate subscription count.
      */
     public val subscriptionCount: StateFlow<Int>
 
@@ -253,7 +268,7 @@ public fun <T> MutableSharedFlow(
 
 // ------------------------------------ Implementation ------------------------------------
 
-private class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
+internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     @JvmField
     var index = -1L // current "to-be-emitted" index, -1 means the slot is free now
 
@@ -275,7 +290,7 @@ private class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     }
 }
 
-private class SharedFlowImpl<T>(
+internal open class SharedFlowImpl<T>(
     private val replay: Int,
     private val bufferCapacity: Int,
     private val onBufferOverflow: BufferOverflow
@@ -334,8 +349,15 @@ private class SharedFlowImpl<T>(
             result
         }
 
+    /*
+     * A tweak for SubscriptionCountStateFlow to get the latest value.
+     */
     @Suppress("UNCHECKED_CAST")
-    override suspend fun collect(collector: FlowCollector<T>) {
+    protected val lastReplayedLocked: T
+        get() = buffer!!.getBufferAt(replayIndex + replaySize - 1) as T
+
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun collect(collector: FlowCollector<T>): Nothing {
         val slot = allocateSlot()
         try {
             if (collector is SubscribedFlowCollector) collector.onSubscription()

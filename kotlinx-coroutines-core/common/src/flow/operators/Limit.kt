@@ -112,7 +112,6 @@ public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public fun <T, R> Flow<T>.transformWhile(
     @BuilderInference transform: suspend FlowCollector<R>.(value: T) -> Boolean
 ): Flow<R> =

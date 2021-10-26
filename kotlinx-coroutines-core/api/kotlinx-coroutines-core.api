@@ -156,6 +156,7 @@ public abstract class kotlinx/coroutines/CoroutineDispatcher : kotlin/coroutines
 	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
 	public final fun interceptContinuation (Lkotlin/coroutines/Continuation;)Lkotlin/coroutines/Continuation;
 	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
+	public fun limitedParallelism (I)Lkotlinx/coroutines/CoroutineDispatcher;
 	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
 	public final fun plus (Lkotlinx/coroutines/CoroutineDispatcher;)Lkotlinx/coroutines/CoroutineDispatcher;
 	public final fun releaseInterceptedContinuation (Lkotlin/coroutines/Continuation;)V
@@ -279,6 +280,7 @@ public final class kotlinx/coroutines/Dispatchers {
 	public static final fun getIO ()Lkotlinx/coroutines/CoroutineDispatcher;
 	public static final fun getMain ()Lkotlinx/coroutines/MainCoroutineDispatcher;
 	public static final fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun shutdown ()V
 }
 
 public final class kotlinx/coroutines/DispatchersKt {
@@ -367,7 +369,6 @@ public final class kotlinx/coroutines/Job$Key : kotlin/coroutines/CoroutineConte
 }
 
 public final class kotlinx/coroutines/JobKt {
-	public static final fun DisposableHandle (Lkotlin/jvm/functions/Function0;)Lkotlinx/coroutines/DisposableHandle;
 	public static final fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableJob;
 	public static final synthetic fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 	public static synthetic fun Job$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableJob;
@@ -447,6 +448,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 public abstract class kotlinx/coroutines/MainCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher {
 	public fun <init> ()V
 	public abstract fun getImmediate ()Lkotlinx/coroutines/MainCoroutineDispatcher;
+	public fun limitedParallelism (I)Lkotlinx/coroutines/CoroutineDispatcher;
 	public fun toString ()Ljava/lang/String;
 	protected final fun toStringInternalImpl ()Ljava/lang/String;
 }
@@ -900,6 +902,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun channelFlow (Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun collect (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun collect (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun collect (Lkotlinx/coroutines/flow/SharedFlow;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun collectIndexed (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun collectLatest (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun combine (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
@@ -1061,6 +1064,7 @@ public abstract interface class kotlinx/coroutines/flow/MutableStateFlow : kotli
 }
 
 public abstract interface class kotlinx/coroutines/flow/SharedFlow : kotlinx/coroutines/flow/Flow {
+	public abstract fun collect (Lkotlinx/coroutines/flow/FlowCollector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getReplayCache ()Ljava/util/List;
 }
 

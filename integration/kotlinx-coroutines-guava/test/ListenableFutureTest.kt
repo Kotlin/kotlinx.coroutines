@@ -555,11 +555,7 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testUnhandledExceptionOnExternalCancellation() = runTest(
-        unhandled = listOf(
-            { it -> it is TestException } // exception is unhandled because there is no parent
-        )
-    ) {
+    fun testUnhandledExceptionOnExternalCancellation() = runTest {
         expect(1)
         // No parent here (NonCancellable), so nowhere to propagate exception
         val result = future(NonCancellable + Dispatchers.Unconfined) {
@@ -567,7 +563,7 @@ class ListenableFutureTest : TestBase() {
                 delay(Long.MAX_VALUE)
             } finally {
                 expect(2)
-                throw TestException() // this exception cannot be handled
+                throw TestException() // this exception cannot be handled and is set to be lost.
             }
         }
         result.cancel(true)
@@ -708,23 +704,6 @@ class ListenableFutureTest : TestBase() {
         assertEquals(testException, thrown.cause)
     }
 
-    @Test
-    fun stressTestJobListenableFutureIsCancelledDoesNotThrow() = runTest {
-        repeat(1000) {
-            val deferred = CompletableDeferred<String>()
-            val asListenableFuture = deferred.asListenableFuture()
-            // We heed two threads to test a race condition.
-            withContext(Dispatchers.Default) {
-                val cancellationJob = launch {
-                    asListenableFuture.cancel(false)
-                }
-                while (!cancellationJob.isCompleted) {
-                    asListenableFuture.isCancelled // Shouldn't throw.
-                }
-            }
-        }
-    }
-
     private inline fun <reified T: Throwable> ListenableFuture<*>.checkFutureException() {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!
@@ -773,6 +752,63 @@ class ListenableFutureTest : TestBase() {
         withTimeout(60_000) {
             children.forEach { it.join() }
             assertEquals(count, completed.get())
+        }
+    }
+
+    @Test
+    fun testFuturePropagatesExceptionToParentAfterCancellation() = runTest {
+        val throwLatch = CompletableDeferred<Boolean>()
+        val cancelLatch = CompletableDeferred<Boolean>()
+        val parent = Job()
+        val scope = CoroutineScope(parent)
+        val exception = TestException("propagated to parent")
+        val future = scope.future {
+            cancelLatch.complete(true)
+            withContext(NonCancellable) {
+                throwLatch.await()
+                throw exception
+            }
+        }
+        cancelLatch.await()
+        future.cancel(true)
+        throwLatch.complete(true)
+        parent.join()
+        assertTrue(parent.isCancelled)
+        assertEquals(exception, parent.getCancellationException().cause)
+    }
+
+    // Stress tests.
+
+    @Test
+    fun testFutureDoesNotReportToCoroutineExceptionHandler() = runTest {
+        repeat(1000) {
+            supervisorScope { // Don't propagate failures in children to parent and other children.
+                val innerFuture = SettableFuture.create<Unit>()
+                val outerFuture = async { innerFuture.await() }
+
+                withContext(Dispatchers.Default) {
+                    launch { innerFuture.setException(TestException("can be lost")) }
+                    launch { outerFuture.cancel() }
+                    // nothing should be reported to CoroutineExceptionHandler, otherwise `Future.cancel` contract violation.
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testJobListenableFutureIsCancelledDoesNotThrow() = runTest {
+        repeat(1000) {
+            val deferred = CompletableDeferred<String>()
+            val asListenableFuture = deferred.asListenableFuture()
+            // We heed two threads to test a race condition.
+            withContext(Dispatchers.Default) {
+                val cancellationJob = launch {
+                    asListenableFuture.cancel(false)
+                }
+                while (!cancellationJob.isCompleted) {
+                    asListenableFuture.isCancelled // Shouldn't throw.
+                }
+            }
         }
     }
 }

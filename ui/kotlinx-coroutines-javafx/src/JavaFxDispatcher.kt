@@ -10,7 +10,6 @@ import javafx.event.*
 import javafx.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.javafx.JavaFx.delay
 import java.lang.UnsupportedOperationException
 import java.lang.reflect.*
 import java.util.concurrent.*

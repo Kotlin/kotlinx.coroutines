@@ -21,6 +21,9 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
     actual fun enqueue(task: Runnable): Unit = delegate.dispatch(EmptyCoroutineContext, task)
 }
 
+internal fun createDefaultDispatcher(): CoroutineDispatcher =
+    DefaultExecutor
+
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
