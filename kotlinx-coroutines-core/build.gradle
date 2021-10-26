@@ -99,6 +99,10 @@ kotlin {
     }
 }
 
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinNativeCompile) {
+    kotlinOptions.freeCompilerArgs += ["-memory-model", "experimental"]
+}
+
 configurations {
     configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
 }
