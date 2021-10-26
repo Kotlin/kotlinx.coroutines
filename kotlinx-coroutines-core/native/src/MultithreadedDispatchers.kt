@@ -9,22 +9,14 @@ import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 
 @ExperimentalCoroutinesApi
-public actual fun newSingleThreadContext(name: String): MultithreadedDispatcher = WorkerDispatcher(name)
+public actual fun newSingleThreadContext(name: String): CloseableCoroutineDispatcher = WorkerDispatcher(name)
 
-public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): MultithreadedDispatcher {
+public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): CloseableCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but got: $nThreads"}
     return MultiWorkerDispatcher(name, nThreads)
 }
 
-/**
- * A coroutine dispatcher that is confined to a single thread.
- */
-@ExperimentalCoroutinesApi
-public actual abstract class MultithreadedDispatcher : CoroutineDispatcher() {
-    public actual abstract fun close()
-}
-
-internal class WorkerDispatcher(name: String) : MultithreadedDispatcher(), Delay {
+internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), Delay {
     private val worker = Worker.start(name = name)
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
@@ -52,7 +44,7 @@ internal class WorkerDispatcher(name: String) : MultithreadedDispatcher(), Delay
     }
 }
 
-private class MultiWorkerDispatcher(name: String, workersCount: Int) : MultithreadedDispatcher() {
+private class MultiWorkerDispatcher(name: String, workersCount: Int) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
     private val workers = Array(workersCount) { Worker.start(name = "$name-$it") }
 

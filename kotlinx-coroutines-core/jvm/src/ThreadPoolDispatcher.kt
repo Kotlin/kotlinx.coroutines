@@ -35,11 +35,6 @@ public actual fun newSingleThreadContext(name: String): ExecutorCoroutineDispatc
     newFixedThreadPoolContext(1, name)
 
 /**
- * A coroutine dispatcher that is confined to a single thread.
- */
-public actual typealias MultithreadedDispatcher = ExecutorCoroutineDispatcher
-
-/**
  * Creates a coroutine execution context with the fixed-size thread-pool and built-in [yield] support.
  * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its threads).
  * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**

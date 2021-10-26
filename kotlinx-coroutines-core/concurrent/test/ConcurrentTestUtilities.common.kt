@@ -14,7 +14,7 @@ expect fun randomWait()
 
 expect fun currentThreadName(): String
 
-inline fun MultithreadedDispatcher.use(block: (MultithreadedDispatcher) -> Unit) {
+inline fun CloseableCoroutineDispatcher.use(block: (CloseableCoroutineDispatcher) -> Unit) {
     try {
         block(this)
     } finally {
