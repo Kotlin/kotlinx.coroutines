@@ -4,8 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlin.coroutines.*
-
 /** Not inside [Dispatchers], as otherwise mutating this throws an `InvalidMutabilityException`. */
 private var injectedMainDispatcher: MainCoroutineDispatcher? = null
 
@@ -27,5 +25,6 @@ public actual object Dispatchers {
         injectedMainDispatcher = null
     }
 }
+
 internal expect fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher
 
