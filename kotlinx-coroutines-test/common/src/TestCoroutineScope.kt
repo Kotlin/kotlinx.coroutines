@@ -31,9 +31,9 @@ public sealed interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCap
     public val testScheduler: TestCoroutineScheduler
 }
 
-private class TestCoroutineScopeImpl (
+private class TestCoroutineScopeImpl(
     override val coroutineContext: CoroutineContext,
-    val ownJob: CompletableJob?
+    private val ownJob: CompletableJob?
 ):
     TestCoroutineScope,
     UncaughtExceptionCaptor by coroutineContext.uncaughtExceptionCaptor
@@ -42,14 +42,16 @@ private class TestCoroutineScopeImpl (
         get() = coroutineContext[TestCoroutineScheduler]!!
 
     /** These jobs existed before the coroutine scope was used, so it's alright if they don't get cancelled. */
-    val initialJobs = coroutineContext.activeJobs()
+    private val initialJobs = coroutineContext.activeJobs()
 
     override fun cleanupTestCoroutines() {
         coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
         coroutineContext.delayController?.cleanupTestCoroutines()
         val jobs = coroutineContext.activeJobs()
         if ((jobs - initialJobs).isNotEmpty()) {
-            throw UncompletedCoroutinesError("Test finished with active jobs: $jobs")
+            val exception = UncompletedCoroutinesError("Test finished with active jobs: $jobs")
+            ownJob?.completeExceptionally(exception)
+            throw exception
         }
         ownJob?.complete()
     }
