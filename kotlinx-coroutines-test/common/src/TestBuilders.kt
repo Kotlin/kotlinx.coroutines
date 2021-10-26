@@ -148,7 +148,8 @@ public expect class TestResult
  * #### Reported exceptions
  *
  * Exceptions reported to the test coroutine scope via [TestCoroutineScope.reportException] will be thrown at the end.
- * By default, unless an explicit [TestExceptionHandler] is passed, this includes all unhandled exceptions.
+ * By default, unless an explicit [TestExceptionHandler] is passed, this includes all unhandled exceptions. If the test
+ * body also fails, the reported exceptions are suppressed by it.
  *
  * #### Uncompleted coroutines
  *
@@ -220,7 +221,7 @@ public fun runTest(
             } catch (e: UncompletedCoroutinesError) {
                 // it's normal that some jobs are not completed if the test body has failed, won't clutter the output
             } catch (e: Throwable) {
-                e.printStackTrace()
+                it.addSuppressed(e)
             }
             throw it
         }
