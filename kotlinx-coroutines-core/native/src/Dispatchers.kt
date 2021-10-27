@@ -6,8 +6,10 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.multithreadingSupported
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 /** Not inside [Dispatchers], as otherwise mutating this throws an `InvalidMutabilityException`. */
+@ThreadLocal
 private var injectedMainDispatcher: MainCoroutineDispatcher? = null
 
 public actual object Dispatchers {
