@@ -34,7 +34,7 @@ import kotlin.coroutines.*
  *
  * Unhandled exceptions thrown by coroutines in the test will be re-thrown at the end of the test.
  *
- * @throws UncompletedCoroutinesError If the [testBody] does not complete (or cancel) all coroutines that it launches
+ * @throws AssertionError If the [testBody] does not complete (or cancel) all coroutines that it launches
  * (including coroutines suspended on join/await).
  *
  * @param context additional context elements. If [context] contains [CoroutineDispatcher] or [CoroutineExceptionHandler],

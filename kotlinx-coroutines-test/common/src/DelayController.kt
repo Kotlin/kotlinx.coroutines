@@ -84,11 +84,11 @@ public interface DelayController {
     /**
      * Call after test code completes to ensure that the dispatcher is properly cleaned up.
      *
-     * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
+     * @throws AssertionError if any pending tasks are active, however it will not throw for suspended
      * coroutines.
      */
     @ExperimentalCoroutinesApi
-    @Throws(UncompletedCoroutinesError::class)
+    @Throws(AssertionError::class)
     public fun cleanupTestCoroutines()
 
     /**
@@ -122,13 +122,6 @@ public interface DelayController {
     @ExperimentalCoroutinesApi
     public fun resumeDispatcher()
 }
-
-/**
- * Thrown when a test has completed and there are tasks that are not completed or cancelled.
- */
-// todo: maybe convert into non-public class in 1.3.0 (need use-cases for a public exception type)
-@ExperimentalCoroutinesApi
-public class UncompletedCoroutinesError(message: String): AssertionError(message)
 
 internal interface SchedulerAsDelayController: DelayController {
     public val scheduler: TestCoroutineScheduler
