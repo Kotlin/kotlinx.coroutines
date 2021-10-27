@@ -5,6 +5,8 @@
 package kotlinx.coroutines
 
 import kotlinx.cinterop.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.internal.multithreadingSupported
 import platform.posix.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
@@ -26,6 +28,9 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
 
 internal class EventLoopImpl: EventLoopImplBase() {
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+        if (!multithreadingSupported) {
+            return scheduleInvokeOnTimeout(timeMillis, block)
+        }
         return DefaultDelay.invokeOnTimeout(timeMillis, block, context)
     }
 }

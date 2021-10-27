@@ -22,7 +22,7 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     private val receivedTotal = atomic(0)
 
     @Test
-    fun testStressNotify()= runBlocking {
+    fun testStressNotify()= runMtTest {
         println("--- ConflatedBroadcastChannelNotifyStressTest")
         val senders = List(nSenders) { senderId ->
             launch(Dispatchers.Default + CoroutineName("Sender$senderId")) {

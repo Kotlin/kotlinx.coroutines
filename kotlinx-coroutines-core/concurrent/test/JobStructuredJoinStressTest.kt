@@ -3,8 +3,8 @@
  */
 
 import kotlinx.coroutines.*
-import kotlin.test.*
 import kotlin.coroutines.*
+import kotlin.test.*
 
 /**
  * Test a race between job failure and join.
@@ -15,12 +15,12 @@ class JobStructuredJoinStressTest : TestBase() {
     private val nRepeats = 10_000 * stressTestMultiplier
 
     @Test
-    fun testStressRegularJoin() {
+    fun testStressRegularJoin() = runMtTest {
         stress(Job::join)
     }
 
     @Test
-    fun testStressSuspendCancellable() {
+    fun testStressSuspendCancellable() = runMtTest {
         stress { job ->
             suspendCancellableCoroutine { cont ->
                 job.invokeOnCompletion { cont.resume(Unit) }
@@ -29,7 +29,7 @@ class JobStructuredJoinStressTest : TestBase() {
     }
 
     @Test
-    fun testStressSuspendCancellableReusable() {
+    fun testStressSuspendCancellableReusable() = runMtTest {
         stress { job ->
             suspendCancellableCoroutineReusable { cont ->
                 job.invokeOnCompletion { cont.resume(Unit) }

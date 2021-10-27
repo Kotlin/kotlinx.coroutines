@@ -10,7 +10,7 @@ import kotlin.test.*
 
 class AtomicCancellationTest : TestBase() {
     @Test
-    fun testSendCancellable() = runBlocking {
+    fun testSendCancellable() = runMtTest {
         expect(1)
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -26,7 +26,7 @@ class AtomicCancellationTest : TestBase() {
     }
 
     @Test
-    fun testSelectSendCancellable() = runBlocking {
+    fun testSelectSendCancellable() = runMtTest {
         expect(1)
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -47,7 +47,7 @@ class AtomicCancellationTest : TestBase() {
     }
 
     @Test
-    fun testReceiveCancellable() = runBlocking {
+    fun testReceiveCancellable() = runMtTest {
         expect(1)
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -63,7 +63,7 @@ class AtomicCancellationTest : TestBase() {
     }
 
     @Test
-    fun testSelectReceiveCancellable() = runBlocking {
+    fun testSelectReceiveCancellable() = runMtTest {
         expect(1)
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
@@ -85,7 +85,7 @@ class AtomicCancellationTest : TestBase() {
     }
 
     @Test
-    fun testSelectDeferredAwaitCancellable() = runBlocking {
+    fun testSelectDeferredAwaitCancellable() = runMtTest {
         expect(1)
         val deferred = async { // deferred, not yet complete
             expect(4)

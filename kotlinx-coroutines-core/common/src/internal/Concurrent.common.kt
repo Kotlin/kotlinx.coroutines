@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines.internal
 
+import kotlin.native.concurrent.*
+
 /**
  * Special kind of list intended to be used as collection of subscribers in `ArrayBroadcastChannel`
  * On JVM it's CopyOnWriteList and on JS it's MutableList.
@@ -22,3 +24,5 @@ internal expect class ReentrantLock() {
 internal expect inline fun <T> ReentrantLock.withLock(action: () -> T): T
 
 internal expect fun <E> identitySet(expectedSize: Int): MutableSet<E>
+
+internal expect val multithreadingSupported: Boolean

@@ -7,6 +7,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -46,6 +47,16 @@ public expect open class TestBase constructor() {
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
     ): TestResult
+}
+
+public fun TestBase.runMtTest(
+    expected: ((Throwable) -> Boolean)? = null,
+    unhandled: List<(Throwable) -> Boolean> = emptyList(),
+    block: suspend CoroutineScope.() -> Unit
+): TestResult {
+    @Suppress("CAST_NEVER_SUCCEEDS")
+    if (!multithreadingSupported) return Unit as TestResult
+    return runTest(expected, unhandled, block)
 }
 
 public suspend inline fun hang(onCancellation: () -> Unit) {

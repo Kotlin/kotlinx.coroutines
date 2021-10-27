@@ -12,7 +12,7 @@ import kotlin.test.*
 class SemaphoreStressTest : TestBase() {
 
     @Test
-    fun testStressTestAsMutex() = runBlocking {
+    fun testStressTestAsMutex() = runMtTest {
         val n = 1_000 * stressTestMultiplier / stressTestNativeDivisor
         val k = 100
         var shared = 0
@@ -31,7 +31,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testStress() = runBlocking {
+    fun testStress() = runMtTest {
         val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
         val k = 100
         val semaphore = Semaphore(10)
@@ -47,7 +47,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testNativeSpecificStress() = runBlocking {
+    fun testNativeSpecificStress() = runMtTest {
         /*
          * Dispatchers.Default is still single-threaded, so here we're doing actual concurrency
          */
@@ -73,7 +73,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testStressCancellation() = runBlocking {
+    fun testStressCancellation() = runMtTest {
         val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
         val semaphore = Semaphore(1)
         semaphore.acquire()
@@ -94,7 +94,7 @@ class SemaphoreStressTest : TestBase() {
      * the semaphore into an incorrect state where permits are leaked.
      */
     @Test
-    fun testStressReleaseCancelRace() = runTest {
+    fun testStressReleaseCancelRace() = runMtTest {
         val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
         val semaphore = Semaphore(1, 1)
         newSingleThreadContext("SemaphoreStressTest").use { pool ->
@@ -124,7 +124,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testShouldBeUnlockedOnCancellation() = runTest {
+    fun testShouldBeUnlockedOnCancellation() = runMtTest {
         val semaphore = Semaphore(1)
         val n = 1000 * stressTestMultiplier
         repeat(n) {

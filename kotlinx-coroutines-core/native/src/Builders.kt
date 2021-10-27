@@ -56,6 +56,7 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
     return coroutine.joinBlocking()
 }
 
+@SharedImmutable
 internal val EMPTY_BLOCK: () -> Unit = {}
 
 private class BlockingCoroutine<T>(

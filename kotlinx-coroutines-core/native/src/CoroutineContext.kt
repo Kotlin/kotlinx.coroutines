@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
@@ -23,12 +24,13 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
 internal expect fun createDefaultDispatcher(): CoroutineDispatcher
 
-internal actual val DefaultDelay: Delay = DefaultExecutor
+@SharedImmutable
+internal actual val DefaultDelay: Delay = if (multithreadingSupported) DefaultExecutor else OldDefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
-    return if (combined !== DefaultExecutor && combined[ContinuationInterceptor] == null)
-        combined + DefaultExecutor else combined
+    return if (combined !== DefaultDelay && combined[ContinuationInterceptor] == null)
+        combined + (DefaultDelay as CoroutineContext.Element) else combined
 }
 
 // No debugging facilities on native

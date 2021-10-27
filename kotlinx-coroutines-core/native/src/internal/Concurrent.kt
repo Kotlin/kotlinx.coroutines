@@ -5,6 +5,7 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
+import kotlin.native.concurrent.*
 import kotlinx.atomicfu.locks.withLock as withLock2
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
@@ -30,3 +31,7 @@ internal open class SuppressSupportingThrowableImpl : Throwable() {
         }
     }
 }
+
+@SharedImmutable
+@OptIn(ExperimentalStdlibApi::class)
+internal actual val multithreadingSupported: Boolean = kotlin.native.isExperimentalMM()

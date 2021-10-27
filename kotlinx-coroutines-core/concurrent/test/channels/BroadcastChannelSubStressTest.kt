@@ -20,7 +20,7 @@ class BroadcastChannelSubStressTest: TestBase() {
     private val receivedTotal = atomic(0L)
 
     @Test
-    fun testStress() = runTest {
+    fun testStress() = runMtTest {
         TestBroadcastChannelKind.values().forEach { kind ->
             println("--- BroadcastChannelSubStressTest $kind")
             val broadcast = kind.create<Long>()

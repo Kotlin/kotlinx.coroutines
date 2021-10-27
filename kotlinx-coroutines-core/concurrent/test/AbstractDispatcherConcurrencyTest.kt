@@ -12,7 +12,7 @@ abstract class AbstractDispatcherConcurrencyTest : TestBase() {
    public abstract val dispatcher: CoroutineDispatcher
 
     @Test
-    fun testLaunchAndJoin() {
+    fun testLaunchAndJoin() = runMtTest {
         expect(1)
         var capturedMutableState = 0
         val job = GlobalScope.launch(dispatcher) {
@@ -25,7 +25,7 @@ abstract class AbstractDispatcherConcurrencyTest : TestBase() {
     }
 
     @Test
-    fun testDispatcherIsActuallyMultithreaded() {
+    fun testDispatcherIsActuallyMultithreaded() = runMtTest {
         val channel = Channel<Int>()
         GlobalScope.launch(dispatcher) {
             channel.send(42)
@@ -41,7 +41,7 @@ abstract class AbstractDispatcherConcurrencyTest : TestBase() {
     }
 
     @Test
-    fun testDelayInDefaultDispatcher() {
+    fun testDelayInDefaultDispatcher() = runMtTest {
         expect(1)
         val job = GlobalScope.launch(dispatcher) {
             expect(2)

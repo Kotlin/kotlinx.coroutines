@@ -10,7 +10,7 @@ import kotlin.test.*
 class RunBlockingTest : TestBase() {
 
     @Test
-    fun testWithTimeoutBusyWait() = runBlocking {
+    fun testWithTimeoutBusyWait() = runMtTest {
         val value = withTimeoutOrNull(10) {
             while (isActive) {
                 // Busy wait
@@ -52,7 +52,7 @@ class RunBlockingTest : TestBase() {
     }
 
     @Test
-    fun testOtherDispatcher() {
+    fun testOtherDispatcher() = runMtTest {
         expect(1)
         val name = "RunBlockingTest.testOtherDispatcher"
         val thread = newSingleThreadContext(name)
@@ -68,7 +68,7 @@ class RunBlockingTest : TestBase() {
     }
 
     @Test
-    fun testCancellation() {
+    fun testCancellation() = runMtTest {
         val ctx = newSingleThreadContext("testCancellation")
         val job = GlobalScope.launch {
             runBlocking(coroutineContext + ctx) {

@@ -5,13 +5,14 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.exceptions.*
+import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
 class ConcurrentExceptionsStressTest : TestBase() {
     private val nWorkers = 4
     private val nRepeat = 1000 * stressTestMultiplier
 
-    private val workers = Array(nWorkers) { index ->
+    private val workers = Array(if (multithreadingSupported) nWorkers else 0) { index ->
         newSingleThreadContext("JobExceptionsStressTest-$index")
     }
 
@@ -23,7 +24,7 @@ class ConcurrentExceptionsStressTest : TestBase() {
     }
 
     @Test
-    fun testStress() = runTest {
+    fun testStress() = runMtTest {
         repeat(nRepeat) {
             testOnce()
         }

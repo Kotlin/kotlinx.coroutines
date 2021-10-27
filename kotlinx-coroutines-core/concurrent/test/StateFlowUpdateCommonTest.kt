@@ -20,7 +20,7 @@ class StateFlowUpdateCommonTest : TestBase() {
     @Test
     fun testGetAndUpdate() = doTest { getAndUpdate { it + 1 } }
 
-    private fun doTest(increment: MutableStateFlow<Int>.() -> Unit) = runTest {
+    private fun doTest(increment: MutableStateFlow<Int>.() -> Unit) = runMtTest {
         val flow = MutableStateFlow(0)
         val j1 = launch(Dispatchers.Default) {
             repeat(iterations / 2) {
