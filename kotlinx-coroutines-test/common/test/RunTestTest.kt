@@ -5,6 +5,7 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -155,7 +156,7 @@ class RunTestTest {
 
     @Test
     fun reproducer2405() = runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
+        val dispatcher = TestCoroutineDispatcher(testScheduler)
         var collectedError = false
         withContext(dispatcher) {
             flow { emit(1) }
@@ -216,27 +217,4 @@ class RunTestTest {
         }
     })
 
-    /** Tests that, when the test body fails, the reported exceptions are suppressed. */
-    @Test
-    fun testSuppressedExceptions() = testResultMap({
-        try {
-            it()
-            fail("should not be reached")
-        } catch (e: TestException) {
-            assertEquals("w", e.message)
-            val suppressed = e.suppressedExceptions +
-                (e.suppressedExceptions.firstOrNull()?.suppressedExceptions ?: emptyList())
-            assertEquals(3, suppressed.size)
-            assertEquals("x", suppressed[0].message)
-            assertEquals("y", suppressed[1].message)
-            assertEquals("z", suppressed[2].message)
-        }
-    }, {
-        runTest {
-            reportException(TestException("x"))
-            reportException(TestException("y"))
-            reportException(TestException("z"))
-            throw TestException("w")
-        }
-    })
 }

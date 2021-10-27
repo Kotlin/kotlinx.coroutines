@@ -123,7 +123,7 @@ class TestCoroutineScopeTest {
     /** Tests that uncaught exceptions are thrown at the cleanup. */
     @Test
     fun testThrowsUncaughtExceptionsOnCleanup() {
-        val scope = createTestCoroutineScope()
+        val scope = TestCoroutineScope()
         val exception = TestException("test")
         scope.launch {
             throw exception
@@ -136,7 +136,7 @@ class TestCoroutineScopeTest {
     /** Tests that uncaught exceptions take priority over uncompleted jobs when throwing on cleanup. */
     @Test
     fun testUncaughtExceptionsPrioritizedOnCleanup() {
-        val scope = createTestCoroutineScope()
+        val scope = TestCoroutineScope()
         val exception = TestException("test")
         scope.launch {
             throw exception
@@ -146,45 +146,6 @@ class TestCoroutineScopeTest {
         }
         assertFailsWith<TestException> {
             scope.cleanupTestCoroutines()
-        }
-    }
-
-    /** Tests that cleaning up twice is forbidden. */
-    @Test
-    fun testClosingTwice() {
-        val scope = createTestCoroutineScope()
-        scope.cleanupTestCoroutines()
-        assertFailsWith<IllegalStateException> {
-            scope.cleanupTestCoroutines()
-        }
-    }
-
-    /** Tests that throwing after cleaning up is forbidden. */
-    @Test
-    fun testReportingAfterClosing() {
-        val scope = createTestCoroutineScope()
-        scope.cleanupTestCoroutines()
-        assertFailsWith<IllegalStateException> {
-            scope.reportException(TestException())
-        }
-    }
-
-    /** Tests that, when reporting several exceptions, the first one is thrown, with the rest suppressed. */
-    @Test
-    fun testSuppressedExceptions() {
-        createTestCoroutineScope().apply {
-            reportException(TestException("x"))
-            reportException(TestException("y"))
-            reportException(TestException("z"))
-            try {
-                cleanupTestCoroutines()
-                fail("should not be reached")
-            } catch (e: TestException) {
-                assertEquals("x", e.message)
-                assertEquals(2, e.suppressedExceptions.size)
-                assertEquals("y", e.suppressedExceptions[0].message)
-                assertEquals("z", e.suppressedExceptions[1].message)
-            }
         }
     }
 

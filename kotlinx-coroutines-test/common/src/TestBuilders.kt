@@ -182,10 +182,12 @@ public fun runTest(
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
     val testScope = TestBodyCoroutine<Unit>(TestCoroutineScope(context + RunningInRunTest()))
     val scheduler = testScope.testScheduler
-    testScope.start(CoroutineStart.DEFAULT, testScope) {
-        testBody()
-    }
     return createTestResult {
+        /** TODO: moving this [AbstractCoroutine.start] call outside [createTestResult] fails on Native with
+         * [TestCoroutineDispatcher], because the event loop is not started. */
+        testScope.start(CoroutineStart.DEFAULT, testScope) {
+            testBody()
+        }
         var completed = false
         while (!completed) {
             scheduler.advanceUntilIdle()
@@ -279,11 +281,11 @@ private const val DEFAULT_DISPATCH_TIMEOUT_MS = 10_000L
 
 private class TestBodyCoroutine<T>(
     private val testScope: TestCoroutineScope,
-) : AbstractCoroutine<T>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope
+) : AbstractCoroutine<T>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope,
+    UncaughtExceptionCaptor by testScope.coroutineContext.uncaughtExceptionCaptor
 {
     override val testScheduler get() = testScope.testScheduler
 
     override fun cleanupTestCoroutines() = testScope.cleanupTestCoroutines()
 
-    override fun reportException(throwable: Throwable) = testScope.reportException(throwable)
 }
