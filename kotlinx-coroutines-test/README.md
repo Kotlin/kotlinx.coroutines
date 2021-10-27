@@ -114,7 +114,7 @@ suspend fun bar() {}
 ```
 
 `runBlockingTest` will auto-progress virtual time until all coroutines are completed before returning. If any coroutines
-are not able to complete, an [UncompletedCoroutinesError] will be thrown.
+are not able to complete, an `AssertionError` will be thrown.
 
 *Note:* The default eager behavior of [runBlockingTest] will ignore [CoroutineStart] parameters.
 
@@ -148,7 +148,7 @@ suspend fun CoroutineScope.foo() {
 *Note:* `runBlockingTest` will always attempt to auto-progress time until all coroutines are completed just before 
 exiting. This is a convenience to avoid having to call [advanceUntilIdle][DelayController.advanceUntilIdle] 
 as the last line of many common test cases.
-If any coroutines cannot complete by advancing time, an [UncompletedCoroutinesError] is thrown.
+If any coroutines cannot complete by advancing time, an `AssertionError` is thrown.
 
 ### Testing `withTimeout` using `runBlockingTest`
 
@@ -447,7 +447,6 @@ If you have any suggestions for improvements to this experimental API please sha
 
 [setMain]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/set-main.html
 [runBlockingTest]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-blocking-test.html
-[UncompletedCoroutinesError]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-uncompleted-coroutines-error/index.html
 [DelayController]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/index.html
 [DelayController.advanceUntilIdle]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/advance-until-idle.html
 [DelayController.pauseDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-delay-controller/pause-dispatcher.html

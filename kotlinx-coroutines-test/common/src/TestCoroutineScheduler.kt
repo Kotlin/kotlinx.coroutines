@@ -24,10 +24,11 @@ import kotlin.jvm.*
  */
 @ExperimentalCoroutinesApi
 // TODO: maybe make this a `TimeSource`?
-public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCoroutineScheduler), CoroutineContext.Element {
+public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCoroutineScheduler),
+    CoroutineContext.Element {
 
     /** @suppress */
-    public companion object Key: CoroutineContext.Key<TestCoroutineScheduler>
+    public companion object Key : CoroutineContext.Key<TestCoroutineScheduler>
 
     /** This heap stores the knowledge about which dispatchers are interested in which moments of virtual time. */
     // TODO: all the synchronization is done via a separate lock, so a non-thread-safe priority queue can be used.
@@ -55,7 +56,7 @@ public class TestCoroutineScheduler: AbstractCoroutineContextElement(TestCorouti
         dispatcher: TestDispatcher,
         timeDeltaMillis: Long,
         marker: T,
-        isCancelled : (T) -> Boolean
+        isCancelled: (T) -> Boolean
     ): DisposableHandle {
         require(timeDeltaMillis >= 0) { "Attempted scheduling an event earlier in time (with the time delta $timeDeltaMillis)" }
         val count = count.getAndIncrement()

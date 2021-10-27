@@ -11,13 +11,13 @@ import kotlin.coroutines.*
  * A scope which provides detailed control over the execution of coroutines for tests.
  */
 @ExperimentalCoroutinesApi
-public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor {
+public sealed interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor {
     /**
      * Call after the test completes.
      * Calls [UncaughtExceptionCaptor.cleanupTestCoroutinesCaptor] and [DelayController.cleanupTestCoroutines].
      *
      * @throws Throwable the first uncaught exception, if there are any uncaught exceptions.
-     * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
+     * @throws AssertionError if any pending tasks are active, however it will not throw for suspended
      * coroutines.
      */
     @ExperimentalCoroutinesApi
@@ -28,8 +28,6 @@ public interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor {
      */
     @ExperimentalCoroutinesApi
     public val testScheduler: TestCoroutineScheduler
-        get() = coroutineContext[TestCoroutineScheduler]
-            ?: throw UnsupportedOperationException("This scope does not have a TestCoroutineScheduler linked to it")
 }
 
 private class TestCoroutineScopeImpl (
@@ -158,3 +156,9 @@ public fun TestCoroutineScope.resumeDispatcher() {
 private val TestCoroutineScope.delayControllerForPausing: DelayController
     get() = coroutineContext.delayController
         ?: throw IllegalStateException("This scope isn't able to pause its dispatchers")
+
+/**
+ * Thrown when a test has completed and there are tasks that are not completed or cancelled.
+ */
+@ExperimentalCoroutinesApi
+internal class UncompletedCoroutinesError(message: String): AssertionError(message)
