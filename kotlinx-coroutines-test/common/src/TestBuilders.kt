@@ -142,13 +142,13 @@ public expect class TestResult
  * ### Failures
  *
  * This method requires that all coroutines launched inside [testBody] complete, or are cancelled. Otherwise, the test
- * will be failed (which, on JVM and Native, means that [runTest] itself will throw [UncompletedCoroutinesError],
+ * will be failed (which, on JVM and Native, means that [runTest] itself will throw [AssertionError],
  * whereas on JS, the `Promise` will fail with it).
  *
  * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
  * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
  * for [dispatchTimeoutMs] milliseconds (by default, 10 seconds) from the moment when [TestCoroutineScheduler] becomes
- * idle before throwing [UncompletedCoroutinesError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
+ * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
  * task during that time, the timer gets reset.
  *
  * Unhandled exceptions thrown by coroutines in the test will be rethrown at the end of the test.
