@@ -107,7 +107,7 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
     return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job)
 }
 
-private inline val CoroutineContext.uncaughtExceptionCaptor: UncaughtExceptionCaptor
+internal inline val CoroutineContext.uncaughtExceptionCaptor: UncaughtExceptionCaptor
     get() {
         val handler = this[CoroutineExceptionHandler]
         return handler as? UncaughtExceptionCaptor ?: throw IllegalArgumentException(

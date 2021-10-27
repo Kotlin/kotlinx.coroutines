@@ -33,3 +33,5 @@ inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(Duration.secon
  * Passes [test] as an argument to [block], but as a function returning not a [TestResult] but [Unit].
 */
 expect fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult): TestResult
+
+class TestException(message: String? = null): Exception(message)

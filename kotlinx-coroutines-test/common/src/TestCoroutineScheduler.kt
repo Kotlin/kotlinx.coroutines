@@ -82,6 +82,21 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     }
 
     /**
+     * Runs the next enqueued task, advancing the virtual time to the time of its scheduled awakening.
+     */
+    private fun tryRunNextTask(): Boolean {
+        val event = synchronized(lock) {
+            val event = events.removeFirstOrNull() ?: return false
+            if (currentTime > event.time)
+                currentTimeAheadOfEvents()
+            currentTime = event.time
+            event
+        }
+        event.dispatcher.processEvent(event.time, event.marker)
+        return true
+    }
+
+    /**
      * Runs the enqueued tasks in the specified order, advancing the virtual time as needed until there are no more
      * tasks associated with the dispatchers linked to this scheduler.
      *
@@ -91,15 +106,8 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      */
     @ExperimentalCoroutinesApi
     public fun advanceUntilIdle() {
-        while (!events.isEmpty) {
-            val event = synchronized(lock) {
-                val event = events.removeFirstOrNull() ?: return
-                if (currentTime > event.time)
-                    currentTimeAheadOfEvents()
-                currentTime = event.time
-                event
-            }
-            event.dispatcher.processEvent(event.time, event.marker)
+        while (!synchronized(lock) { events.isEmpty }) {
+            tryRunNextTask()
         }
     }
 
