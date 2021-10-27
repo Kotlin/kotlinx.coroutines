@@ -180,7 +180,7 @@ public fun runTest(
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    val testScope = TestBodyCoroutine<Unit>(TestCoroutineScope(context + RunningInRunTest()))
+    val testScope = TestBodyCoroutine<Unit>(TestCoroutineScope(context + RunningInRunTest))
     val scheduler = testScope.testScheduler
     return createTestResult {
         /** TODO: moving this [AbstractCoroutine.start] call outside [createTestResult] fails on Native with
@@ -271,8 +271,11 @@ public fun TestDispatcher.runTest(
     runTest(this, dispatchTimeoutMs, block)
 
 /** A coroutine context element indicating that the coroutine is running inside `runTest`. */
-private class RunningInRunTest: AbstractCoroutineContextElement(RunningInRunTest), CoroutineContext.Element {
-    companion object Key : CoroutineContext.Key<RunningInRunTest>
+private object RunningInRunTest: CoroutineContext.Key<RunningInRunTest>, CoroutineContext.Element {
+    override val key: CoroutineContext.Key<*>
+        get() = this
+
+    override fun toString(): String = "RunningInRunTest"
 }
 
 /** The default timeout to use when waiting for asynchronous completions of the coroutines managed by
