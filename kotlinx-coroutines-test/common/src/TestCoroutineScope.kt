@@ -45,11 +45,13 @@ private class TestCoroutineScopeImpl(
     private val initialJobs = coroutineContext.activeJobs()
 
     override fun cleanupTestCoroutines() {
-        coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
-        coroutineContext.delayController?.cleanupTestCoroutines()
-        val jobs = coroutineContext.activeJobs()
-        if ((jobs - initialJobs).isNotEmpty()) {
-            val exception = UncompletedCoroutinesError("Test finished with active jobs: $jobs")
+        try {
+            coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
+            coroutineContext.delayController?.cleanupTestCoroutines()
+            val jobs = coroutineContext.activeJobs()
+            if ((jobs - initialJobs).isNotEmpty())
+                throw UncompletedCoroutinesError("Test finished with active jobs: $jobs")
+        } catch (exception: Throwable) {
             ownJob?.completeExceptionally(exception)
             throw exception
         }
