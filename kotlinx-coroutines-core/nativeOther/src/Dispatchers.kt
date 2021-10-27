@@ -7,18 +7,29 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 
 internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher =
-    NativeMainDispatcher(default)
+    MissingMainDispatcher
 
-// TODO use actual number of cores, prevent `close` call
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher = newFixedThreadPoolContext(4, "Dispatchers.Default")
+internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultDispatcher
 
-private class NativeMainDispatcher(private val delegate: CoroutineDispatcher) : MainCoroutineDispatcher() {
+private object DefaultDispatcher : CoroutineDispatcher() {
+
+    // Delegated, so users won't be able to downcast and call 'close'
+    // The precise number of threads cannot be obtained until KT-48179 is implemented, 4 is just "good enough" number.
+    private val ctx = newFixedThreadPoolContext(4, "Dispatchers.Default")
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        ctx.dispatch(context, block)
+    }
+}
+
+private object MissingMainDispatcher : MainCoroutineDispatcher() {
     override val immediate: MainCoroutineDispatcher
-        get() = throw UnsupportedOperationException("Immediate dispatching is not supported on this platform")
-    override fun dispatch(context: CoroutineContext, block: Runnable) = delegate.dispatch(context, block)
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = delegate.isDispatchNeeded(context)
-    override fun dispatchYield(context: CoroutineContext, block: Runnable) = delegate.dispatchYield(context, block)
-    override fun toString(): String = toStringInternalImpl() ?: delegate.toString()
+        get() = notImplemented()
+    override fun dispatch(context: CoroutineContext, block: Runnable) = notImplemented()
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = notImplemented()
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) = notImplemented()
+
+    private fun notImplemented(): Nothing = TODO("Dispatchers.Main is missing on the current platform")
 }
 
 internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()
