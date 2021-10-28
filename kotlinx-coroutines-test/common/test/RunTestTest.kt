@@ -217,4 +217,38 @@ class RunTestTest {
         }
     })
 
+    /** Tests that [runTest] completes its job. */
+    @Test
+    fun testCompletesOwnJob(): TestResult {
+        var handlerCalled = false
+        return testResultMap({
+            it()
+            assertTrue(handlerCalled)
+        }, {
+            runTest {
+                coroutineContext.job.invokeOnCompletion {
+                    handlerCalled = true
+                }
+            }
+        })
+    }
+
+    /** Tests that [runTest] doesn't complete the job that was passed to it as an argument. */
+    @Test
+    fun testDoesNotCompleteGivenJob(): TestResult {
+        var handlerCalled = false
+        val job = Job()
+        job.invokeOnCompletion {
+            handlerCalled = true
+        }
+        return testResultMap({
+            it()
+            assertFalse(handlerCalled)
+            assertEquals(0, job.children.filter { it.isActive }.count())
+        }, {
+            runTest(job) {
+                assertTrue(coroutineContext.job in job.children)
+            }
+        })
+    }
 }
