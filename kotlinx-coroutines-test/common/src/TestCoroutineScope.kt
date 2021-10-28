@@ -103,7 +103,7 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
         }
         this ?: TestCoroutineExceptionHandler()
     }
-    val job: Job = context[Job] ?: SupervisorJob()
+    val job: Job = context[Job] ?: Job()
     return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job)
 }
 
