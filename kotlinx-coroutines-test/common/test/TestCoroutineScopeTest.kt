@@ -50,6 +50,51 @@ class TestCoroutineScopeTest {
         }
     }
 
+    /** Tests that the cleanup procedure throws if there were uncompleted delays by the end. */
+    @Test
+    fun testPresentDelaysThrowing() {
+        val scope = TestCoroutineScope()
+        var result = false
+        scope.launch {
+            delay(5)
+            result = true
+        }
+        assertFalse(result)
+        assertFailsWith<AssertionError> { scope.cleanupTestCoroutines() }
+        assertFalse(result)
+    }
+
+    /** Tests that the cleanup procedure throws if there were active jobs by the end. */
+    @Test
+    fun testActiveJobsThrowing() {
+        val scope = TestCoroutineScope()
+        var result = false
+        val deferred = CompletableDeferred<String>()
+        scope.launch {
+            deferred.await()
+            result = true
+        }
+        assertFalse(result)
+        assertFailsWith<AssertionError> { scope.cleanupTestCoroutines() }
+        assertFalse(result)
+    }
+
+    /** Tests that the cleanup procedure doesn't throw if it detects that the job is already cancelled. */
+    @Test
+    fun testCancelledDelaysNotThrowing() {
+        val scope = TestCoroutineScope()
+        var result = false
+        val deferred = CompletableDeferred<String>()
+        val job = scope.launch {
+            deferred.await()
+            result = true
+        }
+        job.cancel()
+        assertFalse(result)
+        scope.cleanupTestCoroutines()
+        assertFalse(result)
+    }
+
     private val invalidContexts = listOf(
         Dispatchers.Default, // not a [TestDispatcher]
         TestCoroutineDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
