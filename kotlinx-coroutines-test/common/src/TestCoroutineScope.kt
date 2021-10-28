@@ -16,7 +16,6 @@ public sealed interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCap
      * Called after the test completes.
      *
      * Calls [UncaughtExceptionCaptor.cleanupTestCoroutinesCaptor] and [DelayController.cleanupTestCoroutines].
-     * If a new job was created for this scope, the job is completed.
      *
      * @throws Throwable the first uncaught exception, if there are any uncaught exceptions.
      * @throws AssertionError if any pending tasks are active.
