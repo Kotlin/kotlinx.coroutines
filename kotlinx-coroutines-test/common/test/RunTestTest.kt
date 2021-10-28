@@ -78,7 +78,7 @@ class RunTestTest {
                 delay(10)
                 3
             }
-            throw IllegalStateException("shouldn't be reached")
+            fail("shouldn't be reached")
         }
     }
 
@@ -93,7 +93,7 @@ class RunTestTest {
                 delay(10000)
                 3
             }
-            throw RuntimeException("shouldn't be reached")
+            fail("shouldn't be reached")
         }
     }
 
@@ -117,7 +117,7 @@ class RunTestTest {
                 delay(10000)
                 3
             }
-            throw RuntimeException("shouldn't be reached")
+            fail("shouldn't be reached")
         }
     }
 

@@ -87,7 +87,7 @@ public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineS
  * * Don't nest functions returning a [TestResult].
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-@DelicateCoroutinesApi
+@ExperimentalCoroutinesApi
 public expect class TestResult
 
 /**
@@ -159,7 +159,7 @@ public expect class TestResult
  *
  * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
  * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
- * for [dispatchTimeoutMs] milliseconds (by default, 10 seconds) from the moment when [TestCoroutineScheduler] becomes
+ * for [dispatchTimeoutMs] milliseconds (by default, 60 seconds) from the moment when [TestCoroutineScheduler] becomes
  * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
  * task during that time, the timer gets reset.
  *
@@ -172,7 +172,7 @@ public expect class TestResult
  * @throws IllegalArgumentException if the [context] is invalid. See the [TestCoroutineScope] constructor docs for
  * details.
  */
-@DelicateCoroutinesApi
+@ExperimentalCoroutinesApi
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
@@ -197,24 +197,21 @@ public fun runTest(
                 completed = true
                 continue
             }
-            try {
-                withTimeout(dispatchTimeoutMs) {
-                    select<Unit> {
-                        testScope.onJoin {
-                            completed = true
-                        }
-                        scheduler.onDispatchEvent {
-                            // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
-                        }
+            select<Unit> {
+                testScope.onJoin {
+                    completed = true
+                }
+                scheduler.onDispatchEvent {
+                    // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
+                }
+                onTimeout(dispatchTimeoutMs) {
+                    try {
+                        testScope.cleanupTestCoroutines()
+                    } catch (e: UncompletedCoroutinesError) {
+                        // we expect these and will instead throw a more informative exception just below.
                     }
+                    throw UncompletedCoroutinesError("The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
                 }
-            } catch (e: TimeoutCancellationException) {
-                try {
-                    testScope.cleanupTestCoroutines()
-                } catch (e: UncompletedCoroutinesError) {
-                    // we expect these and will instead throw a more informative exception just below.
-                }
-                throw UncompletedCoroutinesError("The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
             }
         }
         testScope.getCompletionExceptionOrNull()?.let {
@@ -248,7 +245,7 @@ internal expect fun createTestResult(testProcedure: suspend () -> Unit): TestRes
  * Since this function returns [TestResult], in order to work correctly on the JS, its result must be returned
  * immediately from the test body. See the docs for [TestResult] for details.
  */
-@DelicateCoroutinesApi
+@ExperimentalCoroutinesApi
 public fun TestCoroutineScope.runTest(
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     block: suspend TestCoroutineScope.() -> Unit
@@ -263,7 +260,7 @@ public fun TestCoroutineScope.runTest(
  * Since this function returns [TestResult], in order to work correctly on the JS, its result must be returned
  * immediately from the test body. See the docs for [TestResult] for details.
  */
-@DelicateCoroutinesApi
+@ExperimentalCoroutinesApi
 public fun TestDispatcher.runTest(
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     block: suspend TestCoroutineScope.() -> Unit
@@ -280,7 +277,7 @@ private object RunningInRunTest: CoroutineContext.Key<RunningInRunTest>, Corouti
 
 /** The default timeout to use when waiting for asynchronous completions of the coroutines managed by
  * a [TestCoroutineScheduler]. */
-private const val DEFAULT_DISPATCH_TIMEOUT_MS = 10_000L
+private const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
 
 private class TestBodyCoroutine<T>(
     private val testScope: TestCoroutineScope,
