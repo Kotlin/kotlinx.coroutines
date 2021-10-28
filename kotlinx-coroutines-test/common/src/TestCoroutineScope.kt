@@ -32,8 +32,7 @@ public sealed interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCap
 }
 
 private class TestCoroutineScopeImpl(
-    override val coroutineContext: CoroutineContext,
-    private val ownJob: CompletableJob?
+    override val coroutineContext: CoroutineContext
 ):
     TestCoroutineScope,
     UncaughtExceptionCaptor by coroutineContext.uncaughtExceptionCaptor
@@ -45,17 +44,11 @@ private class TestCoroutineScopeImpl(
     private val initialJobs = coroutineContext.activeJobs()
 
     override fun cleanupTestCoroutines() {
-        try {
-            coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
-            coroutineContext.delayController?.cleanupTestCoroutines()
-            val jobs = coroutineContext.activeJobs()
-            if ((jobs - initialJobs).isNotEmpty())
-                throw UncompletedCoroutinesError("Test finished with active jobs: $jobs")
-        } catch (exception: Throwable) {
-            ownJob?.completeExceptionally(exception)
-            throw exception
-        }
-        ownJob?.complete()
+        coroutineContext.uncaughtExceptionCaptor.cleanupTestCoroutinesCaptor()
+        coroutineContext.delayController?.cleanupTestCoroutines()
+        val jobs = coroutineContext.activeJobs()
+        if ((jobs - initialJobs).isNotEmpty())
+            throw UncompletedCoroutinesError("Test finished with active jobs: $jobs")
     }
 }
 
@@ -72,9 +65,7 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
  * * If [context] doesn't have a [ContinuationInterceptor], a [TestCoroutineDispatcher] is created.
  * * If [context] does not provide a [CoroutineExceptionHandler], [TestCoroutineExceptionHandler] is created
  *   automatically.
- * * If [context] provides a [Job], that job is used for the new scope, but is not completed once the scope completes.
- *   On the other hand, if there is no [Job] in the context, a [CompletableJob] is created and completed on
- *   [TestCoroutineScope.cleanupTestCoroutines].
+ * * If [context] provides a [Job], that job is used for the new scope; otherwise, a [CompletableJob] is created.
  *
  * @throws IllegalArgumentException if [context] has both [TestCoroutineScheduler] and a [TestDispatcher] linked to a
  * different scheduler.
@@ -112,16 +103,8 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
         }
         this ?: TestCoroutineExceptionHandler()
     }
-    val job: Job
-    val ownJob: CompletableJob?
-    if (context[Job] == null) {
-        ownJob = SupervisorJob()
-        job = ownJob
-    } else {
-        ownJob = null
-        job = context[Job]!!
-    }
-    return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job, ownJob)
+    val job: Job = context[Job] ?: SupervisorJob()
+    return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job)
 }
 
 private inline val CoroutineContext.uncaughtExceptionCaptor: UncaughtExceptionCaptor

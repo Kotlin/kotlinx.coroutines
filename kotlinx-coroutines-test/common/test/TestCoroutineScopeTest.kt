@@ -95,31 +95,6 @@ class TestCoroutineScopeTest {
         assertFalse(result)
     }
 
-    /** Tests that the coroutine scope completes its job if the job was not passed to it as an argument. */
-    @Test
-    fun testCompletesOwnJob() {
-        val scope = TestCoroutineScope()
-        var handlerCalled = false
-        scope.coroutineContext.job.invokeOnCompletion {
-            handlerCalled = true
-        }
-        scope.cleanupTestCoroutines()
-        assertTrue(handlerCalled)
-    }
-
-    /** Tests that the coroutine scope completes its job if the job was not passed to it as an argument. */
-    @Test
-    fun testDoesNotCompleteGivenJob() {
-        var handlerCalled = false
-        val job = Job()
-        job.invokeOnCompletion {
-            handlerCalled = true
-        }
-        val scope = TestCoroutineScope(job)
-        scope.cleanupTestCoroutines()
-        assertFalse(handlerCalled)
-    }
-
     private val invalidContexts = listOf(
         Dispatchers.Default, // not a [TestDispatcher]
         TestCoroutineDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
