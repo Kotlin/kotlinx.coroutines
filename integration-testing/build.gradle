@@ -82,6 +82,7 @@ task debugAgentTest(type: Test) {
     jvmArgs ('-javaagent:' + project(':kotlinx-coroutines-debug').shadowJar.outputs.files.getFiles()[0])
     testClassesDirs = sourceSet.output.classesDirs
     classpath = sourceSet.runtimeClasspath
+    systemProperties project.properties.subMap(["overwrite.probes"])
 }
 
 task coreAgentTest(type: Test) {
