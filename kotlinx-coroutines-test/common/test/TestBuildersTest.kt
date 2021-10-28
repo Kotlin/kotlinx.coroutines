@@ -104,7 +104,7 @@ class TestBuildersTest {
     }
 
     @Test
-    fun whenInrunBlocking_runBlockingTest_nestsProperly() {
+    fun whenInRunBlocking_runBlockingTest_nestsProperly() {
         // this is not a supported use case, but it is possible so ensure it works
 
         val scope = TestCoroutineScope()
