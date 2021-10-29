@@ -12,13 +12,16 @@ import kotlin.jvm.*
  * A test dispatcher that can interface with a [TestCoroutineScheduler].
  */
 @ExperimentalCoroutinesApi
-public abstract class TestDispatcher: CoroutineDispatcher(), Delay {
+public sealed class TestDispatcher: CoroutineDispatcher(), Delay {
     /** The scheduler that this dispatcher is linked to. */
     @ExperimentalCoroutinesApi
     public abstract val scheduler: TestCoroutineScheduler
 
     /** Notifies the dispatcher that it should process a single event marked with [marker] happening at time [time]. */
-    internal abstract fun processEvent(time: Long, marker: Any)
+    internal open fun processEvent(time: Long, marker: Any) {
+        check(marker is Runnable)
+        marker.run()
+    }
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {

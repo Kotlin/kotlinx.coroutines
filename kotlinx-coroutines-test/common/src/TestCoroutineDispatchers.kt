@@ -29,21 +29,19 @@ import kotlin.coroutines.*
  * scheduler in order for the tasks to run.
  */
 @ExperimentalCoroutinesApi
-public class UnconfinedTestDispatcher(
-    public override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
+@Suppress("FunctionName")
+public fun UnconfinedTestDispatcher(
+    scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
+    name: String? = null
+): TestDispatcher = UnconfinedTestDispatcherImpl(scheduler, name)
+
+private class UnconfinedTestDispatcherImpl(
+    override val scheduler: TestCoroutineScheduler,
     private val name: String? = null
-): TestDispatcher(), Delay {
+): TestDispatcher() {
 
-    /** @suppress */
-    override fun processEvent(time: Long, marker: Any) {
-        check(marker is Runnable)
-        marker.run()
-    }
-
-    /** @suppress */
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
 
-    /** @suppress */
     @Suppress("INVISIBLE_MEMBER")
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         checkSchedulerInContext(scheduler, context)
@@ -64,9 +62,7 @@ public class UnconfinedTestDispatcher(
         )
     }
 
-    /** @suppress */
     override fun toString(): String = "${name ?: "UnconfinedTestDispatcher"}[scheduler=$scheduler]"
-
 }
 
 /**
@@ -88,26 +84,22 @@ public class UnconfinedTestDispatcher(
  *
  * @see UnconfinedTestDispatcher for a dispatcher that is not confined to any particular thread.
  */
+@Suppress("FunctionName")
+public fun StandardTestDispatcher(
+    scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
+    name: String? = null
+): TestDispatcher = StandardTestDispatcherImpl(scheduler, name)
+
 @ExperimentalCoroutinesApi
-public class StandardTestDispatcher(
-    public override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
+private class StandardTestDispatcherImpl(
+    override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
     private val name: String? = null
-): TestDispatcher(), Delay {
+): TestDispatcher() {
 
-    /** @suppress */
-    override fun processEvent(time: Long, marker: Any) {
-        check(marker is Runnable)
-        marker.run()
-    }
-
-    /** @suppress */
-    @Suppress("INVISIBLE_MEMBER")
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         checkSchedulerInContext(scheduler, context)
         scheduler.registerEvent(this, 0, block) { false }
     }
 
-    /** @suppress */
-    override fun toString(): String = "${name ?: "ConfinedTestDispatcher"}[scheduler=$scheduler]"
-
+    override fun toString(): String = "${name ?: "StandardTestDispatcher"}[scheduler=$scheduler]"
 }
