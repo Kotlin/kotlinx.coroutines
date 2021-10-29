@@ -12,19 +12,18 @@ import kotlin.coroutines.*
  * A scope which provides detailed control over the execution of coroutines for tests.
  */
 @ExperimentalCoroutinesApi
-public sealed interface TestCoroutineScope: CoroutineScope {
+public sealed interface TestCoroutineScope : CoroutineScope {
     /**
      * Called after the test completes.
      *
-     * * It checks that there were no uncaught exceptions reported via [reportException]. If there were any, then the
-     *   first one is thrown, whereas the rest are printed to the standard output or the standard error output
-     *   (see [Throwable.printStackTrace]).
+     * * It checks that there were no uncaught exceptions caught by its [CoroutineExceptionHandler].
+     *   If there were any, then the first one is thrown, whereas the rest are suppressed by it.
      * * It runs the tasks pending in the scheduler at the current time. If there are any uncompleted tasks afterwards,
      *   it fails with [UncompletedCoroutinesError].
      * * It checks whether some new child [Job]s were created but not completed since this [TestCoroutineScope] was
      *   created. If so, it fails with [UncompletedCoroutinesError].
      *
-     * For backwards compatibility, if the [CoroutineExceptionHandler] is an [UncaughtExceptionCaptor], its
+     * For backward compatibility, if the [CoroutineExceptionHandler] is an [UncaughtExceptionCaptor], its
      * [TestCoroutineExceptionHandler.cleanupTestCoroutines] behavior is performed.
      * Likewise, if the [ContinuationInterceptor] is a [DelayController], its [DelayController.cleanupTestCoroutines]
      * is called.
@@ -41,6 +40,14 @@ public sealed interface TestCoroutineScope: CoroutineScope {
      */
     @ExperimentalCoroutinesApi
     public val testScheduler: TestCoroutineScheduler
+}
+
+private class TestCoroutineScopeImpl(
+    override val coroutineContext: CoroutineContext
+) : TestCoroutineScope {
+    private val lock = SynchronizedObject()
+    private var exceptions = mutableListOf<Throwable>()
+    private var cleanedUp = false
 
     /**
      * Reports an exception so that it is thrown on [cleanupTestCoroutines].
@@ -48,28 +55,17 @@ public sealed interface TestCoroutineScope: CoroutineScope {
      * If several exceptions are reported, only the first one will be thrown, and the other ones will be suppressed by
      * it.
      *
-     * @throws IllegalStateException with the [Throwable.cause] set to [throwable] if [cleanupTestCoroutines] was
-     * already called.
+     * Returns `false` if [cleanupTestCoroutines] was already called.
      */
-    @ExperimentalCoroutinesApi
-    public fun reportException(throwable: Throwable)
-}
-
-private class TestCoroutineScopeImpl(
-    override val coroutineContext: CoroutineContext
-): TestCoroutineScope
-{
-    private val lock = SynchronizedObject()
-    private var exceptions = mutableListOf<Throwable>()
-    private var cleanedUp = false
-
-    override fun reportException(throwable: Throwable) {
+    fun reportException(throwable: Throwable): Boolean =
         synchronized(lock) {
-            if (cleanedUp)
-                throw ExceptionReportAfterCleanup(throwable)
-            exceptions.add(throwable)
+            if (cleanedUp) {
+                false
+            } else {
+                exceptions.add(throwable)
+                true
+            }
         }
-    }
 
     override val testScheduler: TestCoroutineScheduler
         get() = coroutineContext[TestCoroutineScheduler]!!
@@ -111,7 +107,7 @@ private class TestCoroutineScopeImpl(
     }
 }
 
-internal class ExceptionReportAfterCleanup(cause: Throwable): IllegalStateException(
+internal class ExceptionReportAfterCleanup(cause: Throwable) : IllegalStateException(
     "Attempting to report an uncaught exception after the test coroutine scope was already cleaned up",
     cause
 )
@@ -125,10 +121,13 @@ private fun CoroutineContext.activeJobs(): Set<Job> {
  *
  * [createTestCoroutineScope] is a similar function that defaults to [StandardTestDispatcher].
  */
-@Deprecated("This constructs a `TestCoroutineScope` with a deprecated `CoroutineDispatcher` by default. " +
-    "Please use `createTestCoroutineScope` instead.",
-    ReplaceWith("createTestCoroutineScope(TestCoroutineDispatcher() + TestCoroutineExceptionHandler() + context)",
-        "kotlin.coroutines.EmptyCoroutineContext"),
+@Deprecated(
+    "This constructs a `TestCoroutineScope` with a deprecated `CoroutineDispatcher` by default. " +
+        "Please use `createTestCoroutineScope` instead.",
+    ReplaceWith(
+        "createTestCoroutineScope(TestCoroutineDispatcher() + TestCoroutineExceptionHandler() + context)",
+        "kotlin.coroutines.EmptyCoroutineContext"
+    ),
     level = DeprecationLevel.WARNING
 )
 public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
@@ -143,8 +142,13 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
  * * If [context] doesn't define a [TestCoroutineScheduler] for orchestrating the virtual time used for delay-skipping,
  *   a new one is created, unless a [TestDispatcher] is provided, in which case [TestDispatcher.scheduler] is used.
  * * If [context] doesn't have a [ContinuationInterceptor], a [StandardTestDispatcher] is created.
- * * If [context] does not provide a [CoroutineExceptionHandler], [TestCoroutineExceptionHandler] is created
- *   automatically.
+ * * A [CoroutineExceptionHandler] is created that makes [TestCoroutineScope.cleanupTestCoroutines] throw if there were
+ *   any uncaught exceptions, or forwards the exceptions further in a platform-specific manner if the cleanup was
+ *   already performed when an exception happened. Passing a [CoroutineExceptionHandler] is illegal, unless it's an
+ *   [UncaughtExceptionCaptor], in which case the behavior is preserved for the time being for backward compatibility.
+ *   If you need to have a specific [CoroutineExceptionHandler], please pass it to [launch] on an already-created
+ *   [TestCoroutineScope] and share your use case at
+ *   [our issue tracker](https://github.com/Kotlin/kotlinx.coroutines/issues).
  * * If [context] provides a [Job], that job is used for the new scope; otherwise, a [CompletableJob] is created.
  *
  * @throws IllegalArgumentException if [context] has both [TestCoroutineScheduler] and a [TestDispatcher] linked to a
@@ -174,26 +178,25 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
         }
         else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
     }
-    val linkedHandler: TestExceptionHandlerContextElement?
-    val exceptionHandler: CoroutineExceptionHandler
-    val handlerOwner = Any()
-    when (val exceptionHandlerInCtx = context[CoroutineExceptionHandler]) {
+    var scope: TestCoroutineScopeImpl? = null
+    val exceptionHandler = when (val exceptionHandler = context[CoroutineExceptionHandler]) {
+        is UncaughtExceptionCaptor -> exceptionHandler
         null -> {
-            linkedHandler = TestExceptionHandlerContextElement(
-                { _, throwable -> reportException(throwable) },
-                null,
-                handlerOwner)
-            exceptionHandler = linkedHandler
+            val lock = SynchronizedObject()
+            CoroutineExceptionHandler { context, throwable ->
+                val reported = synchronized(lock) {
+                    scope!!.reportException(throwable)
+                }
+                if (!reported)
+                    throw throwable // let this exception crash everything
+            }
         }
-        else -> {
-            linkedHandler = (exceptionHandlerInCtx as? TestExceptionHandlerContextElement
-                )?.claimOwnershipOrCopy(handlerOwner)
-            exceptionHandler = linkedHandler ?: exceptionHandlerInCtx
-        }
+        else -> throw IllegalArgumentException("A CoroutineExceptionHandler was passed to TestCoroutineScope")
     }
     val job: Job = context[Job] ?: Job()
-    return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job)
-        .also { linkedHandler?.registerTestCoroutineScope(handlerOwner, it) }
+    return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job).also {
+        scope = it
+    }
 }
 
 
@@ -219,10 +222,12 @@ public val TestCoroutineScope.currentTime: Long
  * @see TestCoroutineScheduler.advanceTimeBy
  */
 @ExperimentalCoroutinesApi
-@Deprecated("The name of this function is misleading: it not only advances the time, but also runs the tasks " +
-    "scheduled *at* the ending moment.",
+@Deprecated(
+    "The name of this function is misleading: it not only advances the time, but also runs the tasks " +
+        "scheduled *at* the ending moment.",
     ReplaceWith("this.testScheduler.apply { advanceTimeBy(delayTimeMillis); runCurrent() }"),
-    DeprecationLevel.WARNING)
+    DeprecationLevel.WARNING
+)
 public fun TestCoroutineScope.advanceTimeBy(delayTimeMillis: Long): Unit =
     when (val controller = coroutineContext.delayController) {
         null -> {
@@ -256,34 +261,46 @@ public fun TestCoroutineScope.runCurrent() {
 }
 
 @ExperimentalCoroutinesApi
-@Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
-    "Only `TestCoroutineDispatcher` supports pausing; pause it directly, or use a dispatcher that is always " +
-    "\"paused\", like `StandardTestDispatcher`.",
-    ReplaceWith("(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher(block)",
-        "kotlin.coroutines.ContinuationInterceptor"),
-    DeprecationLevel.WARNING)
+@Deprecated(
+    "The test coroutine scope isn't able to pause its dispatchers in the general case. " +
+        "Only `TestCoroutineDispatcher` supports pausing; pause it directly, or use a dispatcher that is always " +
+        "\"paused\", like `StandardTestDispatcher`.",
+    ReplaceWith(
+        "(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher(block)",
+        "kotlin.coroutines.ContinuationInterceptor"
+    ),
+    DeprecationLevel.WARNING
+)
 public suspend fun TestCoroutineScope.pauseDispatcher(block: suspend () -> Unit) {
     delayControllerForPausing.pauseDispatcher(block)
 }
 
 @ExperimentalCoroutinesApi
-@Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
-    "Only `TestCoroutineDispatcher` supports pausing; pause it directly, or use a dispatcher that is always " +
+@Deprecated(
+    "The test coroutine scope isn't able to pause its dispatchers in the general case. " +
+        "Only `TestCoroutineDispatcher` supports pausing; pause it directly, or use a dispatcher that is always " +
         "\"paused\", like `StandardTestDispatcher`.",
-    ReplaceWith("(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher()",
-        "kotlin.coroutines.ContinuationInterceptor"),
-level = DeprecationLevel.WARNING)
+    ReplaceWith(
+        "(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher()",
+        "kotlin.coroutines.ContinuationInterceptor"
+    ),
+    level = DeprecationLevel.WARNING
+)
 public fun TestCoroutineScope.pauseDispatcher() {
     delayControllerForPausing.pauseDispatcher()
 }
 
 @ExperimentalCoroutinesApi
-@Deprecated("The test coroutine scope isn't able to pause its dispatchers in the general case. " +
-    "Only `TestCoroutineDispatcher` supports pausing; pause it directly, or use a dispatcher that is always " +
+@Deprecated(
+    "The test coroutine scope isn't able to pause its dispatchers in the general case. " +
+        "Only `TestCoroutineDispatcher` supports pausing; pause it directly, or use a dispatcher that is always " +
         "\"paused\", like `StandardTestDispatcher`.",
-    ReplaceWith("(this.coroutineContext[ContinuationInterceptor]!! as DelayController).resumeDispatcher()",
-        "kotlin.coroutines.ContinuationInterceptor"),
-    level = DeprecationLevel.WARNING)
+    ReplaceWith(
+        "(this.coroutineContext[ContinuationInterceptor]!! as DelayController).resumeDispatcher()",
+        "kotlin.coroutines.ContinuationInterceptor"
+    ),
+    level = DeprecationLevel.WARNING
+)
 public fun TestCoroutineScope.resumeDispatcher() {
     delayControllerForPausing.resumeDispatcher()
 }
@@ -301,7 +318,8 @@ public fun TestCoroutineScope.resumeDispatcher() {
         "easily misused. It is only present for backward compatibility and will be removed in the subsequent " +
         "releases. If you need to check the list of exceptions, please consider creating your own " +
         "`CoroutineExceptionHandler`.",
-    level = DeprecationLevel.WARNING)
+    level = DeprecationLevel.WARNING
+)
 public val TestCoroutineScope.uncaughtExceptions: List<Throwable>
     get() = (coroutineContext[CoroutineExceptionHandler] as? UncaughtExceptionCaptor)?.uncaughtExceptions
         ?: emptyList()
@@ -314,4 +332,4 @@ private val TestCoroutineScope.delayControllerForPausing: DelayController
  * Thrown when a test has completed and there are tasks that are not completed or cancelled.
  */
 @ExperimentalCoroutinesApi
-internal class UncompletedCoroutinesError(message: String): AssertionError(message)
+internal class UncompletedCoroutinesError(message: String) : AssertionError(message)

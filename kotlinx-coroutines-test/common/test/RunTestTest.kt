@@ -269,9 +269,9 @@ class RunTestTest {
         }
     }, {
         runTest {
-            reportException(TestException("x"))
-            reportException(TestException("y"))
-            reportException(TestException("z"))
+            launch(SupervisorJob()) { throw TestException("x") }
+            launch(SupervisorJob()) { throw TestException("y") }
+            launch(SupervisorJob()) { throw TestException("z") }
             throw TestException("w")
         }
     })

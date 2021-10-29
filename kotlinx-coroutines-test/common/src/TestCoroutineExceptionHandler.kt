@@ -12,7 +12,9 @@ import kotlin.coroutines.*
  * Access uncaught coroutine exceptions captured during test execution.
  */
 @Deprecated(
-    "Consider whether a `TestExceptionHandler` would work instead. If not, please report your use case at https://github.com/Kotlin/kotlinx.coroutines/issues.",
+    "Consider whether the default mechanism of handling uncaught exceptions is sufficient. " +
+        "If not, try writing your own `CoroutineExceptionHandler` and " +
+        "please report your use case at https://github.com/Kotlin/kotlinx.coroutines/issues.",
     level = DeprecationLevel.WARNING
 )
 public interface UncaughtExceptionCaptor {
@@ -38,12 +40,12 @@ public interface UncaughtExceptionCaptor {
 /**
  * An exception handler that captures uncaught exceptions in tests.
  */
-@Deprecated("You can use `TestExceptionHandler` to define an exception handler that is linked to " +
-    "a `TestCoroutineScope`, or define your own `CoroutineExceptionHandler` if you just need to handle uncaught " +
-    "exceptions without a special `TestCoroutineScope` integration.", level = DeprecationLevel.WARNING)
+@Deprecated(
+    "It's better to define one's own `CoroutineExceptionHandler` if you just need to handle '" +
+        "uncaught exceptions without a special `TestCoroutineScope` integration.", level = DeprecationLevel.WARNING
+)
 public class TestCoroutineExceptionHandler :
-    AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler, UncaughtExceptionCaptor
-{
+    AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler, UncaughtExceptionCaptor {
     private val _exceptions = mutableListOf<Throwable>()
     private val _lock = SynchronizedObject()
     private var _coroutinesCleanedUp = false

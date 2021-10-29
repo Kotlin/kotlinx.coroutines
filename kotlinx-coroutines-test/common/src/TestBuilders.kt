@@ -43,7 +43,10 @@ import kotlin.coroutines.*
  * @param testBody The code of the unit-test.
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
-public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
+public fun runBlockingTest(
+    context: CoroutineContext = EmptyCoroutineContext,
+    testBody: suspend TestCoroutineScope.() -> Unit
+) {
     val scope = createTestCoroutineScope(TestCoroutineDispatcher() + SupervisorJob() + context)
     val scheduler = scope.testScheduler
     val deferred = scope.async {
@@ -235,7 +238,7 @@ public fun runTest(
                 }
                 onTimeout(dispatchTimeoutMs) {
                     try {
-                        testScope.cleanupTestCoroutines()
+                        testScope.cleanup()
                     } catch (e: UncompletedCoroutinesError) {
                         // we expect these and will instead throw a more informative exception just below.
                     }
@@ -245,7 +248,7 @@ public fun runTest(
         }
         testScope.getCompletionExceptionOrNull()?.let {
             try {
-                testScope.cleanupTestCoroutines()
+                testScope.cleanup()
             } catch (e: UncompletedCoroutinesError) {
                 // it's normal that some jobs are not completed if the test body has failed, won't clutter the output
             } catch (e: Throwable) {
@@ -253,7 +256,7 @@ public fun runTest(
             }
             throw it
         }
-        testScope.cleanupTestCoroutines()
+        testScope.cleanup()
     }
 }
 
@@ -295,7 +298,7 @@ public fun TestDispatcher.runTest(
     runTest(this, dispatchTimeoutMs, block)
 
 /** A coroutine context element indicating that the coroutine is running inside `runTest`. */
-private object RunningInRunTest: CoroutineContext.Key<RunningInRunTest>, CoroutineContext.Element {
+private object RunningInRunTest : CoroutineContext.Key<RunningInRunTest>, CoroutineContext.Element {
     override val key: CoroutineContext.Key<*>
         get() = this
 
@@ -308,11 +311,20 @@ private const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
 
 private class TestBodyCoroutine<T>(
     private val testScope: TestCoroutineScope,
-) : AbstractCoroutine<T>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope
-{
+) : AbstractCoroutine<T>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope {
+
     override val testScheduler get() = testScope.testScheduler
 
-    override fun cleanupTestCoroutines() = testScope.cleanupTestCoroutines()
+    @Deprecated(
+        "This deprecation is to prevent accidentally calling `cleanupTestCoroutines` in our own code.",
+        ReplaceWith("this.cleanup()"),
+        DeprecationLevel.ERROR
+    )
+    override fun cleanupTestCoroutines() =
+        throw UnsupportedOperationException(
+            "Calling `cleanupTestCoroutines` inside `runTest` is prohibited: " +
+                "it will be called at the end of the test in any case."
+        )
 
-    override fun reportException(throwable: Throwable) = testScope.reportException(throwable)
+    fun cleanup() = testScope.cleanupTestCoroutines()
 }

@@ -134,23 +134,13 @@ class TestCoroutineScopeTest {
         }
     }
 
-    /** Tests that throwing after cleaning up is forbidden. */
-    @Test
-    fun testReportingAfterClosing() {
-        val scope = createTestCoroutineScope()
-        scope.cleanupTestCoroutines()
-        assertFailsWith<IllegalStateException> {
-            scope.reportException(TestException())
-        }
-    }
-
     /** Tests that, when reporting several exceptions, the first one is thrown, with the rest suppressed. */
     @Test
     fun testSuppressedExceptions() {
         createTestCoroutineScope().apply {
-            reportException(TestException("x"))
-            reportException(TestException("y"))
-            reportException(TestException("z"))
+            launch(SupervisorJob()) { throw TestException("x") }
+            launch(SupervisorJob()) { throw TestException("y") }
+            launch(SupervisorJob()) { throw TestException("z") }
             try {
                 cleanupTestCoroutines()
                 fail("should not be reached")
@@ -166,6 +156,7 @@ class TestCoroutineScopeTest {
     companion object {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]
+            CoroutineExceptionHandler { _, _ -> }, // not an [UncaughtExceptionCaptor]
             StandardTestDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
         )
     }
