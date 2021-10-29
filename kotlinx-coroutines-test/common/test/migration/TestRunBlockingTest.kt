@@ -310,6 +310,15 @@ class TestRunBlockingTest {
     }
 
     @Test
+    fun runBlockingTestBuilder_throwsOnBadHandler() {
+        assertFailsWith<IllegalArgumentException> {
+            runBlockingTest(CoroutineExceptionHandler { _, _ -> }) {
+
+            }
+        }
+    }
+
+    @Test
     fun pauseDispatcher_disablesAutoAdvance_forCurrent() = runBlockingTest {
         var mutable = 0
         pauseDispatcher {
@@ -418,5 +427,14 @@ class TestRunBlockingTest {
     @Test
     fun testOverrideExceptionHandler() = runBlockingTest(exceptionHandler) {
         assertSame(coroutineContext[CoroutineExceptionHandler], exceptionHandler)
+    }
+
+    @Test
+    fun testOverrideExceptionHandlerError() {
+        assertFailsWith<IllegalArgumentException> {
+            runBlockingTest(CoroutineExceptionHandler { _, _ -> }) {
+                fail("Unreached")
+            }
+        }
     }
 }

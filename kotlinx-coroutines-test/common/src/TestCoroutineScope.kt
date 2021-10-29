@@ -183,7 +183,7 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
         is UncaughtExceptionCaptor -> exceptionHandler
         null -> {
             val lock = SynchronizedObject()
-            CoroutineExceptionHandler { context, throwable ->
+            CoroutineExceptionHandler { _, throwable ->
                 val reported = synchronized(lock) {
                     scope!!.reportException(throwable)
                 }
@@ -191,7 +191,11 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
                     throw throwable // let this exception crash everything
             }
         }
-        else -> throw IllegalArgumentException("A CoroutineExceptionHandler was passed to TestCoroutineScope")
+        else -> throw IllegalArgumentException(
+            "A CoroutineExceptionHandler was passed to TestCoroutineScope. " +
+                "Please pass it as an argument to a `launch` or `async` block on an already-created scope " +
+                "if uncaught exceptions require special treatment."
+        )
     }
     val job: Job = context[Job] ?: Job()
     return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job).also {
