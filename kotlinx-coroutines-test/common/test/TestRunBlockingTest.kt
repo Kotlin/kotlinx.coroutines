@@ -436,5 +436,3 @@ class TestRunBlockingTest {
         }
     }
 }
-
-private class TestException(message: String? = null): Exception(message)
