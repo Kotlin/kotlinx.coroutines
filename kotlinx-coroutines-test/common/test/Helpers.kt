@@ -7,6 +7,7 @@ package kotlinx.coroutines.test
 import kotlinx.atomicfu.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The number of milliseconds that is sure not to pass [assertRunsFast].
@@ -28,7 +29,7 @@ inline fun <T> assertRunsFast(timeout: Duration, block: () -> T): T {
  * Asserts that a block completed within two seconds.
  */
 @OptIn(ExperimentalTime::class)
-inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(Duration.seconds(2), block)
+inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(2.seconds, block)
 
 /**
  * Passes [test] as an argument to [block], but as a function returning not a [TestResult] but [Unit].

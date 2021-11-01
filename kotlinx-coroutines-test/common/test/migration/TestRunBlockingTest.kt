@@ -235,12 +235,13 @@ class TestRunBlockingTest {
     fun callingAsyncFunction_executesAsyncBlockImmediately() = runBlockingTest {
         assertRunsFast {
             var executed = false
-            async {
+            val deferred = async {
                 delay(SLOW)
                 executed = true
             }
             advanceTimeBy(SLOW)
 
+            assertTrue(deferred.isCompleted)
             assertTrue(executed)
         }
     }
