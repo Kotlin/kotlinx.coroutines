@@ -13,8 +13,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * Testing libraries may expose this interface to the tests instead of [TestCoroutineDispatcher].
  */
 @ExperimentalCoroutinesApi
-@Deprecated("Use `TestCoroutineScheduler` to control virtual time.",
-    level = DeprecationLevel.WARNING)
+@Deprecated(
+    "Use `TestCoroutineScheduler` to control virtual time.",
+    level = DeprecationLevel.WARNING
+)
 public interface DelayController {
     /**
      * Returns the current virtual clock-time as it is known to this Dispatcher.
@@ -123,20 +125,25 @@ public interface DelayController {
     public fun resumeDispatcher()
 }
 
-internal interface SchedulerAsDelayController: DelayController {
+internal interface SchedulerAsDelayController : DelayController {
     public val scheduler: TestCoroutineScheduler
 
     /** @suppress */
-    @Deprecated("This property delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+    @Deprecated(
+        "This property delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
         ReplaceWith("this.scheduler.currentTime"),
-        level = DeprecationLevel.WARNING)
-    override val currentTime: Long get() = scheduler.currentTime
+        level = DeprecationLevel.WARNING
+    )
+    override val currentTime: Long
+        get() = scheduler.currentTime
 
 
     /** @suppress */
-    @Deprecated("This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+    @Deprecated(
+        "This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
         ReplaceWith("this.scheduler.apply { advanceTimeBy(delayTimeMillis); runCurrent() }"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.WARNING
+    )
     override fun advanceTimeBy(delayTimeMillis: Long): Long {
         val oldTime = scheduler.currentTime
         scheduler.advanceTimeBy(delayTimeMillis)
@@ -145,9 +152,11 @@ internal interface SchedulerAsDelayController: DelayController {
     }
 
     /** @suppress */
-    @Deprecated("This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+    @Deprecated(
+        "This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
         ReplaceWith("this.scheduler.advanceUntilIdle()"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.WARNING
+    )
     override fun advanceUntilIdle(): Long {
         val oldTime = scheduler.currentTime
         scheduler.advanceUntilIdle()
@@ -155,9 +164,11 @@ internal interface SchedulerAsDelayController: DelayController {
     }
 
     /** @suppress */
-    @Deprecated("This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+    @Deprecated(
+        "This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
         ReplaceWith("this.scheduler.runCurrent()"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.WARNING
+    )
     override fun runCurrent(): Unit = scheduler.runCurrent()
 
     /** @suppress */
