@@ -457,11 +457,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // for user-defined handlers it allocates a JobNode object that we might not need, but this is Ok.
         val node: JobNode = makeNode(handler, onCancelling)
         /*
-         * Here we have to ensure that on races we use the same node for immediate invoke
-         * and list addition (see comment to JobNode.invoke) in order to prevent double invocations
-         * and have single markInvoked to synchronize on.
+         * LinkedList algorithm does not support removing and re-adding the same node,
+         * so here we check whether the node is already added to the list to avoid adding the node twice.
          */
-        var nodeAdded: JobNode? = null
+        var nodeAdded = false
         loopOnState { state ->
             when (state) {
                 is Empty -> { // EMPTY_X state -- no completion handlers
@@ -489,9 +488,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                             // or we are adding a child to a coroutine that is not completing yet
                             if (rootCause == null || handler.isHandlerOf<ChildHandleNode>() && !state.isCompleting) {
                                 // Note: add node the list while holding lock on state (make sure it cannot change)
-                                nodeAdded = node
-                                if (!addLastIf(state, list, node)) {
-
+                                if (!nodeAdded) list.addLast(node)
+                                if (this.state !== state) {
                                     /*
                                      * Here we have an additional check for ChildCompletion. Invoking the handler once is not enough
                                      * for this particular kind of node -- the caller makes a decision based on whether the node was added
@@ -503,7 +501,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                                      * invoked or skipped the node, thus we additionally synchronize on 'markInvoked'.
                                      */
                                     if (node is ChildCompletion && !node.markInvoked()) return node
-                                    return@loopOnState // retry
+                                    // The state can only change to Complete here, so the node can stay in the list, just retry
+                                    return@loopOnState
                                 }
                                 // just return node if we don't have to invoke handler (not cancelling yet)
                                 if (rootCause == null) return node
@@ -515,21 +514,27 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                     if (rootCause != null) {
                         // Note: attachChild uses invokeImmediately, so it gets invoked when adding to cancelled job
                         if (invokeImmediately) {
-                            (nodeAdded ?: node).invoke(rootCause)
+                            node.invoke(rootCause)
                         }
                         return handle
                     } else {
-                        nodeAdded = node
-                        // Here again, we try to prevent concurrent finalization of the parent,
-                        // if the parent fails to add ChildCompletion because the child changed it's state to Completed.
-                        if (addLastIf(state, list, node) || node is ChildCompletion && !node.markInvoked()) {
+                        if (!nodeAdded) list.addLast(node)
+                        if (this.state !== state) {
+                            // Here again, we try to prevent concurrent finalization of the parent,
+                            // if the parent fails to add ChildCompletion because the child changed it's state to Completed.
+                            if (node is ChildCompletion && !node.markInvoked()) return node
+                            // If the state has changed to Complete, the node can stay in the list, just retry.
+                            if (this.state !is Incomplete) return@loopOnState
+                            // If the state is Incomplete, set the flag that the node is already added to the list instead of removing it.
+                            nodeAdded = true
+                        } else {
                             return node
                         }
                     }
                 }
                 else -> { // is complete
                     if (invokeImmediately) {
-                        (nodeAdded ?: node).invoke((state as? CompletedExceptionally)?.cause)
+                        node.invoke((state as? CompletedExceptionally)?.cause)
                     }
                     return NonDisposableHandle
                 }
@@ -548,25 +553,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         }
         node.job = this
         return node
-    }
-
-    private fun addLastIf(expectedState: Any, list: NodeList, node: JobNode): Boolean {
-        list.addLast(node)
-        if (this.state === expectedState) return true
-        /*
-         * Here we *have to* remove the node.
-         * E.g.consider the following transition of Job state:
-         * [List of handlers] -> [Finishing [List of handlers]]
-         *
-         * In that case, we'll retry 'addLast'. Even though `node.invoke()` is idempotent,
-         * our linked list cannot reuse nodes, so we forcefully remove it here to re-add on
-         * the next iteration.
-         *
-         * Alternatively, we could've checked that the node is already added to the list,
-         * but it'd significantly complicate the reasoning about the code.
-         */
-        node.dispose()
-        return false
     }
 
     private fun promoteEmptyToNodeList(state: Empty) {
