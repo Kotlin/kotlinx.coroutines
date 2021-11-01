@@ -269,7 +269,7 @@ internal expect fun createTestResult(testProcedure: suspend () -> Unit): TestRes
 /**
  * Runs a test in a [TestCoroutineScope] based on this one.
  *
- * Calls [runTest] using a coroutine context from this [TestCoroutineScope]. The [TestCoroutineScope] used to run
+ * Calls [runTest] using a coroutine context from this [TestCoroutineScope]. The [TestCoroutineScope] used to run the
  * [block] will be different from this one, but will use its [Job] as a parent.
  *
  * Since this function returns [TestResult], in order to work correctly on the JS, its result must be returned

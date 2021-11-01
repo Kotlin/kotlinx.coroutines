@@ -275,4 +275,22 @@ class RunTestTest {
             throw TestException("w")
         }
     })
+
+    /** Tests that [TestCoroutineScope.runTest] does not inherit the exception handler and works. */
+    @Test
+    fun testScopeRunTestExceptionHandler(): TestResult {
+        val scope = createTestCoroutineScope()
+        return testResultMap({
+            try {
+                it()
+                fail("should not be reached")
+            } catch (e: TestException) {
+                scope.cleanupTestCoroutines() // should not fail
+            }
+        }, {
+            scope.runTest {
+                launch(SupervisorJob()) { throw TestException("x") }
+            }
+        })
+    }
 }

@@ -179,18 +179,22 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
         else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
     }
     var scope: TestCoroutineScopeImpl? = null
-    val exceptionHandler = when (val exceptionHandler = context[CoroutineExceptionHandler]) {
-        is UncaughtExceptionCaptor -> exceptionHandler
-        null -> {
-            val lock = SynchronizedObject()
-            CoroutineExceptionHandler { _, throwable ->
+    val ownExceptionHandler = run {
+        val lock = SynchronizedObject()
+        object : AbstractCoroutineContextElement(CoroutineExceptionHandler), TestCoroutineScopeExceptionHandler {
+            override fun handleException(context: CoroutineContext, exception: Throwable) {
                 val reported = synchronized(lock) {
-                    scope!!.reportException(throwable)
+                    scope!!.reportException(exception)
                 }
                 if (!reported)
-                    throw throwable // let this exception crash everything
+                    throw exception // let this exception crash everything
             }
         }
+    }
+    val exceptionHandler = when (val exceptionHandler = context[CoroutineExceptionHandler]) {
+        is UncaughtExceptionCaptor -> exceptionHandler
+        null -> ownExceptionHandler
+        is TestCoroutineScopeExceptionHandler -> ownExceptionHandler
         else -> throw IllegalArgumentException(
             "A CoroutineExceptionHandler was passed to TestCoroutineScope. " +
                 "Please pass it as an argument to a `launch` or `async` block on an already-created scope " +
@@ -203,6 +207,10 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
     }
 }
 
+/** A marker that shows that this [CoroutineExceptionHandler] was created for [TestCoroutineScope]. With this,
+ * constructing a new [TestCoroutineScope] with the [CoroutineScope.coroutineContext] of an existing one will override
+ * the exception handler, instead of failing. */
+private interface TestCoroutineScopeExceptionHandler: CoroutineExceptionHandler
 
 private inline val CoroutineContext.delayController: DelayController?
     get() {
