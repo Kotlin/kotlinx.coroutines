@@ -149,10 +149,12 @@ public expect class TestResult
  *
  * ### Task scheduling
  *
- * Delay-skipping is achieved by using virtual time. [TestCoroutineScheduler] is automatically created (if it wasn't
- * passed in some way in [context]) and can be used to control the virtual time, advancing it, running the tasks
- * scheduled at a specific time etc. Some convenience methods are available on [TestCoroutineScope] to control the
- * scheduler.
+ * Delay-skipping is achieved by using virtual time.
+ * If [Dispatchers.Main] is set to a [TestDispatcher] via [Dispatchers.setMain] before the test,
+ * then its [TestCoroutineScheduler] is used;
+ * otherwise, a new one is automatically created (or taken from [context] in some way) and can be used to control
+ * the virtual time, advancing it, running the tasks scheduled at a specific time etc.
+ * Some convenience methods are available on [TestCoroutineScope] to control the scheduler.
  *
  * Delays in code that runs inside dispatchers that don't use a [TestCoroutineScheduler] don't get skipped:
  * ```
