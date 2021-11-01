@@ -6,6 +6,8 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.test.internal.*
+import kotlinx.coroutines.test.internal.TestMainDispatcher
 import kotlin.coroutines.*
 
 /**
@@ -135,7 +137,10 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
  *
  * It ensures that all the test module machinery is properly initialized.
  * * If [context] doesn't define a [TestCoroutineScheduler] for orchestrating the virtual time used for delay-skipping,
- *   a new one is created, unless a [TestDispatcher] is provided, in which case [TestDispatcher.scheduler] is used.
+ *   a new one is created, unless either
+ *   - a [TestDispatcher] is provided, in which case [TestDispatcher.scheduler] is used;
+ *   - at the moment of the creation of the scope, [Dispatchers.Main] is delegated to a [TestDispatcher], in which case
+ *     its [TestCoroutineScheduler] is used.
  * * If [context] doesn't have a [ContinuationInterceptor], a [StandardTestDispatcher] is created.
  * * A [CoroutineExceptionHandler] is created that makes [TestCoroutineScope.cleanupTestCoroutines] throw if there were
  *   any uncaught exceptions, or forwards the exceptions further in a platform-specific manner if the cleanup was
@@ -168,7 +173,9 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
             dispatcher
         }
         null -> {
-            scheduler = context[TestCoroutineScheduler] ?: TestCoroutineScheduler()
+            val mainDispatcherScheduler =
+                ((Dispatchers.Main as? TestMainDispatcher)?.delegate as? TestDispatcher)?.scheduler
+            scheduler = context[TestCoroutineScheduler] ?: mainDispatcherScheduler ?: TestCoroutineScheduler()
             StandardTestDispatcher(scheduler)
         }
         else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")

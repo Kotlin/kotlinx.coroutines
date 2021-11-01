@@ -48,6 +48,33 @@ class TestCoroutineScopeTest {
             assertSame(scheduler, scope.coroutineContext[TestCoroutineScheduler])
             assertSame(dispatcher, scope.coroutineContext[ContinuationInterceptor])
         }
+        // Reuses the scheduler of `Dispatchers.Main`
+        run {
+            val scheduler = TestCoroutineScheduler()
+            val mainDispatcher = StandardTestDispatcher(scheduler)
+            Dispatchers.setMain(mainDispatcher)
+            try {
+                val scope = createTestCoroutineScope()
+                assertSame(scheduler, scope.coroutineContext[TestCoroutineScheduler])
+                assertNotSame(mainDispatcher, scope.coroutineContext[ContinuationInterceptor])
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
+        // Does not reuse the scheduler of `Dispatchers.Main` if one is explicitly passed
+        run {
+            val mainDispatcher = StandardTestDispatcher()
+            Dispatchers.setMain(mainDispatcher)
+            try {
+                val scheduler = TestCoroutineScheduler()
+                val scope = createTestCoroutineScope(scheduler)
+                assertSame(scheduler, scope.coroutineContext[TestCoroutineScheduler])
+                assertNotSame(mainDispatcher.scheduler, scope.coroutineContext[TestCoroutineScheduler])
+                assertNotSame(mainDispatcher, scope.coroutineContext[ContinuationInterceptor])
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
     }
 
     /** Tests that the cleanup procedure throws if there were uncompleted delays by the end. */

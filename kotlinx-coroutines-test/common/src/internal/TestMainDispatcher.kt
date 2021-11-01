@@ -10,7 +10,7 @@ import kotlin.coroutines.*
  * The testable main dispatcher used by kotlinx-coroutines-test.
  * It is a [MainCoroutineDispatcher] that delegates all actions to a settable delegate.
  */
-internal class TestMainDispatcher(private var delegate: CoroutineDispatcher):
+internal class TestMainDispatcher(var delegate: CoroutineDispatcher):
     MainCoroutineDispatcher(),
     Delay by (delegate as? Delay ?: defaultDelay)
 {
@@ -24,10 +24,6 @@ internal class TestMainDispatcher(private var delegate: CoroutineDispatcher):
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = delegate.isDispatchNeeded(context)
 
     override fun dispatchYield(context: CoroutineContext, block: Runnable) = delegate.dispatchYield(context, block)
-
-    fun setDispatcher(dispatcher: CoroutineDispatcher) {
-        delegate = dispatcher
-    }
 
     fun resetDispatcher() {
         delegate = mainDispatcher
