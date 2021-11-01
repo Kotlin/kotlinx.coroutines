@@ -251,4 +251,46 @@ class RunTestTest {
             }
         })
     }
+
+    /** Tests that, when the test body fails, the reported exceptions are suppressed. */
+    @Test
+    fun testSuppressedExceptions() = testResultMap({
+        try {
+            it()
+            fail("should not be reached")
+        } catch (e: TestException) {
+            assertEquals("w", e.message)
+            val suppressed = e.suppressedExceptions +
+                (e.suppressedExceptions.firstOrNull()?.suppressedExceptions ?: emptyList())
+            assertEquals(3, suppressed.size)
+            assertEquals("x", suppressed[0].message)
+            assertEquals("y", suppressed[1].message)
+            assertEquals("z", suppressed[2].message)
+        }
+    }, {
+        runTest {
+            launch(SupervisorJob()) { throw TestException("x") }
+            launch(SupervisorJob()) { throw TestException("y") }
+            launch(SupervisorJob()) { throw TestException("z") }
+            throw TestException("w")
+        }
+    })
+
+    /** Tests that [TestCoroutineScope.runTest] does not inherit the exception handler and works. */
+    @Test
+    fun testScopeRunTestExceptionHandler(): TestResult {
+        val scope = createTestCoroutineScope()
+        return testResultMap({
+            try {
+                it()
+                fail("should not be reached")
+            } catch (e: TestException) {
+                scope.cleanupTestCoroutines() // should not fail
+            }
+        }, {
+            scope.runTest {
+                launch(SupervisorJob()) { throw TestException("x") }
+            }
+        })
+    }
 }

@@ -124,11 +124,66 @@ class TestCoroutineScopeTest {
         }
     }
 
+    /** Tests that cleaning up twice is forbidden. */
+    @Test
+    fun testClosingTwice() {
+        val scope = createTestCoroutineScope()
+        scope.cleanupTestCoroutines()
+        assertFailsWith<IllegalStateException> {
+            scope.cleanupTestCoroutines()
+        }
+    }
+
+    /** Tests that, when reporting several exceptions, the first one is thrown, with the rest suppressed. */
+    @Test
+    fun testSuppressedExceptions() {
+        createTestCoroutineScope().apply {
+            launch(SupervisorJob()) { throw TestException("x") }
+            launch(SupervisorJob()) { throw TestException("y") }
+            launch(SupervisorJob()) { throw TestException("z") }
+            try {
+                cleanupTestCoroutines()
+                fail("should not be reached")
+            } catch (e: TestException) {
+                assertEquals("x", e.message)
+                assertEquals(2, e.suppressedExceptions.size)
+                assertEquals("y", e.suppressedExceptions[0].message)
+                assertEquals("z", e.suppressedExceptions[1].message)
+            }
+        }
+    }
+
+    /** Tests that constructing a new [TestCoroutineScope] using another one's scope works and overrides the exception
+     * handler. */
+    @Test
+    fun testCopyingContexts() {
+        val deferred = CompletableDeferred<Unit>()
+        val scope1 = createTestCoroutineScope()
+        scope1.launch { deferred.await() } // a pending job in the outer scope
+        val scope2 = createTestCoroutineScope(scope1.coroutineContext)
+        val scope3 = createTestCoroutineScope(scope1.coroutineContext)
+        assertEquals(
+            scope1.coroutineContext.minusKey(CoroutineExceptionHandler),
+            scope2.coroutineContext.minusKey(CoroutineExceptionHandler))
+        scope2.launch(SupervisorJob()) { throw TestException("x") } // will fail the cleanup of scope2
+        try {
+            scope2.cleanupTestCoroutines()
+            fail("should not be reached")
+        } catch (e: TestException) { }
+        scope3.cleanupTestCoroutines() // the pending job in the outer scope will not cause this to fail
+        try {
+            scope1.cleanupTestCoroutines()
+            fail("should not be reached")
+        } catch (e: UncompletedCoroutinesError) {
+            // the pending job in the outer scope
+        }
+    }
+
     companion object {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]
+            CoroutineExceptionHandler { _, _ -> }, // not an [UncaughtExceptionCaptor]
             StandardTestDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
-            CoroutineExceptionHandler { _, _ -> }, // not an `UncaughtExceptionCaptor`
         )
     }
 }
