@@ -174,6 +174,10 @@ configure(subprojects.findAll { !sourceless.contains(it.name) }) {
         kotlinOptions.freeCompilerArgs += "-XXLanguage:-ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated"
         // Remove null assertions to get smaller bytecode on Android
         kotlinOptions.freeCompilerArgs += ["-Xno-param-assertions", "-Xno-receiver-assertions", "-Xno-call-assertions"]
+        // Recognize rxjava3 nullness annotations even before that becomes the default (which will happen in 1.7): https://kotlinlang.org/docs/java-interop.html#nullability-annotations
+        kotlinOptions.freeCompilerArgs += "-Xnullability-annotations=@io.reactivex.rxjava3.annotations:strict"
+        // Recognize nullness annotations on type arguments, etc.: https://kotlinlang.org/docs/java-interop.html#annotating-type-arguments-and-type-parameters
+        kotlinOptions.freeCompilerArgs += "-Xtype-enhancement-improvements-strict-mode"
     }
 }
 
