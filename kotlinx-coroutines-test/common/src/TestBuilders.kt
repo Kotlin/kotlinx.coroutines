@@ -91,7 +91,7 @@ public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineS
 public expect class TestResult
 
 /**
- * Executes [testBody] as a test, returning [TestResult].
+ * Executes [testBody] as a test in a new coroutine, returning [TestResult].
  *
  * On JVM and Native, this function behaves similarly to [runBlocking], with the difference that the code that it runs
  * will skip delays. This allows to use [delay] in without causing the tests to take more time than necessary.
@@ -143,19 +143,20 @@ public expect class TestResult
  *
  * #### Test body failures
  *
- * If the test body finishes with an exception, then this exception will be thrown at the end of the test.
+ * If the created coroutine completes with an exception, then this exception will be thrown at the end of the test.
  *
  * #### Reported exceptions
  *
- * Exceptions reported to the test coroutine scope via [TestCoroutineScope.reportException] will be thrown at the end.
- * By default, unless an explicit [TestExceptionHandler] is passed, this includes all unhandled exceptions. If the test
- * body also fails, the reported exceptions are suppressed by it.
+ * Unhandled exceptions will be thrown at the end of the test.
+ * If the uncaught exceptions happen after the test finishes, the error is propagated in a platform-specific manner.
+ * If the test coroutine completes with an exception, the unhandled exceptions are suppressed by it.
  *
  * #### Uncompleted coroutines
  *
- * This method requires that all coroutines launched inside [testBody] complete, or are cancelled. Otherwise, the test
- * will be failed (which, on JVM and Native, means that [runTest] itself will throw [AssertionError],
- * whereas on JS, the `Promise` will fail with it).
+ * This method requires that, after the test coroutine has completed, all the other coroutines launched inside
+ * [testBody] also complete, or are cancelled.
+ * Otherwise, the test will be failed (which, on JVM and Native, means that [runTest] itself will throw
+ * [AssertionError], whereas on JS, the `Promise` will fail with it).
  *
  * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
  * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
@@ -238,9 +239,7 @@ internal expect fun createTestResult(testProcedure: suspend () -> Unit): TestRes
  * Runs a test in a [TestCoroutineScope] based on this one.
  *
  * Calls [runTest] using a coroutine context from this [TestCoroutineScope]. The [TestCoroutineScope] used to run
- * [block] will be different from this one, but will use its [Job] as a parent; therefore, even if calling
- * [TestCoroutineScope.cleanupTestCoroutines] on this scope were to complete its job, [runTest] won't complete it at the
- * end of the test.
+ * [block] will be different from this one, but will use its [Job] as a parent.
  *
  * Since this function returns [TestResult], in order to work correctly on the JS, its result must be returned
  * immediately from the test body. See the docs for [TestResult] for details.
