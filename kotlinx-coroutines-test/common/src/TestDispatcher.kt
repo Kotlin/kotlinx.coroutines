@@ -18,7 +18,7 @@ public sealed class TestDispatcher: CoroutineDispatcher(), Delay {
     public abstract val scheduler: TestCoroutineScheduler
 
     /** Notifies the dispatcher that it should process a single event marked with [marker] happening at time [time]. */
-    internal open fun processEvent(time: Long, marker: Any) {
+    internal fun processEvent(time: Long, marker: Any) {
         check(marker is Runnable)
         marker.run()
     }

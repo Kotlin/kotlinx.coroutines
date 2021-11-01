@@ -117,4 +117,21 @@ class UnconfinedTestDispatcherTest {
         assertTrue(collectedError)
     }
 
+    /** An example from the [UnconfinedTestDispatcher] documentation. */
+    @Test
+    fun testUnconfinedDispatcher() = runTest {
+        val values = mutableListOf<Int>()
+        val stateFlow = MutableStateFlow(0)
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            stateFlow.collect {
+                values.add(it)
+            }
+        }
+        stateFlow.value = 1
+        stateFlow.value = 2
+        stateFlow.value = 3
+        job.cancel()
+        assertEquals(listOf(0, 1, 2, 3), values)
+    }
+
 }

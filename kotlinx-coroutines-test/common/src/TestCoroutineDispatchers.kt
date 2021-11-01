@@ -5,18 +5,44 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 
 /**
- * An unconfined [TestDispatcher].
+ * Creates an instance of an unconfined [TestDispatcher].
  *
  * This dispatcher is similar to [Dispatchers.Unconfined]: the tasks that it executes are not confined to any particular
  * thread and form an event loop; it's different in that it skips delays, as all [TestDispatcher]s do.
  *
  * Using this [TestDispatcher] can greatly simplify writing tests where it's not important which thread is used when and
- * in which order the queued coroutines are executed. However, please be aware that, like [Dispatchers.Unconfined], this
- * is a specific dispatcher with execution order guarantees that are unusual and not shared by most other dispatchers,
- * so it can only be used reliably for testing functionality, not the specific order of actions.
+ * in which order the queued coroutines are executed.
+ * The typical use case for this is launching child coroutines that are resumed immediately, without going through a
+ * dispatch; this can be helpful for testing [Channel] and [StateFlow] usages.
+ *
+ * ```
+ * @Test
+ * fun testUnconfinedDispatcher() = runTest {
+ *   val values = mutableListOf<Int>()
+ *   val stateFlow = MutableStateFlow(0)
+ *   val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+ *     stateFlow.collect {
+ *       values.add(it)
+ *     }
+ *   }
+ *   stateFlow.value = 1
+ *   stateFlow.value = 2
+ *   stateFlow.value = 3
+ *   job.cancel()
+ *   // each assignment will immediately resume the collecting child coroutine,
+ *   // so no values will be skipped.
+ *   assertEquals(listOf(0, 1, 2, 3), values)
+ * }
+ * ```
+ *
+ * However, please be aware that, like [Dispatchers.Unconfined], this is a specific dispatcher with execution order
+ * guarantees that are unusual and not shared by most other dispatchers, so it can only be used reliably for testing
+ * functionality, not the specific order of actions.
  * See [Dispatchers.Unconfined] for a discussion of the execution order guarantees.
  *
  * In order to support delay skipping, this dispatcher is linked to a [TestCoroutineScheduler], which is used to control
@@ -25,8 +51,7 @@ import kotlin.coroutines.*
  *
  * Additionally, [name] can be set to distinguish each dispatcher instance when debugging.
  *
- * @see StandardTestDispatcher for a more predictable [TestDispatcher] that, however, requires interacting with the
- * scheduler in order for the tasks to run.
+ * @see StandardTestDispatcher for a more predictable [TestDispatcher].
  */
 @ExperimentalCoroutinesApi
 @Suppress("FunctionName")
@@ -66,7 +91,7 @@ private class UnconfinedTestDispatcherImpl(
 }
 
 /**
- * A [TestDispatcher] instance whose tasks are run inside calls to the [scheduler].
+ * Creates an instance of a [TestDispatcher] whose tasks are run inside calls to the [scheduler].
  *
  * This [TestDispatcher] instance does not itself execute any of the tasks. Instead, it always sends them to its
  * [scheduler], which can then be accessed via [TestCoroutineScheduler.runCurrent],
@@ -90,7 +115,6 @@ public fun StandardTestDispatcher(
     name: String? = null
 ): TestDispatcher = StandardTestDispatcherImpl(scheduler, name)
 
-@ExperimentalCoroutinesApi
 private class StandardTestDispatcherImpl(
     override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
     private val name: String? = null
