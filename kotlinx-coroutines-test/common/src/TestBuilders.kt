@@ -115,7 +115,36 @@ public expect class TestResult
  * immediately return the produced [TestResult] from the test method, without doing anything else afterwards. See
  * [TestResult] for details on this.
  *
- * ### Delay-skipping
+ * The test is run in a single thread, unless other [ContinuationInterceptor] are used for child coroutines.
+ * Because of this, child coroutines are not executed in parallel to the test body.
+ * In order to for the spawned-off asynchronous code to actually be executed, one must either [yield] or suspend the
+ * test body some other way, or use commands that control scheduling (see [TestCoroutineScheduler]).
+ *
+ * ```
+ * @Test
+ * fun exampleWaitingForAsyncTasks1() = runTest {
+ *     // 1
+ *     val job = launch {
+ *         // 3
+ *     }
+ *     // 2
+ *     job.join() // the main test coroutine suspends here, so the child is executed
+ *     // 4
+ * }
+ *
+ * @Test
+ * fun exampleWaitingForAsyncTasks2() = runTest {
+ *     // 1
+ *     launch {
+ *         // 3
+ *     }
+ *     // 2
+ *     advanceUntilIdle() // runs the tasks until their queue is empty
+ *     // 4
+ * }
+ * ```
+ *
+ * ### Task scheduling
  *
  * Delay-skipping is achieved by using virtual time. [TestCoroutineScheduler] is automatically created (if it wasn't
  * passed in some way in [context]) and can be used to control the virtual time, advancing it, running the tasks
@@ -130,7 +159,7 @@ public expect class TestResult
  *         val deferred = async {
  *             delay(1_000) // will be skipped
  *             withContext(Dispatchers.Default) {
- *                 delay(5_000) // Dispatchers.Default don't know about TestCoroutineScheduler
+ *                 delay(5_000) // Dispatchers.Default doesn't know about TestCoroutineScheduler
  *             }
  *         }
  *         deferred.await()
