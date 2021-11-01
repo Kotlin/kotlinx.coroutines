@@ -16,6 +16,7 @@ public sealed interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCap
      * Called after the test completes.
      *
      * Calls [UncaughtExceptionCaptor.cleanupTestCoroutinesCaptor] and [DelayController.cleanupTestCoroutines].
+     * If a new job was created for this scope, the job is completed.
      *
      * @throws Throwable the first uncaught exception, if there are any uncaught exceptions.
      * @throws AssertionError if any pending tasks are active.
@@ -102,11 +103,11 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
         }
         this ?: TestCoroutineExceptionHandler()
     }
-    val job: Job = context[Job] ?: SupervisorJob()
+    val job: Job = context[Job] ?: Job()
     return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job)
 }
 
-private inline val CoroutineContext.uncaughtExceptionCaptor: UncaughtExceptionCaptor
+internal inline val CoroutineContext.uncaughtExceptionCaptor: UncaughtExceptionCaptor
     get() {
         val handler = this[CoroutineExceptionHandler]
         return handler as? UncaughtExceptionCaptor ?: throw IllegalArgumentException(

@@ -6,7 +6,10 @@ package kotlinx.coroutines.test
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -46,6 +49,9 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
         get() = synchronized(lock) { field }
         private set
 
+    /** A channel for notifying about the fact that a dispatch recently happened. */
+    private val dispatchEvents: Channel<Unit> = Channel(CONFLATED)
+
     /**
      * Registers a request for the scheduler to notify [dispatcher] at a virtual moment [timeDeltaMillis] milliseconds
      * later via [TestDispatcher.processEvent], which will be called with the provided [marker] object.
@@ -64,12 +70,30 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             val time = addClamping(currentTime, timeDeltaMillis)
             val event = TestDispatchEvent(dispatcher, count, time, marker as Any) { isCancelled(marker) }
             events.addLast(event)
+            /** can't be moved above: otherwise, [onDispatchEvent] could consume the token sent here before there's
+             * actually anything in the event queue. */
+            sendDispatchEvent()
             DisposableHandle {
                 synchronized(lock) {
                     events.remove(event)
                 }
             }
         }
+    }
+
+    /**
+     * Runs the next enqueued task, advancing the virtual time to the time of its scheduled awakening.
+     */
+    private fun tryRunNextTask(): Boolean {
+        val event = synchronized(lock) {
+            val event = events.removeFirstOrNull() ?: return false
+            if (currentTime > event.time)
+                currentTimeAheadOfEvents()
+            currentTime = event.time
+            event
+        }
+        event.dispatcher.processEvent(event.time, event.marker)
+        return true
     }
 
     /**
@@ -82,15 +106,8 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      */
     @ExperimentalCoroutinesApi
     public fun advanceUntilIdle() {
-        while (!events.isEmpty) {
-            val event = synchronized(lock) {
-                val event = events.removeFirstOrNull() ?: return
-                if (currentTime > event.time)
-                    currentTimeAheadOfEvents()
-                currentTime = event.time
-                event
-            }
-            event.dispatcher.processEvent(event.time, event.marker)
+        while (!synchronized(lock) { events.isEmpty }) {
+            tryRunNextTask()
         }
     }
 
@@ -162,6 +179,18 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             return presentEvents.all { it.isCancelled() }
         }
     }
+
+    /**
+     * Notifies this scheduler about a dispatch event.
+     */
+    internal fun sendDispatchEvent() {
+        dispatchEvents.trySend(Unit)
+    }
+
+    /**
+     * Consumes the knowledge that a dispatch event happened recently.
+     */
+    internal val onDispatchEvent: SelectClause1<Unit> get() = dispatchEvents.onReceive
 }
 
 // Some error-throwing functions for pretty stack traces

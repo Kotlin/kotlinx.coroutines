@@ -95,9 +95,40 @@ class TestCoroutineScopeTest {
         assertFalse(result)
     }
 
-    private val invalidContexts = listOf(
-        Dispatchers.Default, // not a [TestDispatcher]
-        TestCoroutineDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
-        CoroutineExceptionHandler { _, _ -> }, // not an `UncaughtExceptionCaptor`
-    )
+    /** Tests that uncaught exceptions are thrown at the cleanup. */
+    @Test
+    fun testThrowsUncaughtExceptionsOnCleanup() {
+        val scope = TestCoroutineScope()
+        val exception = TestException("test")
+        scope.launch {
+            throw exception
+        }
+        assertFailsWith<TestException> {
+            scope.cleanupTestCoroutines()
+        }
+    }
+
+    /** Tests that uncaught exceptions take priority over uncompleted jobs when throwing on cleanup. */
+    @Test
+    fun testUncaughtExceptionsPrioritizedOnCleanup() {
+        val scope = TestCoroutineScope()
+        val exception = TestException("test")
+        scope.launch {
+            throw exception
+        }
+        scope.launch {
+            delay(1000)
+        }
+        assertFailsWith<TestException> {
+            scope.cleanupTestCoroutines()
+        }
+    }
+
+    companion object {
+        internal val invalidContexts = listOf(
+            Dispatchers.Default, // not a [TestDispatcher]
+            TestCoroutineDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
+            CoroutineExceptionHandler { _, _ -> }, // not an `UncaughtExceptionCaptor`
+        )
+    }
 }

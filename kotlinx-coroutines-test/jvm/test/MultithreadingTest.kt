@@ -4,10 +4,11 @@
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
+import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class MultithreadingTest : TestBase() {
+class MultithreadingTest {
 
     @Test
     fun incorrectlyCalledRunBlocking_doesNotHaveSameInterceptor() = runBlockingTest {
@@ -22,7 +23,7 @@ class MultithreadingTest : TestBase() {
     }
 
     @Test
-    fun testSingleThreadExecutor() = runTest {
+    fun testSingleThreadExecutor() = runBlocking {
         val mainThread = Thread.currentThread()
         Dispatchers.setMain(Dispatchers.Unconfined)
         newSingleThreadContext("testSingleThread").use { threadPool ->
@@ -84,6 +85,17 @@ class MultithreadingTest : TestBase() {
         runBlocking {
             // just to ensure the above code terminates
             assertEquals(3, deferred.await())
+        }
+    }
+
+    /** Tests that resuming the coroutine of [runTest] asynchronously in reasonable time succeeds. */
+    @Test
+    fun testResumingFromAnotherThread() = runTest {
+        suspendCancellableCoroutine<Unit> { cont ->
+            thread {
+                Thread.sleep(10)
+                cont.resume(Unit)
+            }
         }
     }
 }
