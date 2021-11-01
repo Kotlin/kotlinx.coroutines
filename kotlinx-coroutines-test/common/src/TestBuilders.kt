@@ -44,7 +44,7 @@ import kotlin.coroutines.*
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
 public fun runBlockingTest(context: CoroutineContext = EmptyCoroutineContext, testBody: suspend TestCoroutineScope.() -> Unit) {
-    val scope = TestCoroutineScope(TestCoroutineDispatcher() + SupervisorJob() + context)
+    val scope = createTestCoroutineScope(TestCoroutineDispatcher() + SupervisorJob() + context)
     val scheduler = scope.testScheduler
     val deferred = scope.async {
         scope.testBody()
@@ -197,10 +197,9 @@ public expect class TestResult
  *
  * [context] can be used to affect the environment of the code under test. Beside just being passed to the coroutine
  * scope created for the test, [context] also can be used to change how the test is executed.
- * See the [TestCoroutineScope] constructor documentation for details.
+ * See the [createTestCoroutineScope] documentation for details.
  *
- * @throws IllegalArgumentException if the [context] is invalid. See the [TestCoroutineScope] constructor docs for
- * details.
+ * @throws IllegalArgumentException if the [context] is invalid. See the [createTestCoroutineScope] docs for details.
  */
 @ExperimentalCoroutinesApi
 public fun runTest(
@@ -210,7 +209,7 @@ public fun runTest(
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    val testScope = TestBodyCoroutine<Unit>(TestCoroutineScope(context + RunningInRunTest))
+    val testScope = TestBodyCoroutine<Unit>(createTestCoroutineScope(context + RunningInRunTest))
     val scheduler = testScope.testScheduler
     return createTestResult {
         /** TODO: moving this [AbstractCoroutine.start] call outside [createTestResult] fails on Native with

@@ -21,7 +21,9 @@ import kotlin.coroutines.*
  *
  * @see DelayController
  */
-@ExperimentalCoroutinesApi
+@Deprecated("The execution order of `TestCoroutineDispatcher` can be confusing, and the mechanism of " +
+    "pausing is typically misunderstood. Please use `StandardTestDispatcher` or `UnconfinedTestDispatcher` instead.",
+    level = DeprecationLevel.WARNING)
 public class TestCoroutineDispatcher(public override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler()):
     TestDispatcher(), Delay, SchedulerAsDelayController
 {
@@ -33,12 +35,6 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
                 scheduler.advanceUntilIdle()
             }
         }
-
-    /** @suppress */
-    override fun processEvent(time: Long, marker: Any) {
-        check(marker is Runnable)
-        marker.run()
-    }
 
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {

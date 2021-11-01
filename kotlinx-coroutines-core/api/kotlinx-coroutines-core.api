@@ -556,6 +556,15 @@ public final class kotlinx/coroutines/TimeoutKt {
 	public static final fun withTimeoutOrNull-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/YieldContext : kotlin/coroutines/AbstractCoroutineContextElement {
+	public static final field Key Lkotlinx/coroutines/YieldContext$Key;
+	public field dispatcherWasUnconfined Z
+	public fun <init> ()V
+}
+
+public final class kotlinx/coroutines/YieldContext$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
 public final class kotlinx/coroutines/YieldKt {
 	public static final fun yield (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }

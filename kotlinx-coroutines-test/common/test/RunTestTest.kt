@@ -57,7 +57,7 @@ class RunTestTest {
             delay(2000)
         }
         val deferred = async {
-            val job = launch(TestCoroutineDispatcher(testScheduler)) {
+            val job = launch(StandardTestDispatcher(testScheduler)) {
                 launch {
                     delay(500)
                 }
@@ -156,7 +156,7 @@ class RunTestTest {
 
     @Test
     fun reproducer2405() = runTest {
-        val dispatcher = TestCoroutineDispatcher(testScheduler)
+        val dispatcher = StandardTestDispatcher(testScheduler)
         var collectedError = false
         withContext(dispatcher) {
             flow { emit(1) }

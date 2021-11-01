@@ -14,7 +14,7 @@ class TestCoroutineScopeTest {
     fun testCreateThrowsOnInvalidArguments() {
         for (ctx in invalidContexts) {
             assertFailsWith<IllegalArgumentException> {
-                TestCoroutineScope(ctx)
+                createTestCoroutineScope(ctx)
             }
         }
     }
@@ -24,27 +24,27 @@ class TestCoroutineScopeTest {
     fun testCreateProvidesScheduler() {
         // Creates a new scheduler.
         run {
-            val scope = TestCoroutineScope()
+            val scope = createTestCoroutineScope()
             assertNotNull(scope.coroutineContext[TestCoroutineScheduler])
         }
         // Reuses the scheduler that the dispatcher is linked to.
         run {
-            val dispatcher = TestCoroutineDispatcher()
-            val scope = TestCoroutineScope(dispatcher)
+            val dispatcher = StandardTestDispatcher()
+            val scope = createTestCoroutineScope(dispatcher)
             assertSame(dispatcher.scheduler, scope.coroutineContext[TestCoroutineScheduler])
         }
         // Uses the scheduler passed to it.
         run {
             val scheduler = TestCoroutineScheduler()
-            val scope = TestCoroutineScope(scheduler)
+            val scope = createTestCoroutineScope(scheduler)
             assertSame(scheduler, scope.coroutineContext[TestCoroutineScheduler])
             assertSame(scheduler, (scope.coroutineContext[ContinuationInterceptor] as TestDispatcher).scheduler)
         }
         // Doesn't touch the passed dispatcher and the scheduler if they match.
         run {
             val scheduler = TestCoroutineScheduler()
-            val dispatcher = TestCoroutineDispatcher(scheduler)
-            val scope = TestCoroutineScope(scheduler + dispatcher)
+            val dispatcher = StandardTestDispatcher(scheduler)
+            val scope = createTestCoroutineScope(scheduler + dispatcher)
             assertSame(scheduler, scope.coroutineContext[TestCoroutineScheduler])
             assertSame(dispatcher, scope.coroutineContext[ContinuationInterceptor])
         }
@@ -53,7 +53,7 @@ class TestCoroutineScopeTest {
     /** Tests that the cleanup procedure throws if there were uncompleted delays by the end. */
     @Test
     fun testPresentDelaysThrowing() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         var result = false
         scope.launch {
             delay(5)
@@ -67,7 +67,7 @@ class TestCoroutineScopeTest {
     /** Tests that the cleanup procedure throws if there were active jobs by the end. */
     @Test
     fun testActiveJobsThrowing() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         var result = false
         val deferred = CompletableDeferred<String>()
         scope.launch {
@@ -82,7 +82,7 @@ class TestCoroutineScopeTest {
     /** Tests that the cleanup procedure doesn't throw if it detects that the job is already cancelled. */
     @Test
     fun testCancelledDelaysNotThrowing() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         var result = false
         val deferred = CompletableDeferred<String>()
         val job = scope.launch {
@@ -98,7 +98,7 @@ class TestCoroutineScopeTest {
     /** Tests that uncaught exceptions are thrown at the cleanup. */
     @Test
     fun testThrowsUncaughtExceptionsOnCleanup() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         val exception = TestException("test")
         scope.launch {
             throw exception
@@ -111,7 +111,7 @@ class TestCoroutineScopeTest {
     /** Tests that uncaught exceptions take priority over uncompleted jobs when throwing on cleanup. */
     @Test
     fun testUncaughtExceptionsPrioritizedOnCleanup() {
-        val scope = TestCoroutineScope()
+        val scope = createTestCoroutineScope()
         val exception = TestException("test")
         scope.launch {
             throw exception
@@ -127,7 +127,7 @@ class TestCoroutineScopeTest {
     companion object {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]
-            TestCoroutineDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
+            StandardTestDispatcher() + TestCoroutineScheduler(), // the dispatcher is not linked to the scheduler
             CoroutineExceptionHandler { _, _ -> }, // not an `UncaughtExceptionCaptor`
         )
     }
