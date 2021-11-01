@@ -107,11 +107,6 @@ private class TestCoroutineScopeImpl(
     }
 }
 
-internal class ExceptionReportAfterCleanup(cause: Throwable) : IllegalStateException(
-    "Attempting to report an uncaught exception after the test coroutine scope was already cleaned up",
-    cause
-)
-
 private fun CoroutineContext.activeJobs(): Set<Job> {
     return checkNotNull(this[Job]).children.filter { it.isActive }.toSet()
 }
