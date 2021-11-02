@@ -113,5 +113,4 @@ class ChannelUndeliveredElementFailureTest : TestBase() {
         channel.cancel()
         expectUnreached()
     }
-
 }

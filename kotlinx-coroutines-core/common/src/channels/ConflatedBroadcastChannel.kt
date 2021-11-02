@@ -99,6 +99,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         if (isClosed) return@withLock false
         isClosed = true
         subscribers.value.forEach { it.close(cause) }
+        subscribers.value = emptyList()
         onCloseHandler?.invoke(cause)
         return@withLock true
     }
@@ -147,7 +148,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      * or closed with an exception.
      */
     public override fun trySend(element: E): ChannelResult<Unit> = lock.withLock {
-        if (isClosed) return@withLock ChannelResult.closed(closeCause)
+        if (isClosed) return@withLock ChannelResult.closed(closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE))
         lastElement = element
         subscribers.value.forEach { it.trySend(element) }
         return@withLock ChannelResult.success(Unit)

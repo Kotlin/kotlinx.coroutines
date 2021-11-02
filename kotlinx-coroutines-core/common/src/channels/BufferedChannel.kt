@@ -12,7 +12,7 @@ import kotlin.jvm.*
 
 internal open class BufferedChannel<E>(
     capacity: Int,
-    private val onUndeliveredElement: OnUndeliveredElement<E>? = null
+    protected val onUndeliveredElement: OnUndeliveredElement<E>? = null
 ) : Channel<E> {
     init {
         require(capacity >= 0) { "Invalid channel capacity: $capacity, should be >=0" }
@@ -62,7 +62,7 @@ internal open class BufferedChannel<E>(
             waiter = INTERRUPTED,
             onRendezvous = { return success(Unit) },
             onSuspend = { _, _ -> return failure() },
-            onClosed = { return closed(getCause()) },
+            onClosed = { return closed(sendException(getCause())) },
             onNoWaiter = { _, _, _, _ -> error("unexpected") }
         )
         error("unexpected")
@@ -75,7 +75,7 @@ internal open class BufferedChannel<E>(
             waiter = null,
             onRendezvous = {},
             onSuspend = { _, _ -> error("unexpected") },
-            onClosed = { onUndeliveredElement?.invoke(element); throw sendException(getCause()) },
+            onClosed = { onUndeliveredElement?.invoke(element); throw recoverStackTrace(sendException(getCause())) },
             onNoWaiter = { segm, i, elem, s -> sendSuspend(segm, i, elem, s) }
         )
 
@@ -249,7 +249,7 @@ internal open class BufferedChannel<E>(
             waiter = null,
             onRendezvous = { e -> return e },
             onSuspend = { _, _ -> error("unexpected") },
-            onClosed = { throw receiveException(getCause()) },
+            onClosed = { throw recoverStackTrace(receiveException(getCause())) },
             onNoWaiter = { segm, i, r -> receiveSuspend(segm, i, r) }
         )
 
@@ -619,7 +619,7 @@ internal open class BufferedChannel<E>(
 
     private fun receiveException(cause: Throwable?) =
         cause ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
-    private fun sendException(cause: Throwable?) =
+    protected fun sendException(cause: Throwable?) =
         cause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)
 
     // Stores the close handler.
@@ -723,7 +723,7 @@ internal open class BufferedChannel<E>(
     final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
 
     protected open fun cancelImpl(cause: Throwable?): Boolean {
-        val cause = cause ?: CancellationException("$classSimpleName was cancelled")
+        val cause = cause ?: CancellationException("Channel was cancelled")
         val wasClosed = closeImpl(cause, true)
         removeRemainingBufferedElements()
         onCancel(wasClosed)

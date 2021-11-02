@@ -124,7 +124,7 @@ class BasicOperationsTest : TestBase() {
         channel.trySend(2)
             .onSuccess { expectUnreached() }
             .onClosed {
-                assertTrue { it is  ClosedSendChannelException}
+                assertIs<ClosedSendChannelException>(it)
                 if (!kind.isConflated) {
                     assertEquals(42, channel.receive())
                 }

@@ -59,7 +59,7 @@ public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() ->
     contract {
         callsInPlace(builder, InvocationKind.EXACTLY_ONCE)
     }
-    return SelectBuilderImpl<R>().run {
+    return SelectBuilderImpl<R>(unbiased = false).run {
         builder(this)
         doSelect()
     }
@@ -79,7 +79,7 @@ public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<
     contract {
         callsInPlace(builder, InvocationKind.EXACTLY_ONCE)
     }
-    return SelectBuilderImpl<R>().run {
+    return SelectBuilderImpl<R>(unbiased = true).run {
         // TODO shuffle alternatives
         builder(this)
         doSelect()
@@ -212,7 +212,7 @@ public interface SelectInstance<in R> {
 }
 
 @PublishedApi
-internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
+internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuilder<R>, SelectInstance<R> {
     private val cont = atomic<Any?>(null)
     @InternalCoroutinesApi
     internal val continuation: CancellableContinuation<*>? get() =
@@ -225,7 +225,7 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
     // 4: block
     // 5: onCompleteAction
     private val alternatives = ArrayList<Any?>(ALTERNATIVE_SIZE * 2) // 2 clauses -- the most common case
-    private var onCompleteAction: Any? = null
+    private var onCompleteAction: (() -> Unit)? = null
 
     private val state = atomic<Any>(REG)
     private val clauseResult = atomic<Any?>(NULL)
@@ -272,11 +272,17 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
         }
         return if (param === PARAM_CLAUSE_0) {
             block as suspend () -> R
-            block()
+            recoverStacktraceIfNeeded { block() }
         } else {
             block as suspend (Any?) -> R
-            block(result)
+            recoverStacktraceIfNeeded { block(result) }
         }
+    }
+
+    private inline fun <R> recoverStacktraceIfNeeded(block: () -> R): R = try {
+        block()
+    } catch (e: Throwable) {
+        throw recoverStackTrace(e)
     }
 
     fun cleanBuilder() {
@@ -355,8 +361,11 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
 
     private suspend fun selectAlternativeSuspend() = suspendCancellableCoroutineReusable<Unit> { cont ->
         if (!this.cont.compareAndSet(null, cont)) cont.resume(Unit)
-        onTimeouts?.forEach {  it.selectClause.invoke(it.block) }.also {
-            onTimeouts = null
+        onTimeouts?.run {
+            if (unbiased) shuffle()
+            forEach {  it.selectClause.invoke(it.block) }.also {
+                onTimeouts = null
+            }
         }
         cont.invokeOnCancellation { cleanNonSelectedAlternatives(null) }
     }
@@ -488,23 +497,20 @@ internal class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
     }
 
     @InternalCoroutinesApi
-    fun default(block: suspend () -> R) {
-        if (clauseResult.value === NULL) {
-            selectInRegPhase(null)
-            storeObjForSelect(OBJ_FOR_SELECT_DEFAULT)
-            clauseResult.value = null
-            this@SelectBuilderImpl.block = block
-        }
-    }
+    fun default(block: suspend () -> R) = onTimeout(0, block)
 
     private var onTimeouts: MutableList<OnTimeout<R>>? = null
     override fun onTimeout(timeMillis: Long, block: suspend () -> R) {
+        if (timeMillis <= 0 && clauseResult.value === NULL) {
+            selectInRegPhase(null)
+            storeObjForSelect(OBJ_FOR_SELECT_ON_TIMEOUT)
+            clauseResult.value = null
+            this@SelectBuilderImpl.block = block
+        }
         if (onTimeouts == null) onTimeouts = ArrayList()
         onTimeouts!! += OnTimeout(timeMillis, block)
     }
 }
-
-private val OBJ_FOR_SELECT_DEFAULT = Symbol("OBJ_FOR_SELECT_DEFAULT")
 
 // Number of items to be stored for each alternative in the `alternatives` array.
 private const val ALTERNATIVE_SIZE = 6
@@ -534,3 +540,4 @@ private class OnTimeout<R>(val timeMillis: Long, val block: suspend () -> R) {
             regFunc = OnTimeout<*>::register as RegistrationFunction
         )
 }
+private val OBJ_FOR_SELECT_ON_TIMEOUT = Symbol("OBJ_FOR_SELECT_ON_TIMEOUT")

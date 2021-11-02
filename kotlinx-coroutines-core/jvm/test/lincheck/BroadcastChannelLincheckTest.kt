@@ -11,7 +11,7 @@ import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
 
-open class BroadcastChannelLincheckTestBase(
+abstract class BroadcastChannelLincheckTestBase(
     private val c: BroadcastChannel<Int>
 ) : AbstractLincheckTest() {
     private val subs = arrayOfNulls<ReceiveChannel<Int>?>(10)

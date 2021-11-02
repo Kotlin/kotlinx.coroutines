@@ -159,19 +159,6 @@ internal abstract class AbstractSendChannel<E>(
         return closed.sendException
     }
 
-    private fun helpCloseAndGetSendException(element: E, closed: Closed<*>): Throwable {
-        // To ensure linearizablity we must ALWAYS help close the channel when we observe that it was closed
-        // See https://github.com/Kotlin/kotlinx.coroutines/issues/1419
-        helpClose(closed)
-        // Element was not delivered -> cals onUndeliveredElement
-        onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
-            // If it crashes, add send exception as suppressed for better diagnostics
-            it.addSuppressed(closed.sendException)
-            throw it
-        }
-        return closed.sendException
-    }
-
     private suspend fun sendSuspend(element: E): Unit = suspendCancellableCoroutineReusable sc@ { cont ->
         loop@ while (true) {
             if (isFullImpl) {

@@ -62,28 +62,4 @@ class SelectTimeoutTest : TestBase() {
         assertEquals("OK", result)
         finish(3)
     }
-
-    @Test
-    fun testUnbiasedNegativeTimeout() = runTest {
-        val counters = intArrayOf(0, 0, 0)
-        val iterations =10_000
-        for (i in 0..iterations) {
-            val result = selectUnbiased<Int> {
-                onTimeout(-1000) {
-                    0
-                }
-                onTimeout(0) {
-                    1
-                }
-                onTimeout(1000) {
-                    expectUnreached()
-                    2
-                }
-            }
-            ++counters[result]
-        }
-        assertEquals(0, counters[2])
-        assertTrue { counters[0] >  iterations / 4 }
-        assertTrue { counters[1] >  iterations / 4 }
-    }
 }

@@ -81,12 +81,14 @@ internal open class ConflatedBufferedChannel<E>(
         lock.unlock()
     }
 
-    override fun trySend(element: E): ChannelResult<Unit> = lock.withLock {
-        val attempt = super.trySend(element)
-        if (attempt.isSuccess || attempt.isClosed) return attempt
-        ensureBufferSize(size + 1)
-        insert(element)
-        return success(Unit)
+    override fun trySend(element: E): ChannelResult<Unit> {
+        lock.withLock {
+            val attempt = super.trySend(element)
+            if (attempt.isSuccess || attempt.isClosed) return attempt
+            ensureBufferSize(size + 1)
+            insert(element)
+            return success(Unit)
+        }
     }
 
     private fun ensureBufferSize(newSize: Int) {
@@ -119,9 +121,13 @@ internal open class ConflatedBufferedChannel<E>(
 
     private fun insert(element: E) {
         if (size == capacity) { // overflow
-            if (onBufferOverflow === DROP_LATEST) return // do nothing
+            if (onBufferOverflow === DROP_LATEST) {
+                onUndeliveredElement?.invoke(element)
+                return
+            } // do nothing
             if (onBufferOverflow === DROP_OLDEST) {
-                retrieve() // drop the first element
+                val oldElement = retrieve() // drop the first element
+                onUndeliveredElement?.invoke(oldElement)
                 insert(element)
             }
         } else {
@@ -132,7 +138,11 @@ internal open class ConflatedBufferedChannel<E>(
     }
 
     override suspend fun send(element: E) {
-        offer(element)
+        val attempt = trySend(element)
+        if (attempt.isClosed) {
+            onUndeliveredElement?.invoke(element)
+            throw sendException(attempt.exceptionOrNull())
+        }
     }
 
     override val isEmpty: Boolean
@@ -143,9 +153,11 @@ internal open class ConflatedBufferedChannel<E>(
     }
 
     override fun cancelImpl(cause: Throwable?): Boolean = lock.withLock {
+        while (size > 0) {
+            val element = retrieve()
+            onUndeliveredElement?.invoke(element)
+        }
         buffer = emptyArray()
-        head = 0
-        size = 0
         super.cancelImpl(cause)
     }
 
