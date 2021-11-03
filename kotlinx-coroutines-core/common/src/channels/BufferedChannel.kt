@@ -206,9 +206,6 @@ internal open class BufferedChannel<E>(
                     val rendezvous = unlimited || s < bufferEnd.value || s < receivers.value
                     if (rendezvous) {
                         if (segm.casState(i, null, BUFFERED)) {
-                            if (s < receivers.value) {
-                                while (segm.getState(i) === BUFFERED) {}
-                            }
                             return RENDEZVOUS
                         }
                     } else {
@@ -217,7 +214,6 @@ internal open class BufferedChannel<E>(
                     }
                 }
                 state === STORING_WAITER -> if (segm.casState(i, state, BUFFERED)) {
-                    while (segm.getState(i) === BUFFERED) {}
                     return RENDEZVOUS
                 }
                 state === BUFFERING -> {
