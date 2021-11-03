@@ -68,16 +68,43 @@ internal open class BufferedChannel<E>(
         error("unexpected")
     }
 
-    public override suspend fun send(element: E): Unit =
-        sendImpl(
-            element = element,
-            startSegment = sendSegment.value,
-            waiter = null,
-            onRendezvous = {},
-            onSuspend = { _, _ -> error("unexpected") },
-            onClosed = { onUndeliveredElement?.invoke(element); throw recoverStackTrace(sendException(getCause())) },
-            onNoWaiter = { segm, i, elem, s -> sendSuspend(segm, i, elem, s) }
-        )
+    public override suspend fun send(element: E): Unit {
+        var segm = sendSegment.value
+        while (true) {
+            if (closeStatus.value > 0) {
+                if (closeStatus.value == 1) completeClose() else completeCancel()
+                onUndeliveredElement?.invoke(element);
+                throw recoverStackTrace(sendException(getCause()))
+            }
+            val s = senders.getAndIncrement()
+            val id = s / SEGMENT_SIZE
+            val i = (s % SEGMENT_SIZE).toInt()
+            if (segm.id != id) {
+                segm = findSegmentSend(id, segm).let {
+                    if (it.isClosed) {
+                        if (closeStatus.value == 1) completeClose() else completeCancel()
+                        onUndeliveredElement?.invoke(element);
+                        throw recoverStackTrace(sendException(getCause()))
+                    } else it.segment
+                }
+            }
+            if (segm.id != id) {
+                senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
+                continue
+            }
+            val result = updateCellSend(segm, i, element, s, null)
+            when {
+                result === RENDEZVOUS -> {
+                    return
+                }
+                result === SUSPEND -> error("Unexpected")
+                result === FAILED -> continue
+                result === NO_WAITER -> {
+                    return sendSuspend(segm, i, element, s)
+                }
+            }
+        }
+    }
 
     private inline fun <W> sendImpl(
         element: E,
@@ -243,25 +270,77 @@ internal open class BufferedChannel<E>(
         sendSegment.findSegmentAndMoveForward(id, start, ::createSegment)
 
 
-    override suspend fun receive(): E =
-        receiveImpl(
-            startSegment = receiveSegment.value,
-            waiter = null,
-            onRendezvous = { e -> return e },
-            onSuspend = { _, _ -> error("unexpected") },
-            onClosed = { throw recoverStackTrace(receiveException(getCause())) },
-            onNoWaiter = { segm, i, r -> receiveSuspend(segm, i, r) }
-        )
+    override suspend fun receive(): E {
+        var segm = receiveSegment.value
+        while (true) {
+            if (closeStatus.value == 2) {
+                completeCancel()
+                throw recoverStackTrace(receiveException(getCause()))
+            }
+            val r = this.receivers.getAndIncrement()
+            val id = r / SEGMENT_SIZE
+            val i = (r % SEGMENT_SIZE).toInt()
+            if (segm.id != id) {
+                segm = findSegmentReceive(id, segm).let {
+                    if (it.isClosed) {
+                        if (closeStatus.value == 1) completeClose() else completeCancel()
+                        throw recoverStackTrace(receiveException(getCause()))
+                    } else it.segment
+                }
+            }
+            if (segm.id != id) {
+                receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
+                continue
+            }
+            val result = updateCellReceive(segm, i, r, null)
+            when {
+                result === SUSPEND -> error("Unexpected")
+                result === FAILED -> continue
+                result !== NO_WAITER -> { // element
+                    return result as E
+                }
+                result === NO_WAITER -> {
+                    return receiveSuspend(segm, i, r)
+                }
+            }
+        }
+    }
 
-    override suspend fun receiveCatching(): ChannelResult<E> =
-        receiveImpl(
-            startSegment = receiveSegment.value,
-            waiter = null,
-            onRendezvous = { element -> onReceiveEnqueued(); return success(element); },
-            onSuspend = { _, _ -> error("unexpected") },
-            onClosed = { onReceiveEnqueued(); return closed(getCause()) },
-            onNoWaiter = { segm, i, r -> receiveCatchingSuspend(segm, i, r) }
-        )
+    override suspend fun receiveCatching(): ChannelResult<E> {
+        var segm = receiveSegment.value
+        while (true) {
+            if (closeStatus.value == 2) {
+                completeCancel()
+                return closed(getCause())
+            }
+            val r = this.receivers.getAndIncrement()
+            val id = r / SEGMENT_SIZE
+            val i = (r % SEGMENT_SIZE).toInt()
+            if (segm.id != id) {
+                segm = findSegmentReceive(id, segm).let {
+                    if (it.isClosed) {
+                        if (closeStatus.value == 1) completeClose() else completeCancel()
+                        return closed(getCause())
+                    } else it.segment
+                }
+            }
+            if (segm.id != id) {
+                receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
+                continue
+            }
+            val result = updateCellReceive(segm, i, r, null)
+            when {
+                result === SUSPEND -> error("Unexpected")
+                result === FAILED -> continue
+                result !== NO_WAITER -> { // element
+                    return success(result as E)
+                }
+                result === NO_WAITER -> {
+                    return receiveCatchingSuspend(segm, i, r)
+                }
+            }
+        }
+    }
 
     override fun tryReceive(): ChannelResult<E> {
         if (receivers.value >= senders.value && closeStatus.value == 0) return failure()
