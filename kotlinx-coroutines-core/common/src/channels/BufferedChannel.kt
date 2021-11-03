@@ -71,32 +71,22 @@ internal open class BufferedChannel<E>(
     public override suspend fun send(element: E): Unit {
         var segm = sendSegment.value
         while (true) {
-            if (closeStatus.value > 0) {
-                if (closeStatus.value == 1) completeClose() else completeCancel()
-                onUndeliveredElement?.invoke(element);
-                throw recoverStackTrace(sendException(getCause()))
-            }
+//            if (closeStatus.value > 0) {
+//                if (closeStatus.value == 1) completeClose() else completeCancel()
+//                onUndeliveredElement?.invoke(element);
+//                throw recoverStackTrace(sendException(getCause()))
+//            }
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
-            if (segm.id != id) {
-                segm = findSegmentSend(id, segm).let {
-                    if (it.isClosed) {
-                        if (closeStatus.value == 1) completeClose() else completeCancel()
-                        onUndeliveredElement?.invoke(element);
-                        throw recoverStackTrace(sendException(getCause()))
-                    } else it.segment
-                }
-            }
+            if (segm.id != id) segm = findSegmentSend(id, segm, element)
             if (segm.id != id) {
                 senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
                 continue
             }
             val result = updateCellSend(segm, i, element, s, null)
             when {
-                result === RENDEZVOUS -> {
-                    return
-                }
+                result === RENDEZVOUS -> return
                 result === SUSPEND -> error("Unexpected")
                 result === FAILED -> continue
                 result === NO_WAITER -> {
@@ -130,15 +120,7 @@ internal open class BufferedChannel<E>(
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
-            if (segm.id != id) {
-                segm = findSegmentSend(id, segm).let {
-                    if (it.isClosed) {
-                        if (closeStatus.value == 1) completeClose() else completeCancel()
-                        onClosed()
-                        return
-                    } else it.segment
-                }
-            }
+            if (segm.id != id)  segm = findSegmentSend(id, segm, element)
             if (segm.id != id) {
                 senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
                 continue
@@ -259,17 +241,24 @@ internal open class BufferedChannel<E>(
         }
     }
 
-    private fun findSegmentSend(id: Long, start: ChannelSegment<E>) =
-        sendSegment.findSegmentAndMoveForward(id, start, ::createSegment)
+    private fun findSegmentSend(id: Long, start: ChannelSegment<E>, element: E) =
+        sendSegment.findSegmentAndMoveForward(id, start, ::createSegment).let {
+            if (it.isClosed) {
+                if (closeStatus.value == 1) completeClose() else completeCancel()
+                onUndeliveredElement?.invoke(element);
+                throw recoverStackTrace(sendException(getCause()))
+            } else it.segment
+        }
+
 
 
     override suspend fun receive(): E {
         var segm = receiveSegment.value
         while (true) {
-            if (closeStatus.value == 2) {
-                completeCancel()
-                throw recoverStackTrace(receiveException(getCause()))
-            }
+//            if (closeStatus.value == 2) {
+//                completeCancel()
+//                throw recoverStackTrace(receiveException(getCause()))
+//            }
             val r = this.receivers.getAndIncrement()
             val id = r / SEGMENT_SIZE
             val i = (r % SEGMENT_SIZE).toInt()
