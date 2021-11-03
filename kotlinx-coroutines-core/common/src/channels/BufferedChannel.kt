@@ -213,9 +213,6 @@ internal open class BufferedChannel<E>(
                         if (segm.casState(i, null, waiter)) return SUSPEND
                     }
                 }
-                state === STORING_WAITER -> if (segm.casState(i, state, BUFFERED)) {
-                    return RENDEZVOUS
-                }
                 state === BUFFERING -> {
                     if (segm.casState(i, state, BUFFERED)) return RENDEZVOUS
                 }
@@ -477,15 +474,12 @@ internal open class BufferedChannel<E>(
                         }
                     } else {
                         if (waiter === null) return NO_WAITER
-                        if (segm.casState(i, state, STORING_WAITER)) {
+                        if (segm.casState(i, state, waiter)) {
                             expandBuffer()
-                            if (segm.casState(i, STORING_WAITER, waiter)) return SUSPEND
-                            // BUFFERED otherwise
-                            val element = segm.retrieveElement(i)
-                            if (segm.getState(i) === BUFFERED) {
-                                segm.setState(i, DONE)
-                                return element
-                            }
+                            return SUSPEND
+                        } else {
+                            expandBuffer()
+                            return segm.retrieveElement(i)
                         }
                     }
                 }
@@ -579,7 +573,6 @@ internal open class BufferedChannel<E>(
                 state === null -> {
                     if (segm.casState(i, segm, BUFFERING)) return true
                 }
-                state === STORING_WAITER -> return true
                 state === BUFFERED || state === BROKEN || state === DONE || state === CLOSED -> return true
                 state === RESUMING_R -> if (segm.casState(i, state, RESUMING_R_EB)) return true
                 state === INTERRUPTED -> {
@@ -1122,8 +1115,6 @@ private val DONE = Symbol("DONE")
 private val INTERRUPTED = Symbol("INTERRUPTED")
 private val INTERRUPTED_R = Symbol("INTERRUPTED_R")
 private val INTERRUPTED_EB = Symbol("INTERRUPTED_EB")
-
-private val STORING_WAITER = Symbol("STORING_WAITER")
 
 // Special values for `CLOSE_HANDLER`
 private val CLOSE_HANDLER_CLOSED = Symbol("CLOSE_HANDLER_CLOSED")
