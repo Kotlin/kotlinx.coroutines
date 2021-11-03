@@ -11,7 +11,7 @@ public fun doGeomDistrWork(work: Int) {
     // are distributed geometrically, see https://github.com/Kotlin/kotlinx.coroutines/pull/1464#discussion_r355705325
     val p = 1.0 / work
     val r = ThreadLocalRandom.current()
-    while (true) {
-        if (r.nextDouble() < p) break
+    repeat(10_000) {
+        if (r.nextDouble() < p) return
     }
 }
