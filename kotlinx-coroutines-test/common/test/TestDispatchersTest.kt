@@ -20,8 +20,8 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
         Dispatchers.resetMain()
     }
 
-    /** Tests that asynchronous execution of tests does not happen concurrently with [AfterTest] (in fact, it does). */
-    @Ignore // fails on JS.
+    /** Tests that asynchronous execution of tests does not happen concurrently with [AfterTest]. */
+    @NoJs
     @Test
     fun testMainMocking() = runTest {
         val mainAtStart = mainTestDispatcher

@@ -3,8 +3,12 @@
  */
 package kotlinx.coroutines.test
 
+import kotlin.test.*
+
 actual fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult) {
     block {
         test()
     }
 }
+
+actual typealias NoNative = Ignore
