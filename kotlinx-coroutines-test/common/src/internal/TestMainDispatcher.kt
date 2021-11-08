@@ -12,9 +12,12 @@ import kotlin.coroutines.*
  */
 internal class TestMainDispatcher(var delegate: CoroutineDispatcher):
     MainCoroutineDispatcher(),
-    Delay by (delegate as? Delay ?: defaultDelay)
+    Delay
 {
     private val mainDispatcher = delegate // the initial value passed to the constructor
+
+    private val delay
+        get() = delegate as? Delay ?: defaultDelay
 
     override val immediate: MainCoroutineDispatcher
         get() = (delegate as? MainCoroutineDispatcher)?.immediate ?: this
@@ -28,6 +31,12 @@ internal class TestMainDispatcher(var delegate: CoroutineDispatcher):
     fun resetDispatcher() {
         delegate = mainDispatcher
     }
+
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
+        delay.scheduleResumeAfterDelay(timeMillis, continuation)
+
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        delay.invokeOnTimeout(timeMillis, block, context)
 }
 
 @Suppress("INVISIBLE_MEMBER")

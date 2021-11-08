@@ -7,6 +7,8 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.test.internal.*
+import kotlinx.coroutines.test.internal.TestMainDispatcher
 import kotlin.coroutines.*
 
 /**
@@ -15,10 +17,32 @@ import kotlin.coroutines.*
  * This dispatcher is similar to [Dispatchers.Unconfined]: the tasks that it executes are not confined to any particular
  * thread and form an event loop; it's different in that it skips delays, as all [TestDispatcher]s do.
  *
+ * Like [Dispatchers.Unconfined], this one does not provide guarantees about the execution order when several coroutines
+ * are queued in this dispatcher. However, we ensure that the [launch] and [async] blocks at the top level of [runTest]
+ * are entered eagerly. This allows launching child coroutines and not calling [runCurrent] for them to start executing.
+ *
+ * ```
+ * @Test
+ * fun testEagerlyEnteringChildCoroutines() = runTest(UnconfinedTestDispatcher()) {
+ *   var entered = false
+ *   val deferred = CompletableDeferred<Unit>()
+ *   var completed = false
+ *   launch {
+ *     entered = true
+ *     deferred.await()
+ *     completed = true
+ *   }
+ *   assertTrue(entered) // `entered = true` already executed.
+ *   assertFalse(completed) // however, the child coroutine then suspended, so it is enqueued.
+ *   deferred.complete(Unit) // resume the coroutine.
+ *   assertTrue(completed) // now the child coroutine is immediately completed.
+ * }
+ * ```
+ *
  * Using this [TestDispatcher] can greatly simplify writing tests where it's not important which thread is used when and
  * in which order the queued coroutines are executed.
- * The typical use case for this is launching child coroutines that are resumed immediately, without going through a
- * dispatch; this can be helpful for testing [Channel] and [StateFlow] usages.
+ * Another typical use case for this dispatcher is launching child coroutines that are resumed immediately, without
+ * going through a dispatch; this can be helpful for testing [Channel] and [StateFlow] usages.
  *
  * ```
  * @Test
@@ -40,14 +64,16 @@ import kotlin.coroutines.*
  * }
  * ```
  *
- * However, please be aware that, like [Dispatchers.Unconfined], this is a specific dispatcher with execution order
+ * Please be aware that, like [Dispatchers.Unconfined], this is a specific dispatcher with execution order
  * guarantees that are unusual and not shared by most other dispatchers, so it can only be used reliably for testing
  * functionality, not the specific order of actions.
  * See [Dispatchers.Unconfined] for a discussion of the execution order guarantees.
  *
  * In order to support delay skipping, this dispatcher is linked to a [TestCoroutineScheduler], which is used to control
- * the virtual time and can be shared among many test dispatchers. If no [scheduler] is passed as an argument, a new one
- * is created.
+ * the virtual time and can be shared among many test dispatchers.
+ * If no [scheduler] is passed as an argument, [Dispatchers.Main] is checked, and if it was mocked with a
+ * [TestDispatcher] via [Dispatchers.setMain], the [TestDispatcher.scheduler] of the mock dispatcher is used; if
+ * [Dispatchers.Main] is not mocked with a [TestDispatcher], a new [TestCoroutineScheduler] is created.
  *
  * Additionally, [name] can be set to distinguish each dispatcher instance when debugging.
  *
@@ -56,14 +82,14 @@ import kotlin.coroutines.*
 @ExperimentalCoroutinesApi
 @Suppress("FunctionName")
 public fun UnconfinedTestDispatcher(
-    scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
+    scheduler: TestCoroutineScheduler? = null,
     name: String? = null
-): TestDispatcher = UnconfinedTestDispatcherImpl(scheduler, name)
+): TestDispatcher = UnconfinedTestDispatcherImpl(scheduler ?: mainTestScheduler ?: TestCoroutineScheduler(), name)
 
 private class UnconfinedTestDispatcherImpl(
     override val scheduler: TestCoroutineScheduler,
     private val name: String? = null
-): TestDispatcher() {
+) : TestDispatcher() {
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
 
@@ -103,7 +129,9 @@ private class UnconfinedTestDispatcherImpl(
  * run these pending tasks, which will block until there are no more tasks scheduled at this point in time, or, when
  * inside [runTest], call [yield] to yield the (only) thread used by [runTest] to the newly-launched coroutines.
  *
- * If a [scheduler] is not passed as an argument, a new one is created.
+ * If no [scheduler] is passed as an argument, [Dispatchers.Main] is checked, and if it was mocked with a
+ * [TestDispatcher] via [Dispatchers.setMain], the [TestDispatcher.scheduler] of the mock dispatcher is used; if
+ * [Dispatchers.Main] is not mocked with a [TestDispatcher], a new [TestCoroutineScheduler] is created.
  *
  * One can additionally pass a [name] in order to more easily distinguish this dispatcher during debugging.
  *
@@ -111,14 +139,14 @@ private class UnconfinedTestDispatcherImpl(
  */
 @Suppress("FunctionName")
 public fun StandardTestDispatcher(
-    scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
+    scheduler: TestCoroutineScheduler? = null,
     name: String? = null
-): TestDispatcher = StandardTestDispatcherImpl(scheduler, name)
+): TestDispatcher = StandardTestDispatcherImpl(scheduler ?: mainTestScheduler ?: TestCoroutineScheduler(), name)
 
 private class StandardTestDispatcherImpl(
     override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
     private val name: String? = null
-): TestDispatcher() {
+) : TestDispatcher() {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         checkSchedulerInContext(scheduler, context)
@@ -127,3 +155,6 @@ private class StandardTestDispatcherImpl(
 
     override fun toString(): String = "${name ?: "StandardTestDispatcher"}[scheduler=$scheduler]"
 }
+
+private val mainTestScheduler
+    get() = ((Dispatchers.Main as? TestMainDispatcher)?.delegate as? TestDispatcher)?.scheduler
