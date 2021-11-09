@@ -383,10 +383,7 @@ class SelectArrayChannelTest : TestBase() {
     }
 
     // only for debugging
-    internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
-        this as SelectBuilderImpl // type assertion
-        default(block)
-    }
+    internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) = onTimeout(0, block)
 
     @Test
     fun testSelectReceiveOrClosedForClosedChannel() = runTest {

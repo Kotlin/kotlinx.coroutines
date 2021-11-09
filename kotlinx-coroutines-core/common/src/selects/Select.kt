@@ -59,7 +59,8 @@ public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() ->
     contract {
         callsInPlace(builder, InvocationKind.EXACTLY_ONCE)
     }
-    return SelectBuilderImpl<R>(unbiased = false).run {
+    return SelectBuilderImpl<R>().run {
+        prepare()
         builder(this)
         doSelect()
     }
@@ -79,8 +80,8 @@ public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<
     contract {
         callsInPlace(builder, InvocationKind.EXACTLY_ONCE)
     }
-    return SelectBuilderImpl<R>(unbiased = true).run {
-        // TODO shuffle alternatives
+    return UnbiasedSelectBuilderImpl<R>().run {
+        prepare()
         builder(this)
         doSelect()
     }
@@ -135,7 +136,7 @@ public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -
     onTimeout(timeout.toDelayMillis(), block)
 
 @InternalCoroutinesApi
-public interface SelectClause {
+public sealed interface SelectClause {
     public val objForSelect: Any
     public val regFunc: RegistrationFunction
     public val processResFunc: ProcessResultFunction
@@ -212,11 +213,52 @@ public interface SelectInstance<in R> {
 }
 
 @PublishedApi
-internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuilder<R>, SelectInstance<R> {
+internal class UnbiasedSelectBuilderImpl<R> : SelectBuilderImpl<R>() {
+    private val clauses: MutableList<ClauseWithArguments> = arrayListOf()
+
+    override fun SelectClause0.invoke(block: suspend () -> R) {
+        clauses += ClauseWithArguments(this, null, block)
+    }
+
+    override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) {
+        clauses += ClauseWithArguments(this, null, block)
+    }
+
+    override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) {
+        clauses += ClauseWithArguments(this, param, block)
+    }
+
+    override suspend fun doSelect(): R {
+        shuffleAndRegisterClauses()
+        return super.doSelect()
+    }
+
+    private fun shuffleAndRegisterClauses() {
+        clauses.shuffle()
+        clauses.forEach {
+            when (val clause = it.clause) {
+                is SelectClause0 -> {
+                    clause.register(it.block as suspend () -> R)
+                }
+                is SelectClause1<*> -> {
+                    clause.register(it.block as suspend (Any?) -> R)
+                }
+                is SelectClause2<*, *> -> {
+                    clause as SelectClause2<Any?, suspend (Any?) -> R>
+                    clause.register(it.param, it.block as suspend (Any?) -> R)
+                }
+            }
+        }
+        clauses.clear()
+    }
+}
+
+private class ClauseWithArguments(val clause: SelectClause, val param: Any?, val block: Any?)
+
+@PublishedApi
+internal open class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
     private val cont = atomic<Any?>(null)
-    @InternalCoroutinesApi
-    internal val continuation: CancellableContinuation<*>? get() =
-        cont.value as? CancellableContinuation<*>
+    internal lateinit var context: CoroutineContext
 
     // 0: objForSelect
     // 1: RegistrationFunction
@@ -227,8 +269,8 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
     private val alternatives = ArrayList<Any?>(ALTERNATIVE_SIZE * 2) // 2 clauses -- the most common case
     private var onCompleteAction: (() -> Unit)? = null
 
-    private val state = atomic<Any>(REG)
-    private val clauseResult = atomic<Any?>(NULL)
+    private val state = atomic<Any>(STATE_REG)
+    private val clauseResult = atomic<Any?>(RESULT_NULL)
 
     override fun invokeOnCompletion(onCompleteAction: () -> Unit) {
         this.onCompleteAction = onCompleteAction
@@ -238,7 +280,11 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
         this.clauseResult.value = selectResult
     }
 
-    suspend fun doSelect(): R =
+    suspend fun prepare() {
+        this.context = coroutineContext
+    }
+
+    open suspend fun doSelect(): R =
         selectAlternativeIteration(cleanOnCompletion = true)
 
     suspend fun selectAlternativeIteration(cleanOnCompletion: Boolean): R {
@@ -285,7 +331,7 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
         throw recoverStackTrace(e)
     }
 
-    fun cleanBuilder() {
+    private fun cleanBuilder() {
         this.alternatives.clear()
         this.cont.value = null
         this.block = null
@@ -295,7 +341,7 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
         val objForSelect = alternatives[i]!!
         val processResFunc = alternatives[i + 2] as ProcessResultFunction
         val param = alternatives[i + 3]
-        val clauseResult = this.clauseResult.value.also { this.clauseResult.lazySet(NULL) }
+        val clauseResult = this.clauseResult.value.also { this.clauseResult.lazySet(RESULT_NULL) }
         return processResFunc(objForSelect, param, clauseResult)
     }
 
@@ -306,10 +352,10 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
         param: Any?,
         block: Any
     ): Boolean {
-        if (clauseResult.value !== NULL) return true
+        if (clauseResult.value !== RESULT_NULL) return true
         checkObjForSelect(objForSelect)
         regFunc(objForSelect, this, param)
-        if (clauseResult.value === NULL) { // registered as waiter
+        if (clauseResult.value === RESULT_NULL) { // registered as waiter
             alternatives.add(objForSelect)
             alternatives.add(regFunc)
             alternatives.add(processResFunc)
@@ -336,7 +382,7 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
         val regFunc = alternatives[i + 1] as RegistrationFunction
         val param = alternatives[i + 3]
         regFunc(objForSelect, this, param)
-        return if (clauseResult.value === NULL) { // registered as waiter
+        return if (clauseResult.value === RESULT_NULL) { // registered as waiter
             alternatives[i + 5] = onCompleteAction.also { onCompleteAction = null }
             true
         } else { // rendezvous?
@@ -346,7 +392,7 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
     }
 
     private fun trySelectAlternative(): Boolean {
-        if (clauseResult.value !== NULL) return true
+        if (clauseResult.value !== RESULT_NULL) return true
         while (true) {
             val objForSelect = extractFromStackOrMarkWaiting() ?: break
             val i = selectedAlternativeIndex(objForSelect)
@@ -361,12 +407,6 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
 
     private suspend fun selectAlternativeSuspend() = suspendCancellableCoroutineReusable<Unit> { cont ->
         if (!this.cont.compareAndSet(null, cont)) cont.resume(Unit)
-        onTimeouts?.run {
-            if (unbiased) shuffle()
-            forEach {  it.selectClause.invoke(it.block) }.also {
-                onTimeouts = null
-            }
-        }
         cont.invokeOnCancellation { cleanNonSelectedAlternatives(null) }
     }
 
@@ -375,7 +415,7 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
      * waiting queues of other alternatives.
      */
     fun cleanNonSelectedAlternatives(selectedObject: Any?) {
-        val curState = state.getAndSet(DONE)
+        val curState = state.getAndSet(STATE_DONE)
         clean@ for (i in 0 until alternatives.size / ALTERNATIVE_SIZE) {
             val i = i * ALTERNATIVE_SIZE
             val objForSelect = alternatives[i]
@@ -422,7 +462,7 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
     override fun trySelect(objForSelect: Any, result: Any?): Boolean {
         if (!tryRendezvousOrReregister(objForSelect)) return false
         this.clauseResult.value = result
-        if (this.cont.value === null && this.cont.compareAndSet(null, DONE)) return true
+        if (this.cont.value === null && this.cont.compareAndSet(null, STATE_DONE)) return true
         this.cont.value!!.let { cont ->
             cont as CancellableContinuation<Unit>
             val resumeToken = cont.tryResume(Unit) ?: return false
@@ -431,24 +471,23 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
         }
     }
 
-
     private fun tryRendezvousOrReregister(objForSelect: Any): Boolean = state.loop { curState ->
         when {
-            curState === REG -> if (state.compareAndSet(curState, Node(objForSelect, null))) return false
-            curState === WAITING -> if (state.compareAndSet(curState, objForSelect)) return true
-            curState === DONE -> return false
+            curState === STATE_REG -> if (state.compareAndSet(curState, Node(objForSelect, null))) return false
+            curState === STATE_WAITING -> if (state.compareAndSet(curState, objForSelect)) return true
+            curState === STATE_DONE -> return false
             else -> if (state.compareAndSet(curState, Node(objForSelect, curState))) return false
         }
     }
 
     private fun extractFromStackOrMarkWaiting(): Any? = state.loop { curState ->
         when {
-            curState === REG -> if (state.compareAndSet(curState, WAITING)) return null
+            curState === STATE_REG -> if (state.compareAndSet(curState, STATE_WAITING)) return null
             curState is Node -> {
-                val updState = curState.next ?: REG
+                val updState = curState.next ?: STATE_REG
                 if (state.compareAndSet(curState, updState)) return curState.objForSelect
             }
-            else -> if (state.compareAndSet(curState, REG)) return curState
+            else -> if (state.compareAndSet(curState, STATE_REG)) return curState
         }
     }
 
@@ -460,7 +499,7 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
 
     private fun storeObjForSelect(objForSelect: Any): Unit = state.loop { curState ->
         when {
-            curState === REG -> if (state.compareAndSet(REG, objForSelect)) return
+            curState === STATE_REG -> if (state.compareAndSet(STATE_REG, objForSelect)) return
             curState is Node -> {
                 var lastNode: Node = curState
                 while (lastNode.next != null) lastNode = lastNode.next as Node
@@ -475,61 +514,53 @@ internal class SelectBuilderImpl<R>(private val unbiased: Boolean) : SelectBuild
 
     var block: Function<R>? = null
 
-    override fun SelectClause0.invoke(block: suspend () -> R) {
+    override fun SelectClause0.invoke(block: suspend () -> R) =
+        register(block)
+
+    override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) =
+        register(param, block)
+
+    override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) =
+        register(block)
+
+    protected fun SelectClause0.register(block: suspend () -> R) {
         if (!addAlternative(objForSelect, regFunc, processResFunc, PARAM_CLAUSE_0, block)) {
             clauseResult.value = processResFunc(objForSelect, null, clauseResult.value)
             this@SelectBuilderImpl.block = block
         }
     }
 
-    override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) {
+    protected fun <Q> SelectClause1<Q>.register(block: suspend (Q) -> R) {
         if (!addAlternative(objForSelect, regFunc, processResFunc, PARAM_CLAUSE_1, block)) {
             clauseResult.value = processResFunc(objForSelect, null, clauseResult.value)
             this@SelectBuilderImpl.block = block
         }
     }
 
-    override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) {
+    protected fun <P, Q> SelectClause2<P, Q>.register(param: P, block: suspend (Q) -> R) {
         if (!addAlternative(objForSelect, regFunc, processResFunc, param, block)) {
             clauseResult.value = processResFunc(objForSelect, param, clauseResult.value)
             this@SelectBuilderImpl.block = block
         }
     }
 
-    @InternalCoroutinesApi
-    fun default(block: suspend () -> R) = onTimeout(0, block)
-
-    private var onTimeouts: MutableList<OnTimeout<R>>? = null
-    override fun onTimeout(timeMillis: Long, block: suspend () -> R) {
-        if (timeMillis <= 0 && clauseResult.value === NULL) {
-            selectInRegPhase(null)
-            storeObjForSelect(OBJ_FOR_SELECT_ON_TIMEOUT)
-            clauseResult.value = null
-            this@SelectBuilderImpl.block = block
-        }
-        if (onTimeouts == null) onTimeouts = ArrayList()
-        onTimeouts!! += OnTimeout(timeMillis, block)
-    }
+    override fun onTimeout(timeMillis: Long, block: suspend () -> R) =
+        OnTimeout(timeMillis).selectClause.invoke(block)
 }
 
-// Number of items to be stored for each alternative in the `alternatives` array.
-private const val ALTERNATIVE_SIZE = 6
-
-private val REG = Symbol("REG")
-private val WAITING = Symbol("WAITING")
-private val DONE = Symbol("DONE")
-private val NULL = Symbol("NULL")
-
-internal val PARAM_CLAUSE_0 = Symbol("PARAM_CLAUSE_0")
-internal val PARAM_CLAUSE_1 = Symbol("PARAM_CLAUSE_1")
-
-private class OnTimeout<R>(val timeMillis: Long, val block: suspend () -> R) {
+private class OnTimeout(
+    private val timeMillis: Long
+) {
     private fun register(select: SelectInstance<*>, ignoredParam: Any?) {
+        if (timeMillis <= 0) {
+            select.selectInRegPhase(Unit)
+            return
+        }
         val action = Runnable {
             select.trySelect(this@OnTimeout, Unit)
         }
         select as SelectBuilderImpl<*>
-        val context = select.continuation!!.context
+        val context = select.context
         val disposableHandle = context.delay.invokeOnTimeout(timeMillis, action, context)
         select.invokeOnCompletion { disposableHandle.dispose() }
     }
@@ -537,7 +568,18 @@ private class OnTimeout<R>(val timeMillis: Long, val block: suspend () -> R) {
     val selectClause: SelectClause0 get() =
         SelectClause0Impl(
             objForSelect = this,
-            regFunc = OnTimeout<*>::register as RegistrationFunction
+            regFunc = OnTimeout::register as RegistrationFunction
         )
 }
-private val OBJ_FOR_SELECT_ON_TIMEOUT = Symbol("OBJ_FOR_SELECT_ON_TIMEOUT")
+
+// Number of items to be stored for each alternative in the `alternatives` array.
+private const val ALTERNATIVE_SIZE = 6
+
+private val STATE_REG = Symbol("REG")
+private val STATE_WAITING = Symbol("WAITING")
+private val STATE_DONE = Symbol("DONE")
+
+private val RESULT_NULL = Symbol("NULL")
+
+internal val PARAM_CLAUSE_0 = Symbol("PARAM_CLAUSE_0")
+internal val PARAM_CLAUSE_1 = Symbol("PARAM_CLAUSE_1")
