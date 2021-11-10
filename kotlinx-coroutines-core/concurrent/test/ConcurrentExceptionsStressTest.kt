@@ -57,7 +57,6 @@ class ConcurrentExceptionsStressTest : TestBase() {
     }
 
     private fun unexpectedException(msg: String, e: Throwable?): Nothing {
-        e?.printStackTrace()
         throw IllegalStateException("Unexpected $msg exception", e)
     }
 
