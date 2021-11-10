@@ -20,9 +20,8 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
         current.executeAfter(0L, EMPTY_BLOCK)// send an empty task to unpark the waiting event loop
     }
 
-    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask): Unit {
+    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
         DefaultExecutor.invokeOnTimeout(now, delayedTask, EmptyCoroutineContext)
-        Unit
     }
 }
 
