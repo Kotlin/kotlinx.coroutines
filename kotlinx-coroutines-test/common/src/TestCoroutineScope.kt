@@ -6,8 +6,6 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.test.internal.*
-import kotlinx.coroutines.test.internal.TestMainDispatcher
 import kotlin.coroutines.*
 
 /**
@@ -172,12 +170,7 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
             }
             dispatcher
         }
-        null -> {
-            val mainDispatcherScheduler =
-                ((Dispatchers.Main as? TestMainDispatcher)?.delegate as? TestDispatcher)?.scheduler
-            scheduler = context[TestCoroutineScheduler] ?: mainDispatcherScheduler ?: TestCoroutineScheduler()
-            StandardTestDispatcher(scheduler)
-        }
+        null -> StandardTestDispatcher(context[TestCoroutineScheduler]).also { scheduler = it.scheduler }
         else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
     }
     var scope: TestCoroutineScopeImpl? = null

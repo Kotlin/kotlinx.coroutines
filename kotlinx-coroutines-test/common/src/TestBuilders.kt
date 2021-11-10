@@ -219,7 +219,7 @@ public fun runTest(
     return createTestResult {
         /** TODO: moving this [AbstractCoroutine.start] call outside [createTestResult] fails on Native with
          * [TestCoroutineDispatcher], because the event loop is not started. */
-        testScope.start(CoroutineStart.DEFAULT, testScope) {
+        testScope.start(CoroutineStart.UNDISPATCHED, testScope) {
             testBody()
         }
         var completed = false

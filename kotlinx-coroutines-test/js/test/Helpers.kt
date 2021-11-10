@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines.test
 
+import kotlin.test.*
+
 actual fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult): TestResult =
     test().then(
         {
@@ -14,3 +16,5 @@ actual fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult): T
                 throw it
             }
         })
+
+actual typealias NoJs = Ignore
