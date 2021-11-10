@@ -25,7 +25,7 @@ abstract class AbstractDispatcherConcurrencyTest : TestBase() {
     }
 
     @Test
-    fun testDispatcherIsActuallyMultithreaded() = runMtTest {
+    fun testDispatcherHasOwnThreads() = runMtTest {
         val channel = Channel<Int>()
         GlobalScope.launch(dispatcher) {
             channel.send(42)
