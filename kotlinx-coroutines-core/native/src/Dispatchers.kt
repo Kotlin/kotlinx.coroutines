@@ -6,11 +6,6 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.multithreadingSupported
 import kotlin.coroutines.*
-import kotlin.native.concurrent.*
-
-/** Not inside [Dispatchers], as otherwise mutating this throws an `InvalidMutabilityException`. */
-@ThreadLocal
-private var injectedMainDispatcher: MainCoroutineDispatcher? = null
 
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcherBasedOnMm()
@@ -19,6 +14,8 @@ public actual object Dispatchers {
     public actual val Unconfined: CoroutineDispatcher get() = kotlinx.coroutines.Unconfined // Avoid freezing
 
     private val mainDispatcher = createMainDispatcher(Default)
+
+    private var injectedMainDispatcher: MainCoroutineDispatcher? = null
 
     @PublishedApi
     internal fun injectMain(dispatcher: MainCoroutineDispatcher) {

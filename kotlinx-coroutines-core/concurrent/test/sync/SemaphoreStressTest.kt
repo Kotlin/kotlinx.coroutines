@@ -46,29 +46,24 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testNativeSpecificStress() = runMtTest {
-        /*
-         * Dispatchers.Default is still single-threaded, so here we're doing actual concurrency
-         */
-        val n = 100_000 * stressTestMultiplier / stressTestNativeDivisor
-        var shared = 0
-        val semaphore = Semaphore(1)
-        val job = launch(Dispatchers.Default) {
-            repeat(n) {
-                semaphore.acquire()
-                shared++
-                semaphore.release()
+    fun testStressAsMutex() = runMtTest {
+        runBlocking(Dispatchers.Default) {
+            val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
+            val k = 100
+            var shared = 0
+            val semaphore = Semaphore(1)
+            val jobs = List(n) {
+                launch {
+                    repeat(k) {
+                        semaphore.acquire()
+                        shared++
+                        semaphore.release()
+                    }
+                }
             }
+            jobs.forEach { it.join() }
+            assertEquals(n * k, shared)
         }
-
-        repeat(n) {
-            semaphore.acquire()
-            shared++
-            semaphore.release()
-        }
-
-        job.join()
-        assertEquals(n * 2, shared)
     }
 
     @Test
