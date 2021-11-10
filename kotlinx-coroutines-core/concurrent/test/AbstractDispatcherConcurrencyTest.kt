@@ -41,7 +41,7 @@ abstract class AbstractDispatcherConcurrencyTest : TestBase() {
     }
 
     @Test
-    fun testDelayInDefaultDispatcher() = runMtTest {
+    fun testDelayInDispatcher() = runMtTest {
         expect(1)
         val job = GlobalScope.launch(dispatcher) {
             expect(2)
