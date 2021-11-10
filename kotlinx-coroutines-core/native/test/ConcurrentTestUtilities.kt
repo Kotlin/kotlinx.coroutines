@@ -16,7 +16,9 @@ actual fun randomWait() {
     repeat(n) {
         BlackHole.sink *= 3
     }
-    if (n > 900) sched_yield()
+    // use the BlackHole value somehow, so even if the compiler gets smarter, it won't remove the object
+    val sinkValue = if (BlackHole.sink > 16) 1 else 0
+    if (n + sinkValue > 900) sched_yield()
 }
 
 @ThreadLocal
