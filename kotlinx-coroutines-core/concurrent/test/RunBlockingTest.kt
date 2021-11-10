@@ -68,20 +68,20 @@ class RunBlockingTest : TestBase() {
     }
 
     @Test
-    fun testCancellation() = runMtTest {
-        val ctx = newSingleThreadContext("testCancellation")
-        val job = GlobalScope.launch {
-            runBlocking(coroutineContext + ctx) {
-                while (true) {
-                    yield()
+    fun testCancellation()  = runMtTest {
+        newFixedThreadPoolContext(2, "testCancellation").use {
+            val job = GlobalScope.launch(it) {
+                runBlocking(coroutineContext) {
+                    while (true) {
+                        yield()
+                    }
                 }
             }
-        }
 
-        runBlocking {
+            runBlocking {
             job.cancelAndJoin()
+            }
         }
-        ctx.close()
     }
 
     @Test
@@ -107,7 +107,7 @@ class RunBlockingTest : TestBase() {
 
     @Test
     fun testDispatchOnShutdown(): Unit = assertFailsWith<CancellationException> {
-        runBlocking<Unit> {
+        runBlocking {
             expect(1)
             val job = launch(NonCancellable) {
                 try {
@@ -127,7 +127,7 @@ class RunBlockingTest : TestBase() {
 
     @Test
     fun testDispatchOnShutdown2(): Unit = assertFailsWith<CancellationException> {
-        runBlocking<Unit> {
+        runBlocking {
             coroutineContext.cancel()
             expect(1)
             val job = launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {

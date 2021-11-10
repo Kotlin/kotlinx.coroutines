@@ -54,6 +54,9 @@ public fun TestBase.runMtTest(
     unhandled: List<(Throwable) -> Boolean> = emptyList(),
     block: suspend CoroutineScope.() -> Unit
 ): TestResult {
+    // Never invoked on JS, not extracted to separate 'concurrent' source set
+    // as it doesn't help with the suppress anyway and requires an additional ceremony
+    // and spreads TestBase extensions over the codebase
     @Suppress("CAST_NEVER_SUCCEEDS")
     if (!multithreadingSupported) return Unit as TestResult
     return runTest(expected, unhandled, block)

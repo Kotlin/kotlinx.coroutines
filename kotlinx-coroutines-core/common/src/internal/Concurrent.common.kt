@@ -4,8 +4,6 @@
 
 package kotlinx.coroutines.internal
 
-import kotlin.native.concurrent.*
-
 /**
  * Special kind of list intended to be used as collection of subscribers in `ArrayBroadcastChannel`
  * On JVM it's CopyOnWriteList and on JS it's MutableList.

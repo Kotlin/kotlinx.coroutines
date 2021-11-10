@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
 class LockFreeLinkedListTest {

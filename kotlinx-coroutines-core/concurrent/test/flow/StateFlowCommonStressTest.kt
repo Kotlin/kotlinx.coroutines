@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow
@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import kotlin.random.*
 import kotlin.test.*
 
-// Simplified version of StateFlowStressTest
+// A simplified version of StateFlowUpdateStressTest
 class StateFlowCommonStressTest : TestBase() {
     private val state = MutableStateFlow<Long>(0)
 

@@ -20,7 +20,6 @@ private object BlackHole {
     var sink = 1
 }
 
-
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias SuppressSupportingThrowable = Throwable
 

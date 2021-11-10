@@ -289,7 +289,11 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
         } else {
-            DefaultExecutor.enqueue(task)
+            if (multithreadingSupported) {
+                DefaultExecutor.enqueue(task)
+            } else {
+                error("Cannot execute task because event loop was shut down")
+            }
         }
     }
 

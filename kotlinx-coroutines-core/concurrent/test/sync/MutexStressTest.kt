@@ -18,23 +18,23 @@ class MutexStressTest : TestBase() {
 
     @Test
     fun testSingleThreadContext() = runMtTest {
-        val ctx = newSingleThreadContext("testSingleThreadContext")
-        testBody(ctx)
-        ctx.close()
+        newSingleThreadContext("testSingleThreadContext").use {
+            testBody(it)
+        }
     }
 
     @Test
     fun testMultiThreadedContextWithSingleWorker() = runMtTest {
-        val ctx = newFixedThreadPoolContext(1, "testMultiThreadedContextWithSingleWorker")
-        testBody(ctx)
-        ctx.close()
+        newFixedThreadPoolContext(1, "testMultiThreadedContextWithSingleWorker").use {
+            testBody(it)
+        }
     }
 
     @Test
     fun testMultiThreadedContext() = runMtTest {
-        val ctx = newFixedThreadPoolContext(8, "testMultiThreadedContext")
-        testBody(ctx)
-        ctx.close()
+       newFixedThreadPoolContext(8, "testMultiThreadedContext").use {
+            testBody(it)
+        }
     }
 
     @Suppress("SuspendFunctionOnCoroutineScope")

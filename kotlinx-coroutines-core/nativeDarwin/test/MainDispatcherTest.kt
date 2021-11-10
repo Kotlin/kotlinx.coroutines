@@ -5,53 +5,65 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import kotlin.coroutines.*
-import kotlin.test.*
 import platform.CoreFoundation.*
 import platform.darwin.*
+import kotlin.coroutines.*
+import kotlin.test.*
 
 class MainDispatcherTest : TestBase() {
 
     private fun isMainThread(): Boolean = CFRunLoopGetCurrent() == CFRunLoopGetMain()
     private fun canTestMainDispatcher() = !isMainThread() && multithreadingSupported
 
-    @Test
-    fun testDispatchNecessityCheckWithMainImmediateDispatcher() {
+    private fun runTestNotOnMainDispatcher(block: suspend CoroutineScope.() -> Unit) {
+        // skip if already on the main thread, run blocking doesn't really work well with that
         if (!canTestMainDispatcher()) return
-        runTest {
-            val main = Dispatchers.Main.immediate
+        runTest(block = block)
+    }
+
+    @Test
+    fun testDispatchNecessityCheckWithMainImmediateDispatcher() = runTestNotOnMainDispatcher {
+        val main = Dispatchers.Main.immediate
+        assertTrue(main.isDispatchNeeded(EmptyCoroutineContext))
+        withContext(Dispatchers.Default) {
             assertTrue(main.isDispatchNeeded(EmptyCoroutineContext))
-            withContext(Dispatchers.Default) {
-                assertTrue(main.isDispatchNeeded(EmptyCoroutineContext))
-                withContext(Dispatchers.Main) {
-                    assertFalse(main.isDispatchNeeded(EmptyCoroutineContext))
-                }
-                assertTrue(main.isDispatchNeeded(EmptyCoroutineContext))
-            }
-        }
-    }
-
-
-    @Test
-    fun testWithContext() {
-        if (!canTestMainDispatcher()) return // skip if already on the main thread, run blocking doesn't really work well with that
-        runTest {
-            expect(1)
-            assertFalse(isMainThread())
             withContext(Dispatchers.Main) {
-                assertTrue(isMainThread())
-                expect(2)
+                assertFalse(main.isDispatchNeeded(EmptyCoroutineContext))
             }
-            assertFalse(isMainThread())
-            finish(3)
+            assertTrue(main.isDispatchNeeded(EmptyCoroutineContext))
         }
     }
 
     @Test
-    fun testWithContextDelay() {
-        if (!canTestMainDispatcher()) return // skip if already on the main thread, run blocking doesn't really work well with that
-        runTest {
-            expect(1)
+    fun testWithContext() = runTestNotOnMainDispatcher {
+        expect(1)
+        assertFalse(isMainThread())
+        withContext(Dispatchers.Main) {
+            assertTrue(isMainThread())
+            expect(2)
+        }
+        assertFalse(isMainThread())
+        finish(3)
+    }
+
+    @Test
+    fun testWithContextDelay() = runTestNotOnMainDispatcher {
+        expect(1)
+        withContext(Dispatchers.Main) {
+            assertTrue(isMainThread())
+            expect(2)
+            delay(100)
+            assertTrue(isMainThread())
+            expect(3)
+        }
+        assertFalse(isMainThread())
+        finish(4)
+    }
+
+    @Test
+    fun testWithTimeoutContextDelayNoTimeout() = runTestNotOnMainDispatcher {
+        expect(1)
+        withTimeout(1000) {
             withContext(Dispatchers.Main) {
                 assertTrue(isMainThread())
                 expect(2)
@@ -59,88 +71,60 @@ class MainDispatcherTest : TestBase() {
                 assertTrue(isMainThread())
                 expect(3)
             }
-            assertFalse(isMainThread())
-            finish(4)
         }
+        assertFalse(isMainThread())
+        finish(4)
     }
 
     @Test
-    fun testWithTimeoutContextDelayNoTimeout() {
-        if (!canTestMainDispatcher()) return // skip if already on the main thread, run blocking doesn't really work well with that
-        runTest {
-            expect(1)
+    fun testWithTimeoutContextDelayTimeout() = runTestNotOnMainDispatcher {
+        expect(1)
+         assertFailsWith<TimeoutCancellationException> {
+            withTimeout(100) {
+                withContext(Dispatchers.Main) {
+                    assertTrue(isMainThread())
+                    expect(2)
+                    delay(1000)
+                    expectUnreached()
+                }
+            }
+            expectUnreached()
+        }
+        assertFalse(isMainThread())
+        finish(3)
+    }
+
+    @Test
+    fun testWithContextTimeoutDelayNoTimeout() = runTestNotOnMainDispatcher {
+        expect(1)
+        withContext(Dispatchers.Main) {
             withTimeout(1000) {
-                withContext(Dispatchers.Main) {
-                    assertTrue(isMainThread())
-                    expect(2)
-                    delay(100)
-                    assertTrue(isMainThread())
-                    expect(3)
-                }
+                assertTrue(isMainThread())
+                expect(2)
+                delay(100)
+                assertTrue(isMainThread())
+                expect(3)
             }
-            assertFalse(isMainThread())
-            finish(4)
         }
+        assertFalse(isMainThread())
+        finish(4)
     }
 
     @Test
-    fun testWithTimeoutContextDelayTimeout() {
-        if (!canTestMainDispatcher()) return // skip if already on the main thread, run blocking doesn't really work well with that
-        runTest {
-            expect(1)
-             assertFailsWith<TimeoutCancellationException> {
-                withTimeout(100) {
-                    withContext(Dispatchers.Main) {
-                        assertTrue(isMainThread())
-                        expect(2)
-                        delay(1000)
-                        expectUnreached()
-                    }
-                }
-                expectUnreached()
-            }
-            assertFalse(isMainThread())
-            finish(3)
-        }
-    }
-
-    @Test
-    fun testWithContextTimeoutDelayNoTimeout() {
-        if (!canTestMainDispatcher()) return // skip if already on the main thread, run blocking doesn't really work well with that
-        runTest {
-            expect(1)
+    fun testWithContextTimeoutDelayTimeout() = runTestNotOnMainDispatcher {
+        expect(1)
+        assertFailsWith<TimeoutCancellationException> {
             withContext(Dispatchers.Main) {
-                withTimeout(1000) {
+                withTimeout(100) {
                     assertTrue(isMainThread())
                     expect(2)
-                    delay(100)
-                    assertTrue(isMainThread())
-                    expect(3)
+                    delay(1000)
+                    expectUnreached()
                 }
             }
-            assertFalse(isMainThread())
-            finish(4)
+            expectUnreached()
         }
-    }
-
-    @Test
-    fun testWithContextTimeoutDelayTimeout() {
-        if (!canTestMainDispatcher()) return // skip if already on the main thread, run blocking doesn't really work well with that
-        runTest {
-            expect(1)
-            assertFailsWith<TimeoutCancellationException> {
-                withContext(Dispatchers.Main) {
-                    withTimeout(100) {
-                        assertTrue(isMainThread())
-                        expect(2)
-                        delay(1000)
-                        expectUnreached()
-                    }
-                }
-                expectUnreached()
-            }
-            assertFalse(isMainThread())
-            finish(3)
-        }
+        assertFalse(isMainThread())
+        finish(3)
     }
 }

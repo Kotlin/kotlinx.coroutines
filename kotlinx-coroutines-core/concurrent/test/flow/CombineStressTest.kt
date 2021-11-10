@@ -26,7 +26,7 @@ class CombineStressTest : TestBase() {
     }
 
     @Test
-    public fun testFailure() = runMtTest {
+    fun testFailure() = runMtTest {
         val innerIterations = 100 * stressTestMultiplierSqrt
         val outerIterations = 10 * stressTestMultiplierSqrt
         withContext(Dispatchers.Default + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {

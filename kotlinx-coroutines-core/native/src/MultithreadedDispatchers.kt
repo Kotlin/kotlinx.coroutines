@@ -29,8 +29,9 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        worker.executeAfter(timeMillis.toMicrosSafe())
-        { with(continuation) { resumeUndispatched(Unit) } }
+        worker.executeAfter(timeMillis.toMicrosSafe()) {
+            with(continuation) { resumeUndispatched(Unit) }
+        }
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
