@@ -84,7 +84,7 @@ class RunTestTest {
 
     /** Tests that too low of a dispatch timeout causes crashes. */
     @Test
-    @Ignore // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
+    @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestWithSmallTimeout() = testResultMap({ fn ->
         assertFailsWith<UncompletedCoroutinesError> { fn() }
     }) {
@@ -107,7 +107,7 @@ class RunTestTest {
 
     /** Tests uncaught exceptions taking priority over dispatch timeout in error reports. */
     @Test
-    @Ignore // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
+    @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestTimingOutAndThrowing() = testResultMap({ fn ->
         assertFailsWith<IllegalArgumentException> { fn() }
     }) {
@@ -174,12 +174,12 @@ class RunTestTest {
 
     /** Tests that, once the test body has thrown, the child coroutines are cancelled. */
     @Test
-    fun testChildrenCancellationOnTestBodyFailure() {
+    fun testChildrenCancellationOnTestBodyFailure(): TestResult {
         var job: Job? = null
-        testResultMap({
+        return testResultMap({
             assertFailsWith<AssertionError> { it() }
             assertTrue(job!!.isCancelled)
-        }, {
+        }) {
             runTest {
                 job = launch {
                     while (true) {
@@ -188,14 +188,14 @@ class RunTestTest {
                 }
                 throw AssertionError()
             }
-        })
+        }
     }
 
     /** Tests that [runTest] reports [TimeoutCancellationException]. */
     @Test
     fun testTimeout() = testResultMap({
         assertFailsWith<TimeoutCancellationException> { it() }
-    }, {
+    }) {
         runTest {
             withTimeout(50) {
                 launch {
@@ -203,19 +203,19 @@ class RunTestTest {
                 }
             }
         }
-    })
+    }
 
     /** Checks that [runTest] throws the root cause and not [JobCancellationException] when a child coroutine throws. */
     @Test
     fun testRunTestThrowsRootCause() = testResultMap({
         assertFailsWith<TestException> { it() }
-    }, {
+    }) {
         runTest {
             launch {
                 throw TestException()
             }
         }
-    })
+    }
 
     /** Tests that [runTest] completes its job. */
     @Test
@@ -224,13 +224,13 @@ class RunTestTest {
         return testResultMap({
             it()
             assertTrue(handlerCalled)
-        }, {
+        }) {
             runTest {
                 coroutineContext.job.invokeOnCompletion {
                     handlerCalled = true
                 }
             }
-        })
+        }
     }
 
     /** Tests that [runTest] doesn't complete the job that was passed to it as an argument. */
@@ -245,11 +245,11 @@ class RunTestTest {
             it()
             assertFalse(handlerCalled)
             assertEquals(0, job.children.filter { it.isActive }.count())
-        }, {
+        }) {
             runTest(job) {
                 assertTrue(coroutineContext.job in job.children)
             }
-        })
+        }
     }
 
     /** Tests that, when the test body fails, the reported exceptions are suppressed. */
@@ -267,14 +267,14 @@ class RunTestTest {
             assertEquals("y", suppressed[1].message)
             assertEquals("z", suppressed[2].message)
         }
-    }, {
+    }) {
         runTest {
             launch(SupervisorJob()) { throw TestException("x") }
             launch(SupervisorJob()) { throw TestException("y") }
             launch(SupervisorJob()) { throw TestException("z") }
             throw TestException("w")
         }
-    })
+    }
 
     /** Tests that [TestCoroutineScope.runTest] does not inherit the exception handler and works. */
     @Test
@@ -287,10 +287,10 @@ class RunTestTest {
             } catch (e: TestException) {
                 scope.cleanupTestCoroutines() // should not fail
             }
-        }, {
+        }) {
             scope.runTest {
                 launch(SupervisorJob()) { throw TestException("x") }
             }
-        })
+        }
     }
 }

@@ -4,6 +4,7 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.test.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -11,9 +12,48 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
 
     @BeforeTest
     fun setUp() {
+        Dispatchers.setMain(StandardTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
         Dispatchers.resetMain()
     }
 
+    /** Tests that asynchronous execution of tests does not happen concurrently with [AfterTest]. */
+    @NoJs
+    @Test
+    fun testMainMocking() = runTest {
+        val mainAtStart = mainTestDispatcher
+        assertNotNull(mainAtStart)
+        withContext(Dispatchers.Main) {
+            delay(10)
+        }
+        withContext(Dispatchers.Default) {
+            delay(10)
+        }
+        withContext(Dispatchers.Main) {
+            delay(10)
+        }
+        assertSame(mainAtStart, mainTestDispatcher)
+    }
+
+    /** Tests that the mocked [Dispatchers.Main] correctly forwards [Delay] methods. */
+    @Test
+    fun testMockedMainImplementsDelay() = runTest {
+        val main = Dispatchers.Main
+        withContext(main) {
+            delay(10)
+        }
+        withContext(Dispatchers.Default) {
+            delay(10)
+        }
+        withContext(main) {
+            delay(10)
+        }
+    }
+
+    /** Tests that [Distpachers.setMain] fails when called with [Dispatchers.Main]. */
     @Test
     @NoNative
     fun testSelfSet() {
@@ -57,3 +97,5 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
         }
     }
 }
+
+private val mainTestDispatcher get() = ((Dispatchers.Main as? TestMainDispatcher)?.delegate as? TestDispatcher)

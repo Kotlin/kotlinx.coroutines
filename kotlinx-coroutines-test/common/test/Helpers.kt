@@ -68,4 +68,7 @@ open class OrderedExecutionTestBase {
 internal fun <T> T.void() { }
 
 @OptionalExpectation
+expect annotation class NoJs()
+
+@OptionalExpectation
 expect annotation class NoNative()

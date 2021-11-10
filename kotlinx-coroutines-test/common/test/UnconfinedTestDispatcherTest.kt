@@ -134,4 +134,34 @@ class UnconfinedTestDispatcherTest {
         assertEquals(listOf(0, 1, 2, 3), values)
     }
 
+    /** Tests that child coroutines are eagerly entered. */
+    @Test
+    fun testEagerlyEnteringChildCoroutines() = runTest(UnconfinedTestDispatcher()) {
+        var entered = false
+        val deferred = CompletableDeferred<Unit>()
+        var completed = false
+        launch {
+            entered = true
+            deferred.await()
+            completed = true
+        }
+        assertTrue(entered) // `entered = true` already executed.
+        assertFalse(completed) // however, the child coroutine then suspended, so it is enqueued.
+        deferred.complete(Unit) // resume the coroutine.
+        assertTrue(completed) // now the child coroutine is immediately completed.
+    }
+
+    /** Tests that the [TestCoroutineScheduler] used for [Dispatchers.Main] gets used by default. */
+    @Test
+    fun testSchedulerReuse() {
+        val dispatcher1 = StandardTestDispatcher()
+        Dispatchers.setMain(dispatcher1)
+        try {
+            val dispatcher2 = UnconfinedTestDispatcher()
+            assertSame(dispatcher1.scheduler, dispatcher2.scheduler)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
 }
