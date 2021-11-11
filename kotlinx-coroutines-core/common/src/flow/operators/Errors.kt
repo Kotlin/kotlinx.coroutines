@@ -186,6 +186,7 @@ public fun <T> Flow<T>.retryWhen(predicate: suspend FlowCollector<T>.(cause: Thr
     }
 
 // Return exception from upstream or null
+@Suppress("NAME_SHADOWING")
 internal suspend fun <T> Flow<T>.catchImpl(
     collector: FlowCollector<T>
 ): Throwable? {
@@ -200,6 +201,8 @@ internal suspend fun <T> Flow<T>.catchImpl(
             }
         }
     } catch (e: Throwable) {
+        // Otherwise, smartcast is impossible
+        val fromDownstream = fromDownstream
         /*
          * First check ensures that we catch an original exception, not one rethrown by an operator.
          * Seconds check ignores cancellation causes, they cannot be caught.
@@ -207,7 +210,41 @@ internal suspend fun <T> Flow<T>.catchImpl(
         if (e.isSameExceptionAs(fromDownstream) || e.isCancellationCause(coroutineContext)) {
             throw e // Rethrow exceptions from downstream and cancellation causes
         } else {
-            return e // not from downstream
+            /*
+             * The exception came from the upstream [semi-] independently.
+             * For pure failures, when the downstream functions normally, we handle the exception as intended.
+             * But if the downstream has failed prior to or concurrently
+             * with the upstream, we forcefully rethrow it, preserving the contextual information and ensuring
+             * that it's not lost.
+             */
+            if (fromDownstream == null) {
+                return e
+            }
+            /*
+             * We consider "downstream" exception as the superseding one even if the
+             * upstream has failed (unless downstream exception is a cancellation exception, aligned with
+             * our cancellation mechanism), so it effectively suppresses it.
+             * That's important for the following scenarios:
+             * ```
+             * flow {
+             *     val resource = ...
+             *     try {
+             *         ... emit as well ...
+             *     } finally {
+             *          resource.close() // Unlucky throw
+             *     }
+             * }.catch { } /* or retry */
+             * .collect { ... }
+             * ```
+             * when *the downstream* throws.
+             */
+            if (fromDownstream is CancellationException) {
+                e.addSuppressed(fromDownstream)
+                throw e
+            } else {
+                fromDownstream.addSuppressed(e)
+                throw fromDownstream
+            }
         }
     }
     return null

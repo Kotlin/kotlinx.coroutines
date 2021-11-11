@@ -131,10 +131,14 @@ import kotlin.coroutines.*
  *
  * ### Exception transparency
  *
- * Flow implementations never catch or handle exceptions that occur in downstream flows. From the implementation standpoint
- * it means that calls to [emit][FlowCollector.emit] and [emitAll] shall never be wrapped into
- * `try { ... } catch { ... }` blocks. Exception handling in flows shall be performed with
- * [catch][Flow.catch] operator and it is designed to only catch exceptions coming from upstream flows while passing
+ * Flow implementations never explicitly catch and ignore exceptions that occur in downstream flows.
+ * From the implementation standpoint, it means that `catch` blocks that wrap calls to [emit][FlowCollector.emit] and [emitAll]
+ * are not allowed to complete normally or attempt to call [emit][FlowCollector.emit], they are only allowed
+ * to rethrow a caught exception or throw a different exception for diagnostics or application-specific purposes.
+ *
+ *
+ * Exception handling with further emission in flows shall only be performed with
+ * [catch][Flow.catch] operator, and it is designed to only catch exceptions coming from upstream flows while passing
  * all downstream exceptions. Similarly, terminal operators like [collect][Flow.collect]
  * throw any unhandled exceptions that occur in their code or in upstream flows, for example:
  *
@@ -147,12 +151,18 @@ import kotlin.coroutines.*
  * ```
  * The same reasoning can be applied to the [onCompletion] operator that is a declarative replacement for the `finally` block.
  *
+ * All exception-handling Flow operators follow the principle of exception suppression:
+ *
+ * If the upstream flow throws an exception during its completion when the downstream exception has been thrown,
+ * the upstream exception becomes superseded and suppressed by the downstream exception.
+ *
  * Failure to adhere to the exception transparency requirement can lead to strange behaviors which make
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
  * by an upstream flow, limiting the ability of local reasoning about the code.
  *
  * Flow machinery enforces exception transparency at runtime and throws [IllegalStateException] on any attempt to emit a value,
  * if an exception has been thrown on previous attempt.
+ *
  *
  * ### Reactive streams
  *

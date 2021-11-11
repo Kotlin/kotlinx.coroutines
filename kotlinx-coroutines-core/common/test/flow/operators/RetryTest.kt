@@ -104,4 +104,42 @@ class RetryTest : TestBase() {
         job.cancelAndJoin()
         finish(3)
     }
+
+    @Test
+    fun testUpstreamExceptionConcurrentWithDownstream() = runTest {
+        val flow = flow {
+            try {
+                expect(1)
+                emit(1)
+            } finally {
+                expect(3)
+                throw TestException()
+            }
+        }.retry { expectUnreached(); true }.onEach {
+            expect(2)
+            throw TestException2()
+        }
+
+        assertFailsWith<TestException2>(flow)
+        finish(4)
+    }
+
+    @Test
+    fun testUpstreamExceptionConcurrentWithDownstreamCancellation() = runTest {
+        val flow = flow {
+            try {
+                expect(1)
+                emit(1)
+            } finally {
+                expect(3)
+                throw TestException()
+            }
+        }.retry { expectUnreached(); true }.onEach {
+            expect(2)
+            throw CancellationException("")
+        }
+
+        assertFailsWith<TestException>(flow)
+        finish(4)
+    }
 }
