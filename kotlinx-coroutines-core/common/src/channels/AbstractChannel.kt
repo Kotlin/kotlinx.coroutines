@@ -696,8 +696,6 @@ internal abstract class AbstractChannel<E>(
         list.forEachReversed { it.resumeSendClosed(closed) }
     }
 
-    public final override fun iterator(): ChannelIterator<E> = Itr(this)
-
     // ------ registerSelectReceive ------
 
     /**
@@ -829,65 +827,6 @@ internal abstract class AbstractChannel<E>(
         override fun toString(): String = "RemoveReceiveOnCancel[$receive]"
     }
 
-    private class Itr<E>(@JvmField val channel: AbstractChannel<E>) : ChannelIterator<E> {
-        var result: Any? = POLL_FAILED // E | POLL_FAILED | Closed
-
-        override suspend fun hasNext(): Boolean {
-            // check for repeated hasNext
-            if (result !== POLL_FAILED) return hasNextResult(result)
-            // fast path -- try poll non-blocking
-            result = channel.pollInternal()
-            if (result !== POLL_FAILED) return hasNextResult(result)
-            // slow-path does suspend
-            return hasNextSuspend()
-        }
-
-        private fun hasNextResult(result: Any?): Boolean {
-            if (result is Closed<*>) {
-                if (result.closeCause != null) throw recoverStackTrace(result.receiveException)
-                return false
-            }
-            return true
-        }
-
-        private suspend fun hasNextSuspend(): Boolean = suspendCancellableCoroutineReusable sc@ { cont ->
-            val receive = ReceiveHasNext(this, cont)
-            while (true) {
-                if (channel.enqueueReceive(receive)) {
-                    channel.removeReceiveOnCancel(cont, receive)
-                    return@sc
-                }
-                // hm... something is not right. try to poll
-                val result = channel.pollInternal()
-                this.result = result
-                if (result is Closed<*>) {
-                    if (result.closeCause == null)
-                        cont.resume(false)
-                    else
-                        cont.resumeWithException(result.receiveException)
-                    return@sc
-                }
-                if (result !== POLL_FAILED) {
-                    @Suppress("UNCHECKED_CAST")
-                    cont.resume(true, channel.onUndeliveredElement?.bindCancellationFun(result as E, cont.context))
-                    return@sc
-                }
-            }
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        override fun next(): E {
-            val result = this.result
-            if (result is Closed<*>) throw recoverStackTrace(result.receiveException)
-            if (result !== POLL_FAILED) {
-                this.result = POLL_FAILED
-                return result as E
-            }
-
-            throw IllegalStateException("'hasNext' should be called prior to 'next' invocation")
-        }
-    }
-
     private open class ReceiveElement<in E>(
         @JvmField val cont: CancellableContinuation<Any?>,
         @JvmField val receiveMode: Int
@@ -923,46 +862,6 @@ internal abstract class AbstractChannel<E>(
     ) : ReceiveElement<E>(cont, receiveMode) {
         override fun resumeOnCancellationFun(value: E): ((Throwable) -> Unit)? =
             onUndeliveredElement.bindCancellationFun(value, cont.context)
-    }
-
-    private open class ReceiveHasNext<E>(
-        @JvmField val iterator: Itr<E>,
-        @JvmField val cont: CancellableContinuation<Boolean>
-    ) : Receive<E>() {
-        override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? {
-            val token = cont.tryResume(true, otherOp?.desc, resumeOnCancellationFun(value))
-                ?: return null
-            assert { token === RESUME_TOKEN } // the only other possible result
-            // We can call finishPrepare only after successful tryResume, so that only good affected node is saved
-            otherOp?.finishPrepare()
-            return RESUME_TOKEN
-        }
-
-        override fun completeResumeReceive(value: E) {
-            /*
-               When otherOp != null invocation of tryResumeReceive can happen multiple times and much later,
-               but completeResumeReceive is called once so we set iterator result here.
-             */
-            iterator.result = value
-            cont.completeResume(RESUME_TOKEN)
-        }
-
-        override fun resumeReceiveClosed(closed: Closed<*>) {
-            val token = if (closed.closeCause == null) {
-                cont.tryResume(false)
-            } else {
-                cont.tryResumeWithException(closed.receiveException)
-            }
-            if (token != null) {
-                iterator.result = closed
-                cont.completeResume(token)
-            }
-        }
-
-        override fun resumeOnCancellationFun(value: E): ((Throwable) -> Unit)? =
-            iterator.channel.onUndeliveredElement?.bindCancellationFun(value, cont.context)
-
-        override fun toString(): String = "ReceiveHasNext@$hexAddress"
     }
 
     private class ReceiveSelect<R, E>(
@@ -1104,8 +1003,8 @@ internal class SendElementWithUndeliveredHandler<E>(
 internal class Closed<in E>(
     @JvmField val closeCause: Throwable?
 ) : Send(), ReceiveOrClosed<E> {
-    val sendException: Throwable get() = closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)
-    val receiveException: Throwable get() = closeCause ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
+    val sendException: Throwable get() = closeCause.sendException
+    val receiveException: Throwable get() = closeCause.receiveException
 
     override val offerResult get() = this
     override val pollResult get() = this

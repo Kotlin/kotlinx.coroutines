@@ -15,6 +15,8 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
+internal val Throwable?.receiveException get() = this ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
+internal val Throwable?.sendException get() = this ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)
 
 
 // -------- Operations on BroadcastChannel --------

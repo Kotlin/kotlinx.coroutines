@@ -43,7 +43,6 @@ private class ChannelViaBroadcast<E>(
 
     override suspend fun receive(): E = sub.receive()
     override suspend fun receiveCatching(): ChannelResult<E> = sub.receiveCatching()
-    override fun iterator(): ChannelIterator<E> = sub.iterator()
     override fun tryReceive(): ChannelResult<E> = sub.tryReceive()
 
     override fun cancel(cause: CancellationException?) = sub.cancel(cause)
