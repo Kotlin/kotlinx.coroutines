@@ -112,7 +112,7 @@ public interface SelectBuilder<in R> {
 @ExperimentalCoroutinesApi
 @ExperimentalTime
 public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R): Unit =
-        onTimeout(timeout.toDelayMillis(), block)
+    onTimeout(timeout.toDelayMillis(), block)
 
 @InternalCoroutinesApi
 public sealed interface SelectClause {
@@ -157,17 +157,8 @@ public class SelectClause2Impl<P, Q>(
     override val regFunc: RegistrationFunction,
     override val processResFunc: ProcessResultFunction
 ) : SelectClause2<P, Q>
-
-/**
- * The registration function specifies how [SelectInstance] should be registered as a waiter, and returns
- * `true` if the registration succeeds, or `false` if a rendezvous has happened during the registration.
- * In the latter case, [SelectInstance.selectInRegPhase] should be invoked.
- */
 @InternalCoroutinesApi
 public typealias RegistrationFunction = (objForSelect: Any, select: SelectInstance<*>, param: Any?) -> Unit
-/**
- * This function specifies
- */
 @InternalCoroutinesApi
 public typealias ProcessResultFunction = (objForSelect: Any, param: Any?, clauseResult: Any?) -> Any?
 @InternalCoroutinesApi
@@ -197,7 +188,6 @@ public interface SelectInstance<in R> {
      */
     public fun selectInRegPhase(selectResult: Any?)
 }
-
 
 
 @PublishedApi
@@ -239,12 +229,11 @@ internal open class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
                 cleanNonSelectedAlternatives(getObjForSelect())
                 cleanBuilder()
             }
-            val result = clauseResult.value.also { clauseResult.lazySet(RESULT_NULL) }
             return if (block is suspend () -> R) {
                 block()
             } else {
                 block as suspend (Any?) -> R
-                block(result)
+                block(clauseResult.value.also { clauseResult.lazySet(RESULT_NULL) })
             }
         } else {
             return selectAlternativeIterationSuspend(cleanOnCompletion)
@@ -255,7 +244,7 @@ internal open class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
         selectAlternativeSuspend()
         val objForSelect = getObjForSelect()
         val i = selectedAlternativeIndex(objForSelect)
-        val result = clauseResult.value.also { clauseResult.lazySet(RESULT_NULL) }
+        val result = processResult(i)
         val param = alternatives[i + 3]
         val block = alternatives[i + 4]
         if (cleanOnCompletion) {
@@ -407,7 +396,7 @@ internal open class SelectBuilderImpl<R> : SelectBuilder<R>, SelectInstance<R> {
 
     override fun trySelect(objForSelect: Any, result: Any?): Boolean {
         if (!tryRendezvousOrReregister(objForSelect)) return false
-        clauseResult.value = processResult(selectedAlternativeIndex(objForSelect))
+        this.clauseResult.value = result
         if (this.cont.value === null && this.cont.compareAndSet(null, STATE_DONE)) return true
         this.cont.value!!.let { cont ->
             cont as CancellableContinuation<Unit>

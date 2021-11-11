@@ -191,14 +191,34 @@ internal class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 
 
     override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
         objForSelect = this,
-        regFunc = onAcquire.regFunc,
+        regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
         processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
     )
 
+    private fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
+        onAcquire.regFunc(this, SelectInstanceWithOwner(select, owner), owner)
+    }
+
     private fun onLockProcessResult(owner: Any?, result: Any?): Any? {
         onAcquire.processResFunc(this, null, result)
-        this.owner.value = owner
+        while (isLocked && this.owner.value === NO_OWNER) {}
         return this
+    }
+
+    private inner class SelectInstanceWithOwner<Q>(
+        val select: SelectInstance<Q>,
+        val owner: Any?
+    ) : SelectInstance<Q> by select {
+        override fun trySelect(objForSelect: Any, result: Any?): Boolean {
+            return select.trySelect(objForSelect, result).also { success ->
+                if (success) this@MutexImpl.owner.value = owner
+            }
+        }
+
+        override fun selectInRegPhase(selectResult: Any?) {
+            select.selectInRegPhase(selectResult)
+            this@MutexImpl.owner.value = owner
+        }
     }
 
     private inner class CancellableContinuationWithOwner(
