@@ -58,7 +58,7 @@ private const val SIGNALLED = -2  // already signalled subscriber onCompleted/on
 private class RxObservableCoroutine<T : Any>(
     parentContext: CoroutineContext,
     private val subscriber: ObservableEmitter<T>
-) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T> {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked while subscriber.onXXX is being invoked
@@ -87,31 +87,16 @@ private class RxObservableCoroutine<T : Any>(
     }
 
     override val onSend: SelectClause2<T, SendChannel<T>>
-        get() = this
+        get() = SelectClause2Impl(
+            mutex,
+            mutex.onLock.regFunc,
+            RxObservableCoroutine<*>::onSendSelectProcessResult as ProcessResultFunction
+        )
 
-    // registerSelectSend
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-    override fun <R> registerSelectClause2(
-        select: SelectInstance<R>,
-        element: T,
-        block: suspend (SendChannel<T>) -> R
-    ) {
-        val clause =  suspend {
-            doLockedNext(element)?.let { throw it }
-            block(this)
-        }
-
-        // This is the default replacement proposed in onLock replacement
-        launch(start = CoroutineStart.UNDISPATCHED) {
-            mutex.lock()
-            // Already selected -- bail out
-            if (!select.trySelect()) {
-                mutex.unlock()
-                return@launch
-            }
-
-            clause.startCoroutineCancellable(select.completion)
-        }
+    private fun onSendSelectProcessResult(element: Any?, clauseResult: Any?): Any? {
+        mutex.onLock.processResFunc.invoke(mutex, element, clauseResult)
+        doLockedNext(element as T)?.let { throw it }
+        return this
     }
 
     // assert: mutex.isLocked()

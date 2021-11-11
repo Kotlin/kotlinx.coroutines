@@ -7,6 +7,7 @@ package kotlinx.coroutines.sync
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
 import kotlin.js.*
 import kotlin.math.*
@@ -90,6 +91,7 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore {
     /*
        The queue of waiting acquirers is essentially an infinite array based on the list of segments
@@ -172,7 +174,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
 
     override suspend fun acquire() {
         // Decrement the number of available permits.
-        val p = _availablePermits.getAndDecrement()
+        val p = decPermits()
         // Is the permit acquired?
         if (p > 0) return // permit acquired
         // Try to suspend otherwise.
@@ -192,17 +194,61 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     }
 
     @JsName("acquireCont")
-    protected fun acquire(cont: CancellableContinuation<Unit>) {
+    protected fun acquire(cont: CancellableContinuation<Unit>) = acquire(
+        waiter = cont,
+        suspend = { cont -> addAcquireToQueue(cont) },
+        onAcquired = { cont -> cont.resume(Unit, onCancellationRelease) }
+    )
+
+    @JsName("acquireInternal")
+    private inline fun <W> acquire(waiter: W, suspend: (waiter: W) -> Boolean, onAcquired: (waiter: W) -> Unit) {
         while (true) {
             // Decrement the number of available permits at first.
-            val p = _availablePermits.getAndDecrement()
+            val p = decPermits()
             // Is the permit acquired?
-            if (p > 0) { // permit acquired
-                cont.resume(Unit, onCancellationRelease)
+            if (p > 0) {
+                onAcquired(waiter)
                 return
             }
             // Permit has not been acquired, try to suspend.
-            if (addAcquireToQueue(cont)) return
+            if (suspend(waiter)) return
+        }
+    }
+
+    val onAcquire: SelectClause1<Semaphore> get() = SelectClause1Impl(
+        objForSelect = this,
+        regFunc = SemaphoreImpl::onAcquireRegFunction as RegistrationFunction,
+        processResFunc = SemaphoreImpl::onAcquireProcessResultFunction as ProcessResultFunction
+    )
+
+    private fun onAcquireRegFunction(select: SelectInstance<*>, ignoredParam: Any?) =
+        acquire(
+            waiter = select,
+            suspend = { s -> addAcquireToQueue(s) },
+            onAcquired = { s -> s.selectInRegPhase(Unit) }
+        )
+
+    private fun onAcquireProcessResultFunction(param: Any?, result: Any?): Any? {
+        return this
+    }
+
+    /**
+     * Decrements the number of available permits
+     * and ensures that it is not greater than [permits]
+     * at the point of decrement. The last may happen
+     * due to an incorrect `release()` call without
+     * a preceding `acquire()`.
+     */
+    private fun decPermits(): Int {
+        while (true) {
+            // Decrement the number of available permits.
+            val p = _availablePermits.getAndDecrement()
+            // Is the number of available permits greater
+            // than the maximal one due to an incorrect
+            // `release()` call without a preceding `acquire()`?
+            if (p > permits) continue
+            // The number of permits is correct, return it.
+            return p
         }
     }
 
@@ -244,22 +290,39 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     /**
      * Returns `false` if the received permit cannot be used and the calling operation should restart.
      */
-    private fun addAcquireToQueue(cont: CancellableContinuation<Unit>): Boolean {
+    private fun addAcquireToQueue(waiter: Any): Boolean {
         val curTail = this.tail.value
         val enqIdx = enqIdx.getAndIncrement()
         val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
             createNewSegment = ::createSegment).segment // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
         // the regular (fast) path -- if the cell is empty, try to install continuation
-        if (segment.cas(i, null, cont)) { // installed continuation successfully
-            cont.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
+        if (segment.cas(i, null, waiter)) { // installed continuation successfully
+            when (waiter) {
+                is CancellableContinuation<*> -> {
+                    waiter.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
+                }
+                is SelectInstance<*> -> {
+                    waiter.invokeOnCompletion { CancelSemaphoreAcquisitionHandler(segment, i).invoke(null) }
+                }
+                else -> error("unexpected: $waiter")
+            }
             return true
         }
         // On CAS failure -- the cell must be either PERMIT or BROKEN
         // If the cell already has PERMIT from tryResumeNextFromQueue, try to grab it
         if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
             /// This continuation is not yet published, but still can be cancelled via outer job
-            cont.resume(Unit, onCancellationRelease)
+            when(waiter) {
+                is CancellableContinuation<*> -> {
+                    waiter as CancellableContinuation<Unit>
+                    waiter.resume(Unit, onCancellationRelease)
+                }
+                is SelectInstance<*> -> {
+                    waiter.selectInRegPhase(Unit)
+                }
+                else -> error("unexpected: $waiter")
+            }
             return true
         }
         assert { segment.get(i) === BROKEN } // it must be broken in this case, no other way around it
@@ -288,14 +351,23 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
                 return !segment.cas(i, PERMIT, BROKEN)
             }
             cellState === CANCELLED -> return false // the acquire was already cancelled
-            else -> return (cellState as CancellableContinuation<Unit>).tryResumeAcquire()
+            else -> return cellState.tryResumeAcquire()
         }
     }
 
-    private fun CancellableContinuation<Unit>.tryResumeAcquire(): Boolean {
-        val token = tryResume(Unit, null, onCancellationRelease) ?: return false
-        completeResume(token)
-        return true
+    private fun Any.tryResumeAcquire(): Boolean = when(this) {
+        is CancellableContinuation<*> -> {
+            this as CancellableContinuation<Unit>
+            val token = tryResume(Unit, null, onCancellationRelease)
+            if (token != null) {
+                completeResume(token)
+                true
+            } else false
+        }
+        is SelectInstance<*> -> {
+            trySelect(this@SemaphoreImpl, Unit)
+        }
+        else -> error("unexpected: $this")
     }
 }
 

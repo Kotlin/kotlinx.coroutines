@@ -170,12 +170,15 @@ internal class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 
         } else false
 
     override fun unlock(owner: Any?) {
+        var i = 1
         while (true) {
             // Is this mutex locked?
             check(isLocked) { "This mutex is not locked" }
             // Read the owner, waiting until it is set in a spin-loop if required.
             val curOwner = this.owner.value
             if (curOwner === NO_OWNER) continue // <-- ATTENTION, BLOCKING PART HERE
+            i++
+            if (i % 1_000 == 0) println("WTF")
             // Check the owner.
             check(curOwner === owner) { "This mutex is locked by $curOwner, but $owner is expected" }
             // Try to clean the owner first. We need to use CAS here to synchronize with concurrent `unlock(..)`-s.
@@ -186,7 +189,17 @@ internal class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 
         }
     }
 
-    override val onLock: SelectClause2<Any?, Mutex> get() = TODO("Will be implemented later")
+    override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
+        objForSelect = this,
+        regFunc = onAcquire.regFunc,
+        processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
+    )
+
+    private fun onLockProcessResult(owner: Any?, result: Any?): Any? {
+        onAcquire.processResFunc(this, null, result)
+        this.owner.value = owner
+        return this
+    }
 
     private inner class CancellableContinuationWithOwner(
         val cont: CancellableContinuation<Unit>,

@@ -5,32 +5,12 @@
 package kotlinx.coroutines.lincheck
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
-import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
-import org.jetbrains.kotlinx.lincheck.strategy.stress.*
-import org.jetbrains.kotlinx.lincheck.verifier.*
-
-class MutexWithoutOwnerLincheckTest : AbstractLincheckTest() {
-    private val mutex = Mutex()
-
-    @Operation
-    fun tryLock() = mutex.tryLock()
-
-    @Operation(promptCancellation = true)
-    suspend fun lock() = mutex.lock()
-
-    @Operation(handleExceptionsAsResult = [IllegalStateException::class])
-    fun unlock() = mutex.unlock()
-
-    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
-        actorsBefore(0)
-
-    override fun extractState() = mutex.isLocked
-}
 
 @Param(name = "owner", gen = IntGen::class, conf = "0:2")
 class MutexLincheckTest : AbstractLincheckTest() {
@@ -41,6 +21,9 @@ class MutexLincheckTest : AbstractLincheckTest() {
 
     @Operation(promptCancellation = true)
     suspend fun lock(@Param(name = "owner") owner: Int) = mutex.lock(owner.asOwnerOrNull)
+
+    @Operation(promptCancellation = true)
+    suspend fun onLock(@Param(name = "owner") owner: Int) = select<Unit> { mutex.onLock(owner.asOwnerOrNull) {} }
 
     @Operation(handleExceptionsAsResult = [IllegalStateException::class])
     fun unlock(@Param(name = "owner") owner: Int) = mutex.unlock(owner.asOwnerOrNull)
