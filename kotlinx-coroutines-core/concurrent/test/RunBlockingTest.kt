@@ -79,7 +79,7 @@ class RunBlockingTest : TestBase() {
             }
 
             runBlocking {
-            job.cancelAndJoin()
+                job.cancelAndJoin()
             }
         }
     }
