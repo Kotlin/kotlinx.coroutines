@@ -4,7 +4,7 @@
 package kotlinx.coroutines
 
 public actual fun TestBase.runMtTest(
-    expected: ((Throwable) -> Boolean)? ,
+    expected: ((Throwable) -> Boolean)?,
     unhandled: List<(Throwable) -> Boolean>,
     block: suspend CoroutineScope.() -> Unit
 ): TestResult = runTest(expected, unhandled, block)
