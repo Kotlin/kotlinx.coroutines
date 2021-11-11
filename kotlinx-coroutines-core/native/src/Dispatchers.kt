@@ -19,6 +19,9 @@ public actual object Dispatchers {
 
     @PublishedApi
     internal fun injectMain(dispatcher: MainCoroutineDispatcher) {
+        if (!multithreadingSupported) {
+            throw IllegalStateException("Dispatchers.setMain is not supported in Kotlin/Native when new memory model is disabled")
+        }
         injectedMainDispatcher = dispatcher
     }
 

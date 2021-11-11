@@ -11,7 +11,7 @@ import kotlin.random.*
 import kotlin.test.*
 
 class ChannelCancelUndeliveredElementStressTest : TestBase() {
-    private val repeatTimes = 10_000 * stressTestMultiplier / stressTestNativeDivisor
+    private val repeatTimes = (if (isNative) 1_000 else 10_000) * stressTestMultiplier
 
     // total counters
     private var sendCnt = 0

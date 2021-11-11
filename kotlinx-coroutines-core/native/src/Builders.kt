@@ -56,9 +56,6 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
     return coroutine.joinBlocking()
 }
 
-@SharedImmutable
-internal val EMPTY_BLOCK: () -> Unit = {}
-
 private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val eventLoop: EventLoop?
@@ -71,7 +68,7 @@ private class BlockingCoroutine<T>(
         // wake up blocked thread
         if (joinWorker != Worker.current) {
             // Unpark waiting worker
-            joinWorker.executeAfter(0L, EMPTY_BLOCK) // send an empty task to unpark the waiting event loop
+            joinWorker.executeAfter(0L, {}) // send an empty task to unpark the waiting event loop
         }
     }
 

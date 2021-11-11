@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import kotlin.random.*
 import kotlin.test.*
 
-// A simplified version of StateFlowUpdateStressTest
+// A simplified version of StateFlowStressTest
 class StateFlowCommonStressTest : TestBase() {
     private val state = MutableStateFlow<Long>(0)
 

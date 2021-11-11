@@ -11,7 +11,7 @@ import kotlin.test.*
 
 class MutexStressTest : TestBase() {
 
-    private val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
+    private val n = (if (isNative) 1_000 else 10_000) * stressTestMultiplier
 
     @Test
     fun testDefaultDispatcher() = runMtTest { testBody(Dispatchers.Default) }

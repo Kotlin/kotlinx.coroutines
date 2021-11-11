@@ -10,9 +10,11 @@ import kotlin.test.*
 
 class SemaphoreStressTest : TestBase() {
 
+    private val iterations = (if (isNative) 1_000 else 10_000) * stressTestMultiplier
+
     @Test
     fun testStressTestAsMutex() = runMtTest {
-        val n = 1_000 * stressTestMultiplier / stressTestNativeDivisor
+        val n = iterations
         val k = 100
         var shared = 0
         val semaphore = Semaphore(1)
@@ -31,7 +33,7 @@ class SemaphoreStressTest : TestBase() {
 
     @Test
     fun testStress() = runMtTest {
-        val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
+        val n = iterations
         val k = 100
         val semaphore = Semaphore(10)
         val jobs = List(n) {
@@ -48,7 +50,7 @@ class SemaphoreStressTest : TestBase() {
     @Test
     fun testStressAsMutex() = runMtTest {
         runBlocking(Dispatchers.Default) {
-            val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
+            val n = iterations
             val k = 100
             var shared = 0
             val semaphore = Semaphore(1)
@@ -68,7 +70,7 @@ class SemaphoreStressTest : TestBase() {
 
     @Test
     fun testStressCancellation() = runMtTest {
-        val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
+        val n = iterations
         val semaphore = Semaphore(1)
         semaphore.acquire()
         repeat(n) {
@@ -89,7 +91,7 @@ class SemaphoreStressTest : TestBase() {
      */
     @Test
     fun testStressReleaseCancelRace() = runMtTest {
-        val n = 10_000 * stressTestMultiplier / stressTestNativeDivisor
+        val n = iterations
         val semaphore = Semaphore(1, 1)
         newSingleThreadContext("SemaphoreStressTest").use { pool ->
             repeat (n) {

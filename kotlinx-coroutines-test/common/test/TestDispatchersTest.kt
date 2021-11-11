@@ -28,11 +28,13 @@ class TestDispatchersTest {
     }
 
     @Test
+    @NoNative
     fun testSelfSet() {
         assertFailsWith<IllegalArgumentException> { Dispatchers.setMain(Dispatchers.Main) }
     }
 
     @Test
+    @NoNative
     fun testImmediateDispatcher() = runBlockingTest {
         Dispatchers.setMain(ImmediateDispatcher())
         expect(1)

@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
 
+// A simplified version of StateFlowUpdateStressTest
 class StateFlowUpdateCommonTest : TestBase() {
     private val iterations = 100_000 * stressTestMultiplier
 
