@@ -39,7 +39,7 @@ private class DarwinMainDispatcher(
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !(invokeImmediately && isMainThread())
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        platformAutoreleasePool {
+        autoreleasepool {
             dispatch_async(dispatch_get_main_queue()) {
                 block.run()
             }
