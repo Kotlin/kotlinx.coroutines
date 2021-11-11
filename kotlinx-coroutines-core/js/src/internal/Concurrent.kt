@@ -4,8 +4,6 @@
 
 package kotlinx.coroutines.internal
 
-import kotlin.native.concurrent.*
-
 internal actual typealias ReentrantLock = NoOpLock
 
 internal actual inline fun <T> ReentrantLock.withLock(action: () -> T) = action()
@@ -19,4 +17,3 @@ internal actual fun <E> subscriberList(): SubscribersList<E> = CopyOnWriteList()
 
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet(expectedSize)
 
-internal actual val multithreadingSupported: Boolean = false

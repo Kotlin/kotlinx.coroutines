@@ -12,9 +12,7 @@ class ConcurrentExceptionsStressTest : TestBase() {
     private val nWorkers = 4
     private val nRepeat = 1000 * stressTestMultiplier
 
-    private val workers = Array(if (multithreadingSupported) nWorkers else 0) { index ->
-        newSingleThreadContext("JobExceptionsStressTest-$index")
-    }
+    private var workers: Array<CloseableCoroutineDispatcher> = emptyArray()
 
     @AfterTest
     fun tearDown() {
@@ -25,6 +23,10 @@ class ConcurrentExceptionsStressTest : TestBase() {
 
     @Test
     fun testStress() = runMtTest {
+        workers = Array(nWorkers) { index ->
+            newSingleThreadContext("JobExceptionsStressTest-$index")
+        }
+
         repeat(nRepeat) {
             testOnce()
         }

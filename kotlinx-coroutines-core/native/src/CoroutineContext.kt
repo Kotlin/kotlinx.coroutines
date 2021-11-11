@@ -12,16 +12,30 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
     private val delegate = WorkerDispatcher(name = "Dispatchers.Default")
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) =
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        checkState()
         delegate.dispatch(context, block)
+    }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        checkState()
         delegate.scheduleResumeAfterDelay(timeMillis, continuation)
+    }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        delegate.invokeOnTimeout(timeMillis, block, context)
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+        checkState()
+        return delegate.invokeOnTimeout(timeMillis, block, context)
+    }
 
-    actual fun enqueue(task: Runnable): Unit = delegate.dispatch(EmptyCoroutineContext, task)
+    actual fun enqueue(task: Runnable): Unit {
+        checkState()
+        delegate.dispatch(EmptyCoroutineContext, task)
+    }
+
+    private fun checkState() {
+        if (multithreadingSupported) return
+        error("DefaultExecutor should never be invoked in K/N with disabled new memory model. The top-most 'runBlocking' event loop has been shutdown")
+    }
 }
 
 internal expect fun createDefaultDispatcher(): CoroutineDispatcher

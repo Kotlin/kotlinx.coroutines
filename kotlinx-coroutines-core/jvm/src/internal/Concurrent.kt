@@ -36,5 +36,3 @@ internal fun removeFutureOnCancel(executor: Executor): Boolean {
         return false // failed to setRemoveOnCancelPolicy, assume it does not removes future on cancel
     }
 }
-
-internal actual val multithreadingSupported: Boolean = true

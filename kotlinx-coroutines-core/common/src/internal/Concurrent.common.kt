@@ -22,5 +22,3 @@ internal expect class ReentrantLock() {
 internal expect inline fun <T> ReentrantLock.withLock(action: () -> T): T
 
 internal expect fun <E> identitySet(expectedSize: Int): MutableSet<E>
-
-internal expect val multithreadingSupported: Boolean
