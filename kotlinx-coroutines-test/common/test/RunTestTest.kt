@@ -124,7 +124,7 @@ class RunTestTest {
     /** Tests that passing invalid contexts to [runTest] causes it to fail (on JS, without forking). */
     @Test
     fun testRunTestWithIllegalContext() {
-        for (ctx in TestCoroutineScopeTest.invalidContexts) {
+        for (ctx in TestScopeTest.invalidContexts) {
             assertFailsWith<IllegalArgumentException> {
                 runTest(ctx) { }
             }
@@ -279,13 +279,13 @@ class RunTestTest {
     /** Tests that [TestCoroutineScope.runTest] does not inherit the exception handler and works. */
     @Test
     fun testScopeRunTestExceptionHandler(): TestResult {
-        val scope = createTestCoroutineScope()
+        val scope = TestScope()
         return testResultMap({
             try {
                 it()
                 fail("should not be reached")
             } catch (e: TestException) {
-                scope.cleanupTestCoroutines() // should not fail
+                // expected
             }
         }) {
             scope.runTest {

@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("DEPRECATION")
 
 package kotlinx.coroutines.test
 
@@ -12,6 +13,7 @@ import kotlin.coroutines.*
  * A scope which provides detailed control over the execution of coroutines for tests.
  */
 @ExperimentalCoroutinesApi
+@Deprecated("Use `TestScope` in combination with `runTest` instead")
 public sealed interface TestCoroutineScope : CoroutineScope {
     /**
      * Called after the test completes.
@@ -84,7 +86,7 @@ private class TestCoroutineScopeImpl(
             }
         } else {
             testScheduler.runCurrent()
-            !testScheduler.isIdle()
+            !testScheduler.isIdle(strict = false)
         }
         (coroutineContext[CoroutineExceptionHandler] as? UncaughtExceptionCaptor)?.cleanupTestCoroutines()
         synchronized(lock) {
@@ -107,7 +109,7 @@ private class TestCoroutineScopeImpl(
     }
 }
 
-private fun CoroutineContext.activeJobs(): Set<Job> {
+internal fun CoroutineContext.activeJobs(): Set<Job> {
     return checkNotNull(this[Job]).children.filter { it.isActive }.toSet()
 }
 
@@ -156,37 +158,22 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
  * [UncaughtExceptionCaptor].
  */
 @ExperimentalCoroutinesApi
+@Deprecated(
+    "This function was introduced in order to help migrate from TestCoroutineScope to TestScope. " +
+        "Please use TestScope() construction instead, or just runTest(), without creating a scope.",
+    level = DeprecationLevel.WARNING
+)
 public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
-    val scheduler: TestCoroutineScheduler
-    val dispatcher = when (val dispatcher = context[ContinuationInterceptor]) {
-        is TestDispatcher -> {
-            scheduler = dispatcher.scheduler
-            val ctxScheduler = context[TestCoroutineScheduler]
-            if (ctxScheduler != null) {
-                require(dispatcher.scheduler === ctxScheduler) {
-                    "Both a TestCoroutineScheduler $ctxScheduler and TestDispatcher $dispatcher linked to " +
-                        "another scheduler were passed."
-                }
-            }
-            dispatcher
-        }
-        null -> StandardTestDispatcher(context[TestCoroutineScheduler]).also { scheduler = it.scheduler }
-        else -> throw IllegalArgumentException("Dispatcher must implement TestDispatcher: $dispatcher")
-    }
+    val ctxWithDispatcher = context.withDelaySkipping()
     var scope: TestCoroutineScopeImpl? = null
-    val ownExceptionHandler = run {
-        val lock = SynchronizedObject()
+    val ownExceptionHandler =
         object : AbstractCoroutineContextElement(CoroutineExceptionHandler), TestCoroutineScopeExceptionHandler {
             override fun handleException(context: CoroutineContext, exception: Throwable) {
-                val reported = synchronized(lock) {
-                    scope!!.reportException(exception)
-                }
-                if (!reported)
+                if (!scope!!.reportException(exception))
                     throw exception // let this exception crash everything
             }
         }
-    }
-    val exceptionHandler = when (val exceptionHandler = context[CoroutineExceptionHandler]) {
+    val exceptionHandler = when (val exceptionHandler = ctxWithDispatcher[CoroutineExceptionHandler]) {
         is UncaughtExceptionCaptor -> exceptionHandler
         null -> ownExceptionHandler
         is TestCoroutineScopeExceptionHandler -> ownExceptionHandler
@@ -196,8 +183,8 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
                 "if uncaught exceptions require special treatment."
         )
     }
-    val job: Job = context[Job] ?: Job()
-    return TestCoroutineScopeImpl(context + scheduler + dispatcher + exceptionHandler + job).also {
+    val job: Job = ctxWithDispatcher[Job] ?: Job()
+    return TestCoroutineScopeImpl(ctxWithDispatcher + exceptionHandler + job).also {
         scope = it
     }
 }
@@ -205,7 +192,7 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
 /** A marker that shows that this [CoroutineExceptionHandler] was created for [TestCoroutineScope]. With this,
  * constructing a new [TestCoroutineScope] with the [CoroutineScope.coroutineContext] of an existing one will override
  * the exception handler, instead of failing. */
-private interface TestCoroutineScopeExceptionHandler: CoroutineExceptionHandler
+private interface TestCoroutineScopeExceptionHandler : CoroutineExceptionHandler
 
 private inline val CoroutineContext.delayController: DelayController?
     get() {

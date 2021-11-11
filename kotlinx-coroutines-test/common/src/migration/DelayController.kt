@@ -5,8 +5,7 @@
 
 package kotlinx.coroutines.test
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 
 /**
  * Control the virtual clock time of a [CoroutineDispatcher].
@@ -186,7 +185,7 @@ internal interface SchedulerAsDelayController : DelayController {
     override fun cleanupTestCoroutines() {
         // process any pending cancellations or completions, but don't advance time
         scheduler.runCurrent()
-        if (!scheduler.isIdle()) {
+        if (!scheduler.isIdle(strict = false)) {
             throw UncompletedCoroutinesError(
                 "Unfinished coroutines during tear-down. Ensure all coroutines are" +
                     " completed or cancelled by your test."
