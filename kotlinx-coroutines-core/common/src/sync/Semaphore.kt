@@ -8,9 +8,9 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.contracts.*
-import kotlin.coroutines.*
+import kotlin.js.*
 import kotlin.math.*
-import kotlin.native.concurrent.SharedImmutable
+import kotlin.native.concurrent.*
 
 /**
  * A counting semaphore for coroutines that logically maintains a number of available permits.
@@ -90,7 +90,7 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     }
 }
 
-private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore {
+internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore {
     /*
        The queue of waiting acquirers is essentially an infinite array based on the list of segments
        (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue
@@ -140,11 +140,11 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     }
 
     /**
-     * This counter indicates a number of available permits if it is non-negative,
-     * or the size with minus sign otherwise. Note, that 32-bit counter is enough here
-     * since the maximal number of available permits is [permits] which is [Int],
-     * and the maximum number of waiting acquirers cannot be greater than 2^31 in any
-     * real application.
+     * This counter indicates the number of available permits if it is positive,
+     * or the negated number of waiters on this semaphore otherwise.
+     * Note, that 32-bit counter is enough here since the maximal number of available
+     * permits is [permits] which is [Int], and the maximum number of waiting acquirers
+     * cannot be greater than 2^31 in any real application.
      */
     private val _availablePermits = atomic(permits - acquiredPermits)
     override val availablePermits: Int get() = max(_availablePermits.value, 0)
@@ -152,40 +152,92 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     private val onCancellationRelease = { _: Throwable -> release() }
 
     override fun tryAcquire(): Boolean {
-        _availablePermits.loop { p ->
+        while (true) {
+            // Get the current number of available permits.
+            val p = _availablePermits.value
+            // Is the number of available permits greater
+            // than the maximal one because of an incorrect
+            // `release()` call without a preceding `acquire()`?
+            // Change it to `permits` and start from the beginning.
+            if (p > permits) {
+                coerceAvailablePermitsAtMaximum()
+                continue
+            }
+            // Try to decrement the number of available
+            // permits if it is greater than zero.
             if (p <= 0) return false
             if (_availablePermits.compareAndSet(p, p - 1)) return true
         }
     }
 
     override suspend fun acquire() {
+        // Decrement the number of available permits.
         val p = _availablePermits.getAndDecrement()
+        // Is the permit acquired?
         if (p > 0) return // permit acquired
+        // Try to suspend otherwise.
         // While it looks better when the following function is inlined,
         // it is important to make `suspend` function invocations in a way
-        // so that the tail-call optimization can be applied.
+        // so that the tail-call optimization can be applied here.
         acquireSlowPath()
     }
 
     private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
+        // Try to suspend.
+        if (addAcquireToQueue(cont)) return@sc
+        // The suspension has been failed
+        // due to the synchronous resumption mode.
+        // Restart the whole `acquire`.
+        acquire(cont)
+    }
+
+    @JsName("acquireCont")
+    protected fun acquire(cont: CancellableContinuation<Unit>) {
         while (true) {
-            if (addAcquireToQueue(cont)) return@sc
+            // Decrement the number of available permits at first.
             val p = _availablePermits.getAndDecrement()
+            // Is the permit acquired?
             if (p > 0) { // permit acquired
                 cont.resume(Unit, onCancellationRelease)
-                return@sc
+                return
             }
+            // Permit has not been acquired, try to suspend.
+            if (addAcquireToQueue(cont)) return
         }
     }
 
     override fun release() {
         while (true) {
-            val p = _availablePermits.getAndUpdate { cur ->
-                check(cur < permits) { "The number of released permits cannot be greater than $permits" }
-                cur + 1
+            // Increment the number of available permits.
+            val p = _availablePermits.getAndIncrement()
+            // Is this `release` call correct and does not
+            // exceed the maximal number of permits?
+            if (p >= permits) {
+                // Revert the number of available permits
+                // back to the correct one and fail with error.
+                coerceAvailablePermitsAtMaximum()
+                error("The number of released permits cannot be greater than $permits")
             }
+            // Is there a waiter that should be resumed?
             if (p >= 0) return
+            // Try to resume the first waiter, and
+            // restart the operation if either this
+            // first waiter is cancelled or
+            // due to `SYNC` resumption mode.
             if (tryResumeNextFromQueue()) return
+        }
+    }
+
+    /**
+     * Changes the number of available permits to
+     * [permits] if it became greater due to an
+     * incorrect [release] call.
+     */
+    private fun coerceAvailablePermitsAtMaximum() {
+        while (true) {
+            val cur = _availablePermits.value
+            if (cur <= permits) break
+            if (_availablePermits.compareAndSet(cur, permits)) break
         }
     }
 
