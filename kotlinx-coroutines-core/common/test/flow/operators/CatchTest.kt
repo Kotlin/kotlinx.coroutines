@@ -160,7 +160,7 @@ class CatchTest : TestBase() {
             throw TestException2()
         }
 
-        assertFailsWith<TestException2>(flow)
+        assertFailsWith<TestException>(flow)
         finish(4)
     }
 

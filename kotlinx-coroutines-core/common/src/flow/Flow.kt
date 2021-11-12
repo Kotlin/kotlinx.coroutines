@@ -133,7 +133,7 @@ import kotlin.coroutines.*
  *
  * When `emit` or `emitAll` throws, the Flow implementations must immediately stop emitting new values and finish with an exception.
  * For diagnostics or application-specific purposes, the exception may be different from the one thrown by the emit operation,
- * but then it will be suppressed, as discussed below.
+ * suppressing the original exception as discussed below.
  * If there is a need to emit values after the downstream failed, please use the [catch][Flow.catch] operator.
  *
  * The [catch][Flow.catch] operator only catches upstream exceptions, but passes
@@ -152,7 +152,9 @@ import kotlin.coroutines.*
  * All exception-handling Flow operators follow the principle of exception suppression:
  *
  * If the upstream flow throws an exception during its completion when the downstream exception has been thrown,
- * the upstream exception becomes superseded and suppressed by the downstream exception.
+ * the downstream exception becomes superseded and suppressed by the upstream exception, being a semantic
+ * equivalent of throwing from `finally` block. Exception-handling operators then ignore this exception,
+ * still following the downstream failure.
  *
  * Failure to adhere to the exception transparency requirement can lead to strange behaviors which make
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
