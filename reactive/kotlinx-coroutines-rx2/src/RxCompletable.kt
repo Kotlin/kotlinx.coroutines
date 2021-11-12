@@ -20,7 +20,7 @@ public fun rxCompletable(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> Unit
 ): Completable {
-    require(context[Job] === null) { "Completable context cannot contain job in it." +
+    require(context[Job] === null) { "Completable context cannot contain job in it. " +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return rxCompletableInternal(GlobalScope, context, block)
 }
