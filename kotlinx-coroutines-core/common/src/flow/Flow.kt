@@ -131,14 +131,12 @@ import kotlin.coroutines.*
  *
  * ### Exception transparency
  *
- * Flow implementations never explicitly catch and ignore exceptions that occur in downstream flows.
- * From the implementation standpoint, it means that `catch` blocks that wrap calls to [emit][FlowCollector.emit] and [emitAll]
- * are not allowed to complete normally or attempt to call [emit][FlowCollector.emit], they are only allowed
- * to rethrow a caught exception or throw a different exception for diagnostics or application-specific purposes.
+ * When `emit` or `emitAll` throws, the Flow implementations must immediately stop emitting new values and finish with an exception.
+ * For diagnostics or application-specific purposes, the exception may be different from the one thrown by the emit operation,
+ * but then it will be suppressed, as discussed below.
+ * If there is a need to emit values after the downstream failed, please use the [catch][Flow.catch] operator.
  *
- *
- * Exception handling with further emission in flows shall only be performed with
- * [catch][Flow.catch] operator, and it is designed to only catch exceptions coming from upstream flows while passing
+ * The [catch][Flow.catch] operator only catches upstream exceptions, but passes
  * all downstream exceptions. Similarly, terminal operators like [collect][Flow.collect]
  * throw any unhandled exceptions that occur in their code or in upstream flows, for example:
  *
