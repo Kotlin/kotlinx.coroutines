@@ -460,7 +460,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * LinkedList algorithm does not support removing and re-adding the same node,
          * so here we check whether the node is already added to the list to avoid adding the node twice.
          */
-        var nodeAdded = false
+        var isNodeAdded = false
         loopOnState { state ->
             when (state) {
                 is Empty -> { // EMPTY_X state -- no completion handlers
@@ -488,7 +488,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                             // or we are adding a child to a coroutine that is not completing yet
                             if (rootCause == null || handler.isHandlerOf<ChildHandleNode>() && !state.isCompleting) {
                                 // Note: add node the list while holding lock on state (make sure it cannot change)
-                                if (!nodeAdded) list.addLast(node)
+                                if (!isNodeAdded) list.addLast(node)
                                 if (this.state !== state) {
                                     /*
                                      * Here we have an additional check for ChildCompletion. Invoking the handler once is not enough
@@ -518,7 +518,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                         }
                         return handle
                     } else {
-                        if (!nodeAdded) list.addLast(node)
+                        if (!isNodeAdded) list.addLast(node)
                         if (this.state !== state) {
                             // Here again, we try to prevent concurrent finalization of the parent,
                             // if the parent fails to add ChildCompletion because the child changed it's state to Completed.
@@ -526,7 +526,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                             // If the state has changed to Complete, the node can stay in the list, just retry.
                             if (this.state !is Incomplete) return@loopOnState
                             // If the state is Incomplete, set the flag that the node is already added to the list instead of removing it.
-                            nodeAdded = true
+                            isNodeAdded = true
                         } else {
                             return node
                         }
@@ -629,7 +629,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 is Incomplete -> { // may have a list of completion handlers
                     // remove node from the list if there is a list
                     if (state.list != null) {
-                        // Completely remove so the node might be re-added
                         if (!node.remove() && node.isRemoved) {
                             // Note: .remove() returns 'false' if the node wasn't added at all, e.g.
                             // because it was an optimized "single element list"
@@ -1396,7 +1395,7 @@ internal abstract class JobNode : CompletionHandlerBase(), DisposableHandle, Inc
     override val isActive: Boolean get() = true
     override val list: NodeList? get() = null
     override fun dispose() = job.removeNode(this)
-    private val _isInvoked = atomic(false)
+    private val isInvoked = atomic(false)
 
     /*
      * This method is guaranteed to be invoked once per JobNode lifecycle.
@@ -1420,7 +1419,7 @@ internal abstract class JobNode : CompletionHandlerBase(), DisposableHandle, Inc
         if (!markInvoked()) return
         invokeOnce(cause)
     }
-    fun markInvoked() = _isInvoked.compareAndSet(false, true)
+    fun markInvoked() = isInvoked.compareAndSet(false, true)
     override fun toString() = "$classSimpleName@$hexAddress[job@${job.hexAddress}]"
 }
 
