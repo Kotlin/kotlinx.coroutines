@@ -7,6 +7,8 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlin.jvm.*
+import kotlin.native.concurrent.*
 
 private typealias Node = LockFreeLinkedListNode
 
@@ -20,9 +22,11 @@ internal const val SUCCESS: Int = 1
 internal const val FAILURE: Int = 2
 
 @PublishedApi
+@SharedImmutable
 internal val CONDITION_FALSE: Any = Symbol("CONDITION_FALSE")
 
 @PublishedApi
+@SharedImmutable
 internal val LIST_EMPTY: Any = Symbol("LIST_EMPTY")
 
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -616,7 +620,7 @@ public actual open class LockFreeLinkedListNode {
         assert { next === this._next.value }
     }
 
-    override fun toString(): String = "${this::class.java.simpleName}@${Integer.toHexString(System.identityHashCode(this))}"
+    override fun toString(): String = "${this::classSimpleName}@${this.hexAddress}"
 }
 
 private class Removed(@JvmField val ref: Node) {

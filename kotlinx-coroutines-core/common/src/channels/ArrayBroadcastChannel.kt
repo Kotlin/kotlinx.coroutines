@@ -33,6 +33,11 @@ internal class ArrayBroadcastChannel<E>(
         require(capacity >= 1) { "ArrayBroadcastChannel capacity must be at least 1, but $capacity was specified" }
     }
 
+    /**
+     * NB: prior to changing any logic of ArrayBroadcastChannel internals, please ensure that
+     * you do not break internal invariants of the SubscriberList implementation on K/N and KJS
+     */
+
     /*
      *  Writes to buffer are guarded by bufferLock, but reads from buffer are concurrent with writes
      *    - Write element to buffer then write "tail" (volatile)
@@ -60,6 +65,7 @@ internal class ArrayBroadcastChannel<E>(
         get() = _size.value
         set(value) { _size.value = value }
 
+    @Suppress("DEPRECATION")
     private val subscribers = subscriberList<Subscriber<E>>()
 
     override val isBufferAlwaysFull: Boolean get() = false

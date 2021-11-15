@@ -1,16 +1,16 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
 package kotlinx.coroutines
 
+import kotlinx.coroutines.exceptions.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
 class RunBlockingTest : TestBase() {
 
     @Test
-    fun testWithTimeoutBusyWait() = runBlocking {
+    fun testWithTimeoutBusyWait() = runMtTest {
         val value = withTimeoutOrNull(10) {
             while (isActive) {
                 // Busy wait
@@ -52,14 +52,14 @@ class RunBlockingTest : TestBase() {
     }
 
     @Test
-    fun testOtherDispatcher() {
+    fun testOtherDispatcher() = runMtTest {
         expect(1)
         val name = "RunBlockingTest.testOtherDispatcher"
         val thread = newSingleThreadContext(name)
         runBlocking(thread) {
             expect(2)
             assertSame(coroutineContext[ContinuationInterceptor], thread)
-            assertTrue(Thread.currentThread().name.contains(name))
+            assertTrue(currentThreadName().contains(name))
             yield() // should work
             expect(3)
         }
@@ -67,19 +67,20 @@ class RunBlockingTest : TestBase() {
         thread.close()
     }
 
-
     @Test
-    fun testCancellation() = newFixedThreadPoolContext(2, "testCancellation").use {
-        val job = GlobalScope.launch(it) {
-            runBlocking(coroutineContext) {
-                while (true) {
-                    yield()
+    fun testCancellation()  = runMtTest {
+        newFixedThreadPoolContext(2, "testCancellation").use {
+            val job = GlobalScope.launch(it) {
+                runBlocking(coroutineContext) {
+                    while (true) {
+                        yield()
+                    }
                 }
             }
-        }
 
-        runBlocking {
-            job.cancelAndJoin()
+            runBlocking {
+                job.cancelAndJoin()
+            }
         }
     }
 
@@ -104,40 +105,44 @@ class RunBlockingTest : TestBase() {
         }
     }
 
-    @Test(expected = CancellationException::class)
-    fun testDispatchOnShutdown() = runBlocking<Unit> {
-        expect(1)
-        val job = launch(NonCancellable) {
-            try {
-                expect(2)
-                delay(Long.MAX_VALUE)
-            } finally {
-                finish(4)
+    @Test
+    fun testDispatchOnShutdown(): Unit = assertFailsWith<CancellationException> {
+        runBlocking {
+            expect(1)
+            val job = launch(NonCancellable) {
+                try {
+                    expect(2)
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    finish(4)
+                }
             }
+
+            yield()
+            expect(3)
+            coroutineContext.cancel()
+            job.cancel()
         }
+    }.let { }
 
-        yield()
-        expect(3)
-        coroutineContext.cancel()
-        job.cancel()
-    }
-
-    @Test(expected = CancellationException::class)
-    fun testDispatchOnShutdown2() = runBlocking<Unit> {
-        coroutineContext.cancel()
-        expect(1)
-        val job = launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
-            try {
-                expect(2)
-                delay(Long.MAX_VALUE)
-            } finally {
-                finish(4)
+    @Test
+    fun testDispatchOnShutdown2(): Unit = assertFailsWith<CancellationException> {
+        runBlocking {
+            coroutineContext.cancel()
+            expect(1)
+            val job = launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
+                try {
+                    expect(2)
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    finish(4)
+                }
             }
-        }
 
-        expect(3)
-        job.cancel()
-    }
+            expect(3)
+            job.cancel()
+        }
+    }.let { }
 
     @Test
     fun testNestedRunBlocking() = runBlocking {
@@ -157,19 +162,10 @@ class RunBlockingTest : TestBase() {
     fun testIncompleteState() {
         val handle = runBlocking {
             // See #835
-            coroutineContext[Job]!!.invokeOnCompletion {  }
+            coroutineContext[Job]!!.invokeOnCompletion { }
         }
 
         handle.dispose()
-    }
-
-    @Test
-    fun testContract() {
-        val rb: Int
-        runBlocking {
-            rb = 42
-        }
-        rb.hashCode() // unused
     }
 
     @Test

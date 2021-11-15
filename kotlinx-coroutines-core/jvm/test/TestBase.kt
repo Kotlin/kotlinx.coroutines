@@ -20,14 +20,17 @@ private val VERBOSE = systemProp("test.verbose", false)
  */
 public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
 
-public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
+public actual val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
 
 private const val SHUTDOWN_TIMEOUT = 1_000L // 1s at most to wait per thread
+
+public actual val isNative = false
 
 /**
  * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
  */
 public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
+
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit

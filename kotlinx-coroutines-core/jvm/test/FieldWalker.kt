@@ -78,9 +78,8 @@ object FieldWalker {
         val path = ArrayList<String>()
         var cur = element
         while (true) {
-            val ref = visited.getValue(cur)
-            if (ref is Ref.RootRef) break
-            when (ref) {
+            when (val ref = visited.getValue(cur)) {
+                Ref.RootRef -> break
                 is Ref.FieldRef -> {
                     cur = ref.parent
                     path += "|${ref.parent.javaClass.simpleName}::${ref.name}"
@@ -89,7 +88,9 @@ object FieldWalker {
                     cur = ref.parent
                     path += "[${ref.index}]"
                 }
-                else -> error("Should not be reached")
+                else -> {
+                    // Nothing, kludge for IDE
+                }
             }
         }
         path.reverse()

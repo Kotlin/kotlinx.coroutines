@@ -8,9 +8,12 @@ import kotlin.js.*
 
 public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
+public actual val stressTestMultiplierSqrt: Int = 1
 
 @Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
 public actual typealias TestResult = Promise<Unit>
+
+public actual val isNative = false
 
 public actual open class TestBase actual constructor() {
     public actual val isBoundByJsTestTimeout = true

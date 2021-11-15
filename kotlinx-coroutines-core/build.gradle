@@ -74,19 +74,50 @@ kotlin {
         SourceSetsKt.configureMultiplatform(it)
     }
 
-    configure(targets) {
-        // Configure additional binaries and test runs -- one for each OS
-        if (["macos", "linux", "mingw"].any { name.startsWith(it) }) {
-            binaries {
-                // Test for memory leaks using a special entry point that does not exit but returns from main
-                binaries.getTest("DEBUG").freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
-                // Configure a separate test where code runs in background
-                test("background", [org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType.DEBUG]) {
-                    freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
-                }
+    /*
+     * Configure four test runs:
+     * 1) Old memory model, Main thread
+     * 2) New memory model, Main thread
+     * 3) Old memory model, BG thread
+     * 4) New memory model, BG thread (required for Dispatchers.Main tests on Darwin)
+     *
+     * All new MM targets are build with optimize = true to have stress tests properly run.
+     */
+    targets.withType(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests.class).configureEach {
+        binaries {
+            // Test for memory leaks using a special entry point that does not exit but returns from main
+            binaries.getTest("DEBUG").freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
+        }
+
+        binaries.test("newMM", [DEBUG]) {
+            def thisTest = it
+            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
+            optimized = true
+            binaryOptions["memoryModel"] = "experimental"
+            testRuns.create("newMM") {
+                setExecutionSourceFrom(thisTest)
+                // A hack to get different suffixes in the aggregated report.
+                executionTask.configure { targetName = "$targetName new MM" }
             }
-            testRuns {
-                background { setExecutionSourceFrom(binaries.backgroundDebugTest) }
+        }
+
+        binaries.test("worker",  [DEBUG]) {
+            def thisTest = it
+            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
+            testRuns.create("worker") {
+                setExecutionSourceFrom(thisTest)
+                executionTask.configure { targetName = "$targetName worker" }
+            }
+        }
+
+        binaries.test("workerWithNewMM", [DEBUG]) {
+            def thisTest = it
+            optimized = true
+            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
+            binaryOptions["memoryModel"] = "experimental"
+            testRuns.create("workerWithNewMM") {
+                setExecutionSourceFrom(thisTest)
+                executionTask.configure { targetName = "$targetName worker with new MM" }
             }
         }
     }
@@ -96,6 +127,7 @@ kotlin {
         withJava()
     }
 }
+
 
 configurations {
     configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
