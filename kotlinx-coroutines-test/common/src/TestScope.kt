@@ -157,10 +157,10 @@ internal class TestScopeImpl(context: CoroutineContext) :
 
     override val testScheduler get() = context[TestCoroutineScheduler]!!
 
-    var entered = false
-    var finished = false
-    val uncaughtExceptions = mutableListOf<Throwable>()
-    val lock = SynchronizedObject()
+    private var entered = false
+    private var finished = false
+    private val uncaughtExceptions = mutableListOf<Throwable>()
+    private val lock = SynchronizedObject()
 
     /** Called upon entry to [runTest]. Will throw if called more than once. */
     fun enter() {
@@ -180,7 +180,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
     }
 
     /** Called at the end of the test. May only be called once. */
-    fun finish(): List<Throwable> {
+    fun leave(): List<Throwable> {
         val exceptions = synchronized(lock) {
             check(entered && !finished)
             finished = true
@@ -206,6 +206,9 @@ internal class TestScopeImpl(context: CoroutineContext) :
             }
         }
     }
+
+    override fun toString(): String =
+        "TestScope[" + (if (finished) "test ended" else if (entered) "test started" else "test not started") + "]"
 }
 
 /** Use the knowledge that any [TestScope] that we receive is necessarily a [TestScopeImpl]. */

@@ -164,7 +164,7 @@ public fun TestScope.runTest(
 ): TestResult = asSpecificImplementation().let {
     it.enter()
     createTestResult {
-        runTestCoroutine(it, dispatchTimeoutMs, testBody) { it.finish() }
+        runTestCoroutine(it, dispatchTimeoutMs, testBody) { it.leave() }
     }
 }
 

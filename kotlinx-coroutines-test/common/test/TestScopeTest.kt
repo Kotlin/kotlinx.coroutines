@@ -88,7 +88,7 @@ class TestScopeTest {
         }
         assertFalse(result)
         scope.asSpecificImplementation().enter()
-        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().finish() }
+        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().leave() }
         assertFalse(result)
     }
 
@@ -104,7 +104,7 @@ class TestScopeTest {
         }
         assertFalse(result)
         scope.asSpecificImplementation().enter()
-        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().finish() }
+        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().leave() }
         assertFalse(result)
     }
 
@@ -121,7 +121,7 @@ class TestScopeTest {
         job.cancel()
         assertFalse(result)
         scope.asSpecificImplementation().enter()
-        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().finish() }
+        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().leave() }
         assertFalse(result)
     }
 
@@ -155,7 +155,7 @@ class TestScopeTest {
             launch(SupervisorJob()) { throw TestException("y") }
             launch(SupervisorJob()) { throw TestException("z") }
             runCurrent()
-            val e = asSpecificImplementation().finish()
+            val e = asSpecificImplementation().leave()
             assertEquals(3, e.size)
             assertEquals("x", e[0].message)
             assertEquals("y", e[1].message)

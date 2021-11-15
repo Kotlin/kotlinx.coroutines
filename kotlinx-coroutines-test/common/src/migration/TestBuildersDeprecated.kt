@@ -82,7 +82,7 @@ public fun runBlockingTestOnTestScope(
     deferred.getCompletionExceptionOrNull()?.let {
         throw it
     }
-    scope.finish().throwAll()
+    scope.leave().throwAll()
     val jobs = context.activeJobs() - startJobs
     if (jobs.isNotEmpty())
         throw UncompletedCoroutinesError("Some jobs were not completed at the end of the test: $jobs")
