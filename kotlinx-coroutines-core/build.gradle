@@ -271,6 +271,7 @@ task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
 }
 
 static void configureJvmForLincheck(task) {
+    task.forkEvery = 1
     task.minHeapSize = '1g'
     task.maxHeapSize = '6g' // we may need more space for building an interleaving tree in the model checking mode
     task.jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
