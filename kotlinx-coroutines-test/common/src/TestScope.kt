@@ -182,7 +182,8 @@ internal class TestScopeImpl(context: CoroutineContext) :
     /** Called at the end of the test. May only be called once. */
     fun leave(): List<Throwable> {
         val exceptions = synchronized(lock) {
-            check(entered && !finished)
+            if(!entered || finished)
+                throw IllegalStateException("An internal error. Please report to the Kotlinx Coroutines issue tracker")
             finished = true
             uncaughtExceptions
         }
