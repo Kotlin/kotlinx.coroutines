@@ -201,12 +201,6 @@ task checkJdk16() {
     }
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
-    kotlinOptions.jdkHome = System.env.JDK_16
-    // only fail when actually trying to compile, not during project setup phase
-    dependsOn(checkJdk16)
-}
-
 jvmTest {
     minHeapSize = '1g'
     maxHeapSize = '1g'
@@ -283,7 +277,6 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
     executable = "$System.env.JDK_16/bin/java"
-    exclude '**/*LFStressTest.*' // lock-freedom tests use LockFreedomTestEnvironment which needs JDK8
     exclude '**/*LincheckTest.*' // Lincheck tests use LinChecker which needs JDK8
     exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
     exclude '**/ExceptionsGuideTest.*'

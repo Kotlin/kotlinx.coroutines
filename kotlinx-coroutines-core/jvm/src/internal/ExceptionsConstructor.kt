@@ -11,10 +11,15 @@ import java.util.concurrent.locks.*
 import kotlin.concurrent.*
 
 private val throwableFields = Throwable::class.java.fieldsCountOrDefault(-1)
-private val cacheLock = ReentrantReadWriteLock()
 private typealias Ctor = (Throwable) -> Throwable?
-// Replace it with ClassValue when Java 6 support is over
-private val exceptionCtors: WeakHashMap<Class<out Throwable>, Ctor> = WeakHashMap()
+
+private val ctorCache = try {
+    if (ANDROID_DETECTED) WeakMapCtorCache
+    else ClassValueCtorCache
+} catch (e: Throwable) {
+    // Fallback on Java 6 or exotic setups
+    WeakMapCtorCache
+}
 
 @Suppress("UNCHECKED_CAST")
 internal fun <E : Throwable> tryCopyException(exception: E): E? {
@@ -22,33 +27,26 @@ internal fun <E : Throwable> tryCopyException(exception: E): E? {
     if (exception is CopyableThrowable<*>) {
         return runCatching { exception.createCopy() as E? }.getOrNull()
     }
-    // Use cached ctor if found
-    cacheLock.read { exceptionCtors[exception.javaClass] }?.let { cachedCtor ->
-        return cachedCtor(exception) as E?
-    }
-    /*
-     * Skip reflective copy if an exception has additional fields (that are usually populated in user-defined constructors)
-     */
-    if (throwableFields != exception.javaClass.fieldsCountOrDefault(0)) {
-        cacheLock.write { exceptionCtors[exception.javaClass] = { null } }
-        return null
-    }
-    /*
-     * Try to reflectively find constructor(), constructor(message, cause), constructor(cause) or constructor(message).
-     * Exceptions are shared among coroutines, so we should copy exception before recovering current stacktrace.
-     */
-    var ctor: Ctor? = null
-    val constructors = exception.javaClass.constructors.sortedByDescending { it.parameterTypes.size }
-    for (constructor in constructors) {
-        ctor = createConstructor(constructor)
-        if (ctor != null) break
-    }
-    // Store the resulting ctor to cache
-    cacheLock.write { exceptionCtors[exception.javaClass] = ctor ?: { null } }
-    return ctor?.invoke(exception) as E?
+    return ctorCache.get(exception.javaClass).invoke(exception) as E?
 }
 
-private fun createConstructor(constructor: Constructor<*>): Ctor? {
+private fun <E : Throwable> createConstructor(clz: Class<E>): Ctor {
+    val nullResult: Ctor = { null } // Pre-cache class
+    // Skip reflective copy if an exception has additional fields (that are usually populated in user-defined constructors)
+    if (throwableFields != clz.fieldsCountOrDefault(0)) return nullResult
+    /*
+    * Try to reflectively find constructor(), constructor(message, cause), constructor(cause) or constructor(message).
+    * Exceptions are shared among coroutines, so we should copy exception before recovering current stacktrace.
+    */
+    val constructors = clz.constructors.sortedByDescending { it.parameterTypes.size }
+    for (constructor in constructors) {
+        val result = createSafeConstructor(constructor)
+        if (result != null) return result
+    }
+    return nullResult
+}
+
+private fun createSafeConstructor(constructor: Constructor<*>): Ctor? {
     val p = constructor.parameterTypes
     return when (p.size) {
         2 -> when {
@@ -71,11 +69,41 @@ private fun createConstructor(constructor: Constructor<*>): Ctor? {
 private inline fun safeCtor(crossinline block: (Throwable) -> Throwable): Ctor =
     { e -> runCatching { block(e) }.getOrNull() }
 
-private fun Class<*>.fieldsCountOrDefault(defaultValue: Int) = kotlin.runCatching { fieldsCount() }.getOrDefault(defaultValue)
+private fun Class<*>.fieldsCountOrDefault(defaultValue: Int) =
+    kotlin.runCatching { fieldsCount() }.getOrDefault(defaultValue)
 
 private tailrec fun Class<*>.fieldsCount(accumulator: Int = 0): Int {
     val fieldsCount = declaredFields.count { !Modifier.isStatic(it.modifiers) }
     val totalFields = accumulator + fieldsCount
     val superClass = superclass ?: return totalFields
     return superClass.fieldsCount(totalFields)
+}
+
+internal abstract class CtorCache {
+    abstract fun get(key: Class<out Throwable>): Ctor
+}
+
+private object WeakMapCtorCache : CtorCache() {
+    private val cacheLock = ReentrantReadWriteLock()
+    private val exceptionCtors: WeakHashMap<Class<out Throwable>, Ctor> = WeakHashMap()
+
+    override fun get(key: Class<out Throwable>): Ctor {
+        cacheLock.read { exceptionCtors[key]?.let { return it } }
+        cacheLock.write {
+            exceptionCtors[key]?.let { return it }
+            return createConstructor(key).also { exceptionCtors[key] = it }
+        }
+    }
+}
+
+@IgnoreJreRequirement
+private object ClassValueCtorCache : CtorCache() {
+    private val cache = object : ClassValue<Ctor>() {
+        override fun computeValue(type: Class<*>?): Ctor {
+            @Suppress("UNCHECKED_CAST")
+            return createConstructor(type as Class<out Throwable>)
+        }
+    }
+
+    override fun get(key: Class<out Throwable>): Ctor = cache.get(key)
 }
