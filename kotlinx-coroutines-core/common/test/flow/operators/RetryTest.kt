@@ -142,4 +142,23 @@ class RetryTest : TestBase() {
         assertFailsWith<TestException>(flow)
         finish(4)
     }
+
+    @Test
+    fun testUpstreamCancellationIsIgnoredWhenDownstreamFails() = runTest {
+        val flow = flow {
+            try {
+                expect(1)
+                emit(1)
+            } finally {
+                expect(3)
+                throw CancellationException("")
+            }
+        }.retry { expectUnreached(); true }.onEach {
+            expect(2)
+            throw TestException("")
+        }
+
+        assertFailsWith<TestException>(flow)
+        finish(4)
+    }
 }

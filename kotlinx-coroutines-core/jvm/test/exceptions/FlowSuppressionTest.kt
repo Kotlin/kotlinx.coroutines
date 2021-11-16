@@ -47,4 +47,28 @@ class FlowSuppressionTest : TestBase() {
 
         }
     }
+
+    @Test
+    fun testCancellationSuppression() = runTest {
+        val flow = flow {
+            try {
+                expect(1)
+                emit(1)
+            } finally {
+                expect(3)
+                throw CancellationException("")
+            }
+        }.catch { expectUnreached() }.onEach {
+            expect(2)
+            throw TestException("")
+        }
+
+        try {
+            flow.collect()
+        } catch (e: Throwable) {
+            assertIs<TestException>(e)
+            assertIs<CancellationException>(e.suppressed[0])
+        }
+        finish(4)
+    }
 }
