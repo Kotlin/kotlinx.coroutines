@@ -220,9 +220,10 @@ internal suspend fun <T> Flow<T>.catchImpl(
                 return e
             }
             /*
-             * We consider "downstream" exception as the superseding one even if the
-             * upstream has failed (unless downstream exception is a cancellation exception, aligned with
-             * our cancellation mechanism), so it effectively suppresses it.
+             * We consider the upstream exception as the superseding one when both upstream and downstream
+             * fail, suppressing the downstream exception, and operating similarly to `finally` block with
+             * the useful addition of adding the original downstream exception to suppressed ones.
+             *
              * That's important for the following scenarios:
              * ```
              * flow {
@@ -230,9 +231,9 @@ internal suspend fun <T> Flow<T>.catchImpl(
              *     try {
              *         ... emit as well ...
              *     } finally {
-             *          resource.close() // Unlucky throw
+             *          resource.close() // Throws in the shutdown sequence when 'collect' already has thrown an exception
              *     }
-             * }.catch { } /* or retry */
+             * }.catch { } // or retry
              * .collect { ... }
              * ```
              * when *the downstream* throws.
