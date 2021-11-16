@@ -186,7 +186,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
             finished = true
             uncaughtExceptions
         }
-        val activeJobs = children.filter { it.isActive }.toList()
+        val activeJobs = children.filter { it.isActive }.toList() // only non-empty if used with `runBlockingTest`
         if (exceptions.isEmpty()) {
             if (activeJobs.isNotEmpty())
                 throw UncompletedCoroutinesError(
