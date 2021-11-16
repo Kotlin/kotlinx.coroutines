@@ -79,7 +79,6 @@ class RunTestLegacyScopeTest {
     }
 
     @Test
-    @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestWithSmallTimeout() = testResultMap({ fn ->
         assertFailsWith<UncompletedCoroutinesError> { fn() }
     }) {
@@ -100,7 +99,6 @@ class RunTestLegacyScopeTest {
     }
 
     @Test
-    @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestTimingOutAndThrowing() = testResultMap({ fn ->
         assertFailsWith<IllegalArgumentException> { fn() }
     }) {
