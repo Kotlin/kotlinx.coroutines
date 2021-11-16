@@ -33,20 +33,6 @@ class LockFreeLinkedListTest {
     }
 
     @Test
-    fun testCondOps() {
-        val list = LockFreeLinkedListHead()
-        assertContents(list)
-        assertTrue(list.addLastIf(IntNode(1)) { true })
-        assertContents(list, 1)
-        assertFalse(list.addLastIf(IntNode(2)) { false })
-        assertContents(list, 1)
-        assertTrue(list.addLastIf(IntNode(3)) { true })
-        assertContents(list, 1, 3)
-        assertFalse(list.addLastIf(IntNode(4)) { false })
-        assertContents(list, 1, 3)
-    }
-
-    @Test
     fun testAtomicOpsSingle() {
         val list = LockFreeLinkedListHead()
         assertContents(list)

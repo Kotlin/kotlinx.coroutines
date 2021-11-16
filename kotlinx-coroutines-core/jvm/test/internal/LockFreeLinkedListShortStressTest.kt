@@ -40,23 +40,14 @@ class LockFreeLinkedListShortStressTest : TestBase() {
             threads += thread(start = false, name = "adder-$threadId") {
                 val rnd = Random()
                 while (System.currentTimeMillis() < deadline) {
-                    var node: IntNode? = IntNode(threadId)
-                    when (rnd.nextInt(3)) {
-                        0 -> list.addLast(node!!)
-                        1 -> assertTrue(list.addLastIf(node!!, { true })) // just to test conditional add
-                        2 -> { // just to test failed conditional add
-                            assertFalse(list.addLastIf(node!!, { false }))
-                            node = null
-                        }
-                    }
-                    if (node != null) {
-                        if (node.remove()) {
-                            undone.incrementAndGet()
-                        } else {
-                            // randomly help other removal's completion
-                            if (rnd.nextBoolean()) node.helpRemove()
-                            missed.incrementAndGet()
-                        }
+                    val node = IntNode(threadId)
+                    list.addLast(node)
+                    if (node.remove()) {
+                        undone.incrementAndGet()
+                    } else {
+                        // randomly help other removal's completion
+                        if (rnd.nextBoolean()) node.helpRemove()
+                        missed.incrementAndGet()
                     }
                 }
                 completedAdder.incrementAndGet()
