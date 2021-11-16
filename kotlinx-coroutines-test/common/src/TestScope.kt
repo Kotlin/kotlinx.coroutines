@@ -25,7 +25,7 @@ import kotlin.coroutines.*
  * The usual way to access a [TestScope] is to call [runTest], but it can also be constructed manually, in order to
  * use it to initialize the components that participate in the test.
  *
- * #### Differences from [TestCoroutineScope]
+ * #### Differences from the deprecated [TestCoroutineScope]
  *
  * * This doesn't provide an equivalent of [TestCoroutineScope.cleanupTestCoroutines], and so can't be used as a
  *   standalone mechanism for writing tests: it does require that [runTest] is eventually called.
@@ -186,11 +186,20 @@ internal class TestScopeImpl(context: CoroutineContext) :
             finished = true
             uncaughtExceptions
         }
-        if (exceptions.isEmpty() && (children.any { it.isActive } || !testScheduler.isIdle()))
-            throw UncompletedCoroutinesError(
-                "Unfinished coroutines during teardown. Ensure all coroutines are" +
-                    " completed or cancelled by your test."
-            )
+        val activeJobs = children.filter { it.isActive }.toList()
+        if (exceptions.isEmpty()) {
+            if (activeJobs.isNotEmpty())
+                throw UncompletedCoroutinesError(
+                    "Active jobs found during the tear-down. " +
+                        "Ensure that all coroutines are completed or cancelled by your test. " +
+                        "The active jobs: $activeJobs"
+                )
+            if (!testScheduler.isIdle())
+                throw UncompletedCoroutinesError(
+                    "Unfinished coroutines found during the tear-down. " +
+                        "Ensure that all coroutines are completed or cancelled by your test."
+                )
+        }
         return exceptions
     }
 

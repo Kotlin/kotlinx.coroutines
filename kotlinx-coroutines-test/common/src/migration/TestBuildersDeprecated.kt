@@ -71,19 +71,25 @@ public fun runBlockingTestOnTestScope(
     context: CoroutineContext = EmptyCoroutineContext,
     testBody: suspend TestScope.() -> Unit
 ) {
-    val startJobs = context.activeJobs()
-    val scope = TestScope(TestCoroutineDispatcher() + SupervisorJob() + context).asSpecificImplementation()
+    val completeContext = TestCoroutineDispatcher() + SupervisorJob() + context
+    val startJobs = completeContext.activeJobs()
+    val scope = TestScope(completeContext).asSpecificImplementation()
     scope.enter()
-    val scheduler = scope.testScheduler
-    val deferred = scope.async {
+    scope.start(CoroutineStart.UNDISPATCHED, scope) {
         scope.testBody()
     }
-    scheduler.advanceUntilIdle()
-    deferred.getCompletionExceptionOrNull()?.let {
-        throw it
+    scope.testScheduler.advanceUntilIdle()
+    scope.getCompletionExceptionOrNull()?.let {
+        val exceptions = try {
+            scope.leave()
+        } catch (e: UncompletedCoroutinesError) {
+            listOf()
+        }
+        (listOf(it) + exceptions).throwAll()
+        return
     }
     scope.leave().throwAll()
-    val jobs = context.activeJobs() - startJobs
+    val jobs = completeContext.activeJobs() - startJobs
     if (jobs.isNotEmpty())
         throw UncompletedCoroutinesError("Some jobs were not completed at the end of the test: $jobs")
 }
