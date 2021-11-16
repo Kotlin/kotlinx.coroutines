@@ -311,8 +311,6 @@ class TestCoroutineSchedulerTest {
     private fun forTestDispatchers(block: (TestDispatcher) -> Unit): Unit =
         @Suppress("DEPRECATION")
         listOf(
-            TestCoroutineDispatcher(),
-            TestCoroutineDispatcher().also { it.pauseDispatcher() },
             StandardTestDispatcher(),
             UnconfinedTestDispatcher()
         ).forEach {

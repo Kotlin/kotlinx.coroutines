@@ -330,9 +330,3 @@ public val TestCoroutineScope.uncaughtExceptions: List<Throwable>
 private val TestCoroutineScope.delayControllerForPausing: DelayController
     get() = coroutineContext.delayController
         ?: throw IllegalStateException("This scope isn't able to pause its dispatchers")
-
-/**
- * Thrown when a test has completed and there are tasks that are not completed or cancelled.
- */
-@ExperimentalCoroutinesApi
-internal class UncompletedCoroutinesError(message: String) : AssertionError(message)

@@ -229,3 +229,9 @@ internal class UncaughtExceptionsBeforeTest : IllegalStateException(
     "There were uncaught exceptions in coroutines launched from TestScope before the test started. Please avoid this," +
         " as such exceptions are also reported in a platform-dependent manner so that they are not lost."
 )
+
+/**
+ * Thrown when a test has completed and there are tasks that are not completed or cancelled.
+ */
+@ExperimentalCoroutinesApi
+internal class UncompletedCoroutinesError(message: String) : AssertionError(message)
