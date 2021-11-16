@@ -32,7 +32,7 @@ fun testFoo() = runTest {
     }
     advanceUntilIdle()
     customCaptor.cleanupTestCoroutines()
-  }
+}
 ```
 
 ### `DelayController`
@@ -89,7 +89,7 @@ fun testFoo() = runTest {
     }
     advanceUntilIdle()
     // check the list of the caught exceptions
-  }
+}
 ```
 
 ## Auto-replace `TestCoroutineScope` constructor function with `createTestCoroutineScope`
@@ -178,7 +178,7 @@ fun testFoo() = runTest {
     deferred.getCompletionExceptionOrNull()?.let {
       throw it
     }
-  }
+}
 ```
 
 ### Only a single call to `runTest` is permitted per test.
