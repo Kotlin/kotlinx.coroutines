@@ -17,6 +17,7 @@ import kotlinx.coroutines.*
     "Use `TestCoroutineScheduler` to control virtual time.",
     level = DeprecationLevel.WARNING
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public interface DelayController {
     /**
      * Returns the current virtual clock-time as it is known to this Dispatcher.
@@ -106,6 +107,7 @@ public interface DelayController {
         "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
         level = DeprecationLevel.WARNING
     )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public suspend fun pauseDispatcher(block: suspend () -> Unit)
 
     /**
@@ -118,6 +120,7 @@ public interface DelayController {
         "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
         level = DeprecationLevel.WARNING
     )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public fun pauseDispatcher()
 
     /**
@@ -131,6 +134,7 @@ public interface DelayController {
         "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
         level = DeprecationLevel.WARNING
     )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public fun resumeDispatcher()
 }
 
@@ -143,6 +147,7 @@ internal interface SchedulerAsDelayController : DelayController {
         ReplaceWith("this.scheduler.currentTime"),
         level = DeprecationLevel.WARNING
     )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     override val currentTime: Long
         get() = scheduler.currentTime
 
@@ -153,6 +158,7 @@ internal interface SchedulerAsDelayController : DelayController {
         ReplaceWith("this.scheduler.apply { advanceTimeBy(delayTimeMillis); runCurrent() }"),
         level = DeprecationLevel.WARNING
     )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     override fun advanceTimeBy(delayTimeMillis: Long): Long {
         val oldTime = scheduler.currentTime
         scheduler.advanceTimeBy(delayTimeMillis)
@@ -166,6 +172,7 @@ internal interface SchedulerAsDelayController : DelayController {
         ReplaceWith("this.scheduler.advanceUntilIdle()"),
         level = DeprecationLevel.WARNING
     )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     override fun advanceUntilIdle(): Long {
         val oldTime = scheduler.currentTime
         scheduler.advanceUntilIdle()
@@ -178,6 +185,7 @@ internal interface SchedulerAsDelayController : DelayController {
         ReplaceWith("this.scheduler.runCurrent()"),
         level = DeprecationLevel.WARNING
     )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     override fun runCurrent(): Unit = scheduler.runCurrent()
 
     /** @suppress */

@@ -12,7 +12,7 @@ import kotlin.jvm.*
  * A test dispatcher that can interface with a [TestCoroutineScheduler].
  */
 @ExperimentalCoroutinesApi
-public sealed class TestDispatcher: CoroutineDispatcher(), Delay {
+public abstract class TestDispatcher internal constructor(): CoroutineDispatcher(), Delay {
     /** The scheduler that this dispatcher is linked to. */
     @ExperimentalCoroutinesApi
     public abstract val scheduler: TestCoroutineScheduler

@@ -13,6 +13,9 @@ import kotlin.jvm.*
  * Sets the given [dispatcher] as an underlying dispatcher of [Dispatchers.Main].
  * All subsequent usages of [Dispatchers.Main] will use the given [dispatcher] under the hood.
  *
+ * Using [TestDispatcher] as an argument has special behavior: subsequently-called [runTest], as well as
+ * [TestScope] and test dispatcher constructors, will use the [TestCoroutineScheduler] of the provided dispatcher.
+ *
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
 @ExperimentalCoroutinesApi

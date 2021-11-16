@@ -47,6 +47,7 @@ import kotlin.jvm.*
  * @param testBody The code of the unit-test.
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun runBlockingTest(
     context: CoroutineContext = EmptyCoroutineContext,
     testBody: suspend TestCoroutineScope.() -> Unit
@@ -67,6 +68,7 @@ public fun runBlockingTest(
  * A version of [runBlockingTest] that works with [TestScope].
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun runBlockingTestOnTestScope(
     context: CoroutineContext = EmptyCoroutineContext,
     testBody: suspend TestScope.() -> Unit
@@ -102,6 +104,7 @@ public fun runBlockingTestOnTestScope(
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineScope].
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(coroutineContext, block)
 
@@ -109,6 +112,7 @@ public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.
  * Convenience method for calling [runBlockingTestOnTestScope] on an existing [TestScope].
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestScope.runBlockingTest(block: suspend TestScope.() -> Unit): Unit =
     runBlockingTestOnTestScope(coroutineContext, block)
 
@@ -116,6 +120,7 @@ public fun TestScope.runBlockingTest(block: suspend TestScope.() -> Unit): Unit 
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
  */
 @Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(this, block)
 
@@ -124,6 +129,7 @@ public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineS
  */
 @ExperimentalCoroutinesApi
 @Deprecated("Use `runTest` instead.", level = DeprecationLevel.WARNING)
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun runTestWithLegacyScope(
     context: CoroutineContext = EmptyCoroutineContext,
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
@@ -157,6 +163,7 @@ public fun runTestWithLegacyScope(
  */
 @ExperimentalCoroutinesApi
 @Deprecated("Use `TestScope.runTest` instead.", level = DeprecationLevel.WARNING)
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.runTest(
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     block: suspend TestCoroutineScope.() -> Unit
