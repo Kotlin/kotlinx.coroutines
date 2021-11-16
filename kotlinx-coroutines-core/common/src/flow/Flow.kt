@@ -163,7 +163,6 @@ import kotlin.coroutines.*
  * Flow machinery enforces exception transparency at runtime and throws [IllegalStateException] on any attempt to emit a value,
  * if an exception has been thrown on previous attempt.
  *
- *
  * ### Reactive streams
  *
  * Flow is [Reactive Streams](http://www.reactive-streams.org/) compliant, you can safely interop it with
