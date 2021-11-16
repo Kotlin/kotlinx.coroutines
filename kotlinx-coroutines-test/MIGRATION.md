@@ -17,7 +17,7 @@ was called.
 
 We currently don't provide a replacement for this.
 However, `runTest` follows structured concurrency better than `runBlockingTest` did, so exceptions from child coroutines
-are propagated structurally in more cases than before, which makes uncaught exception handlers less useful.
+are propagated structurally, which makes uncaught exception handlers less useful.
 
 If you have a use case for this, please tell us about it at the issue tracker.
 Meanwhile, it should be possible to use a custom exception captor, which should only implement
@@ -78,12 +78,13 @@ It is already illegal to use a `TestCoroutineScope` without performing `cleanupT
   An example is shown below.
 
 ```kotlin
+val exceptions = mutableListOf<Throwable>()
+val customCaptor = CoroutineExceptionHandler { ctx, throwable ->
+    exceptions.add(throwable) // add proper synchronization if the test is multithreaded
+}
+
 @Test
 fun testFoo() = runTest {
-    val exceptions = mutableListOf<Throwable>()
-    val customCaptor = CoroutineExceptionHandler { ctx, throwable ->
-      exceptions.add(throwable) // add proper synchronization if the test is multithreaded
-    }
     launch(customCaptor) {
         // ...
     }

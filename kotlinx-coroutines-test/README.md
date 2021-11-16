@@ -111,8 +111,6 @@ on Kotlin/JS. The main differences are the following:
   guide the execution, advancing the virtual time by a duration, draining the queue of the awaiting tasks, or running
   the tasks scheduled at the present moment.
 * **Handling uncaught exceptions** spawned in the child coroutines by throwing them at the end of the test.
-* **Detecting unfinished jobs**, that is, tasks that are still pending by the end of the test, in order to prevent
-  coroutine leaks.
 * **Waiting for asynchronous callbacks**.
   Sometimes, especially when working with third-party code, it's impossible to mock all the dispatchers in use.
   [runTest] will handle the situations where some code runs in dispatchers not integrated with the test module.
@@ -317,11 +315,6 @@ fun testEagerlyEnteringSomeChildCoroutines() = runTest(UnconfinedTestDispatcher(
     assertTrue(entered2)
 }
 ```
-
-## Detecting unfinished jobs
-
-The test framework ensures that coroutines are not leaked.
-To this end, the coroutines that aren't finished by the end of the test are reported.
 
 ### Using `withTimeout` inside `runTest`
 
