@@ -140,6 +140,17 @@ public final class kotlinx/coroutines/CompletionHandlerException : java/lang/Run
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 }
 
+public abstract interface class kotlinx/coroutines/CopyableThreadContextElement : kotlinx/coroutines/ThreadContextElement {
+	public abstract fun copyForChildCoroutine ()Lkotlinx/coroutines/CopyableThreadContextElement;
+}
+
+public final class kotlinx/coroutines/CopyableThreadContextElement$DefaultImpls {
+	public static fun fold (Lkotlinx/coroutines/CopyableThreadContextElement;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lkotlinx/coroutines/CopyableThreadContextElement;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lkotlinx/coroutines/CopyableThreadContextElement;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/CopyableThreadContextElement;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
 public abstract interface class kotlinx/coroutines/CopyableThrowable {
 	public abstract fun createCopy ()Ljava/lang/Throwable;
 }
