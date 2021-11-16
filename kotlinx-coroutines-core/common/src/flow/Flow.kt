@@ -153,8 +153,8 @@ import kotlin.coroutines.*
  *
  * If the upstream flow throws an exception during its completion when the downstream exception has been thrown,
  * the downstream exception becomes superseded and suppressed by the upstream exception, being a semantic
- * equivalent of throwing from `finally` block. Exception-handling operators then ignore this exception,
- * still following the downstream failure.
+ * equivalent of throwing from `finally` block. However, this doesn't affect the operation of the exception-handling operators,
+ * which consider the downstream exception to be the root cause and behave as if the upstream didn't throw anything.
  *
  * Failure to adhere to the exception transparency requirement can lead to strange behaviors which make
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
