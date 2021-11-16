@@ -50,7 +50,7 @@ public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.()
 @Deprecated(
     "Deprecated in the favour of 'receiveCatching'",
     ReplaceWith("receiveCatching().getOrNull()"),
-    DeprecationLevel.WARNING
+    DeprecationLevel.ERROR
 ) // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
@@ -63,7 +63,7 @@ public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
  */
 @Deprecated(
     "Deprecated in the favour of 'onReceiveCatching'",
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.ERROR
 )  // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
     @Suppress("DEPRECATION", "UNCHECKED_CAST")

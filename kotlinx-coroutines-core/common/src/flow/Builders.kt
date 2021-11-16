@@ -199,25 +199,6 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
 }
 
 /**
- * @suppress
- */
-@FlowPreview
-@Deprecated(
-    message = "Use channelFlow with awaitClose { } instead of flowViaChannel and invokeOnClose { }.",
-    level = DeprecationLevel.ERROR
-) // To be removed in 1.4.x
-@Suppress("DeprecatedCallableAddReplaceWith")
-public fun <T> flowViaChannel(
-    bufferSize: Int = BUFFERED,
-    @BuilderInference block: CoroutineScope.(channel: SendChannel<T>) -> Unit
-): Flow<T> {
-    return channelFlow<T> {
-        block(channel)
-        awaitClose()
-    }.buffer(bufferSize)
-}
-
-/**
  * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel]
  * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
  * produced by code that is running in a different context or concurrently.

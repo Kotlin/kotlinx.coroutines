@@ -13,36 +13,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 
 /**
- * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
- * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this source.
- *
- * This API is deprecated in the favour of [Flow].
- * [MaybeSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
- * @suppress
- */
-@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.ERROR) // Will be hidden in 1.5
-public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
-    val channel = SubscriptionChannel<T>()
-    subscribe(channel)
-    return channel
-}
-
-/**
- * Subscribes to this [ObservableSource] and returns a channel to receive elements emitted by it.
- * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this source.
- *
- * This API is deprecated in the favour of [Flow].
- * [ObservableSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
- * @suppress
- */
-@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.ERROR) // Will be hidden in 1.5
-public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
-    val channel = SubscriptionChannel<T>()
-    subscribe(channel)
-    return channel
-}
-
-/**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
  *
  * If [action] throws an exception at some point or if the [MaybeSource] raises an error, the exception is rethrown from
@@ -106,4 +76,20 @@ private class SubscriptionChannel<T> :
     override fun onError(e: Throwable) {
         close(cause = e)
     }
+}
+
+/** @suppress */
+@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.HIDDEN) // ERROR in 1.4.0, HIDDEN in 1.6.0
+public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>()
+    subscribe(channel)
+    return channel
+}
+
+/** @suppress */
+@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.HIDDEN) // ERROR in 1.4.0, HIDDEN in 1.6.0
+public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>()
+    subscribe(channel)
+    return channel
 }
