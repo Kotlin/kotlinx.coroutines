@@ -57,7 +57,6 @@ public class TestCoroutineExceptionHandler :
         synchronized(_lock) {
             if (_coroutinesCleanedUp) {
                 handleCoroutineExceptionImpl(context, exception)
-                return
             }
             _exceptions += exception
         }

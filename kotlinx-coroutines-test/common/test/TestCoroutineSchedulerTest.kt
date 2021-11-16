@@ -5,7 +5,6 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
 import kotlin.test.*
 
 class TestCoroutineSchedulerTest {
@@ -47,7 +46,7 @@ class TestCoroutineSchedulerTest {
     @Test
     fun testAdvanceTimeByEnormousDelays() = forTestDispatchers {
         assertRunsFast {
-            with (createTestCoroutineScope(it)) {
+            with (TestScope(it)) {
                 launch {
                     val initialDelay = 10L
                     delay(initialDelay)
@@ -78,30 +77,29 @@ class TestCoroutineSchedulerTest {
 
     /** Tests the basic functionality of [TestCoroutineScheduler.advanceTimeBy]. */
     @Test
-    fun testAdvanceTimeBy() = assertRunsFast {
-        val scheduler = TestCoroutineScheduler()
-        val scope = createTestCoroutineScope(scheduler)
-        var stage = 1
-        scope.launch {
-            delay(1_000)
-            assertEquals(1_000, scheduler.currentTime)
-            stage = 2
-            delay(500)
-            assertEquals(1_500, scheduler.currentTime)
-            stage = 3
-            delay(501)
-            assertEquals(2_001, scheduler.currentTime)
-            stage = 4
+    fun testAdvanceTimeBy() = runTest {
+        assertRunsFast {
+            var stage = 1
+            launch {
+                delay(1_000)
+                assertEquals(1_000, currentTime)
+                stage = 2
+                delay(500)
+                assertEquals(1_500, currentTime)
+                stage = 3
+                delay(501)
+                assertEquals(2_001, currentTime)
+                stage = 4
+            }
+            assertEquals(1, stage)
+            assertEquals(0, currentTime)
+            advanceTimeBy(2_000)
+            assertEquals(3, stage)
+            assertEquals(2_000, currentTime)
+            advanceTimeBy(2)
+            assertEquals(4, stage)
+            assertEquals(2_002, currentTime)
         }
-        assertEquals(1, stage)
-        assertEquals(0, scheduler.currentTime)
-        scheduler.advanceTimeBy(2_000)
-        assertEquals(3, stage)
-        assertEquals(2_000, scheduler.currentTime)
-        scheduler.advanceTimeBy(2)
-        assertEquals(4, stage)
-        assertEquals(2_002, scheduler.currentTime)
-        scope.cleanupTestCoroutines()
     }
 
     /** Tests the basic functionality of [TestCoroutineScheduler.runCurrent]. */
@@ -135,7 +133,7 @@ class TestCoroutineSchedulerTest {
     fun testRunCurrentNotDrainingQueue() = forTestDispatchers {
         assertRunsFast {
             val scheduler = it.scheduler
-            val scope = createTestCoroutineScope(it)
+            val scope = TestScope(it)
             var stage = 1
             scope.launch {
                 delay(SLOW)
@@ -160,7 +158,7 @@ class TestCoroutineSchedulerTest {
     fun testNestedAdvanceUntilIdle() = forTestDispatchers {
         assertRunsFast {
             val scheduler = it.scheduler
-            val scope = createTestCoroutineScope(it)
+            val scope = TestScope(it)
             var executed = false
             scope.launch {
                 launch {
@@ -177,7 +175,7 @@ class TestCoroutineSchedulerTest {
     /** Tests [yield] scheduling tasks for future execution and not executing immediately. */
     @Test
     fun testYield() = forTestDispatchers {
-        val scope = createTestCoroutineScope(it)
+        val scope = TestScope(it)
         var stage = 0
         scope.launch {
             yield()
@@ -197,7 +195,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that dispatching the delayed tasks is ordered by their waking times. */
     @Test
     fun testDelaysPriority() = forTestDispatchers {
-        val scope = createTestCoroutineScope(it)
+        val scope = TestScope(it)
         var lastMeasurement = 0L
         fun checkTime(time: Long) {
             assertTrue(lastMeasurement < time)
@@ -234,10 +232,11 @@ class TestCoroutineSchedulerTest {
         checkTime(201)
     }
 
-    private fun TestCoroutineScope.checkTimeout(
+    private fun TestScope.checkTimeout(
         timesOut: Boolean, timeoutMillis: Long = SLOW, block: suspend () -> Unit
     ) = assertRunsFast {
         var caughtException = false
+        asSpecificImplementation().enter()
         launch {
             try {
                 withTimeout(timeoutMillis) {
@@ -248,7 +247,7 @@ class TestCoroutineSchedulerTest {
             }
         }
         advanceUntilIdle()
-        cleanupTestCoroutines()
+        asSpecificImplementation().leave().throwAll()
         if (timesOut)
             assertTrue(caughtException)
         else
@@ -258,7 +257,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that timeouts get triggered. */
     @Test
     fun testSmallTimeouts() = forTestDispatchers {
-        val scope = createTestCoroutineScope(it)
+        val scope = TestScope(it)
         scope.checkTimeout(true) {
             val half = SLOW / 2
             delay(half)
@@ -269,7 +268,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that timeouts don't get triggered if the code finishes in time. */
     @Test
     fun testLargeTimeouts() = forTestDispatchers {
-        val scope = createTestCoroutineScope(it)
+        val scope = TestScope(it)
         scope.checkTimeout(false) {
             val half = SLOW / 2
             delay(half)
@@ -280,7 +279,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that timeouts get triggered if the code fails to finish in time asynchronously. */
     @Test
     fun testSmallAsynchronousTimeouts() = forTestDispatchers {
-        val scope = createTestCoroutineScope(it)
+        val scope = TestScope(it)
         val deferred = CompletableDeferred<Unit>()
         scope.launch {
             val half = SLOW / 2
@@ -296,7 +295,7 @@ class TestCoroutineSchedulerTest {
     /** Tests that timeouts don't get triggered if the code finishes in time, even if it does so asynchronously. */
     @Test
     fun testLargeAsynchronousTimeouts() = forTestDispatchers {
-        val scope = createTestCoroutineScope(it)
+        val scope = TestScope(it)
         val deferred = CompletableDeferred<Unit>()
         scope.launch {
             val half = SLOW / 2

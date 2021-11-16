@@ -169,9 +169,11 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /**
      * Checks that the only tasks remaining in the scheduler are cancelled.
      */
-    // TODO: also completely empties the queue, as there's no nondestructive way to iterate over [ThreadSafeHeap]
-    internal fun isIdle(): Boolean {
+    internal fun isIdle(strict: Boolean = true): Boolean {
         synchronized(lock) {
+            if (strict)
+                return events.isEmpty
+            // TODO: also completely empties the queue, as there's no nondestructive way to iterate over [ThreadSafeHeap]
             val presentEvents = mutableListOf<TestDispatchEvent<*>>()
             while (true) {
                 presentEvents += events.removeFirstOrNull() ?: break

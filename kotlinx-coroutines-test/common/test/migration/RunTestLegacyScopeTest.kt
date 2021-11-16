@@ -9,11 +9,12 @@ import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class RunTestTest {
+/** Copy of [RunTestTest], but for [TestCoroutineScope] */
+@Suppress("DEPRECATION")
+class RunTestLegacyScopeTest {
 
-    /** Tests that [withContext] that sends work to other threads works in [runTest]. */
     @Test
-    fun testWithContextDispatching() = runTest {
+    fun testWithContextDispatching() = runTestWithLegacyScope {
         var counter = 0
         withContext(Dispatchers.Default) {
             counter += 1
@@ -21,9 +22,8 @@ class RunTestTest {
         assertEquals(counter, 1)
     }
 
-    /** Tests that joining [GlobalScope.launch] works in [runTest]. */
     @Test
-    fun testJoiningForkedJob() = runTest {
+    fun testJoiningForkedJob() = runTestWithLegacyScope {
         var counter = 0
         val job = GlobalScope.launch {
             counter += 1
@@ -32,26 +32,23 @@ class RunTestTest {
         assertEquals(counter, 1)
     }
 
-    /** Tests [suspendCoroutine] not failing [runTest]. */
     @Test
-    fun testSuspendCoroutine() = runTest {
+    fun testSuspendCoroutine() = runTestWithLegacyScope {
         val answer = suspendCoroutine<Int> {
             it.resume(42)
         }
         assertEquals(42, answer)
     }
 
-    /** Tests that [runTest] attempts to detect it being run inside another [runTest] and failing in such scenarios. */
     @Test
-    fun testNestedRunTestForbidden() = runTest {
+    fun testNestedRunTestForbidden() = runTestWithLegacyScope {
         assertFailsWith<IllegalStateException> {
             runTest { }
         }
     }
 
-    /** Tests that even the dispatch timeout of `0` is fine if all the dispatches go through the same scheduler. */
     @Test
-    fun testRunTestWithZeroTimeoutWithControlledDispatches() = runTest(dispatchTimeoutMs = 0) {
+    fun testRunTestWithZeroTimeoutWithControlledDispatches() = runTestWithLegacyScope(dispatchTimeoutMs = 0) {
         // below is some arbitrary concurrent code where all dispatches go through the same scheduler.
         launch {
             delay(2000)
@@ -68,12 +65,11 @@ class RunTestTest {
         deferred.await()
     }
 
-    /** Tests that a dispatch timeout of `0` will fail the test if there are some dispatches outside the scheduler. */
     @Test
     fun testRunTestWithZeroTimeoutWithUncontrolledDispatches() = testResultMap({ fn ->
         assertFailsWith<UncompletedCoroutinesError> { fn() }
     }) {
-        runTest(dispatchTimeoutMs = 0) {
+        runTestWithLegacyScope(dispatchTimeoutMs = 0) {
             withContext(Dispatchers.Default) {
                 delay(10)
                 3
@@ -82,13 +78,12 @@ class RunTestTest {
         }
     }
 
-    /** Tests that too low of a dispatch timeout causes crashes. */
     @Test
     @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestWithSmallTimeout() = testResultMap({ fn ->
         assertFailsWith<UncompletedCoroutinesError> { fn() }
     }) {
-        runTest(dispatchTimeoutMs = 100) {
+        runTestWithLegacyScope(dispatchTimeoutMs = 100) {
             withContext(Dispatchers.Default) {
                 delay(10000)
                 3
@@ -97,21 +92,19 @@ class RunTestTest {
         }
     }
 
-    /** Tests that too low of a dispatch timeout causes crashes. */
     @Test
-    fun testRunTestWithLargeTimeout() = runTest(dispatchTimeoutMs = 5000) {
+    fun testRunTestWithLargeTimeout() = runTestWithLegacyScope(dispatchTimeoutMs = 5000) {
         withContext(Dispatchers.Default) {
             delay(50)
         }
     }
 
-    /** Tests uncaught exceptions taking priority over dispatch timeout in error reports. */
     @Test
     @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestTimingOutAndThrowing() = testResultMap({ fn ->
         assertFailsWith<IllegalArgumentException> { fn() }
     }) {
-        runTest(dispatchTimeoutMs = 1) {
+        runTestWithLegacyScope(dispatchTimeoutMs = 1) {
             coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, IllegalArgumentException())
             withContext(Dispatchers.Default) {
                 delay(10000)
@@ -121,32 +114,29 @@ class RunTestTest {
         }
     }
 
-    /** Tests that passing invalid contexts to [runTest] causes it to fail (on JS, without forking). */
     @Test
     fun testRunTestWithIllegalContext() {
         for (ctx in TestScopeTest.invalidContexts) {
             assertFailsWith<IllegalArgumentException> {
-                runTest(ctx) { }
+                runTestWithLegacyScope(ctx) { }
             }
         }
     }
 
-    /** Tests that throwing exceptions in [runTest] fails the test with them. */
     @Test
     fun testThrowingInRunTestBody() = testResultMap({
         assertFailsWith<RuntimeException> { it() }
     }) {
-        runTest {
+        runTestWithLegacyScope {
             throw RuntimeException()
         }
     }
 
-    /** Tests that throwing exceptions in pending tasks [runTest] fails the test with them. */
     @Test
     fun testThrowingInRunTestPendingTask() = testResultMap({
         assertFailsWith<RuntimeException> { it() }
     }) {
-        runTest {
+        runTestWithLegacyScope {
             launch {
                 delay(SLOW)
                 throw RuntimeException()
@@ -155,7 +145,7 @@ class RunTestTest {
     }
 
     @Test
-    fun reproducer2405() = runTest {
+    fun reproducer2405() = runTestWithLegacyScope {
         val dispatcher = StandardTestDispatcher(testScheduler)
         var collectedError = false
         withContext(dispatcher) {
@@ -172,7 +162,6 @@ class RunTestTest {
         assertTrue(collectedError)
     }
 
-    /** Tests that, once the test body has thrown, the child coroutines are cancelled. */
     @Test
     fun testChildrenCancellationOnTestBodyFailure(): TestResult {
         var job: Job? = null
@@ -180,7 +169,7 @@ class RunTestTest {
             assertFailsWith<AssertionError> { it() }
             assertTrue(job!!.isCancelled)
         }) {
-            runTest {
+            runTestWithLegacyScope {
                 job = launch {
                     while (true) {
                         delay(1000)
@@ -191,12 +180,11 @@ class RunTestTest {
         }
     }
 
-    /** Tests that [runTest] reports [TimeoutCancellationException]. */
     @Test
     fun testTimeout() = testResultMap({
         assertFailsWith<TimeoutCancellationException> { it() }
     }) {
-        runTest {
+        runTestWithLegacyScope {
             withTimeout(50) {
                 launch {
                     delay(1000)
@@ -205,19 +193,17 @@ class RunTestTest {
         }
     }
 
-    /** Checks that [runTest] throws the root cause and not [JobCancellationException] when a child coroutine throws. */
     @Test
     fun testRunTestThrowsRootCause() = testResultMap({
         assertFailsWith<TestException> { it() }
     }) {
-        runTest {
+        runTestWithLegacyScope {
             launch {
                 throw TestException()
             }
         }
     }
 
-    /** Tests that [runTest] completes its job. */
     @Test
     fun testCompletesOwnJob(): TestResult {
         var handlerCalled = false
@@ -225,7 +211,7 @@ class RunTestTest {
             it()
             assertTrue(handlerCalled)
         }) {
-            runTest {
+            runTestWithLegacyScope {
                 coroutineContext.job.invokeOnCompletion {
                     handlerCalled = true
                 }
@@ -233,7 +219,6 @@ class RunTestTest {
         }
     }
 
-    /** Tests that [runTest] doesn't complete the job that was passed to it as an argument. */
     @Test
     fun testDoesNotCompleteGivenJob(): TestResult {
         var handlerCalled = false
@@ -246,13 +231,12 @@ class RunTestTest {
             assertFalse(handlerCalled)
             assertEquals(0, job.children.filter { it.isActive }.count())
         }) {
-            runTest(job) {
+            runTestWithLegacyScope(job) {
                 assertTrue(coroutineContext.job in job.children)
             }
         }
     }
 
-    /** Tests that, when the test body fails, the reported exceptions are suppressed. */
     @Test
     fun testSuppressedExceptions() = testResultMap({
         try {
@@ -268,7 +252,7 @@ class RunTestTest {
             assertEquals("z", suppressed[2].message)
         }
     }) {
-        runTest {
+        runTestWithLegacyScope {
             launch(SupervisorJob()) { throw TestException("x") }
             launch(SupervisorJob()) { throw TestException("y") }
             launch(SupervisorJob()) { throw TestException("z") }
@@ -276,10 +260,9 @@ class RunTestTest {
         }
     }
 
-    /** Tests that [TestCoroutineScope.runTest] does not inherit the exception handler and works. */
     @Test
     fun testScopeRunTestExceptionHandler(): TestResult {
-        val scope = TestScope()
+        val scope = TestCoroutineScope()
         return testResultMap({
             try {
                 it()

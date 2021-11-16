@@ -10,10 +10,18 @@ import kotlin.test.*
 
 class StandardTestDispatcherTest: OrderedExecutionTestBase() {
 
-    private val scope = createTestCoroutineScope(StandardTestDispatcher())
+    private val scope = TestScope(StandardTestDispatcher())
+
+    @BeforeTest
+    fun init() {
+        scope.asSpecificImplementation().enter()
+    }
 
     @AfterTest
-    fun cleanup() = scope.cleanupTestCoroutines()
+    fun cleanup() {
+        scope.runCurrent()
+        assertEquals(listOf(), scope.asSpecificImplementation().leave())
+    }
 
     /** Tests that the [StandardTestDispatcher] follows an execution order similar to `runBlocking`. */
     @Test
