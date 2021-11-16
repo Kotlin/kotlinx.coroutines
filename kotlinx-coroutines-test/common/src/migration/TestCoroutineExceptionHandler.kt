@@ -18,6 +18,7 @@ import kotlin.coroutines.*
         "please report your use case at https://github.com/Kotlin/kotlinx.coroutines/issues.",
     level = DeprecationLevel.WARNING
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public interface UncaughtExceptionCaptor {
     /**
      * List of uncaught coroutine exceptions.
@@ -46,6 +47,7 @@ public interface UncaughtExceptionCaptor {
         "It may be to define one's own `CoroutineExceptionHandler` if you just need to handle '" +
         "uncaught exceptions without a special `TestCoroutineScope` integration.", level = DeprecationLevel.WARNING
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public class TestCoroutineExceptionHandler :
     AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler, UncaughtExceptionCaptor {
     private val _exceptions = mutableListOf<Throwable>()

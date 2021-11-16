@@ -14,6 +14,7 @@ import kotlin.coroutines.*
  */
 @ExperimentalCoroutinesApi
 @Deprecated("Use `TestScope` in combination with `runTest` instead")
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public sealed interface TestCoroutineScope : CoroutineScope {
     /**
      * Called after the test completes.
@@ -35,6 +36,8 @@ public sealed interface TestCoroutineScope : CoroutineScope {
      * @throws IllegalStateException if called more than once.
      */
     @ExperimentalCoroutinesApi
+    @Deprecated("Please call `runTest`, which automatically performs the cleanup, instead of using this function.")
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public fun cleanupTestCoroutines()
 
     /**
@@ -127,6 +130,7 @@ internal fun CoroutineContext.activeJobs(): Set<Job> {
     ),
     level = DeprecationLevel.WARNING
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
     val scheduler = context[TestCoroutineScheduler] ?: TestCoroutineScheduler()
     return createTestCoroutineScope(TestCoroutineDispatcher(scheduler) + TestCoroutineExceptionHandler() + context)
@@ -163,6 +167,7 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
         "Please use TestScope() construction instead, or just runTest(), without creating a scope.",
     level = DeprecationLevel.WARNING
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
     val ctxWithDispatcher = context.withDelaySkipping()
     var scope: TestCoroutineScopeImpl? = null
@@ -222,6 +227,7 @@ public val TestCoroutineScope.currentTime: Long
     ReplaceWith("this.testScheduler.apply { advanceTimeBy(delayTimeMillis); runCurrent() }"),
     DeprecationLevel.WARNING
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.advanceTimeBy(delayTimeMillis: Long): Unit =
     when (val controller = coroutineContext.delayController) {
         null -> {
@@ -265,6 +271,7 @@ public fun TestCoroutineScope.runCurrent() {
     ),
     DeprecationLevel.WARNING
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public suspend fun TestCoroutineScope.pauseDispatcher(block: suspend () -> Unit) {
     delayControllerForPausing.pauseDispatcher(block)
 }
@@ -280,6 +287,7 @@ public suspend fun TestCoroutineScope.pauseDispatcher(block: suspend () -> Unit)
     ),
     level = DeprecationLevel.WARNING
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.pauseDispatcher() {
     delayControllerForPausing.pauseDispatcher()
 }
@@ -295,6 +303,7 @@ public fun TestCoroutineScope.pauseDispatcher() {
     ),
     level = DeprecationLevel.WARNING
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.resumeDispatcher() {
     delayControllerForPausing.resumeDispatcher()
 }
