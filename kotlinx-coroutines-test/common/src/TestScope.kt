@@ -101,8 +101,7 @@ public fun TestScope.advanceTimeBy(delayTimeMillis: Long): Unit = testScheduler.
  *   If you need to have a specific [CoroutineExceptionHandler], please pass it to [launch] on an already-created
  *   [TestCoroutineScope] and share your use case at
  *   [our issue tracker](https://github.com/Kotlin/kotlinx.coroutines/issues).
- * * If [context] provides a [Job], that job is used as a parent for the new scope;
- *   otherwise, a [CompletableJob] is created.
+ * * If [context] provides a [Job], that job is used as a parent for the new scope.
  *
  * @throws IllegalArgumentException if [context] has both [TestCoroutineScheduler] and a [TestDispatcher] linked to a
  * different scheduler.
