@@ -18,7 +18,7 @@ import kotlin.coroutines.*
  * To preserve backwards compatibility with Ktor 1.x, previous version of the code is
  * extracted here as is and isolated from the rest of code base, so R8 can get rid of it.
  *
- * It should be removed after Kotlin 3.0.0 (EOL of Ktor 1.x) around 2022.
+ * It should be removed after Ktor 3.0.0 (EOL of Ktor 1.x) around 2022.
  */
 @PublishedApi
 internal open class ExperimentalCoroutineDispatcher(

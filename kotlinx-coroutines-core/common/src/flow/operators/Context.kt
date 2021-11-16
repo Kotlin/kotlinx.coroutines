@@ -277,64 +277,6 @@ private class CancellableFlowImpl<T>(private val flow: Flow<T>) : CancellableFlo
     }
 }
 
-/**
- * The operator that changes the context where all transformations applied to the given flow within a [builder] are executed.
- * This operator is context preserving and does not affect the context of the preceding and subsequent operations.
- *
- * Example:
- *
- * ```
- * flow // not affected
- *     .map { ... } // Not affected
- *     .flowWith(Dispatchers.IO) {
- *         map { ... } // in IO
- *         .filter { ... } // in IO
- *     }
- *     .map { ... } // Not affected
- * ```
- *
- * For more explanation of context preservation please refer to [Flow] documentation.
- *
- * This operator is deprecated without replacement because it was discovered that it doesn't play well with coroutines
- * and flow semantics:
- *
- * 1) It doesn't prevent context elements from the downstream to leak into its body
- *     ```
- *     flowOf(1).flowWith(EmptyCoroutineContext) {
- *         onEach { println(kotlin.coroutines.coroutineContext[CoroutineName]) } // Will print 42
- *     }.flowOn(CoroutineName(42))
- *     ```
- * 2) To avoid such leaks, new primitive should be introduced to `kotlinx.coroutines` -- the subtraction of contexts.
- *    And this will become a new concept to learn, maintain and explain.
- * 3) It defers the execution of declarative [builder] until the moment of [collection][Flow.collect] similarly
- *    to `Observable.defer`. But it is unexpected because nothing in the name `flowWith` reflects this fact.
- * 4) It can be confused with [flowOn] operator, though [flowWith] is much rarer.
- *
- * @suppress
- */
-@FlowPreview
-@Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.ERROR) // Error in beta release, removal in 1.4
-public fun <T, R> Flow<T>.flowWith(
-    flowContext: CoroutineContext,
-    bufferSize: Int = BUFFERED,
-    builder: Flow<T>.() -> Flow<R>
-): Flow<R> {
-    checkFlowContext(flowContext)
-    val source = this
-    return unsafeFlow {
-        /**
-         * Here we should remove a Job instance from the context.
-         * All builders are written using scoping and no global coroutines are launched, so it is safe not to provide explicit Job.
-         * It is also necessary not to mess with cancellation if multiple flowWith are used.
-         */
-        val originalContext = currentCoroutineContext().minusKey(Job)
-        val prepared = source.flowOn(originalContext).buffer(bufferSize)
-        builder(prepared).flowOn(flowContext).buffer(bufferSize).collect { value ->
-            return@collect emit(value)
-        }
-    }
-}
-
 private fun checkFlowContext(context: CoroutineContext) {
     require(context[Job] == null) {
         "Flow context cannot contain job in it. Had $context"

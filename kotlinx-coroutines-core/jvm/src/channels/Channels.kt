@@ -43,11 +43,11 @@ import kotlinx.coroutines.*
  * ```
  */
 @Deprecated(
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     message = "Deprecated in the favour of 'trySendBlocking'. " +
         "Consider handling the result of 'trySendBlocking' explicitly and rethrow exception if necessary",
     replaceWith = ReplaceWith("trySendBlocking(element)")
-)
+) // WARNING in 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 public fun <E> SendChannel<E>.sendBlocking(element: E) {
     // fast path
     if (trySend(element).isSuccess)

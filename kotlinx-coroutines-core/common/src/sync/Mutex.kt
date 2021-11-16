@@ -65,7 +65,7 @@ public interface Mutex {
      * Deprecated for removal without built-in replacement.
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = "Mutex.onLock deprecated without replacement. " +
-        "For additional details please refer to #2794")
+        "For additional details please refer to #2794") // WARNING since 1.6.0
     public val onLock: SelectClause2<Any?, Mutex>
 
     /**
