@@ -91,9 +91,7 @@ private object WeakMapCtorCache : CtorCache() {
         cacheLock.read { exceptionCtors[key]?.let { return it } }
         cacheLock.write {
             exceptionCtors[key]?.let { return it }
-            val result = createConstructor(key)
-            exceptionCtors[key] = result
-            return result
+            return createConstructor(key).also { exceptionCtors[key] = it }
         }
     }
 }
