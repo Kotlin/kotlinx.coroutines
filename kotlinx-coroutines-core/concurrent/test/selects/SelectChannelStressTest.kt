@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
@@ -11,61 +11,60 @@ import kotlin.test.*
 
 class SelectChannelStressTest: TestBase() {
 
+    // Running less iterations on native platforms because of some performance regression
+    private val iterations = (if (isNative) 1_000 else 1_000_000) * stressTestMultiplier
+
     @Test
-    fun testSelectSendResourceCleanupArrayChannel() = runTest {
+    fun testSelectSendResourceCleanupArrayChannel() = runMtTest {
         val channel = Channel<Int>(1)
-        val n = 10_000_000 * stressTestMultiplier
         expect(1)
         channel.send(-1) // fill the buffer, so all subsequent sends cannot proceed
-        repeat(n) { i ->
+        repeat(iterations) { i ->
             select {
                 channel.onSend(i) { expectUnreached() }
                 default { expect(i + 2) }
             }
         }
-        finish(n + 2)
+        finish(iterations + 2)
     }
 
     @Test
-    fun testSelectReceiveResourceCleanupArrayChannel() = runTest {
+    fun testSelectReceiveResourceCleanupArrayChannel() = runMtTest {
         val channel = Channel<Int>(1)
-        val n = 10_000_000 * stressTestMultiplier
         expect(1)
-        repeat(n) { i ->
+        repeat(iterations) { i ->
             select {
                 channel.onReceive { expectUnreached() }
                 default { expect(i + 2) }
             }
         }
-        finish(n + 2)
+        finish(iterations + 2)
     }
 
     @Test
-    fun testSelectSendResourceCleanupRendezvousChannel() = runTest {
+    fun testSelectSendResourceCleanupRendezvousChannel() = runMtTest {
         val channel = Channel<Int>(Channel.RENDEZVOUS)
-        val n = 1_000_000 * stressTestMultiplier
         expect(1)
-        repeat(n) { i ->
+        repeat(iterations) { i ->
             select {
                 channel.onSend(i) { expectUnreached() }
                 default { expect(i + 2) }
             }
         }
-        finish(n + 2)
+        finish(iterations + 2)
     }
 
     @Test
-    fun testSelectReceiveResourceRendezvousChannel() = runTest {
+    fun testSelectReceiveResourceRendezvousChannel() = runMtTest {
         val channel = Channel<Int>(Channel.RENDEZVOUS)
-        val n = 1_000_000 * stressTestMultiplier
         expect(1)
-        repeat(n) { i ->
+        repeat(iterations) { i ->
             select {
                 channel.onReceive { expectUnreached() }
                 default { expect(i + 2) }
             }
         }
-        finish(n + 2)
+        finish(iterations + 2)
     }
 
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {

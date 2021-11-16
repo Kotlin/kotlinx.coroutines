@@ -7,11 +7,13 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
 public expect val isStressTest: Boolean
 public expect val stressTestMultiplier: Int
+public expect val stressTestMultiplierSqrt: Int
 
 /**
  * The result of a multiplatform asynchronous test.
@@ -19,6 +21,8 @@ public expect val stressTestMultiplier: Int
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 public expect class TestResult
+
+public expect val isNative: Boolean
 
 public expect open class TestBase constructor() {
     /*

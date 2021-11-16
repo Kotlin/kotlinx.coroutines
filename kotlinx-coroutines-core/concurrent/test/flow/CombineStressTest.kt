@@ -1,16 +1,16 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import org.junit.*
+import kotlin.test.*
 
 class CombineStressTest : TestBase() {
 
     @Test
-    public fun testCancellation() = runTest {
+    fun testCancellation() = runMtTest {
         withContext(Dispatchers.Default + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {
             flow {
                 expect(1)
@@ -26,7 +26,7 @@ class CombineStressTest : TestBase() {
     }
 
     @Test
-    public fun testFailure() = runTest {
+    fun testFailure() = runMtTest {
         val innerIterations = 100 * stressTestMultiplierSqrt
         val outerIterations = 10 * stressTestMultiplierSqrt
         withContext(Dispatchers.Default + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {

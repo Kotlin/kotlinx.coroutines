@@ -8,22 +8,6 @@ import kotlin.coroutines.*
 import kotlin.test.*
 
 class DelayExceptionTest : TestBase() {
-    private object Dispatcher : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext): Boolean = true
-        override fun dispatch(context: CoroutineContext, block: Runnable) { block.run() }
-    }
-
-    private lateinit var exception: Throwable
-
-
-    @Test
-    fun testThrowsTce() {
-        CoroutineScope(Dispatcher + CoroutineExceptionHandler { _, e -> exception = e }).launch {
-            delay(10)
-        }
-
-        assertTrue(exception is IllegalStateException)
-    }
 
     @Test
     fun testMaxDelay() = runBlocking {

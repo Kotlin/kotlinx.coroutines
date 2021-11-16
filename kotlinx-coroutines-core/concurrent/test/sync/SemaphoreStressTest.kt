@@ -1,18 +1,25 @@
+/*
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
-import org.junit.Test
+import kotlinx.coroutines.exceptions.*
 import kotlin.test.*
 
 class SemaphoreStressTest : TestBase() {
+
+    private val iterations = (if (isNative) 1_000 else 10_000) * stressTestMultiplier
+
     @Test
-    fun stressTestAsMutex() = runBlocking(Dispatchers.Default) {
-        val n = 10_000 * stressTestMultiplier
+    fun testStressTestAsMutex() = runMtTest {
+        val n = iterations
         val k = 100
         var shared = 0
         val semaphore = Semaphore(1)
         val jobs = List(n) {
-            launch {
+            launch(Dispatchers.Default) {
                 repeat(k) {
                     semaphore.acquire()
                     shared++
@@ -25,12 +32,12 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun stressTest() = runBlocking(Dispatchers.Default) {
-        val n = 10_000 * stressTestMultiplier
+    fun testStress() = runMtTest {
+        val n = iterations
         val k = 100
         val semaphore = Semaphore(10)
         val jobs = List(n) {
-            launch {
+            launch(Dispatchers.Default) {
                 repeat(k) {
                     semaphore.acquire()
                     semaphore.release()
@@ -41,12 +48,33 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun stressCancellation() = runBlocking(Dispatchers.Default) {
-        val n = 10_000 * stressTestMultiplier
+    fun testStressAsMutex() = runMtTest {
+        runBlocking(Dispatchers.Default) {
+            val n = iterations
+            val k = 100
+            var shared = 0
+            val semaphore = Semaphore(1)
+            val jobs = List(n) {
+                launch {
+                    repeat(k) {
+                        semaphore.acquire()
+                        shared++
+                        semaphore.release()
+                    }
+                }
+            }
+            jobs.forEach { it.join() }
+            assertEquals(n * k, shared)
+        }
+    }
+
+    @Test
+    fun testStressCancellation() = runMtTest {
+        val n = iterations
         val semaphore = Semaphore(1)
         semaphore.acquire()
         repeat(n) {
-            val job = launch {
+            val job = launch(Dispatchers.Default) {
                 semaphore.acquire()
             }
             yield()
@@ -62,8 +90,8 @@ class SemaphoreStressTest : TestBase() {
      * the semaphore into an incorrect state where permits are leaked.
      */
     @Test
-    fun stressReleaseCancelRace() = runTest {
-        val n = 10_000 * stressTestMultiplier
+    fun testStressReleaseCancelRace() = runMtTest {
+        val n = iterations
         val semaphore = Semaphore(1, 1)
         newSingleThreadContext("SemaphoreStressTest").use { pool ->
             repeat (n) {
@@ -92,7 +120,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testShouldBeUnlockedOnCancellation() = runTest {
+    fun testShouldBeUnlockedOnCancellation() = runMtTest {
         val semaphore = Semaphore(1)
         val n = 1000 * stressTestMultiplier
         repeat(n) {

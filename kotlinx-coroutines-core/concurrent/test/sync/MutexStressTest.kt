@@ -1,22 +1,49 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.sync
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.exceptions.*
 import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 class MutexStressTest : TestBase() {
+
+    private val n = (if (isNative) 1_000 else 10_000) * stressTestMultiplier
+
     @Test
-    fun testStress() = runBlocking(Dispatchers.Default) {
-        val n = 1000 * stressTestMultiplier
+    fun testDefaultDispatcher() = runMtTest { testBody(Dispatchers.Default) }
+
+    @Test
+    fun testSingleThreadContext() = runMtTest {
+        newSingleThreadContext("testSingleThreadContext").use {
+            testBody(it)
+        }
+    }
+
+    @Test
+    fun testMultiThreadedContextWithSingleWorker() = runMtTest {
+        newFixedThreadPoolContext(1, "testMultiThreadedContextWithSingleWorker").use {
+            testBody(it)
+        }
+    }
+
+    @Test
+    fun testMultiThreadedContext() = runMtTest {
+       newFixedThreadPoolContext(8, "testMultiThreadedContext").use {
+            testBody(it)
+        }
+    }
+
+    @Suppress("SuspendFunctionOnCoroutineScope")
+    private suspend fun CoroutineScope.testBody(dispatcher: CoroutineDispatcher) {
         val k = 100
         var shared = 0
         val mutex = Mutex()
         val jobs = List(n) {
-            launch {
+            launch(dispatcher) {
                 repeat(k) {
                     mutex.lock()
                     shared++
@@ -29,11 +56,11 @@ class MutexStressTest : TestBase() {
     }
 
     @Test
-    fun stressUnlockCancelRace() = runTest {
+    fun stressUnlockCancelRace() = runMtTest {
         val n = 10_000 * stressTestMultiplier
         val mutex = Mutex(true) // create a locked mutex
         newSingleThreadContext("SemaphoreStressTest").use { pool ->
-            repeat (n) {
+            repeat(n) {
                 // Initially, we hold the lock and no one else can `lock`,
                 // otherwise it's a bug.
                 assertTrue(mutex.isLocked)
@@ -59,11 +86,11 @@ class MutexStressTest : TestBase() {
     }
 
     @Test
-    fun stressUnlockCancelRaceWithSelect() = runTest {
+    fun stressUnlockCancelRaceWithSelect() = runMtTest {
         val n = 10_000 * stressTestMultiplier
         val mutex = Mutex(true) // create a locked mutex
         newSingleThreadContext("SemaphoreStressTest").use { pool ->
-            repeat (n) {
+            repeat(n) {
                 // Initially, we hold the lock and no one else can `lock`,
                 // otherwise it's a bug.
                 assertTrue(mutex.isLocked)
@@ -92,7 +119,7 @@ class MutexStressTest : TestBase() {
     }
 
     @Test
-    fun testShouldBeUnlockedOnCancellation() = runTest {
+    fun testShouldBeUnlockedOnCancellation() = runMtTest {
         val mutex = Mutex()
         val n = 1000 * stressTestMultiplier
         repeat(n) {

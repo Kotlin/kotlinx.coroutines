@@ -46,11 +46,17 @@ extensions.configure<JMHPluginExtension>("jmh") {
 //    includeTests = false
 }
 
-tasks.named<Jar>("jmhJar") {
+val jmhJarTask = tasks.named<Jar>("jmhJar") {
     archiveBaseName by "benchmarks"
     archiveClassifier by null
     archiveVersion by null
     destinationDirectory.file("$rootDir")
+}
+
+tasks {
+    build {
+        dependsOn(jmhJarTask)
+    }
 }
 
 dependencies {

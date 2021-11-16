@@ -46,3 +46,5 @@ internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.curr
 @InternalCoroutinesApi
 public fun processNextEventInCurrentThread(): Long =
     ThreadLocalEventLoop.currentOrNull()?.processNextEvent() ?: Long.MAX_VALUE
+
+internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()

@@ -16,7 +16,7 @@ class PromiseTest : TestBase() {
         val deferred = promise.asDeferred()
         assertEquals("OK", deferred.await())
     }
-    
+
     @Test
     fun testPromiseRejectedAsDeferred() = GlobalScope.promise {
         lateinit var promiseReject: (Throwable) -> Unit
