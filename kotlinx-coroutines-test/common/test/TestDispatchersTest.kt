@@ -55,7 +55,6 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
 
     /** Tests that [Distpachers.setMain] fails when called with [Dispatchers.Main]. */
     @Test
-    @NoNative
     fun testSelfSet() {
         assertFailsWith<IllegalArgumentException> { Dispatchers.setMain(Dispatchers.Main) }
     }
