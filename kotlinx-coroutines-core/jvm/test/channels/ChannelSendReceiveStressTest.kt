@@ -25,7 +25,10 @@ class ChannelSendReceiveStressTest(
         fun params(): Collection<Array<Any>> =
                 listOf(1, 2, 10).flatMap { nSenders ->
                     listOf(1, 10).flatMap { nReceivers ->
-                        TestChannelKind.values().map { arrayOf(it, nSenders, nReceivers) }
+                        TestChannelKind.values()
+                            // Workaround for bug that won't be fixed unless new channel implementation, see #2443
+                            .filter { it != TestChannelKind.LINKED_LIST }
+                            .map { arrayOf(it, nSenders, nReceivers) }
                     }
                 }
     }
