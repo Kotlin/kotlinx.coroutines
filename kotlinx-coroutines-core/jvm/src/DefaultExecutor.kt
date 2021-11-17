@@ -4,10 +4,25 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
-internal actual val DefaultDelay: Delay = DefaultExecutor
+internal actual val DefaultDelay: Delay = initializeDefaultDelay()
+
+private val defaultMainDelayOptIn = systemProp("kotlinx.coroutines.main.delay", true)
+
+private fun initializeDefaultDelay(): Delay {
+    // Opt-out flag
+    if (!defaultMainDelayOptIn) return DefaultExecutor
+    val main = Dispatchers.Main
+    /*
+     * When we already are working with UI and Main threads, it makes
+     * no sense to create a separate thread with timer that cannot be controller
+     * by the UI runtime.
+     */
+    return if (main.isMissing() || main !is Delay) DefaultExecutor else main
+}
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
