@@ -102,8 +102,10 @@ internal object DebugProbesImpl {
     }
 
     private fun stopWeakRefCleanerThread() {
-        weakRefCleanerThread?.interrupt()
+        val thread = weakRefCleanerThread ?: return
         weakRefCleanerThread = null
+        thread.interrupt()
+        thread.join()
     }
 
     public fun hierarchyToString(job: Job): String = coroutineStateLock.write {
