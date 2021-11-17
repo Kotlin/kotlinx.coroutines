@@ -51,8 +51,6 @@ public interface Delay {
      * Schedules invocation of a specified [block] after a specified delay [timeMillis].
      * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] of this invocation
      * request if it is not needed anymore.
-     *
-     * This implementation uses a built-in single-threaded scheduled executor service.
      */
     public fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         DefaultDelay.invokeOnTimeout(timeMillis, block, context)
