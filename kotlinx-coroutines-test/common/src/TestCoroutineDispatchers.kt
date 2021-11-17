@@ -7,7 +7,6 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.test.internal.*
 import kotlinx.coroutines.test.internal.TestMainDispatcher
 import kotlin.coroutines.*
 
@@ -84,7 +83,8 @@ import kotlin.coroutines.*
 public fun UnconfinedTestDispatcher(
     scheduler: TestCoroutineScheduler? = null,
     name: String? = null
-): TestDispatcher = UnconfinedTestDispatcherImpl(scheduler ?: mainTestScheduler ?: TestCoroutineScheduler(), name)
+): TestDispatcher = UnconfinedTestDispatcherImpl(
+    scheduler ?: TestMainDispatcher.currentTestScheduler ?: TestCoroutineScheduler(), name)
 
 private class UnconfinedTestDispatcherImpl(
     override val scheduler: TestCoroutineScheduler,
@@ -141,7 +141,8 @@ private class UnconfinedTestDispatcherImpl(
 public fun StandardTestDispatcher(
     scheduler: TestCoroutineScheduler? = null,
     name: String? = null
-): TestDispatcher = StandardTestDispatcherImpl(scheduler ?: mainTestScheduler ?: TestCoroutineScheduler(), name)
+): TestDispatcher = StandardTestDispatcherImpl(
+    scheduler ?: TestMainDispatcher.currentTestScheduler ?: TestCoroutineScheduler(), name)
 
 private class StandardTestDispatcherImpl(
     override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler(),
@@ -155,6 +156,3 @@ private class StandardTestDispatcherImpl(
 
     override fun toString(): String = "${name ?: "StandardTestDispatcher"}[scheduler=$scheduler]"
 }
-
-private val mainTestScheduler
-    get() = ((Dispatchers.Main as? TestMainDispatcher)?.delegate as? TestDispatcher)?.scheduler

@@ -24,7 +24,7 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
     @NoJs
     @Test
     fun testMainMocking() = runTest {
-        val mainAtStart = mainTestDispatcher
+        val mainAtStart = TestMainDispatcher.currentTestDispatcher
         assertNotNull(mainAtStart)
         withContext(Dispatchers.Main) {
             delay(10)
@@ -35,7 +35,7 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
         withContext(Dispatchers.Main) {
             delay(10)
         }
-        assertSame(mainAtStart, mainTestDispatcher)
+        assertSame(mainAtStart, TestMainDispatcher.currentTestDispatcher)
     }
 
     /** Tests that the mocked [Dispatchers.Main] correctly forwards [Delay] methods. */
@@ -96,5 +96,3 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
         }
     }
 }
-
-private val mainTestDispatcher get() = ((Dispatchers.Main as? TestMainDispatcher)?.delegate as? TestDispatcher)

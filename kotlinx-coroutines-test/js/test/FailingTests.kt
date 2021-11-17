@@ -25,11 +25,11 @@ class FailingTests {
     @Test
     fun testAfterTestIsConcurrent() = runTest {
         try {
-            val mainAtStart = (Dispatchers.Main as? TestMainDispatcher)?.delegate as? TestDispatcher ?: return@runTest
+            val mainAtStart = TestMainDispatcher.currentTestDispatcher ?: return@runTest
             withContext(Dispatchers.Default) {
                 // context switch
             }
-            assertNotSame(mainAtStart, (Dispatchers.Main as TestMainDispatcher).delegate)
+            assertNotSame(mainAtStart, TestMainDispatcher.currentTestDispatcher!!)
         } finally {
             assertTrue(tearDownEntered)
         }
