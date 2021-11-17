@@ -16,10 +16,29 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
  */
 @ExperimentalCoroutinesApi
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
-    val combined = coroutineContext + context
+    val combined = coroutineContext.foldCopiesForChildCoroutine() + context
     val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
     return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
         debug + Dispatchers.Default else debug
+}
+
+/**
+ * Returns the [CoroutineContext] for a child coroutine to inherit.
+ *
+ * If any [CopyableThreadContextElement] is in the [this], calls
+ * [CopyableThreadContextElement.copyForChildCoroutine] on each, returning a new [CoroutineContext]
+ * by folding the returned copied elements into [this].
+ *
+ * Returns [this] if `this` has zero [CopyableThreadContextElement] in it.
+ */
+private fun CoroutineContext.foldCopiesForChildCoroutine(): CoroutineContext {
+    val hasToCopy = fold(false) { result, it ->
+        result || it is CopyableThreadContextElement<*>
+    }
+    if (!hasToCopy) return this
+    return fold<CoroutineContext>(EmptyCoroutineContext) { combined, it ->
+        combined + if (it is CopyableThreadContextElement<*>) it.copyForChildCoroutine() else it
+    }
 }
 
 /**
