@@ -90,7 +90,8 @@ private fun cleanBlockHoundTraces(frames: List<String>): List<String> {
 public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
     val baos = ByteArrayOutputStream()
     DebugProbes.dumpCoroutines(PrintStream(baos))
-    val trace = baos.toString().split("\n\n")
+    val wholeDump = baos.toString()
+    val trace = wholeDump.split("\n\n")
     if (traces.isEmpty()) {
         val filtered = trace.filter { ignoredCoroutine == null || !it.contains(ignoredCoroutine) }
         assertEquals(1, filtered.count())
@@ -105,7 +106,7 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
 
         val expected = traces[index - 1].applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
         val actual = value.applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
-        assertEquals(expected.size, actual.size, "Creation stacktrace should be part of the expected input")
+        assertEquals(expected.size, actual.size, "Creation stacktrace should be part of the expected input. Whole dump:\n$wholeDump")
 
         expected.withIndex().forEach { (index, trace) ->
             val actualTrace = actual[index].trimStackTrace().sanitizeAddresses()
@@ -113,7 +114,7 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
             val actualLines = cleanBlockHoundTraces(actualTrace.split("\n"))
             val expectedLines = expectedTrace.split("\n")
             for (i in expectedLines.indices) {
-                assertEquals(expectedLines[i], actualLines[i])
+                assertEquals(expectedLines[i], actualLines[i], "Whole dump:\n$wholeDump")
             }
         }
     }
