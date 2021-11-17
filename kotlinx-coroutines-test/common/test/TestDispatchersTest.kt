@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
+@NoNative
 class TestDispatchersTest: OrderedExecutionTestBase() {
 
     @BeforeTest
@@ -21,8 +22,8 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
     }
 
     /** Tests that asynchronous execution of tests does not happen concurrently with [AfterTest]. */
-    @NoJs
     @Test
+    @NoJs
     fun testMainMocking() = runTest {
         val mainAtStart = TestMainDispatcher.currentTestDispatcher
         assertNotNull(mainAtStart)

@@ -48,6 +48,12 @@ class TestScopeTest {
             assertSame(scheduler, scope.coroutineContext[TestCoroutineScheduler])
             assertSame(dispatcher, scope.coroutineContext[ContinuationInterceptor])
         }
+    }
+
+    /** Part of [testCreateProvidesScheduler], disabled for Native */
+    @Test
+    @NoNative
+    fun testCreateReusesScheduler() {
         // Reuses the scheduler of `Dispatchers.Main`
         run {
             val scheduler = TestCoroutineScheduler()
