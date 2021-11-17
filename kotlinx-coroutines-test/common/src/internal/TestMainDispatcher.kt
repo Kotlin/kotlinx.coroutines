@@ -60,7 +60,7 @@ internal class TestMainDispatcher(delegate: CoroutineDispatcher):
      * The read operations never throw. Instead, the failures detected inside them will be remembered and thrown on the
      * next modification.
      */
-    private class NonConcurrentlyModifiable<T>(private val initialValue: T, private val name: String) {
+    private class NonConcurrentlyModifiable<T>(initialValue: T, private val name: String) {
         private val readers = atomic(0) // number of concurrent readers
         private val isWriting = atomic(false) // a modification is happening currently
         private val exceptionWhenReading: AtomicRef<Throwable?> = atomic(null) // exception from reading
@@ -77,7 +77,7 @@ internal class TestMainDispatcher(delegate: CoroutineDispatcher):
                 readers.decrementAndGet()
                 return result
             }
-            set(value: T) {
+            set(value) {
                 exceptionWhenReading.getAndSet(null)?.let { throw it }
                 if (readers.value != 0) throw concurrentRW()
                 if (!isWriting.compareAndSet(expect = false, update = true)) throw concurrentWW()

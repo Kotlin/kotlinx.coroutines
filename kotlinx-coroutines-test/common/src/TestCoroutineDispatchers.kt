@@ -137,6 +137,7 @@ private class UnconfinedTestDispatcherImpl(
  *
  * @see UnconfinedTestDispatcher for a dispatcher that is not confined to any particular thread.
  */
+@ExperimentalCoroutinesApi
 @Suppress("FunctionName")
 public fun StandardTestDispatcher(
     scheduler: TestCoroutineScheduler? = null,
