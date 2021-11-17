@@ -73,7 +73,7 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
             while (true) {
                 cleanWeakRef(weakRefQueue.remove() as HashedWeakRef<*>)
             }
-        } catch(e: InterruptedException) {
+        } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
         }
     }
