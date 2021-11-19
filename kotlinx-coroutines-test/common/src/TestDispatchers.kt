@@ -11,7 +11,10 @@ import kotlin.jvm.*
 
 /**
  * Sets the given [dispatcher] as an underlying dispatcher of [Dispatchers.Main].
- * All subsequent usages of [Dispatchers.Main] will use given [dispatcher] under the hood.
+ * All subsequent usages of [Dispatchers.Main] will use the given [dispatcher] under the hood.
+ *
+ * Using [TestDispatcher] as an argument has special behavior: subsequently-called [runTest], as well as
+ * [TestScope] and test dispatcher constructors, will use the [TestCoroutineScheduler] of the provided dispatcher.
  *
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
@@ -23,8 +26,9 @@ public fun Dispatchers.setMain(dispatcher: CoroutineDispatcher) {
 
 /**
  * Resets state of the [Dispatchers.Main] to the original main dispatcher.
- * For example, in Android Main thread dispatcher will be set as [Dispatchers.Main].
- * Used to clean up all possible dependencies, should be used in tear down (`@After`) methods.
+ *
+ * For example, in Android, the Main thread dispatcher will be set as [Dispatchers.Main].
+ * This method undoes a dependency injection performed for tests, and so should be used in tear down (`@After`) methods.
  *
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */

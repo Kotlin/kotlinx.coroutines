@@ -4,13 +4,14 @@
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
+import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class MultithreadingTest : TestBase() {
+class MultithreadingTest {
 
     @Test
-    fun incorrectlyCalledRunblocking_doesNotHaveSameInterceptor() = runBlockingTest {
+    fun incorrectlyCalledRunBlocking_doesNotHaveSameInterceptor() = runBlockingTest {
         // this code is an error as a production test, please do not use this as an example
 
         // this test exists to document this error condition, if it's possible to make this code work please update
@@ -22,7 +23,7 @@ class MultithreadingTest : TestBase() {
     }
 
     @Test
-    fun testSingleThreadExecutor() = runTest {
+    fun testSingleThreadExecutor() = runBlocking {
         val mainThread = Thread.currentThread()
         Dispatchers.setMain(Dispatchers.Unconfined)
         newSingleThreadContext("testSingleThread").use { threadPool ->
@@ -85,5 +86,27 @@ class MultithreadingTest : TestBase() {
             // just to ensure the above code terminates
             assertEquals(3, deferred.await())
         }
+    }
+
+    /** Tests that resuming the coroutine of [runTest] asynchronously in reasonable time succeeds. */
+    @Test
+    fun testResumingFromAnotherThread() = runTest {
+        suspendCancellableCoroutine<Unit> { cont ->
+            thread {
+                Thread.sleep(10)
+                cont.resume(Unit)
+            }
+        }
+    }
+
+    /** Tests that [StandardTestDispatcher] is confined to the thread that interacts with the scheduler. */
+    @Test
+    fun testStandardTestDispatcherIsConfined() = runTest {
+        val initialThread = Thread.currentThread()
+        withContext(Dispatchers.IO) {
+            val ioThread = Thread.currentThread()
+            assertNotSame(initialThread, ioThread)
+        }
+        assertEquals(initialThread, Thread.currentThread())
     }
 }

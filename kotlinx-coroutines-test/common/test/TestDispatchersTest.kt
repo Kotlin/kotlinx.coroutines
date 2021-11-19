@@ -1,41 +1,67 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+package kotlinx.coroutines.test
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class TestDispatchersTest {
-    private val actionIndex = atomic(0)
-    private val finished = atomic(false)
-
-    private fun expect(index: Int) {
-        val wasIndex = actionIndex.incrementAndGet()
-        check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
-    }
-
-    private fun finish(index: Int) {
-        expect(index)
-        check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
-    }
+@NoNative
+class TestDispatchersTest: OrderedExecutionTestBase() {
 
     @BeforeTest
     fun setUp() {
+        Dispatchers.setMain(StandardTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
         Dispatchers.resetMain()
     }
 
+    /** Tests that asynchronous execution of tests does not happen concurrently with [AfterTest]. */
     @Test
-    @NoNative
+    @NoJs
+    fun testMainMocking() = runTest {
+        val mainAtStart = TestMainDispatcher.currentTestDispatcher
+        assertNotNull(mainAtStart)
+        withContext(Dispatchers.Main) {
+            delay(10)
+        }
+        withContext(Dispatchers.Default) {
+            delay(10)
+        }
+        withContext(Dispatchers.Main) {
+            delay(10)
+        }
+        assertSame(mainAtStart, TestMainDispatcher.currentTestDispatcher)
+    }
+
+    /** Tests that the mocked [Dispatchers.Main] correctly forwards [Delay] methods. */
+    @Test
+    fun testMockedMainImplementsDelay() = runTest {
+        val main = Dispatchers.Main
+        withContext(main) {
+            delay(10)
+        }
+        withContext(Dispatchers.Default) {
+            delay(10)
+        }
+        withContext(main) {
+            delay(10)
+        }
+    }
+
+    /** Tests that [Distpachers.setMain] fails when called with [Dispatchers.Main]. */
+    @Test
     fun testSelfSet() {
         assertFailsWith<IllegalArgumentException> { Dispatchers.setMain(Dispatchers.Main) }
     }
 
     @Test
-    @NoNative
-    fun testImmediateDispatcher() = runBlockingTest {
+    fun testImmediateDispatcher() = runTest {
         Dispatchers.setMain(ImmediateDispatcher())
         expect(1)
         withContext(Dispatchers.Main) {

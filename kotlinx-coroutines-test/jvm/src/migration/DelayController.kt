@@ -1,25 +1,30 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("DEPRECATION")
 
 package kotlinx.coroutines.test
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 
 /**
  * Control the virtual clock time of a [CoroutineDispatcher].
  *
- * Testing libraries may expose this interface to tests instead of [TestCoroutineDispatcher].
+ * Testing libraries may expose this interface to the tests instead of [TestCoroutineDispatcher].
  */
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+@ExperimentalCoroutinesApi
+@Deprecated(
+    "Use `TestCoroutineScheduler` to control virtual time.",
+    level = DeprecationLevel.WARNING
+)
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public interface DelayController {
     /**
      * Returns the current virtual clock-time as it is known to this Dispatcher.
      *
      * @return The virtual clock-time
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+    @ExperimentalCoroutinesApi
     public val currentTime: Long
 
     /**
@@ -57,7 +62,7 @@ public interface DelayController {
      * @param delayTimeMillis The amount of time to move the CoroutineContext's clock forward.
      * @return The amount of delay-time that this Dispatcher's clock has been forwarded.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+    @ExperimentalCoroutinesApi
     public fun advanceTimeBy(delayTimeMillis: Long): Long
 
     /**
@@ -68,7 +73,7 @@ public interface DelayController {
      *
      * @return the amount of delay-time that this Dispatcher's clock has been forwarded in milliseconds.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+    @ExperimentalCoroutinesApi
     public fun advanceUntilIdle(): Long
 
     /**
@@ -76,17 +81,17 @@ public interface DelayController {
      *
      * Calling this function will never advance the clock.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+    @ExperimentalCoroutinesApi
     public fun runCurrent()
 
     /**
      * Call after test code completes to ensure that the dispatcher is properly cleaned up.
      *
-     * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
+     * @throws AssertionError if any pending tasks are active, however it will not throw for suspended
      * coroutines.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-    @Throws(UncompletedCoroutinesError::class)
+    @ExperimentalCoroutinesApi
+    @Throws(AssertionError::class)
     public fun cleanupTestCoroutines()
 
     /**
@@ -98,7 +103,11 @@ public interface DelayController {
      * This is useful when testing functions that start a coroutine. By pausing the dispatcher assertions or
      * setup may be done between the time the coroutine is created and started.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+    @Deprecated(
+        "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
+        level = DeprecationLevel.WARNING
+    )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public suspend fun pauseDispatcher(block: suspend () -> Unit)
 
     /**
@@ -107,7 +116,11 @@ public interface DelayController {
      * When paused, the dispatcher will not execute any coroutines automatically, and you must call [runCurrent] or
      * [advanceTimeBy], or [advanceUntilIdle] to execute coroutines.
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+    @Deprecated(
+        "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
+        level = DeprecationLevel.WARNING
+    )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public fun pauseDispatcher()
 
     /**
@@ -117,13 +130,74 @@ public interface DelayController {
      * time and execute coroutines scheduled in the future use, one of [advanceTimeBy],
      * or [advanceUntilIdle].
      */
-    @ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
+    @Deprecated(
+        "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
+        level = DeprecationLevel.WARNING
+    )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public fun resumeDispatcher()
 }
 
-/**
- * Thrown when a test has completed and there are tasks that are not completed or cancelled.
- */
-// todo: maybe convert into non-public class in 1.3.0 (need use-cases for a public exception type)
-@ExperimentalCoroutinesApi // Since 1.2.1, tentatively till 1.3.0
-public class UncompletedCoroutinesError(message: String): AssertionError(message)
+internal interface SchedulerAsDelayController : DelayController {
+    val scheduler: TestCoroutineScheduler
+
+    /** @suppress */
+    @Deprecated(
+        "This property delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+        ReplaceWith("this.scheduler.currentTime"),
+        level = DeprecationLevel.WARNING
+    )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
+    override val currentTime: Long
+        get() = scheduler.currentTime
+
+
+    /** @suppress */
+    @Deprecated(
+        "This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+        ReplaceWith("this.scheduler.apply { advanceTimeBy(delayTimeMillis); runCurrent() }"),
+        level = DeprecationLevel.WARNING
+    )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
+    override fun advanceTimeBy(delayTimeMillis: Long): Long {
+        val oldTime = scheduler.currentTime
+        scheduler.advanceTimeBy(delayTimeMillis)
+        scheduler.runCurrent()
+        return scheduler.currentTime - oldTime
+    }
+
+    /** @suppress */
+    @Deprecated(
+        "This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+        ReplaceWith("this.scheduler.advanceUntilIdle()"),
+        level = DeprecationLevel.WARNING
+    )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
+    override fun advanceUntilIdle(): Long {
+        val oldTime = scheduler.currentTime
+        scheduler.advanceUntilIdle()
+        return scheduler.currentTime - oldTime
+    }
+
+    /** @suppress */
+    @Deprecated(
+        "This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
+        ReplaceWith("this.scheduler.runCurrent()"),
+        level = DeprecationLevel.WARNING
+    )
+    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
+    override fun runCurrent(): Unit = scheduler.runCurrent()
+
+    /** @suppress */
+    @ExperimentalCoroutinesApi
+    override fun cleanupTestCoroutines() {
+        // process any pending cancellations or completions, but don't advance time
+        scheduler.runCurrent()
+        if (!scheduler.isIdle(strict = false)) {
+            throw UncompletedCoroutinesError(
+                "Unfinished coroutines during tear-down. Ensure all coroutines are" +
+                    " completed or cancelled by your test."
+            )
+        }
+    }
+}

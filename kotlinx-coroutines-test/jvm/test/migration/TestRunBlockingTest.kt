@@ -7,6 +7,7 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class TestRunBlockingTest {
 
     @Test
@@ -128,7 +129,6 @@ class TestRunBlockingTest {
 
     @Test
     fun whenUsingTimeout_inAsync_doesNotTriggerWhenNotDelayed() = runBlockingTest {
-        val testScope = this
         val deferred = async {
             withTimeout(SLOW) {
                 delay(0)
@@ -195,7 +195,7 @@ class TestRunBlockingTest {
 
                 assertRunsFast {
                     job.join()
-                    throw job.getCancellationException().cause ?: assertFails { "expected exception" }
+                    throw job.getCancellationException().cause ?: AssertionError("expected exception")
                 }
             }
         }
@@ -235,12 +235,13 @@ class TestRunBlockingTest {
     fun callingAsyncFunction_executesAsyncBlockImmediately() = runBlockingTest {
         assertRunsFast {
             var executed = false
-            async {
+            val deferred = async {
                 delay(SLOW)
                 executed = true
             }
             advanceTimeBy(SLOW)
 
+            assertTrue(deferred.isCompleted)
             assertTrue(executed)
         }
     }
@@ -366,7 +367,7 @@ class TestRunBlockingTest {
             runBlockingTest {
                 val expectedError = TestException("hello")
 
-                val job = launch {
+                launch {
                     throw expectedError
                 }
 
@@ -437,5 +438,3 @@ class TestRunBlockingTest {
         }
     }
 }
-
-private class TestException(message: String? = null): Exception(message)

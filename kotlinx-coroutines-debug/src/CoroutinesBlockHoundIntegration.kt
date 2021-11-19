@@ -10,7 +10,6 @@ import kotlinx.coroutines.scheduling.*
 import reactor.blockhound.*
 import reactor.blockhound.integration.*
 
-@Suppress("UNUSED")
 public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
 
     override fun applyTo(builder: BlockHound.Builder): Unit = with(builder) {
