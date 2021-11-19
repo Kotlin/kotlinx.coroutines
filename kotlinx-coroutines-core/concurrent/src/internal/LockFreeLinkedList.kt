@@ -86,6 +86,12 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
+    @PublishedApi
+    internal inline fun makeCondAddOp(node: Node, crossinline condition: () -> Boolean): CondAddOp =
+        object : CondAddOp(node) {
+            override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
+        }
+
     public actual open val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed
@@ -141,6 +147,20 @@ public actual open class LockFreeLinkedListNode {
 
     public fun <T : Node> describeAddLast(node: T): AddLastDesc<T> = AddLastDesc(this, node)
 
+    /**
+     * Adds last item to this list atomically if the [condition] is true.
+     */
+    public actual inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
+        val condAdd = makeCondAddOp(node, condition)
+        while (true) { // lock-free loop on prev.next
+            val prev = prevNode // sentinel node is never removed, so prev is always defined
+            when (prev.tryCondAddNext(node, this, condAdd)) {
+                SUCCESS -> return true
+                FAILURE -> return false
+            }
+        }
+    }
+
     public actual inline fun addLastIfPrev(node: Node, predicate: (Node) -> Boolean): Boolean {
         while (true) { // lock-free loop on prev.next
             val prev = prevNode // sentinel node is never removed, so prev is always defined
@@ -154,9 +174,7 @@ public actual open class LockFreeLinkedListNode {
             predicate: (Node) -> Boolean, // prev node predicate
             crossinline condition: () -> Boolean // atomically checked condition
     ): Boolean {
-        val condAdd = object : CondAddOp(node) {
-            override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
-        }
+        val condAdd = makeCondAddOp(node, condition)
         while (true) { // lock-free loop on prev.next
             val prev = prevNode // sentinel node is never removed, so prev is always defined
             if (!predicate(prev)) return false
