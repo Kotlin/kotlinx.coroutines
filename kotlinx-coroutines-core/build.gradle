@@ -266,7 +266,7 @@ task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
 
 static void configureJvmForLincheck(task) {
     task.minHeapSize = '1g'
-    task.maxHeapSize = '6g' // we may need more space for building an interleaving tree in the model checking mode
+    task.maxHeapSize = '4g' // we may need more space for building an interleaving tree in the model checking mode
     task.jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
                      '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
     task.systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
