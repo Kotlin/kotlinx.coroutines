@@ -388,7 +388,7 @@ If you run the above code you'll see that it does not always print zero, though 
 of your machine you may need to tweak timeouts in this example to actually see non-zero values. 
 
 > Note, that incrementing and decrementing `acquired` counter here from 100K coroutines is completely safe,
-> since it always happens from the same main thread. More on that will be explained in the next chapter
+> since it always happens from the same main thread. More on that will be explained in the chapter
 > on coroutine context.
 > 
 {type="note"}

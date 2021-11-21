@@ -15,7 +15,7 @@ When these builders are used to create a _root_ coroutine, that is not a _child_
 the former builders treat exceptions as **uncaught** exceptions, similar to Java's `Thread.uncaughtExceptionHandler`,
 while the latter are relying on the user to consume the final
 exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.receive] 
-([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
+([produce] and [receive][ReceiveChannel.receive] are covered in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
 
 It can be demonstrated by a simple example that creates root coroutines using the [GlobalScope]:
 
@@ -68,7 +68,7 @@ Caught ArithmeticException
 ## CoroutineExceptionHandler
 
 It is possible to customize the default behavior of printing **uncaught** exceptions to the console.
-[CoroutineExceptionHandler] context element on a _root_ coroutine can be used as generic `catch` block for
+[CoroutineExceptionHandler] context element on a _root_ coroutine can be used as a generic `catch` block for
 this root coroutine and all its children where custom exception handling may take place.
 It is similar to [`Thread.uncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)).
 You cannot recover from the exception in the `CoroutineExceptionHandler`. The coroutine had already completed
@@ -349,7 +349,7 @@ hierarchy of coroutines. Let us take a look at the case when unidirectional canc
 
 A good example of such a requirement is a UI component with the job defined in its scope. If any of the UI's child tasks
 have failed, it is not always necessary to cancel (effectively kill) the whole UI component,
-but if UI component is destroyed (and its job is cancelled), then it is necessary to fail all child jobs as their results are no longer needed.
+but if the UI component is destroyed (and its job is cancelled), then it is necessary to cancel all child jobs as their results are no longer needed.
 
 Another example is a server process that spawns multiple child jobs and needs to _supervise_
 their execution, tracking their failures and only restarting the failed ones.
