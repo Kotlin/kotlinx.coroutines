@@ -10,7 +10,6 @@ import javafx.event.*
 import javafx.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.javafx.JavaFx.delay
 import java.lang.UnsupportedOperationException
 import java.lang.reflect.*
 import java.util.concurrent.*
@@ -35,22 +34,18 @@ public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
+        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS) {
             with(continuation) { resumeUndispatched(Unit) }
-        })
+        }
         continuation.invokeOnCancellation { timeline.stop() }
     }
 
     /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
+        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS) {
             block.run()
-        })
-        return object : DisposableHandle {
-            override fun dispose() {
-                timeline.stop()
-            }
         }
+        return DisposableHandle { timeline.stop() }
     }
 
     private fun schedule(time: Long, unit: TimeUnit, handler: EventHandler<ActionEvent>): Timeline =

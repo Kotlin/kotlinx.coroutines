@@ -380,7 +380,7 @@ private class StateFlowImpl<T>(
         throw UnsupportedOperationException("MutableStateFlow.resetReplayCache is not supported")
     }
 
-    override suspend fun collect(collector: FlowCollector<T>) {
+    override suspend fun collect(collector: FlowCollector<T>): Nothing {
         val slot = allocateSlot()
         try {
             if (collector is SubscribedFlowCollector) collector.onSubscription()
@@ -413,10 +413,6 @@ private class StateFlowImpl<T>(
 
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseStateFlow(context, capacity, onBufferOverflow)
-}
-
-internal fun MutableStateFlow<Int>.increment(delta: Int) {
-    update { it + delta }
 }
 
 internal fun <T> StateFlow<T>.fuseStateFlow(

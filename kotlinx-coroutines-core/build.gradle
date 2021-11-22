@@ -70,38 +70,64 @@ if (rootProject.ext.native_targets_enabled) {
  * because JMV-only projects depend on core, thus core should always be initialized before configuration.
  */
 kotlin {
-    configure(sourceSets) {
-        def srcDir = name.endsWith('Main') ? 'src' : 'test'
-        def platform = name[0..-5]
-        kotlin.srcDirs = ["$platform/$srcDir"]
-        if (name == "jvmMain") {
-            resources.srcDirs = ["$platform/resources"]
-        } else if (name == "jvmTest") {
-            resources.srcDirs = ["$platform/test-resources"]
+    sourceSets.forEach {
+        SourceSetsKt.configureMultiplatform(it)
+    }
+
+    /*
+     * Configure four test runs:
+     * 1) Old memory model, Main thread
+     * 2) New memory model, Main thread
+     * 3) Old memory model, BG thread
+     * 4) New memory model, BG thread (required for Dispatchers.Main tests on Darwin)
+     *
+     * All new MM targets are build with optimize = true to have stress tests properly run.
+     */
+    targets.withType(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests.class).configureEach {
+        binaries {
+            // Test for memory leaks using a special entry point that does not exit but returns from main
+            binaries.getTest("DEBUG").freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
         }
-        languageSettings {
-            progressiveMode = true
-            optInAnnotations.each { useExperimentalAnnotation(it) }
+
+        binaries.test("newMM", [DEBUG]) {
+            def thisTest = it
+            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
+            optimized = true
+            binaryOptions["memoryModel"] = "experimental"
+            testRuns.create("newMM") {
+                setExecutionSourceFrom(thisTest)
+                // A hack to get different suffixes in the aggregated report.
+                executionTask.configure { targetName = "$targetName new MM" }
+            }
+        }
+
+        binaries.test("worker",  [DEBUG]) {
+            def thisTest = it
+            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
+            testRuns.create("worker") {
+                setExecutionSourceFrom(thisTest)
+                executionTask.configure { targetName = "$targetName worker" }
+            }
+        }
+
+        binaries.test("workerWithNewMM", [DEBUG]) {
+            def thisTest = it
+            optimized = true
+            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
+            binaryOptions["memoryModel"] = "experimental"
+            testRuns.create("workerWithNewMM") {
+                setExecutionSourceFrom(thisTest)
+                executionTask.configure { targetName = "$targetName worker with new MM" }
+            }
         }
     }
 
-    configure(targets) {
-        // Configure additional binaries and test runs -- one for each OS
-        if (["macos", "linux", "mingw"].any { name.startsWith(it) }) {
-            binaries {
-                // Test for memory leaks using a special entry point that does not exit but returns from main
-                binaries.getTest("DEBUG").freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
-                // Configure a separate test where code runs in background
-                test("background", [org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType.DEBUG]) {
-                    freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
-                }
-            }
-            testRuns {
-                background { setExecutionSourceFrom(binaries.backgroundDebugTest) }
-            }
-        }
+    jvm {
+        // For animal sniffer
+        withJava()
     }
 }
+
 
 configurations {
     configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
@@ -175,12 +201,6 @@ task checkJdk16() {
     }
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
-    kotlinOptions.jdkHome = System.env.JDK_16
-    // only fail when actually trying to compile, not during project setup phase
-    dependsOn(checkJdk16)
-}
-
 jvmTest {
     minHeapSize = '1g'
     maxHeapSize = '1g'
@@ -246,7 +266,7 @@ task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
 
 static void configureJvmForLincheck(task) {
     task.minHeapSize = '1g'
-    task.maxHeapSize = '6g' // we may need more space for building an interleaving tree in the model checking mode
+    task.maxHeapSize = '4g' // we may need more space for building an interleaving tree in the model checking mode
     task.jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
                      '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
     task.systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
@@ -257,7 +277,6 @@ task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
     executable = "$System.env.JDK_16/bin/java"
-    exclude '**/*LFStressTest.*' // lock-freedom tests use LockFreedomTestEnvironment which needs JDK8
     exclude '**/*LincheckTest.*' // Lincheck tests use LinChecker which needs JDK8
     exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
     exclude '**/ExceptionsGuideTest.*'

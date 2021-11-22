@@ -6,14 +6,11 @@ package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.flow.*
 
 /**
- * Scope for the [produce][CoroutineScope.produce] coroutine builder.
- *
- * **Note: This is an experimental api.** Behavior of producers that work as children in a parent scope with respect
- *        to cancellation and error handling may change in the future.
+ * Scope for the [produce][CoroutineScope.produce], [callbackFlow] and [channelFlow] builders.
  */
-@ExperimentalCoroutinesApi
 public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
     /**
      * A reference to the channel this coroutine [sends][send] elements to.
@@ -45,7 +42,6 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
     check(kotlin.coroutines.coroutineContext[Job] === this) { "awaitClose() can only be invoked from the producer context" }
     try {
@@ -137,7 +133,7 @@ internal fun <E> CoroutineScope.produce(
     return coroutine
 }
 
-internal open class ProducerCoroutine<E>(
+private class ProducerCoroutine<E>(
     parentContext: CoroutineContext, channel: Channel<E>
 ) : ChannelCoroutine<E>(parentContext, channel, true, active = true), ProducerScope<E> {
     override val isActive: Boolean

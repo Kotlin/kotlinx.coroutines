@@ -119,29 +119,6 @@ class MonoTest : TestBase() {
         assertNull(Mono.empty<Int>().awaitSingleOrNull())
     }
 
-    /** Tests that the versions of the await methods specialized for Mono for deprecation behave correctly and we don't
-     * break any code by introducing them. */
-    @Test
-    @Suppress("DEPRECATION")
-    fun testDeprecatedAwaitMethods() = runBlocking {
-        val filledMono = mono<String> { "OK" }
-        assertEquals("OK", filledMono.awaitFirst())
-        assertEquals("OK", filledMono.awaitFirstOrDefault("!"))
-        assertEquals("OK", filledMono.awaitFirstOrNull())
-        assertEquals("OK", filledMono.awaitFirstOrElse { "ELSE" })
-        assertEquals("OK", filledMono.awaitLast())
-        assertEquals("OK", filledMono.awaitSingleOrDefault("!"))
-        assertEquals("OK", filledMono.awaitSingleOrElse { "ELSE" })
-        val emptyMono = mono<String> { null }
-        assertFailsWith<NoSuchElementException> { emptyMono.awaitFirst() }
-        assertEquals("OK", emptyMono.awaitFirstOrDefault("OK"))
-        assertNull(emptyMono.awaitFirstOrNull())
-        assertEquals("ELSE", emptyMono.awaitFirstOrElse { "ELSE" })
-        assertFailsWith<NoSuchElementException> { emptyMono.awaitLast() }
-        assertEquals("OK", emptyMono.awaitSingleOrDefault("OK"))
-        assertEquals("ELSE", emptyMono.awaitSingleOrElse { "ELSE" })
-    }
-
     /** Tests that calls to [awaitSingleOrNull] (and, thus, to the rest of such functions) throw [CancellationException]
      * and unsubscribe from the publisher when their [Job] is cancelled. */
     @Test

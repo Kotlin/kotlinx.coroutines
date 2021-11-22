@@ -46,6 +46,64 @@ abstract class MergeTest : TestBase() {
     }
 
     @Test
+    fun testOneSourceCancelled() = runTest {
+        val flow = flow {
+            expect(1)
+            emit(1)
+            expect(2)
+            yield()
+            throw CancellationException("")
+        }
+
+        val otherFlow = flow {
+            repeat(5) {
+                emit(1)
+                yield()
+            }
+
+            expect(3)
+        }
+
+        val result = listOf(flow, otherFlow).merge().toList()
+        assertEquals(MutableList(6) { 1 }, result)
+        finish(4)
+    }
+
+    @Test
+    fun testOneSourceCancelledNonFused() = runTest {
+        val flow = flow {
+            expect(1)
+            emit(1)
+            expect(2)
+            yield()
+            throw CancellationException("")
+        }
+
+        val otherFlow = flow {
+            repeat(5) {
+                emit(1)
+                yield()
+            }
+
+            expect(3)
+        }
+
+        val result = listOf(flow, otherFlow).nonFuseableMerge().toList()
+        assertEquals(MutableList(6) { 1 }, result)
+        finish(4)
+    }
+
+    private fun <T> Iterable<Flow<T>>.nonFuseableMerge(): Flow<T> {
+        return channelFlow {
+            forEach { flow ->
+                launch {
+                    flow.collect { send(it) }
+                }
+            }
+        }
+    }
+
+    @Test
     fun testIsolatedContext() = runTest {
         val flow = flow {
             emit(NamedDispatchers.name())

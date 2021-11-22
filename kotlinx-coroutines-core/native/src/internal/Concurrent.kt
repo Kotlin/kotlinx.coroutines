@@ -4,15 +4,34 @@
 
 package kotlinx.coroutines.internal
 
-internal actual typealias ReentrantLock = NoOpLock
+import kotlinx.atomicfu.*
+import kotlin.native.concurrent.*
+import kotlinx.atomicfu.locks.withLock as withLock2
 
-internal actual inline fun <T> ReentrantLock.withLock(action: () -> T) = action()
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+internal actual typealias ReentrantLock = kotlinx.atomicfu.locks.SynchronizedObject
 
-internal class NoOpLock {
-    fun tryLock() = true
-    fun unlock(): Unit {}
-}
+internal actual inline fun <T> ReentrantLock.withLock(action: () -> T): T = this.withLock2(action)
 
 internal actual fun <E> subscriberList(): MutableList<E> = CopyOnWriteList<E>()
 
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet()
+
+
+// "Suppress-supporting throwable" is currently used for tests only
+internal open class SuppressSupportingThrowableImpl : Throwable() {
+    private val _suppressed = atomic<Array<Throwable>>(emptyArray())
+
+    val suppressed: Array<Throwable>
+        get() = _suppressed.value
+
+    fun addSuppressed(other: Throwable) {
+        _suppressed.update { current ->
+            current + other
+        }
+    }
+}
+
+@SharedImmutable
+@OptIn(ExperimentalStdlibApi::class)
+internal val multithreadingSupported: Boolean = kotlin.native.isExperimentalMM()

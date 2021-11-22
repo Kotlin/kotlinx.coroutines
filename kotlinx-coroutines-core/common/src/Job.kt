@@ -113,7 +113,13 @@ public interface Job : CoroutineContext.Element {
     /**
      * Key for [Job] instance in the coroutine context.
      */
-    public companion object Key : CoroutineContext.Key<Job>
+    public companion object Key : CoroutineContext.Key<Job> {
+        init {
+            // `Job` will necessarily be accessed early, so this is as good a place as any for the
+            // initialization logic that we want to happen as soon as possible
+            initializeDefaultExceptionHandlers()
+        }
+    }
 
     // ------------ state query ------------
 
@@ -387,25 +393,13 @@ public fun Job0(parent: Job? = null): Job = Job(parent)
 /**
  * A handle to an allocated object that can be disposed to make it eligible for garbage collection.
  */
-public interface DisposableHandle {
+public fun interface DisposableHandle {
     /**
      * Disposes the corresponding object, making it eligible for garbage collection.
      * Repeated invocation of this function has no effect.
      */
     public fun dispose()
 }
-
-/**
- * @suppress **This an internal API and should not be used from general code.**
- */
-@Suppress("FunctionName")
-@InternalCoroutinesApi
-public inline fun DisposableHandle(crossinline block: () -> Unit): DisposableHandle =
-    object : DisposableHandle {
-        override fun dispose() {
-            block()
-        }
-    }
 
 // -------------------- Parent-child communication --------------------
 

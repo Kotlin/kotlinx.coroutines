@@ -23,12 +23,12 @@ class WorkerTest : TestBase() {
     }
 
     @Test
-    fun testLaunchInWorkerTroughGlobalScope() {
+    fun testLaunchInWorkerThroughGlobalScope() {
         val worker = Worker.start()
         worker.execute(TransferMode.SAFE, { }) {
             runBlocking {
                 CoroutineScope(EmptyCoroutineContext).launch {
-                    delay(1)
+                    delay(10)
                 }.join()
             }
         }.result

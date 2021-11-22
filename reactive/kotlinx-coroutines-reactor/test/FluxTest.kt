@@ -170,8 +170,6 @@ class FluxTest : TestBase() {
         val flux = flux {
             assertFailsWith<NullPointerException> { send(null) }
             assertFailsWith<NullPointerException> { trySend(null) }
-            @Suppress("DEPRECATION")
-            assertFailsWith<NullPointerException> { offer(null) }
             send("OK")
         }
         assertEquals("OK", flux.awaitFirstOrNull())

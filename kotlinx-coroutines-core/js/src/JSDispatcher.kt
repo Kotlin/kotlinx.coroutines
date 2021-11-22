@@ -31,6 +31,11 @@ internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
 
     abstract fun scheduleQueueProcessing()
 
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        return this
+    }
+
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         messageQueue.enqueue(block)
     }

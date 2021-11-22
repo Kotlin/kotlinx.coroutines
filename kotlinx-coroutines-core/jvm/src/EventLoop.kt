@@ -13,8 +13,7 @@ internal actual abstract class EventLoopImplPlatform: EventLoop() {
             unpark(thread)
     }
 
-    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
-        assert { this !== DefaultExecutor } // otherwise default execution was shutdown with tasks in it (cannot be)
+    protected actual open fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
         DefaultExecutor.schedule(now, delayedTask)
     }
 }
@@ -47,3 +46,5 @@ internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.curr
 @InternalCoroutinesApi
 public fun processNextEventInCurrentThread(): Long =
     ThreadLocalEventLoop.currentOrNull()?.processNextEvent() ?: Long.MAX_VALUE
+
+internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()

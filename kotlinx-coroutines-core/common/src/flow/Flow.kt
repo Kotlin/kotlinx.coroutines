@@ -131,10 +131,12 @@ import kotlin.coroutines.*
  *
  * ### Exception transparency
  *
- * Flow implementations never catch or handle exceptions that occur in downstream flows. From the implementation standpoint
- * it means that calls to [emit][FlowCollector.emit] and [emitAll] shall never be wrapped into
- * `try { ... } catch { ... }` blocks. Exception handling in flows shall be performed with
- * [catch][Flow.catch] operator and it is designed to only catch exceptions coming from upstream flows while passing
+ * When `emit` or `emitAll` throws, the Flow implementations must immediately stop emitting new values and finish with an exception.
+ * For diagnostics or application-specific purposes, the exception may be different from the one thrown by the emit operation,
+ * suppressing the original exception as discussed below.
+ * If there is a need to emit values after the downstream failed, please use the [catch][Flow.catch] operator.
+ *
+ * The [catch][Flow.catch] operator only catches upstream exceptions, but passes
  * all downstream exceptions. Similarly, terminal operators like [collect][Flow.collect]
  * throw any unhandled exceptions that occur in their code or in upstream flows, for example:
  *
@@ -146,6 +148,13 @@ import kotlin.coroutines.*
  *     .collect { process(it) } // throws exceptions from process and computeTwo
  * ```
  * The same reasoning can be applied to the [onCompletion] operator that is a declarative replacement for the `finally` block.
+ *
+ * All exception-handling Flow operators follow the principle of exception suppression:
+ *
+ * If the upstream flow throws an exception during its completion when the downstream exception has been thrown,
+ * the downstream exception becomes superseded and suppressed by the upstream exception, being a semantic
+ * equivalent of throwing from `finally` block. However, this doesn't affect the operation of the exception-handling operators,
+ * which consider the downstream exception to be the root cause and behave as if the upstream didn't throw anything.
  *
  * Failure to adhere to the exception transparency requirement can lead to strange behaviors which make
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"

@@ -11,29 +11,6 @@ import kotlinx.coroutines.internal.*
 import org.reactivestreams.*
 
 /**
- * Subscribes to this [Publisher] and returns a channel to receive the elements emitted by it.
- * The resulting channel needs to be [cancelled][ReceiveChannel.cancel] in order to unsubscribe from this publisher.
-
- * @param request how many items to request from the publisher in advance (optional, a single element by default).
- *
- * This method is deprecated in the favor of [Flow].
- * Instead of iterating over the resulting channel please use [collect][Flow.collect]:
- * ```
- * asFlow().collect { value ->
- *     // process value
- * }
- * ```
- */
-@Deprecated(
-    message = "Transforming publisher to channel is deprecated, use asFlow() instead",
-    level = DeprecationLevel.ERROR) // Will be error in 1.4
-public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
-    val channel = SubscriptionChannel<T>(request)
-    subscribe(channel)
-    return channel
-}
-
-/**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  *
  * If [action] throws an exception at some point, the subscription is cancelled, and the exception is rethrown from
@@ -123,3 +100,12 @@ private class SubscriptionChannel<T>(
     }
 }
 
+/** @suppress */
+@Deprecated(
+    message = "Transforming publisher to channel is deprecated, use asFlow() instead",
+    level = DeprecationLevel.HIDDEN) // ERROR in 1.4, HIDDEN in 1.6.0
+public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>(request)
+    subscribe(channel)
+    return channel
+}

@@ -5,22 +5,8 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.scheduling.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
-
-internal const val COROUTINES_SCHEDULER_PROPERTY_NAME = "kotlinx.coroutines.scheduler"
-
-internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_NAME).let { value ->
-    when (value) {
-        null, "", "on" -> true
-        "off" -> false
-        else -> error("System property '$COROUTINES_SCHEDULER_PROPERTY_NAME' has unrecognized value '$value'")
-    }
-}
-
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
-    if (useCoroutinesScheduler) DefaultScheduler else CommonPool
 
 /**
  * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
@@ -30,10 +16,29 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
  */
 @ExperimentalCoroutinesApi
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
-    val combined = coroutineContext + context
+    val combined = coroutineContext.foldCopiesForChildCoroutine() + context
     val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
     return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
         debug + Dispatchers.Default else debug
+}
+
+/**
+ * Returns the [CoroutineContext] for a child coroutine to inherit.
+ *
+ * If any [CopyableThreadContextElement] is in the [this], calls
+ * [CopyableThreadContextElement.copyForChildCoroutine] on each, returning a new [CoroutineContext]
+ * by folding the returned copied elements into [this].
+ *
+ * Returns [this] if `this` has zero [CopyableThreadContextElement] in it.
+ */
+private fun CoroutineContext.foldCopiesForChildCoroutine(): CoroutineContext {
+    val hasToCopy = fold(false) { result, it ->
+        result || it is CopyableThreadContextElement<*>
+    }
+    if (!hasToCopy) return this
+    return fold<CoroutineContext>(EmptyCoroutineContext) { combined, it ->
+        combined + if (it is CopyableThreadContextElement<*>) it.copyForChildCoroutine() else it
+    }
 }
 
 /**
@@ -153,6 +158,7 @@ internal actual val CoroutineContext.coroutineName: String? get() {
 
 private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 
+@IgnoreJreRequirement // desugared hashcode implementation
 internal data class CoroutineId(
     val id: Long
 ) : ThreadContextElement<String>, AbstractCoroutineContextElement(CoroutineId) {

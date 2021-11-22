@@ -115,7 +115,12 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         }
     }
 
-    protected open fun shutdown() {}
+    final override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        return this
+    }
+
+    open fun shutdown() {}
 }
 
 @ThreadLocal
@@ -271,7 +276,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         // then process one event from queue
         val task = dequeue()
         if (task != null) {
-            task.run()
+            platformAutoreleasePool { task.run() }
             return 0
         }
         return nextTime
@@ -279,7 +284,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 
     public final override fun dispatch(context: CoroutineContext, block: Runnable) = enqueue(block)
 
-    public fun enqueue(task: Runnable) {
+    open fun enqueue(task: Runnable) {
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
@@ -526,3 +531,13 @@ internal expect object DefaultExecutor {
     public fun enqueue(task: Runnable)
 }
 
+/**
+ * Used by Darwin targets to wrap a [Runnable.run] call in an Objective-C Autorelease Pool. It is a no-op on JVM, JS and
+ * non-Darwin native targets.
+ *
+ * Coroutines on Darwin targets can call into the Objective-C world, where a callee may push a to-be-returned object to
+ * the Autorelease Pool, so as to avoid a premature ARC release before it reaches the caller. This means the pool must
+ * be eventually drained to avoid leaks. Since Kotlin Coroutines does not use [NSRunLoop], which provides automatic
+ * pool management, it must manage the pool creation and pool drainage manually.
+ */
+internal expect inline fun platformAutoreleasePool(crossinline block: () -> Unit)

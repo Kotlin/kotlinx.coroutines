@@ -21,7 +21,7 @@ class ShareInConflationTest : TestBase() {
         op: suspend Flow<Int>.(CoroutineScope) -> Flow<Int>
     ) = runTest {
         expect(1)
-        // emit all and conflate, then should collect bufferCapacity latest ones
+        // emit all and conflate, then should collect bufferCapacity the latest ones
         val done = Job()
         flow {
             repeat(n) { i ->

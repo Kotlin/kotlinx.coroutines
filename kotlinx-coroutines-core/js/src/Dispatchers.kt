@@ -8,8 +8,22 @@ import kotlin.coroutines.*
 
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
-    public actual val Main: MainCoroutineDispatcher = JsMainDispatcher(Default, false)
+    public actual val Main: MainCoroutineDispatcher
+        get() = injectedMainDispatcher ?: mainDispatcher
     public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
+
+    private val mainDispatcher = JsMainDispatcher(Default, false)
+    private var injectedMainDispatcher: MainCoroutineDispatcher? = null
+
+    @PublishedApi
+    internal fun injectMain(dispatcher: MainCoroutineDispatcher) {
+        injectedMainDispatcher = dispatcher
+    }
+
+    @PublishedApi
+    internal fun resetInjectedMain() {
+        injectedMainDispatcher = null
+    }
 }
 
 private class JsMainDispatcher(

@@ -6,7 +6,6 @@ package kotlinx.coroutines.debug.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
@@ -82,7 +81,7 @@ internal object DebugProbesImpl {
     public fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
         startWeakRefCleanerThread()
-        if (AgentPremain.isInstalledStatically) return
+        if (AgentInstallationType.isInstalledStatically) return
         dynamicAttach?.invoke(true) // attach
     }
 
@@ -92,7 +91,7 @@ internal object DebugProbesImpl {
         stopWeakRefCleanerThread()
         capturedCoroutinesMap.clear()
         callerInfoCache.clear()
-        if (AgentPremain.isInstalledStatically) return
+        if (AgentInstallationType.isInstalledStatically) return
         dynamicAttach?.invoke(false) // detach
     }
 
@@ -103,8 +102,10 @@ internal object DebugProbesImpl {
     }
 
     private fun stopWeakRefCleanerThread() {
-        weakRefCleanerThread?.interrupt()
+        val thread = weakRefCleanerThread ?: return
         weakRefCleanerThread = null
+        thread.interrupt()
+        thread.join()
     }
 
     public fun hierarchyToString(job: Job): String = coroutineStateLock.write {
@@ -149,10 +150,11 @@ internal object DebugProbesImpl {
      * Private method that dumps coroutines so that different public-facing method can use
      * to produce different result types.
      */
-    private inline fun <R : Any> dumpCoroutinesInfoImpl(create: (CoroutineOwner<*>, CoroutineContext) -> R): List<R> =
+    private inline fun <R : Any> dumpCoroutinesInfoImpl(crossinline create: (CoroutineOwner<*>, CoroutineContext) -> R): List<R> =
         coroutineStateLock.write {
             check(isInstalled) { "Debug probes are not installed" }
             capturedCoroutines
+                .asSequence()
                 // Stable ordering of coroutines by their sequence number
                 .sortedBy { it.info.sequenceNumber }
                 // Leave in the dump only the coroutines that were not collected while we were dumping them
@@ -160,8 +162,85 @@ internal object DebugProbesImpl {
                     // Fuse map and filter into one operation to save an inline
                     if (owner.isFinished()) null
                     else owner.info.context?.let { context -> create(owner, context) }
-                }
+                }.toList()
         }
+
+    /*
+     * This method optimises the number of packages sent by the IDEA debugger
+     * to a client VM to speed up fetching of coroutine information.
+     *
+     * The return value is an array of objects, which consists of four elements:
+     * 1) A string in a JSON format that stores information that is needed to display
+     *    every coroutine in the coroutine panel in the IDEA debugger.
+     * 2) An array of last observed threads.
+     * 3) An array of last observed frames.
+     * 4) An array of DebugCoroutineInfo.
+     *
+     * ### Implementation note
+     * For methods like `dumpCoroutinesInfo` JDWP provides `com.sun.jdi.ObjectReference`
+     * that does a roundtrip to client VM for *each* field or property read.
+     * To avoid that, we serialize most of the critical for UI data into a primitives
+     * to save an exponential number of roundtrips.
+     *
+     * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
+     */
+    @OptIn(ExperimentalStdlibApi::class)
+    public fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> {
+        val coroutinesInfo = dumpCoroutinesInfo()
+        val size = coroutinesInfo.size
+        val lastObservedThreads = ArrayList<Thread?>(size)
+        val lastObservedFrames = ArrayList<CoroutineStackFrame?>(size)
+        val coroutinesInfoAsJson = ArrayList<String>(size)
+        for (info in coroutinesInfo) {
+            val context = info.context
+            val name = context[CoroutineName.Key]?.name?.toStringWithQuotes()
+            val dispatcher = context[CoroutineDispatcher.Key]?.toStringWithQuotes()
+            coroutinesInfoAsJson.add(
+                """
+                {
+                    "name": $name,
+                    "id": ${context[CoroutineId.Key]?.id},
+                    "dispatcher": $dispatcher,
+                    "sequenceNumber": ${info.sequenceNumber},
+                    "state": "${info.state}"
+                } 
+                """.trimIndent()
+            )
+            lastObservedFrames.add(info.lastObservedFrame)
+            lastObservedThreads.add(info.lastObservedThread)
+        }
+
+        return arrayOf(
+            "[${coroutinesInfoAsJson.joinToString()}]",
+            lastObservedThreads.toTypedArray(),
+            lastObservedFrames.toTypedArray(),
+            coroutinesInfo.toTypedArray()
+        )
+    }
+
+    /*
+     * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
+     */
+    public fun enhanceStackTraceWithThreadDumpAsJson(info: DebugCoroutineInfo): String {
+        val stackTraceElements = enhanceStackTraceWithThreadDump(info, info.lastObservedStackTrace)
+        val stackTraceElementsInfoAsJson = mutableListOf<String>()
+        for (element in stackTraceElements) {
+            stackTraceElementsInfoAsJson.add(
+                """
+                {
+                    "declaringClass": "${element.className}",
+                    "methodName": "${element.methodName}",
+                    "fileName": ${element.fileName?.toStringWithQuotes()},
+                    "lineNumber": ${element.lineNumber}
+                }
+                """.trimIndent()
+            )
+        }
+
+        return "[${stackTraceElementsInfoAsJson.joinToString()}]"
+    }
+
+    private fun Any.toStringWithQuotes() = "\"$this\""
 
     /*
      * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.

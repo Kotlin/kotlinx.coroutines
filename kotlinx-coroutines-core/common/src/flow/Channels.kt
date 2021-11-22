@@ -179,41 +179,6 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * ### Deprecated
- *
- * **This API is deprecated.** The [BroadcastChannel] provides a complex channel-like API for hot flows.
- * [SharedFlow] is an easier-to-use and more flow-centric API for the same purposes, so using
- * [shareIn] operator is preferred. It is not a direct replacement, so please
- * study [shareIn] documentation to see what kind of shared flow fits your use-case. As a rule of thumb:
- *
- * * Replace `broadcastIn(scope)` and `broadcastIn(scope, CoroutineStart.LAZY)` with `shareIn(scope, 0, SharingStarted.Lazily)`.
- * * Replace `broadcastIn(scope, CoroutineStart.DEFAULT)` with `shareIn(scope, 0, SharingStarted.Eagerly)`.
- */
-@Deprecated(
-    message = "Use shareIn operator and the resulting SharedFlow as a replacement for BroadcastChannel",
-    replaceWith = ReplaceWith("this.shareIn(scope, SharingStarted.Lazily, 0)"),
-    level = DeprecationLevel.ERROR
-) // WARNING in 1.4.0, error in 1.5.0, removed in 1.6.0 (was @FlowPreview)
-public fun <T> Flow<T>.broadcastIn(
-    scope: CoroutineScope,
-    start: CoroutineStart = CoroutineStart.LAZY
-): BroadcastChannel<T> {
-    // Backwards compatibility with operator fusing
-    val channelFlow = asChannelFlow()
-    val capacity = when (channelFlow.onBufferOverflow) {
-        BufferOverflow.SUSPEND -> channelFlow.produceCapacity
-        BufferOverflow.DROP_OLDEST -> Channel.CONFLATED
-        BufferOverflow.DROP_LATEST ->
-            throw IllegalArgumentException("Broadcast channel does not support BufferOverflow.DROP_LATEST")
-    }
-    return scope.broadcast(channelFlow.context, capacity = capacity, start = start) {
-        collect { value ->
-            send(value)
-        }
-    }
-}
-
-/**
  * Creates a [produce] coroutine that collects the given flow.
  *
  * This transformation is **stateful**, it launches a [produce] coroutine

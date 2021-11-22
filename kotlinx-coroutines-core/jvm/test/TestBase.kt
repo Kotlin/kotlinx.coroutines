@@ -20,14 +20,17 @@ private val VERBOSE = systemProp("test.verbose", false)
  */
 public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
 
-public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
+public actual val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
 
 private const val SHUTDOWN_TIMEOUT = 1_000L // 1s at most to wait per thread
+
+public actual val isNative = false
 
 /**
  * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
  */
 public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
+
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit
@@ -152,7 +155,8 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
     })
 
     fun println(message: Any?) {
-        previousOut.println(message)
+        if (disableOutCheck) kotlin.io.println(message)
+        else previousOut.println(message)
     }
 
     @Before
@@ -199,15 +203,12 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
     }
 
     fun initPoolsBeforeTest() {
-        CommonPool.usePrivatePool()
         DefaultScheduler.usePrivateScheduler()
     }
 
     fun shutdownPoolsAfterTest() {
-        CommonPool.shutdown(SHUTDOWN_TIMEOUT)
         DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
-        DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
-        CommonPool.restore()
+        DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
         DefaultScheduler.restore()
     }
 

@@ -12,8 +12,7 @@ import kotlin.coroutines.*
  */
 public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
 
-internal expect fun createDefaultDispatcher(): CoroutineDispatcher
-
+@PublishedApi
 @Suppress("PropertyName")
 internal expect val DefaultDelay: Delay
 

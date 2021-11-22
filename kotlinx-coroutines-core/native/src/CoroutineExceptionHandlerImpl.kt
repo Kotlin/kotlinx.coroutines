@@ -5,8 +5,14 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
+import kotlin.native.*
 
+internal actual fun initializeDefaultExceptionHandlers() {
+    // Do nothing
+}
+
+@OptIn(ExperimentalStdlibApi::class)
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
     // log exception
-    exception.printStackTrace()
+    processUnhandledException(exception)
 }

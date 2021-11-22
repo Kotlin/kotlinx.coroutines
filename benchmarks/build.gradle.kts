@@ -46,21 +46,28 @@ extensions.configure<JMHPluginExtension>("jmh") {
 //    includeTests = false
 }
 
-tasks.named<Jar>("jmhJar") {
+val jmhJarTask = tasks.named<Jar>("jmhJar") {
     archiveBaseName by "benchmarks"
     archiveClassifier by null
     archiveVersion by null
     destinationDirectory.file("$rootDir")
 }
 
-dependencies {
-    compile("org.openjdk.jmh:jmh-core:1.26")
-    compile("io.projectreactor:reactor-core:${version("reactor")}")
-    compile("io.reactivex.rxjava2:rxjava:2.1.9")
-    compile("com.github.akarnokd:rxjava2-extensions:0.20.8")
+tasks {
+    build {
+        dependsOn(jmhJarTask)
+    }
+}
 
-    compile("com.typesafe.akka:akka-actor_2.12:2.5.0")
-    compile(project(":kotlinx-coroutines-core"))
+dependencies {
+    implementation("org.openjdk.jmh:jmh-core:1.26")
+    implementation("io.projectreactor:reactor-core:${version("reactor")}")
+    implementation("io.reactivex.rxjava2:rxjava:2.1.9")
+    implementation("com.github.akarnokd:rxjava2-extensions:0.20.8")
+
+    implementation("com.typesafe.akka:akka-actor_2.12:2.5.0")
+    implementation(project(":kotlinx-coroutines-core"))
+    implementation(project(":kotlinx-coroutines-reactive"))
 
     // add jmh dependency on main
     "jmhImplementation"(sourceSets.main.get().runtimeClasspath)
