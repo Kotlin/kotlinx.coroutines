@@ -59,7 +59,7 @@ Create a Kotlin [flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-corou
 
 ## Debug the coroutine
 
-1. Set a breakpoint at the at the line where the `emit()` function is called:
+1. Set a breakpoint at the line where the `emit()` function is called:
 
     ![Build a console application](flow-breakpoint.png)
 
@@ -74,7 +74,7 @@ Create a Kotlin [flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-corou
 
     ![Debug the coroutine](flow-debug-1.png)
 
-3. Resume the debugger session by clicking **Resume program** in the **Debug** tool window. The program stops at the same breakpoint.
+3. Resume the debugger session by clicking **Resume Program** in the **Debug** tool window. The program stops at the same breakpoint.
 
     ![Debug the coroutine](flow-resume-debug.png)
 
@@ -117,7 +117,7 @@ Create a Kotlin [flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-corou
     The `buffer()` function buffers emitted values from the flow.
     The emitter coroutine has the **RUNNING** status, and the collector coroutine has the **SUSPENDED** status.
 
-2. Resume the debugger session by clicking **Resume program** in the **Debug** tool window.
+2. Resume the debugger session by clicking **Resume Program** in the **Debug** tool window.
 
     ![Debugging coroutines](flow-debug-4.png)
 
