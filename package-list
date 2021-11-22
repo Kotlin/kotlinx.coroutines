@@ -10,7 +10,6 @@ kotlinx.coroutines.flow
 kotlinx.coroutines.intrinsics
 kotlinx.coroutines.selects
 kotlinx.coroutines.sync
-kotlinx.coroutines.test
 module:kotlinx-coroutines-debug
 kotlinx.coroutines.debug
 kotlinx.coroutines.debug.junit4

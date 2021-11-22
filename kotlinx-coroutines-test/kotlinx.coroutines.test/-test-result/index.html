@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>TestResult</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
+      </div>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
+
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-test::kotlinx.coroutines.test/TestResult///PointingToDeclaration//-1423329498">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-test</a>/<a href="../index.html">kotlinx.coroutines.test</a>/<a href="index.html">TestResult</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain">common</button><button class="platform-tag platform-selector js-like" data-active="" data-filter=":kotlinx-coroutines-test:dokkaHtmlPartial/jsMain">js</button><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-tag platform-selector native-like" data-active="" data-filter=":kotlinx-coroutines-test:dokkaHtmlPartial/nativeMain">native</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Test</span><wbr><span>Result</span></h1>
+            <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+              <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark js-like" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/jsMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/jsMain" data-toggle=":kotlinx-coroutines-test:dokkaHtmlPartial/jsMain">js</button><button class="platform-bookmark jvm-like" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain" data-toggle=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark native-like" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/nativeMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/nativeMain" data-toggle=":kotlinx-coroutines-test:dokkaHtmlPartial/nativeMain">native</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>class <a href="index.html">TestResult</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A test result.</p><ul><li><p class="paragraph">On JVM and Native, this resolves to <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>, representing the fact that tests are run in a blocking manner on these platforms: a call to a function returning a <a href="index.html">TestResult</a> will simply execute the test inside it.</p></li><li><p class="paragraph">On JS, this is a <code>Promise</code>, which reflects the fact that the test-running function does not wait for a test to finish. The JS test frameworks typically support returning <code>Promise</code> from a test and will correctly handle it.</p></li></ul><p class="paragraph">Because of the behavior on JS, extra care must be taken when writing multiplatform tests to avoid losing test errors:</p><ul><li><p class="paragraph">Don't do anything after running the functions returning a <a href="index.html">TestResult</a>. On JS, this code will execute before the test finishes.</p></li><li><p class="paragraph">As a corollary, don't run functions returning a <a href="index.html">TestResult</a> more than once per test. The only valid thing to do with a <a href="index.html">TestResult</a> is to immediately <code>return</code> it from a test.</p></li><li><p class="paragraph">Don't nest functions returning a <a href="index.html">TestResult</a>.</p></li></ul></div><div class="content sourceset-depenent-content" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/jsMain"><div class="symbol monospace">typealias <a href="index.html">TestResult</a> = <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html">Promise</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div><div class="content sourceset-depenent-content" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain"><div class="symbol monospace">typealias <a href="index.html">TestResult</a> = <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div><div class="content sourceset-depenent-content" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/nativeMain"><div class="symbol monospace">typealias <a href="index.html">TestResult</a> = <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div>            </div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"></div>
+            <div class="tabs-section-body"></div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
+

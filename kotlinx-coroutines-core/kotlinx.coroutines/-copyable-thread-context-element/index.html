@@ -1,0 +1,74 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>CopyableThreadContextElement</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
+      </div>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
+
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines/CopyableThreadContextElement///PointingToDeclaration//-1316292404">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines</a>/<a href="index.html">CopyableThreadContextElement</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Copyable</span><wbr><span>Thread</span><wbr><span>Context</span><wbr><span>Element</span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="../-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>interface <a href="index.html">CopyableThreadContextElement</a>&lt;<a href="index.html">S</a>&gt; : <a href="../-thread-context-element/index.html">ThreadContextElement</a>&lt;<a href="index.html">S</a>&gt; <span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A <a href="../-thread-context-element/index.html">ThreadContextElement</a> copied whenever a child coroutine inherits a context containing it.</p><p class="paragraph">When an API uses a mutable<code>ThreadLocal</code> for consistency, a <a href="index.html">CopyableThreadContextElement</a> can give coroutines "coroutine-safe" write access to that <code>ThreadLocal</code>.</p><p class="paragraph">A write made to a <code>ThreadLocal</code> with a matching <a href="index.html">CopyableThreadContextElement</a> by a coroutine will be visible to itself and any child coroutine launched after that write.</p><p class="paragraph">Writes will not be visible to the parent coroutine, peer coroutines, or coroutines that happen to use the same thread. Writes made to the <code>ThreadLocal</code> by the parent coroutine after launching a child coroutine will not be visible to that child coroutine.</p><p class="paragraph">This can be used to allow a coroutine to use a mutable ThreadLocal API transparently and correctly, regardless of the coroutine's structured concurrency.</p><p class="paragraph">This example adapts a <code>ThreadLocal</code> method trace to be "coroutine local" while the method trace is in a coroutine:</p><div class="sample-container"><code class="" theme="idea"><pre>class TraceContextElement(val traceData: TraceData?) : CopyableThreadContextElement&lt;TraceData?&gt; {<br>    companion object Key : CoroutineContext.Key&lt;ThreadTraceContextElement&gt;<br>    override val key: CoroutineContext.Key&lt;ThreadTraceContextElement&gt;<br>        get() = Key<br><br>    override fun updateThreadContext(context: CoroutineContext): TraceData? {<br>        val oldState = traceThreadLocal.get()<br>        traceThreadLocal.set(data)<br>        return oldState<br>    }<br><br>    override fun restoreThreadContext(context: CoroutineContext, oldData: TraceData?) {<br>        traceThreadLocal.set(oldState)<br>    }<br><br>    override fun copyForChildCoroutine(): CopyableThreadContextElement&lt;MyData?&gt; {<br>        // Copy from the ThreadLocal source of truth at child coroutine launch time. This makes<br>        // ThreadLocal writes between resumption of the parent coroutine and the launch of the<br>        // child coroutine visible to the child.<br>        return CopyForChildCoroutineElement(traceThreadLocal.get())<br>    }<br>}</pre></code></div><p class="paragraph">A coroutine using this mechanism can safely call Java code that assumes it's called using a <code>Thread</code>.</p></div></div>
+          </div>
+          <div class="tabbedcontent">
+            <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Sources">Sources</button></div>
+            <div class="tabs-section-body">
+              <h2 class="">Functions</h2>
+              <div class="table" data-togglable="Functions"><a data-name="-547132327%2FFunctions%2F-1316292404" anchor-label="copyForChildCoroutine" id="-547132327%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="copy-for-child-coroutine.html">copyForChildCoroutine</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-547132327%2FFunctions%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div>
+                      <div class="platform-tags ">
+                        <div class="platform-tag jvm-like">jvm</div>
+                      </div>
+                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace">abstract fun <a href="copy-for-child-coroutine.html">copyForChildCoroutine</a>(): <a href="index.html">CopyableThreadContextElement</a>&lt;<a href="index.html">S</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<a data-name="-547132327%2FFunctions%2F-1316292404" anchor-label="copyForChildCoroutine" id="-547132327%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a><div class="brief "><a data-name="-547132327%2FFunctions%2F-1316292404" anchor-label="copyForChildCoroutine" id="-547132327%2FFunctions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>Returns a <a href="index.html">CopyableThreadContextElement</a> to replace <code>this</code><code>CopyableThreadContextElement</code> in the child coroutine's context that is under construction.</div></div>
+</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h2 class="">Sources</h2>
+              <div class="table" data-togglable="Sources"><a data-name="387208686%2FSource%2F-1316292404" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadContextElement.kt#L80" id="387208686%2FSource%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+                <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+                  <div class="main-subrow keyValue ">
+                    <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadContextElement.kt#L80">jvm source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="387208686%2FSource%2F-1316292404"></span>
+                          <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                        </span></span></div>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
+

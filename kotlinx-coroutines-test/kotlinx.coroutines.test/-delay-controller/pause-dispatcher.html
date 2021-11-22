@@ -14,26 +14,27 @@
       <div id="main">
         <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-        <div class="main-content" id="content" pageids="kotlinx-coroutines-test::kotlinx.coroutines.test/DelayController/pauseDispatcher/#kotlin.coroutines.SuspendFunction0[kotlin.Unit]/PointingToDeclaration//90836492">
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-test::kotlinx.coroutines.test/DelayController/pauseDispatcher/#kotlin.coroutines.SuspendFunction0[kotlin.Unit]/PointingToDeclaration//-1989735873">
           <div class="navigation-wrapper" id="navigation-wrapper">
             <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-test</a>/<a href="../index.html">kotlinx.coroutines.test</a>/<a href="index.html">DelayController</a>/<a href="pause-dispatcher.html">pauseDispatcher</a></div>
             <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain">jvm</button></div>
               <div id="searchBar"></div>
             </div>
           </div>
           <div class="cover ">
             <h1 class="cover"><span>pause</span><wbr><span>Dispatcher</span></h1>
           </div>
-<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
 
   <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>abstract suspend fun <a href="pause-dispatcher.html">pauseDispatcher</a>(block: suspend () -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain"><div class="symbol monospace strikethrough">abstract suspend fun <a href="pause-dispatcher.html">pauseDispatcher</a>(block: suspend () -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
   </div>
 <p class="paragraph">Run a block of code in a paused dispatcher.</p><p class="paragraph">By pausing the dispatcher any new coroutines will not execute immediately. After block executes, the dispatcher will resume auto-advancing.</p><p class="paragraph">This is useful when testing functions that start a coroutine. By pausing the dispatcher assertions or setup may be done between the time the coroutine is created and started.</p></div>
-<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
 
   <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>abstract fun <a href="pause-dispatcher.html">pauseDispatcher</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/jvmMain"><div class="symbol monospace strikethrough">abstract fun <a href="pause-dispatcher.html">pauseDispatcher</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
   </div>
 <p class="paragraph">Pause the dispatcher.</p><p class="paragraph">When paused, the dispatcher will not execute any coroutines automatically, and you must call <a href="run-current.html">runCurrent</a> or <a href="advance-time-by.html">advanceTimeBy</a>, or <a href="advance-until-idle.html">advanceUntilIdle</a> to execute coroutines.</p></div>
         </div>

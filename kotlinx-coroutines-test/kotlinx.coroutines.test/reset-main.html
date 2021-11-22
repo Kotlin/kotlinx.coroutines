@@ -14,22 +14,23 @@
       <div id="main">
         <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
 
-        <div class="main-content" id="content" pageids="kotlinx-coroutines-test::kotlinx.coroutines.test//resetMain/kotlinx.coroutines.Dispatchers#/PointingToDeclaration//90836492">
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-test::kotlinx.coroutines.test//resetMain/kotlinx.coroutines.Dispatchers#/PointingToDeclaration//1391162071">
           <div class="navigation-wrapper" id="navigation-wrapper">
             <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-test</a>/<a href="index.html">kotlinx.coroutines.test</a>/<a href="reset-main.html">resetMain</a></div>
             <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain">common</button></div>
               <div id="searchBar"></div>
             </div>
           </div>
           <div class="cover ">
             <h1 class="cover"><span>reset</span><wbr><span>Main</span></h1>
           </div>
-<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
 
   <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>fun <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/index.html">Dispatchers</a>.<a href="reset-main.html">resetMain</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>fun <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/index.html">Dispatchers</a>.<a href="reset-main.html">resetMain</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
   </div>
-<p class="paragraph">Resets state of the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> to the original main dispatcher. For example, in Android Main thread dispatcher will be set as <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a>. Used to clean up all possible dependencies, should be used in tear down (<code>@After</code>) methods.</p><p class="paragraph">It is unsafe to call this method if alive coroutines launched in <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> exist.</p></div>
+<p class="paragraph">Resets state of the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> to the original main dispatcher.</p><p class="paragraph">For example, in Android, the Main thread dispatcher will be set as <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a>. This method undoes a dependency injection performed for tests, and so should be used in tear down (<code>@After</code>) methods.</p><p class="paragraph">It is unsafe to call this method if alive coroutines launched in <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> exist.</p></div>
         </div>
         <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>

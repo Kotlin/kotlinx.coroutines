@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>StandardTestDispatcher</title>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
+      </div>
+      <div id="main">
+        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
+
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-test::kotlinx.coroutines.test//StandardTestDispatcher/#kotlinx.coroutines.test.TestCoroutineScheduler?#kotlin.String?/PointingToDeclaration//1391162071">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-test</a>/<a href="index.html">kotlinx.coroutines.test</a>/<a href="-standard-test-dispatcher.html">StandardTestDispatcher</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain">common</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>Standard</span><wbr><span>Test</span><wbr><span>Dispatcher</span></h1>
+          </div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>fun <a href="-standard-test-dispatcher.html">StandardTestDispatcher</a>(scheduler: <a href="-test-coroutine-scheduler/index.html">TestCoroutineScheduler</a>? = null, name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>? = null): <a href="-test-dispatcher/index.html">TestDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<p class="paragraph">Creates an instance of a <a href="-test-dispatcher/index.html">TestDispatcher</a> whose tasks are run inside calls to the <a href="-standard-test-dispatcher.html">scheduler</a>.</p><p class="paragraph">This <a href="-test-dispatcher/index.html">TestDispatcher</a> instance does not itself execute any of the tasks. Instead, it always sends them to its <a href="-standard-test-dispatcher.html">scheduler</a>, which can then be accessed via <a href="-test-coroutine-scheduler/run-current.html">TestCoroutineScheduler.runCurrent</a>, <a href="-test-coroutine-scheduler/advance-until-idle.html">TestCoroutineScheduler.advanceUntilIdle</a>, or <a href="-test-coroutine-scheduler/advance-time-by.html">TestCoroutineScheduler.advanceTimeBy</a>, which will then execute these tasks in a blocking manner.</p><p class="paragraph">In practice, this means that <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/index.html">launch</a> or <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/index.html">async</a> blocks will not be entered immediately (unless they are parameterized with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d/index.html">CoroutineStart.UNDISPATCHED</a>), and one should either call <a href="-test-coroutine-scheduler/run-current.html">TestCoroutineScheduler.runCurrent</a> to run these pending tasks, which will block until there are no more tasks scheduled at this point in time, or, when inside <a href="run-test.html">runTest</a>, call <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/index.html">yield</a> to yield the (only) thread used by <a href="run-test.html">runTest</a> to the newly-launched coroutines.</p><p class="paragraph">If no <a href="-standard-test-dispatcher.html">scheduler</a> is passed as an argument, <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> is checked, and if it was mocked with a <a href="-test-dispatcher/index.html">TestDispatcher</a> via <a href="set-main.html">Dispatchers.setMain</a>, the <a href="-test-dispatcher/scheduler.html">TestDispatcher.scheduler</a> of the mock dispatcher is used; if <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> is not mocked with a <a href="-test-dispatcher/index.html">TestDispatcher</a>, a new <a href="-test-coroutine-scheduler/index.html">TestCoroutineScheduler</a> is created.</p><p class="paragraph">One can additionally pass a <a href="-standard-test-dispatcher.html">name</a> in order to more easily distinguish this dispatcher during debugging.</p><h2 class="">See also</h2><div data-togglable="See also"><div class="platform-hinted WithExtraAttributes" data-platform-hinted="data-platform-hinted" data-togglable="See also"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div data-togglable="See also"><div class="table" data-togglable="See also"><div class="table-row" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="main-subrow keyValue WithExtraAttributes RowTitle"><div class=""><span class="inline-flex"><a href="-unconfined-test-dispatcher.html">UnconfinedTestDispatcher</a></span><span class="inline-flex"><div data-togglable="See also"><p class="paragraph">for a dispatcher that is not confined to any particular thread.</p></div></span></div><div></div></div></div></div></div></div></div></div></div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
+

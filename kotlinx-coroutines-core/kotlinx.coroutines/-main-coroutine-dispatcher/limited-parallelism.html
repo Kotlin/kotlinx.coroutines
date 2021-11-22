@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>limitedParallelism</title>
+</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+  
+    <div id="container">
+      <div id="leftColumn"><a href="../../../index.html">
+            <div id="logo"></div>
+          </a>
+        <div id="paneSearch"></div>
+        <div id="sideMenu"></div>
+      </div>
+      <div id="main">
+        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
+
+        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines/MainCoroutineDispatcher/limitedParallelism/#kotlin.Int/PointingToDeclaration//1975948010">
+          <div class="navigation-wrapper" id="navigation-wrapper">
+            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines</a>/<a href="index.html">MainCoroutineDispatcher</a>/<a href="limited-parallelism.html">limitedParallelism</a></div>
+            <div class="pull-right d-flex">
+              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+              <div id="searchBar"></div>
+            </div>
+          </div>
+          <div class="cover ">
+            <h1 class="cover"><span>limited</span><wbr><span>Parallelism</span></h1>
+          </div>
+<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
+
+  <div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">open override fun <a href="limited-parallelism.html">limitedParallelism</a>(parallelism: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>): <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+<p class="paragraph">Creates a view of the current dispatcher that limits the parallelism to the given <a href="limited-parallelism.html">value</a>. The resulting view uses the original dispatcher for execution, but with the guarantee that no more than <a href="limited-parallelism.html">parallelism</a> coroutines are executed at the same time.</p><p class="paragraph">This method does not impose restrictions on the number of views or the total sum of parallelism values, each view controls its own parallelism independently with the guarantee that the effective parallelism of all views cannot exceed the actual parallelism of the original dispatcher.</p><h3 class=""> Limitations</h3><p class="paragraph">The default implementation of <code>limitedParallelism</code> does not support direct dispatchers, such as executing the given runnable in place during <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-main-coroutine-dispatcher/dispatch.html">dispatch</a> calls. Any dispatcher that may return <code>false</code> from <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines/-main-coroutine-dispatcher/is-dispatch-needed.html">isDispatchNeeded</a> is considered direct. For direct dispatchers, it is recommended to override this method and provide a domain-specific implementation or to throw an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unsupported-operation-exception/index.html">UnsupportedOperationException</a>.</p><h3 class=""> Example of usage</h3><div class="sample-container"><code class="" theme="idea"><pre>private val backgroundDispatcher = newFixedThreadPoolContext(4, "App Background")<br>// At most 2 threads will be processing images as it is really slow and CPU-intensive<br>private val imageProcessingDispatcher = backgroundDispatcher.limitedParallelism(2)<br>// At most 3 threads will be processing JSON to avoid image processing starvation<br>private val imageProcessingDispatcher = backgroundDispatcher.limitedParallelism(3)<br>// At most 1 thread will be doing IO<br>private val fileWriterDispatcher = backgroundDispatcher.limitedParallelism(1)</pre></code></div><p class="paragraph">is 6. Yet at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism.</p><p class="paragraph">Note that this example was structured in such a way that it illustrates the parallelism guarantees. In practice, it is usually better to use Dispatchers.IO or <a href="../-dispatchers/-default.html">Dispatchers.Default</a> instead of creating a <code>backgroundDispatcher</code>. It is both possible and advised to call <code>limitedParallelism</code> on them.</p></div>
+          <h2 class="">Sources</h2>
+          <div class="table" data-togglable="Sources"><a data-name="-575509901%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt#L56" id="-575509901%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+            <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+              <div class="main-subrow keyValue ">
+                <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/MainCoroutineDispatcher.kt#L56">common source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-575509901%2FSource%2F1975948010"></span>
+                      <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                    </span></span></div>
+                <div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+      </div>
+    </div>
+  
+</body></html>
+
+
