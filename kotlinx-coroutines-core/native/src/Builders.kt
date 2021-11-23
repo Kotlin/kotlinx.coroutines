@@ -84,7 +84,7 @@ private class BlockingCoroutine<T>(
                 } else {
                     parkNanos = Long.MAX_VALUE
                 }
-                // note: process next even may loose unpark flag, so check if completed before parking
+                // note: processNextEvent may lose unpark flag, so check if completed before parking
                 if (isCompleted) break
                 joinWorker.park(parkNanos / 1000L, true)
             }
