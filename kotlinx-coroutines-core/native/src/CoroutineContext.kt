@@ -10,7 +10,7 @@ import kotlin.native.concurrent.*
 
 internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
-    private val delegate = WorkerDispatcher(name = "Dispatchers.Default")
+    private val delegate = WorkerDispatcher(name = "DefaultExecutor")
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         checkState()
