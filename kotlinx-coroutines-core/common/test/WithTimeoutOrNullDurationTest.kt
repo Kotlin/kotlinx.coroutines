@@ -10,8 +10,9 @@ package kotlinx.coroutines
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-@ExperimentalTime
 class WithTimeoutOrNullDurationTest : TestBase() {
     /**
      * Tests a case of no timeout and no suspension inside.
@@ -19,7 +20,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(Duration.seconds(10)) {
+        val result = withTimeoutOrNull(10.seconds) {
             expect(2)
             "OK"
         }
@@ -33,7 +34,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testBasicSuspend() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(Duration.seconds(10)) {
+        val result = withTimeoutOrNull(10.seconds) {
             expect(2)
             yield()
             expect(3)
@@ -56,7 +57,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
         }
         expect(2)
         // test that it does not yield to the above job when started
-        val result = withTimeoutOrNull(Duration.seconds(1)) {
+        val result = withTimeoutOrNull(1.seconds) {
             expect(3)
             yield() // yield only now
             expect(5)
@@ -74,7 +75,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testYieldBlockingWithTimeout() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(Duration.milliseconds(100)) {
+        val result = withTimeoutOrNull(100.milliseconds) {
             while (true) {
                 yield()
             }
@@ -86,7 +87,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testSmallTimeout() = runTest {
         val channel = Channel<Int>(1)
-        val value = withTimeoutOrNull(Duration.milliseconds(1)) {
+        val value = withTimeoutOrNull(1.milliseconds) {
             channel.receive()
         }
         assertNull(value)
@@ -103,8 +104,8 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     fun testInnerTimeout() = runTest(
         expected = { it is CancellationException }
     ) {
-        withTimeoutOrNull(Duration.milliseconds(1000)) {
-            withTimeout(Duration.milliseconds(10)) {
+        withTimeoutOrNull(1000.milliseconds) {
+            withTimeout(10.milliseconds) {
                 while (true) {
                     yield()
                 }
@@ -119,7 +120,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     fun testNestedTimeout() = runTest(expected = { it is TimeoutCancellationException }) {
         withTimeoutOrNull(Duration.INFINITE) {
             // Exception from this withTimeout is not suppressed by withTimeoutOrNull
-            withTimeout(Duration.milliseconds(10)) {
+            withTimeout(10.milliseconds) {
                 delay(Duration.INFINITE)
                 1
             }
@@ -131,9 +132,9 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testOuterTimeout() = runTest {
         var counter = 0
-        val result = withTimeoutOrNull(Duration.milliseconds(250)) {
+        val result = withTimeoutOrNull(250.milliseconds) {
             while (true) {
-                val inner = withTimeoutOrNull(Duration.milliseconds(100)) {
+                val inner = withTimeoutOrNull(100.milliseconds) {
                     while (true) {
                         yield()
                     }
@@ -149,7 +150,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeoutOrNull(Duration.milliseconds(100)) {
+        val result = withTimeoutOrNull(100.milliseconds) {
             bad
         }
         assertSame(bad, result)
@@ -164,9 +165,9 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testNullOnTimeout() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(Duration.milliseconds(100)) {
+        val result = withTimeoutOrNull(100.milliseconds) {
             expect(2)
-            delay(Duration.milliseconds(1000))
+            delay(1000.milliseconds)
             expectUnreached()
             "OK"
         }
@@ -177,10 +178,10 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testSuppressExceptionWithResult() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(Duration.milliseconds(100)) {
+        val result = withTimeoutOrNull(100.milliseconds) {
             expect(2)
             try {
-                delay(Duration.milliseconds(1000))
+                delay(1000.milliseconds)
             } catch (e: CancellationException) {
                 expect(3)
             }
@@ -194,10 +195,10 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
         try {
-            withTimeoutOrNull(Duration.milliseconds(100)) {
+            withTimeoutOrNull(100.milliseconds) {
                 expect(2)
                 try {
-                    delay(Duration.milliseconds(1000))
+                    delay(1000.milliseconds)
                 } catch (e: CancellationException) {
                     expect(3)
                     throw TestException()
@@ -216,11 +217,11 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testNegativeTimeout() = runTest {
         expect(1)
-        var result = withTimeoutOrNull(-Duration.milliseconds(1)) {
+        var result = withTimeoutOrNull(-1.milliseconds) {
             expectUnreached()
         }
         assertNull(result)
-        result = withTimeoutOrNull(Duration.milliseconds(0)) {
+        result = withTimeoutOrNull(0.milliseconds) {
             expectUnreached()
         }
         assertNull(result)
@@ -232,7 +233,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
         expect(1)
         try {
             expect(2)
-            withTimeoutOrNull<Unit>(Duration.milliseconds(1000)) {
+            withTimeoutOrNull<Unit>(1000.milliseconds) {
                 expect(3)
                 throw TestException()
             }

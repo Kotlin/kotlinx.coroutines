@@ -37,7 +37,7 @@ class SharingStartedWhileSubscribedTest : TestBase() {
         assertEquals(SharingStarted.WhileSubscribed(Long.MAX_VALUE), SharingStarted.WhileSubscribed(Duration.INFINITE))
         assertEquals(SharingStarted.WhileSubscribed(replayExpirationMillis = 0), SharingStarted.WhileSubscribed(replayExpiration = Duration.ZERO))
         assertEquals(SharingStarted.WhileSubscribed(replayExpirationMillis = 3), SharingStarted.WhileSubscribed(
-            replayExpiration = Duration.milliseconds(3)
+            replayExpiration = 3.milliseconds
         ))
         assertEquals(SharingStarted.WhileSubscribed(replayExpirationMillis = 7000),
             SharingStarted.WhileSubscribed(replayExpiration = 7.seconds))

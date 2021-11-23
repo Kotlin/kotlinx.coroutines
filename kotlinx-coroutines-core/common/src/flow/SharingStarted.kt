@@ -135,7 +135,6 @@ public fun interface SharingStarted {
  * are negative.
  */
 @Suppress("FunctionName")
-@ExperimentalTime
 public fun SharingStarted.Companion.WhileSubscribed(
     stopTimeout: Duration = Duration.ZERO,
     replayExpiration: Duration = Duration.INFINITE
