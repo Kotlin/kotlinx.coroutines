@@ -28,7 +28,6 @@ class SharingStartedWhileSubscribedTest : TestBase() {
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     @Test
     fun testDurationParams() {
         assertEquals(SharingStarted.WhileSubscribed(0), SharingStarted.WhileSubscribed(Duration.ZERO))

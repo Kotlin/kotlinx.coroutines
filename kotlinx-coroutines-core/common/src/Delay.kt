@@ -133,7 +133,6 @@ public suspend fun delay(timeMillis: Long) {
  *
  * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
  */
-@ExperimentalTime
 public suspend fun delay(duration: Duration): Unit = delay(duration.toDelayMillis())
 
 /** Returns [Delay] implementation of the given context */
@@ -143,6 +142,5 @@ internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) 
  * Convert this duration to its millisecond value.
  * Positive durations are coerced at least `1`.
  */
-@ExperimentalTime
 internal fun Duration.toDelayMillis(): Long =
     if (this > Duration.ZERO) inWholeMilliseconds.coerceAtLeast(1) else 0

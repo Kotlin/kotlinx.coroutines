@@ -12,7 +12,6 @@ import kotlin.collections.ArrayList
 import kotlin.test.*
 import kotlin.time.*
 
-@ExperimentalTime
 class SharedFlowStressTest : TestBase() {
     private val nProducers = 5
     private val nConsumers = 3

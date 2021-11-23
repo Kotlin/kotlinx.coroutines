@@ -273,7 +273,6 @@ class SampleTest : TestBase() {
         finish(4)
     }
 
-    @ExperimentalTime
     @Test
     public fun testDurationBasic() = withVirtualTime {
         expect(1)

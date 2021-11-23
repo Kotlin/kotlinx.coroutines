@@ -8,7 +8,6 @@ import kotlinx.coroutines.*
 import kotlin.test.*
 import kotlin.time.*
 
-@ExperimentalTime
 class SelectTimeoutDurationTest : TestBase() {
     @Test
     fun testBasic() = runTest {

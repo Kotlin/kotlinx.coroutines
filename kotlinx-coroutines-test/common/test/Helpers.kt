@@ -17,7 +17,6 @@ const val SLOW = 100_000L
 /**
  * Asserts that a block completed within [timeout].
  */
-@OptIn(ExperimentalTime::class)
 inline fun <T> assertRunsFast(timeout: Duration, block: () -> T): T {
     val result: T
     val elapsed = TimeSource.Monotonic.measureTime { result = block() }
@@ -28,7 +27,6 @@ inline fun <T> assertRunsFast(timeout: Duration, block: () -> T): T {
 /**
  * Asserts that a block completed within two seconds.
  */
-@OptIn(ExperimentalTime::class)
 inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(2.seconds, block)
 
 /**

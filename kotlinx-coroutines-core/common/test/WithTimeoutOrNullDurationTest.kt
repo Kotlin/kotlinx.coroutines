@@ -11,7 +11,6 @@ import kotlinx.coroutines.channels.*
 import kotlin.test.*
 import kotlin.time.*
 
-@ExperimentalTime
 class WithTimeoutOrNullDurationTest : TestBase() {
     /**
      * Tests a case of no timeout and no suspension inside.

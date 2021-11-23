@@ -62,7 +62,6 @@ public interface SelectBuilder<in R> {
  * **Note: This is an experimental api.** It may be replaced with light-weight timer/timeout channels in the future.
  */
 @ExperimentalCoroutinesApi
-@ExperimentalTime
 public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R): Unit =
         onTimeout(timeout.toDelayMillis(), block)
 

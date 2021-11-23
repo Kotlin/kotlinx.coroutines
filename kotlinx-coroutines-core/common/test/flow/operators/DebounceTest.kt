@@ -198,7 +198,6 @@ class DebounceTest : TestBase() {
         finish(4)
     }
 
-    @ExperimentalTime
     @Test
     fun testDurationBasic() = withVirtualTime {
         expect(1)
@@ -222,7 +221,6 @@ class DebounceTest : TestBase() {
         finish(5)
     }
 
-    @ExperimentalTime
     @Test
     fun testDebounceSelectorBasic() = withVirtualTime {
         expect(1)
@@ -271,7 +269,6 @@ class DebounceTest : TestBase() {
         finish(5)
     }
 
-    @ExperimentalTime
     @Test
     fun testZeroDebounceTimeSelector() = withVirtualTime {
         expect(1)
@@ -289,7 +286,6 @@ class DebounceTest : TestBase() {
         finish(5)
     }
 
-    @ExperimentalTime
     @Test
     fun testDebounceDurationSelectorBasic() = withVirtualTime {
         expect(1)
