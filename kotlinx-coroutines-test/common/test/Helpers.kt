@@ -28,7 +28,6 @@ inline fun <T> assertRunsFast(timeout: Duration, block: () -> T): T {
 /**
  * Asserts that a block completed within two seconds.
  */
-@OptIn(ExperimentalTime::class)
 inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(2.seconds, block)
 
 /**

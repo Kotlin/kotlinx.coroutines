@@ -17,7 +17,6 @@ import kotlin.time.*
 /* Scaffolding for Knit code examples
 <!--- TEST_NAME FlowDelayTest -->
 <!--- PREFIX .*-duration-.*
-@file:OptIn(ExperimentalTime::class)
 ----- INCLUDE .*-duration-.*
 import kotlin.time.*
 ----- INCLUDE .*
