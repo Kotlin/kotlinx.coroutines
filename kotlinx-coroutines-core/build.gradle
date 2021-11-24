@@ -190,17 +190,6 @@ kotlin.sourceSets {
     }
 }
 
-task checkJdk16() {
-    // only fail w/o JDK_16 when actually trying to compile, not during project setup phase
-    doLast {
-        if (!System.env.JDK_16) {
-            throw new GradleException("JDK_16 environment variable is not defined. " +
-                    "Can't build against JDK 1.6 runtime and run JDK 1.6 compatibility tests. " +
-                    "Please ensure JDK 1.6 is installed and that JDK_16 points to it.")
-        }
-    }
-}
-
 jvmTest {
     minHeapSize = '1g'
     maxHeapSize = '1g'
@@ -273,21 +262,8 @@ static void configureJvmForLincheck(task) {
     task.systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '1' // better for the model checking mode
 }
 
-task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
-    classpath = files { jvmTest.classpath }
-    testClassesDirs = files { jvmTest.testClassesDirs }
-    executable = "$System.env.JDK_16/bin/java"
-    exclude '**/*LincheckTest.*' // Lincheck tests use LinChecker which needs JDK8
-    exclude '**/exceptions/**'   // exceptions tests check suppressed exception which needs JDK8
-    exclude '**/ExceptionsGuideTest.*'
-    exclude '**/RunInterruptibleStressTest.*' // fails on JDK 1.6 due to JDK bug
-}
-
-// Run jdk16Test test only during nightly stress test
-jdk16Test.onlyIf { project.properties['stressTest'] != null }
-
 // Always check additional test sets
-task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest, jdk16Test])
+task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest])
 check.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
