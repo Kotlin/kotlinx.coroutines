@@ -10,9 +10,8 @@ import org.junit.*
 import org.junit.Test
 import kotlin.collections.ArrayList
 import kotlin.test.*
-import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
 
-@ExperimentalTime
 class SharedFlowStressTest : TestBase() {
     private val nProducers = 5
     private val nConsumers = 3
@@ -71,7 +70,7 @@ class SharedFlowStressTest : TestBase() {
         var lastProduced = 0L
         var lastConsumed = 0L
         for (sec in 1..nSeconds) {
-            delay(Duration.seconds(1))
+            delay(1.seconds)
             val produced = totalProduced.value
             val consumed = totalConsumed.value
             println("$sec sec: produced = $produced; consumed = $consumed")
