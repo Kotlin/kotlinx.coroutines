@@ -13,11 +13,10 @@ internal class TestMainDispatcherFactory : MainDispatcherFactory {
         val otherFactories = allFactories.filter { it !== this }
         val secondBestFactory = otherFactories.maxByOrNull { it.loadPriority }
         val main = secondBestFactory?.tryCreateDispatcher(otherFactories)
-        val dispatcher = when {
-            main?.isMissing() ?: true -> null
-            else -> main
+        return when (val exception = main?.exceptionIfMissing()) {
+            null -> TestMainDispatcher(main)
+            else -> TestMainDispatcher(null, exception.cause)
         }
-        return TestMainDispatcher(dispatcher)
     }
 
     /**

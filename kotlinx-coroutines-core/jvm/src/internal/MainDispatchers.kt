@@ -61,7 +61,12 @@ public fun MainDispatcherFactory.tryCreateDispatcher(factories: List<MainDispatc
 
 /** @suppress */
 @InternalCoroutinesApi
-public fun MainCoroutineDispatcher.isMissing(): Boolean = this is MissingMainCoroutineDispatcher
+public fun MainCoroutineDispatcher.exceptionIfMissing(): Throwable? =
+    try {
+        (this as? MissingMainCoroutineDispatcher)?.isDispatchNeeded(EmptyCoroutineContext)
+    } catch (e: Throwable) {
+        e
+    }
 
 // R8 optimization hook, not const on purpose to enable R8 optimizations via "assumenosideeffects"
 @Suppress("MayBeConstant")
@@ -90,13 +95,13 @@ private class MissingMainCoroutineDispatcher(
 
     override val immediate: MainCoroutineDispatcher get() = this
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
+    override fun isDispatchNeeded(context: CoroutineContext): Nothing =
         missing()
 
-    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher =
+    override fun limitedParallelism(parallelism: Int): Nothing =
         missing()
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) =
+    override fun dispatch(context: CoroutineContext, block: Runnable): Nothing =
         missing()
 
     private fun missing(): Nothing {

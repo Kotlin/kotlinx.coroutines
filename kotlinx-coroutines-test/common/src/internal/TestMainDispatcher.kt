@@ -13,28 +13,25 @@ import kotlin.coroutines.*
  * The testable main dispatcher used by kotlinx-coroutines-test.
  * It is a [MainCoroutineDispatcher] that delegates all actions to a settable delegate.
  */
-internal class TestMainDispatcher(delegate: CoroutineDispatcher?):
+internal class TestMainDispatcher(delegate: CoroutineDispatcher?, mainInitException: Throwable? = null):
     MainCoroutineDispatcher(),
-    Delay
-{
-    private val mainDispatcher = delegate
+    Delay {
+    private val mainDispatcher = delegate ?: UnsetMainDispatcher(mainInitException)
 
     private var _delegate = NonConcurrentlyModifiable(mainDispatcher, "Dispatchers.Main")
 
-    private val delegate
-        get() = _delegate.value ?: UnsetMainDispatcher
-
     private val delay
-        get() = delegate as? Delay ?: nonMockedDelay
+        get() = _delegate.value as? Delay ?: nonMockedDelay
 
     override val immediate: MainCoroutineDispatcher
-        get() = (delegate as? MainCoroutineDispatcher)?.immediate ?: this
+        get() = (_delegate.value as? MainCoroutineDispatcher)?.immediate ?: this
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) = delegate.dispatch(context, block)
+    override fun dispatch(context: CoroutineContext, block: Runnable) = _delegate.value.dispatch(context, block)
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = delegate.isDispatchNeeded(context)
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = _delegate.value.isDispatchNeeded(context)
 
-    override fun dispatchYield(context: CoroutineContext, block: Runnable) = delegate.dispatchYield(context, block)
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) =
+        _delegate.value.dispatchYield(context, block)
 
     fun setDispatcher(dispatcher: CoroutineDispatcher) {
         _delegate.value = dispatcher
@@ -50,11 +47,11 @@ internal class TestMainDispatcher(delegate: CoroutineDispatcher?):
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         delay.invokeOnTimeout(timeMillis, block, context)
 
-    override fun toString(): String = "TestMainDispatcher[delegate=$delegate]"
+    override fun toString(): String = "TestMainDispatcher[delegate=${_delegate.value}]"
 
     companion object {
         internal val currentTestDispatcher
-            get() = (Dispatchers.Main as? TestMainDispatcher)?.delegate as? TestDispatcher
+            get() = (Dispatchers.Main as? TestMainDispatcher)?._delegate?.value as? TestDispatcher
 
         internal val currentTestScheduler
             get() = currentTestDispatcher?.scheduler
@@ -93,16 +90,19 @@ internal class TestMainDispatcher(delegate: CoroutineDispatcher?):
             }
     }
 
-    private object UnsetMainDispatcher : MainCoroutineDispatcher() {
+    private class UnsetMainDispatcher(private val mainInitException: Throwable?) : MainCoroutineDispatcher() {
         override val immediate: MainCoroutineDispatcher get() = this
         override fun isDispatchNeeded(context: CoroutineContext): Boolean = missing()
         override fun limitedParallelism(parallelism: Int): CoroutineDispatcher = missing()
         override fun dispatch(context: CoroutineContext, block: Runnable) = missing()
 
-        private fun missing(): Nothing =
-            throw IllegalStateException(
+        private fun missing(): Nothing {
+            val message = if (mainInitException == null)
                 "Dispatchers.Main is not available was not provided for tests via Dispatchers.setMain."
-            )
+            else
+                "Dispatchers.Main failed to initialize and was not replaced via Dispatchers.setMain."
+            throw IllegalStateException(message, mainInitException)
+        }
 
         override fun toString(): String = "missing"
     }
