@@ -2,37 +2,39 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>advanceTimeBy</title>
-</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+
   
+    <div class="navigation-wrapper" id="navigation-wrapper">
+      <div id="leftToggler"><span class="icon-toggler"></span></div>
+      <div class="library-name"><a href="../../../index.html"><span>kotlinx.coroutines</span></a></div>
+      <div>1.6.0-RC-SNAPSHOT</div>
+      <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain">common</button></div>
+<button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+      </div>
+    </div>
     <div id="container">
-      <div id="leftColumn"><a href="../../../index.html">
-            <div id="logo"></div>
-          </a>
-        <div id="paneSearch"></div>
+      <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main">
-        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
-
+      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
         <div class="main-content" id="content" pageids="kotlinx-coroutines-test::kotlinx.coroutines.test/TestCoroutineScheduler/advanceTimeBy/#kotlin.Long/PointingToDeclaration//1391162071">
-          <div class="navigation-wrapper" id="navigation-wrapper">
-            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-test</a>/<a href="../index.html">kotlinx.coroutines.test</a>/<a href="index.html">TestCoroutineScheduler</a>/<a href="advance-time-by.html">advanceTimeBy</a></div>
-            <div class="pull-right d-flex">
-              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain">common</button></div>
-              <div id="searchBar"></div>
-            </div>
-          </div>
+          <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-test</a>/<a href="../index.html">kotlinx.coroutines.test</a>/<a href="index.html">TestCoroutineScheduler</a>/<a href="advance-time-by.html">advanceTimeBy</a></div>
           <div class="cover ">
-            <h1 class="cover"><span>advance</span><wbr><span>Time</span><wbr><span>By</span></h1>
+            <h1 class="cover"><span>advance</span><wbr><span>Time</span><wbr><span><span>By</span></span></h1>
           </div>
-<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>fun <a href="advance-time-by.html">advanceTimeBy</a>(delayTimeMillis: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<p class="paragraph">Moves the virtual clock of this dispatcher forward by <a href="advance-time-by.html">the specified amount</a>, running the scheduled tasks in the meantime.</p><p class="paragraph">Breaking changes from TestCoroutineDispatcher.advanceTimeBy:</p><ul><li><p class="paragraph">Intentionally doesn't return a <code>Long</code> value, as its use cases are unclear. We may restore it in the future; please describe your use cases at <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/">the issue tracker</a>. For now, it's possible to query <a href="current-time.html">currentTime</a> before and after execution of this method, to the same effect.</p></li><li><p class="paragraph">It doesn't run the tasks that are scheduled at exactly <a href="current-time.html">currentTime</a> + <a href="advance-time-by.html">delayTimeMillis</a>. For example, advancing the time by one millisecond used to run the tasks at the current millisecond and the next millisecond, but now will stop just before executing any task starting at the next millisecond.</p></li><li><p class="paragraph">Overflowing the target time used to lead to nothing being done, but will now run the tasks scheduled at up to (but not including) <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/-m-a-x_-v-a-l-u-e.html">Long.MAX_VALUE</a>.</p></li></ul><h4 class="">Throws</h4><div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="table"><div class="table-row" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">kotlin.IllegalStateException</a></span></div><div><div class="title"><p class="paragraph">if passed a negative <a href="advance-time-by.html">delay</a>.</p></div></div></div></div></div></div></div></div>
+          <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+            <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation">@</span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html"><span class="token annotation">ExperimentalCoroutinesApi</span></a></div></div><span class="token keyword"></span><span class="token keyword">fun </span><a href="advance-time-by.html"><span class="token function">advanceTimeBy</span></a><span class="token punctuation">(</span>delayTimeMillis<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Moves the virtual clock of this dispatcher forward by <a href="advance-time-by.html">the specified amount</a>, running the scheduled tasks in the meantime.</p><p class="paragraph">Breaking changes from TestCoroutineDispatcher.advanceTimeBy:</p><ul><li><p class="paragraph">Intentionally doesn't return a <code class="lang-kotlin">Long</code> value, as its use cases are unclear. We may restore it in the future; please describe your use cases at <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/">the issue tracker</a>. For now, it's possible to query <a href="current-time.html">currentTime</a> before and after execution of this method, to the same effect.</p></li><li><p class="paragraph">It doesn't run the tasks that are scheduled at exactly <a href="current-time.html">currentTime</a> + <a href="advance-time-by.html">delayTimeMillis</a>. For example, advancing the time by one millisecond used to run the tasks at the current millisecond <i>and</i> the next millisecond, but now will stop just before executing any task starting at the next millisecond.</p></li><li><p class="paragraph">Overflowing the target time used to lead to nothing being done, but will now run the tasks scheduled at up to (but not including) <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/-m-a-x_-v-a-l-u-e.html">Long.MAX_VALUE</a>.</p></li></ul><h2 class="">Throws</h2><div class="table"><div class="table-row" data-filterable-current=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-test:dokkaHtmlPartial/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html"><span>kotlin.</span><wbr><span>Illegal</span><wbr><span>State</span><wbr><span><span>Exception</span></span></a></span></div><div><div class="title"><p class="paragraph">if passed a negative <a href="advance-time-by.html">delay</a>.</p></div></div></div></div></div></div>          </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

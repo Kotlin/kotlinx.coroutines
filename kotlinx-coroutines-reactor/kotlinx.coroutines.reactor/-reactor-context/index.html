@@ -2,28 +2,32 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>ReactorContext</title>
-</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+
   
+    <div class="navigation-wrapper" id="navigation-wrapper">
+      <div id="leftToggler"><span class="icon-toggler"></span></div>
+      <div class="library-name"><a href="../../../index.html"><span>kotlinx.coroutines</span></a></div>
+      <div>1.6.0-RC-SNAPSHOT</div>
+      <div class="pull-right d-flex"><button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+      </div>
+    </div>
     <div id="container">
-      <div id="leftColumn"><a href="../../../index.html">
-            <div id="logo"></div>
-          </a>
-        <div id="paneSearch"></div>
+      <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main">
-        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
-
+      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
         <div class="main-content" id="content" pageids="kotlinx-coroutines-reactor::kotlinx.coroutines.reactor/ReactorContext///PointingToDeclaration//-3089886">
-          <div class="navigation-wrapper" id="navigation-wrapper">
-            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-reactor</a>/<a href="../index.html">kotlinx.coroutines.reactor</a>/<a href="index.html">ReactorContext</a></div>
-            <div class="pull-right d-flex">
-              <div id="searchBar"></div>
-            </div>
-          </div>
+          <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-reactor</a>/<a href="../index.html">kotlinx.coroutines.reactor</a>/<a href="index.html">ReactorContext</a></div>
           <div class="cover ">
-            <h1 class="cover"><span>Reactor</span><wbr><span>Context</span></h1>
-            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">class <a href="index.html">ReactorContext</a>(context: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>) : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-abstract-coroutine-context-element/index.html">AbstractCoroutineContextElement</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Wraps Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration between Reactor and kotlinx.coroutines. <a href="../as-coroutine-context.html">Context.asCoroutineContext</a> puts Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> elements into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>, which can be used to propagate the information about Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> through coroutines.</p><p class="paragraph">This context element is implicitly propagated through subscribers' context by all Reactive integrations, such as <a href="../mono.html">mono</a>, <a href="../flux.html">flux</a>, <a href="../../../kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/index.html">Publisher.asFlow</a>, <a href="../../../kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/index.html">Flow.asPublisher</a> and <a href="../../../kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/index.html">Flow.asFlux</a>. Functions that subscribe to a reactive stream (e.g. <a href="../../../kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/index.html">Publisher.awaitFirst</a>), too, propagate <a href="index.html">ReactorContext</a> to the subscriber's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>.</p><h3 class=""> Examples of Reactive context integration.</h3><h4 class=""> Propagating ReactorContext to Reactor's Context</h4><div class="sample-container"><code class="" theme="idea"><pre>val flux = myDatabaseService.getUsers()<br>    .contextWrite { ctx -&gt; println(ctx); ctx }<br>flux.awaitFirst() // Will print "null"<br><br>// Now add ReactorContext<br>withContext(Context.of("answer", "42").asCoroutineContext()) {<br>   flux.awaitFirst() // Will print "Context{'key'='value'}"<br>}</pre></code></div><h4 class=""> Propagating subscriber's Context to ReactorContext:</h4><div class="sample-container"><code class="" theme="idea"><pre>val flow = flow {<br>    println("Reactor context in Flow: " + currentCoroutineContext()[ReactorContext])<br>}<br>// No context<br>flow.asFlux()<br>    .subscribe() // Will print 'Reactor context in Flow: null'<br>// Add subscriber's context<br>flow.asFlux()<br>    .contextWrite { ctx -&gt; ctx.put("answer", 42) }<br>    .subscribe() // Will print "Reactor context in Flow: Context{'answer'=42}"</pre></code></div></div></div>
+            <h1 class="cover"><span>Reactor</span><wbr><span><span>Context</span></span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">ReactorContext</a><span class="token punctuation">(</span>context<span class="token operator">: </span><a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a><span class="token punctuation">)</span> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-abstract-coroutine-context-element/index.html">AbstractCoroutineContextElement</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Wraps Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a> element for seamless integration between Reactor and kotlinx.coroutines. <a href="../as-coroutine-context.html">Context.asCoroutineContext</a> puts Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> elements into a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a>, which can be used to propagate the information about Reactor's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a> through coroutines.</p><p class="paragraph">This context element is implicitly propagated through subscribers' context by all Reactive integrations, such as <a href="../mono.html">mono</a>, <a href="../flux.html">flux</a>, <a href="../../../kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/index.html">Publisher.asFlow</a>, <a href="../../../kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/index.html">Flow.asPublisher</a> and <a href="../../../kotlinx-coroutines-reactor/kotlinx.coroutines.reactor/index.html">Flow.asFlux</a>. Functions that subscribe to a reactive stream (e.g. <a href="../../../kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/index.html">Publisher.awaitFirst</a>), too, propagate <a href="index.html">ReactorContext</a> to the subscriber's <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>.</p><h3 class=""> Examples of Reactive context integration.</h3><h4 class=""> Propagating ReactorContext to Reactor's Context</h4><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val flux = myDatabaseService.getUsers()<br>    .contextWrite { ctx -&gt; println(ctx); ctx }<br>flux.awaitFirst() // Will print "null"<br><br>// Now add ReactorContext<br>withContext(Context.of("answer", "42").asCoroutineContext()) {<br>   flux.awaitFirst() // Will print "Context{'key'='value'}"<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><h4 class=""> Propagating subscriber's Context to ReactorContext:</h4><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val flow = flow {<br>    println("Reactor context in Flow: " + currentCoroutineContext()[ReactorContext])<br>}<br>// No context<br>flow.asFlux()<br>    .subscribe() // Will print 'Reactor context in Flow: null'<br>// Add subscriber's context<br>flow.asFlux()<br>    .contextWrite { ctx -&gt; ctx.put("answer", 42) }<br>    .subscribe() // Will print "Reactor context in Flow: Context{'answer'=42}"</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
           </div>
           <div class="tabbedcontent">
             <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Constructors">Constructors</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button></div>
@@ -37,7 +41,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="-reactor-context.html">ReactorContext</a>(contextView: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/ContextView.html">ContextView</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="-reactor-context.html"><span class="token function">ReactorContext</span></a><span class="token punctuation">(</span>contextView<span class="token operator">: </span><a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/ContextView.html">ContextView</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -50,7 +54,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="-reactor-context.html">ReactorContext</a>(context: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="-reactor-context.html"><span class="token function">ReactorContext</span></a><span class="token punctuation">(</span>context<span class="token operator">: </span><a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -60,17 +64,13 @@
               <div class="table" data-togglable="Types"><a data-name="-945550390%2FClasslikes%2F-3089886" anchor-label="Key" id="-945550390%2FClasslikes%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="-key/index.html">Key</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-945550390%2FClasslikes%2F-3089886"></span>
+                    <div class=""><span class="inline-flex"><a href="-key/index.html"><span><span>Key</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-945550390%2FClasslikes%2F-3089886"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">object <a href="-key/index.html">Key</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a>&lt;<a href="index.html">ReactorContext</a>&gt; <span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-key/index.html">Key</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-key/index.html">CoroutineContext.Key</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">ReactorContext</a><span class="token operator">&gt; </span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -79,17 +79,13 @@
               <div class="table" data-togglable="Functions"><a data-name="-825140488%2FFunctions%2F-3089886" anchor-label="toString" id="-825140488%2FFunctions%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="to-string.html">toString</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-825140488%2FFunctions%2F-3089886"></span>
+                    <div class=""><span class="inline-flex"><a href="to-string.html"><span>to</span><wbr><span><span>String</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-825140488%2FFunctions%2F-3089886"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="to-string.html">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="to-string.html"><span class="token function">toString</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -103,7 +99,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><a data-name="-313915417%2FProperties%2F-3089886" anchor-label="context" id="-313915417%2FProperties%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="context.html">context</a>: <a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"><a data-name="-313915417%2FProperties%2F-3089886" anchor-label="context" id="-313915417%2FProperties%2F-3089886" data-filterable-set=":kotlinx-coroutines-reactor:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="context.html">context</a><span class="token operator">: </span><a href="https://projectreactor.io/docs/core/3.4.1/api/reactor/util/context/Context.html">Context</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -112,7 +108,7 @@
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

@@ -2,28 +2,32 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>CoroutineInfo</title>
-</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+
   
+    <div class="navigation-wrapper" id="navigation-wrapper">
+      <div id="leftToggler"><span class="icon-toggler"></span></div>
+      <div class="library-name"><a href="../../../index.html"><span>kotlinx.coroutines</span></a></div>
+      <div>1.6.0-RC-SNAPSHOT</div>
+      <div class="pull-right d-flex"><button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+      </div>
+    </div>
     <div id="container">
-      <div id="leftColumn"><a href="../../../index.html">
-            <div id="logo"></div>
-          </a>
-        <div id="paneSearch"></div>
+      <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main">
-        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
-
+      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
         <div class="main-content" id="content" pageids="kotlinx-coroutines-debug::kotlinx.coroutines.debug/CoroutineInfo///PointingToDeclaration//-1708783535">
-          <div class="navigation-wrapper" id="navigation-wrapper">
-            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a>/<a href="../index.html">kotlinx.coroutines.debug</a>/<a href="index.html">CoroutineInfo</a></div>
-            <div class="pull-right d-flex">
-              <div id="searchBar"></div>
-            </div>
-          </div>
+          <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a>/<a href="../index.html">kotlinx.coroutines.debug</a>/<a href="index.html">CoroutineInfo</a></div>
           <div class="cover ">
-            <h1 class="cover"><span>Coroutine</span><wbr><span>Info</span></h1>
-            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>class <a href="index.html">CoroutineInfo</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Class describing coroutine info such as its context, state and stacktrace.</p></div></div>
+            <h1 class="cover"><span>Coroutine</span><wbr><span><span>Info</span></span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation">@</span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html"><span class="token annotation">ExperimentalCoroutinesApi</span></a></div></div><span class="token keyword">class </span><a href="index.html">CoroutineInfo</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Class describing coroutine info such as its context, state and stacktrace.</p></div></div>
           </div>
           <div class="tabbedcontent">
             <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button></div>
@@ -32,34 +36,26 @@
               <div class="table" data-togglable="Functions"><a data-name="-1800269183%2FFunctions%2F-1708783535" anchor-label="lastObservedStackTrace" id="-1800269183%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="last-observed-stack-trace.html">lastObservedStackTrace</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1800269183%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="last-observed-stack-trace.html"><span>last</span><wbr><span>Observed</span><wbr><span>Stack</span><wbr><span><span>Trace</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1800269183%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="last-observed-stack-trace.html">lastObservedStackTrace</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StackTraceElement.html">StackTraceElement</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="-1800269183%2FFunctions%2F-1708783535" anchor-label="lastObservedStackTrace" id="-1800269183%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1800269183%2FFunctions%2F-1708783535" anchor-label="lastObservedStackTrace" id="-1800269183%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Last observed stacktrace of the coroutine captured on its suspension or resumption point.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="last-observed-stack-trace.html"><span class="token function">lastObservedStackTrace</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StackTraceElement.html">StackTraceElement</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Last observed stacktrace of the coroutine captured on its suspension or resumption point. It means that for <a href="../-state/-r-u-n-n-i-n-g/index.html">running</a> coroutines resulting stacktrace is inaccurate and reflects stacktrace of the resumption point, not the actual current stacktrace.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 <a data-name="-1328887504%2FFunctions%2F-1708783535" anchor-label="toString" id="-1328887504%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="to-string.html">toString</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1328887504%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="to-string.html"><span>to</span><wbr><span><span>String</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1328887504%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">open override fun <a href="to-string.html">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-</div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="to-string.html"><span class="token function">toString</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -73,7 +69,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="-607259985%2FProperties%2F-1708783535" anchor-label="context" id="-607259985%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="context.html">context</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-607259985%2FProperties%2F-1708783535" anchor-label="context" id="-607259985%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Coroutine context</a> of the coroutine</div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="-607259985%2FProperties%2F-1708783535" anchor-label="context" id="-607259985%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="context.html">context</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html">CoroutineContext</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-607259985%2FProperties%2F-1708783535" anchor-label="context" id="-607259985%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><p class="paragraph"><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Coroutine context</a> of the coroutine</p></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -86,7 +82,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="-842573056%2FProperties%2F-1708783535" anchor-label="creationStackTrace" id="-842573056%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="creation-stack-trace.html">creationStackTrace</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StackTraceElement.html">StackTraceElement</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-842573056%2FProperties%2F-1708783535" anchor-label="creationStackTrace" id="-842573056%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Creation stacktrace of the coroutine.</div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="-842573056%2FProperties%2F-1708783535" anchor-label="creationStackTrace" id="-842573056%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="creation-stack-trace.html">creationStackTrace</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StackTraceElement.html">StackTraceElement</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-842573056%2FProperties%2F-1708783535" anchor-label="creationStackTrace" id="-842573056%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><p class="paragraph">Creation stacktrace of the coroutine. Can be empty if <a href="../-debug-probes/enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> is not set.</p></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -99,7 +95,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="1800265953%2FProperties%2F-1708783535" anchor-label="job" id="1800265953%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="job.html">job</a>: <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a>?<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="1800265953%2FProperties%2F-1708783535" anchor-label="job" id="1800265953%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> associated with a current coroutine or null.</div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="1800265953%2FProperties%2F-1708783535" anchor-label="job" id="1800265953%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="job.html">job</a><span class="token operator">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a><span class="token operator">?</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="1800265953%2FProperties%2F-1708783535" anchor-label="job" id="1800265953%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><p class="paragraph"><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> associated with a current coroutine or null. May be later used in <a href="../-debug-probes/print-job.html">DebugProbes.printJob</a>.</p></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -112,7 +108,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="2113733197%2FProperties%2F-1708783535" anchor-label="state" id="2113733197%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="state.html">state</a>: <a href="../-state/index.html">State</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="2113733197%2FProperties%2F-1708783535" anchor-label="state" id="2113733197%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Last observed state of the coroutine</div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="2113733197%2FProperties%2F-1708783535" anchor-label="state" id="2113733197%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="state.html">state</a><span class="token operator">: </span><a href="../-state/index.html">State</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="2113733197%2FProperties%2F-1708783535" anchor-label="state" id="2113733197%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><p class="paragraph">Last observed state of the coroutine</p></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -121,7 +117,7 @@
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

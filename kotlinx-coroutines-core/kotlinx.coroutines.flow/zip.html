@@ -2,35 +2,37 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>zip</title>
-</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script><script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script>
+</head><body><link href="../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script>
+    <script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><link href="../../styles/prism.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" async></script><script type="text/javascript" src="../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+
   
+    <div class="navigation-wrapper" id="navigation-wrapper">
+      <div id="leftToggler"><span class="icon-toggler"></span></div>
+      <div class="library-name"><a href="../../index.html"><span>kotlinx.coroutines</span></a></div>
+      <div>1.6.0-RC-SNAPSHOT</div>
+      <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+      </div>
+    </div>
     <div id="container">
-      <div id="leftColumn"><a href="../../index.html">
-            <div id="logo"></div>
-          </a>
-        <div id="paneSearch"></div>
+      <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main">
-        <script type="text/javascript" src="../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
-
+      <div id="main"><script type="text/javascript" src="../../scripts/main.js"></script>
         <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow//zip/kotlinx.coroutines.flow.Flow[TypeParam(bounds=[kotlin.Any?])]#kotlinx.coroutines.flow.Flow[TypeParam(bounds=[kotlin.Any?])]#kotlin.coroutines.SuspendFunction2[TypeParam(bounds=[kotlin.Any?]),TypeParam(bounds=[kotlin.Any?]),TypeParam(bounds=[kotlin.Any?])]/PointingToDeclaration//1975948010">
-          <div class="navigation-wrapper" id="navigation-wrapper">
-            <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines.flow</a>/<a href="zip.html">zip</a></div>
-            <div class="pull-right d-flex">
-              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-              <div id="searchBar"></div>
-            </div>
-          </div>
+          <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines.flow</a>/<a href="zip.html">zip</a></div>
           <div class="cover ">
-            <h1 class="cover"><span>zip</span></h1>
+            <h1 class="cover"><span><span>zip</span></span></h1>
           </div>
-<div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun &lt;<a href="zip.html">T1</a>, <a href="zip.html">T2</a>, <a href="zip.html">R</a>&gt; <a href="-flow/index.html">Flow</a>&lt;<a href="zip.html">T1</a>&gt;.<a href="zip.html">zip</a>(other: <a href="-flow/index.html">Flow</a>&lt;<a href="zip.html">T2</a>&gt;, transform: suspend (<a href="zip.html">T1</a>, <a href="zip.html">T2</a>) -&gt; <a href="zip.html">R</a>): <a href="-flow/index.html">Flow</a>&lt;<a href="zip.html">R</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<p class="paragraph">Zips values from the current flow (<code>this</code>) with <a href="zip.html">other</a> flow using provided <a href="zip.html">transform</a> function applied to each pair of values. The resulting flow completes as soon as one of the flows completes and cancel is called on the remaining flow.</p><p class="paragraph">It can be demonstrated with the following example:</p><div class="sample-container"><code class="" theme="idea"><pre>val flow = flowOf(1, 2, 3).onEach { delay(10) }<br>val flow2 = flowOf("a", "b", "c", "d").onEach { delay(15) }<br>flow.zip(flow2) { i, s -&gt; i.toString() + s }.collect {<br>    println(it) // Will print "1a 2b 3c"<br>}</pre></code></div><h3 class=""> Buffering</h3><p class="paragraph">The upstream flow is collected sequentially in the same coroutine without any buffering, while the <a href="zip.html">other</a> flow is collected concurrently as if <code>buffer(0)</code> is used. See documentation in the <a href="buffer.html">buffer</a> operator for explanation. You can use additional calls to the <a href="buffer.html">buffer</a> operator as needed for more concurrency.</p></div>
+          <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+            <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="zip.html">T1</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="zip.html">T2</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="zip.html">R</a><span class="token operator">&gt; </span><a href="-flow/index.html">Flow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="zip.html">T1</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="zip.html"><span class="token function">zip</span></a><span class="token punctuation">(</span>other<span class="token operator">: </span><a href="-flow/index.html">Flow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="zip.html">T2</a><span class="token operator">&gt;</span><span class="token punctuation">, </span>transform<span class="token operator">: </span><span class="token keyword">suspend </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="zip.html">T1</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="zip.html">T2</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="zip.html">R</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="-flow/index.html">Flow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="zip.html">R</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Zips values from the current flow (<code class="lang-kotlin">this</code>) with <a href="zip.html">other</a> flow using provided <a href="zip.html">transform</a> function applied to each pair of values. The resulting flow completes as soon as one of the flows completes and cancel is called on the remaining flow.</p><p class="paragraph">It can be demonstrated with the following example:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val flow = flowOf(1, 2, 3).onEach { delay(10) }<br>val flow2 = flowOf("a", "b", "c", "d").onEach { delay(15) }<br>flow.zip(flow2) { i, s -&gt; i.toString() + s }.collect {<br>    println(it) // Will print "1a 2b 3c"<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><h3 class=""> Buffering</h3><p class="paragraph">The upstream flow is collected sequentially in the same coroutine without any buffering, while the <a href="zip.html">other</a> flow is collected concurrently as if <code class="lang-kotlin">buffer(0)</code> is used. See documentation in the <a href="buffer.html">buffer</a> operator for explanation. You can use additional calls to the <a href="buffer.html">buffer</a> operator as needed for more concurrency.</p></div>          </div>
           <h2 class="">Sources</h2>
           <div class="table" data-togglable="Sources"><a data-name="765490251%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/operators/Zip.kt#L312" id="765490251%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
             <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
@@ -43,7 +45,7 @@
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

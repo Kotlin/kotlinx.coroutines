@@ -2,29 +2,36 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>MutableStateFlow</title>
-</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+
   
+    <div class="navigation-wrapper" id="navigation-wrapper">
+      <div id="leftToggler"><span class="icon-toggler"></span></div>
+      <div class="library-name"><a href="../../../index.html"><span>kotlinx.coroutines</span></a></div>
+      <div>1.6.0-RC-SNAPSHOT</div>
+      <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+      </div>
+    </div>
     <div id="container">
-      <div id="leftColumn"><a href="../../../index.html">
-            <div id="logo"></div>
-          </a>
-        <div id="paneSearch"></div>
+      <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main">
-        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
-
+      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
         <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow/MutableStateFlow///PointingToDeclaration//1975948010">
-          <div class="navigation-wrapper" id="navigation-wrapper">
-            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines.flow</a>/<a href="index.html">MutableStateFlow</a></div>
-            <div class="pull-right d-flex">
-              <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-              <div id="searchBar"></div>
-            </div>
-          </div>
+          <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines.flow</a>/<a href="index.html">MutableStateFlow</a></div>
           <div class="cover ">
-            <h1 class="cover"><span>Mutable</span><wbr><span>State</span><wbr><span>Flow</span></h1>
-            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">interface <a href="index.html">MutableStateFlow</a>&lt;<a href="index.html">T</a>&gt; : <a href="../-state-flow/index.html">StateFlow</a>&lt;<a href="index.html">T</a>&gt; , <a href="../-mutable-shared-flow/index.html">MutableSharedFlow</a>&lt;<a href="index.html">T</a>&gt; <span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A mutable <a href="../-state-flow/index.html">StateFlow</a> that provides a setter for <a href="value.html">value</a>. An instance of <code>MutableStateFlow</code> with the given initial <code>value</code> can be created using <code>MutableStateFlow(value)</code> constructor function.</p><p class="paragraph">See the <a href="../-state-flow/index.html">StateFlow</a> documentation for details on state flows.</p><h3 class=""> Not stable for inheritance</h3><p class="paragraph">The <code>MutableStateFlow</code> interface is not stable for inheritance in 3rd party libraries, as new methods might be added to this interface in the future, but is stable for use. Use the <code>MutableStateFlow()</code> constructor function to create an implementation.</p></div></div>
+            <h1 class="cover"><span>Mutable</span><wbr><span>State</span><wbr><span><span>Flow</span></span></h1>
+            <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+              <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">MutableStateFlow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span> : <a href="../-state-flow/index.html">StateFlow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt; </span>, <a href="../-mutable-shared-flow/index.html">MutableSharedFlow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt; </span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A mutable <a href="../-state-flow/index.html">StateFlow</a> that provides a setter for <a href="value.html">value</a>. An instance of <code class="lang-kotlin">MutableStateFlow</code> with the given initial <code class="lang-kotlin">value</code> can be created using <code class="lang-kotlin">MutableStateFlow(value)</code> constructor function.</p><p class="paragraph">See the <a href="../-state-flow/index.html">StateFlow</a> documentation for details on state flows.</p><h3 class=""> Not stable for inheritance</h3><p class="paragraph"><strong>The </strong><code class="strong lang-kotlin"><strong>MutableStateFlow</strong></code><strong> interface is not stable for inheritance in 3rd party libraries</strong>, as new methods might be added to this interface in the future, but is stable for use. Use the <code class="lang-kotlin">MutableStateFlow()</code> constructor function to create an implementation.</p></div>            </div>
           </div>
           <div class="tabbedcontent">
             <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Extensions">Extensions</button><button class="section-tab" data-togglable="Sources">Sources</button></div>
@@ -33,20 +40,15 @@
               <div class="table" data-togglable="Functions"><a data-name="1185863519%2FFunctions%2F1975948010" anchor-label="compareAndSet" id="1185863519%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="compare-and-set.html">compareAndSet</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1185863519%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex"><a href="compare-and-set.html"><span>compare</span><wbr><span>And</span><wbr><span><span>Set</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1185863519%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
+                      <div class="title">
+                        <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                          <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="compare-and-set.html"><span class="token function">compareAndSet</span></a><span class="token punctuation">(</span>expect<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">, </span>update<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Atomically compares the current <a href="value.html">value</a> with <a href="compare-and-set.html">expect</a> and sets it to <a href="compare-and-set.html">update</a> if it is equal to <a href="compare-and-set.html">expect</a>. The result is <code class="lang-kotlin">true</code> if the <a href="value.html">value</a> was set to <a href="compare-and-set.html">update</a> and <code class="lang-kotlin">false</code> otherwise.</p></div></div>                        </div>
                       </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">abstract fun <a href="compare-and-set.html">compareAndSet</a>(expect: <a href="index.html">T</a>, update: <a href="index.html">T</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="1185863519%2FFunctions%2F1975948010" anchor-label="compareAndSet" id="1185863519%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1185863519%2FFunctions%2F1975948010" anchor-label="compareAndSet" id="1185863519%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Atomically compares the current <a href="value.html">value</a> with <a href="compare-and-set.html">expect</a> and sets it to <a href="compare-and-set.html">update</a> if it is equal to <a href="compare-and-set.html">expect</a>.</div></div>
-</div>
                     </div>
                   </div>
                 </div>
@@ -59,11 +61,10 @@
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
-                      </div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-1741978243%2FProperties%2F1975948010" anchor-label="value" id="-1741978243%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace">abstract override var <a href="value.html">value</a>: <a href="index.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-1741978243%2FProperties%2F1975948010" anchor-label="value" id="-1741978243%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>The current value of this state flow.</div></div></div>
+                        <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted" data-togglable="Properties">
+                          <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><a data-name="-1741978243%2FProperties%2F1975948010" anchor-label="value" id="-1741978243%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">override </span><span class="token keyword">var </span><a href="value.html">value</a><span class="token operator">: </span><a href="index.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-1741978243%2FProperties%2F1975948010" anchor-label="value" id="-1741978243%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><p class="paragraph">The current value of this state flow.</p></div></div>                        </div>
                       </div>
                     </div>
                   </div>
@@ -73,80 +74,60 @@
               <div class="table" data-togglable="Extensions"><a data-name="-749884711%2FExtensions%2F1975948010" anchor-label="asStateFlow" id="-749884711%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../as-state-flow.html">asStateFlow</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-749884711%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex"><a href="../as-state-flow.html"><span>as</span><wbr><span>State</span><wbr><span><span>Flow</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-749884711%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
+                      <div class="title">
+                        <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                          <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../as-state-flow.html">T</a><span class="token operator">&gt; </span><a href="index.html">MutableStateFlow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../as-state-flow.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="../as-state-flow.html"><span class="token function">asStateFlow</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-state-flow/index.html">StateFlow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../as-state-flow.html">T</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Represents this mutable state flow as a read-only state flow.</p></div></div>                        </div>
                       </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">fun &lt;<a href="../as-state-flow.html">T</a>&gt; <a href="index.html">MutableStateFlow</a>&lt;<a href="../as-state-flow.html">T</a>&gt;.<a href="../as-state-flow.html">asStateFlow</a>(): <a href="../-state-flow/index.html">StateFlow</a>&lt;<a href="../as-state-flow.html">T</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="-749884711%2FExtensions%2F1975948010" anchor-label="asStateFlow" id="-749884711%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-749884711%2FExtensions%2F1975948010" anchor-label="asStateFlow" id="-749884711%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Represents this mutable state flow as a read-only state flow.</div></div>
-</div>
                     </div>
                   </div>
                 </div>
 <a data-name="-932882616%2FExtensions%2F1975948010" anchor-label="getAndUpdate" id="-932882616%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../get-and-update.html">getAndUpdate</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-932882616%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex"><a href="../get-and-update.html"><span>get</span><wbr><span>And</span><wbr><span><span>Update</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-932882616%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
+                      <div class="title">
+                        <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                          <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../get-and-update.html">T</a><span class="token operator">&gt; </span><a href="index.html">MutableStateFlow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../get-and-update.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="../get-and-update.html"><span class="token function">getAndUpdate</span></a><span class="token punctuation">(</span>function<span class="token operator">: </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="../get-and-update.html">T</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="../get-and-update.html">T</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="../get-and-update.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Updates the <a href="value.html">MutableStateFlow.value</a> atomically using the specified <a href="../get-and-update.html">function</a> of its value, and returns its prior value.</p></div></div>                        </div>
                       </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">inline fun &lt;<a href="../get-and-update.html">T</a>&gt; <a href="index.html">MutableStateFlow</a>&lt;<a href="../get-and-update.html">T</a>&gt;.<a href="../get-and-update.html">getAndUpdate</a>(function: (<a href="../get-and-update.html">T</a>) -&gt; <a href="../get-and-update.html">T</a>): <a href="../get-and-update.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="-932882616%2FExtensions%2F1975948010" anchor-label="getAndUpdate" id="-932882616%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="-932882616%2FExtensions%2F1975948010" anchor-label="getAndUpdate" id="-932882616%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Updates the <a href="value.html">MutableStateFlow.value</a> atomically using the specified <a href="../get-and-update.html">function</a> of its value, and returns its prior value.</div></div>
-</div>
                     </div>
                   </div>
                 </div>
 <a data-name="1996476265%2FExtensions%2F1975948010" anchor-label="update" id="1996476265%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../update.html">update</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1996476265%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex"><a href="../update.html"><span><span>update</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1996476265%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
+                      <div class="title">
+                        <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                          <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../update.html">T</a><span class="token operator">&gt; </span><a href="index.html">MutableStateFlow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../update.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="../update.html"><span class="token function">update</span></a><span class="token punctuation">(</span>function<span class="token operator">: </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="../update.html">T</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="../update.html">T</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Updates the <a href="value.html">MutableStateFlow.value</a> atomically using the specified <a href="../update.html">function</a> of its value.</p></div></div>                        </div>
                       </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">inline fun &lt;<a href="../update.html">T</a>&gt; <a href="index.html">MutableStateFlow</a>&lt;<a href="../update.html">T</a>&gt;.<a href="../update.html">update</a>(function: (<a href="../update.html">T</a>) -&gt; <a href="../update.html">T</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="1996476265%2FExtensions%2F1975948010" anchor-label="update" id="1996476265%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1996476265%2FExtensions%2F1975948010" anchor-label="update" id="1996476265%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Updates the <a href="value.html">MutableStateFlow.value</a> atomically using the specified <a href="../update.html">function</a> of its value.</div></div>
-</div>
                     </div>
                   </div>
                 </div>
 <a data-name="1769272618%2FExtensions%2F1975948010" anchor-label="updateAndGet" id="1769272618%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../update-and-get.html">updateAndGet</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1769272618%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex"><a href="../update-and-get.html"><span>update</span><wbr><span>And</span><wbr><span><span>Get</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1769272618%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="platform-tags ">
-                        <div class="platform-tag common-like">common</div>
+                      <div class="title">
+                        <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                          <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../update-and-get.html">T</a><span class="token operator">&gt; </span><a href="index.html">MutableStateFlow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../update-and-get.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="../update-and-get.html"><span class="token function">updateAndGet</span></a><span class="token punctuation">(</span>function<span class="token operator">: </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="../update-and-get.html">T</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="../update-and-get.html">T</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="../update-and-get.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Updates the <a href="value.html">MutableStateFlow.value</a> atomically using the specified <a href="../update-and-get.html">function</a> of its value, and returns the new value.</p></div></div>                        </div>
                       </div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace">inline fun &lt;<a href="../update-and-get.html">T</a>&gt; <a href="index.html">MutableStateFlow</a>&lt;<a href="../update-and-get.html">T</a>&gt;.<a href="../update-and-get.html">updateAndGet</a>(function: (<a href="../update-and-get.html">T</a>) -&gt; <a href="../update-and-get.html">T</a>): <a href="../update-and-get.html">T</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="1769272618%2FExtensions%2F1975948010" anchor-label="updateAndGet" id="1769272618%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a><div class="brief "><a data-name="1769272618%2FExtensions%2F1975948010" anchor-label="updateAndGet" id="1769272618%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>Updates the <a href="value.html">MutableStateFlow.value</a> atomically using the specified <a href="../update-and-get.html">function</a> of its value, and returns the new value.</div></div>
-</div>
                     </div>
                   </div>
                 </div>
@@ -165,7 +146,7 @@
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

@@ -2,28 +2,32 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>DebugProbes</title>
-</head><body><link href="../../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script><script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script>
+</head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+
   
+    <div class="navigation-wrapper" id="navigation-wrapper">
+      <div id="leftToggler"><span class="icon-toggler"></span></div>
+      <div class="library-name"><a href="../../../index.html"><span>kotlinx.coroutines</span></a></div>
+      <div>1.6.0-RC-SNAPSHOT</div>
+      <div class="pull-right d-flex"><button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+      </div>
+    </div>
     <div id="container">
-      <div id="leftColumn"><a href="../../../index.html">
-            <div id="logo"></div>
-          </a>
-        <div id="paneSearch"></div>
+      <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main">
-        <script type="text/javascript" src="../../../scripts/main.js"></script><div id="leftToggler"><span class="icon-toggler"></span></div>
-
+      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
         <div class="main-content" id="content" pageids="kotlinx-coroutines-debug::kotlinx.coroutines.debug/DebugProbes///PointingToDeclaration//-1708783535">
-          <div class="navigation-wrapper" id="navigation-wrapper">
-            <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a>/<a href="../index.html">kotlinx.coroutines.debug</a>/<a href="index.html">DebugProbes</a></div>
-            <div class="pull-right d-flex">
-              <div id="searchBar"></div>
-            </div>
-          </div>
+          <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a>/<a href="../index.html">kotlinx.coroutines.debug</a>/<a href="index.html">DebugProbes</a></div>
           <div class="cover ">
-            <h1 class="cover"><span>Debug</span><wbr><span>Probes</span></h1>
-            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block">@<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html">ExperimentalCoroutinesApi</a>()</div></div>object <a href="index.html">DebugProbes</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Debug probes support.</p><p class="paragraph">Debug probes is a dynamic attach mechanism which installs multiple hooks into coroutines machinery. It slows down all coroutine-related code, but in return provides a lot of diagnostic information, including asynchronous stack-traces and coroutine dumps (similar to <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.management/java/lang/management/ThreadMXBean.html#dumpAllThreads(kotlin.Boolean,kotlin.Boolean)">ThreadMXBean.dumpAllThreads</a> and <code>jstack</code> via <a href="dump-coroutines.html">DebugProbes.dumpCoroutines</a>. All introspecting methods throw <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if debug probes were not installed.</p><p class="paragraph">Installed hooks:</p><ul><li><p class="paragraph"><code>probeCoroutineResumed</code> is invoked on every <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resume</a>.</p></li><li><p class="paragraph"><code>probeCoroutineSuspended</code> is invoked on every continuation suspension.</p></li><li><p class="paragraph"><code>probeCoroutineCreated</code> is invoked on every coroutine creation using stdlib intrinsics.</p></li></ul><p class="paragraph">Overhead:</p><ul><li><p class="paragraph">Every created coroutine is stored in a concurrent hash map and hash map is looked up and     updated on each suspension and resumption.</p></li><li><p class="paragraph">If <a href="enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> is enabled, stack trace of the current thread is captured on     each created coroutine that is a rough equivalent of throwing an exception per each created coroutine.</p></li></ul></div></div>
+            <h1 class="cover"><span>Debug</span><wbr><span><span>Probes</span></span></h1>
+            <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation">@</span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html"><span class="token annotation">ExperimentalCoroutinesApi</span></a></div></div><span class="token keyword">object </span><a href="index.html">DebugProbes</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Debug probes support.</p><p class="paragraph">Debug probes is a dynamic attach mechanism which installs multiple hooks into coroutines machinery. It slows down all coroutine-related code, but in return provides a lot of diagnostic information, including asynchronous stack-traces and coroutine dumps (similar to <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.management/java/lang/management/ThreadMXBean.html#dumpAllThreads(kotlin.Boolean,kotlin.Boolean)">ThreadMXBean.dumpAllThreads</a> and <code class="lang-kotlin">jstack</code> via <a href="dump-coroutines.html">DebugProbes.dumpCoroutines</a>. All introspecting methods throw <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if debug probes were not installed.</p><p class="paragraph">Installed hooks:</p><ul><li><p class="paragraph"><code class="lang-kotlin">probeCoroutineResumed</code> is invoked on every <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resume</a>.</p></li><li><p class="paragraph"><code class="lang-kotlin">probeCoroutineSuspended</code> is invoked on every continuation suspension.</p></li><li><p class="paragraph"><code class="lang-kotlin">probeCoroutineCreated</code> is invoked on every coroutine creation using stdlib intrinsics.</p></li></ul><p class="paragraph">Overhead:</p><ul><li><p class="paragraph">Every created coroutine is stored in a concurrent hash map and hash map is looked up and     updated on each suspension and resumption.</p></li><li><p class="paragraph">If <a href="enable-creation-stack-traces.html">DebugProbes.enableCreationStackTraces</a> is enabled, stack trace of the current thread is captured on     each created coroutine that is a rough equivalent of throwing an exception per each created coroutine.</p></li></ul></div></div>
           </div>
           <div class="tabbedcontent">
             <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button></div>
@@ -32,153 +36,117 @@
               <div class="table" data-togglable="Functions"><a data-name="1165958964%2FFunctions%2F-1708783535" anchor-label="dumpCoroutines" id="1165958964%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="dump-coroutines.html">dumpCoroutines</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1165958964%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="dump-coroutines.html"><span>dump</span><wbr><span><span>Coroutines</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1165958964%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="dump-coroutines.html">dumpCoroutines</a>(out: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/PrintStream.html">PrintStream</a> = System.out)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="1165958964%2FFunctions%2F-1708783535" anchor-label="dumpCoroutines" id="1165958964%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1165958964%2FFunctions%2F-1708783535" anchor-label="dumpCoroutines" id="1165958964%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Dumps all active coroutines into the given output stream, providing a consistent snapshot of all existing coroutines at the moment of invocation.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="dump-coroutines.html"><span class="token function">dumpCoroutines</span></a><span class="token punctuation">(</span>out<span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/PrintStream.html">PrintStream</a><span class="token operator"> = </span>System.out<span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Dumps all active coroutines into the given output stream, providing a consistent snapshot of all existing coroutines at the moment of invocation. The output of this method is similar to <code class="lang-kotlin">jstack</code> or a full thread dump. It can be used as the replacement to "Dump threads" action.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 <a data-name="-233238449%2FFunctions%2F-1708783535" anchor-label="dumpCoroutinesInfo" id="-233238449%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="dump-coroutines-info.html">dumpCoroutinesInfo</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-233238449%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="dump-coroutines-info.html"><span>dump</span><wbr><span>Coroutines</span><wbr><span><span>Info</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-233238449%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="dump-coroutines-info.html">dumpCoroutinesInfo</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../-coroutine-info/index.html">CoroutineInfo</a>&gt;<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="-233238449%2FFunctions%2F-1708783535" anchor-label="dumpCoroutinesInfo" id="-233238449%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-233238449%2FFunctions%2F-1708783535" anchor-label="dumpCoroutinesInfo" id="-233238449%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Returns all existing coroutines info.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="dump-coroutines-info.html"><span class="token function">dumpCoroutinesInfo</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-coroutine-info/index.html">CoroutineInfo</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Returns all existing coroutines info. The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 <a data-name="-614501133%2FFunctions%2F-1708783535" anchor-label="install" id="-614501133%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="install.html">install</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-614501133%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="install.html"><span><span>install</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-614501133%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="install.html">install</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="-614501133%2FFunctions%2F-1708783535" anchor-label="install" id="-614501133%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-614501133%2FFunctions%2F-1708783535" anchor-label="install" id="-614501133%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Installs a <a href="index.html">DebugProbes</a> instead of no-op stdlib probes by redefining debug probes class using the same class loader as one loaded <a href="index.html">DebugProbes</a> class.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="install.html"><span class="token function">install</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Installs a <a href="index.html">DebugProbes</a> instead of no-op stdlib probes by redefining debug probes class using the same class loader as one loaded <a href="index.html">DebugProbes</a> class.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 <a data-name="640173412%2FFunctions%2F-1708783535" anchor-label="jobToString" id="640173412%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="job-to-string.html">jobToString</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="640173412%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="job-to-string.html"><span>job</span><wbr><span>To</span><wbr><span><span>String</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="640173412%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="job-to-string.html">jobToString</a>(job: <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="640173412%2FFunctions%2F-1708783535" anchor-label="jobToString" id="640173412%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="640173412%2FFunctions%2F-1708783535" anchor-label="jobToString" id="640173412%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Returns string representation of the coroutines <a href="job-to-string.html">job</a> hierarchy with additional debug information.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="job-to-string.html"><span class="token function">jobToString</span></a><span class="token punctuation">(</span>job<span class="token operator">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Returns string representation of the coroutines <a href="job-to-string.html">job</a> hierarchy with additional debug information. Hierarchy is printed from the <a href="job-to-string.html">job</a> as a root transitively to all children.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 <a data-name="1026843789%2FFunctions%2F-1708783535" anchor-label="printJob" id="1026843789%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="print-job.html">printJob</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1026843789%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="print-job.html"><span>print</span><wbr><span><span>Job</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1026843789%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="print-job.html">printJob</a>(job: <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a>, out: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/PrintStream.html">PrintStream</a> = System.out)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="1026843789%2FFunctions%2F-1708783535" anchor-label="printJob" id="1026843789%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="1026843789%2FFunctions%2F-1708783535" anchor-label="printJob" id="1026843789%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Prints <a href="print-job.html">job</a> hierarchy representation from <a href="job-to-string.html">jobToString</a> to the given <a href="print-job.html">out</a>.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="print-job.html"><span class="token function">printJob</span></a><span class="token punctuation">(</span>job<span class="token operator">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a><span class="token punctuation">, </span>out<span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/PrintStream.html">PrintStream</a><span class="token operator"> = </span>System.out<span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Prints <a href="print-job.html">job</a> hierarchy representation from <a href="job-to-string.html">jobToString</a> to the given <a href="print-job.html">out</a>.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 <a data-name="974863223%2FFunctions%2F-1708783535" anchor-label="printScope" id="974863223%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="print-scope.html">printScope</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="974863223%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="print-scope.html"><span>print</span><wbr><span><span>Scope</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="974863223%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="print-scope.html">printScope</a>(scope: <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>, out: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/PrintStream.html">PrintStream</a> = System.out)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="974863223%2FFunctions%2F-1708783535" anchor-label="printScope" id="974863223%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="974863223%2FFunctions%2F-1708783535" anchor-label="printScope" id="974863223%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Prints all coroutines launched within the given <a href="print-scope.html">scope</a>.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="print-scope.html"><span class="token function">printScope</span></a><span class="token punctuation">(</span>scope<span class="token operator">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a><span class="token punctuation">, </span>out<span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/PrintStream.html">PrintStream</a><span class="token operator"> = </span>System.out<span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Prints all coroutines launched within the given <a href="print-scope.html">scope</a>. Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope has no a job in it.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 <a data-name="-1888939108%2FFunctions%2F-1708783535" anchor-label="scopeToString" id="-1888939108%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="scope-to-string.html">scopeToString</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1888939108%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="scope-to-string.html"><span>scope</span><wbr><span>To</span><wbr><span><span>String</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1888939108%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="scope-to-string.html">scopeToString</a>(scope: <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="-1888939108%2FFunctions%2F-1708783535" anchor-label="scopeToString" id="-1888939108%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1888939108%2FFunctions%2F-1708783535" anchor-label="scopeToString" id="-1888939108%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Returns string representation of all coroutines launched within the given <a href="scope-to-string.html">scope</a>.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="scope-to-string.html"><span class="token function">scopeToString</span></a><span class="token punctuation">(</span>scope<span class="token operator">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Returns string representation of all coroutines launched within the given <a href="scope-to-string.html">scope</a>. Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if the scope has no a job in it.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 <a data-name="-1704982708%2FFunctions%2F-1708783535" anchor-label="uninstall" id="-1704982708%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="uninstall.html">uninstall</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1704982708%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="uninstall.html"><span><span>uninstall</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1704982708%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">fun <a href="uninstall.html">uninstall</a>()<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="-1704982708%2FFunctions%2F-1708783535" anchor-label="uninstall" id="-1704982708%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-1704982708%2FFunctions%2F-1708783535" anchor-label="uninstall" id="-1704982708%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Uninstall debug probes.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="uninstall.html"><span class="token function">uninstall</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Uninstall debug probes.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 <a data-name="-707725400%2FFunctions%2F-1708783535" anchor-label="withDebugProbes" id="-707725400%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="with-debug-probes.html">withDebugProbes</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-707725400%2FFunctions%2F-1708783535"></span>
+                    <div class=""><span class="inline-flex"><a href="with-debug-probes.html"><span>with</span><wbr><span>Debug</span><wbr><span><span>Probes</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-707725400%2FFunctions%2F-1708783535"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
-                      <div class="title"><div class="divergent-group" data-filterable-current=":kotlinx-coroutines-debug:dokkaHtmlPartial/main" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="with-platform-tags"><span class="pull-right"></span></div>
-
-  <div>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace">inline fun <a href="with-debug-probes.html">withDebugProbes</a>(block: () -&gt; <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a>)<span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
-  </div>
-<a data-name="-707725400%2FFunctions%2F-1708783535" anchor-label="withDebugProbes" id="-707725400%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="brief "><a data-name="-707725400%2FFunctions%2F-1708783535" anchor-label="withDebugProbes" id="-707725400%2FFunctions%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Invokes given block of code with installed debug probes and uninstall probes in the end.</div></div>
-</div>
+                      <div class="title">
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><a href="with-debug-probes.html"><span class="token function">withDebugProbes</span></a><span class="token punctuation">(</span>block<span class="token operator">: </span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Invokes given block of code with installed debug probes and uninstall probes in the end.</p></div></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -192,7 +160,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="1472093402%2FProperties%2F-1708783535" anchor-label="enableCreationStackTraces" id="1472093402%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace">var <a href="enable-creation-stack-traces.html">enableCreationStackTraces</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="1472093402%2FProperties%2F-1708783535" anchor-label="enableCreationStackTraces" id="1472093402%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Whether coroutine creation stack traces should be captured.</div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="1472093402%2FProperties%2F-1708783535" anchor-label="enableCreationStackTraces" id="1472093402%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="enable-creation-stack-traces.html">enableCreationStackTraces</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="1472093402%2FProperties%2F-1708783535" anchor-label="enableCreationStackTraces" id="1472093402%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><p class="paragraph">Whether coroutine creation stack traces should be captured. When enabled, for each created coroutine a stack trace of the current thread is captured and attached to the coroutine. This option can be useful during local debug sessions, but is recommended to be disabled in production environments to avoid stack trace dumping overhead.</p></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -205,7 +173,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="-620623298%2FProperties%2F-1708783535" anchor-label="isInstalled" id="-620623298%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace">val <a href="is-installed.html">isInstalled</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-620623298%2FProperties%2F-1708783535" anchor-label="isInstalled" id="-620623298%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Determines whether debug probes were <a href="install.html">installed</a>.</div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="-620623298%2FProperties%2F-1708783535" anchor-label="isInstalled" id="-620623298%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="is-installed.html">isInstalled</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="-620623298%2FProperties%2F-1708783535" anchor-label="isInstalled" id="-620623298%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><p class="paragraph">Determines whether debug probes were <a href="install.html">installed</a>.</p></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -218,7 +186,7 @@
                         </span></span></div>
                     <div>
                       <div class="title">
-                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="1998934273%2FProperties%2F-1708783535" anchor-label="sanitizeStackTraces" id="1998934273%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace">var <a href="sanitize-stack-traces.html">sanitizeStackTraces</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="1998934273%2FProperties%2F-1708783535" anchor-label="sanitizeStackTraces" id="1998934273%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a>Whether coroutine creation stack traces should be sanitized.</div></div></div>
+                        <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"><a data-name="1998934273%2FProperties%2F-1708783535" anchor-label="sanitizeStackTraces" id="1998934273%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="sanitize-stack-traces.html">sanitizeStackTraces</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><a data-name="1998934273%2FProperties%2F-1708783535" anchor-label="sanitizeStackTraces" id="1998934273%2FProperties%2F-1708783535" data-filterable-set=":kotlinx-coroutines-debug:dokkaHtmlPartial/main"></a><p class="paragraph">Whether coroutine creation stack traces should be sanitized. Sanitization removes all frames from <code class="lang-kotlin">kotlinx.coroutines</code> package except the first one and the last one to simplify diagnostic.</p></div></div></div>
                       </div>
                     </div>
                   </div>
@@ -227,7 +195,7 @@
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   
