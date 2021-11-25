@@ -98,9 +98,9 @@ internal class TestMainDispatcher(delegate: CoroutineDispatcher?, mainInitExcept
 
         private fun missing(): Nothing {
             val message = if (mainInitException == null)
-                "Dispatchers.Main is not available was not provided for tests via Dispatchers.setMain."
+                "Dispatchers.Main is not available and was not provided for tests via Dispatchers.setMain."
             else
-                "Dispatchers.Main failed to initialize and was not replaced via Dispatchers.setMain."
+                "Dispatchers.Main failed to initialize and was not replaced for tests via Dispatchers.setMain."
             throw IllegalStateException(message, mainInitException)
         }
 
