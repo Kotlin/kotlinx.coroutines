@@ -13,7 +13,7 @@ import kotlin.coroutines.*
  * The testable main dispatcher used by kotlinx-coroutines-test.
  * It is a [MainCoroutineDispatcher] that delegates all actions to a settable delegate.
  */
-internal class TestMainDispatcher(delegate: CoroutineDispatcher?, mainInitException: Throwable? = null):
+internal class TestMainDispatcher(delegate: CoroutineDispatcher?, mainInitException: Throwable? = null) :
     MainCoroutineDispatcher(),
     Delay {
     private val mainDispatcher = delegate ?: UnsetMainDispatcher(mainInitException)
