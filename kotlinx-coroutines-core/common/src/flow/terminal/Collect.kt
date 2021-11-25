@@ -51,42 +51,6 @@ public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
 }
 
 /**
- * Terminal flow operator that collects the given flow with a provided [action].
- * If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
- *
- * Example of use:
- *
- * ```
- * val flow = getMyEvents()
- * try {
- *     flow.collect { value ->
- *         println("Received $value")
- *     }
- *     println("My events are consumed successfully")
- * } catch (e: Throwable) {
- *     println("Exception from the flow: $e")
- * }
- * ```
- */
-public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit =
-    collect(object : FlowCollector<T> {
-        override suspend fun emit(value: T) = action(value)
-    })
-
-/**
- * Terminal flow operator that collects the given [SharedFlow] with the provided [action].
- * If any exception occurs during `collect` or in the provided flow, this exception is rethrown from this method.
- *
- * This is a counterpart of a regular [Flow.collect] extension, only different in the return type
- * so that any code below `collect` produces a compilation warning.
- */
-public suspend inline fun <T> SharedFlow<T>.collect(crossinline action: suspend (value: T) -> Unit): Nothing {
-    collect(object : FlowCollector<T> {
-        override suspend fun emit(value: T) = action(value)
-    })
-}
-
-/**
  * Terminal flow operator that collects the given flow with a provided [action] that takes the index of an element (zero-based) and the element.
  * If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
  *
