@@ -18,27 +18,27 @@ internal class TestMainDispatcher(delegate: CoroutineDispatcher?, mainInitExcept
     Delay {
     private val mainDispatcher = delegate ?: UnsetMainDispatcher(mainInitException)
 
-    private var _delegate = NonConcurrentlyModifiable(mainDispatcher, "Dispatchers.Main")
+    private var delegate = NonConcurrentlyModifiable(mainDispatcher, "Dispatchers.Main")
 
     private val delay
-        get() = _delegate.value as? Delay ?: nonMockedDelay
+        get() = delegate.value as? Delay ?: nonMockedDelay
 
     override val immediate: MainCoroutineDispatcher
-        get() = (_delegate.value as? MainCoroutineDispatcher)?.immediate ?: this
+        get() = (delegate.value as? MainCoroutineDispatcher)?.immediate ?: this
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) = _delegate.value.dispatch(context, block)
+    override fun dispatch(context: CoroutineContext, block: Runnable) = delegate.value.dispatch(context, block)
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = _delegate.value.isDispatchNeeded(context)
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = delegate.value.isDispatchNeeded(context)
 
     override fun dispatchYield(context: CoroutineContext, block: Runnable) =
-        _delegate.value.dispatchYield(context, block)
+        delegate.value.dispatchYield(context, block)
 
     fun setDispatcher(dispatcher: CoroutineDispatcher) {
-        _delegate.value = dispatcher
+        delegate.value = dispatcher
     }
 
     fun resetDispatcher() {
-        _delegate.value = mainDispatcher
+        delegate.value = mainDispatcher
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
@@ -47,11 +47,11 @@ internal class TestMainDispatcher(delegate: CoroutineDispatcher?, mainInitExcept
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         delay.invokeOnTimeout(timeMillis, block, context)
 
-    override fun toString(): String = "TestMainDispatcher[delegate=${_delegate.value}]"
+    override fun toString(): String = "TestMainDispatcher[delegate=${delegate.value}]"
 
     companion object {
         internal val currentTestDispatcher
-            get() = (Dispatchers.Main as? TestMainDispatcher)?._delegate?.value as? TestDispatcher
+            get() = (Dispatchers.Main as? TestMainDispatcher)?.delegate?.value as? TestDispatcher
 
         internal val currentTestScheduler
             get() = currentTestDispatcher?.scheduler
