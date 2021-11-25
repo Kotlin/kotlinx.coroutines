@@ -8,6 +8,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.test.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -214,21 +215,24 @@ internal suspend fun <T: AbstractCoroutine<Unit>> runTestCoroutine(
             completed = true
             continue
         }
-        select<Unit> {
-            coroutine.onJoin {
-                completed = true
-            }
-            scheduler.onDispatchEvent {
-                // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
-            }
-            onTimeout(dispatchTimeoutMs) {
-                try {
-                    cleanup()
-                } catch (e: UncompletedCoroutinesError) {
-                    // we expect these and will instead throw a more informative exception just below.
-                    emptyList()
-                }.throwAll()
-                throw UncompletedCoroutinesError("The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
+        withContext(nonMockedDelay as ContinuationInterceptor) {
+            select<Unit> {
+                coroutine.onJoin {
+                    completed = true
+                }
+                scheduler.onDispatchEvent {
+                    // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
+                }
+                onTimeout(dispatchTimeoutMs) {
+                    try {
+                        cleanup()
+                    } catch (e: UncompletedCoroutinesError) {
+                        // we expect these and will instead throw a more informative exception just below.
+                        emptyList()
+                    }.throwAll()
+                    throw UncompletedCoroutinesError(
+                        "The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
+                }
             }
         }
     }

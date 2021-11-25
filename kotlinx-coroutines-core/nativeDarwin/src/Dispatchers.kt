@@ -17,6 +17,9 @@ internal fun isMainThread(): Boolean = CFRunLoopGetCurrent() == CFRunLoopGetMain
 internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher =
     if (multithreadingSupported) DarwinMainDispatcher(false) else OldMainDispatcher(Dispatchers.Default)
 
+@SharedImmutable
+internal actual val mainDispatcherIsPresent: Boolean = true
+
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DarwinGlobalQueueDispatcher
 
 private object DarwinGlobalQueueDispatcher : CoroutineDispatcher() {

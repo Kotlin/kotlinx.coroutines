@@ -74,8 +74,12 @@ class SomeTest {
 
 Calling `setMain` or `resetMain` immediately changes the `Main` dispatcher globally.
 
-If `Main` is overridden with a [TestDispatcher], then its [TestCoroutineScheduler] is used when new [TestDispatcher] or
-[TestScope] instances are created without [TestCoroutineScheduler] being passed as an argument.
+If `Main` is overridden with a [TestDispatcher], then
+* its [TestCoroutineScheduler] is used when new [TestDispatcher] or [TestScope] instances are created without
+  [TestCoroutineScheduler] being passed as an argument.
+* even the code running on other dispatchers, like `Dispatchers.IO` or `Dispatchers.Default`,
+  will run its delays using its [TestCoroutineScheduler].
+  The only exception is the code running on dispatchers that implement `Delay`.
 
 ## runTest
 
@@ -336,8 +340,9 @@ fun testFooWithTimeout() = runTest {
 ## Virtual time support with other dispatchers
 
 Calls to `withContext(Dispatchers.IO)`, `withContext(Dispatchers.Default)` ,and `withContext(Dispatchers.Main)` are
-common in coroutines-based code bases. Unfortunately, just executing code in a test will not lead to these dispatchers
-using the virtual time source, so delays will not be skipped in them.
+common in coroutines-based code bases.
+Unfortunately, just executing code in a test will not lead to these dispatchers using the virtual time source, so delays
+will not be skipped in them.
 
 ```kotlin
 suspend fun veryExpensiveFunction() = withContext(Dispatchers.Default) {
@@ -351,9 +356,13 @@ fun testExpensiveFunction() = runTest {
 }
 ```
 
-Tests should, when possible, replace these dispatchers with a [TestDispatcher] if the `withContext` calls `delay` in the
-function under test. For example, `veryExpensiveFunction` above should allow mocking with a [TestDispatcher] using
-either dependency injection, a service locator, or a default parameter, if it is to be used with virtual time.
+To ensure that these delays are skipped, do one of the following:
+* Call [Dispatchers.setMain] with a [TestDispatcher].
+  Then, all delays that happen outside of dispatchers implementing `Delay` will use its [TestCoroutineScheduler].
+* Replace these dispatchers with a [TestDispatcher] if the `withContext` calls `delay` in the
+  function under test.
+  For example, `veryExpensiveFunction` above should allow mocking with a [TestDispatcher] using either dependency
+  injection, a service locator, or a default parameter, if it is to be used with virtual time.
 
 ### Status of the API
 

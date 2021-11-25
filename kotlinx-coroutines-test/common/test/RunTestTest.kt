@@ -6,6 +6,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -70,6 +71,7 @@ class RunTestTest {
 
     /** Tests that a dispatch timeout of `0` will fail the test if there are some dispatches outside the scheduler. */
     @Test
+    @NoNative // the event loop was shut down
     fun testRunTestWithZeroTimeoutWithUncontrolledDispatches() = testResultMap({ fn ->
         assertFailsWith<UncompletedCoroutinesError> { fn() }
     }) {
@@ -102,6 +104,23 @@ class RunTestTest {
     fun testRunTestWithLargeTimeout() = runTest(dispatchTimeoutMs = 5000) {
         withContext(Dispatchers.Default) {
             delay(50)
+        }
+    }
+
+    /** Tests that [onTimeout] executes quickly. */
+    @Test
+    fun testOnTimeout() = runTest {
+        assertRunsFast {
+            val deferred = CompletableDeferred<Unit>()
+            val result = select<Boolean> {
+                onTimeout(SLOW) {
+                    true
+                }
+                deferred.onJoin {
+                    fail("unreached")
+                }
+            }
+            assertTrue(result)
         }
     }
 

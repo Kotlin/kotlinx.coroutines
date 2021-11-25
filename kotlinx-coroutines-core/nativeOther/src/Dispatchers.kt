@@ -5,9 +5,13 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher =
     MissingMainDispatcher
+
+@SharedImmutable
+internal actual val mainDispatcherIsPresent: Boolean = false
 
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultDispatcher
 

@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.multithreadingSupported
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcherBasedOnMm()
@@ -24,12 +25,14 @@ public actual object Dispatchers {
         }
         injectedMainDispatcher = dispatcher
     }
-
-    @PublishedApi
-    internal fun resetInjectedMain() {
-        injectedMainDispatcher = null
-    }
 }
+
+/**
+ * Does this platform define a Main dispatcher?
+ */
+@PublishedApi
+@SharedImmutable
+internal expect val mainDispatcherIsPresent: Boolean
 
 internal expect fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher
 

@@ -11,6 +11,7 @@ import org.junit.Test
 import java.util.concurrent.*
 import kotlin.test.*
 
+@Ignore
 class BlockingCoroutineDispatcherWorkSignallingStressTest : SchedulerTestBase() {
 
     @Test

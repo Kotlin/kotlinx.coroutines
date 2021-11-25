@@ -86,7 +86,7 @@ internal fun throwMissingMainDispatcherException(): Nothing {
 private class MissingMainCoroutineDispatcher(
     private val cause: Throwable?,
     private val errorHint: String? = null
-) : MainCoroutineDispatcher(), Delay {
+) : MainCoroutineDispatcher() {
 
     override val immediate: MainCoroutineDispatcher get() = this
 
@@ -96,16 +96,7 @@ private class MissingMainCoroutineDispatcher(
     override fun limitedParallelism(parallelism: Int): CoroutineDispatcher =
         missing()
 
-    override suspend fun delay(time: Long) =
-        missing()
-
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        missing()
-
     override fun dispatch(context: CoroutineContext, block: Runnable) =
-        missing()
-
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
         missing()
 
     private fun missing(): Nothing {
@@ -124,6 +115,7 @@ private class MissingMainCoroutineDispatcher(
  * @suppress
  */
 @InternalCoroutinesApi
+@Deprecated("No longer used", level = DeprecationLevel.WARNING) // WARNING in 1.6, ERROR in 1.7, removed in 1.8
 public object MissingMainCoroutineDispatcherFactory : MainDispatcherFactory {
     override val loadPriority: Int
         get() = -1

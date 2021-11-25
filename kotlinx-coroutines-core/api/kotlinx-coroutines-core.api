@@ -249,6 +249,18 @@ public final class kotlinx/coroutines/DebugKt {
 	public static final field DEBUG_PROPERTY_VALUE_ON Ljava/lang/String;
 }
 
+public final class kotlinx/coroutines/DefaultExecutor : java/lang/Runnable {
+	public static final field INSTANCE Lkotlinx/coroutines/DefaultExecutor;
+	public static final field THREAD_NAME Ljava/lang/String;
+	public static synthetic fun decrementUseCount$default (Lkotlinx/coroutines/EventLoop;ZILjava/lang/Object;)V
+	public fun enqueue (Ljava/lang/Runnable;)V
+	public static synthetic fun incrementUseCount$default (Lkotlinx/coroutines/EventLoop;ZILjava/lang/Object;)V
+	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
+	public fun run ()V
+	public fun shutdown ()V
+	public final fun shutdownForTests (J)V
+}
+
 public abstract interface class kotlinx/coroutines/Deferred : kotlinx/coroutines/Job {
 	public abstract fun await (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getCompleted ()Ljava/lang/Object;

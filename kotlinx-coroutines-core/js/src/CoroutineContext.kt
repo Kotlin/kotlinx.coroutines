@@ -34,7 +34,7 @@ private fun isJsdom() = jsTypeOf(navigator) != UNDEFINED &&
     navigator.userAgent.match("\\bjsdom\\b")
 
 internal actual val DefaultDelay: Delay
-    get() = Dispatchers.Default as Delay
+    get() = Dispatchers.Main as? Delay ?: Dispatchers.Default as Delay
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context

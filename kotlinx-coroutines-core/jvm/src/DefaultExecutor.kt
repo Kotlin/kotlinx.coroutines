@@ -21,10 +21,11 @@ private fun initializeDefaultDelay(): Delay {
      * no sense to create a separate thread with timer that cannot be controller
      * by the UI runtime.
      */
-    return if (main.isMissing() || main !is Delay) DefaultExecutor else main
+    return if (main !is Delay) DefaultExecutor else main
 }
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+@PublishedApi
 internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     const val THREAD_NAME = "kotlinx.coroutines.DefaultExecutor"
 

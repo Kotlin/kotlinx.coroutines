@@ -21,6 +21,52 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
         Dispatchers.resetMain()
     }
 
+    /** Tests that replacing the dispatcher also replaces the default delay implementation. */
+    @Test
+    @NoJs // AfterTest is asynchronous
+    fun testDefaultDelayReplacement() = runTest {
+        assertRunsFast {
+            delay(10_000)
+            withContext(Dispatchers.Default) {
+                delay(10_000)
+            }
+            delay(10_000)
+        }
+    }
+
+    /**
+     * Tests that the dispatch timeout is not affected by the change to the delay implementation.
+     *
+     * In this case, it checks that there are no spurious notifications about dispatches.
+     */
+    @Test
+    fun testRunTestWithMainAndSmallTimeout() = testResultMap({ fn ->
+        assertFailsWith<UncompletedCoroutinesError> { fn() }
+    }) {
+        runTest(dispatchTimeoutMs = 100) {
+            withContext(Dispatchers.Default) {
+                suspendCancellableCoroutine<Unit> {
+                    nonMockedDelay.scheduleResumeAfterDelay(5_000, it)
+                }
+            }
+            fail("shouldn't be reached")
+        }
+    }
+
+    /**
+     * Tests that the dispatch timeout is not affected by the change to the delay implementation.
+     *
+     * In this case, it checks that the timeout does not happen immediately.
+     */
+    @Test
+    fun testRunTestWithMainAndLangeTimeout() = runTest(dispatchTimeoutMs = 1_000) {
+        withContext(Dispatchers.Default) {
+            suspendCancellableCoroutine<Unit> {
+                nonMockedDelay.scheduleResumeAfterDelay(50, it)
+            }
+        }
+    }
+
     /** Tests that asynchronous execution of tests does not happen concurrently with [AfterTest]. */
     @Test
     @NoJs

@@ -41,7 +41,11 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 internal expect fun createDefaultDispatcher(): CoroutineDispatcher
 
 @SharedImmutable
-internal actual val DefaultDelay: Delay = if (multithreadingSupported) DefaultExecutor else OldDefaultExecutor
+@PublishedApi
+internal val NonMockedDefaultDelay: Delay = if (multithreadingSupported) DefaultExecutor else OldDefaultExecutor
+
+internal actual val DefaultDelay: Delay
+    get() = Dispatchers.Main as? Delay ?: NonMockedDefaultDelay
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context

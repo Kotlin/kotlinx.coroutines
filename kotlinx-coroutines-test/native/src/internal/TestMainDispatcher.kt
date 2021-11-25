@@ -6,8 +6,11 @@ package kotlinx.coroutines.test.internal
 import kotlinx.coroutines.*
 
 @Suppress("INVISIBLE_MEMBER")
+internal actual val nonMockedDelay: Delay = NonMockedDefaultDelay
+
+@Suppress("INVISIBLE_MEMBER")
 internal actual fun Dispatchers.getTestMainDispatcher(): TestMainDispatcher =
     when (val mainDispatcher = Main) {
         is TestMainDispatcher -> mainDispatcher
-        else -> TestMainDispatcher(mainDispatcher).also { injectMain(it) }
+        else -> TestMainDispatcher(if (mainDispatcherIsPresent) mainDispatcher else null).also { injectMain(it) }
     }

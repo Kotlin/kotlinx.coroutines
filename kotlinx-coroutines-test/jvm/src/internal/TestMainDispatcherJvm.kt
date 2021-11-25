@@ -11,8 +11,12 @@ internal class TestMainDispatcherFactory : MainDispatcherFactory {
 
     override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher {
         val otherFactories = allFactories.filter { it !== this }
-        val secondBestFactory = otherFactories.maxByOrNull { it.loadPriority } ?: MissingMainCoroutineDispatcherFactory
-        val dispatcher = secondBestFactory.tryCreateDispatcher(otherFactories)
+        val secondBestFactory = otherFactories.maxByOrNull { it.loadPriority }
+        val main = secondBestFactory?.tryCreateDispatcher(otherFactories)
+        val dispatcher = when {
+            main?.isMissing() ?: true -> null
+            else -> main
+        }
         return TestMainDispatcher(dispatcher)
     }
 
@@ -23,6 +27,9 @@ internal class TestMainDispatcherFactory : MainDispatcherFactory {
     override val loadPriority: Int
         get() = Int.MAX_VALUE
 }
+
+@Suppress("INVISIBLE_MEMBER")
+internal actual val nonMockedDelay: Delay = DefaultExecutor
 
 internal actual fun Dispatchers.getTestMainDispatcher(): TestMainDispatcher {
     val mainDispatcher = Main
