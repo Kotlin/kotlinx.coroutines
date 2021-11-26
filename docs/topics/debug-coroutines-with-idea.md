@@ -16,7 +16,7 @@ The tutorial assumes you have prior knowledge of the [coroutines](coroutines-gui
 
     The `src` directory contains Kotlin source files and resources. The `main.kt` file contains sample code that will print `Hello World!`.
 
-2. Change code in the `main()` function:
+3. Change code in the `main()` function:
 
     * Use the [`runBlocking()`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html) block to wrap a coroutine.
     * Use the [`async()`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html) function to create coroutines that compute deferred values `a` and `b`.
