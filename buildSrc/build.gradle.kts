@@ -44,7 +44,20 @@ fun version(target: String): String {
 
 dependencies {
     implementation(kotlin("gradle-plugin", version("kotlin")))
-    implementation("org.jetbrains.dokka:dokka-gradle-plugin:${version("dokka")}")
-    implementation("org.jetbrains.dokka:dokka-core:${version("dokka")}")
+    /*
+     * Dokka is compiled with language level = 1.4, but depends on Kotlin 1.6.0, while
+     * our version of Gradle bundles Kotlin 1.4.x and can read metadata only up to 1.5.x,
+     * thus we're excluding stdlib compiled with 1.6.0 from dependencies.
+     */
+    implementation("org.jetbrains.dokka:dokka-gradle-plugin:${version("dokka")}") {
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+    }
+    implementation("org.jetbrains.dokka:dokka-core:${version("dokka")}") {
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+    }
     implementation("ru.vyarus:gradle-animalsniffer-plugin:1.5.3") // Android API check
 }
