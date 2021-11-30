@@ -97,7 +97,7 @@ class RunTestTest {
         }
     }
 
-    /** Tests that too low of a dispatch timeout causes crashes. */
+    /** Tests that real delays can be accounted for with a large enough dispatch timeout. */
     @Test
     fun testRunTestWithLargeTimeout() = runTest(dispatchTimeoutMs = 5000) {
         withContext(Dispatchers.Default) {
