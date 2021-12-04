@@ -52,8 +52,8 @@ It produces the following output (maybe in different order):
 ```text
 Unconfined            : I'm working in thread main
 Default               : I'm working in thread DefaultDispatcher-worker-1
-newSingleThreadContext: I'm working in thread MyOwnThread
 main runBlocking      : I'm working in thread main
+newSingleThreadContext: I'm working in thread MyOwnThread
 ```
 
 <!--- TEST LINES_START_UNORDERED -->
