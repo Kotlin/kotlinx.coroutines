@@ -25,7 +25,7 @@ abstract class ParametrizedDispatcherBase : CoroutineScope {
     private var closeable: Closeable? = null
 
     @Setup
-    @UseExperimental(InternalCoroutinesApi::class)
+    @OptIn(InternalCoroutinesApi::class)
     open fun setup() {
         coroutineContext = when {
             dispatcher == "fjp" -> ForkJoinPool.commonPool().asCoroutineDispatcher()
