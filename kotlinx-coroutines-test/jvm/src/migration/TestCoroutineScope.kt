@@ -15,7 +15,7 @@ import kotlin.coroutines.*
 @ExperimentalCoroutinesApi
 @Deprecated("Use `TestScope` in combination with `runTest` instead")
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
-public sealed interface TestCoroutineScope : CoroutineScope {
+public interface TestCoroutineScope : CoroutineScope {
     /**
      * Called after the test completes.
      *
