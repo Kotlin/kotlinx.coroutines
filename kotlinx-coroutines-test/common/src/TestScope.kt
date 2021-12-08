@@ -75,7 +75,7 @@ public fun TestScope.runCurrent(): Unit = testScheduler.runCurrent()
  * Moves the virtual clock of this dispatcher forward by [the specified amount][delayTimeMillis], running the
  * scheduled tasks in the meantime.
  *
- * In contrast with [TestScope.advanceTimeBy], this function does not run the tasks scheduled at the moment
+ * In contrast with `TestCoroutineScope.advanceTimeBy`, this function does not run the tasks scheduled at the moment
  * [currentTime] + [delayTimeMillis].
  *
  * @throws IllegalStateException if passed a negative [delay][delayTimeMillis].
