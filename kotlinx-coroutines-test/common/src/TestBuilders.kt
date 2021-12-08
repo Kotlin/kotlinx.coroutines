@@ -164,7 +164,7 @@ public fun TestScope.runTest(
 ): TestResult = asSpecificImplementation().let {
     it.enter()
     createTestResult {
-        runTestCoroutine(it, dispatchTimeoutMs, testBody) { it.leave() }
+        runTestCoroutine(it, dispatchTimeoutMs, TestScopeImpl::tryGetCompletionCause, testBody) { it.leave() }
     }
 }
 
@@ -196,6 +196,7 @@ internal const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
 internal suspend fun <T: AbstractCoroutine<Unit>> runTestCoroutine(
     coroutine: T,
     dispatchTimeoutMs: Long,
+    tryGetCompletionCause: T.() -> Throwable?,
     testBody: suspend T.() -> Unit,
     cleanup: () -> List<Throwable>,
 ) {
@@ -228,7 +229,26 @@ internal suspend fun <T: AbstractCoroutine<Unit>> runTestCoroutine(
                     // we expect these and will instead throw a more informative exception just below.
                     emptyList()
                 }.throwAll()
-                throw UncompletedCoroutinesError("The test coroutine was not completed after waiting for $dispatchTimeoutMs ms")
+                var completing: Boolean
+                val completionCause = try {
+                    coroutine.tryGetCompletionCause().also { completing = true }
+                } catch (e: Throwable) {
+                    completing = false
+                    null
+                }
+                var message = "After waiting for $dispatchTimeoutMs ms"
+                if (!completing)
+                    message += ", the test coroutine is not completing"
+                val activeChildren = coroutine.children.filter { it.isActive }.toList()
+                if (activeChildren.isNotEmpty())
+                    message += ", there were active child jobs: $activeChildren"
+                if (completing && activeChildren.isEmpty()) {
+                    // some sort of race condition? write something generic.
+                    message += ", the test coroutine was not completed"
+                }
+                val error = UncompletedCoroutinesError(message)
+                completionCause?.let { cause -> error.addSuppressed(cause) }
+                throw error
             }
         }
     }

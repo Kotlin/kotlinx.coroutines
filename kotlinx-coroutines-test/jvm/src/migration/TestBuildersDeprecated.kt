@@ -8,7 +8,6 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -137,9 +136,9 @@ public fun runTestWithLegacyScope(
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    val testScope = TestBodyCoroutine<Unit>(createTestCoroutineScope(context + RunningInRunTest))
+    val testScope = TestBodyCoroutine(createTestCoroutineScope(context + RunningInRunTest))
     return createTestResult {
-        runTestCoroutine(testScope, dispatchTimeoutMs, testBody) {
+        runTestCoroutine(testScope, dispatchTimeoutMs, TestBodyCoroutine::tryGetCompletionCause, testBody) {
             try {
                 testScope.cleanup()
                 emptyList()
@@ -169,9 +168,9 @@ public fun TestCoroutineScope.runTest(
     block: suspend TestCoroutineScope.() -> Unit
 ): TestResult = runTestWithLegacyScope(coroutineContext, dispatchTimeoutMs, block)
 
-private class TestBodyCoroutine<T>(
+private class TestBodyCoroutine(
     private val testScope: TestCoroutineScope,
-) : AbstractCoroutine<T>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope {
+) : AbstractCoroutine<Unit>(testScope.coroutineContext, initParentJob = true, active = true), TestCoroutineScope {
 
     override val testScheduler get() = testScope.testScheduler
 
@@ -187,4 +186,7 @@ private class TestBodyCoroutine<T>(
         )
 
     fun cleanup() = testScope.cleanupTestCoroutines()
+
+    /** Throws an exception if the coroutine is not completing. */
+    fun tryGetCompletionCause(): Throwable? = completionCause
 }

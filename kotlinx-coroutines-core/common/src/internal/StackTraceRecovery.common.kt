@@ -40,6 +40,7 @@ internal expect suspend inline fun recoverAndThrow(exception: Throwable): Nothin
  * The opposite of [recoverStackTrace].
  * It is guaranteed that `unwrap(recoverStackTrace(e)) === e`
  */
+@PublishedApi
 internal expect fun <E: Throwable> unwrap(exception: E): E
 
 internal expect class StackTraceElement
