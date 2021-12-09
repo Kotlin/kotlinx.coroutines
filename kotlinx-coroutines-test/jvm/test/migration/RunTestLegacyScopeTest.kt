@@ -6,6 +6,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -100,10 +101,20 @@ class RunTestLegacyScopeTest {
 
     @Test
     fun testRunTestTimingOutAndThrowing() = testResultMap({ fn ->
-        assertFailsWith<IllegalArgumentException> { fn() }
+        try {
+            fn()
+            fail("unreached")
+        } catch (e: UncompletedCoroutinesError) {
+            @Suppress("INVISIBLE_MEMBER")
+            val suppressed = unwrap(e).suppressedExceptions
+            assertEquals(1, suppressed.size)
+            assertIs<TestException>(suppressed[0]).also {
+                assertEquals("A", it.message)
+            }
+        }
     }) {
         runTestWithLegacyScope(dispatchTimeoutMs = 1) {
-            coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, IllegalArgumentException())
+            coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, TestException("A"))
             withContext(Dispatchers.Default) {
                 delay(10000)
                 3

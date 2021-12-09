@@ -159,14 +159,24 @@ class RunTestTest {
         }
     }
 
-    /** Tests uncaught exceptions taking priority over dispatch timeout in error reports. */
+    /** Tests uncaught exceptions being suppressed by the dispatch timeout error. */
     @Test
     @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestTimingOutAndThrowing() = testResultMap({ fn ->
-        assertFailsWith<IllegalArgumentException> { fn() }
+        try {
+            fn()
+            fail("unreached")
+        } catch (e: UncompletedCoroutinesError) {
+            @Suppress("INVISIBLE_MEMBER")
+            val suppressed = unwrap(e).suppressedExceptions
+            assertEquals(1, suppressed.size)
+            assertIs<TestException>(suppressed[0]).also {
+                assertEquals("A", it.message)
+            }
+        }
     }) {
         runTest(dispatchTimeoutMs = 1) {
-            coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, IllegalArgumentException())
+            coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, TestException("A"))
             withContext(Dispatchers.Default) {
                 delay(10000)
                 3
