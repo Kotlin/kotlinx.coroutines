@@ -161,11 +161,10 @@ public fun runTest(
 public fun TestScope.runTest(
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     testBody: suspend TestScope.() -> Unit
-): TestResult = with(asSpecificImplementation()) {
-    enter()
-    start(CoroutineStart.UNDISPATCHED, this, testBody)
+): TestResult = asSpecificImplementation().let {
+    it.enter()
     createTestResult {
-        runTestCoroutine(this, dispatchTimeoutMs, { tryGetCompletionCause() }) { leave() }
+        runTestCoroutine(it, dispatchTimeoutMs, TestScopeImpl::tryGetCompletionCause, testBody) { it.leave() }
     }
 }
 
@@ -196,13 +195,18 @@ internal const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
  * The [cleanup] procedure may either throw [UncompletedCoroutinesError] to denote that child coroutines were leaked, or
  * return a list of uncaught exceptions that should be reported at the end of the test.
  */
-internal suspend fun runTestCoroutine(
-    coroutine: AbstractCoroutine<Unit>,
+internal suspend fun <T: AbstractCoroutine<Unit>> runTestCoroutine(
+    coroutine: T,
     dispatchTimeoutMs: Long,
-    tryGetCompletionCause: () -> Throwable?,
+    tryGetCompletionCause: T.() -> Throwable?,
+    testBody: suspend T.() -> Unit,
     cleanup: () -> List<Throwable>,
 ) {
     val scheduler = coroutine.coroutineContext[TestCoroutineScheduler]!!
+    /** TODO: moving this [AbstractCoroutine.start] call outside [createTestResult] fails on JS. */
+    coroutine.start(CoroutineStart.UNDISPATCHED, coroutine) {
+        testBody()
+    }
     var completed = false
     while (!completed) {
         scheduler.advanceUntilIdle()
@@ -240,10 +244,10 @@ internal suspend fun runTestCoroutine(
  * Invoked on timeout in [runTest]. Almost always just builds a nice [UncompletedCoroutinesError] and throws it.
  * However, sometimes it detects that the coroutine completed, in which case it returns normally.
  */
-private inline fun handleTimeout(
-    coroutine: AbstractCoroutine<Unit>,
+private inline fun<T: AbstractCoroutine<Unit>> handleTimeout(
+    coroutine: T,
     dispatchTimeoutMs: Long,
-    tryGetCompletionCause: () -> Throwable?,
+    tryGetCompletionCause: T.() -> Throwable?,
     cleanup: () -> List<Throwable>,
 ) {
     val uncaughtExceptions = try {
@@ -253,7 +257,7 @@ private inline fun handleTimeout(
         emptyList()
     }
     val activeChildren = coroutine.children.filter { it.isActive }.toList()
-    val completionCause = if (coroutine.isCancelled) tryGetCompletionCause() else null
+    val completionCause = if (coroutine.isCancelled) coroutine.tryGetCompletionCause() else null
     var message = "After waiting for $dispatchTimeoutMs ms"
     if (completionCause == null)
         message += ", the test coroutine is not completing"
