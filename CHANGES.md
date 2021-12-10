@@ -1,5 +1,17 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.6.0-RC2
+
+* `@ExperimentalTime` is no longer needed for methods that use `Duration` (#3041).
+* `FlowCollector` is now `fun interface`, and corresponding inline extension is removed (#3047).
+* Fixed the exception handler being invoked several times on Android, thanks to @1zaman (#3056).
+* The deprecated `TestCoroutineScope` is no longer sealed, to simplify migration from it (#3072).
+* `runTest` gives more informative errors when it times out waiting for external completion (#3071).
+* `SendChannel.trySendBlocking` is now available on Kotlin/Native (#3064).
+* Fixed the bug due to which `Dispatchers.Main` was not used for `delay` and `withTimeout` (#3046).
+* JDK 1.6 is no longer required for building the project (#3043).
+* New version of Dokka is used, fixing the memory leak when building the coroutines and providing brand new reference visuals (https://kotlin.github.io/kotlinx.coroutines/) (#3051, #3054).
+
 ## Version 1.6.0-RC
 
 ### kotlinx-coroutines-test rework
@@ -34,7 +46,7 @@
 * `Flow` exception transparency mechanism is improved to be more exception-friendly (#3017, #2860).
 * Cancellation from `flat*` operators that leverage multiple coroutines is no longer propagated upstream (#2964).
 * `SharedFlow.collect` now returns `Nothing` (#2789, #2502).
-* `FlowCollector` is now `fun interface`, and corresponding inline extension is removed (#2790).
+* `DisposableHandle` is now `fun interface`, and corresponding inline extension is removed (#2790).
 * Deprecation level of all previously deprecated signatures is raised (#3024).
 * The version file is shipped with each JAR as a resource (#2941).
 * Unhandled exceptions on K/N are passed to the standard library function `processUnhandledException` (#2981).

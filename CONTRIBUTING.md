@@ -80,15 +80,12 @@ to Gradle (in Preferences -> Build, Execution, Deployment -> Build Tools -> Grad
 ### Environment requirements
 
 * JDK >= 11 referred to by the `JAVA_HOME` environment variable.
-* JDK 1.6 referred to by the `JDK_16` environment variable. 
-  It is OK to have `JDK_16` pointing to a non 1.6 JDK (e.g. `JAVA_HOME`) for external contributions.
 * JDK 1.8 referred to by the `JDK_18` environment variable. Only used by nightly stress-tests. 
   It is OK to have `JDK_18` to a non 1.8 JDK (e.g. `JAVA_HOME`) for external contributions.
-  
+
 For external contributions you can for example add this to your shell startup scripts (e.g. `~/.zshrc`):
 ```shell
 # This assumes JAVA_HOME is set already to a JDK >= 11 version
-export JDK_16="$JAVA_HOME"
 export JDK_18="$JAVA_HOME"
 ```
 
