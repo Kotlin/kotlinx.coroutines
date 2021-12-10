@@ -5,6 +5,7 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
@@ -97,6 +98,59 @@ class RunTestTest {
         }
     }
 
+    /** Tests that, on timeout, the names of the active coroutines are listed,
+     * whereas the names of the completed ones are not. */
+    @Test
+    @NoJs
+    @NoNative
+    fun testListingActiveCoroutinesOnTimeout(): TestResult {
+        val name1 = "GoodUniqueName"
+        val name2 = "BadUniqueName"
+        return testResultMap({
+            try {
+                it()
+                fail("unreached")
+            } catch (e: UncompletedCoroutinesError) {
+                assertTrue((e.message ?: "").contains(name1))
+                assertFalse((e.message ?: "").contains(name2))
+            }
+        }) {
+            runTest(dispatchTimeoutMs = 10) {
+                launch(CoroutineName(name1)) {
+                    CompletableDeferred<Unit>().await()
+                }
+                launch(CoroutineName(name2)) {
+                }
+            }
+        }
+    }
+
+    /** Tests that the [UncompletedCoroutinesError] suppresses an exception with which the coroutine is completing. */
+    @Test
+    fun testFailureWithPendingCoroutine() = testResultMap({
+        try {
+            it()
+            fail("unreached")
+        } catch (e: UncompletedCoroutinesError) {
+            @Suppress("INVISIBLE_MEMBER")
+            val suppressed = unwrap(e).suppressedExceptions
+            assertEquals(1, suppressed.size)
+            assertIs<TestException>(suppressed[0]).also {
+                assertEquals("A", it.message)
+            }
+        }
+    }) {
+        runTest(dispatchTimeoutMs = 10) {
+            launch {
+                withContext(NonCancellable) {
+                    awaitCancellation()
+                }
+            }
+            yield()
+            throw TestException("A")
+        }
+    }
+
     /** Tests that real delays can be accounted for with a large enough dispatch timeout. */
     @Test
     fun testRunTestWithLargeTimeout() = runTest(dispatchTimeoutMs = 5000) {
@@ -105,14 +159,24 @@ class RunTestTest {
         }
     }
 
-    /** Tests uncaught exceptions taking priority over dispatch timeout in error reports. */
+    /** Tests uncaught exceptions being suppressed by the dispatch timeout error. */
     @Test
     @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestTimingOutAndThrowing() = testResultMap({ fn ->
-        assertFailsWith<IllegalArgumentException> { fn() }
+        try {
+            fn()
+            fail("unreached")
+        } catch (e: UncompletedCoroutinesError) {
+            @Suppress("INVISIBLE_MEMBER")
+            val suppressed = unwrap(e).suppressedExceptions
+            assertEquals(1, suppressed.size)
+            assertIs<TestException>(suppressed[0]).also {
+                assertEquals("A", it.message)
+            }
+        }
     }) {
         runTest(dispatchTimeoutMs = 1) {
-            coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, IllegalArgumentException())
+            coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, TestException("A"))
             withContext(Dispatchers.Default) {
                 delay(10000)
                 3

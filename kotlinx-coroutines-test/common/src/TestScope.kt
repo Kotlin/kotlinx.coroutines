@@ -216,6 +216,9 @@ internal class TestScopeImpl(context: CoroutineContext) :
         }
     }
 
+    /** Throws an exception if the coroutine is not completing. */
+    fun tryGetCompletionCause(): Throwable? = completionCause
+
     override fun toString(): String =
         "TestScope[" + (if (finished) "test ended" else if (entered) "test started" else "test not started") + "]"
 }
