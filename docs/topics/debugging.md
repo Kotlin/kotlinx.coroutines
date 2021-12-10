@@ -7,7 +7,6 @@
 * [Stacktrace recovery](#stacktrace-recovery)
   * [Stacktrace recovery machinery](#stacktrace-recovery-machinery)
 * [Debug agent](#debug-agent)
-  * [Debug agent and Android](#debug-agent-and-android)
 * [Android optimization](#android-optimization)
 
 <!--- END -->
@@ -77,12 +76,6 @@ additionally enhancing stacktraces with information where coroutine was created.
 
 The full tutorial of how to use debug agent can be found in the corresponding [readme](../../kotlinx-coroutines-debug/README.md).
 
-### Debug agent and Android
-
-Unfortunately, Android runtime does not support Instrument API necessary for `kotlinx-coroutines-debug` to function, triggering `java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/ManagementFactory;`.
-
-Nevertheless, it will be possible to support debug agent on Android as soon as [GradleAspectJ-Android](https://github.com/Archinamon/android-gradle-aspectj)  will support android-gradle 3.3 
-
 <!---
 Make an exception googlable
 java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/ManagementFactory;
@@ -98,8 +91,8 @@ java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/Mana
 ## Android optimization
 
 In optimized (release) builds with R8 version 1.6.0 or later both 
-[Debugging mode](../../docs/debugging.md#debug-mode) and 
-[Stacktrace recovery](../../docs/debugging.md#stacktrace-recovery) 
+[Debugging mode](debugging.md#debug-mode) and 
+[Stacktrace recovery](debugging.md#stacktrace-recovery) 
 are permanently turned off. 
 For more details see ["Optimization" section for Android](../../ui/kotlinx-coroutines-android/README.md#optimization). 
 
