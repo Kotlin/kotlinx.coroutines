@@ -161,4 +161,22 @@ class HandlerDispatcherTest : TestBase() {
         assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
         assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
     }
+
+    @Test
+    fun testDelayIsDelegatedToMain() = runTest {
+        val mainLooper = shadowOf(Looper.getMainLooper())
+        mainLooper.pause()
+        val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
+        assertNull(mainMessageQueue.head)
+        val job = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+            expect(1)
+            delay(10_000_000)
+            expect(3)
+        }
+        expect(2)
+        assertNotNull(mainMessageQueue.head)
+        mainLooper.runOneTask()
+        job.join()
+        finish(4)
+    }
 }
