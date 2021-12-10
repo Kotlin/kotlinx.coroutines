@@ -14,6 +14,10 @@ import kotlin.jvm.*
 /**
  * Executes a [testBody] inside an immediate execution dispatcher.
  *
+ * This method is deprecated in favor of [runTest]. Please see the
+ * [migration guide](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md)
+ * for an instruction on how to update the code for the new API.
+ *
  * This is similar to [runBlocking] but it will immediately progress past delays and into [launch] and [async] blocks.
  * You can use this to write tests that execute in the presence of calls to [delay] without causing your test to take
  * extra time.
@@ -45,7 +49,10 @@ import kotlin.jvm.*
  *        then they must implement [DelayController] and [TestCoroutineExceptionHandler] respectively.
  * @param testBody The code of the unit-test.
  */
-@Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
+@Deprecated("Use `runTest` instead to support completing from other dispatchers. " +
+    "Please see the migration guide for details: " +
+    "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
+    level = DeprecationLevel.WARNING)
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun runBlockingTest(
     context: CoroutineContext = EmptyCoroutineContext,
@@ -101,8 +108,16 @@ public fun runBlockingTestOnTestScope(
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineScope].
+ *
+ * This method is deprecated in favor of [runTest], whereas [TestCoroutineScope] is deprecated in favor of [TestScope].
+ * Please see the
+ * [migration guide](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md)
+ * for an instruction on how to update the code for the new API.
  */
-@Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
+@Deprecated("Use `runTest` instead to support completing from other dispatchers. " +
+    "Please see the migration guide for details: " +
+    "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
+    level = DeprecationLevel.WARNING)
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(coroutineContext, block)
@@ -117,8 +132,16 @@ public fun TestScope.runBlockingTest(block: suspend TestScope.() -> Unit): Unit 
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
+ *
+ * This method is deprecated in favor of [runTest], whereas [TestCoroutineScope] is deprecated in favor of [TestScope].
+ * Please see the
+ * [migration guide](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md)
+ * for an instruction on how to update the code for the new API.
  */
-@Deprecated("Use `runTest` instead to support completing from other dispatchers.", level = DeprecationLevel.WARNING)
+@Deprecated("Use `runTest` instead to support completing from other dispatchers. " +
+    "Please see the migration guide for details: " +
+    "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
+    level = DeprecationLevel.WARNING)
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(this, block)

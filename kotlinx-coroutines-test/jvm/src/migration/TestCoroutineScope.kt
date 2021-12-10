@@ -11,9 +11,17 @@ import kotlin.coroutines.*
 
 /**
  * A scope which provides detailed control over the execution of coroutines for tests.
+ *
+ * This scope is deprecated in favor of [TestScope].
+ * Please see the
+ * [migration guide](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md)
+ * for an instruction on how to update the code for the new API.
  */
 @ExperimentalCoroutinesApi
-@Deprecated("Use `TestScope` in combination with `runTest` instead")
+@Deprecated("Use `TestScope` in combination with `runTest` instead." +
+    "Please see the migration guide for details: " +
+    "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
+    level = DeprecationLevel.WARNING)
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public interface TestCoroutineScope : CoroutineScope {
     /**
@@ -138,6 +146,11 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
 
 /**
  * A coroutine scope for launching test coroutines.
+ *
+ * This is a function for aiding in migration from [TestCoroutineScope] to [TestScope].
+ * Please see the
+ * [migration guide](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md)
+ * for an instruction on how to update the code for the new API.
  *
  * It ensures that all the test module machinery is properly initialized.
  * * If [context] doesn't define a [TestCoroutineScheduler] for orchestrating the virtual time used for delay-skipping,
