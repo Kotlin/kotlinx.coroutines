@@ -11,6 +11,12 @@ import kotlinx.coroutines.*
  * Control the virtual clock time of a [CoroutineDispatcher].
  *
  * Testing libraries may expose this interface to the tests instead of [TestCoroutineDispatcher].
+ *
+ * This interface is deprecated without replacement.
+ * Instead, [TestCoroutineScheduler] is supposed to be used to control the virtual time.
+ * Please see the
+ * [migration guide](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md)
+ * for an instruction on how to update the code for the new API.
  */
 @ExperimentalCoroutinesApi
 @Deprecated(
