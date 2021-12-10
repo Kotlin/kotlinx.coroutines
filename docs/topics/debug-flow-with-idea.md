@@ -18,7 +18,7 @@ Create a Kotlin [flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-corou
 
     The `src` directory contains Kotlin source files and resources. The `main.kt` file contains sample code that will print `Hello World!`.
 
-2. Create the `simple()` function that returns a flow of three numbers:
+3. Create the `simple()` function that returns a flow of three numbers:
 
     * Use the [`delay()`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html) function to imitate CPU-consuming blocking code. It suspends the coroutine for 100 ms without blocking the thread.
     * Produce the values in the `for` loop using the [`emit()`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow-collector/emit.html) function.
@@ -36,7 +36,7 @@ Create a Kotlin [flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-corou
     }
     ```
 
-3. Change the code in the `main()` function:
+4. Change the code in the `main()` function:
 
     * Use the [`runBlocking()`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html) block to wrap a coroutine.
     * Collect the emitted values using the [`collect()`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/collect.html) function.
@@ -53,13 +53,13 @@ Create a Kotlin [flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-corou
     }
     ```
 
-4. Build the code by clicking **Build Project**.
+5. Build the code by clicking **Build Project**.
 
     ![Build an application](flow-build-project.png)
 
 ## Debug the coroutine
 
-1. Set a breakpoint at the at the line where the `emit()` function is called:
+1. Set a breakpoint at the line where the `emit()` function is called:
 
     ![Build a console application](flow-breakpoint.png)
 
@@ -74,7 +74,7 @@ Create a Kotlin [flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-corou
 
     ![Debug the coroutine](flow-debug-1.png)
 
-3. Resume the debugger session by clicking **Resume program** in the **Debug** tool window. The program stops at the same breakpoint.
+3. Resume the debugger session by clicking **Resume Program** in the **Debug** tool window. The program stops at the same breakpoint.
 
     ![Debug the coroutine](flow-resume-debug.png)
 
@@ -101,7 +101,7 @@ Create a Kotlin [flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-corou
     }
     ```
 
-4. Build the code by clicking **Build Project**.
+3. Build the code by clicking **Build Project**.
 
 ## Debug a Kotlin flow with two coroutines
 
@@ -117,7 +117,7 @@ Create a Kotlin [flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-corou
     The `buffer()` function buffers emitted values from the flow.
     The emitter coroutine has the **RUNNING** status, and the collector coroutine has the **SUSPENDED** status.
 
-2. Resume the debugger session by clicking **Resume program** in the **Debug** tool window.
+3. Resume the debugger session by clicking **Resume Program** in the **Debug** tool window.
 
     ![Debugging coroutines](flow-debug-4.png)
 
