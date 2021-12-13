@@ -228,6 +228,16 @@ internal open class BufferedChannel<E>(
                     } else false
                 }
             }
+            is ReceiveItr<*> -> {
+                this as ReceiveItr<E>
+                this.iterator.receiveResult = success(element)
+                this.cont.tryResume(true, idempotent = null, onCancellation = onCancellation).let {
+                    if (it !== null) {
+                        this.cont.completeResume(it)
+                        true
+                    } else false
+                }
+            }
             is CancellableContinuation<*> -> {
                 this as CancellableContinuation<E>
                 tryResume(element, idempotent = null, onCancellation = onCancellation).let {
@@ -849,7 +859,7 @@ internal open class BufferedChannel<E>(
                                 break
                             }
                         }
-                        state is CancellableContinuation<*> || state is ReceiveCatching<*> || state is SelectInstance<*> -> {
+                        state is CancellableContinuation<*> || state is ReceiveCatching<*> || state is ReceiveItr<*> || state is SelectInstance<*> -> {
                             if (segm.casState(i, state, CLOSED)) {
                                 if (state.closeReceiver()) expandBuffer()
                                 break
@@ -877,6 +887,14 @@ internal open class BufferedChannel<E>(
             is ReceiveCatching<*> -> {
                 this.receiver.tryResume(closed(cause))?.also { this.receiver.completeResume(it) }.let { it !== null }
             }
+            is ReceiveItr<*> -> {
+                iterator.receiveResult = closed(cause)
+                if (cause == null) {
+                    cont.tryResume(false)?.also { this.cont.completeResume(it) }.let { it !== null }
+                } else {
+                    cont.tryResumeWithException(cause)?.also { this.cont.completeResume(it) }.let { it !== null }
+                }
+            }
             is SelectInstance<*> -> this.trySelect(this@BufferedChannel, CLOSED)
             else -> error("Unexpected waiter: $this")
         }
@@ -888,28 +906,82 @@ internal open class BufferedChannel<E>(
     // ######################
 
     // TODO make it extension function after `receiveOrClosed` is added.
-    public override fun iterator(): ChannelIterator<E> = object : ChannelIterator<E> {
-        private var result: ChannelResult<E>? = null
+    public override fun iterator(): ChannelIterator<E> = Itr()
+
+    internal inner class Itr : ChannelIterator<E> {
+        var receiveResult: ChannelResult<E>? = null
         override suspend fun hasNext(): Boolean {
-            if (result == null) {
-                result = receiveCatching()
-            }
-            result!!.let {
-                it.onSuccess { return true }
-                it.onFailure { cause ->
+            // Try to receive the next element if required.
+            if (receiveResult == null) {
+                val receiveResult = tryReceive()
+                receiveResult.onSuccess {
+                    this.receiveResult = receiveResult
+                    return true
+                }.onClosed { cause ->
+                    this.receiveResult = receiveResult
                     if (cause == null) return false
                     else throw recoverStackTrace(cause)
                 }
             }
-            error("unreachable")
+            // The operation is likely to suspend, go to the slow-path.
+            return hasNextSuspend()
         }
+
+        private suspend fun hasNextSuspend() = suspendCancellableCoroutineReusable<Boolean> sc@ { cont ->
+            var segm = receiveSegment.value
+            while (true) {
+                val r = this@BufferedChannel.receivers.getAndIncrement()
+                val id = r / SEGMENT_SIZE
+                val i = (r % SEGMENT_SIZE).toInt()
+                if (segm.id != id) {
+                    segm = findSegmentReceive(id, segm).let {
+                        if (it.isClosed) {
+                            if (closeStatus.value == 1) completeClose() else completeCancel()
+                            cont.resumeWithException(recoverStackTrace(receiveException(getCause())))
+                            return@sc
+                        } else it.segment
+                    }
+                }
+                if (segm.id != id) {
+                    receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
+                    continue
+                }
+                val result = updateCellReceive(segm, i, r, ReceiveItr(cont, this))
+                when {
+                    result === SUSPEND -> {
+                        cont.invokeOnCancellation { segm.onCancellation(i) }
+                        onReceiveEnqueued()
+                        return@sc
+                    }
+                    result === FAILED -> continue
+                    result !== NO_WAITER -> { // element
+                        this.receiveResult = success(result as E)
+                        cont.resume(true)
+                        return@sc
+                    }
+                    result === NO_WAITER -> error("unexpected")
+                }
+            }
+        }
+
+//        private suspend fun hasNextSuspend(): Boolean {
+//            this.receiveResult = receiveCatching()
+//            receiveResult!!.let {
+//                it.onSuccess { return true }
+//                it.onClosed { cause ->
+//                    if (cause == null) return false
+//                    else throw recoverStackTrace(cause)
+//                }
+//            }
+//            error("unreachable")
+//        }
 
         @Suppress("UNCHECKED_CAST")
         override fun next(): E {
-            // Read the already received result or null if [hasNext] has not been invoked yet.
-            val result = this.result ?: error("`hasNext()` has not been invoked")
+            // Read the already received result, or null if [hasNext] has not been invoked yet.
+            val result = this.receiveResult ?: error("`hasNext()` has not been invoked")
             result.onSuccess { element ->
-                this.result = null
+                this.receiveResult = null
                 return element
             }.onFailure { cause ->
                 throw recoverStackTrace(receiveException(cause))
@@ -1089,6 +1161,8 @@ private class WaiterEB(@JvmField val waiter: Any) {
 }
 
 private class ReceiveCatching<E>(@JvmField val receiver: CancellableContinuation<ChannelResult<E>>)
+private class ReceiveItr<E>(@JvmField val cont: CancellableContinuation<Boolean>, @JvmField val  iterator: BufferedChannel<E>.Itr)
+
 
 // Number of cells in each segment
 private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)

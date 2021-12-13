@@ -154,6 +154,10 @@ class ArrayChannelTest : TestBase() {
 
     @Test
     fun testBufferSizeFromTheMiddle() = runTest {
+        GlobalScope.launch {
+            delay(1000)
+            println()
+        }
         val capacity = 42
         val channel = Channel<Int>(capacity)
         repeat(4) {
