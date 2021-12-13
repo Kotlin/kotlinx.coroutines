@@ -45,7 +45,7 @@ To release a new `<version>` of `kotlinx-coroutines`:
 0. On [TeamCity integration server](https://teamcity.jetbrains.com/project.html?projectId=KotlinTools_KotlinxCoroutines):
    * Wait until "Build" configuration for committed `master` branch passes tests.
    * Run "Deploy (Configure, RUN THIS ONE)" configuration with the corresponding new version:
-     - Use the `<version>` branch
+     - Use the `version-<version>` branch
      - Set the `DeployVersion` build parameter to `<version>`
    * Wait until all four "Deploy" configurations finish.
 
