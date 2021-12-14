@@ -23,6 +23,7 @@ class FailingTests {
 
     /** [TestDispatchersTest.testMainMocking]. */
     @Test
+    @Ignore
     fun testAfterTestIsConcurrent() = runTest {
         try {
             val mainAtStart = TestMainDispatcher.currentTestDispatcher ?: return@runTest
