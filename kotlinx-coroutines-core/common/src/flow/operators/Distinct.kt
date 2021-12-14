@@ -71,7 +71,6 @@ private class DistinctFlowImpl<T>(
     @JvmField val keySelector: (T) -> Any?,
     @JvmField val areEquivalent: (old: Any?, new: Any?) -> Boolean
 ): Flow<T> {
-    @InternalCoroutinesApi
     override suspend fun collect(collector: FlowCollector<T>) {
         var previousKey: Any? = NULL
         upstream.collect { value ->

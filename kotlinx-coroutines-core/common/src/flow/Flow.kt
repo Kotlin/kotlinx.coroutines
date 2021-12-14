@@ -172,7 +172,7 @@ import kotlin.coroutines.*
  *
  * **The `Flow` interface is not stable for inheritance in 3rd party libraries**, as new methods
  * might be added to this interface in the future, but is stable for use.
- * Use the `flow { ... }` builder function to create an implementation.
+ * Use the `flow { ... }` builder function to create an implementation, or extend [AbstractFlow].
  */
 public interface Flow<out T> {
     /**
@@ -184,7 +184,6 @@ public interface Flow<out T> {
      * should be used. Such limitation ensures that the context preservation property is not violated and prevents most
      * of the developer mistakes related to concurrency, inconsistent flow dispatchers and cancellation.
      */
-    @InternalCoroutinesApi
     public suspend fun collect(collector: FlowCollector<T>)
 }
 
@@ -214,7 +213,6 @@ public interface Flow<out T> {
 @FlowPreview
 public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
-    @InternalCoroutinesApi
     public final override suspend fun collect(collector: FlowCollector<T>) {
         val safeCollector = SafeCollector(collector, coroutineContext)
         try {
