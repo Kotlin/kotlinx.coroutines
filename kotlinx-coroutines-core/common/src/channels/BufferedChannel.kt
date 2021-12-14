@@ -71,11 +71,11 @@ internal open class BufferedChannel<E>(
     public override suspend fun send(element: E): Unit {
         var segm = sendSegment.value
         while (true) {
-//            if (closeStatus.value > 0) {
-//                if (closeStatus.value == 1) completeClose() else completeCancel()
-//                onUndeliveredElement?.invoke(element);
-//                throw recoverStackTrace(sendException(getCause()))
-//            }
+            if (closeStatus.value > 0) {
+                if (closeStatus.value == 1) completeClose() else completeCancel()
+                onUndeliveredElement?.invoke(element);
+                throw recoverStackTrace(sendException(getCause()))
+            }
             val s = senders.getAndIncrement()
             val id = s / SEGMENT_SIZE
             val i = (s % SEGMENT_SIZE).toInt()
@@ -228,12 +228,14 @@ internal open class BufferedChannel<E>(
                     } else false
                 }
             }
-            is ReceiveItr<*> -> {
-                this as ReceiveItr<E>
-                this.iterator.receiveResult = success(element)
-                this.cont.tryResume(true, idempotent = null, onCancellation = onCancellation).let {
+            is BufferedChannel<*>.Itr -> {
+                this as BufferedChannel<E>.Itr
+                this.receiveResult = success(element)
+                val cont = this.cont!!
+                this.cont = null
+                cont.tryResume(true, idempotent = null, onCancellation = onCancellation).let {
                     if (it !== null) {
-                        this.cont.completeResume(it)
+                        cont.completeResume(it)
                         true
                     } else false
                 }
@@ -859,7 +861,7 @@ internal open class BufferedChannel<E>(
                                 break
                             }
                         }
-                        state is CancellableContinuation<*> || state is ReceiveCatching<*> || state is ReceiveItr<*> || state is SelectInstance<*> -> {
+                        state is CancellableContinuation<*> || state is ReceiveCatching<*> || state is BufferedChannel<*>.Itr || state is SelectInstance<*> -> {
                             if (segm.casState(i, state, CLOSED)) {
                                 if (state.closeReceiver()) expandBuffer()
                                 break
@@ -887,12 +889,13 @@ internal open class BufferedChannel<E>(
             is ReceiveCatching<*> -> {
                 this.receiver.tryResume(closed(cause))?.also { this.receiver.completeResume(it) }.let { it !== null }
             }
-            is ReceiveItr<*> -> {
-                iterator.receiveResult = closed(cause)
+            is BufferedChannel<*>.Itr -> {
+                receiveResult = closed(cause)
+                val cont = this.cont!!
                 if (cause == null) {
-                    cont.tryResume(false)?.also { this.cont.completeResume(it) }.let { it !== null }
+                    cont.tryResume(false)?.also { cont.completeResume(it); this.cont = null }.let { it !== null }
                 } else {
-                    cont.tryResumeWithException(cause)?.also { this.cont.completeResume(it) }.let { it !== null }
+                    cont.tryResumeWithException(cause)?.also { cont.completeResume(it); this.cont = null }.let { it !== null }
                 }
             }
             is SelectInstance<*> -> this.trySelect(this@BufferedChannel, CLOSED)
@@ -910,6 +913,9 @@ internal open class BufferedChannel<E>(
 
     internal inner class Itr : ChannelIterator<E> {
         var receiveResult: ChannelResult<E>? = null
+        @JvmField
+        var cont: CancellableContinuation<Boolean>? = null
+
         override suspend fun hasNext(): Boolean {
             // Try to receive the next element if required.
             if (receiveResult == null) {
@@ -928,6 +934,7 @@ internal open class BufferedChannel<E>(
         }
 
         private suspend fun hasNextSuspend() = suspendCancellableCoroutineReusable<Boolean> sc@ { cont ->
+            this.cont = cont
             var segm = receiveSegment.value
             while (true) {
                 val r = this@BufferedChannel.receivers.getAndIncrement()
@@ -937,7 +944,13 @@ internal open class BufferedChannel<E>(
                     segm = findSegmentReceive(id, segm).let {
                         if (it.isClosed) {
                             if (closeStatus.value == 1) completeClose() else completeCancel()
-                            cont.resumeWithException(recoverStackTrace(receiveException(getCause())))
+                            this.cont = null
+                            val cause = getCause()
+                            if (cause == null) {
+                                cont.resume(false)
+                            } else {
+                                cont.resumeWithException(recoverStackTrace(cause))
+                            }
                             return@sc
                         } else it.segment
                     }
@@ -946,7 +959,7 @@ internal open class BufferedChannel<E>(
                     receivers.compareAndSet(r + 1, segm.id * SEGMENT_SIZE)
                     continue
                 }
-                val result = updateCellReceive(segm, i, r, ReceiveItr(cont, this))
+                val result = updateCellReceive(segm, i, r, this)
                 when {
                     result === SUSPEND -> {
                         cont.invokeOnCancellation { segm.onCancellation(i) }
@@ -956,6 +969,7 @@ internal open class BufferedChannel<E>(
                     result === FAILED -> continue
                     result !== NO_WAITER -> { // element
                         this.receiveResult = success(result as E)
+                        this.cont = null
                         cont.resume(true)
                         return@sc
                     }
@@ -1161,8 +1175,6 @@ private class WaiterEB(@JvmField val waiter: Any) {
 }
 
 private class ReceiveCatching<E>(@JvmField val receiver: CancellableContinuation<ChannelResult<E>>)
-private class ReceiveItr<E>(@JvmField val cont: CancellableContinuation<Boolean>, @JvmField val  iterator: BufferedChannel<E>.Itr)
-
 
 // Number of cells in each segment
 private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.bufferedChannel.segmentSize", 32)
