@@ -178,6 +178,7 @@ internal open class CancellableContinuationImpl<in T>(
             if (!_state.compareAndSet(state, update)) return@loop // retry on cas failure
             // Invoke cancel handler if it was present
             (state as? CancelHandler)?.let { callCancelHandler(it, cause) }
+            segment?.onCancellation(i) // TODO fix me, pleeeeease
             // Complete state update
             detachChildIfNonResuable()
             dispatchResume(resumeMode) // no need for additional cancellation checks
@@ -329,6 +330,13 @@ internal open class CancellableContinuationImpl<in T>(
 
     override fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?) =
         resumeImpl(value, resumeMode, onCancellation)
+
+    private var segment: Segment<*>? = null
+    private var i: Int = -1
+    internal fun invokeOnCancellation(segment: Segment<*>, i: Int) {
+        this.segment = segment
+        this.i = i
+    }
 
     public override fun invokeOnCancellation(handler: CompletionHandler) {
         val cancelHandler = makeCancelHandler(handler)

@@ -187,7 +187,8 @@ internal open class BufferedChannel<E>(
                     return
                 }
                 result === SUSPEND -> {
-                    cont.invokeOnCancellation(segm.makeCancelHandler(i))
+                    cont as CancellableContinuationImpl<*>
+                    cont.invokeOnCancellation(segm, i)
                     return
                 }
                 result === FAILED -> continue
@@ -462,7 +463,8 @@ internal open class BufferedChannel<E>(
         val result = updateCellReceive(segm, i, r, cont)
         when {
             result === SUSPEND -> {
-                cont.invokeOnCancellation(segm.makeCancelHandler(i))
+                cont as CancellableContinuationImpl<*>
+                cont.invokeOnCancellation(segm, i)
                 onReceiveEnqueued()
             }
             result === FAILED -> {
@@ -470,7 +472,10 @@ internal open class BufferedChannel<E>(
                     startSegment = receiveSegment.value,
                     waiter = cont,
                     onRendezvous = { element -> cont.resume(element); onReceiveEnqueued() },
-                    onSuspend = { segm, i -> cont.invokeOnCancellation(segm.makeCancelHandler(i)); onReceiveEnqueued() },
+                    onSuspend = { segm, i ->
+                        cont as CancellableContinuationImpl<*>
+                        cont.invokeOnCancellation(segm, i)
+                        onReceiveEnqueued() },
                     onClosed = { cont.resumeWithException(receiveException(getCause())); onReceiveEnqueued() },
                     onNoWaiter = { _, _, _ -> error("unexpected") }
                 )
@@ -492,14 +497,19 @@ internal open class BufferedChannel<E>(
         when {
             result === SUSPEND -> {
                 onReceiveEnqueued()
-                cont.invokeOnCancellation(segm.makeCancelHandler(i))
+                cont as CancellableContinuationImpl<*>
+                cont.invokeOnCancellation(segm, i)
             }
             result === FAILED -> {
                 receiveImpl<Any?>(
                     startSegment = receiveSegment.value,
                     waiter = waiter,
                     onRendezvous = { element -> cont.resume(success(element)); onReceiveEnqueued() },
-                    onSuspend = { segm, i -> cont.invokeOnCancellation(segm.makeCancelHandler(i)); onReceiveEnqueued() },
+                    onSuspend = { segm, i ->
+                        cont as CancellableContinuationImpl<*>
+                        cont.invokeOnCancellation(segm, i)
+                        onReceiveEnqueued()
+                                },
                     onClosed = { cont.resume(closed(getCause())); onReceiveEnqueued() },
                     onNoWaiter = { _, _, _ -> error("unexpected") }
                 )
@@ -1217,7 +1227,7 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
         return (if (element === NULL_ELEMENT) null else element) as E
     }
 
-    fun onCancellation(i: Int) {
+    override fun onCancellation(i: Int) {
         data[i * 2 + 1].update {
             if (it === RESUMING_R || it === RESUMING_EB || it === RESUMING_R_EB ||
                 it === INTERRUPTED || it === INTERRUPTED_R || it === INTERRUPTED_EB ||

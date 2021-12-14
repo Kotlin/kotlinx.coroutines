@@ -214,6 +214,8 @@ internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers
     // returns `true` if this segment is logically removed after the decrement.
     internal fun decPointers() = cleanedAndPointers.addAndGet(-(1 shl POINTERS_SHIFT)) == maxSlots
 
+    internal open fun onCancellation(i: Int) {}
+
     /**
      * Invoked on each slot clean-up; should not be invoked twice for the same slot.
      */
