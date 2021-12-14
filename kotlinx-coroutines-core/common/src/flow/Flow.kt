@@ -172,7 +172,7 @@ import kotlin.coroutines.*
  *
  * **The `Flow` interface is not stable for inheritance in 3rd party libraries**, as new methods
  * might be added to this interface in the future, but is stable for use.
- * Use the `flow { ... }` builder function to create an implementation or extend [AbstractFlow].
+ * Use the `flow { ... }` builder function to create an implementation, or extend [AbstractFlow].
  */
 public interface Flow<out T> {
     /**
