@@ -12,6 +12,7 @@ import kotlin.jvm.*
 
 internal open class BufferedChannel<E>(
     capacity: Int,
+    @JvmField
     protected val onUndeliveredElement: OnUndeliveredElement<E>? = null
 ) : Channel<E> {
     init {
@@ -73,7 +74,7 @@ internal open class BufferedChannel<E>(
         while (true) {
             if (closeStatus.value > 0) {
                 if (closeStatus.value == 1) completeClose() else completeCancel()
-                onUndeliveredElement?.invoke(element);
+                onUndeliveredElement?.invoke(element)
                 throw recoverStackTrace(sendException(getCause()))
             }
             val s = senders.getAndIncrement()
@@ -230,7 +231,7 @@ internal open class BufferedChannel<E>(
             }
             is BufferedChannel<*>.Itr -> {
                 this as BufferedChannel<E>.Itr
-                this.receiveResult = success(element)
+                this.receiveResult = element
                 val cont = this.cont!!
                 this.cont = null
                 cont.tryResume(true, idempotent = null, onCancellation = onCancellation).let {
@@ -890,7 +891,7 @@ internal open class BufferedChannel<E>(
                 this.receiver.tryResume(closed(cause))?.also { this.receiver.completeResume(it) }.let { it !== null }
             }
             is BufferedChannel<*>.Itr -> {
-                receiveResult = closed(cause)
+                receiveResult = Closed(cause)
                 val cont = this.cont!!
                 if (cause == null) {
                     cont.tryResume(false)?.also { cont.completeResume(it); this.cont = null }.let { it !== null }
@@ -908,11 +909,10 @@ internal open class BufferedChannel<E>(
     // ## Iterator Support ##
     // ######################
 
-    // TODO make it extension function after `receiveOrClosed` is added.
-    public override fun iterator(): ChannelIterator<E> = Itr()
+    override fun iterator(): ChannelIterator<E> = Itr()
 
     internal inner class Itr : ChannelIterator<E> {
-        var receiveResult: ChannelResult<E>? = null
+        var receiveResult: Any? = null
         @JvmField
         var cont: CancellableContinuation<Boolean>? = null
 
@@ -921,10 +921,10 @@ internal open class BufferedChannel<E>(
             if (receiveResult == null) {
                 val receiveResult = tryReceive()
                 receiveResult.onSuccess {
-                    this.receiveResult = receiveResult
+                    this.receiveResult = (it ?: NULL_ELEMENT)
                     return true
                 }.onClosed { cause ->
-                    this.receiveResult = receiveResult
+                    this.receiveResult = Closed(cause)
                     if (cause == null) return false
                     else throw recoverStackTrace(cause)
                 }
@@ -944,8 +944,9 @@ internal open class BufferedChannel<E>(
                     segm = findSegmentReceive(id, segm).let {
                         if (it.isClosed) {
                             if (closeStatus.value == 1) completeClose() else completeCancel()
-                            this.cont = null
                             val cause = getCause()
+                            this.cont = null
+                            this.receiveResult = Closed(cause)
                             if (cause == null) {
                                 cont.resume(false)
                             } else {
@@ -968,7 +969,7 @@ internal open class BufferedChannel<E>(
                     }
                     result === FAILED -> continue
                     result !== NO_WAITER -> { // element
-                        this.receiveResult = success(result as E)
+                        this.receiveResult = result
                         this.cont = null
                         cont.resume(true)
                         return@sc
@@ -994,15 +995,13 @@ internal open class BufferedChannel<E>(
         override fun next(): E {
             // Read the already received result, or null if [hasNext] has not been invoked yet.
             val result = this.receiveResult ?: error("`hasNext()` has not been invoked")
-            result.onSuccess { element ->
-                this.receiveResult = null
-                return element
-            }.onFailure { cause ->
-                throw recoverStackTrace(receiveException(cause))
-            }
-            error("unreachable")
+            if (result === NULL_ELEMENT) return null as E
+            if (result is Closed) throw recoverStackTrace(receiveException(result.cause))
+            this.receiveResult = null
+            return result as E
         }
     }
+    private class Closed(@JvmField val cause: Throwable?)
 
     override fun toString(): String {
         val data = arrayListOf<String>()
