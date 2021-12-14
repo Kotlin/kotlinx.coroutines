@@ -140,7 +140,6 @@ public interface SharedFlow<out T> : Flow<T> {
      *
      * @see [Flow.collect]
      */
-    @InternalCoroutinesApi
     override suspend fun collect(collector: FlowCollector<T>): Nothing
 }
 
