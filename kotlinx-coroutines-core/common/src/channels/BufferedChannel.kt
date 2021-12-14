@@ -156,23 +156,75 @@ internal open class BufferedChannel<E>(
                 cont.resume(Unit)
             }
             result === SUSPEND -> {
-                cont.invokeOnCancellation {
-                    onUndeliveredElement?.invoke(segm.retrieveElement(i))
-                    segm.onCancellation(i)
-                }
+                cont.invokeOnCancellation(segm.makeCancelHandler(i, onUndeliveredElement))
             }
             result === FAILED -> {
-                sendImpl(
-                    element = element,
-                    startSegment = segm,
-                    waiter = cont,
-                    onRendezvous = { cont.resume(Unit) },
-                    onSuspend = { segm, i -> cont.invokeOnCancellation { segm.onCancellation(i) } },
-                    onClosed = { cont.resumeWithException(sendException(getCause())) },
-                    onNoWaiter = { _, _, _, _ -> error("Waiter is not empty") })
+                sendSlowPath(segm, element, cont)
             }
         }
     }
+
+    private fun sendSlowPath(startSegment: ChannelSegment<E>, element: E, cont: CancellableContinuation<Unit>) {
+        var segm = startSegment
+        while (true) {
+            if (closeStatus.value > 0) {
+                if (closeStatus.value == 1) completeClose() else completeCancel()
+                cont.resumeWithException(sendException(getCause()))
+                return
+            }
+            val s = senders.getAndIncrement()
+            val id = s / SEGMENT_SIZE
+            val i = (s % SEGMENT_SIZE).toInt()
+            if (segm.id != id)  segm = findSegmentSend(id, segm, element)
+            if (segm.id != id) {
+                senders.compareAndSet(s + 1, segm.id * SEGMENT_SIZE)
+                continue
+            }
+            val result = updateCellSend(segm, i, element, s, cont)
+            when {
+                result === RENDEZVOUS -> {
+                    cont.resume(Unit)
+                    return
+                }
+                result === SUSPEND -> {
+                    cont.invokeOnCancellation(segm.makeCancelHandler(i))
+                    return
+                }
+                result === FAILED -> continue
+                result === NO_WAITER -> error("Impossible")
+            }
+        }
+    }
+
+//    private suspend fun sendSuspend(
+//        segm: ChannelSegment<E>,
+//        i: Int,
+//        element: E,
+//        s: Long
+//    ) = suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
+//        val result = updateCellSend(segm, i, element, s, cont)
+//        when {
+//            result === RENDEZVOUS -> {
+//                cont.resume(Unit)
+//            }
+//            result === SUSPEND -> {
+//                cont.invokeOnCancellation {
+//                    onUndeliveredElement?.invoke(segm.retrieveElement(i))
+//                    segm.onCancellation(i)
+//                }
+//            }
+//            result === FAILED -> {
+//                sendImpl(
+//                    element = element,
+//                    startSegment = segm,
+//                    waiter = cont,
+//                    onRendezvous = { cont.resume(Unit) },
+//                    onSuspend = { segm, i -> cont.invokeOnCancellation(segm.makeCancelHandler(i)) },
+//                    onClosed = { cont.resumeWithException(sendException(getCause())) },
+//                    onNoWaiter = { _, _, _, _ -> error("Waiter is not empty") })
+//            }
+//        }
+//    }
 
     private fun <W> updateCellSend(
         segm: ChannelSegment<E>,
@@ -410,7 +462,7 @@ internal open class BufferedChannel<E>(
         val result = updateCellReceive(segm, i, r, cont)
         when {
             result === SUSPEND -> {
-                cont.invokeOnCancellation { segm.onCancellation(i) }
+                cont.invokeOnCancellation(segm.makeCancelHandler(i))
                 onReceiveEnqueued()
             }
             result === FAILED -> {
@@ -418,7 +470,7 @@ internal open class BufferedChannel<E>(
                     startSegment = receiveSegment.value,
                     waiter = cont,
                     onRendezvous = { element -> cont.resume(element); onReceiveEnqueued() },
-                    onSuspend = { segm, i -> cont.invokeOnCancellation { segm.onCancellation(i) }; onReceiveEnqueued() },
+                    onSuspend = { segm, i -> cont.invokeOnCancellation(segm.makeCancelHandler(i)); onReceiveEnqueued() },
                     onClosed = { cont.resumeWithException(receiveException(getCause())); onReceiveEnqueued() },
                     onNoWaiter = { _, _, _ -> error("unexpected") }
                 )
@@ -440,14 +492,14 @@ internal open class BufferedChannel<E>(
         when {
             result === SUSPEND -> {
                 onReceiveEnqueued()
-                cont.invokeOnCancellation { segm.onCancellation(i) }
+                cont.invokeOnCancellation(segm.makeCancelHandler(i))
             }
             result === FAILED -> {
                 receiveImpl<Any?>(
                     startSegment = receiveSegment.value,
                     waiter = waiter,
                     onRendezvous = { element -> cont.resume(success(element)); onReceiveEnqueued() },
-                    onSuspend = { segm, i -> cont.invokeOnCancellation { segm.onCancellation(i) }; onReceiveEnqueued() },
+                    onSuspend = { segm, i -> cont.invokeOnCancellation(segm.makeCancelHandler(i)); onReceiveEnqueued() },
                     onClosed = { cont.resume(closed(getCause())); onReceiveEnqueued() },
                     onNoWaiter = { _, _, _ -> error("unexpected") }
                 )
@@ -963,7 +1015,7 @@ internal open class BufferedChannel<E>(
                 val result = updateCellReceive(segm, i, r, this)
                 when {
                     result === SUSPEND -> {
-                        cont.invokeOnCancellation { segm.onCancellation(i) }
+                        cont.invokeOnCancellation(segm.makeCancelHandler(i))
                         onReceiveEnqueued()
                         return@sc
                     }
@@ -1164,6 +1216,13 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
             INTERRUPTED
         }
         onSlotCleaned()
+    }
+
+    fun makeCancelHandler(i: Int, onUndeliveredElement: OnUndeliveredElement<E>? = null): CancelHandler = object : CancelHandler() {
+        override fun invoke(cause: Throwable?) {
+            onUndeliveredElement?.invoke(retrieveElement(i))
+            onCancellation(i)
+        }
     }
 }
 
