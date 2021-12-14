@@ -268,7 +268,6 @@ internal open class BufferedChannel<E>(
     }
 
     private fun Any.tryResumeReceiver(element: E): Boolean {
-        val onCancellation: ((cause: Throwable) -> Unit)? = onUndeliveredElement?.let { { _ -> it(element) }}
         return when(this) {
             is SelectInstance<*> -> {
                 // TODO onUndeliveredElement
@@ -276,7 +275,7 @@ internal open class BufferedChannel<E>(
             }
             is ReceiveCatching<*> -> {
                 this as ReceiveCatching<E>
-                this.receiver.tryResume(success(element), idempotent = null,  onCancellation = onCancellation).let {
+                this.receiver.tryResume(success(element), null, onUndeliveredElement?.bindCancellationFun(element, receiver.context)).let {
                     if (it !== null) {
                         this.receiver.completeResume(it)
                         true
@@ -288,7 +287,7 @@ internal open class BufferedChannel<E>(
                 this.receiveResult = element
                 val cont = this.cont!!
                 this.cont = null
-                cont.tryResume(true, idempotent = null, onCancellation = onCancellation).let {
+                cont.tryResume(true, null, onUndeliveredElement?.bindCancellationFun(element, cont.context)).let {
                     if (it !== null) {
                         cont.completeResume(it)
                         true
@@ -297,7 +296,7 @@ internal open class BufferedChannel<E>(
             }
             is CancellableContinuation<*> -> {
                 this as CancellableContinuation<E>
-                tryResume(element, idempotent = null, onCancellation = onCancellation).let {
+                tryResume(element, null, onUndeliveredElement?.bindCancellationFun(element, context)).let {
                     if (it !== null) {
                         completeResume(it)
                         true
@@ -1240,13 +1239,6 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
             INTERRUPTED
         }
         onSlotCleaned()
-    }
-
-    fun makeCancelHandler(i: Int, onUndeliveredElement: OnUndeliveredElement<E>? = null): CancelHandler = object : BeforeResumeCancelHandler() {
-        override fun invoke(cause: Throwable?) {
-            onUndeliveredElement?.invoke(retrieveElement(i))
-            onCancellation(i)
-        }
     }
 }
 
