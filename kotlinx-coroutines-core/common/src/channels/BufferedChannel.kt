@@ -37,7 +37,7 @@ internal open class BufferedChannel<E>(
     private val closeStatus = atomic(0) // 1 -- CLOSED, 2 -- CANCELLED
 
     init {
-        val s = ChannelSegment<E>(0, null, 3)
+        val s = ChannelSegment<E>(0, null, 3, onUndeliveredElement)
         sendSegment = atomic(s)
         receiveSegment = atomic(s)
         bufferEndSegment = atomic(s)
@@ -156,7 +156,8 @@ internal open class BufferedChannel<E>(
                 cont.resume(Unit)
             }
             result === SUSPEND -> {
-                cont.invokeOnCancellation(segm.makeCancelHandler(i, onUndeliveredElement))
+                cont as CancellableContinuationImpl<*>
+                cont.invokeOnCancellation(segm, i)
             }
             result === FAILED -> {
                 sendSlowPath(segm, element, cont)
@@ -1191,6 +1192,8 @@ internal open class BufferedChannel<E>(
             }
         }
     }
+
+    private fun createSegment(id: Long, prev: ChannelSegment<E>?) = ChannelSegment(id, prev, 0, onUndeliveredElement)
 }
 
 /**
@@ -1198,7 +1201,7 @@ internal open class BufferedChannel<E>(
  * Each segment has its own [id], which increase from the beginning. These [id]s help
  * to update [BufferedChannel.head] and [BufferedChannel.tail] correctly
  */
-internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: Int) :
+internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: Int, private val onUndeliveredElement: OnUndeliveredElement<E>?) :
     Segment<ChannelSegment<E>>(id, prev, pointers) {
     private val data = atomicArrayOfNulls<Any?>(SEGMENT_SIZE * 2) // 2 registers per slot
 
@@ -1228,6 +1231,7 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
     }
 
     override fun onCancellation(i: Int) {
+        onUndeliveredElement?.invoke(retrieveElement(i))
         data[i * 2 + 1].update {
             if (it === RESUMING_R || it === RESUMING_EB || it === RESUMING_R_EB ||
                 it === INTERRUPTED || it === INTERRUPTED_R || it === INTERRUPTED_EB ||
@@ -1238,7 +1242,7 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
         onSlotCleaned()
     }
 
-    fun makeCancelHandler(i: Int, onUndeliveredElement: OnUndeliveredElement<E>? = null): CancelHandler = object : CancelHandler() {
+    fun makeCancelHandler(i: Int, onUndeliveredElement: OnUndeliveredElement<E>? = null): CancelHandler = object : BeforeResumeCancelHandler() {
         override fun invoke(cause: Throwable?) {
             onUndeliveredElement?.invoke(retrieveElement(i))
             onCancellation(i)
@@ -1246,7 +1250,6 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, pointers: I
     }
 }
 
-private fun <E> createSegment(id: Long, prev: ChannelSegment<E>?) = ChannelSegment(id, prev, 0)
 
 private class WaiterEB(@JvmField val waiter: Any) {
     override fun toString() = "ExpandBufferDesc($waiter)"
