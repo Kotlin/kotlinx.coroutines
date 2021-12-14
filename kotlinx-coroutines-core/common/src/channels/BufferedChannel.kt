@@ -963,10 +963,18 @@ internal open class BufferedChannel<E>(
 
     override fun iterator(): ChannelIterator<E> = Itr()
 
-    internal inner class Itr : ChannelIterator<E> {
+    internal inner class Itr : ChannelIterator<E>, CancelHandler() {
         var receiveResult: Any? = null
         @JvmField
         var cont: CancellableContinuation<Boolean>? = null
+
+        var segment: ChannelSegment<E>? = null
+        var i = -1
+
+        // on cancellation
+        override fun invoke(cause: Throwable?) {
+            segment?.onCancellation(i)
+        }
 
         override suspend fun hasNext(): Boolean {
             // Try to receive the next element if required.
@@ -1015,7 +1023,9 @@ internal open class BufferedChannel<E>(
                 val result = updateCellReceive(segm, i, r, this)
                 when {
                     result === SUSPEND -> {
-                        cont.invokeOnCancellation(segm.makeCancelHandler(i))
+                        this.segment = segm
+                        this.i = i
+                        cont.invokeOnCancellation(this)
                         onReceiveEnqueued()
                         return@sc
                     }
