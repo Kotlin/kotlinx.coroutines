@@ -13,6 +13,7 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Duration.Companion.nanoseconds
 
+@kotlin.time.ExperimentalTime
 class DelayDurationTest : TestBase() {
 
     @Test

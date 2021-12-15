@@ -10,6 +10,7 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+@kotlin.time.ExperimentalTime
 class SharingStartedWhileSubscribedTest : TestBase() {
     @Test // make sure equals works properly, or otherwise other tests don't make sense
     fun testEqualsAndHashcode() {
