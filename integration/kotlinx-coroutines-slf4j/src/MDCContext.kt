@@ -43,6 +43,7 @@ public class MDCContext(
     /**
      * The value of [MDC] context map.
      */
+    @Suppress("MemberVisibilityCanBePrivate")
     public val contextMap: MDCContextMap = MDC.getCopyOfContextMap()
 ) : ThreadContextElement<MDCContextMap>, AbstractCoroutineContextElement(Key) {
     /**
