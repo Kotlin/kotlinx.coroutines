@@ -7,6 +7,7 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.time.*
 
 /**
  * A coroutine scope that for launching test coroutines.
@@ -83,6 +84,14 @@ public fun TestScope.runCurrent(): Unit = testScheduler.runCurrent()
  */
 @ExperimentalCoroutinesApi
 public fun TestScope.advanceTimeBy(delayTimeMillis: Long): Unit = testScheduler.advanceTimeBy(delayTimeMillis)
+
+/**
+ * The [test scheduler][TestScope.testScheduler] as a [TimeSource].
+ * @see TestCoroutineScheduler.timeSource
+ */
+@ExperimentalCoroutinesApi
+@ExperimentalTime
+public val TestScope.testTimeSource: TimeSource get() = testScheduler.timeSource
 
 /**
  * Creates a [TestScope].

@@ -6,6 +6,8 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlin.test.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
 
 class TestCoroutineSchedulerTest {
     /** Tests that `TestCoroutineScheduler` attempts to detect if there are several instances of it. */
@@ -306,6 +308,16 @@ class TestCoroutineSchedulerTest {
         scope.checkTimeout(false) {
             deferred.await()
         }
+    }
+
+    @Test
+    @ExperimentalTime
+    fun testAdvanceTimeSource() = runTest {
+        val expected = 1.seconds
+        val actual = testTimeSource.measureTime {
+            delay(expected)
+        }
+        assertEquals(expected, actual)
     }
 
     private fun forTestDispatchers(block: (TestDispatcher) -> Unit): Unit =

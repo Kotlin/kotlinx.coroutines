@@ -12,6 +12,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.time.*
 
 /**
  * This is a scheduler for coroutines used in tests, providing the delay-skipping behavior.
@@ -26,7 +27,6 @@ import kotlin.jvm.*
  * haven't yet been dispatched (via [runCurrent]).
  */
 @ExperimentalCoroutinesApi
-// TODO: maybe make this a `TimeSource`?
 public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCoroutineScheduler),
     CoroutineContext.Element {
 
@@ -43,7 +43,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /** This counter establishes some order on the events that happen at the same virtual time. */
     private val count = atomic(0L)
 
-    /** The current virtual time. */
+    /** The current virtual time in milliseconds. */
     @ExperimentalCoroutinesApi
     public var currentTime: Long = 0
         get() = synchronized(lock) { field }
@@ -193,6 +193,15 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * Consumes the knowledge that a dispatch event happened recently.
      */
     internal val onDispatchEvent: SelectClause1<Unit> get() = dispatchEvents.onReceive
+
+    /**
+     * Returns the [TimeSource] representation of the virtual time of this scheduler.
+     */
+    @ExperimentalCoroutinesApi
+    @ExperimentalTime
+    public val timeSource: TimeSource = object : AbstractLongTimeSource(DurationUnit.MILLISECONDS) {
+        override fun read(): Long = currentTime
+    }
 }
 
 // Some error-throwing functions for pretty stack traces
