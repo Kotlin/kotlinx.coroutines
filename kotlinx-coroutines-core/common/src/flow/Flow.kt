@@ -184,7 +184,7 @@ public interface Flow<out T> {
      *
      * This method can be used along with SAM-conversion of [FlowCollector]:
      * ```
-     * myFlow.collect { value -> println("Collected $value")
+     * myFlow.collect { value -> println("Collected $value") }
      * ```
      *
      * ### Method inheritance
