@@ -1,5 +1,11 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.6.0-RC3
+
+* Fixed the error in 1.6.0-RC2 because of which `Flow.collect` couldn't be called due to the `@InternalCoroutinesApi` annotation (#3082)
+* Fixed some R8 warnings introduced in 1.6.0-RC (#3090)
+* `TestCoroutineScheduler` now provides a `TimeSource` with its virtual time via the `timeSource` property. Thanks @hfhbd! (#3087)
+
 ## Version 1.6.0-RC2
 
 * `@ExperimentalTime` is no longer needed for methods that use `Duration` (#3041).
