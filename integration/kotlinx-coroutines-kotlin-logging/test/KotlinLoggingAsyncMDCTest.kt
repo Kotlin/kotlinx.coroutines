@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 import kotlinx.coroutines.*
 import kotlinx.coroutines.kotlinlogging.*
 import org.apache.logging.log4j.*
@@ -6,10 +10,6 @@ import org.junit.*
 import org.junit.Test
 import org.slf4j.*
 import kotlin.test.*
-
-/*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
 
 class KotlinLoggingAsyncMDCTest : TestBase() {
     init {
