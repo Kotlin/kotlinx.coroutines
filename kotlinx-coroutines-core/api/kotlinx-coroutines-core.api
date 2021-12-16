@@ -39,22 +39,24 @@ public abstract interface class kotlinx/coroutines/CancellableContinuation : kot
 	public abstract fun isCancelled ()Z
 	public abstract fun isCompleted ()Z
 	public abstract fun resume (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun resume (Ljava/lang/Object;Lkotlinx/coroutines/OnCancellation;)V
 	public abstract fun resumeUndispatched (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/Object;)V
 	public abstract fun resumeUndispatchedWithException (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/Throwable;)V
 	public abstract fun tryResume (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-	public abstract fun tryResume (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public abstract fun tryResume (Ljava/lang/Object;Ljava/lang/Object;Lkotlinx/coroutines/OnCancellation;)Ljava/lang/Object;
 	public abstract fun tryResumeWithException (Ljava/lang/Throwable;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/CancellableContinuation$DefaultImpls {
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/CancellableContinuation;Ljava/lang/Throwable;ILjava/lang/Object;)Z
+	public static fun resume (Lkotlinx/coroutines/CancellableContinuation;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun tryResume$default (Lkotlinx/coroutines/CancellableContinuation;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/CancellableContinuation {
 	public fun <init> (Lkotlin/coroutines/Continuation;I)V
 	public final fun callCancelHandler (Lkotlinx/coroutines/CancelHandler;Ljava/lang/Throwable;)V
-	public final fun callOnCancellation (Lkotlin/jvm/functions/Function1;Ljava/lang/Throwable;)V
+	public final fun callOnCancellation (Lkotlinx/coroutines/OnCancellation;Ljava/lang/Object;Ljava/lang/Throwable;)V
 	public fun cancel (Ljava/lang/Throwable;)Z
 	public fun completeResume (Ljava/lang/Object;)V
 	public fun getCallerFrame ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
@@ -69,12 +71,13 @@ public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/
 	public fun isCompleted ()Z
 	protected fun nameString ()Ljava/lang/String;
 	public fun resume (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
+	public fun resume (Ljava/lang/Object;Lkotlinx/coroutines/OnCancellation;)V
 	public fun resumeUndispatched (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/Object;)V
 	public fun resumeUndispatchedWithException (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/Throwable;)V
 	public fun resumeWith (Ljava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
 	public fun tryResume (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun tryResume (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public fun tryResume (Ljava/lang/Object;Ljava/lang/Object;Lkotlinx/coroutines/OnCancellation;)Ljava/lang/Object;
 	public fun tryResumeWithException (Ljava/lang/Throwable;)Ljava/lang/Object;
 }
 
@@ -508,6 +511,10 @@ public final class kotlinx/coroutines/NonDisposableHandle : kotlinx/coroutines/C
 }
 
 public abstract interface annotation class kotlinx/coroutines/ObsoleteCoroutinesApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface class kotlinx/coroutines/OnCancellation {
+	public abstract fun invoke (Ljava/lang/Object;Ljava/lang/Throwable;Lkotlin/coroutines/CoroutineContext;)V
 }
 
 public abstract interface class kotlinx/coroutines/ParentJob : kotlinx/coroutines/Job {

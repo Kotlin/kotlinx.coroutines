@@ -88,7 +88,7 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     }
 }
 
-private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore {
+private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore, OnCancellation<Unit> {
     /*
        The queue of waiting acquirers is essentially an infinite array based on the list of segments
        (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue
@@ -147,7 +147,10 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     private val _availablePermits = atomic(permits - acquiredPermits)
     override val availablePermits: Int get() = max(_availablePermits.value, 0)
 
-    private val onCancellationRelease = { _: Throwable -> release() }
+    // Invoked on continuation cancellation during dispatching
+    override fun invoke(value: Unit, cause: Throwable?, context: CoroutineContext) {
+        release()
+    }
 
     override fun tryAcquire(): Boolean {
         _availablePermits.loop { p ->
@@ -170,7 +173,7 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
             if (addAcquireToQueue(cont)) return@sc
             val p = _availablePermits.getAndDecrement()
             if (p > 0) { // permit acquired
-                cont.resume(Unit, onCancellationRelease)
+                cont.resume(Unit, this)
                 return@sc
             }
         }
@@ -205,7 +208,7 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         // If the cell already has PERMIT from tryResumeNextFromQueue, try to grab it
         if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
             /// This continuation is not yet published, but still can be cancelled via outer job
-            cont.resume(Unit, onCancellationRelease)
+            cont.resume(Unit, this)
             return true
         }
         assert { segment.get(i) === BROKEN } // it must be broken in this case, no other way around it
@@ -239,7 +242,7 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
     }
 
     private fun CancellableContinuation<Unit>.tryResumeAcquire(): Boolean {
-        val token = tryResume(Unit, null, onCancellationRelease) ?: return false
+        val token = tryResume(Unit, null, this@SemaphoreImpl) ?: return false
         completeResume(token)
         return true
     }

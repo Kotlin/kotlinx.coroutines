@@ -87,7 +87,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * @suppress  **This is unstable API and it is subject to change.**
      */
     @InternalCoroutinesApi
-    public fun tryResume(value: T, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any?
+    public fun tryResume(value: T, idempotent: Any?, onCancellation: OnCancellation<@UnsafeVariance T>?): Any?
 
     /**
      * Tries to resume this continuation with the specified [exception] and returns a non-null object token if successful,
@@ -201,8 +201,55 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * It can be invoked concurrently with the surrounding code.
      * There is no guarantee on the execution context of its invocation.
      */
+    @Deprecated(level = DeprecationLevel.WARNING,
+        message = "Replaced with resume(value: T, onCancellation: OnCancellation<T>?)")
     @ExperimentalCoroutinesApi // since 1.2.0
-    public fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?)
+    public fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?) {
+        if (onCancellation == null) {
+            resume(value)
+            return
+        }
+        val onCancellationNew = OnCancellation<T> { _, cause, _ ->
+            onCancellation(cause ?: CancellationException("Cancelled"))
+        }
+        resume(value, onCancellationNew)
+    }
+
+    /**
+     * Resumes this continuation with the specified `value` and calls the specified `onCancellation`
+     * handler when either resumed too late (when continuation was already cancelled) or, although resumed
+     * successfully (before cancellation), the coroutine's job was cancelled before it had a
+     * chance to run in its dispatcher, so that the suspended function threw an exception
+     * instead of returning this value.
+     *
+     * The installed [onCancellation] handler should not throw any exceptions.
+     * If it does, they will get caught, wrapped into a [CompletionHandlerException] and
+     * processed as an uncaught exception in the context of the current coroutine
+     * (see [CoroutineExceptionHandler]).
+     *
+     * This function shall be used when resuming with a resource that must be closed by
+     * code that called the corresponding suspending function, for example:
+     *
+     * ```
+     * continuation.resume(resource) { r, cause ->
+     *     r.close(cause)
+     * }
+     * ```
+     *
+     * A more complete example and further details are given in
+     * the documentation for the [suspendCancellableCoroutine] function.
+     *
+     * **Note**: The [onCancellation] handler must be fast, non-blocking, and thread-safe.
+     * It can be invoked concurrently with the surrounding code.
+     * There is no guarantee on the execution context of its invocation.
+     */
+    @ExperimentalCoroutinesApi
+    @InternalCoroutinesApi
+    public fun resume(value: T, onCancellation: OnCancellation<@UnsafeVariance T>?)
+}
+
+public fun interface OnCancellation<in T> {
+    public fun invoke(value: T, cause: Throwable?, context: CoroutineContext)
 }
 
 /**
