@@ -6,7 +6,6 @@ package kotlinx.coroutines.reactive
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
@@ -69,11 +68,9 @@ public class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>,
     private val exceptionOnCancelHandler: (Throwable, CoroutineContext) -> Unit
-) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, Subscription, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, Subscription {
     override val channel: SendChannel<T> get() = this
 
-    // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
-    private val mutex = Mutex(locked = true)
     private val _nRequested = atomic(0L) // < 0 when closed (CLOSED or SIGNALLED)
 
     @Volatile
@@ -83,6 +80,39 @@ public class PublisherCoroutine<in T>(
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit): Nothing =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
+
+    // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
+    private val mutex: Mutex = PublisherCoroutineMutex()
+
+    /**
+     * To send an element, [mutex] should be locked first, after which [doLockedNext]
+     * is called -- it releases the mutex at the end. To support the `select` operation
+     * and implement [onSend], we use a modified version of [Mutex.onLock], which
+     * invokes [doLockedNext] at the end and returns this [PublisherCoroutine] as result
+     * (see [PublisherCoroutineMutex.onLockProcessResult]).
+     *
+     * We use this dirty hack as we need to wait for a lock, and, therefore, the clause
+     * object should be a [Mutex] instance. Thus, the [doLockedNext] call must be a part
+     * of [PublisherCoroutineMutex.onLockProcessResult] as well. A possible alternative
+     * would be to inherit [PublisherCoroutine] from [Mutex], but it already extends [AbstractCoroutine].
+     */
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+    private inner class PublisherCoroutineMutex : MutexImpl(locked = true) {
+        override fun onLockRegFunction(select: SelectInstance<*>, element: Any?) {
+            super.onLockRegFunction(select, owner = null)
+        }
+
+        @Suppress("UNCHECKED_CAST", "RedundantNullableReturnType")
+        override fun onLockProcessResult(element: Any?, result: Any?): Any? {
+            super.onLockProcessResult(owner = null, result)
+            doLockedNext(element as T)?.let { throw it }
+            return this@PublisherCoroutine
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override val onSend: SelectClause2<T, SendChannel<T>>
+        get() = mutex.onLock as SelectClause2<T, SendChannel<T>>
 
     override fun trySend(element: T): ChannelResult<Unit> =
         if (!mutex.tryLock()) {
@@ -97,29 +127,6 @@ public class PublisherCoroutine<in T>(
     public override suspend fun send(element: T) {
         mutex.lock()
         doLockedNext(element)?.let { throw it }
-    }
-
-    override val onSend: SelectClause2<T, SendChannel<T>>
-        get() = this
-
-    // registerSelectSend
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-    override fun <R> registerSelectClause2(select: SelectInstance<R>, element: T, block: suspend (SendChannel<T>) -> R) {
-        val clause =  suspend {
-            doLockedNext(element)?.let { throw it }
-            block(this)
-        }
-
-        launch(start = CoroutineStart.UNDISPATCHED) {
-            mutex.lock()
-            // Already selected -- bail out
-            if (!select.trySelect()) {
-                mutex.unlock()
-                return@launch
-            }
-
-            clause.startCoroutineCancellable(select.completion)
-        }
     }
 
     /*

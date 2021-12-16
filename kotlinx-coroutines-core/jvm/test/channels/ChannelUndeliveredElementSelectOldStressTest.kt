@@ -19,7 +19,7 @@ import kotlin.test.*
  * using `onUndeliveredElement` to detect lost resources and close them properly.
  */
 @RunWith(Parameterized::class)
-class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : TestBase() {
+class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannelKind) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
@@ -52,8 +52,6 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
 
     private val modulo = 1 shl 25
     private val mask = (modulo - 1).toLong()
-    private val sentStatus = ItemStatus() // 1 - send norm, 2 - send select, +2 - did not throw exception
-    private val receivedStatus = ItemStatus() // 1-6 received
     private val failedStatus = ItemStatus() // 1 - failed
 
     lateinit var sender: Job
@@ -113,11 +111,8 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
             assertEquals(sentCnt - failedToDeliverCnt.value, receivedCnt)
         } catch (e: Throwable) {
             printProgressSummary(iteration)
-            printErrorDetails()
             throw e
         }
-        sentStatus.clear()
-        receivedStatus.clear()
         failedStatus.clear()
     }
 
@@ -131,38 +126,15 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         println("        Duplicated $dupCnt deliveries")
     }
 
-    private fun printErrorDetails() {
-        val min = minOf(sentStatus.min, receivedStatus.min, failedStatus.min)
-        val max = maxOf(sentStatus.max, receivedStatus.max, failedStatus.max)
-        for (x in min..max) {
-            val sentCnt = if (sentStatus[x] != 0) 1 else 0
-            val receivedCnt = if (receivedStatus[x] != 0) 1 else 0
-            val failedToDeliverCnt = failedStatus[x]
-            if (sentCnt - failedToDeliverCnt != receivedCnt) {
-                println("!!! Error for value $x: " +
-                    "sentStatus=${sentStatus[x]}, " +
-                    "receivedStatus=${receivedStatus[x]}, " +
-                    "failedStatus=${failedStatus[x]}"
-                )
-            }
-        }
-    }
-
-
     private fun launchSender() {
         sender = scope.launch(start = CoroutineStart.ATOMIC) {
             cancellable(senderDone) {
                 var counter = 0
                 while (true) {
                     val trySendData = Data(sentCnt++)
-                    val sendMode = Random.nextInt(2) + 1
-                    sentStatus[trySendData.x] = sendMode
-                    when (sendMode) {
-                        1 -> channel.send(trySendData)
-                        2 -> select<Unit> { channel.onSend(trySendData) {} }
-                        else -> error("cannot happen")
+                    selectOld<Unit> {
+                        channel.onSend(trySendData) {}
                     }
-                    sentStatus[trySendData.x] = sendMode + 2
                     when {
                         // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
                         kind == TestChannelKind.LINKED_LIST -> while (sentCnt > lastReceived + 100) yield()
@@ -184,27 +156,16 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         receiver = scope.launch(start = CoroutineStart.ATOMIC) {
             cancellable(receiverDone) {
                 while (true) {
-                    val receiveMode = Random.nextInt(6) + 1
-                    val receivedData = when (receiveMode) {
-                        1 -> channel.receive()
-                        2 -> select { channel.onReceive { it } }
-                        3 -> channel.receiveCatching().getOrElse { error("Should not be closed") }
-                        4 -> select { channel.onReceiveCatching { it.getOrElse { error("Should not be closed") } } }
-                        5 -> channel.receiveCatching().getOrThrow()
-                        6 -> {
-                            val iterator = channel.iterator()
-                            check(iterator.hasNext()) { "Should not be closed" }
-                            iterator.next()
+                    selectOld<Unit> {
+                        channel.onReceive {
+                            it.onReceived()
+                            receivedCnt++
+                            val received = it.x
+                            if (received <= lastReceived)
+                                dupCnt++
+                            lastReceived = received
                         }
-                        else -> error("cannot happen")
                     }
-                    receivedData.onReceived()
-                    receivedCnt++
-                    val received = receivedData.x
-                    if (received <= lastReceived)
-                        dupCnt++
-                    lastReceived = received
-                    receivedStatus[received] = receiveMode
                 }
             }
         }
