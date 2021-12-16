@@ -42,6 +42,7 @@ module('kotlinx-coroutines-bom')
 module('integration/kotlinx-coroutines-guava')
 module('integration/kotlinx-coroutines-jdk8')
 module('integration/kotlinx-coroutines-slf4j')
+module('integration/kotlinx-coroutines-kotlin-logging')
 module('integration/kotlinx-coroutines-play-services')
 
 module('reactive/kotlinx-coroutines-reactive')

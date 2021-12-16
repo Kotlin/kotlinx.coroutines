@@ -1,0 +1,9 @@
+public final class kotlinx/coroutines/kotlinlogging/KotlinLoggingAsyncMDCKt {
+	public static final fun withLoggingContextAsync (Ljava/util/Map;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun withLoggingContextAsync (Lkotlin/Pair;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun withLoggingContextAsync ([Lkotlin/Pair;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun withLoggingContextAsync$default (Ljava/util/Map;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun withLoggingContextAsync$default (Lkotlin/Pair;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun withLoggingContextAsync$default ([Lkotlin/Pair;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
