@@ -99,33 +99,7 @@ And make sure that you use the latest Kotlin version:
 
 Add dependencies (you can also add other modules that you need):
 
-```groovy
-dependencies {
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
-}
-```
-
-And make sure that you use the latest Kotlin version:
-
-```groovy
-buildscript {
-    ext.kotlin_version = '1.6.0'
-}
-```
-
-Make sure that you have `mavenCentral()` in the list of repositories:
-
-```
-repositories {
-    mavenCentral()
-}
-```
-
-### Gradle Kotlin DSL
-
-Add dependencies (you can also add other modules that you need):
-
-```groovy
+```kotlin
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 }
@@ -133,21 +107,31 @@ dependencies {
 
 And make sure that you use the latest Kotlin version:
 
-```groovy
+```kotlin
 plugins {
+    // For build.gradle.kts (Kotlin DSL)
     kotlin("jvm") version "1.6.0"
+    
+    // For build.gradle (Groovy DSL)
+    id "org.jetbrains.kotlin.jvm" version "1.6.0"
 }
 ```
 
-Make sure that you have `mavenCentral()` in the list of repositories.
+Make sure that you have `mavenCentral()` in the list of repositories:
+
+```kotlin
+repositories {
+    mavenCentral()
+}
+```
 
 ### Android
 
 Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as a dependency when using `kotlinx.coroutines` on Android:
 
-```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0'
+```kotlin
+implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
 ```
 
 This gives you access to the Android [Dispatchers.Main]
@@ -165,7 +149,8 @@ For more details see ["Optimization" section for Android](ui/kotlinx-coroutines-
 The `kotlinx-coroutines-core` artifact contains a resource file that is not required for the coroutines to operate
 normally and is only used by the debugger. To exclude it at no loss of functionality, add the following snippet to the
 `android` block in your Gradle file for the application subproject:
-```groovy
+
+```kotlin
 packagingOptions {
     resources.excludes += "DebugProbesKt.bin"
 }
@@ -177,7 +162,8 @@ Core modules of `kotlinx.coroutines` are also available for
 [Kotlin/JS](https://kotlinlang.org/docs/reference/js-overview.html) and [Kotlin/Native](https://kotlinlang.org/docs/reference/native-overview.html).
 
 In common code that should get compiled for different platforms, you can add a dependency to `kotlinx-coroutines-core` right to the `commonMain` source set:
-```groovy
+
+```kotlin
 commonMain {
     dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
