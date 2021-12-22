@@ -74,6 +74,16 @@ private object ImmediateSwingDispatcher : SwingDispatcher() {
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
 internal object Swing : SwingDispatcher() {
+
+    /* A workaround so that the dispatcher's initialization crashes with an exception if running in a headless
+    environment. This is needed so that this broken dispatcher is not used as the source of delays. */
+    init {
+        Timer(1) { }.apply {
+            isRepeats = false
+            start()
+        }
+    }
+
     override val immediate: MainCoroutineDispatcher
         get() = ImmediateSwingDispatcher
 
