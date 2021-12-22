@@ -40,7 +40,7 @@ abstract class SchedulerTestBase : TestBase() {
         }
 
         private fun maxSequenceNumber(): Int? {
-            return Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }
+            return Thread.getAllStackTraces().keys.asSequence().filter { it is GoBasedCoroutineScheduler.Worker }
                 .map { sequenceNumber(it.name) }.maxOrNull()
         }
 

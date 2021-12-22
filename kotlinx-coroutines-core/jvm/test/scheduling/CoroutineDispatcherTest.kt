@@ -22,7 +22,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
         corePoolSize = 1
         expect(1)
         withContext(dispatcher) {
-            require(Thread.currentThread() is CoroutineScheduler.Worker)
+            require(Thread.currentThread() is GoBasedCoroutineScheduler.Worker)
             expect(2)
             val job = async {
                 expect(3)
