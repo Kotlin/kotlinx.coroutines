@@ -178,7 +178,7 @@ public val CoroutineScope.isActive: Boolean
  * ```
  * // concurrently load configuration and data
  * suspend fun loadConfigurationAndData() {
- *     coroutinesScope {
+ *     coroutineScope {
  *         launch { loadConfiguration() }
  *         launch { loadData() }
  *     }
