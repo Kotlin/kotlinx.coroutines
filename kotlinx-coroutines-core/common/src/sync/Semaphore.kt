@@ -367,7 +367,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
             } else false
         }
         is SelectInstance<*> -> {
-            trySelect(this@SemaphoreImpl, Unit, onCancellationRelease)
+            trySelect(this@SemaphoreImpl, Unit)
         }
         else -> error("unexpected: $this")
     }

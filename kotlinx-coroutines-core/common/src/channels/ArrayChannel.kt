@@ -159,7 +159,7 @@ internal open class ArrayChannel<E>(
                     // The only exception is when this "send" operation is an `onSend` clause that has to be re-registered
                     // in the corresponding `select` invocation.
                     val send = send
-                    if (send !is SendElementSelectWithUndeliveredHandler<*> || send.trySelectResult != REREGISTERING)
+                    if (send !is SendElementSelectWithUndeliveredHandler<*> || send.trySelectResult != REREGISTER)
                         send!!.undeliveredElement()
                 }
             }

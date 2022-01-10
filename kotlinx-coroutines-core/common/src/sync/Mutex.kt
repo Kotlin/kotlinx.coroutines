@@ -229,8 +229,8 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         val select: SelectInstance<Q>,
         val owner: Any?
     ) : SelectInstance<Q> by select {
-        override fun trySelect(clauseObject: Any, result: Any?, onCancellation: ((Throwable) -> Unit)?): Boolean {
-            return select.trySelect(clauseObject, result, { unlock(owner) }).also { success ->
+        override fun trySelect(clauseObject: Any, result: Any?): Boolean {
+            return select.trySelect(clauseObject, result).also { success ->
                 if (success) this@MutexImpl.owner.value = owner
             }
         }

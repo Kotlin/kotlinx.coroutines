@@ -105,14 +105,18 @@ public interface SelectBuilder<in R> {
 }
 
 /**
- * Each [select] clause should be provided with:
+ * Each [select] clause is specified with:
  * 1) the [object of this clause][clauseObject],
- *    such as the channel instance for [Channel.onSend];
+ *    such as the channel instance for [SendChannel.onSend];
  * 2) the function that specifies how this clause
  *    should be registered in the object above;
- * 3) the function that modifies the resumption result
- *    (passed via [SelectInstance.trySelect]) to the argument
- *    of the user-specified block.
+ * 3) the function that modifies the internal result
+ *    (passed via [SelectInstance.trySelect] or
+ *    [SelectInstance.selectInRegistrationPhase])
+ *    to the argument of the user-specified block.
+ * 4) the function that specifies how the internal result provided via
+ *    [SelectInstance.trySelect] or [SelectInstance.selectInRegistrationPhase]
+ *    should be processed in case of this `select` cancellation while dispatching.
  */
 @InternalCoroutinesApi
 public sealed interface SelectClause {
@@ -124,19 +128,27 @@ public sealed interface SelectClause {
 
 /**
  * The registration function specifies how the `select` instance should be registered into
- * the specified clause object.
+ * the specified clause object. In case of channels, the registration logic
+ * coincides with the plain `send/receive` operation with the only difference that
+ * the `select` instance is stored as a waiter instead of continuation.
  */
 @InternalCoroutinesApi
 public typealias RegistrationFunction = (clauseObject: Any, select: SelectInstance<*>, param: Any?) -> Unit
 
 /**
- *
+ * This function specifies how the _internal_ result, provided via [SelectInstance.selectInRegistrationPhase]
+ * or [SelectInstance.trySelect] should be processed. For example, both [ReceiveChannel.onReceive] and
+ * [ReceiveChannel.onReceiveCatching] clauses perform exactly the same synchronization logic,
+ * but differ when the channel has been discovered in the closed or cancelled state.
  */
 @InternalCoroutinesApi
 public typealias ProcessResultFunction = (clauseObject: Any, param: Any?, clauseResult: Any?) -> Any?
 
 /**
- *
+ * This function specifies how the internal result, provided via [SelectInstance.trySelect]
+ * or [SelectInstance.selectInRegistrationPhase], should be processed in case of this `select`
+ * cancellation while dispatching. Unfortunately, we cannot pass this function only in [SelectInstance.trySelect],
+ * as [SelectInstance.selectInRegistrationPhase] can be called when the coroutine is already cancelled.
  */
 public typealias OnCancellationConstructor = (select: SelectInstance<*>, param: Any?, internalResult: Any?) -> (Throwable) -> Unit
 
@@ -144,7 +156,6 @@ public typealias OnCancellationConstructor = (select: SelectInstance<*>, param: 
  * Clause for [select] expression without additional parameters that does not select any value.
  */
 public interface SelectClause0 : SelectClause
-
 @InternalCoroutinesApi
 public class SelectClause0Impl(
     override val clauseObject: Any,
@@ -160,7 +171,6 @@ private val DUMMY_PROCESS_RESULT_FUNCTION: ProcessResultFunction = { _, _, _ -> 
  * Clause for [select] expression without additional parameters that selects value of type [Q].
  */
 public interface SelectClause1<out Q> : SelectClause
-
 @InternalCoroutinesApi
 public class SelectClause1Impl<Q>(
     override val clauseObject: Any,
@@ -173,7 +183,6 @@ public class SelectClause1Impl<Q>(
  * Clause for [select] expression with additional parameter of type [P] that selects value of type [Q].
  */
 public interface SelectClause2<in P, out Q> : SelectClause
-
 @InternalCoroutinesApi
 public class SelectClause2Impl<P, Q>(
     override val clauseObject: Any,
@@ -183,7 +192,7 @@ public class SelectClause2Impl<P, Q>(
 ) : SelectClause2<P, Q>
 
 /**
- * Internal representation of select instance.
+ * Internal representation of `select` instance.
  *
  * @suppress **This is unstable API, and it is subject to change.**
  */
@@ -198,19 +207,24 @@ public interface SelectInstance<in R> {
      * This function should be called by other operations,
      * which are trying to perform a rendezvous with this `select`.
      * Returns `true` if the rendezvous succeeds, `false` otherwise.
+     *
+     * Note that according to the current implementation, a rendezvous attempt can fail
+     * when either another clause is already selected or this `select` is still in
+     * REGISTRATION phase. To distinguish the reasons, [SelectImplementation.trySelectDetailed]
+     * function can be used instead.
      */
-    public fun trySelect(clauseObject: Any, result: Any?, onCancellation: ((Throwable) -> Unit)? = null): Boolean
+    public fun trySelect(clauseObject: Any, result: Any?): Boolean
 
     /**
-     * Specifies how the stored as a waiter `select` instance should
-     * be removed in case cancellation or another clause selection.
+     * When this `select` instance is stored as a waiter, the specified [handle][disposableHandle]
+     * defines how the stored `select` should be removed in case of cancellation or another clause selection.
      */
     public fun disposeOnCompletion(disposableHandle: DisposableHandle)
 
     /**
-     * When the registering clause becomes selected, the corresponding internal result
+     * When a clause becomes selected during registration, the corresponding internal result
      * (which is further passed to the clause's [ProcessResultFunction]) should be provided
-     * via this function. After that, other clause registrations are ignored.
+     * via this function. After that, other clause registrations are ignored and [trySelect] fails.
      */
     public fun selectInRegistrationPhase(internalResult: Any?)
 }
@@ -221,10 +235,11 @@ internal open class SelectImplementation<R> constructor(
 ) : CancelHandler(), SelectBuilder<R>, SelectInstance<R> {
 
     /**
-     * The `select` operation is split into three phases: REGISTRATION, WAITING, and COMPLETING.
+     * Essentially. each `select` operation is split into three phases: REGISTRATION, WAITING, and COMPLETING.
+     * In REGISTRATION phase,
      *
      * == Phase 1: Registration ==
-     * In the first, registration phase, [SelectBuilder] is applied, and all the clauses register
+     * In the first REGISTRATION phase, [SelectBuilder] is applied, and all the clauses register
      * via the provided [registration function][SelectClause.regFunc]. Intuitively, `select` registration
      * is similar to the plain blocking operation, with the only difference that this [SelectInstance]
      * is stored instead of continuation, and [SelectInstance.trySelect] is used to make a rendezvous.
@@ -271,7 +286,7 @@ internal open class SelectImplementation<R> constructor(
      */
     private val state = atomic<Any>(STATE_REG)
     /**
-     * Returns `true` if this `select` instance is in the registration phase;
+     * Returns `true` if this `select` instance is in the REGISTRATION phase;
      * otherwise, returns `false`.
      */
     private val inRegistrationPhase
@@ -284,7 +299,9 @@ internal open class SelectImplementation<R> constructor(
      */
     private val isSelected
         get() = state.value is ClauseData<*>
-
+    /**
+     * Returns `true` if this `select` is cancelled.
+     */
     private val isCancelled
         get() = state.value is Cancelled
 
@@ -316,7 +333,7 @@ internal open class SelectImplementation<R> constructor(
     private var internalResult: Any? = NO_RESULT
 
     /**
-     * This function is called after [SelectBuilder] is applied. In case one of the clauses is already selected,
+     * This function is called after the [SelectBuilder] is applied. In case one of the clauses is already selected,
      * the algorithm applies the corresponding [ProcessResultFunction] and invokes the user-specified [block][ClauseData.block].
      * Otherwise, it moves this `select` to WAITING phase (re-registering clauses if needed), suspends until a rendezvous
      * is happened, and then completes the operation by applying the corresponding [ProcessResultFunction] and
@@ -351,12 +368,11 @@ internal open class SelectImplementation<R> constructor(
         ClauseData<R>(clauseObject, regFunc, processResFunc, param, block, onCancellationConstructor).register()
 
     /**
-     * Attempts to register this `select` clause.
-     * If another clause is already selected, this function
-     * does nothing.
+     * Attempts to register this `select` clause. If another clause is already selected,
+     * this function does nothing and completes immediately.
      * Otherwise, it registers this `select` instance in
      * the [clause object][ClauseData.clauseObject]
-     * according to the [registration function][ClauseData.regFunc].
+     * according to the provided [registration function][ClauseData.regFunc].
      * On success, this `select` instance is stored as a waiter
      * in the clause object -- the algorithm also stores
      * the provided via [disposeOnCompletion] completion action
@@ -378,8 +394,13 @@ internal open class SelectImplementation<R> constructor(
             // is stored as a waiter. Add this clause to the list
             // of registered clauses and store the provided via
             // [invokeOnCompletion] completion action into the clause.
-            if (!reregister) clauses += this // TODO comment -- cancellation handler cannot be concurrent
-            disposableHandle = this@SelectImplementation.disposableHandle // TODO bug is here
+            //
+            // Importantly, the [waitUntilSelected] function is implemented
+            // carefully to ensure that the cancellation handler has not been
+            // installed when clauses re-register, so the logic below cannot
+            // be invoked concurrently with the clean-up procedure.
+            if (!reregister) clauses += this
+            disposableHandle = this@SelectImplementation.disposableHandle
             this@SelectImplementation.disposableHandle = null
         } else {
             // This clause has been selected!
@@ -431,6 +452,14 @@ internal open class SelectImplementation<R> constructor(
                 // Perform a transition to WAITING phase by storing the current continuation.
                 curState === STATE_REG -> if (state.compareAndSet(curState, cont)) {
                     // Perform a clean-up in case of cancellation.
+                    //
+                    // Importantly, we MUST install the cancellation handler
+                    // only when the algorithm is bound to suspend. Otherwise,
+                    // a race with [tryRegister] is possible, and the provided
+                    // via [disposeOnCompletion] cancellation action can be ignored.
+                    // Also, we MUST guarantee that this dispose handle is _visible_
+                    // according to the memory model, and we CAN guarantee this when
+                    // the state is updated.
                     cont.invokeOnCancellation(this.asHandler)
                     return@sc
                 }
@@ -454,6 +483,12 @@ internal open class SelectImplementation<R> constructor(
         }
     }
 
+    /**
+     * Re-registers the clause with the specified
+     * [clause object][clauseObject] after unsuccessful
+     * [trySelect] of this clause while the `select`
+     * was still in REGISTRATION phase.
+     */
     private fun reregisterClause(clauseObject: Any) {
         val clause = findClause(clauseObject)
         clause.disposableHandle = null
@@ -464,30 +499,31 @@ internal open class SelectImplementation<R> constructor(
     // = RENDEZVOUS =
     // ==============
 
-    override fun trySelect(clauseObject: Any, result: Any?, onCancellation: ((Throwable) -> Unit)?): Boolean =
-        trySelectInternal(clauseObject, result, onCancellation) == TRY_SELECT_SUCCESS
+    override fun trySelect(clauseObject: Any, result: Any?): Boolean =
+        trySelectInternal(clauseObject, result) == TRY_SELECT_SUCCESSFUL
 
-    public fun trySelectDetailed(clauseObject: Any, result: Any?, onCancellation: ((Throwable) -> Unit)? = null) =
-        TrySelectDetailedResult(trySelectInternal(clauseObject, result, onCancellation))
+    /**
+     * Similar to [trySelect] but provides a failure reason
+     * if this rendezvous is unsuccessful. We need this function
+     * in the channel implementation.
+     */
+    fun trySelectDetailed(clauseObject: Any, result: Any?) =
+        TrySelectDetailedResult(trySelectInternal(clauseObject, result))
 
-    private fun trySelectInternal(clauseObject: Any, result: Any?, onCancellation: ((Throwable) -> Unit)?): Int {
-        /**
-         * Tries to select the specified clause and returns the suspended coroutine on success.
-         * On failure, when another clause is already selected or this `select` operation is cancelled,
-         * this function returns `null`.
-         */
+    private fun trySelectInternal(clauseObject: Any, internalResult: Any?): Int {
         while (true) {
             when (val curState = state.value) {
                 // Perform a rendezvous with this select if it is in WAITING state.
                 is CancellableContinuation<*> -> {
-                    val clause = findClause(clauseObject) ?: continue
-                    @Suppress("UNCHECKED_CAST")
+                    val clause = findClause(clauseObject)
+                    val onCancellation = clause.createOnCancellationAction(this@SelectImplementation, internalResult)
                     if (state.compareAndSet(curState, clause)) {
+                        @Suppress("UNCHECKED_CAST")
                         val cont = curState as CancellableContinuation<Unit>
                         // Success! Store the resumption value and
                         // try to resume the continuation.
-                        this.internalResult = result
-                        if (cont.tryResume(onCancellation)) return TRY_SELECT_SUCCESS
+                        this.internalResult = internalResult
+                        if (cont.tryResume(onCancellation)) return TRY_SELECT_SUCCESSFUL
                         // If the resumption failed, we need to clean
                         // the [result] field to avoid memory leaks.
                         this.internalResult = null
@@ -523,13 +559,15 @@ internal open class SelectImplementation<R> constructor(
     // ==============
 
     /**
-     * Completes this `select` operation. First, it applies the
-     * [ProcessResultFunction] of the selected clause to the internal result,
-     * which is provided via [SelectInstance.selectInRegistrationPhase] or
-     * [SelectInstance.trySelect]. After that, the [clean-up procedure][cleanup]
-     * is called to free all the referenced object for garbage collecting.
-     * In the last, the user-specified blocked with the processed result
-     * as an argument is invoked.
+     * Completes this `select` operation after the internal result is provided
+     * via [SelectInstance.trySelect] or [SelectInstance.selectInRegistrationPhase].
+     * (1) First, this function applies the [ProcessResultFunction] of the selected clause
+     * to the internal result.
+     * (2) After that, the [clean-up procedure][cleanup]
+     * is called to remove this `select` instance from other clause objects, and
+     * make it possible to collect it by GC after this `select` finishes.
+     * (3) Finally, the user-specified block is invoked
+     * with the processed result as an argument.
      */
     private suspend fun complete(): R {
         assert { isSelected }
@@ -548,9 +586,8 @@ internal open class SelectImplementation<R> constructor(
 
     /**
      * Invokes all [DisposableHandle]-s provided via
-     * [SelectInstance.disposeOnCompletion] during clauses
-     * registration, and clears all the references to avoid
-     * memory leaks.
+     * [SelectInstance.disposeOnCompletion] during
+     * clause registrations.
      */
     private fun cleanup(selectedClause: ClauseData<R>? = null) {
         assert { state.value == selectedClause }
@@ -560,15 +597,21 @@ internal open class SelectImplementation<R> constructor(
         clauses.forEach { clause ->
             if (clause !== selectedClause) clause.disposableHandle?.dispose()
         }
+        // We do not clean all the data, as this [SelectImplementation]
+        // instance should be collected by GC anyway, and doing so brings
+        // non-trivial concurrency-related tricks and is bug-prone in general.
     }
 
     // [CompletionHandler] implementation, must be invoked on cancellation.
     override fun invoke(cause: Throwable?) {
-        val update = Cancelled(cause ?: CancellationException("This select has been cancelled"))
+        val update = Cancelled(cause ?: CancellationException("This `select` has been cancelled"))
+        // Update the state.
         state.update { cur ->
+            // Finish immediately when this `select` is already completed.
             if (cur is ClauseData<*> || cur == STATE_COMPLETED) return
             update
         }
+        // Remove this `select` install from all the clause object (channels, mutexes, etc.).
         clauses.forEach { it.disposableHandle?.dispose() }
     }
 
@@ -579,18 +622,20 @@ internal open class SelectImplementation<R> constructor(
         @JvmField val clauseObject: Any, // the object of this `select` clause: Channel, Mutex, Job, ...
         private val regFunc: RegistrationFunction,
         private val processResFunc: ProcessResultFunction,
-        private val param: Any?,
-        private val block: Any,
+        private val param: Any?, // the user-specified param
+        private val block: Any, // the user-specified block, which should be called if this clause becomes selected
         @JvmField val onCancellationConstructor: OnCancellationConstructor?,
         @JvmField var disposableHandle: DisposableHandle? = null
     ) {
         /**
-         * Try to register the specified `select` instance in [clauseObject].
-         * Returns `true` if the `select` is successfully registered and
+         * Tries to register the specified [select] instance in [clauseObject].
+         * Returns `true` if this [select] is successfully registered and
          * is waiting for a rendezvous, or `false` when this clause becomes
-         * selected during registration (e.g., a [Channel.onReceive] registration
+         * selected during registration.
+         *
+         * For example, the [Channel.onReceive] clause registration
          * on a non-empty channel retrieves the first element and completes
-         * the corresponding `select` operation).
+         * the corresponding [select] via [SelectInstance.selectInRegistrationPhase].
          */
         fun tryRegister(select: SelectImplementation<R>): Boolean {
             assert { select.inRegistrationPhase || select.isCancelled }
@@ -600,12 +645,12 @@ internal open class SelectImplementation<R> constructor(
         }
 
         /**
-         * Processes the internal result, which is provided
-         * via either [SelectInstance.selectInRegistrationPhase]
-         * or [SelectInstance.trySelect], and returns an argument
+         * Processes the internal result provided via either
+         * [SelectInstance.selectInRegistrationPhase] or
+         * [SelectInstance.trySelect] and returns an argument
          * for the user-specified [block].
          *
-         * Importantly, this function is eligible to throw an exception
+         * Importantly, this function may throw an exception
          * (e.g., when the channel is closed in [Channel.onSend], the
          * corresponding [ProcessResultFunction] is bound to fail).
          */
@@ -654,20 +699,20 @@ private fun CancellableContinuation<Unit>.tryResume(onCancellation: ((cause: Thr
 private class Cancelled(@JvmField val cause: Throwable)
 
 // trySelectInternal(..) results.
-private const val TRY_SELECT_SUCCESS = 0
+private const val TRY_SELECT_SUCCESSFUL = 0
 private const val TRY_SELECT_REREGISTER = 1
 private const val TRY_SELECT_CANCELLED = 2
 private const val TRY_SELECT_ALREADY_SELECTED = 3
 // trySelectDetailed(..) results.
 internal enum class TrySelectDetailedResult {
-    SUCCESSFUL, REREGISTERING, CANCELLED, ALREADY_SELECTED
+    SUCCESSFUL, REREGISTER, CANCELLED, ALREADY_SELECTED
 }
-private fun TrySelectDetailedResult(internalResult: Int): TrySelectDetailedResult = when(internalResult) {
-    TRY_SELECT_SUCCESS -> SUCCESSFUL
-    TRY_SELECT_REREGISTER -> REREGISTERING
+private fun TrySelectDetailedResult(trySelectInternalResult: Int): TrySelectDetailedResult = when(trySelectInternalResult) {
+    TRY_SELECT_SUCCESSFUL -> SUCCESSFUL
+    TRY_SELECT_REREGISTER -> REREGISTER
     TRY_SELECT_CANCELLED -> CANCELLED
     TRY_SELECT_ALREADY_SELECTED -> ALREADY_SELECTED
-    else -> error("Unexpected internal result: $internalResult")
+    else -> error("Unexpected internal result: $trySelectInternalResult")
 }
 
 // Markers for REGISTRATION and COMPLETED states.
@@ -680,7 +725,7 @@ private val STATE_COMPLETED = Symbol("STATE_COMPLETED")
 @SharedImmutable
 private val NO_RESULT = Symbol("NO_RESULT")
 // We use this marker parameter objects to distinguish
-// SelectClause[0,1,2] and invoke the `block` correctly.
+// SelectClause[0,1,2] and invoke the user-specified block correctly.
 @SharedImmutable
 internal val PARAM_CLAUSE_0 = Symbol("PARAM_CLAUSE_0")
 @SharedImmutable

@@ -494,7 +494,7 @@ internal abstract class AbstractChannel<E>(
             // Too late, already cancelled, but we removed it from the queue and need to notify on undelivered element.
             // The only exception is when this "send" operation is an `onSend` clause that has to be re-registered
             // in the corresponding `select` invocation.
-            if (send !is SendElementSelectWithUndeliveredHandler<*> || send.trySelectResult != REREGISTERING)
+            if (send !is SendElementSelectWithUndeliveredHandler<*> || send.trySelectResult != REREGISTER)
                 send.undeliveredElement()
         }
     }
@@ -866,7 +866,7 @@ internal abstract class AbstractChannel<E>(
         private var success: Boolean? = null
 
         override fun tryResumeReceive(value: E, otherOp: PrepareOp?): Symbol? = lock.withLock {
-            if (success == null) success = select.trySelect(this@AbstractChannel, value, resumeOnCancellationFun(value))
+            if (success == null) success = select.trySelect(this@AbstractChannel, value)
             if (success!!) RESUME_TOKEN else null
         }
         override fun completeResumeReceive(value: E) {}
