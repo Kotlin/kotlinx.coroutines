@@ -116,7 +116,7 @@ buildscript {
 Make sure that you have `mavenCentral()` in the list of repositories:
 
 ```
-repository {
+repositories {
     mavenCentral()
 }
 ```
@@ -135,7 +135,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 plugins {
-    kotlin("jvm") version "1.5.30"
+    kotlin("jvm") version "1.6.0"
 }
 ```
 
