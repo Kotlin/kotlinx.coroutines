@@ -32,6 +32,6 @@ internal open class SuppressSupportingThrowableImpl : Throwable() {
     }
 }
 
-@SharedImmutable
 @OptIn(ExperimentalStdlibApi::class)
-internal val multithreadingSupported: Boolean = kotlin.native.isExperimentalMM()
+internal val multithreadingSupported: Boolean
+    get() = kotlin.native.isExperimentalMM()
