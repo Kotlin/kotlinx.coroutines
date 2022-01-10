@@ -193,7 +193,7 @@ public interface Flow<out T> {
      * Instead, [AbstractFlow] can be used as the base type to properly ensure flow's properties.
      *
      * All default flow implementations ensure context preservation and exception transparency properties on a best-effort basis
-     * and throw [IllegalStateException] if the violation was detected.
+     * and throw [IllegalStateException] if a violation was detected.
      */
     public suspend fun collect(collector: FlowCollector<T>)
 }
