@@ -115,7 +115,7 @@ import kotlin.native.concurrent.*
  * ### Implementation notes
  *
  * Shared flow implementation uses a lock to ensure thread-safety, but suspending collector and emitter coroutines are
- * resumed outside of this lock to avoid dead-locks when using unconfined coroutines. Adding new subscribers
+ * resumed outside of this lock to avoid deadlocks when using unconfined coroutines. Adding new subscribers
  * has `O(1)` amortized cost, but emitting has `O(N)` cost, where `N` is the number of subscribers.
  *
  * ### Not stable for inheritance
@@ -132,13 +132,13 @@ public interface SharedFlow<out T> : Flow<T> {
 
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
-     * This method should never be used directly. To emit values from a shared flow into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
-     * should be used.
+     * To emit values from a shared flow into a specific collector, either `collector.emitAll(flow)` or `collect { ... }`
+     * SAM-conversion can be used.
      *
      * **A shared flow never completes**. A call to [Flow.collect] or any other terminal operator
      * on a shared flow never completes normally.
      *
-     * @see [Flow.collect]
+     * @see [Flow.collect] for implementation and inheritance details.
      */
     override suspend fun collect(collector: FlowCollector<T>): Nothing
 }
