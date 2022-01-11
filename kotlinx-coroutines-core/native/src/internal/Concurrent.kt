@@ -32,6 +32,7 @@ internal open class SuppressSupportingThrowableImpl : Throwable() {
     }
 }
 
-@SharedImmutable
+// getter instead of a property due to the bug in the initialization dependencies tracking with '-Xir-property-lazy-initialization=disabled' that Ktor uses 
 @OptIn(ExperimentalStdlibApi::class)
-internal val multithreadingSupported: Boolean = kotlin.native.isExperimentalMM()
+internal val multithreadingSupported: Boolean
+    get() = kotlin.native.isExperimentalMM()
