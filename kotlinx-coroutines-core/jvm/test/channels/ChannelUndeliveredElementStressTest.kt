@@ -221,25 +221,22 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     }
 
     private inner class Data(val x: Long) {
-        private val failedToDeliverOrReceived = atomic(false)
-        private var firstFailedToDeliverOrReceivedCallTrace: Exception? = null
+        private val firstFailedToDeliverOrReceivedCallTrace = atomic<Exception?>(null)
 
         fun failedToDeliver() {
-            if (failedToDeliverOrReceived.compareAndSet(false, true)) {
-                firstFailedToDeliverOrReceivedCallTrace = Exception("First onUndeliveredElement() call")
-            } else {
-                throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace!!)
+            val trace = Exception("First onUndeliveredElement() call")
+            if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) {
+                failedToDeliverCnt.incrementAndGet()
+                failedStatus[x] = 1
+                return
             }
-            failedToDeliverCnt.incrementAndGet()
-            failedStatus[x] = 1
+            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
         }
 
         fun onReceived() {
-            if (failedToDeliverOrReceived.compareAndSet(false, true)) {
-                firstFailedToDeliverOrReceivedCallTrace = Exception("First onReceived() call")
-            } else {
-                throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace!!)
-            }
+            val trace = Exception("First onReceived() call")
+            if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) return
+            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
         }
     }
 

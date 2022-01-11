@@ -155,10 +155,9 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
                 var counter = 0
                 while (true) {
                     val trySendData = Data(sentCnt++)
-                    val sendMode = Random.nextInt(2) + 1
-                    sentStatus[trySendData.x] = sendMode
+                    sentStatus[trySendData.x] = 1
                     selectOld<Unit> { channel.onSend(trySendData) {} }
-                    sentStatus[trySendData.x] = sendMode + 2
+                    sentStatus[trySendData.x] = 3
                     when {
                         // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
                         kind == TestChannelKind.LINKED_LIST -> while (sentCnt > lastReceived + 100) yield()
@@ -172,7 +171,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
 
     private suspend fun stopSender() {
         stoppedSender++
-        sender.cancel()
+        sender.cancelAndJoin()
         senderDone.receive()
     }
 
@@ -207,25 +206,22 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
     }
 
     private inner class Data(val x: Long) {
-        private val failedToDeliverOrReceived = atomic(false)
-        private var firstFailedToDeliverOrReceivedCallTrace: Exception? = null
+        private val firstFailedToDeliverOrReceivedCallTrace = atomic<Exception?>(null)
 
         fun failedToDeliver() {
-            if (failedToDeliverOrReceived.compareAndSet(false, true)) {
-                firstFailedToDeliverOrReceivedCallTrace = Exception("First onUndeliveredElement() call")
-            } else {
-                throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace!!)
+            val trace = Exception("First onUndeliveredElement() call")
+            if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) {
+                failedToDeliverCnt.incrementAndGet()
+                failedStatus[x] = 1
+                return
             }
-            failedToDeliverCnt.incrementAndGet()
-            failedStatus[x] = 1
+            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
         }
 
         fun onReceived() {
-            if (failedToDeliverOrReceived.compareAndSet(false, true)) {
-                firstFailedToDeliverOrReceivedCallTrace = Exception("First onReceived() call")
-            } else {
-                throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace!!)
-            }
+            val trace = Exception("First onReceived() call")
+            if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) return
+            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
         }
     }
 
