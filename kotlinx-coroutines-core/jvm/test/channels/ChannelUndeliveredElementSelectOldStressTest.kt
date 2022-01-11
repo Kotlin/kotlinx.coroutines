@@ -52,6 +52,8 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
 
     private val modulo = 1 shl 25
     private val mask = (modulo - 1).toLong()
+    private val sentStatus = ItemStatus() // 1 - send norm, 2 - send select, +2 - did not throw exception
+    private val receivedStatus = ItemStatus() // 1-6 received
     private val failedStatus = ItemStatus() // 1 - failed
 
     lateinit var sender: Job
@@ -111,8 +113,11 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
             assertEquals(sentCnt - failedToDeliverCnt.value, receivedCnt)
         } catch (e: Throwable) {
             printProgressSummary(iteration)
+            printErrorDetails()
             throw e
         }
+        sentStatus.clear()
+        receivedStatus.clear()
         failedStatus.clear()
     }
 
@@ -126,15 +131,34 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
         println("        Duplicated $dupCnt deliveries")
     }
 
+    private fun printErrorDetails() {
+        val min = minOf(sentStatus.min, receivedStatus.min, failedStatus.min)
+        val max = maxOf(sentStatus.max, receivedStatus.max, failedStatus.max)
+        for (x in min..max) {
+            val sentCnt = if (sentStatus[x] != 0) 1 else 0
+            val receivedCnt = if (receivedStatus[x] != 0) 1 else 0
+            val failedToDeliverCnt = failedStatus[x]
+            if (sentCnt - failedToDeliverCnt != receivedCnt) {
+                println("!!! Error for value $x: " +
+                    "sentStatus=${sentStatus[x]}, " +
+                    "receivedStatus=${receivedStatus[x]}, " +
+                    "failedStatus=${failedStatus[x]}"
+                )
+            }
+        }
+    }
+
+
     private fun launchSender() {
         sender = scope.launch(start = CoroutineStart.ATOMIC) {
             cancellable(senderDone) {
                 var counter = 0
                 while (true) {
                     val trySendData = Data(sentCnt++)
-                    selectOld<Unit> {
-                        channel.onSend(trySendData) {}
-                    }
+                    val sendMode = Random.nextInt(2) + 1
+                    sentStatus[trySendData.x] = sendMode
+                    selectOld<Unit> { channel.onSend(trySendData) {} }
+                    sentStatus[trySendData.x] = sendMode + 2
                     when {
                         // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
                         kind == TestChannelKind.LINKED_LIST -> while (sentCnt > lastReceived + 100) yield()
@@ -156,14 +180,15 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
         receiver = scope.launch(start = CoroutineStart.ATOMIC) {
             cancellable(receiverDone) {
                 while (true) {
-                    selectOld<Unit> {
-                        channel.onReceive {
-                            it.onReceived()
+                   selectOld<Unit> {
+                        channel.onReceive { receivedData ->
+                            receivedData.onReceived()
                             receivedCnt++
-                            val received = it.x
+                            val received = receivedData.x
                             if (received <= lastReceived)
                                 dupCnt++
                             lastReceived = received
+                            receivedStatus[received] = 1
                         }
                     }
                 }
