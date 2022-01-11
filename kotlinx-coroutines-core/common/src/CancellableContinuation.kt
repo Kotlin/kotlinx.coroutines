@@ -87,7 +87,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * @suppress  **This is unstable API and it is subject to change.**
      */
     @InternalCoroutinesApi
-    public fun tryResume(value: T, idempotent: Any?, onCancellation: OnCancellation<@UnsafeVariance T>?): Any?
+    public fun tryResume(value: T, idempotent: Any?, onCancellation: OnCancellationHandler<@UnsafeVariance T>?): Any?
 
     /**
      * Tries to resume this continuation with the specified [exception] and returns a non-null object token if successful,
@@ -209,7 +209,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
             resume(value)
             return
         }
-        val onCancellationNew = OnCancellation<T> { _, cause, _ ->
+        val onCancellationNew = OnCancellationHandler<T> { _, cause, _ ->
             onCancellation(cause ?: CancellationException("Cancelled"))
         }
         resume(value, onCancellationNew)
@@ -245,10 +245,10 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      */
     @ExperimentalCoroutinesApi
     @InternalCoroutinesApi
-    public fun resume(value: T, onCancellation: OnCancellation<@UnsafeVariance T>?)
+    public fun resume(value: T, onCancellation: OnCancellationHandler<@UnsafeVariance T>?)
 }
 
-public fun interface OnCancellation<in T> {
+public fun interface OnCancellationHandler<in T> {
     public fun invoke(value: T, cause: Throwable?, context: CoroutineContext)
 }
 

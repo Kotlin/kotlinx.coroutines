@@ -213,7 +213,7 @@ internal open class CancellableContinuationImpl<in T>(
     fun callCancelHandler(handler: CancelHandler, cause: Throwable?) =
         callCancelHandlerSafely { handler.invoke(cause) }
 
-    fun callOnCancellation(onCancellation: OnCancellation<@UnsafeVariance T>, value: T, cause: Throwable) {
+    fun callOnCancellation(onCancellation: OnCancellationHandler<@UnsafeVariance T>, value: T, cause: Throwable) {
         try {
             onCancellation.invoke(value, cause, context)
         } catch (ex: Throwable) {
@@ -326,7 +326,7 @@ internal open class CancellableContinuationImpl<in T>(
     override fun resumeWith(result: Result<T>) =
         resumeImpl(result.toState(this), resumeMode)
 
-    override fun resume(value: T, onCancellation: OnCancellation<@UnsafeVariance T>?) {
+    override fun resume(value: T, onCancellation: OnCancellationHandler<@UnsafeVariance T>?) {
         resumeImpl(value, resumeMode, onCancellation)
     }
 
@@ -401,7 +401,7 @@ internal open class CancellableContinuationImpl<in T>(
         state: NotCompleted,
         proposedUpdate: Any?,
         resumeMode: Int,
-        onCancellation: OnCancellation<T>?,
+        onCancellation: OnCancellationHandler<T>?,
         idempotent: Any?
     ): Any? = when {
         proposedUpdate is CompletedExceptionally -> {
@@ -420,7 +420,7 @@ internal open class CancellableContinuationImpl<in T>(
     private fun resumeImpl(
         proposedUpdate: Any?,
         resumeMode: Int,
-        onCancellation: OnCancellation<T>? = null
+        onCancellation: OnCancellationHandler<T>? = null
     ) {
         _state.loop { state ->
             when (state) {
@@ -456,7 +456,7 @@ internal open class CancellableContinuationImpl<in T>(
     private fun tryResumeImpl(
         proposedUpdate: Any?,
         idempotent: Any?,
-        onCancellation: OnCancellation<T>?
+        onCancellation: OnCancellationHandler<T>?
     ): Symbol? {
         _state.loop { state ->
             when (state) {
@@ -502,7 +502,7 @@ internal open class CancellableContinuationImpl<in T>(
     override fun tryResume(value: T, idempotent: Any?): Any? =
         tryResumeImpl(value, idempotent, onCancellation = null)
 
-    override fun tryResume(value: T, idempotent: Any?, onCancellation: OnCancellation<@UnsafeVariance T>?): Any? =
+    override fun tryResume(value: T, idempotent: Any?, onCancellation: OnCancellationHandler<@UnsafeVariance T>?): Any? =
         tryResumeImpl(value, idempotent, onCancellation)
 
     override fun tryResumeWithException(exception: Throwable): Any? =
@@ -580,7 +580,7 @@ private class InvokeOnCancel( // Clashes with InvokeOnCancellation
 private data class CompletedContinuation<T>(
     @JvmField val result: T,
     @JvmField val cancelHandler: CancelHandler? = null, // installed via invokeOnCancellation
-    @JvmField val onCancellation: OnCancellation<T>? = null, // installed via resume block
+    @JvmField val onCancellation: OnCancellationHandler<T>? = null, // installed via resume block
     @JvmField val idempotentResume: Any? = null,
     @JvmField val cancelCause: Throwable? = null
 ) {

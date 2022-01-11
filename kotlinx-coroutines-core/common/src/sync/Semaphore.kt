@@ -88,7 +88,7 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     }
 }
 
-private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore, OnCancellation<Unit> {
+private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore, OnCancellationHandler<Unit> {
     /*
        The queue of waiting acquirers is essentially an infinite array based on the list of segments
        (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue

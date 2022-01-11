@@ -24,15 +24,15 @@ internal abstract class AbstractSendChannel<E>(
     // ------ OnCancellation handlers that call onUndeliveredElement ------
 
     @Suppress("UNCHECKED_CAST")
-    protected val receiveOnCancellation: OnCancellation<Any?> = OnCancellation<E> { value, cause, context ->
+    protected val receiveOnCancellation: OnCancellationHandler<Any?> = OnCancellationHandler<E> { value, cause, context ->
         onUndeliveredElement?.callUndeliveredElement(value, context)
-    } as OnCancellation<Any?>
+    } as OnCancellationHandler<Any?>
     @Suppress("UNCHECKED_CAST")
-    protected val receiveCatchingOnCancellation: OnCancellation<Any?> = OnCancellation<ChannelResult<E>> { value, cause, context ->
+    protected val receiveCatchingOnCancellation: OnCancellationHandler<Any?> = OnCancellationHandler<ChannelResult<E>> { value, cause, context ->
         value.onSuccess {
             onUndeliveredElement?.callUndeliveredElement(it, context)
         }
-    } as OnCancellation<Any?>
+    } as OnCancellationHandler<Any?>
 
     // ------ extension points for buffered channels ------
 
@@ -844,8 +844,8 @@ internal abstract class AbstractChannel<E>(
     private class Itr<E>(@JvmField val channel: AbstractChannel<E>) : ChannelIterator<E> {
         val result = atomic<Any?>(POLL_FAILED) // E | POLL_FAILED | ReceiveHasNext | Closed
 
-        val hasNextSuspendOnCancellation = OnCancellation<Boolean> { success, cause, context ->
-            if (!success) return@OnCancellation
+        val hasNextSuspendOnCancellation = OnCancellationHandler<Boolean> { success, cause, context ->
+            if (!success) return@OnCancellationHandler
             val element: E = result.value as E // it is guaranteed that the element has been provided
             channel.onUndeliveredElement?.callUndeliveredElement(element, context)
         }
@@ -950,7 +950,7 @@ internal abstract class AbstractChannel<E>(
         cont: CancellableContinuation<Any?>,
         receiveMode: Int
     ) : ReceiveElement<E>(cont, receiveMode) {
-        override val resumeOnCancellationFun: OnCancellation<Any?>
+        override val resumeOnCancellationFun: OnCancellationHandler<Any?>
             get() = if (receiveMode == RECEIVE_RESULT) receiveCatchingOnCancellation
                     else receiveOnCancellation
     }
@@ -992,7 +992,7 @@ internal abstract class AbstractChannel<E>(
 
         @Suppress("UNCHECKED_CAST")
         override val resumeOnCancellationFun
-            get() = iterator.hasNextSuspendOnCancellation as OnCancellation<Any?>
+            get() = iterator.hasNextSuspendOnCancellation as OnCancellationHandler<Any?>
 
         override fun toString(): String = "ReceiveHasNext@$hexAddress"
     }
@@ -1030,7 +1030,7 @@ internal abstract class AbstractChannel<E>(
         fun resumeOnCancellationFun(value: E): ((Throwable) -> Unit)? =
             onUndeliveredElement?.bindCancellationFun(value, select.completion.context)
 
-        override val resumeOnCancellationFun: OnCancellation<Any?>
+        override val resumeOnCancellationFun: OnCancellationHandler<Any?>
             get() = if (receiveMode == RECEIVE_RESULT) receiveCatchingOnCancellation
                     else receiveOnCancellation
 
@@ -1149,7 +1149,7 @@ internal class Closed<in E>(
 internal abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClosed<E> {
     override val offerResult get() = OFFER_SUCCESS
     abstract fun resumeReceiveClosed(closed: Closed<*>)
-    open val resumeOnCancellationFun: OnCancellation<Any?>? = null
+    open val resumeOnCancellationFun: OnCancellationHandler<Any?>? = null
 }
 
 @Suppress("NOTHING_TO_INLINE", "UNCHECKED_CAST")
