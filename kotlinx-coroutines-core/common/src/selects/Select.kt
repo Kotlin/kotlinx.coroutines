@@ -569,7 +569,7 @@ internal open class SelectImplementation<R> constructor(
             when (val curState = state.value) {
                 // Perform a rendezvous with this select if it is in WAITING state.
                 is CancellableContinuation<*> -> {
-                    val clause = findClause(clauseObject) ?: continue
+                    val clause = findClause(clauseObject) ?: continue // retry if `clauses` is already `null`
                     val onCancellation = clause.createOnCancellationAction(this@SelectImplementation, internalResult)
                     if (state.compareAndSet(curState, clause)) {
                         @Suppress("UNCHECKED_CAST")
@@ -604,6 +604,8 @@ internal open class SelectImplementation<R> constructor(
 
     /**
      * Finds the clause with the corresponding [clause object][SelectClause.clauseObject].
+     * If the reference to the list of clauses is already cleared due to completion/cancellation,
+     * this function returns `null`
      */
     private fun findClause(clauseObject: Any) = clauses?.run {
         find { it.clauseObject === clauseObject } ?: error("Clause with object $clauseObject is not found")
