@@ -8,7 +8,7 @@ import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
-private val defaultMainDelayOptIn = systemProp("kotlinx.coroutines.main.delay", true)
+private val defaultMainDelayOptIn = systemProp("kotlinx.coroutines.main.delay", false)
 
 internal actual val DefaultDelay: Delay = initializeDefaultDelay()
 
