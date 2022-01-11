@@ -235,24 +235,49 @@ internal open class SelectImplementation<R> constructor(
 ) : CancelHandler(), SelectBuilder<R>, SelectInstance<R> {
 
     /**
-     * Essentially. each `select` operation is split into three phases: REGISTRATION, WAITING, and COMPLETING.
-     * In REGISTRATION phase,
+     * Essentially, the `select` operation is split into three phases: REGISTRATION, WAITING, and COMPLETION.
      *
-     * == Phase 1: Registration ==
-     * In the first REGISTRATION phase, [SelectBuilder] is applied, and all the clauses register
-     * via the provided [registration function][SelectClause.regFunc]. Intuitively, `select` registration
-     * is similar to the plain blocking operation, with the only difference that this [SelectInstance]
-     * is stored instead of continuation, and [SelectInstance.trySelect] is used to make a rendezvous.
-     * Also, when registering, it is possible for the operation to complete immediately, without waiting.
-     * In this case, [SelectInstance.selectInRegistrationPhase] should be used. Otherwise, when this
-     * `select` instance is stored as a waiter, a completion handler should be specified via [SelectInstance.disposeOnCompletion].
+     * == Phase 1: REGISTRATION ==
+     * In the first REGISTRATION phase, the user-specified [SelectBuilder] is applied, and all the listed clauses
+     * are registered via the provided [registration functions][SelectClause.regFunc]. Intuitively, `select` clause
+     * registration is similar to the plain blocking operation, with the only difference that the corresponding
+     * [SelectInstance] is stored instead of continuation, and [SelectInstance.trySelect] is used to make a rendezvous.
+     * Also, when registering, it is possible for the operation to complete immediately, without waiting. In this case,
+     * [SelectInstance.selectInRegistrationPhase] should be used. Otherwise, when this `select` instance is stored
+     * as a waiter, a completion handler should be specified via [SelectInstance.disposeOnCompletion].
      *
-     * After the [SelectBuilder] is processed, the registration completes s
+     * After one clause registration is completed, another coroutine can attempt to make a rendezvous with this `select`.
+     * However, to resolve a race between clauses registration and [SelectInstance.trySelect], the latter fails when
+     * this `select` is still in REGISTRATION phase. Thus, the corresponding clause has to be registered again.
+     *
+     * In this phase, the `state` field stores either a special [STATE_REG] marker or
+     * a list of clauses to be re-registered due to failed rendezvous attempts.
+     *
+     * == Phase 2: WAITING ==
+     * If no rendezvous happens in REGISTRATION phase, the `select` operation moves to WAITING one and suspends until
+     * [SelectInstance.trySelect] is called. Also, when waiting, this `select` operation can be cancelled. In the latter
+     * case, further [SelectInstance.trySelect] calls fail, and all the completion handlers, specified via
+     * [SelectInstance.disposeOnCompletion] during clauses registration, are invoked to remove this `select` instance
+     * as a waiter from the corresponding clause objects.
+     *
+     * In this phase, the `state` field stores either the continuation to be later resumed or a special `Cancelled`
+     * object when this `select` becomes cancelled.
+     *
+     * == Phase 3: COMPLETION ==
+     * Once a rendezvous happens either in REGISTRATION phase (via [SelectInstance.selectInRegistrationPhase]) or
+     * in WAITING phase (via [SelectInstance.trySelect]), this `select` moves to `COMPLETION` phase. First,
+     * the provided internal result is processed via the clause-specified [ProcessResultFunction], which returns
+     * the argument for the user-specified block. After that, this `select` should be removed from all other
+     * clause objects by calling the [DisposableHandle]-s provided via [SelectInstance.disposeOnCompletion]
+     * during registration. At the end, the user-specified block is called.
+     *
+     * In this phase, one a rendezvous is happened, the `state` field stores the corresponding clause. After that,
+     * to avoid memory leaks, the state moves to [STATE_COMPLETED].
      *
      *
      * The state machine is listed below:
      *
-     *            REGISTRATION PHASE                   WAITING PHASE             COMPLETING PHASE
+     *            REGISTRATION PHASE                   WAITING PHASE             COMPLETION PHASE
      *       ⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢             ⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢         ⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢
      *
      *                                                 +-----------+                 +-----------+
@@ -279,6 +304,31 @@ internal open class SelectImplementation<R> constructor(
      *       |            |  add one more clause
      *       |            |  for re-registration
      *       +------------+
+     *
+     * One of the most valuable benefits of this `select` design is that it allows processing clauses
+     * in a way similar to plain operations, such as `send` or `receive` on channels. The only difference
+     * is that instead of continuation, the operation should store the provided `select` instance object.
+     * Thus, this design makes it possible to support the `select` expression for any blocking data structure
+     * in Kotlin Coroutines.
+     *
+     * It is worth mentioning that the algorithm above provides "obstruction-freedom" non-blocking guarantee
+     * instead of the standard "lock-freedom" to avoid using heavy descriptors. In practice, this relaxation
+     * does not make significant difference. However, it is vital for Kotlin Coroutines to provide some
+     * non-blocking guarantee, as users may add blocking code in [SelectBuilder], and this blocking code
+     * should not cause blocking behaviour in other places, such as an attempt to make a rendezvous with
+     * the `select` that is hang in REGISTRATION phase.
+     *
+     * Also, this implementation is NOT linearizable under some circumstances. The reason is that a rendezvous
+     * attempt with `select` (via [SelectInstance.trySelect]) may fail when this `select` operation is still
+     * in REGESTRATION phase. Consider the following situation on two empty rendezvous channels `c1` and `c2`
+     * and the `select` operation that tries to send an element to one of these channels. First, this `select`
+     * instance is registered as a waiter in `c1`. After that, another thread can observe that `c1` is no longer
+     * empty and try to receive an element from `c1` -- this receive attempt fails due to the `select` operation
+     * being in REGISRTATION phase.
+     * It is also possible to observe that this `select` operation registered in `c2` first, and only after that in
+     * `c1` (it has to re-register in `c1` after the unsuccessful rendezvous attempt), which is also non-linearizable.
+     * We, however, find such a non-linearizable behaviour not so important in practice and leverage the correctness
+     * relaxation for the algorithm simplicity and the non-blocking progress guarantee.
      */
 
     /**
@@ -308,7 +358,7 @@ internal open class SelectImplementation<R> constructor(
     /**
      * List of clauses waiting on this `select` instance.
      */
-    private var clauses: MutableList<ClauseData<R>> = ArrayList(2)
+    private var clauses: MutableList<ClauseData<R>>? = ArrayList(2)
 
     /**
      * Stores the completion action provided through [disposeOnCompletion] during clause registration.
@@ -399,7 +449,7 @@ internal open class SelectImplementation<R> constructor(
             // carefully to ensure that the cancellation handler has not been
             // installed when clauses re-register, so the logic below cannot
             // be invoked concurrently with the clean-up procedure.
-            if (!reregister) clauses += this
+            if (!reregister) clauses!! += this
             disposableHandle = this@SelectImplementation.disposableHandle
             this@SelectImplementation.disposableHandle = null
         } else {
@@ -419,7 +469,7 @@ internal open class SelectImplementation<R> constructor(
      * Checks that there does not exist another clause with the same object.
      */
     private fun checkClauseObject(clauseObject: Any) {
-        check(!clauses.any { it.clauseObject === clauseObject }) {
+        check(!clauses!!.any { it.clauseObject === clauseObject }) {
             "Cannot use select clauses on the same object: $clauseObject"
         }
     }
@@ -490,7 +540,7 @@ internal open class SelectImplementation<R> constructor(
      * was still in REGISTRATION phase.
      */
     private fun reregisterClause(clauseObject: Any) {
-        val clause = findClause(clauseObject)
+        val clause = findClause(clauseObject)!!
         clause.disposableHandle = null
         clause.register(reregister = true)
     }
@@ -515,7 +565,7 @@ internal open class SelectImplementation<R> constructor(
             when (val curState = state.value) {
                 // Perform a rendezvous with this select if it is in WAITING state.
                 is CancellableContinuation<*> -> {
-                    val clause = findClause(clauseObject)
+                    val clause = findClause(clauseObject) ?: continue
                     val onCancellation = clause.createOnCancellationAction(this@SelectImplementation, internalResult)
                     if (state.compareAndSet(curState, clause)) {
                         @Suppress("UNCHECKED_CAST")
@@ -551,11 +601,12 @@ internal open class SelectImplementation<R> constructor(
     /**
      * Finds the clause with the corresponding [clause object][SelectClause.clauseObject].
      */
-    private fun findClause(clauseObject: Any) =
-        clauses.find { it.clauseObject === clauseObject } ?: error("Clause with object $clauseObject is not found")
+    private fun findClause(clauseObject: Any) = clauses?.run {
+        find { it.clauseObject === clauseObject } ?: error("Clause with object $clauseObject is not found")
+    }
 
     // ==============
-    // = COMPLETING =
+    // = COMPLETION =
     // ==============
 
     /**
@@ -589,17 +640,17 @@ internal open class SelectImplementation<R> constructor(
      * [SelectInstance.disposeOnCompletion] during
      * clause registrations.
      */
-    private fun cleanup(selectedClause: ClauseData<R>? = null) {
+    private fun cleanup(selectedClause: ClauseData<R>) {
         assert { state.value == selectedClause }
-        state.value = STATE_COMPLETED
         // Invoke all cancellation handlers except for the
         // one related to the selected clause, if specified.
-        clauses.forEach { clause ->
+        clauses?.forEach { clause ->
             if (clause !== selectedClause) clause.disposableHandle?.dispose()
         }
-        // We do not clean all the data, as this [SelectImplementation]
-        // instance should be collected by GC anyway, and doing so brings
-        // non-trivial concurrency-related tricks and is bug-prone in general.
+        // We do need to clean all the data to avoid memory leaks.
+        state.value = STATE_COMPLETED
+        internalResult = NO_RESULT
+        clauses = null
     }
 
     // [CompletionHandler] implementation, must be invoked on cancellation.
@@ -611,8 +662,11 @@ internal open class SelectImplementation<R> constructor(
             if (cur is ClauseData<*> || cur == STATE_COMPLETED) return
             update
         }
-        // Remove this `select` install from all the clause object (channels, mutexes, etc.).
-        clauses.forEach { it.disposableHandle?.dispose() }
+        // Remove this `select` instance from all the clause object (channels, mutexes, etc.).
+        clauses?.forEach { it.disposableHandle?.dispose() }
+        // We do need to clean all the data to avoid memory leaks.
+        internalResult = NO_RESULT
+        clauses = null
     }
 
     /**

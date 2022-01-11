@@ -197,6 +197,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         clauseObject = this,
         regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
         processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
+        onCancellationConstructor = onCancellationUnlockConstructor
     )
 
     protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
@@ -205,9 +206,13 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     protected open fun onLockProcessResult(owner: Any?, result: Any?): Any? {
         onAcquire.processResFunc(this, null, result)
-//        while (isLocked && this.owner.value === NO_OWNER) {} // TODO do we need this?
         return this
     }
+
+    protected val onCancellationUnlockConstructor: OnCancellationConstructor =
+        { select: SelectInstance<*>, owner: Any?, ignoredResult: Any? ->
+            { unlock(owner) }
+        }
 
     private inner class CancellableContinuationWithOwner(
         val cont: CancellableContinuation<Unit>,
