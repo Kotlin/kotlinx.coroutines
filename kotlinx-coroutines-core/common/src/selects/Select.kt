@@ -240,13 +240,15 @@ internal open class SelectImplementation<R> constructor(
      * == Phase 1: REGISTRATION ==
      * In the first REGISTRATION phase, the user-specified [SelectBuilder] is applied, and all the listed clauses
      * are registered via the provided [registration functions][SelectClause.regFunc]. Intuitively, `select` clause
-     * registration is similar to the plain blocking operation, with the only difference that the corresponding
-     * [SelectInstance] is stored instead of continuation, and [SelectInstance.trySelect] is used to make a rendezvous.
+     * registration is similar to the plain blocking operation, with the only difference that this [SelectInstance]
+     * is stored as a waiter instead of continuation, and [SelectInstance.trySelect] is used to make a rendezvous.
      * Also, when registering, it is possible for the operation to complete immediately, without waiting. In this case,
-     * [SelectInstance.selectInRegistrationPhase] should be used. Otherwise, when this `select` instance is stored
-     * as a waiter, a completion handler should be specified via [SelectInstance.disposeOnCompletion].
+     * [SelectInstance.selectInRegistrationPhase] should be used. Otherwise, when no rendezvous happens and this `select`
+     * instance is stored as a waiter, a completion handler for the registering clause should be specified via
+     * [SelectInstance.disposeOnCompletion]; this handler specifies how to remove this `select` instance from the
+     * clause object when another clause becomes selected or the operation cancels.
      *
-     * After one clause registration is completed, another coroutine can attempt to make a rendezvous with this `select`.
+     * After a clause registration is completed, another coroutine can attempt to make a rendezvous with this `select`.
      * However, to resolve a race between clauses registration and [SelectInstance.trySelect], the latter fails when
      * this `select` is still in REGISTRATION phase. Thus, the corresponding clause has to be registered again.
      *
@@ -255,24 +257,26 @@ internal open class SelectImplementation<R> constructor(
      *
      * == Phase 2: WAITING ==
      * If no rendezvous happens in REGISTRATION phase, the `select` operation moves to WAITING one and suspends until
-     * [SelectInstance.trySelect] is called. Also, when waiting, this `select` operation can be cancelled. In the latter
-     * case, further [SelectInstance.trySelect] calls fail, and all the completion handlers, specified via
-     * [SelectInstance.disposeOnCompletion] during clauses registration, are invoked to remove this `select` instance
-     * as a waiter from the corresponding clause objects.
+     * [SelectInstance.trySelect] is called. Also, when waiting, this `select` can be cancelled. In the latter case,
+     * further [SelectInstance.trySelect] attempts fail, and all the completion handlers, specified via
+     * [SelectInstance.disposeOnCompletion], are invoked to remove this `select` instance from the corresponding
+     * clause objects.
      *
      * In this phase, the `state` field stores either the continuation to be later resumed or a special `Cancelled`
-     * object when this `select` becomes cancelled.
+     * object (with the cancellation cause inside) when this `select` becomes cancelled.
      *
      * == Phase 3: COMPLETION ==
      * Once a rendezvous happens either in REGISTRATION phase (via [SelectInstance.selectInRegistrationPhase]) or
-     * in WAITING phase (via [SelectInstance.trySelect]), this `select` moves to `COMPLETION` phase. First,
-     * the provided internal result is processed via the clause-specified [ProcessResultFunction], which returns
-     * the argument for the user-specified block. After that, this `select` should be removed from all other
-     * clause objects by calling the [DisposableHandle]-s provided via [SelectInstance.disposeOnCompletion]
-     * during registration. At the end, the user-specified block is called.
+     * in WAITING phase (via [SelectInstance.trySelect]), this `select` moves to the final `COMPLETION` phase.
+     * First, the provided internal result is processed via the [ProcessResultFunction] of the selected clause;
+     * it returns the argument for the user-specified block or throws an exception (see [SendChannel.onSend] as
+     * an example). After that, this `select` should be removed from all other clause objects by calling the
+     * corresponding [DisposableHandle]-s, provided via [SelectInstance.disposeOnCompletion] during registration.
+     * At the end, the user-specified block is called and this `select` finishes.
      *
-     * In this phase, one a rendezvous is happened, the `state` field stores the corresponding clause. After that,
-     * to avoid memory leaks, the state moves to [STATE_COMPLETED].
+     * In this phase, once a rendezvous is happened, the `state` field stores the corresponding clause.
+     * After that, it moves to [STATE_COMPLETED] to avoid memory leaks.
+     *
      *
      *
      * The state machine is listed below:
