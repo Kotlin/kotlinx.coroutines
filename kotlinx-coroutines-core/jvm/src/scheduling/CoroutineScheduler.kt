@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import java.io.*
 import java.util.concurrent.*
-import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
 import kotlin.math.*
 import kotlin.random.*
@@ -261,7 +260,7 @@ internal class CoroutineScheduler(
      * works properly
      */
     @JvmField
-    val workers = AtomicReferenceArray<Worker?>(maxPoolSize + 1)
+    val workers = ResizableAtomicArray<Worker?>(corePoolSize + 1)
 
     /**
      * Long describing state of workers in this pool.
