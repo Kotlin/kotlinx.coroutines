@@ -11,7 +11,7 @@ import java.io.*
 import java.lang.Runnable
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
-import java.util.concurrent.locks.*
+import java.util.concurrent.locks.LockSupport.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.random.*
 
@@ -26,6 +26,16 @@ internal class GoBasedCoroutineScheduler(
     val idleProcessor: AtomicRef<Processor?> = atomic(processors[0])
 
     val nSpinningWorkers: AtomicInt = atomic(0)
+
+    val nIdleWorkers: AtomicInt = atomic(0)
+    val idleWorker: AtomicRef<Worker?> = atomic(null)
+
+    val _isTerminated: AtomicBoolean = atomic(false)
+
+    val isTerminated: Boolean get() = _isTerminated.value
+
+    val lastCreatedWorker: AtomicRef<Worker?> = atomic(null)
+    val workersLock = ReentrantLock()
 
     val randomOrderCoprimes: List<Int>
 
@@ -65,45 +75,81 @@ internal class GoBasedCoroutineScheduler(
 
     private fun wakeProcessorIfNeeded() {
         // todo: check spinning
-        if (nIdleProcessors.value > 0) {
-            startWorker(null)
+        if (nIdleProcessors.value == 0) {
+            return
         }
+
+        if (!nSpinningWorkers.compareAndSet(0, 1)) {
+            return
+        }
+
+        startWorker(null, true)
     }
 
     // done until spinning impl
-    private fun startWorker(p: Processor?) {
+    private fun startWorker(p: Processor?, spinning: Boolean) {
+        // todo: proc lock?
         globalLock.lock()
         val processor = p
             ?: acquireIdleProcessor()
             ?: run {
                 globalLock.unlock()
+                if (spinning) {
+                    if (nSpinningWorkers.decrementAndGet() < 0) {
+                        throw IllegalStateException("negative number of spinning workers")
+                    }
+                }
                 return
             }
         val idleWorker = getIdleWorker()
         if (idleWorker == null) {
             globalLock.unlock()
-            createWorker(processor)
+            createWorker(processor, spinning)
             return
         }
-        wakeupIdleWorker(processor)
+        wakeupIdleWorker(idleWorker, processor, spinning)
         globalLock.unlock()
     }
 
-    private fun createWorker(processor: Processor) {
-        val worker = Worker(processor)
+    private fun createWorker(processor: Processor, spinning: Boolean) {
+        workersLock.withLock {
+            if (isTerminated) {
+                return
+            }
+            val worker = Worker(spinning)
+            worker.nextCreatedWorker.value = lastCreatedWorker.value
+            lastCreatedWorker.value = worker
+            wireProcessor(worker, processor)
+            worker.start()
+        }
+    }
+
+    private fun wakeupIdleWorker(idleWorker: Worker, processor: Processor, spinning: Boolean) {
+        wireProcessor(idleWorker, processor)
+        idleWorker.spinning.value = spinning
+        unpark(idleWorker)
+    }
+
+    private fun wireProcessor(worker: Worker, processor: Processor) {
+        if (worker.processor.value != null) {
+            throw IllegalStateException("worker already has a processor")
+        }
+        if (processor.worker.value != null) {
+            throw IllegalStateException("processor is already used")
+        }
+        if (processor.status.value != ProcessorStatus.IDLE) {
+            throw IllegalStateException("processor is not idle")
+        }
+        worker.processor.value = processor
         processor.worker.value = worker
         processor.status.value = ProcessorStatus.RUNNING
-        worker.start()
     }
 
-    private fun wakeupIdleWorker(processor: Processor) {
-        TODO("Not yet implemented")
-    }
-
-    // todo: check if it is applicable in jvm
     private fun getIdleWorker(): Worker? {
-        // todo: implement
-        return null
+        return idleWorker.value?.also {
+            idleWorker.value = it.nextIdleWorker.value
+            nIdleWorkers.decrementAndGet()
+        }
     }
 
     // sched.lock must be held
@@ -129,7 +175,7 @@ internal class GoBasedCoroutineScheduler(
 
         val processor = this.processor.value ?: return task
 
-        processor.queue.add(task)
+        processor.queue.add(task, fair = tailDispatch)
 
         return null
     }
@@ -290,14 +336,18 @@ internal class GoBasedCoroutineScheduler(
 
     // todo: find if worker locks needed
     // todo: rewrite
-    internal inner class Worker constructor(
-        processor: Processor?,
-        val spinning: AtomicBoolean = atomic(false),
+    internal inner class Worker(
+        spinning: Boolean
     ) : Thread() {
-        internal val processor: AtomicRef<Processor?> = atomic(processor)
+        internal val spinning: AtomicBoolean = atomic(false)
+        internal val processor: AtomicRef<Processor?> = atomic(null)
+        internal val nextIdleWorker: AtomicRef<Worker?> = atomic(null)
+        internal val nextCreatedWorker: AtomicRef<Worker?> = atomic(null)
+        internal val workerTerminated = atomic(false)
 
         init {
             isDaemon = true
+            this.spinning.value = spinning
         }
 
         inline val scheduler get() = this@GoBasedCoroutineScheduler
@@ -309,29 +359,42 @@ internal class GoBasedCoroutineScheduler(
         private fun runWorker() {
             val p = processor.value ?: throw IllegalStateException("worker runs without a processor")
             while (true) {
+                var task: Task? = null
 
                 if (p.scheduleTick.value % 61 == 0L) {
-                    val taskFromGlobalQueue = getTaskFromGlobalQueue()
-                    if (taskFromGlobalQueue != null) {
-                        executeTask(taskFromGlobalQueue)
-                        continue
+                    task = getTaskFromGlobalQueue()
+                }
+
+                if (task == null) {
+                    task = p.queue.poll()
+                }
+
+                if (task == null) {
+                    task = findTask()
+                }
+
+                if (spinning.value) {
+                    spinning.value = false
+                    if (nSpinningWorkers.decrementAndGet() < 0) {
+                        throw IllegalStateException("negative number of spinning workers")
                     }
                 }
 
-                val taskFromLocalQueue = p.queue.poll()
+                if (task == null) break
 
-                if (taskFromLocalQueue != null) {
-                    executeTask(taskFromLocalQueue)
-                    continue
-                }
-
-                val foundTask = findTask()
-                if (foundTask != null) {
-                    executeTask(foundTask)
-                    continue
-                }
-                break
+                executeTask(task)
             }
+            tearDown()
+        }
+
+        private fun tearDown() {
+            workerTerminated.value = true
+            val p = processor.value ?: return
+            val released = releaseProcessor()
+            if (released !== p) {
+                throw IllegalStateException("error on tearTown: inconsistent p")
+            }
+            returnIdleProcessorToQueue(released)
         }
 
         private fun getTaskFromGlobalQueue(): Task? {
@@ -359,30 +422,31 @@ internal class GoBasedCoroutineScheduler(
         }
 
         private fun findTask(): Task? {
-            val p = processor.value ?: throw IllegalStateException("worker runs without a processor")
-            while (true) {
-                val taskFromLocalQueue = p.queue.poll()
-                if (taskFromLocalQueue != null) {
-                    return taskFromLocalQueue
+            while (!isTerminated) {
+                val p = processor.value ?: throw IllegalStateException("worker runs without a processor")
+                var task: Task? = p.queue.poll()
+
+                if (task != null) {
+                    return task
                 }
 
-                val taskFromGlobalQueue = getTaskFromGlobalQueue()
-                if (taskFromGlobalQueue != null) {
-                    return taskFromGlobalQueue
+                task = getTaskFromGlobalQueue()
+                if (task != null) {
+                    return task
                 }
 
                 if (spinning.value || nSpinningWorkers.value * 2 < nProcessors - nIdleProcessors.value) {
-                    if (spinning.value) {
+                    if (!spinning.value) {
                         spinning.value = true
                         nSpinningWorkers.incrementAndGet()
                     }
 
-                    val (task, newWork) = stealTask()
-                    if (task != null) {
-                        return task
+                    val stolen = stealTask()
+                    if (stolen.task != null) {
+                        return stolen.task
                     }
 
-                    if (newWork) {
+                    if (stolen.newWork) {
                         continue
                     }
                 }
@@ -401,16 +465,53 @@ internal class GoBasedCoroutineScheduler(
                     returnIdleProcessorToQueue(releasedProcessor)
                 }
 
-                val wasSpinning = spinning.value
+//                val wasSpinning = spinning.value
                 if (spinning.value) {
                     spinning.value = false
                     if (nSpinningWorkers.decrementAndGet() < 0) {
                         throw IllegalStateException("negative nSpinningWorkers")
                     }
-                    //todo: try find new p with work
+                    val newProcessor = tryFindNewProcessor()
+                    if (newProcessor != null) {
+                        wireProcessor(this, newProcessor)
+                        spinning.value = true
+                        nSpinningWorkers.incrementAndGet()
+                        continue
+                    }
+                }
+                parkWorker()
+            }
+            return null
+        }
+
+        private fun parkWorker() {
+            if (this.processor.value != null) {
+                throw IllegalStateException("worker tries to park with processor")
+            }
+            globalLock.withLock {
+                this.nextIdleWorker.value = idleWorker.value
+                idleWorker.value = this
+                nIdleWorkers.incrementAndGet()
+            }
+            while (this.processor.value == null && !isTerminated) {
+                interrupted() // Cleanup interruptions
+                park()
+            }
+        }
+
+        private fun tryFindNewProcessor(): Processor? {
+            processors.forEach { processor ->
+                if (processor.status.value != ProcessorStatus.IDLE && processor.queue.size != 0) {
+                    globalLock.withLock {
+                        val p = acquireIdleProcessor()
+                        if (p != null) {
+                            return p
+                        }
+                    }
                 }
                 return null
             }
+            return null
         }
 
         private fun stealTask(): StolenTask {
@@ -495,10 +596,26 @@ internal class GoBasedCoroutineScheduler(
     override fun execute(command: Runnable) = dispatch(command)
 
     override fun close() {
-
+        shutdown(10_000L)
     }
 
     fun shutdown(timeout: Long) {
-
+        if (!_isTerminated.compareAndSet(false, true)) return
+        val currentWorker = currentWorker()
+        var worker: Worker? = workersLock.withLock {
+            lastCreatedWorker.value
+        }
+        while (worker != null) {
+            if (worker !== currentWorker) {
+                while (worker.isAlive) {
+                    unpark(worker)
+                    worker.join(timeout)
+                }
+                if (!worker.workerTerminated.value) {
+                    throw IllegalStateException("expected worker to finish")
+                }
+            }
+            worker = worker.nextCreatedWorker.value
+        }
     }
 }
