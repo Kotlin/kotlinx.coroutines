@@ -19,14 +19,12 @@ internal class ResizableAtomicArray<T>(initialLength: Int) {
     public fun currentLength(): Int = array.length()
 
     public operator fun get(index: Int): T? {
-        assert { index >= 0 }
         val array = this.array // volatile read
         return if (index < array.length()) array[index] else null
     }
 
     @Synchronized
     operator fun set(index: Int, value: T?) {
-        assert { index >= 0 }
         val curArray = this.array
         val curLen = curArray.length()
         if (index < curLen) {
