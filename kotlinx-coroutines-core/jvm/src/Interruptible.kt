@@ -8,7 +8,7 @@ import kotlinx.atomicfu.*
 import kotlin.coroutines.*
 
 /**
- * Calls the specified [block] with a given coroutine context in a interruptible manner.
+ * Calls the specified [block] with a given coroutine context in an interruptible manner.
  * The blocking code block will be interrupted and this function will throw [CancellationException]
  * if the coroutine is cancelled.
  *
@@ -30,6 +30,11 @@ import kotlin.coroutines.*
  * suspend fun <T> BlockingQueue<T>.awaitTake(): T =
  *         runInterruptible(Dispatchers.IO) { queue.take() }
  * ```
+ *
+ * `runInterruptible` uses [withContext] as an underlying mechanism for switching context,
+ * meaning that the supplied [block] is invoked in an [undispatched][CoroutineStart.UNDISPATCHED]
+ * manner directly by the caller if [CoroutineDispatcher] from the current [coroutineContext][currentCoroutineContext]
+ * is the same as the one supplied in [context].
  */
 public suspend fun <T> runInterruptible(
     context: CoroutineContext = EmptyCoroutineContext,
