@@ -479,7 +479,7 @@ internal class CoroutineScheduler(
              * 3) Only then start the worker, otherwise it may miss its own creation
              */
             val worker = Worker(newIndex)
-            workers[newIndex] = worker
+            workers.setSynchronized(newIndex, worker)
             require(newIndex == incrementCreatedWorkers())
             worker.start()
             return cpuWorkers + 1
@@ -837,7 +837,7 @@ internal class CoroutineScheduler(
                 val lastIndex = decrementCreatedWorkers()
                 if (lastIndex != oldIndex) {
                     val lastWorker = workers[lastIndex]!!
-                    workers[oldIndex] = lastWorker
+                    workers.setSynchronized(oldIndex, lastWorker)
                     lastWorker.indexInArray = oldIndex
                     /*
                      * Now lastWorker is available at both indices in the array, but it can
@@ -851,7 +851,7 @@ internal class CoroutineScheduler(
                 /*
                  * 5) It is safe to clear reference from workers array now.
                  */
-                workers[lastIndex] = null
+                workers.setSynchronized(lastIndex, null)
             }
             state = WorkerState.TERMINATED
         }

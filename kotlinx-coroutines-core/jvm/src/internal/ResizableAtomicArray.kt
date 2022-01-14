@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.*
 import java.util.concurrent.atomic.*
 
 /**
@@ -23,8 +22,8 @@ internal class ResizableAtomicArray<T>(initialLength: Int) {
         return if (index < array.length()) array[index] else null
     }
 
-    @Synchronized
-    operator fun set(index: Int, value: T?) {
+    // Must not be called concurrently, e.g. always use synchronized(this) to call this function
+    fun setSynchronized(index: Int, value: T?) {
         val curArray = this.array
         val curLen = curArray.length()
         if (index < curLen) {
