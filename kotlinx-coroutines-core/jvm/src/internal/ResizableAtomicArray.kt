@@ -15,7 +15,8 @@ internal class ResizableAtomicArray<T>(initialLength: Int) {
     @Volatile
     private var array = AtomicReferenceArray<T>(initialLength)
 
-    public fun length(): Int = array.length()
+    // for debug output
+    public fun currentLength(): Int = array.length()
 
     public operator fun get(index: Int): T? {
         assert { index >= 0 }

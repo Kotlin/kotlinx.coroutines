@@ -524,7 +524,7 @@ internal class CoroutineScheduler(
         var dormant = 0
         var terminated = 0
         val queueSizes = arrayListOf<String>()
-        for (index in 1 until workers.length()) {
+        for (index in 1 until workers.currentLength()) {
             val worker = workers[index] ?: continue
             val queueSize = worker.localQueue.size
             when (worker.state) {
