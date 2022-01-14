@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import java.util.concurrent.atomic.*
 
 /**
- * Atomic array with lock-free reads and synchronized modifications. It is logically has unbounded size,
+ * Atomic array with lock-free reads and synchronized modifications. It logically has an unbounded size,
  * is implicitly filled with nulls, and is resized on updates as needed to grow.
  */
 internal class ResizableAtomicArray<T>(initialLength: Int) {

@@ -260,7 +260,7 @@ internal class CoroutineScheduler(
      * works properly
      */
     @JvmField
-    val workers = ResizableAtomicArray<Worker?>(corePoolSize + 1)
+    val workers = ResizableAtomicArray<Worker>(corePoolSize + 1)
 
     /**
      * Long describing state of workers in this pool.
