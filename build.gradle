@@ -58,6 +58,7 @@ buildscript {
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
         classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
         classpath "ru.vyarus:gradle-animalsniffer-plugin:1.5.3" // Android API check
+        classpath "org.jetbrains.kotlinx:kover:$kover_version"
 
         // JMH plugins
         classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
@@ -105,7 +106,8 @@ allprojects {
 }
 
 apply plugin: "binary-compatibility-validator"
-apply plugin: 'base'
+apply plugin: "base"
+apply plugin: "kover-conventions"
 
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
@@ -303,7 +305,7 @@ def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm"
 
 task deploy(dependsOn: publishTasks)
 
-apply plugin: 'animalsniffer-convention'
+apply plugin: "animalsniffer-conventions"
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
 

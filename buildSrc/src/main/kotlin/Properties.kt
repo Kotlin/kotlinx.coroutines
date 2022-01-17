@@ -6,6 +6,11 @@
 
 import org.gradle.api.provider.*
 
+/*
+ * TODO: explain it
+ */
+val coverageEnabled = System.getProperty("kover.enable")?.toBoolean() ?: false
+
 infix fun <T> Property<T>.by(value: T) {
     set(value)
 }

@@ -1,3 +1,6 @@
+import kotlinx.kover.api.*
+import kotlinx.kover.tasks.*
+
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -19,6 +22,12 @@ dependencies {
     testImplementation("org.smali:baksmali:${version("baksmali")}")
 
     "r8"("com.android.tools.build:builder:7.1.0-alpha01")
+}
+
+tasks.withType<Test> {
+    extensions.configure<KoverTaskExtension> {
+        excludes = excludes + listOf("com.android.*", "android.*") // Robolectric
+    }
 }
 
 val optimizedDexDir = File(buildDir, "dex-optim/")
