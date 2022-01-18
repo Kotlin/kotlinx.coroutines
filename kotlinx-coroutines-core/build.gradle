@@ -272,19 +272,20 @@ tasks.jvmLincheckTest {
     }
 }
 
-def commonExcludes = ["kotlinx.coroutines.test.*", // Deprecated package for removal
-                                 "kotlinx.coroutines.debug.*", // Tested by debug module
-                                 "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
-                                 "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
-                                 "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
-]
+def commonKoverExcludes =
+        ["kotlinx.coroutines.test.*", // Deprecated package for removal
+         "kotlinx.coroutines.debug.*", // Tested by debug module
+         "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
+         "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
+         "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
+        ]
 
 tasks.koverHtmlReport {
-    excludes = commonExcludes
+    excludes = commonKoverExcludes
 }
 
 tasks.koverVerify {
-    excludes = commonExcludes
+    excludes = commonKoverExcludes
 }
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
