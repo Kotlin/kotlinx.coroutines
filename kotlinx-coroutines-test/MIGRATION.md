@@ -149,7 +149,7 @@ variant of `TestCoroutineDispatcher` should be used.
 This version of the dispatcher, which can be observed has the property of eagerly entering `launch` and `async` blocks:
 code until the first suspension is executed without dispatching.
 
-We ensured sure that, when run with an `UnconfinedTestDispatcher`, `runTest` also eagerly enters `launch` and `async`
+We ensured that when run with an `UnconfinedTestDispatcher`, `runTest` also eagerly enters `launch` and `async`
 blocks, but *this only works at the top level*: if a child coroutine also called `launch` or `async`, we don't provide
 any guarantees about their dispatching order.
 
