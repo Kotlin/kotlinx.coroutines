@@ -42,8 +42,9 @@ subprojects {
             bound {
                 /*
                  * 85 is our baseline that we aim to raise to 90+.
-                 * Missing coverage is typically bugs in the agent (e.g. deprecated with error signatures are counted),
-                 * some are various diagnostics `toString` or `catch` against OOMs/VerificationErrors,
+                 * Missing coverage is typically due to bugs in the agent
+                 * (e.g. signatures deprecated with an error are counted),
+                 * sometimes it's various diagnostic `toString` or `catch` for OOMs/VerificationErrors,
                  * but some places are definitely worth visiting.
                  */
                 minValue = expectedCoverage[projectName] ?: 85 // COVERED_LINES_PERCENTAGE
