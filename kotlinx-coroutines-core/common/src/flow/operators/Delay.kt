@@ -385,7 +385,7 @@ public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelay
  * @param timeout Timeout period
  * @param action Action to invoke on timeout. Default is to throw [FlowTimeoutException]
  */
-@ExperimentalTime
+@FlowPreview
 public fun <T> Flow<T>.timeout(
     timeout: Duration,
     @BuilderInference action: suspend FlowCollector<T>.() -> Unit = { throw FlowTimeoutException(timeout.toDelayMillis()) }
@@ -425,13 +425,12 @@ public fun <T> Flow<T>.timeout(
  * @param timeoutMillis Timeout period in millis
  * @param action Action to invoke on timeout. Default is to throw [FlowTimeoutException]
  */
-@ExperimentalTime
+@FlowPreview
 public fun <T> Flow<T>.timeout(
     timeoutMillis: Long,
     @BuilderInference action: suspend FlowCollector<T>.() -> Unit = { throw FlowTimeoutException(timeoutMillis) }
 ): Flow<T> = timeoutInternal(timeoutMillis, action)
 
-@ExperimentalTime
 private fun <T> Flow<T>.timeoutInternal(
     timeoutMillis: Long,
     action: suspend FlowCollector<T>.() -> Unit
@@ -466,17 +465,17 @@ private fun <T> Flow<T>.timeoutInternal(
 
     // Await for values from our producer now
     whileSelect {
-        values.onReceiveOrNull { value ->
+        values.onReceive { value ->
             if (value !== DONE) {
                 if (value === TIMEOUT) {
                     downStream.action()
                     values.cancel(ChildCancelledException())
-                    return@onReceiveOrNull false // Just end the loop here. Nothing more to be done.
+                    return@onReceive false // Just end the loop here. Nothing more to be done.
                 }
                 downStream.emit(NULL.unbox(value))
-                return@onReceiveOrNull true
+                return@onReceive true
             }
-            return@onReceiveOrNull false // We got the DONE signal, so exit the while loop
+            return@onReceive false // We got the DONE signal, so exit the while loop
         }
     }
 }
@@ -489,7 +488,7 @@ private fun <T> Flow<T>.timeoutInternal(
 public class FlowTimeoutException internal constructor(message: String) : CancellationException(message), CopyableThrowable<FlowTimeoutException> {
 
     // message is never null in fact
-    override fun createCopy(): FlowTimeoutException? =
+    override fun createCopy(): FlowTimeoutException =
         FlowTimeoutException(message ?: "").also { it.initCause(this) }
 }
 
