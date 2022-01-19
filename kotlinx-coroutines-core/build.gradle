@@ -256,7 +256,7 @@ static void configureJvmForLincheck(task) {
     task.minHeapSize = '1g'
     task.maxHeapSize = '4g' // we may need more space for building an interleaving tree in the model checking mode
     task.jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
-                     '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
+                    '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
     task.systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
     task.systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '1' // better for the model checking mode
 }
@@ -264,6 +264,28 @@ static void configureJvmForLincheck(task) {
 // Always check additional test sets
 task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest])
 check.dependsOn moreTest
+
+tasks.jvmLincheckTest {
+    kover {
+        enabled = false // Always disabled, lincheck doesn't really support coverage
+    }
+}
+
+def commonKoverExcludes =
+        ["kotlinx.coroutines.test.*", // Deprecated package for removal
+         "kotlinx.coroutines.debug.*", // Tested by debug module
+         "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
+         "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
+         "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
+        ]
+
+tasks.koverHtmlReport {
+    excludes = commonKoverExcludes
+}
+
+tasks.koverVerify {
+    excludes = commonKoverExcludes
+}
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
     classifier = 'tests'
