@@ -5,7 +5,6 @@
 package kotlinx.coroutines.rx2
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.test.*
 import org.junit.*
 import java.util.concurrent.*
 
@@ -16,8 +15,8 @@ class SchedulerStressTest : TestBase() {
     }
 
     /**
-     * Test that we don't get an OOM if we schedule many jobs at once. It's expected that if you don't dispose that you'd
-     * see a OOM error.
+     * Test that we don't get an OOM if we schedule many jobs at once.
+     * It's expected that if you don't dispose you'd see an OOM error.
      */
     @Test
     fun testSchedulerDisposed(): Unit = runTest {
@@ -73,20 +72,20 @@ class SchedulerStressTest : TestBase() {
      * see a OOM error.
      */
     @Test
-    fun testSchedulerDisposedDuringDelay(): Unit = runBlockingTest {
+    fun testSchedulerDisposedDuringDelay(): Unit = runTest {
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
         testRunnableDisposedDuringDelay(scheduler::scheduleDirect)
     }
 
     @Test
-    fun testSchedulerWorkerDisposedDuringDelay(): Unit = runBlockingTest {
+    fun testSchedulerWorkerDisposedDuringDelay(): Unit = runTest {
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
         testRunnableDisposedDuringDelay(scheduler.createWorker()::schedule)
     }
 
-    private suspend fun TestCoroutineScope.testRunnableDisposedDuringDelay(block: RxSchedulerBlockWithDelay) {
+    private suspend fun testRunnableDisposedDuringDelay(block: RxSchedulerBlockWithDelay) {
         expect(1)
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
@@ -103,7 +102,6 @@ class SchedulerStressTest : TestBase() {
                     }
                 }, delayMillis, TimeUnit.MILLISECONDS)
                 disposable.dispose()
-                advanceTimeBy(delayMillis)
                 yield()
             }
         }

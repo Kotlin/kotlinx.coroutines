@@ -8,6 +8,7 @@ import io.reactivex.rxjava3.core.*
 import io.reactivex.rxjava3.disposables.*
 import io.reactivex.rxjava3.plugins.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
@@ -27,6 +28,104 @@ public fun Scheduler.asCoroutineDispatcher(): CoroutineDispatcher =
 @JvmName("asCoroutineDispatcher")
 public fun Scheduler.asCoroutineDispatcher0(): SchedulerCoroutineDispatcher =
     SchedulerCoroutineDispatcher(this)
+
+/**
+ * Converts an instance of [CoroutineDispatcher] to an implementation of [Scheduler].
+ */
+public fun CoroutineDispatcher.asScheduler(): Scheduler =
+    if (this is SchedulerCoroutineDispatcher) {
+        scheduler
+    } else {
+        DispatcherScheduler(this)
+    }
+
+private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Scheduler() {
+
+    private val schedulerJob = SupervisorJob()
+
+    /**
+     * The scope for everything happening in this [DispatcherScheduler].
+     *
+     * Running tasks, too, get launched under this scope, because [shutdown] should cancel the running tasks as well.
+     */
+    private val scope = CoroutineScope(schedulerJob + dispatcher)
+
+    override fun scheduleDirect(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
+        if (!scope.isActive) return Disposable.disposed()
+        var handle: DisposableHandle? = null
+        val task = buildTask(block) { handle!! }
+        val newBlock = Runnable { scope.launch { task.block() } }
+        val ctx = scope.coroutineContext
+        @Suppress("INVISIBLE_MEMBER")
+        ctx.delay.invokeOnTimeout(unit.toMillis(delay), newBlock, ctx).let { handle = it }
+        return task
+    }
+
+    override fun createWorker(): Worker = DispatcherWorker(dispatcher, schedulerJob)
+
+    override fun shutdown() {
+        schedulerJob.cancel()
+    }
+
+    private class DispatcherWorker(dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
+
+        private val workerJob = SupervisorJob(parentJob)
+        private val workerScope = CoroutineScope(workerJob + dispatcher)
+        private val blockChannel = Channel<suspend () -> Unit>(Channel.UNLIMITED)
+
+        init {
+            workerScope.launch {
+                while (isActive) {
+                    val task = blockChannel.receive()
+                    task()
+                }
+            }
+        }
+
+        override fun schedule(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
+            if (!workerScope.isActive) return Disposable.disposed()
+            val timeMillis = unit.toMillis(delay)
+            var handle: DisposableHandle? = null
+            val task = buildTask(block) { handle!! }
+            val newBlock = Runnable { blockChannel.trySend(task.block) }
+            val ctx = workerScope.coroutineContext
+            @Suppress("INVISIBLE_MEMBER")
+            ctx.delay.invokeOnTimeout(timeMillis, newBlock, ctx).let { handle = it }
+            return task
+        }
+
+        override fun isDisposed(): Boolean = !workerScope.isActive
+
+        override fun dispose() {
+            blockChannel.close()
+            workerJob.cancel()
+        }
+    }
+
+    data class Task(val disposable: Disposable, val block: suspend () -> Unit): Disposable by disposable
+
+    companion object {
+        private fun buildTask(block: Runnable, handle: () -> DisposableHandle): Task {
+            val decoratedBlock = RxJavaPlugins.onSchedule(block)
+            val disposable = Disposable.fromRunnable {
+                handle().dispose()
+            }
+            return Task(disposable) {
+                if (!disposable.isDisposed) {
+                    try {
+                        runInterruptible {
+                            decoratedBlock.run()
+                        }
+                    } catch (e: Throwable) {
+                        // TODO: what about TimeoutCancellationException?
+                        if (e !is CancellationException)
+                            RxJavaPlugins.onError(e)
+                    }
+                }
+            }
+        }
+    }
+}
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary [Scheduler].
@@ -58,126 +157,10 @@ public class SchedulerCoroutineDispatcher(
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()
+
     /** @suppress */
     override fun equals(other: Any?): Boolean = other is SchedulerCoroutineDispatcher && other.scheduler === scheduler
+
     /** @suppress */
     override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
-
-/**
- * Converts an instance of [CoroutineDispatcher] to an implementation of [Scheduler].
- */
-public fun CoroutineDispatcher.asScheduler(): Scheduler =
-    if (this is SchedulerCoroutineDispatcher) {
-        scheduler
-    } else {
-        DispatcherScheduler(this)
-    }
-
-private class DispatcherScheduler(val dispatcher: CoroutineDispatcher) : Scheduler() {
-
-    private val schedulerJob = SupervisorJob()
-
-    private val scope = CoroutineScope(schedulerJob + dispatcher + CoroutineExceptionHandler { _, throwable ->
-        RxJavaPlugins.onError(throwable)
-    })
-
-    override fun scheduleDirect(block: Runnable): Disposable =
-        scheduleDirect(block, 0, TimeUnit.MILLISECONDS)
-
-    override fun scheduleDirect(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
-        if (!scope.isActive) return Disposable.disposed()
-        val newBlock = RxJavaPlugins.onSchedule(block)
-        return scope.launch {
-            delay(unit.toMillis(delay))
-            newBlock.run()
-        }.asDisposable()
-    }
-
-    override fun createWorker(): Worker =
-        DispatcherWorker(dispatcher, schedulerJob).also {
-            it.start()
-        }
-
-    override fun shutdown() {
-        scope.cancel()
-    }
-
-    private class DispatcherWorker(dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
-
-        private val workerJob = SupervisorJob(parentJob)
-        private val workerScope = CoroutineScope(workerJob + dispatcher)
-        private val blockChannel = Channel<SchedulerChannelTask>(Channel.UNLIMITED)
-
-        fun start() {
-            workerScope.launch {
-                while (isActive) {
-                    val task = blockChannel.receive()
-                    task.execute()
-                }
-            }
-        }
-
-        override fun isDisposed(): Boolean = !workerScope.isActive
-
-        override fun schedule(block: Runnable): Disposable =
-            schedule(block, 0, TimeUnit.MILLISECONDS)
-
-        override fun schedule(block: Runnable, delay: Long, unit: TimeUnit): Disposable {
-            if (!workerScope.isActive) return Disposable.disposed()
-
-            val newBlock = RxJavaPlugins.onSchedule(block)
-
-            val taskJob = Job(workerJob)
-            val task = SchedulerChannelTask(newBlock, taskJob)
-
-            if (delay <= 0L) {
-                blockChannel.offer(task)
-            } else {
-                // Use `taskJob` as the parent here so the delay will also get cancelled if the Disposable
-                // is disposed.
-                workerScope.launch(taskJob) {
-                    // Delay *before* enqueuing the task, so other tasks (e.g. via schedule without delay)
-                    // aren't blocked by the delay.
-                    delay(unit.toMillis(delay))
-                    // Once the task is ready to run, it still needs to be executed via the queue to comply
-                    // with the Scheduler contract of running all worker tasks in a non-overlapping manner.
-                    blockChannel.offer(task)
-                }
-            }
-
-            return taskJob.asDisposable()
-        }
-
-        override fun dispose() {
-            workerScope.cancel()
-        }
-    }
-}
-
-/**
- * Represents a task to be queued sequentially on a [Channel] for a [Scheduler.Worker].
- *
- * Delayed tasks do not block [Channel] from processing other tasks
- */
-private class SchedulerChannelTask(
-    private val block: Runnable,
-    job: Job
-) : JobDisposable(job) {
-    fun execute() {
-        if (job.isActive) {
-            block.run()
-        }
-    }
-}
-
-private open class JobDisposable(protected val job: Job) : Disposable {
-    override fun isDisposed(): Boolean = !job.isActive
-
-    override fun dispose() {
-        job.cancel()
-    }
-}
-
-private fun Job.asDisposable(): Disposable = JobDisposable(this)
-

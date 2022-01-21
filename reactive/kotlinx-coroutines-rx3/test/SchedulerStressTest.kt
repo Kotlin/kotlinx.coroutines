@@ -73,20 +73,20 @@ class SchedulerStressTest : TestBase() {
      * see a OOM error.
      */
     @Test
-    fun testSchedulerDisposedDuringDelay(): Unit = runBlockingTest {
+    fun testSchedulerDisposedDuringDelay(): Unit = runTest {
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
         testRunnableDisposedDuringDelay(scheduler::scheduleDirect)
     }
 
     @Test
-    fun testSchedulerWorkerDisposedDuringDelay(): Unit = runBlockingTest {
+    fun testSchedulerWorkerDisposedDuringDelay(): Unit = runTest {
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
         testRunnableDisposedDuringDelay(scheduler.createWorker()::schedule)
     }
 
-    private suspend fun TestCoroutineScope.testRunnableDisposedDuringDelay(block: RxSchedulerBlockWithDelay) {
+    private suspend fun testRunnableDisposedDuringDelay(block: RxSchedulerBlockWithDelay) {
         expect(1)
 
         val dispatcher = currentDispatcher() as CoroutineDispatcher
@@ -103,7 +103,6 @@ class SchedulerStressTest : TestBase() {
                     }
                 }, delayMillis, TimeUnit.MILLISECONDS)
                 disposable.dispose()
-                advanceTimeBy(delayMillis)
                 yield()
             }
         }

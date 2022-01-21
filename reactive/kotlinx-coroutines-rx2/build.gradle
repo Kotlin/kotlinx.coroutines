@@ -6,7 +6,6 @@ import org.jetbrains.dokka.gradle.DokkaTaskPartial
 dependencies {
     api project(':kotlinx-coroutines-reactive')
     testImplementation project(':kotlinx-coroutines-reactive').sourceSets.test.output
-    testImplementation project(':kotlinx-coroutines-test')
     testImplementation "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
     api "io.reactivex.rxjava2:rxjava:$rxjava2_version"
 }
