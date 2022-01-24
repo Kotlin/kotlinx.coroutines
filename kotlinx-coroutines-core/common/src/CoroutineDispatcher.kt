@@ -84,7 +84,7 @@ public abstract class CoroutineDispatcher :
      * // At most 2 threads will be processing images as it is really slow and CPU-intensive
      * private val imageProcessingDispatcher = backgroundDispatcher.limitedParallelism(2)
      * // At most 3 threads will be processing JSON to avoid image processing starvation
-     * private val imageProcessingDispatcher = backgroundDispatcher.limitedParallelism(3)
+     * private val jsonProcessingDispatcher = backgroundDispatcher.limitedParallelism(3)
      * // At most 1 thread will be doing IO
      * private val fileWriterDispatcher = backgroundDispatcher.limitedParallelism(1)
      * ```
