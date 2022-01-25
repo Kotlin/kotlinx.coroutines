@@ -88,6 +88,8 @@ private class DispatcherScheduler(@JvmField val dispatcher: CoroutineDispatcher)
             workerJob.cancel()
         }
     }
+
+    override fun toString(): String = dispatcher.toString()
 }
 
 private typealias Task = suspend () -> Unit
