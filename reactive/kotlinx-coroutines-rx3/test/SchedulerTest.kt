@@ -441,45 +441,6 @@ class SchedulerTest : TestBase() {
     }
 
     /**
-     * Let's test the [Scheduler.Worker] to make sure it satisfies the documented constraint of running all work
-     * sequentially using RxJava primitives
-     */
-    @Test
-    fun testSchedulerWorkerSequentialWithObservables(): Unit = runTest {
-        expect(1)
-
-        val scheduler = Dispatchers.Default.asScheduler()
-
-        val testObservable = Observable
-            .create<Int> {
-                it.onNext(1)
-                it.onNext(2)
-                it.onComplete()
-            }
-            .observeOn(scheduler)
-            .map {
-                runBlocking {
-                    if (it == 1) {
-                        // delay by some time. we expect that even with delay this iteration should be first
-                        delay(100)
-                    }
-                    it + 1
-                }
-            }
-            .subscribeOn(scheduler)
-
-        val testObserver = TestObserver<Int>()
-        testObservable.subscribe(testObserver)
-        testObservable.blockingSubscribe()
-        testObserver.apply {
-            assertValueCount(2)
-            assertResult(2, 3)
-            dispose()
-        }
-        finish(2)
-    }
-
-    /**
      * Test that ensures that delays are actually respected (tasks scheduled sooner in the future run before tasks scheduled later,
      * even when the later task is submitted before the earlier one)
      */
