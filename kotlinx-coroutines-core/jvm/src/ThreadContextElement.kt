@@ -97,26 +97,25 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * is in a coroutine:
  *
  * ```
- * class TraceContextElement(val traceData: TraceData?) : CopyableThreadContextElement<TraceData?> {
- *     companion object Key : CoroutineContext.Key<ThreadTraceContextElement>
- *     override val key: CoroutineContext.Key<ThreadTraceContextElement>
- *         get() = Key
+ * class TraceContextElement(private val traceData: TraceData?) : CopyableThreadContextElement<TraceData?> {
+ *     companion object Key : CoroutineContext.Key<TraceContextElement>
+ *     override val key: CoroutineContext.Key<TraceContextElement> = Key
  *
  *     override fun updateThreadContext(context: CoroutineContext): TraceData? {
  *         val oldState = traceThreadLocal.get()
- *         traceThreadLocal.set(data)
+ *         traceThreadLocal.set(traceData)
  *         return oldState
  *     }
  *
- *     override fun restoreThreadContext(context: CoroutineContext, oldData: TraceData?) {
+ *     override fun restoreThreadContext(context: CoroutineContext, oldState: TraceData?) {
  *         traceThreadLocal.set(oldState)
  *     }
  *
- *     override fun copyForChildCoroutine(): CopyableThreadContextElement<MyData?> {
+ *     override fun copyForChildCoroutine(): CopyableThreadContextElement<TraceData?> {
  *         // Copy from the ThreadLocal source of truth at child coroutine launch time. This makes
  *         // ThreadLocal writes between resumption of the parent coroutine and the launch of the
  *         // child coroutine visible to the child.
- *         return CopyForChildCoroutineElement(traceThreadLocal.get())
+ *         return TraceContextElement(traceThreadLocal.get()?.copy())
  *     }
  * }
  * ```
