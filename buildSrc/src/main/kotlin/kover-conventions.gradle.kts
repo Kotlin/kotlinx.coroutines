@@ -16,10 +16,9 @@ val expectedCoverage = mutableMapOf(
 
     // TODO figure it out, these probably should be fixed
     "kotlinx-coroutines-debug" to 84,
-    "kotlinx-coroutines-reactive" to 65,
+    // Re-evaluate this along with Kover update where deprecated with error+ functions are not considered as uncovered: IDEA-287459
     "kotlinx-coroutines-reactor" to 65,
-    "kotlinx-coroutines-rx2" to 78,
-    "kotlinx-coroutines-slf4j" to 81
+    "kotlinx-coroutines-rx2" to 78
 )
 
 extensions.configure<KoverExtension> {
@@ -50,5 +49,9 @@ subprojects {
                 minValue = expectedCoverage[projectName] ?: 85 // COVERED_LINES_PERCENTAGE
             }
         }
+    }
+
+    tasks.withType<KoverHtmlReportTask> {
+        htmlReportDir.set(file(rootProject.buildDir.toString() + "/kover/" + project.name + "/html"))
     }
 }
