@@ -13,8 +13,6 @@ val expectedCoverage = mutableMapOf(
     "kotlinx-coroutines-swing" to 70, // awaitFrame is not tested
     "kotlinx-coroutines-javafx" to 39, // JavaFx is not tested on TC because its graphic subsystem cannot be initialized in headless mode
 
-    // TODO figure it out, these probably should be fixed
-    "kotlinx-coroutines-debug" to 84,
     // Re-evaluate this along with Kover update where deprecated with error+ functions are not considered as uncovered: IDEA-287459
     "kotlinx-coroutines-reactor" to 65,
     "kotlinx-coroutines-rx2" to 78
@@ -29,7 +27,7 @@ extensions.configure<KoverExtension> {
      * ./gradlew :p:check -Pkover.enabled=true -- verifies coverage
      * ./gradlew :p:koverReport -Pkover.enabled=true -- generates report
      */
-    isDisabled = false// !(properties["kover.enabled"]?.toString()?.toBoolean() ?: false)
+    isDisabled = !(properties["kover.enabled"]?.toString()?.toBoolean() ?: false)
 }
 
 subprojects {
