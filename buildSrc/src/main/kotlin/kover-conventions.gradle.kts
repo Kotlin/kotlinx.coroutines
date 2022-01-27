@@ -10,8 +10,7 @@ val notCovered = sourceless + internal + unpublished
 
 val expectedCoverage = mutableMapOf(
     // These have lower coverage in general, it can be eventually fixed
-    "kotlinx-coroutines-swing" to 70,
-    "kotlinx-coroutines-android" to 50,
+    "kotlinx-coroutines-swing" to 70, // awaitFrame is not tested
     "kotlinx-coroutines-javafx" to 39, // JavaFx is not tested on TC because its graphic subsystem cannot be initialized in headless mode
 
     // TODO figure it out, these probably should be fixed
@@ -30,7 +29,7 @@ extensions.configure<KoverExtension> {
      * ./gradlew :p:check -Pkover.enabled=true -- verifies coverage
      * ./gradlew :p:koverReport -Pkover.enabled=true -- generates report
      */
-    isDisabled = !(properties["kover.enabled"]?.toString()?.toBoolean() ?: false)
+    isDisabled = false// !(properties["kover.enabled"]?.toString()?.toBoolean() ?: false)
 }
 
 subprojects {
