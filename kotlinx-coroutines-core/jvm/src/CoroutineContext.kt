@@ -10,35 +10,68 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 
 /**
  * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
- * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on).
+ * [ContinuationInterceptor] is specified, and adds optional support for
+ * copyable thread context [elements][CopyableThreadContextElement] and  debugging facilities (when turned on).
  *
  * See [DEBUG_PROPERTY_NAME] for description of debugging facilities on JVM.
+ *
  */
 @ExperimentalCoroutinesApi
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
-    val combined = coroutineContext.foldCopiesForChildCoroutine() + context
+    val combined = foldCopies(context)
     val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
     return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
         debug + Dispatchers.Default else debug
 }
 
-/**
- * Returns the [CoroutineContext] for a child coroutine to inherit.
+private val hasCopyableElements: (Boolean, CoroutineContext.Element) -> Boolean = { result, it ->
+    result || it is CopyableThreadContextElement<*, *>
+}
+
+/*
+ * Folds two contexts if there is need to.
  *
- * If any [CopyableThreadContextElement] is in the [this], calls
- * [CopyableThreadContextElement.copyForChildCoroutine] on each, returning a new [CoroutineContext]
- * by folding the returned copied elements into [this].
- *
- * Returns [this] if `this` has zero [CopyableThreadContextElement] in it.
+ * The algorithm is the following:
+ * *
+ * *
+ * *
  */
-private fun CoroutineContext.foldCopiesForChildCoroutine(): CoroutineContext {
-    val hasToCopy = fold(false) { result, it ->
-        result || it is CopyableThreadContextElement<*>
+private fun CoroutineScope.foldCopies(appendContext: CoroutineContext): CoroutineContext {
+    // Do we have something to copy left-hand side?
+    val hasElementsLeft = coroutineContext.fold(false, hasCopyableElements)
+    val hasElementsRight = appendContext.fold(false, hasCopyableElements)
+
+    // Nothing to fold, so just return the sum of contexts
+    if (!hasElementsLeft && !hasElementsRight) {
+        return coroutineContext + appendContext
     }
-    if (!hasToCopy) return this
-    return fold<CoroutineContext>(EmptyCoroutineContext) { combined, it ->
-        combined + if (it is CopyableThreadContextElement<*>) it.copyForChildCoroutine() else it
+
+    // Elements from 'appendContext' that TODO
+    var leftoverContext = appendContext
+
+    val folded = coroutineContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
+        if (element !is CopyableThreadContextElement<*, *>) return@fold result + element
+        // Will this element be overwritten?
+        val newElement = leftoverContext[element.key]
+        // No, just copy it
+        if (newElement == null) {
+            return@fold result + element.copyForChildCoroutine()
+        }
+        // Yes, then first remove the element from append context
+        leftoverContext = leftoverContext.minusKey(element.key)
+        // Return the sum
+        @Suppress("UNCHECKED_CAST")
+        return@fold result + element.mergeUnsafe(newElement as CopyableThreadContextElement<Any?, *>)
     }
+
+    return folded + leftoverContext
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun <E : CopyableThreadContextElement<Any?, E>> CopyableThreadContextElement<*, *>.mergeUnsafe(
+    f: CopyableThreadContextElement<*, *>
+): CoroutineContext.Element {
+    return (this as E).merge(f as E)
 }
 
 /**

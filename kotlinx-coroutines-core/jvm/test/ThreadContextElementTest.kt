@@ -189,7 +189,7 @@ class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
 /**
  * A [ThreadContextElement] that implements copy semantics in [copyForChildCoroutine].
  */
-class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextElement<MyData?> {
+class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextElement<MyData?, CopyForChildCoroutineElement> {
     companion object Key : CoroutineContext.Key<CopyForChildCoroutineElement>
 
     override val key: CoroutineContext.Key<CopyForChildCoroutineElement>
@@ -199,6 +199,10 @@ class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextEle
         val oldState = myThreadLocal.get()
         myThreadLocal.set(data)
         return oldState
+    }
+
+    override fun merge(element: CopyForChildCoroutineElement): CopyForChildCoroutineElement {
+        TODO("Not yet implemented")
     }
 
     override fun restoreThreadContext(context: CoroutineContext, oldState: MyData?) {
@@ -216,7 +220,7 @@ class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextEle
      * will be reflected in the parent coroutine's [CopyForChildCoroutineElement] when it yields the
      * thread and calls [restoreThreadContext].
      */
-    override fun copyForChildCoroutine(): CopyableThreadContextElement<MyData?> {
+    override fun copyForChildCoroutine(): CopyForChildCoroutineElement {
         return CopyForChildCoroutineElement(myThreadLocal.get())
     }
 }
