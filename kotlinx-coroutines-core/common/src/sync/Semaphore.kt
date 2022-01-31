@@ -215,24 +215,14 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         }
     }
 
-    val onAcquire: SelectClause1<Semaphore> get() = SelectClause1Impl(
-        clauseObject = this,
-        regFunc = SemaphoreImpl::onAcquireRegFunction as RegistrationFunction,
-        processResFunc = SemaphoreImpl::onAcquireProcessResultFunction as ProcessResultFunction
-    )
-
+    // We do not fully support `onAcquire` as it is needed only for `Mutex.onLock`.
     @Suppress("UNUSED_PARAMETER")
-    private fun onAcquireRegFunction(select: SelectInstance<*>, ignoredParam: Any?) =
+    protected fun onAcquireRegFunction(select: SelectInstance<*>, ignoredParam: Any?) =
         acquire(
             waiter = select,
             suspend = { s -> addAcquireToQueue(s) },
             onAcquired = { s -> s.selectInRegistrationPhase(Unit) }
         )
-
-    @Suppress("UNUSED_PARAMETER", "RedundantNullableReturnType")
-    private fun onAcquireProcessResultFunction(param: Any?, result: Any?): Any? {
-        return this
-    }
 
     /**
      * Decrements the number of available permits

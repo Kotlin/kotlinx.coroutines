@@ -5,7 +5,6 @@
 package kotlinx.coroutines.lincheck
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
@@ -19,9 +18,6 @@ abstract class SemaphoreLincheckTestBase(permits: Int) : AbstractLincheckTest() 
 
     @Operation(promptCancellation = true, allowExtraSuspension = true)
     suspend fun acquire() = semaphore.acquire()
-
-    @Operation(promptCancellation = true, allowExtraSuspension = true)
-    suspend fun onAcquire(): Unit = select { semaphore.onAcquire {} }
 
     @Operation(handleExceptionsAsResult = [IllegalStateException::class])
     fun release() = semaphore.release()

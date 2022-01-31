@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
+import kotlin.jvm.*
 import kotlin.native.concurrent.*
 
 /**
@@ -20,7 +21,7 @@ import kotlin.native.concurrent.*
  *
  * JVM API note:
  * Memory semantic of the [Mutex] is similar to `synchronized` block on JVM:
- * An unlock on a [Mutex] happens-before every subsequent successful lock on that [Mutex].
+ * An unlock operation on a [Mutex] happens-before every subsequent successful lock on that [Mutex].
  * Unsuccessful call to [tryLock] do not have any memory effects.
  */
 public interface Mutex {
@@ -171,9 +172,12 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     override fun tryLock(owner: Any?): Boolean =
         if (tryAcquire()) {
+            assert { this.owner.value === NO_OWNER }
             this.owner.value = owner
             true
-        } else false
+        } else {
+            false
+        }
 
     override fun unlock(owner: Any?) {
         while (true) {
@@ -192,7 +196,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST", "OverridingDeprecatedMember")
     override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
         clauseObject = this,
         regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
@@ -201,52 +205,67 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     )
 
     protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
-        onAcquire.regFunc(this, SelectInstanceWithOwner(select, owner), owner)
+        onAcquireRegFunction(SelectInstanceWithOwner(select, owner), owner)
     }
 
     protected open fun onLockProcessResult(owner: Any?, result: Any?): Any? {
-        onAcquire.processResFunc(this, null, result)
         return this
     }
 
-    protected val onCancellationUnlockConstructor: OnCancellationConstructor =
-        { select: SelectInstance<*>, owner: Any?, ignoredResult: Any? ->
+    private val onCancellationUnlockConstructor: OnCancellationConstructor =
+        { _: SelectInstance<*>, owner: Any?, _: Any? ->
             { unlock(owner) }
         }
 
     private inner class CancellableContinuationWithOwner(
+        @JvmField
         val cont: CancellableContinuation<Unit>,
+        @JvmField
         val owner: Any?
     ) : CancellableContinuation<Unit> by cont {
         override fun tryResume(value: Unit, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any? {
-            val token = cont.tryResume(value, idempotent, onCancellation)
-            if (token !== null) this@MutexImpl.owner.value = owner
+            assert { this@MutexImpl.owner.value === NO_OWNER }
+            val token = cont.tryResume(value, idempotent) {
+                assert { this@MutexImpl.owner.value.let { it === NO_OWNER ||it === owner } }
+                this@MutexImpl.owner.value = owner
+                unlock(owner)
+            }
+            if (token != null) {
+                assert { this@MutexImpl.owner.value === NO_OWNER }
+                this@MutexImpl.owner.value = owner
+            }
             return token
         }
 
         override fun resume(value: Unit, onCancellation: ((cause: Throwable) -> Unit)?) {
+            assert { this@MutexImpl.owner.value === NO_OWNER }
             this@MutexImpl.owner.value = owner
-            cont.resume(value, onCancellation)
+            cont.resume(value) { unlock(owner) }
         }
     }
 
     private inner class SelectInstanceWithOwner<Q>(
+        @JvmField
         val select: SelectInstance<Q>,
+        @JvmField
         val owner: Any?
     ) : SelectInstance<Q> by select {
         override fun trySelect(clauseObject: Any, result: Any?): Boolean {
+            assert { this@MutexImpl.owner.value === NO_OWNER }
+            this@MutexImpl.owner.value = owner
             return select.trySelect(clauseObject, result).also { success ->
-                if (success) this@MutexImpl.owner.value = owner
+                if (!success) this@MutexImpl.owner.value = NO_OWNER
             }
         }
 
         override fun selectInRegistrationPhase(internalResult: Any?) {
-            select.selectInRegistrationPhase(internalResult)
+            assert { this@MutexImpl.owner.value === NO_OWNER }
             this@MutexImpl.owner.value = owner
+            select.selectInRegistrationPhase(internalResult)
         }
     }
 
-    override fun toString() = "Mutex@${hexAddress}"
+    override fun toString() = "Mutex@${hexAddress}[isLocked=$isLocked,owner=${owner.value}]"
 }
 
 @SharedImmutable

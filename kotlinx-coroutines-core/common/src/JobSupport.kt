@@ -1205,7 +1205,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal suspend fun awaitInternal(): Any? {
+    protected suspend fun awaitInternal(): Any? {
         // fast-path -- check state (avoid extra object creation)
         while (true) { // lock-free loop on state
             val state = this.state
@@ -1235,9 +1235,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cont.getResult()
     }
 
-
     @Suppress("UNCHECKED_CAST")
-    internal val onAwaitInternal: SelectClause1<*> get() = SelectClause1Impl<Any?>(
+    protected val onAwaitInternal: SelectClause1<*> get() = SelectClause1Impl<Any?>(
         clauseObject = this@JobSupport,
         regFunc = JobSupport::onAwaitInternalRegFunc as RegistrationFunction,
         processResFunc = JobSupport::onAwaitInternalProcessResFunc as ProcessResultFunction
