@@ -57,7 +57,7 @@ class ThreadLocalStressTest : TestBase() {
              * 'block' is this coroutine, it goes to 'trySuspend', checks for postponed cancellation and *dispatches* it.
              * The execution stops _right_ before 'undispatchedCompletion.clearThreadContext()'.
              *
-             * T2 now executes dispatched cancellation and concurrently mutates the state of undispatched completion.
+             * T2 now executes the dispatched cancellation and concurrently mutates the state of the undispatched completion.
              * All bets are off, now both threads can leave the thread locals state inconsistent.
              */
             withContext(threadLocal.asContextElement("foo")) {
