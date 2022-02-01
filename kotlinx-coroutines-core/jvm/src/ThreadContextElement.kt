@@ -133,11 +133,12 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * `Thread`.
  */
 @ExperimentalCoroutinesApi
-public interface CopyableThreadContextElement<S, E : CopyableThreadContextElement<S, E>> : ThreadContextElement<S> {
+public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
 
     /**
      * Returns a [CopyableThreadContextElement] to replace `this` `CopyableThreadContextElement` in the child
-     * coroutine's context that is under construction.
+     * coroutine's context that is under construction if the child coroutine's context does not contain
+     * an element with the same [key].
      *
      * This function is called on the element each time a new coroutine inherits a context containing it,
      * and the returned value is folded into the context given to the child.
@@ -145,9 +146,17 @@ public interface CopyableThreadContextElement<S, E : CopyableThreadContextElemen
      * Since this method is called whenever a new coroutine is launched in a context containing this
      * [CopyableThreadContextElement], implementations are performance-sensitive.
      */
-    public fun copyForChildCoroutine(): E
+    public fun copyForChildCoroutine(): CopyableThreadContextElement<S>
 
-    public fun merge(element: E): E
+    /**
+     * Returns a [CopyableThreadContextElement] to replace `this` `CopyableThreadContextElement` in the child
+     * coroutine's context when the child coroutine's context contains an element with the same [key] as the
+     * current one.
+     *
+     * This function is called on current element, supplied with an element retrieved from child's
+     * coroutine context by the current [key].
+     */
+    public fun merge(overwritingElement: CoroutineContext.Element): CoroutineContext
 }
 
 /**

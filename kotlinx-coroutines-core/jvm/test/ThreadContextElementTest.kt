@@ -126,8 +126,7 @@ class ThreadContextElementTest : TestBase() {
     @Test
     fun testCopyableThreadContextElementImplementsWriteVisibility() = runTest {
         newFixedThreadPoolContext(nThreads = 4, name = "withContext").use {
-            val startData = MyData()
-            withContext(it + CopyForChildCoroutineElement(startData)) {
+            withContext(it + CopyForChildCoroutineElement(MyData())) {
                 val forBlockData = MyData()
                 myThreadLocal.setForBlock(forBlockData) {
                     assertSame(myThreadLocal.get(), forBlockData)
@@ -153,7 +152,7 @@ class ThreadContextElementTest : TestBase() {
                         assertSame(myThreadLocal.get(), forBlockData)
                     }
                 }
-                assertSame(myThreadLocal.get(), startData) // Asserts value was restored.
+                assertNull(myThreadLocal.get()) // Asserts value was restored to its origin
             }
         }
     }
@@ -189,7 +188,7 @@ class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
 /**
  * A [ThreadContextElement] that implements copy semantics in [copyForChildCoroutine].
  */
-class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextElement<MyData?, CopyForChildCoroutineElement> {
+class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextElement<MyData?> {
     companion object Key : CoroutineContext.Key<CopyForChildCoroutineElement>
 
     override val key: CoroutineContext.Key<CopyForChildCoroutineElement>
@@ -201,8 +200,8 @@ class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextEle
         return oldState
     }
 
-    override fun merge(element: CopyForChildCoroutineElement): CopyForChildCoroutineElement {
-        TODO("Not yet implemented")
+    override fun merge(overwritingElement: CoroutineContext.Element): CopyForChildCoroutineElement {
+        TODO("Not used in tests")
     }
 
     override fun restoreThreadContext(context: CoroutineContext, oldState: MyData?) {

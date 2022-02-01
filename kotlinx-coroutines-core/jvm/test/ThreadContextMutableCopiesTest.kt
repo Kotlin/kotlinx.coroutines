@@ -13,8 +13,8 @@ class ThreadContextMutableCopiesTest : TestBase() {
     }
 
     class MyMutableElement(
-        private val mutableData: MutableList<String>
-    ) : CopyableThreadContextElement<MutableList<String>, MyMutableElement> {
+        val mutableData: MutableList<String>
+    ) : CopyableThreadContextElement<MutableList<String>> {
 
         companion object Key : CoroutineContext.Key<MyMutableElement>
 
@@ -35,8 +35,9 @@ class ThreadContextMutableCopiesTest : TestBase() {
             return MyMutableElement(ArrayList(mutableData))
         }
 
-        override fun merge(element: MyMutableElement): MyMutableElement {
-            return MyMutableElement((element.mutableData + mutableData).toSet().toMutableList())
+        override fun merge(overwritingElement: CoroutineContext.Element): MyMutableElement {
+            overwritingElement as MyMutableElement // <- app-specific, may be another subtype
+            return MyMutableElement((mutableData.toSet() + overwritingElement.mutableData).toMutableList())
         }
     }
 
@@ -65,7 +66,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
                 threadLocalData.get().add("Y")
                 // Note here, +root overwrites the data
                 launch(Dispatchers.Default + root) {
-                    assertEquals(listOf("X", "Y"), threadLocalData.get().sorted())
+                    assertEquals(listOf("X", "Y"), threadLocalData.get())
                     assertNotSame(originalData, threadLocalData.get())
                     finish(2)
                 }
@@ -84,7 +85,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
                 threadLocalData.get().add("Y")
                 // Note here, +root overwrites the data
                 launch(Dispatchers.Default + MyMutableElement(mutableListOf("Z"))) {
-                    assertEquals(listOf("X", "Y", "Z"), threadLocalData.get().sorted())
+                    assertEquals(listOf("X", "Y", "Z"), threadLocalData.get())
                     assertNotSame(originalData, threadLocalData.get())
                     finish(2)
                 }
@@ -93,21 +94,41 @@ class ThreadContextMutableCopiesTest : TestBase() {
     }
 
     @Test
-    @Ignore // Not implemented yet
     fun testDataIsNotOverwrittenWithContext() = runTest {
         val root = MyMutableElement(ArrayList())
         runBlocking(root) {
             val originalData = threadLocalData.get()
             threadLocalData.get().add("X")
+            expect(1)
             launch {
                 threadLocalData.get().add("Y")
                 // Note here, +root overwrites the data
                 withContext(Dispatchers.Default + root) {
-                    assertEquals(listOf("X", "Y"), threadLocalData.get().sorted())
+                    assertEquals(listOf("X", "Y"), threadLocalData.get())
                     assertNotSame(originalData, threadLocalData.get())
                     finish(2)
                 }
             }
+        }
+    }
+
+    @Test
+    fun testDataIsCopiedForRunBlocking() = runTest {
+        val root = MyMutableElement(ArrayList())
+        val originalData = root.mutableData
+        runBlocking(root) {
+            assertNotSame(originalData, threadLocalData.get())
+        }
+    }
+
+    @Test
+    fun testDataIsCopiedForCoroutine() = runTest {
+        val root = MyMutableElement(ArrayList())
+        val originalData = root.mutableData
+        expect(1)
+        launch(root) {
+            assertNotSame(originalData, threadLocalData.get())
+            finish(2)
         }
     }
 }

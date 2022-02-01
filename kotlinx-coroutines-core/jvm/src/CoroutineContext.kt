@@ -14,64 +14,69 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
  * copyable thread context [elements][CopyableThreadContextElement] and  debugging facilities (when turned on).
  *
  * See [DEBUG_PROPERTY_NAME] for description of debugging facilities on JVM.
- *
  */
 @ExperimentalCoroutinesApi
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
-    val combined = foldCopies(context)
+    val combined = foldCopies(coroutineContext, context, true)
     val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
     return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
         debug + Dispatchers.Default else debug
 }
 
+/**
+ * Creates context for coroutine builder functions that do not launch a new coroutine,
+ * but change current coroutine context, such as [withContext] and `runBlocking`.
+ */
+@ExperimentalCoroutinesApi
+public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
+    return foldCopies(this, addedContext, false)
+}
+
 private val hasCopyableElements: (Boolean, CoroutineContext.Element) -> Boolean = { result, it ->
-    result || it is CopyableThreadContextElement<*, *>
+    result || it is CopyableThreadContextElement<*>
 }
 
 /*
  * Folds two contexts if there is need to.
- *
- * The algorithm is the following:
- * *
- * *
- * *
  */
-private fun CoroutineScope.foldCopies(appendContext: CoroutineContext): CoroutineContext {
+private fun foldCopies(originalContext: CoroutineContext, appendContext: CoroutineContext, isNewCoroutine: Boolean): CoroutineContext {
     // Do we have something to copy left-hand side?
-    val hasElementsLeft = coroutineContext.fold(false, hasCopyableElements)
+    val hasElementsLeft = originalContext.fold(false, hasCopyableElements)
     val hasElementsRight = appendContext.fold(false, hasCopyableElements)
 
     // Nothing to fold, so just return the sum of contexts
     if (!hasElementsLeft && !hasElementsRight) {
-        return coroutineContext + appendContext
+        return originalContext + appendContext
     }
 
-    // Elements from 'appendContext' that TODO
     var leftoverContext = appendContext
 
-    val folded = coroutineContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
-        if (element !is CopyableThreadContextElement<*, *>) return@fold result + element
+    val folded = originalContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
+        if (element !is CopyableThreadContextElement<*>) return@fold result + element
         // Will this element be overwritten?
         val newElement = leftoverContext[element.key]
         // No, just copy it
         if (newElement == null) {
-            return@fold result + element.copyForChildCoroutine()
+            // For 'withContext'-like builders we do not copy as the element is not shared
+            return@fold result + if (isNewCoroutine) element.copyForChildCoroutine() else element
         }
         // Yes, then first remove the element from append context
         leftoverContext = leftoverContext.minusKey(element.key)
         // Return the sum
         @Suppress("UNCHECKED_CAST")
-        return@fold result + element.mergeUnsafe(newElement as CopyableThreadContextElement<Any?, *>)
+        return@fold result + (element as CopyableThreadContextElement<Any?>).merge(newElement)
     }
 
+    if (hasElementsRight) {
+        leftoverContext = leftoverContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
+            // We're appending new context element -- we have to copy it, otherwise it may be shared with others
+            if (element is CopyableThreadContextElement<*>) {
+                return@fold result + element.copyForChildCoroutine()
+            }
+            return@fold result + element
+        }
+    }
     return folded + leftoverContext
-}
-
-@Suppress("UNCHECKED_CAST")
-private fun <E : CopyableThreadContextElement<Any?, E>> CopyableThreadContextElement<*, *>.mergeUnsafe(
-    f: CopyableThreadContextElement<*, *>
-): CoroutineContext.Element {
-    return (this as E).merge(f as E)
 }
 
 /**
