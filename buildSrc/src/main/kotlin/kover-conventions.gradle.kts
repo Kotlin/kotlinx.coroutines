@@ -10,16 +10,12 @@ val notCovered = sourceless + internal + unpublished
 
 val expectedCoverage = mutableMapOf(
     // These have lower coverage in general, it can be eventually fixed
-    "kotlinx-coroutines-swing" to 70,
-    "kotlinx-coroutines-android" to 50,
+    "kotlinx-coroutines-swing" to 70, // awaitFrame is not tested
     "kotlinx-coroutines-javafx" to 39, // JavaFx is not tested on TC because its graphic subsystem cannot be initialized in headless mode
 
-    // TODO figure it out, these probably should be fixed
-    "kotlinx-coroutines-debug" to 84,
-    "kotlinx-coroutines-reactive" to 65,
+    // Re-evaluate this along with Kover update where deprecated with error+ functions are not considered as uncovered: IDEA-287459
     "kotlinx-coroutines-reactor" to 65,
-    "kotlinx-coroutines-rx2" to 78,
-    "kotlinx-coroutines-slf4j" to 81
+    "kotlinx-coroutines-rx2" to 78
 )
 
 extensions.configure<KoverExtension> {
@@ -50,5 +46,9 @@ subprojects {
                 minValue = expectedCoverage[projectName] ?: 85 // COVERED_LINES_PERCENTAGE
             }
         }
+    }
+
+    tasks.withType<KoverHtmlReportTask> {
+        htmlReportDir.set(file(rootProject.buildDir.toString() + "/kover/" + project.name + "/html"))
     }
 }

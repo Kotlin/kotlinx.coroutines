@@ -51,3 +51,15 @@ shadowJar {
     configurations = [project.configurations.shadowDeps]
     relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
 }
+
+def commonKoverExcludes =
+        // Never used, safety mechanism
+        ["kotlinx.coroutines.debug.internal.NoOpProbesKt"]
+
+tasks.koverHtmlReport {
+    excludes = commonKoverExcludes
+}
+
+tasks.koverVerify {
+    excludes = commonKoverExcludes
+}
