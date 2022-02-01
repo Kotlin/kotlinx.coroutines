@@ -107,7 +107,7 @@ internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedC
 
 /**
  * Marker indicating that [UndispatchedCoroutine] exists somewhere up in the stack.
- * Used as a performance optimization to avoid stack walking where it is not nesessary.
+ * Used as a performance optimization to avoid stack walking where it is not necessary.
  */
 private object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
     override val key: CoroutineContext.Key<*>
@@ -120,26 +120,34 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont) {
 
-    private var savedContext: CoroutineContext? = null
-    private var savedOldValue: Any? = null
+    /*
+     * The state is thread-local because this coroutine can be used concurrently.
+     * Scenario of usage (withContinuationContext):
+     * val state = saveThreadContext(ctx)
+     * try {
+     *     invokeSmthWithThisCoroutineAsCompletion() // Completion implies that 'afterResume' will be called
+     *     // COROUTINE_SUSPENDED is returned
+     * } finally {
+     *     thisCoroutine().clearThreadContext() // Concurrently the "smth" could've been already resumed on a different thread
+     *     // and it also calls saveThreadContext and clearThreadContext
+     * }
+     */
+    private var threadStateToRecover = ThreadLocal<Pair<CoroutineContext, Any?>>()
 
     fun saveThreadContext(context: CoroutineContext, oldValue: Any?) {
-        savedContext = context
-        savedOldValue = oldValue
+        threadStateToRecover.set(context to oldValue)
     }
 
     fun clearThreadContext(): Boolean {
-        if (savedContext == null) return false
-        savedContext = null
-        savedOldValue = null
+        if (threadStateToRecover.get() == null) return false
+        threadStateToRecover.set(null)
         return true
     }
 
     override fun afterResume(state: Any?) {
-        savedContext?.let { context ->
-            restoreThreadContext(context, savedOldValue)
-            savedContext = null
-            savedOldValue = null
+        threadStateToRecover.get()?.let { (ctx, value) ->
+            restoreThreadContext(ctx, value)
+            threadStateToRecover.set(null)
         }
         // resume undispatched -- update context but stay on the same dispatcher
         val result = recoverResult(state, uCont)
