@@ -27,6 +27,24 @@ internal actual fun initializeDefaultExceptionHandlers() {
     CoroutineExceptionHandler
 }
 
+/**
+ * Private exception without stacktrace that is added to suppressed exceptions of the original exception
+ * when it is reported to the last-ditch current thread 'uncaughtExceptionHandler'.
+ *
+ * The purpose of this exception is to add an otherwise inaccessible diagnostic information and to
+ * be able to poke the failing coroutine context in the debugger.
+ */
+private class DiagnosticCoroutineContextException(private val context: CoroutineContext) : RuntimeException() {
+    override fun getLocalizedMessage(): String {
+        return context.toString()
+    }
+
+    override fun fillInStackTrace(): Throwable {
+        // Prevent Android <= 6.0 bug, #1866
+        stackTrace = emptyArray()
+        return this
+    }
+}
 
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
     // use additional extension handlers
@@ -42,5 +60,8 @@ internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
 
     // use thread's handler
     val currentThread = Thread.currentThread()
+    // addSuppressed is never user-defined and cannot normally throw with the only exception being OOM
+    // we do ignore that just in case to definitely deliver the exception
+    runCatching { exception.addSuppressed(DiagnosticCoroutineContextException(context)) }
     currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
 }
