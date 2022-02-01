@@ -53,7 +53,7 @@ class ThreadLocalStressTest : TestBase() {
              * Now the following code path is likely to be triggered:
              *
              * T1 from within 'withContinuationContext' method:
-             * Finds 'oldValue', finds undispatched completion, invokes this block.
+             * Finds 'oldValue', finds undispatched completion, invokes its 'block' argument.
              * 'block' is this coroutine, it goes to 'trySuspend', checks for postponed cancellation and *dispatches* it.
              * The execution stops _right_ before 'undispatchedCompletion.clearThreadContext()'.
              *
