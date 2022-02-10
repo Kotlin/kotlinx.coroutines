@@ -170,6 +170,15 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * Emits a [value] to this shared flow, suspending on buffer overflow if the shared flow was created
      * with the default [BufferOverflow.SUSPEND] strategy.
      *
+     * Buffer is only used by shared flow to wait for slow subscribers.
+     * **When this shared flow has no subscribers `emit` call never suspends.**
+     * It just stores the most recently emitted value to its replay cache (if it was configured),
+     * dropping the older elements from the replay cache.
+     *
+     * A shared flow configured with a [BufferOverflow] strategy other than [SUSPEND][BufferOverflow.SUSPEND]
+     * (either [DROP_OLDEST][BufferOverflow.DROP_OLDEST] or [DROP_LATEST][BufferOverflow.DROP_LATEST]) never
+     * suspends on [emit], since its buffer overflow is handled without suspension.
+     *
      * See [tryEmit] for a non-suspending variant of this function.
      *
      * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
@@ -181,6 +190,11 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * Tries to emit a [value] to this shared flow without suspending. It returns `true` if the value was
      * emitted successfully. When this function returns `false`, it means that the call to a plain [emit]
      * function will suspend until there is a buffer space available.
+     *
+     * Buffer is only used by shared flow to wait for slow subscribers.
+     * **When this shared flow has no subscribers [emit] call never suspends, and thus `tryEmit` always returns `true`.**.
+     * It just stores the most recently emitted value to its replay cache (if it was configured),
+     * dropping the older elements from the replay cache.
      *
      * A shared flow configured with a [BufferOverflow] strategy other than [SUSPEND][BufferOverflow.SUSPEND]
      * (either [DROP_OLDEST][BufferOverflow.DROP_OLDEST] or [DROP_LATEST][BufferOverflow.DROP_LATEST]) never
