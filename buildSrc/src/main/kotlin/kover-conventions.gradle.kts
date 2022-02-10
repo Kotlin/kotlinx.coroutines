@@ -15,7 +15,7 @@ val expectedCoverage = mutableMapOf(
 
     // Re-evaluate this along with Kover update where deprecated with error+ functions are not considered as uncovered: IDEA-287459
     "kotlinx-coroutines-reactor" to 65,
-    "kotlinx-coroutines-rx2" to 78
+    "kotlinx-coroutines-rx2" to 83
 )
 
 extensions.configure<KoverExtension> {
