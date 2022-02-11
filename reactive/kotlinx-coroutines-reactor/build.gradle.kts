@@ -29,7 +29,8 @@ externalDocumentationLink(
 )
 
 val commonKoverExcludes = listOf(
-    "kotlinx.coroutines.reactor.FlowKt" // Deprecated
+    "kotlinx.coroutines.reactor.FlowKt", // Deprecated
+    "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
 )
 
 tasks.koverHtmlReport {
