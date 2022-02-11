@@ -66,10 +66,6 @@ if (project.name == "kotlinx-coroutines-core") {
             val jvmMain by getting {
                 makeLinkMapping(project.file("jvm"))
             }
-
-            configureEach {
-                classpath.from(project.configurations["jvmCompileClasspath"].files)
-            }
         }
     }
 }
