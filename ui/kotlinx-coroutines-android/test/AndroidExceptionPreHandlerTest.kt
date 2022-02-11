@@ -13,6 +13,7 @@ import kotlin.test.*
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [27])
+@LooperMode(LooperMode.Mode.LEGACY)
 class AndroidExceptionPreHandlerTest : TestBase() {
     @Test
     fun testUnhandledException() = runTest {

@@ -18,6 +18,7 @@ import kotlin.test.*
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [28])
+@LooperMode(LooperMode.Mode.LEGACY)
 class HandlerDispatcherAsyncTest : TestBase() {
 
     /**

@@ -10,16 +10,46 @@ configurations {
 
 repositories {
     mavenCentral()
-    jcenter() // https://youtrack.jetbrains.com/issue/IDEA-261387
 }
+
+val artifactType = Attribute.of("artifactType", String::class.java)
+val unpackedAar = Attribute.of("unpackedAar", Boolean::class.javaObjectType)
+
+configurations.configureEach {
+    afterEvaluate {
+        if (isCanBeResolved) {
+            attributes.attribute(unpackedAar, true) // request all AARs to be unpacked
+        }
+    }
+}
+
 dependencies {
+    attributesSchema {
+        attribute(unpackedAar)
+    }
+
+    artifactTypes {
+        create("aar") {
+            attributes.attribute(unpackedAar, false)
+        }
+    }
+
+    registerTransform(UnpackAar::class.java) {
+        from.attribute(unpackedAar, false).attribute(artifactType, "aar")
+        to.attribute(unpackedAar, true).attribute(artifactType, "jar")
+    }
+
     compileOnly("com.google.android:android:${version("android")}")
     compileOnly("androidx.annotation:annotation:${version("androidx_annotation")}")
 
     testImplementation("com.google.android:android:${version("android")}")
     testImplementation("org.robolectric:robolectric:${version("robolectric")}")
-    testImplementation("org.smali:baksmali:${version("baksmali")}")
+    // Required by robolectric
+    testImplementation("androidx.test:core:1.2.0")
+    testImplementation("androidx.test:monitor:1.2.0")
 
+
+    testImplementation("org.smali:baksmali:${version("baksmali")}")
     "r8"("com.android.tools.build:builder:7.1.0-alpha01")
 }
 
