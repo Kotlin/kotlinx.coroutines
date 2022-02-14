@@ -25,3 +25,5 @@ internal actual object DefaultExecutor {
 
 private fun unsupported(): Nothing =
     throw UnsupportedOperationException("runBlocking event loop is not supported")
+
+internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()

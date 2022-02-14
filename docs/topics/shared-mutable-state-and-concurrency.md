@@ -9,7 +9,7 @@ but others are unique.
 
 ## The problem
 
-Let us launch a hundred coroutines all doing the same action thousand times. 
+Let us launch a hundred coroutines all doing the same action a thousand times. 
 We'll also measure their completion time for further comparisons:
 
 ```kotlin
@@ -384,7 +384,7 @@ single reference to the actor can be carried around as its handle.
 The first step of using an actor is to define a class of messages that an actor is going to process.
 Kotlin's [sealed classes](https://kotlinlang.org/docs/reference/sealed-classes.html) are well suited for that purpose.
 We define `CounterMsg` sealed class with `IncCounter` message to increment a counter and `GetCounter` message
-to get its value. The later needs to send a response. A [CompletableDeferred] communication
+to get its value. The latter needs to send a response. A [CompletableDeferred] communication
 primitive, that represents a single value that will be known (communicated) in the future,
 is used here for that purpose.
 

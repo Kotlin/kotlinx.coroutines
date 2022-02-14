@@ -66,10 +66,6 @@ This module provides debugging facilities for coroutines (run JVM with `-ea` or 
 and [newCoroutineContext] function to write user-defined coroutine builders that work with these
 debugging facilities. See [DEBUG_PROPERTY_NAME] for more details.
 
-This module provides a special CoroutineContext type [TestCoroutineCoroutineContext][kotlinx.coroutines.test.TestCoroutineContext] that
-allows the writer of code that contains Coroutines with delays and timeouts to write non-flaky unit-tests for that code allowing these tests to
-terminate in near zero time. See the documentation for this class for more information.
-
 # Package kotlinx.coroutines
 
 General-purpose coroutine builders, contexts, and helper functions.
@@ -130,7 +126,6 @@ Low-level primitives for finer-grained control of coroutines.
 
 [kotlinx.coroutines.sync.Mutex]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/index.html
 [kotlinx.coroutines.sync.Mutex.lock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/lock.html
-[kotlinx.coroutines.sync.Mutex.tryLock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/try-lock.html
 
 <!--- INDEX kotlinx.coroutines.channels -->
 
@@ -154,9 +149,5 @@ Low-level primitives for finer-grained control of coroutines.
 
 [kotlinx.coroutines.selects.select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/select.html
 [kotlinx.coroutines.selects.SelectBuilder.onTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/on-timeout.html
-
-<!--- INDEX kotlinx.coroutines.test -->
-
-[kotlinx.coroutines.test.TestCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.test/-test-coroutine-context/index.html
 
 <!--- END -->

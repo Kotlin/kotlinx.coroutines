@@ -25,6 +25,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         @JvmStatic
         fun params(): Collection<Array<Any>> =
             TestChannelKind.values()
+                .filter { it === TestChannelKind.UNLIMITED }
                 .filter { !it.viaBroadcast }
                 .map { arrayOf<Any>(it) }
     }
@@ -32,12 +33,12 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     private val iterationDurationMs = 100L
     private val testIterations = 20 * stressTestMultiplier // 2 sec
 
-    private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
+    private val dispatcher = newFixedThreadPoolContext(2, "ChannelUndeliveredElementStressTest")
     private val scope = CoroutineScope(dispatcher)
 
     private val channel = kind.create<Data> { it.failedToDeliver() }
-    private val senderDone = Channel<Boolean>(1)
-    private val receiverDone = Channel<Boolean>(1)
+    private val senderDone = Channel<Boolean>(Channel.UNLIMITED)
+    private val receiverDone = Channel<Boolean>(Channel.UNLIMITED)
 
     @Volatile
     private var lastReceived = -1L
@@ -116,6 +117,13 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
             printErrorDetails()
             throw e
         }
+        val c = channel
+        if (c is BufferedChannel<*>) {
+            assert(c.sendersCounter < (sentCnt + stoppedSender) * 1.1) {
+                "Too many broken cells: $sentCnt elements was sent and $stoppedSender send-s has been stopped, " +
+                    "but sendersCounter equals ${c.sendersCounter}"
+            }
+        }
         sentStatus.clear()
         receivedStatus.clear()
         failedStatus.clear()
@@ -165,7 +173,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                     sentStatus[trySendData.x] = sendMode + 2
                     when {
                         // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
-                        kind == TestChannelKind.LINKED_LIST -> while (sentCnt > lastReceived + 100) yield()
+                        kind == TestChannelKind.UNLIMITED -> while (sentCnt > lastReceived + 40) yield()
                         // yield periodically to check cancellation on conflated channels
                         kind.isConflated -> if (counter++ % 100 == 0) yield()
                     }
@@ -187,10 +195,10 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                     val receiveMode = Random.nextInt(6) + 1
                     val receivedData = when (receiveMode) {
                         1 -> channel.receive()
-                        2 -> select { channel.onReceive { it } }
-                        3 -> channel.receiveCatching().getOrElse { error("Should not be closed") }
-                        4 -> select { channel.onReceiveCatching { it.getOrElse { error("Should not be closed") } } }
-                        5 -> channel.receiveCatching().getOrThrow()
+                        2 -> channel.receiveCatching().getOrElse { error("Should not be closed") }
+                        3 -> channel.receiveCatching().getOrThrow()
+                        4 -> select { channel.onReceive { it } }
+                        5 -> select { channel.onReceiveCatching { it.getOrElse { error("Should not be closed") } } }
                         6 -> {
                             val iterator = channel.iterator()
                             check(iterator.hasNext()) { "Should not be closed" }
@@ -198,6 +206,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                         }
                         else -> error("cannot happen")
                     }
+                    receivedData.onReceived()
                     receivedCnt++
                     val received = receivedData.x
                     if (received <= lastReceived)
@@ -220,12 +229,22 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     }
 
     private inner class Data(val x: Long) {
-        private val failedToDeliver = atomic(false)
+        private val firstFailedToDeliverOrReceivedCallTrace = atomic<Exception?>(null)
 
         fun failedToDeliver() {
-            check(failedToDeliver.compareAndSet(false, true)) { "onUndeliveredElement notified twice" }
-            failedToDeliverCnt.incrementAndGet()
-            failedStatus[x] = 1
+            val trace = Exception("First onUndeliveredElement() call")
+            if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) {
+                failedToDeliverCnt.incrementAndGet()
+                failedStatus[x] = 1
+                return
+            }
+            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
+        }
+
+        fun onReceived() {
+            val trace = Exception("First onReceived() call")
+            if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) return
+            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
         }
     }
 

@@ -51,8 +51,10 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
 
 internal class AndroidDispatcherFactory : MainDispatcherFactory {
 
-    override fun createDispatcher(allFactories: List<MainDispatcherFactory>) =
-        HandlerContext(Looper.getMainLooper().asHandler(async = true))
+    override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher {
+        val mainLooper = Looper.getMainLooper() ?: throw IllegalStateException("The main looper is not available")
+        return HandlerContext(mainLooper.asHandler(async = true))
+    }
 
     override fun hintOnError(): String = "For tests Dispatchers.setMain from kotlinx-coroutines-test module can be used"
 

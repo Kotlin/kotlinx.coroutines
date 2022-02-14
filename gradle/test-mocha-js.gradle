@@ -29,7 +29,7 @@ task testMochaNode(type: NodeTask, dependsOn: [compileTestJsLegacy, installDepen
 
 def jsLegacyTestTask = project.tasks.findByName('jsLegacyTest') ? jsLegacyTest : jsTest
 
-jsLegacyTestTask.dependsOn testMochaNode
+//jsLegacyTestTask.dependsOn testMochaNode
 
 // -- Testing with Mocha under headless Chrome
 
@@ -99,5 +99,5 @@ task testMochaJsdom(type: NodeTask, dependsOn: [compileTestJsLegacy, installDepe
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
 }
 
-jsLegacyTestTask.dependsOn testMochaJsdom
+//jsLegacyTestTask.dependsOn testMochaJsdom
 

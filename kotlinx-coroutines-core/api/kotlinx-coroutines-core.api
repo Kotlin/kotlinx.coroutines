@@ -51,7 +51,7 @@ public final class kotlinx/coroutines/CancellableContinuation$DefaultImpls {
 	public static synthetic fun tryResume$default (Lkotlinx/coroutines/CancellableContinuation;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
-public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/CancellableContinuation {
+public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/CancellableContinuation, kotlinx/coroutines/channels/Waiter {
 	public fun <init> (Lkotlin/coroutines/Continuation;I)V
 	public final fun callCancelHandler (Lkotlinx/coroutines/CancelHandler;Ljava/lang/Throwable;)V
 	public final fun callOnCancellation (Lkotlin/jvm/functions/Function1;Ljava/lang/Throwable;)V
@@ -138,6 +138,17 @@ public final class kotlinx/coroutines/CompletableJob$DefaultImpls {
 
 public final class kotlinx/coroutines/CompletionHandlerException : java/lang/RuntimeException {
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public abstract interface class kotlinx/coroutines/CopyableThreadContextElement : kotlinx/coroutines/ThreadContextElement {
+	public abstract fun copyForChildCoroutine ()Lkotlinx/coroutines/CopyableThreadContextElement;
+}
+
+public final class kotlinx/coroutines/CopyableThreadContextElement$DefaultImpls {
+	public static fun fold (Lkotlinx/coroutines/CopyableThreadContextElement;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lkotlinx/coroutines/CopyableThreadContextElement;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lkotlinx/coroutines/CopyableThreadContextElement;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/CopyableThreadContextElement;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
 }
 
 public abstract interface class kotlinx/coroutines/CopyableThrowable {
@@ -399,7 +410,7 @@ public final class kotlinx/coroutines/JobKt {
 	public static final fun isActive (Lkotlin/coroutines/CoroutineContext;)Z
 }
 
-public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlinx/coroutines/Job, kotlinx/coroutines/ParentJob, kotlinx/coroutines/selects/SelectClause0 {
+public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlinx/coroutines/Job, kotlinx/coroutines/ParentJob {
 	public fun <init> (Z)V
 	protected fun afterCompletion (Ljava/lang/Object;)V
 	public final fun attachChild (Lkotlinx/coroutines/ChildJob;)Lkotlinx/coroutines/ChildHandle;
@@ -437,7 +448,6 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public final fun parentCancelled (Lkotlinx/coroutines/ParentJob;)V
 	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
 	public fun plus (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
-	public final fun registerSelectClause0 (Lkotlinx/coroutines/selects/SelectInstance;Lkotlin/jvm/functions/Function1;)V
 	public final fun start ()Z
 	protected final fun toCancellationException (Ljava/lang/Throwable;Ljava/lang/String;)Ljava/util/concurrent/CancellationException;
 	public static synthetic fun toCancellationException$default (Lkotlinx/coroutines/JobSupport;Ljava/lang/Throwable;Ljava/lang/String;ILjava/lang/Object;)Ljava/util/concurrent/CancellationException;
@@ -543,6 +553,15 @@ public final class kotlinx/coroutines/TimeoutKt {
 	public static final fun withTimeout-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun withTimeoutOrNull (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun withTimeoutOrNull-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/YieldContext : kotlin/coroutines/AbstractCoroutineContextElement {
+	public static final field Key Lkotlinx/coroutines/YieldContext$Key;
+	public field dispatcherWasUnconfined Z
+	public fun <init> ()V
+}
+
+public final class kotlinx/coroutines/YieldContext$Key : kotlin/coroutines/CoroutineContext$Key {
 }
 
 public final class kotlinx/coroutines/YieldKt {
@@ -836,6 +855,9 @@ public final class kotlinx/coroutines/channels/TickerMode : java/lang/Enum {
 	public static fun values ()[Lkotlinx/coroutines/channels/TickerMode;
 }
 
+public abstract interface class kotlinx/coroutines/channels/Waiter {
+}
+
 public final class kotlinx/coroutines/debug/internal/DebugCoroutineInfo {
 	public fun <init> (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfoImpl;Lkotlin/coroutines/CoroutineContext;)V
 	public final fun getContext ()Lkotlin/coroutines/CoroutineContext;
@@ -889,8 +911,6 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun asFlow ([Ljava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asSharedFlow (Lkotlinx/coroutines/flow/MutableSharedFlow;)Lkotlinx/coroutines/flow/SharedFlow;
 	public static final fun asStateFlow (Lkotlinx/coroutines/flow/MutableStateFlow;)Lkotlinx/coroutines/flow/StateFlow;
-	public static final fun broadcastIn (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;Lkotlinx/coroutines/CoroutineStart;)Lkotlinx/coroutines/channels/BroadcastChannel;
-	public static synthetic fun broadcastIn$default (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;Lkotlinx/coroutines/CoroutineStart;ILjava/lang/Object;)Lkotlinx/coroutines/channels/BroadcastChannel;
 	public static final synthetic fun buffer (Lkotlinx/coroutines/flow/Flow;I)Lkotlinx/coroutines/flow/Flow;
 	public static final fun buffer (Lkotlinx/coroutines/flow/Flow;ILkotlinx/coroutines/channels/BufferOverflow;)Lkotlinx/coroutines/flow/Flow;
 	public static synthetic fun buffer$default (Lkotlinx/coroutines/flow/Flow;IILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
@@ -901,8 +921,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun catch (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun channelFlow (Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun collect (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun collect (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun collect (Lkotlinx/coroutines/flow/SharedFlow;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun collect (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun collectIndexed (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun collectLatest (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun combine (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
@@ -961,10 +980,6 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun flowOf (Ljava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun flowOf ([Ljava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun flowOn (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/flow/Flow;
-	public static final fun flowViaChannel (ILkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
-	public static synthetic fun flowViaChannel$default (ILkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
-	public static final fun flowWith (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/CoroutineContext;ILkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
-	public static synthetic fun flowWith$default (Lkotlinx/coroutines/flow/Flow;Lkotlin/coroutines/CoroutineContext;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun fold (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun forEach (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)V
 	public static final fun getDEFAULT_CONCURRENCY ()I
@@ -981,8 +996,6 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun onCompletion (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onEach (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onEmpty (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
-	public static final fun onErrorCollect (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
-	public static synthetic fun onErrorCollect$default (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onErrorResume (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onErrorResumeNext (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onErrorReturn (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
@@ -998,9 +1011,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun reduce (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun replay (Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun replay (Lkotlinx/coroutines/flow/Flow;I)Lkotlinx/coroutines/flow/Flow;
-	public static final synthetic fun retry (Lkotlinx/coroutines/flow/Flow;ILkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun retry (Lkotlinx/coroutines/flow/Flow;JLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
-	public static synthetic fun retry$default (Lkotlinx/coroutines/flow/Flow;ILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static synthetic fun retry$default (Lkotlinx/coroutines/flow/Flow;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun retryWhen (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function4;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun runningFold (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
@@ -1170,65 +1181,113 @@ public class kotlinx/coroutines/scheduling/ExperimentalCoroutineDispatcher : kot
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class kotlinx/coroutines/selects/OnTimeoutKt {
+	public static final fun onTimeout (Lkotlinx/coroutines/selects/SelectBuilder;JLkotlin/jvm/functions/Function1;)V
+	public static final fun onTimeout-8Mi8wO0 (Lkotlinx/coroutines/selects/SelectBuilder;JLkotlin/jvm/functions/Function1;)V
+}
+
 public abstract interface class kotlinx/coroutines/selects/SelectBuilder {
 	public abstract fun invoke (Lkotlinx/coroutines/selects/SelectClause0;Lkotlin/jvm/functions/Function1;)V
 	public abstract fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V
 	public abstract fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public abstract fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
-	public abstract fun onTimeout (JLkotlin/jvm/functions/Function1;)V
+	public abstract synthetic fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 }
 
 public final class kotlinx/coroutines/selects/SelectBuilder$DefaultImpls {
 	public static fun invoke (Lkotlinx/coroutines/selects/SelectBuilder;Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun onTimeout (Lkotlinx/coroutines/selects/SelectBuilder;JLkotlin/jvm/functions/Function1;)V
 }
 
-public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/coroutines/internal/LockFreeLinkedListHead, kotlin/coroutines/Continuation, kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/selects/SelectBuilder, kotlinx/coroutines/selects/SelectInstance {
+public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/coroutines/selects/SelectImplementation {
 	public fun <init> (Lkotlin/coroutines/Continuation;)V
-	public fun disposeOnSelect (Lkotlinx/coroutines/DisposableHandle;)V
-	public fun getCallerFrame ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
-	public fun getCompletion ()Lkotlin/coroutines/Continuation;
-	public fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public final fun getResult ()Ljava/lang/Object;
-	public fun getStackTraceElement ()Ljava/lang/StackTraceElement;
+	public final fun getUCont ()Lkotlin/coroutines/Continuation;
 	public final fun handleBuilderException (Ljava/lang/Throwable;)V
+}
+
+public abstract interface class kotlinx/coroutines/selects/SelectClause {
+	public abstract fun getClauseObject ()Ljava/lang/Object;
+	public abstract fun getOnCancellationConstructor ()Lkotlin/jvm/functions/Function3;
+	public abstract fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
+	public abstract fun getRegFunc ()Lkotlin/jvm/functions/Function3;
+}
+
+public abstract interface class kotlinx/coroutines/selects/SelectClause0 : kotlinx/coroutines/selects/SelectClause {
+}
+
+public final class kotlinx/coroutines/selects/SelectClause0Impl : kotlinx/coroutines/selects/SelectClause0 {
+	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getClauseObject ()Ljava/lang/Object;
+	public fun getOnCancellationConstructor ()Lkotlin/jvm/functions/Function3;
+	public fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
+	public fun getRegFunc ()Lkotlin/jvm/functions/Function3;
+}
+
+public abstract interface class kotlinx/coroutines/selects/SelectClause1 : kotlinx/coroutines/selects/SelectClause {
+}
+
+public final class kotlinx/coroutines/selects/SelectClause1Impl : kotlinx/coroutines/selects/SelectClause1 {
+	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getClauseObject ()Ljava/lang/Object;
+	public fun getOnCancellationConstructor ()Lkotlin/jvm/functions/Function3;
+	public fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
+	public fun getRegFunc ()Lkotlin/jvm/functions/Function3;
+}
+
+public abstract interface class kotlinx/coroutines/selects/SelectClause2 : kotlinx/coroutines/selects/SelectClause {
+}
+
+public final class kotlinx/coroutines/selects/SelectClause2Impl : kotlinx/coroutines/selects/SelectClause2 {
+	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getClauseObject ()Ljava/lang/Object;
+	public fun getOnCancellationConstructor ()Lkotlin/jvm/functions/Function3;
+	public fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
+	public fun getRegFunc ()Lkotlin/jvm/functions/Function3;
+}
+
+public class kotlinx/coroutines/selects/SelectImplementation : kotlinx/coroutines/selects/SelectBuilder, kotlinx/coroutines/selects/SelectInstance {
+	public fun <init> (Lkotlin/coroutines/CoroutineContext;)V
+	public fun disposeOnCompletion (Lkotlinx/coroutines/DisposableHandle;)V
+	public fun doSelect (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getContext ()Lkotlin/coroutines/CoroutineContext;
+	public synthetic fun invoke (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun invoke (Ljava/lang/Throwable;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause0;Lkotlin/jvm/functions/Function1;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
-	public fun isSelected ()Z
-	public fun onTimeout (JLkotlin/jvm/functions/Function1;)V
-	public fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
-	public fun resumeSelectWithException (Ljava/lang/Throwable;)V
-	public fun resumeWith (Ljava/lang/Object;)V
-	public fun toString ()Ljava/lang/String;
-	public fun trySelect ()Z
-	public fun trySelectOther (Lkotlinx/coroutines/internal/LockFreeLinkedListNode$PrepareOp;)Ljava/lang/Object;
+	public synthetic fun onTimeout (JLkotlin/jvm/functions/Function1;)V
+	protected final fun register (Lkotlinx/coroutines/selects/SelectImplementation$ClauseData;Z)V
+	public static synthetic fun register$default (Lkotlinx/coroutines/selects/SelectImplementation;Lkotlinx/coroutines/selects/SelectImplementation$ClauseData;ZILjava/lang/Object;)V
+	public fun selectInRegistrationPhase (Ljava/lang/Object;)V
+	public fun trySelect (Ljava/lang/Object;Ljava/lang/Object;)Z
+	public final fun trySelectDetailed (Ljava/lang/Object;Ljava/lang/Object;)Lkotlinx/coroutines/selects/TrySelectDetailedResult;
 }
 
-public abstract interface class kotlinx/coroutines/selects/SelectClause0 {
-	public abstract fun registerSelectClause0 (Lkotlinx/coroutines/selects/SelectInstance;Lkotlin/jvm/functions/Function1;)V
+protected final class kotlinx/coroutines/selects/SelectImplementation$ClauseData {
+	public final field clauseObject Ljava/lang/Object;
+	public field disposableHandle Lkotlinx/coroutines/DisposableHandle;
+	public final field onCancellationConstructor Lkotlin/jvm/functions/Function3;
+	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlinx/coroutines/DisposableHandle;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlinx/coroutines/DisposableHandle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun createOnCancellationAction (Lkotlinx/coroutines/selects/SelectInstance;Ljava/lang/Object;)Lkotlin/jvm/functions/Function1;
+	public final fun invokeBlock (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun processResult (Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun tryRegister (Lkotlinx/coroutines/selects/SelectImplementation;)Z
 }
 
-public abstract interface class kotlinx/coroutines/selects/SelectClause1 {
-	public abstract fun registerSelectClause1 (Lkotlinx/coroutines/selects/SelectInstance;Lkotlin/jvm/functions/Function2;)V
-}
-
-public abstract interface class kotlinx/coroutines/selects/SelectClause2 {
-	public abstract fun registerSelectClause2 (Lkotlinx/coroutines/selects/SelectInstance;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
-}
-
-public abstract interface class kotlinx/coroutines/selects/SelectInstance {
-	public abstract fun disposeOnSelect (Lkotlinx/coroutines/DisposableHandle;)V
-	public abstract fun getCompletion ()Lkotlin/coroutines/Continuation;
-	public abstract fun isSelected ()Z
-	public abstract fun performAtomicTrySelect (Lkotlinx/coroutines/internal/AtomicDesc;)Ljava/lang/Object;
-	public abstract fun resumeSelectWithException (Ljava/lang/Throwable;)V
-	public abstract fun trySelect ()Z
-	public abstract fun trySelectOther (Lkotlinx/coroutines/internal/LockFreeLinkedListNode$PrepareOp;)Ljava/lang/Object;
+public abstract interface class kotlinx/coroutines/selects/SelectInstance : kotlinx/coroutines/channels/Waiter {
+	public abstract fun disposeOnCompletion (Lkotlinx/coroutines/DisposableHandle;)V
+	public abstract fun getContext ()Lkotlin/coroutines/CoroutineContext;
+	public abstract fun selectInRegistrationPhase (Ljava/lang/Object;)V
+	public abstract fun trySelect (Ljava/lang/Object;Ljava/lang/Object;)Z
 }
 
 public final class kotlinx/coroutines/selects/SelectKt {
-	public static final fun onTimeout-8Mi8wO0 (Lkotlinx/coroutines/selects/SelectBuilder;JLkotlin/jvm/functions/Function1;)V
 	public static final fun select (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -1236,17 +1295,19 @@ public final class kotlinx/coroutines/selects/SelectUnbiasedKt {
 	public static final fun selectUnbiased (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class kotlinx/coroutines/selects/UnbiasedSelectBuilderImpl : kotlinx/coroutines/selects/SelectBuilder {
+public final class kotlinx/coroutines/selects/UnbiasedSelectBuilderImpl : kotlinx/coroutines/selects/UnbiasedSelectImplementation {
 	public fun <init> (Lkotlin/coroutines/Continuation;)V
-	public final fun getClauses ()Ljava/util/ArrayList;
-	public final fun getInstance ()Lkotlinx/coroutines/selects/SelectBuilderImpl;
+	public final fun getUCont ()Lkotlin/coroutines/Continuation;
 	public final fun handleBuilderException (Ljava/lang/Throwable;)V
 	public final fun initSelectResult ()Ljava/lang/Object;
+}
+
+public class kotlinx/coroutines/selects/UnbiasedSelectImplementation : kotlinx/coroutines/selects/SelectImplementation {
+	public fun <init> (Lkotlin/coroutines/CoroutineContext;)V
+	public fun doSelect (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause0;Lkotlin/jvm/functions/Function1;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
-	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
-	public fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 }
 
 public final class kotlinx/coroutines/selects/WhileSelectKt {

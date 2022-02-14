@@ -36,6 +36,6 @@ private class AtomicRefHolder<T>(initialValue: T) {
 }
 
 private class TestSegment(id: Long, prev: TestSegment?, pointers: Int) : Segment<TestSegment>(id, prev, pointers) {
-    override val maxSlots: Int get() = 1
+    override val numberOfSlots: Int get() = 1
 }
 private fun createTestSegment(id: Long, prev: TestSegment?) = TestSegment(id, prev, 0)

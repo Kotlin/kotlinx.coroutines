@@ -102,8 +102,10 @@ internal object DebugProbesImpl {
     }
 
     private fun stopWeakRefCleanerThread() {
-        weakRefCleanerThread?.interrupt()
+        val thread = weakRefCleanerThread ?: return
         weakRefCleanerThread = null
+        thread.interrupt()
+        thread.join()
     }
 
     public fun hierarchyToString(job: Job): String = coroutineStateLock.write {
@@ -148,10 +150,11 @@ internal object DebugProbesImpl {
      * Private method that dumps coroutines so that different public-facing method can use
      * to produce different result types.
      */
-    private inline fun <R : Any> dumpCoroutinesInfoImpl(create: (CoroutineOwner<*>, CoroutineContext) -> R): List<R> =
+    private inline fun <R : Any> dumpCoroutinesInfoImpl(crossinline create: (CoroutineOwner<*>, CoroutineContext) -> R): List<R> =
         coroutineStateLock.write {
             check(isInstalled) { "Debug probes are not installed" }
             capturedCoroutines
+                .asSequence()
                 // Stable ordering of coroutines by their sequence number
                 .sortedBy { it.info.sequenceNumber }
                 // Leave in the dump only the coroutines that were not collected while we were dumping them
@@ -159,7 +162,7 @@ internal object DebugProbesImpl {
                     // Fuse map and filter into one operation to save an inline
                     if (owner.isFinished()) null
                     else owner.info.context?.let { context -> create(owner, context) }
-                }
+                }.toList()
         }
 
     /*

@@ -3,6 +3,8 @@
     <words>
       <w>kotlinx</w>
       <w>lincheck</w>
+      <w>linearizability</w>
+      <w>linearizable</w>
       <w>redirector</w>
     </words>
   </dictionary>

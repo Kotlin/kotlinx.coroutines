@@ -112,7 +112,7 @@ private fun <T> createSegment(id: Long, prev: OneElementSegment<T>?) = OneElemen
 internal class OneElementSegment<T>(id: Long, prev: OneElementSegment<T>?, pointers: Int) : Segment<OneElementSegment<T>>(id, prev, pointers) {
     val element = atomic<Any?>(null)
 
-    override val maxSlots get() = 1
+    override val numberOfSlots get() = 1
 
     val logicallyRemoved get() = element.value === BROKEN
 

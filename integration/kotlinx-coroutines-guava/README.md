@@ -62,6 +62,6 @@ Integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/L
 
 <!--- INDEX com.google.common.util.concurrent -->
 
-[com.google.common.util.concurrent.ListenableFuture]: https://kotlin.github.io/kotlinx.coroutines/https://google.github.io/guava/releases/28.0-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html
+[com.google.common.util.concurrent.ListenableFuture]: https://kotlin.github.io/kotlinx.coroutines/https://google.github.io/guava/releases/31.0.1-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html
 
 <!--- END -->

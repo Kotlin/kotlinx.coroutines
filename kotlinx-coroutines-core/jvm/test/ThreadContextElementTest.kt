@@ -54,7 +54,6 @@ class ThreadContextElementTest : TestBase() {
         assertNull(myThreadLocal.get())
     }
 
-
     @Test
     fun testWithContext() = runTest {
         expect(1)
@@ -86,6 +85,78 @@ class ThreadContextElementTest : TestBase() {
 
         finish(7)
     }
+
+    @Test
+    fun testNonCopyableElementReferenceInheritedOnLaunch() = runTest {
+        var parentElement: MyElement? = null
+        var inheritedElement: MyElement? = null
+
+        newSingleThreadContext("withContext").use {
+            withContext(it + MyElement(MyData())) {
+                parentElement = coroutineContext[MyElement.Key]
+                launch {
+                    inheritedElement = coroutineContext[MyElement.Key]
+                }
+            }
+        }
+
+        assertSame(inheritedElement, parentElement,
+            "Inner and outer coroutines did not have the same object reference to a" +
+                " ThreadContextElement that did not override `copyForChildCoroutine()`")
+    }
+
+    @Test
+    fun testCopyableElementCopiedOnLaunch() = runTest {
+        var parentElement: CopyForChildCoroutineElement? = null
+        var inheritedElement: CopyForChildCoroutineElement? = null
+
+        newSingleThreadContext("withContext").use {
+            withContext(it + CopyForChildCoroutineElement(MyData())) {
+                parentElement = coroutineContext[CopyForChildCoroutineElement.Key]
+                launch {
+                    inheritedElement = coroutineContext[CopyForChildCoroutineElement.Key]
+                }
+            }
+        }
+
+        assertNotSame(inheritedElement, parentElement,
+            "Inner coroutine did not copy its copyable ThreadContextElement.")
+    }
+
+    @Test
+    fun testCopyableThreadContextElementImplementsWriteVisibility() = runTest {
+        newFixedThreadPoolContext(nThreads = 4, name = "withContext").use {
+            val startData = MyData()
+            withContext(it + CopyForChildCoroutineElement(startData)) {
+                val forBlockData = MyData()
+                myThreadLocal.setForBlock(forBlockData) {
+                    assertSame(myThreadLocal.get(), forBlockData)
+                    launch {
+                        assertSame(myThreadLocal.get(), forBlockData)
+                    }
+                    launch {
+                        assertSame(myThreadLocal.get(), forBlockData)
+                        // Modify value in child coroutine. Writes to the ThreadLocal and
+                        // the (copied) ThreadLocalElement's memory are not visible to peer or
+                        // ancestor coroutines, so this write is both threadsafe and coroutinesafe.
+                        val innerCoroutineData = MyData()
+                        myThreadLocal.setForBlock(innerCoroutineData) {
+                            assertSame(myThreadLocal.get(), innerCoroutineData)
+                        }
+                        assertSame(myThreadLocal.get(), forBlockData) // Asserts value was restored.
+                    }
+                    launch {
+                        val innerCoroutineData = MyData()
+                        myThreadLocal.setForBlock(innerCoroutineData) {
+                            assertSame(myThreadLocal.get(), innerCoroutineData)
+                        }
+                        assertSame(myThreadLocal.get(), forBlockData)
+                    }
+                }
+                assertSame(myThreadLocal.get(), startData) // Asserts value was restored.
+            }
+        }
+    }
 }
 
 class MyData
@@ -114,3 +185,60 @@ class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
         myThreadLocal.set(oldState)
     }
 }
+
+/**
+ * A [ThreadContextElement] that implements copy semantics in [copyForChildCoroutine].
+ */
+class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextElement<MyData?> {
+    companion object Key : CoroutineContext.Key<CopyForChildCoroutineElement>
+
+    override val key: CoroutineContext.Key<CopyForChildCoroutineElement>
+        get() = Key
+
+    override fun updateThreadContext(context: CoroutineContext): MyData? {
+        val oldState = myThreadLocal.get()
+        myThreadLocal.set(data)
+        return oldState
+    }
+
+    override fun restoreThreadContext(context: CoroutineContext, oldState: MyData?) {
+        myThreadLocal.set(oldState)
+    }
+
+    /**
+     * At coroutine launch time, the _current value of the ThreadLocal_ is inherited by the new
+     * child coroutine, and that value is copied to a new, unique, ThreadContextElement memory
+     * reference for the child coroutine to use uniquely.
+     *
+     * n.b. the value copied to the child must be the __current value of the ThreadLocal__ and not
+     * the value initially passed to the ThreadContextElement in order to reflect writes made to the
+     * ThreadLocal between coroutine resumption and the child coroutine launch point. Those writes
+     * will be reflected in the parent coroutine's [CopyForChildCoroutineElement] when it yields the
+     * thread and calls [restoreThreadContext].
+     */
+    override fun copyForChildCoroutine(): CopyableThreadContextElement<MyData?> {
+        return CopyForChildCoroutineElement(myThreadLocal.get())
+    }
+}
+
+/**
+ * Calls [block], setting the value of [this] [ThreadLocal] for the duration of [block].
+ *
+ * When a [CopyForChildCoroutineElement] for `this` [ThreadLocal] is used within a
+ * [CoroutineContext], a ThreadLocal set this way will have the "correct" value expected lexically
+ * at every statement reached, whether that statement is reached immediately, across suspend and
+ * redispatch within one coroutine, or within a child coroutine. Writes made to the `ThreadLocal`
+ * by child coroutines will not be visible to the parent coroutine. Writes made to the `ThreadLocal`
+ * by the parent coroutine _after_ launching a child coroutine will not be visible to that child
+ * coroutine.
+ */
+private inline fun <ThreadLocalT, OutputT> ThreadLocal<ThreadLocalT>.setForBlock(
+    value: ThreadLocalT,
+    crossinline block: () -> OutputT
+) {
+    val priorValue = get()
+    set(value)
+    block()
+    set(priorValue)
+}
+

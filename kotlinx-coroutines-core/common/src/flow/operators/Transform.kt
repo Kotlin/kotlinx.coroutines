@@ -45,7 +45,7 @@ public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = transform<T?, T> { value
  * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
  */
 public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -> R): Flow<R> = transform { value ->
-   return@transform emit(transform(value))
+    return@transform emit(transform(value))
 }
 
 /**

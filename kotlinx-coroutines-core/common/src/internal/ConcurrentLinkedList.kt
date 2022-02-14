@@ -42,7 +42,7 @@ private inline fun <S : Segment<S>> S.findSegmentInternal(
  * Returns `false` if the segment `to` is logically removed, `true` on a successful update.
  */
 @Suppress("NOTHING_TO_INLINE") // Must be inline because it is an AtomicRef extension
-private inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = loop { cur ->
+internal inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = loop { cur ->
     if (cur.id >= to.id) return true
     if (!to.tryIncPointers()) return false
     if (compareAndSet(cur, to)) { // the segment is moved
@@ -150,11 +150,13 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
      */
     fun remove() {
         assert { removed } // The node should be logically removed at first.
-        assert { !isTail } // The physical tail cannot be removed.
+        // The physical tail cannot be removed. Instead, we remove it when
+        // a new segment is added and this segment is not the tail one anymore.
+        if (isTail) return
         while (true) {
             // Read `next` and `prev` pointers ignoring logically removed nodes.
-            val prev = leftmostAliveNode
-            val next = rightmostAliveNode
+            val prev = aliveSegmentLeft
+            val next = aliveSegmentRight
             // Link `next` and `prev`.
             next._prev.value = prev
             if (prev !== null) prev._next.value = next
@@ -166,14 +168,14 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
         }
     }
 
-    private val leftmostAliveNode: N? get() {
+    private val aliveSegmentLeft: N? get() {
         var cur = prev
         while (cur !== null && cur.removed)
             cur = cur._prev.value
         return cur
     }
 
-    private val rightmostAliveNode: N get() {
+    private val aliveSegmentRight: N get() {
         assert { !isTail } // Should not be invoked on the tail node
         var cur = next!!
         while (cur.removed)
@@ -189,10 +191,10 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
  */
 internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers: Int): ConcurrentLinkedListNode<S>(prev) {
     /**
-     * This property should return the maximal number of slots in this segment,
+     * This property should return the number of slots in this segment,
      * it is used to define whether the segment is logically removed.
      */
-    abstract val maxSlots: Int
+    abstract val numberOfSlots: Int
 
     /**
      * Numbers of cleaned slots (the lowest bits) and AtomicRef pointers to this segment (the highest bits)
@@ -200,23 +202,22 @@ internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers
     private val cleanedAndPointers = atomic(pointers shl POINTERS_SHIFT)
 
     /**
-     * The segment is considered as removed if all the slots are cleaned.
-     * There are no pointers to this segment from outside, and
-     * it is not a physical tail in the linked list of segments.
+     * The segment is considered as removed if all the slots are cleaned
+     * and there are no pointers to this segment from outside.
      */
-    override val removed get() = cleanedAndPointers.value == maxSlots && !isTail
+    override val removed get() = cleanedAndPointers.value == numberOfSlots
 
     // increments the number of pointers if this segment is not logically removed.
-    internal fun tryIncPointers() = cleanedAndPointers.addConditionally(1 shl POINTERS_SHIFT) { it != maxSlots || isTail }
+    internal fun tryIncPointers() = cleanedAndPointers.addConditionally(1 shl POINTERS_SHIFT) { it != numberOfSlots }
 
     // returns `true` if this segment is logically removed after the decrement.
-    internal fun decPointers() = cleanedAndPointers.addAndGet(-(1 shl POINTERS_SHIFT)) == maxSlots && !isTail
+    internal fun decPointers() = cleanedAndPointers.addAndGet(-(1 shl POINTERS_SHIFT)) == numberOfSlots
 
     /**
      * Invoked on each slot clean-up; should not be invoked twice for the same slot.
      */
     fun onSlotCleaned() {
-        if (cleanedAndPointers.incrementAndGet() == maxSlots && !isTail) remove()
+        if (cleanedAndPointers.incrementAndGet() == numberOfSlots) remove()
     }
 }
 

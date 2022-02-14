@@ -10,29 +10,10 @@ import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
-/**
- * This [CoroutineContext] dispatcher can be used to simulate virtual time to speed up
- * code, especially tests, that deal with delays and timeouts in Coroutines.
- *
- * Provide an instance of this TestCoroutineContext when calling the *non-blocking*
- * [launch][CoroutineScope.launch] or [async][CoroutineScope.async]
- * and then advance time or trigger the actions to make the co-routines execute as soon as possible.
- *
- * This works much like the *TestScheduler* in RxJava2, which allows to speed up tests that deal
- * with non-blocking Rx chains that contain delays, timeouts, intervals and such.
- *
- * This dispatcher can also handle *blocking* coroutines that are started by [runBlocking].
- * This dispatcher's virtual time will be automatically advanced based on the delayed actions
- * within the Coroutine(s).
- *
- * **Note: This API will become obsolete in future updates due to integration with structured concurrency.**
- *           See [issue #541](https://github.com/Kotlin/kotlinx.coroutines/issues/541).
- *
- * @param name A user-readable name for debugging purposes.
- */
+/** @suppress  */
 @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
         ReplaceWith("TestCoroutineScope", "kotlin.coroutines.test"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR) // ERROR in 1.6.0, removed in 1.7.0
 public class TestCoroutineContext(private val name: String? = null) : CoroutineContext {
     private val uncaughtExceptions = mutableListOf<Throwable>()
 
@@ -264,28 +245,11 @@ private class TimedRunnableObsolete(
     override fun toString() = "TimedRunnable(time=$time, run=$run)"
 }
 
-/**
- * Executes a block of code in which a unit-test can be written using the provided [TestCoroutineContext]. The provided
- * [TestCoroutineContext] is available in the [testBody] as the `this` receiver.
- *
- * The [testBody] is executed and an [AssertionError] is thrown if the list of unhandled exceptions is not empty and
- * contains any exception that is not a [CancellationException].
- *
- * If the [testBody] successfully executes one of the [TestCoroutineContext.assertAllUnhandledExceptions],
- * [TestCoroutineContext.assertAnyUnhandledException], [TestCoroutineContext.assertUnhandledException] or
- * [TestCoroutineContext.assertExceptions], the list of unhandled exceptions will have been cleared and this method will
- * not throw an [AssertionError].
- *
- * **Note: This API will become obsolete in future updates due to integration with structured concurrency.**
- *           See [issue #541](https://github.com/Kotlin/kotlinx.coroutines/issues/541).
- *
- * @param testContext The provided [TestCoroutineContext]. If not specified, a default [TestCoroutineContext] will be
- * provided instead.
- * @param testBody The code of the unit-test.
- */
+/** @suppress  */
 @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
         ReplaceWith("testContext.runBlockingTest(testBody)", "kotlin.coroutines.test"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR) // ERROR in 1.6.0, removed in 1.7.0
+@Suppress("DEPRECATION_ERROR")
 public fun withTestContext(testContext: TestCoroutineContext = TestCoroutineContext(), testBody: TestCoroutineContext.() -> Unit) {
     with (testContext) {
         testBody()

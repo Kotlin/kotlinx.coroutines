@@ -2,6 +2,8 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:OptIn(InternalCoroutinesApi::class)
+
 package kotlinx.coroutines.channels
 
 import kotlinx.atomicfu.*
@@ -12,6 +14,12 @@ import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
+
+public fun <T> OldChannel(capacity: Int): Channel<T> = when(capacity) {
+    Channel.RENDEZVOUS -> RendezvousChannel(null)
+    Channel.UNLIMITED -> LinkedListChannel(null)
+    else -> ArrayChannel(capacity, BufferOverflow.SUSPEND, null)
+}
 
 /**
  * Abstract send channel. It is a base class for all send channel implementations.

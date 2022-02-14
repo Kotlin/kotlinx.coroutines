@@ -160,7 +160,7 @@ public interface SendChannel<in E> {
         level = DeprecationLevel.WARNING,
         message = "Deprecated in the favour of 'trySend' method",
         replaceWith = ReplaceWith("trySend(element).isSuccess")
-    ) // Warning since 1.5.0
+    ) // Warning since 1.5.0, error since 1.6.0
     public fun offer(element: E): Boolean {
         val result = trySend(element)
         if (result.isSuccess) return true
@@ -318,7 +318,7 @@ public interface ReceiveChannel<out E> {
             "Please note that the provided replacement does not rethrow channel's close cause as 'poll' did, " +
             "for the precise replacement please refer to the 'poll' documentation",
         replaceWith = ReplaceWith("tryReceive().getOrNull()")
-    ) // Warning since 1.5.0
+    ) // Warning since 1.5.0, error since 1.6.0
     public fun poll(): E? {
         val result = tryReceive()
         if (result.isSuccess) return result.getOrThrow()
@@ -364,9 +364,9 @@ public interface ReceiveChannel<out E> {
         message = "Deprecated in favor of onReceiveCatching extension",
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("onReceiveCatching")
-    ) // Warning since 1.3.0, error in 1.5.0, will be hidden or removed in 1.6.0
+    ) // Warning since 1.3.0, error in 1.5.0, will be hidden or removed in 1.7.0
     public val onReceiveOrNull: SelectClause1<E?>
-        get() = TODO()
+        get() = TODO("remove in 1.7.0? or make hidden?")
 }
 
 /**
@@ -763,26 +763,24 @@ public fun <E> Channel(
     when (capacity) {
         RENDEZVOUS -> {
             if (onBufferOverflow == BufferOverflow.SUSPEND)
-                RendezvousChannel(onUndeliveredElement) // an efficient implementation of rendezvous channel
+                BufferedChannel(RENDEZVOUS, onUndeliveredElement) // an efficient implementation of rendezvous channel
             else
-                ArrayChannel(1, onBufferOverflow, onUndeliveredElement) // support buffer overflow with buffered channel
+                ConflatedBufferedChannel(1, onBufferOverflow, onUndeliveredElement) // support buffer overflow with buffered channel
         }
         CONFLATED -> {
             require(onBufferOverflow == BufferOverflow.SUSPEND) {
                 "CONFLATED capacity cannot be used with non-default onBufferOverflow"
             }
-            ConflatedChannel(onUndeliveredElement)
+            ConflatedBufferedChannel(1, BufferOverflow.DROP_OLDEST, onUndeliveredElement)
         }
-        UNLIMITED -> LinkedListChannel(onUndeliveredElement) // ignores onBufferOverflow: it has buffer, but it never overflows
-        BUFFERED -> ArrayChannel( // uses default capacity with SUSPEND
-            if (onBufferOverflow == BufferOverflow.SUSPEND) CHANNEL_DEFAULT_CAPACITY else 1,
-            onBufferOverflow, onUndeliveredElement
-        )
+        UNLIMITED -> BufferedChannel(UNLIMITED, onUndeliveredElement) // ignores onBufferOverflow: it has buffer, but it never overflows
+        BUFFERED -> { // uses default capacity with SUSPEND
+            if (onBufferOverflow == BufferOverflow.SUSPEND) BufferedChannel(CHANNEL_DEFAULT_CAPACITY, onUndeliveredElement)
+            else ConflatedBufferedChannel(1, onBufferOverflow, onUndeliveredElement)
+        }
         else -> {
-            if (capacity == 1 && onBufferOverflow == BufferOverflow.DROP_OLDEST)
-                ConflatedChannel(onUndeliveredElement) // conflated implementation is more efficient but appears to work in the same way
-            else
-                ArrayChannel(capacity, onBufferOverflow, onUndeliveredElement)
+            if (onBufferOverflow === BufferOverflow.SUSPEND) BufferedChannel(capacity, onUndeliveredElement)
+            else ConflatedBufferedChannel(capacity, onBufferOverflow, onUndeliveredElement)
         }
     }
 

@@ -162,7 +162,7 @@ private class LazyActorCoroutine<E>(
         return super.send(element)
     }
 
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     override fun offer(element: E): Boolean {
         start()
         return super.offer(element)
@@ -182,7 +182,7 @@ private class LazyActorCoroutine<E>(
     }
 
     override val onSend: SelectClause2<E, SendChannel<E>> get() = SelectClause2Impl(
-        objForSelect = this,
+        clauseObject = this,
         regFunc = LazyActorCoroutine<*>::onSendRegFunction as RegistrationFunction,
         processResFunc = super.onSend.processResFunc
     )

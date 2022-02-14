@@ -54,7 +54,6 @@ public interface Mutex {
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
-     * This function can be used in [select] invocation with [onLock] clause.
      * Use [tryLock] to try acquiring the lock without waiting.
      *
      * This function is fair; suspended callers are resumed in first-in-first-out order.
@@ -78,13 +77,14 @@ public interface Mutex {
      * lock acquisition.
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = "Mutex.onLock deprecated without replacement. " +
-        "For additional details please refer to #2794")
+        "For additional details please refer to #2794") // WARNING since 1.6.0
     public val onLock: SelectClause2<Any?, Mutex>
 
     /**
      * Checks whether this mutex is locked by the specified owner.
      *
-     * @return `true` on mutex lock by owner, `false` if not locker or it is locked by different owner
+     * @return `true` when this mutex is locked by the specified owner;
+     * `false` if the mutex is not locked or locked by another owner.
      */
     public fun holdsLock(owner: Any): Boolean
 
@@ -110,7 +110,7 @@ public interface Mutex {
  */
 @Suppress("FunctionName")
 public fun Mutex(locked: Boolean = false): Mutex =
-    MutexImpl(locked) // TODO: locked with owner?
+    MutexImpl(locked)
 
 /**
  * Executes the given [action] under this mutex's lock.
@@ -135,7 +135,13 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
 }
 
 
-internal class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 0), Mutex {
+internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 0), Mutex {
+    /**
+     * After the lock is acquired, the corresponding owner is stored in this field.
+     * The [unlock] operation checks the owner and either re-sets it to [NO_OWNER],
+     * if there is no waiting request, or to the owner of the suspended [lock] operation
+     * to be resumed, otherwise.
+     */
     private val owner = atomic<Any?>(if (locked) null else NO_OWNER)
 
     override val isLocked: Boolean get() =
@@ -170,15 +176,12 @@ internal class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 
         } else false
 
     override fun unlock(owner: Any?) {
-        var i = 1
         while (true) {
             // Is this mutex locked?
             check(isLocked) { "This mutex is not locked" }
             // Read the owner, waiting until it is set in a spin-loop if required.
             val curOwner = this.owner.value
             if (curOwner === NO_OWNER) continue // <-- ATTENTION, BLOCKING PART HERE
-            i++
-            if (i % 1_000 == 0) println("WTF")
             // Check the owner.
             check(curOwner === owner) { "This mutex is locked by $curOwner, but $owner is expected" }
             // Try to clean the owner first. We need to use CAS here to synchronize with concurrent `unlock(..)`-s.
@@ -189,37 +192,27 @@ internal class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
-        objForSelect = this,
+        clauseObject = this,
         regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
         processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
+        onCancellationConstructor = onCancellationUnlockConstructor
     )
 
-    private fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
+    protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
         onAcquire.regFunc(this, SelectInstanceWithOwner(select, owner), owner)
     }
 
-    private fun onLockProcessResult(owner: Any?, result: Any?): Any? {
+    protected open fun onLockProcessResult(owner: Any?, result: Any?): Any? {
         onAcquire.processResFunc(this, null, result)
-        while (isLocked && this.owner.value === NO_OWNER) {}
         return this
     }
 
-    private inner class SelectInstanceWithOwner<Q>(
-        val select: SelectInstance<Q>,
-        val owner: Any?
-    ) : SelectInstance<Q> by select {
-        override fun trySelect(objForSelect: Any, result: Any?): Boolean {
-            return select.trySelect(objForSelect, result).also { success ->
-                if (success) this@MutexImpl.owner.value = owner
-            }
+    protected val onCancellationUnlockConstructor: OnCancellationConstructor =
+        { select: SelectInstance<*>, owner: Any?, ignoredResult: Any? ->
+            { unlock(owner) }
         }
-
-        override fun selectInRegPhase(selectResult: Any?) {
-            select.selectInRegPhase(selectResult)
-            this@MutexImpl.owner.value = owner
-        }
-    }
 
     private inner class CancellableContinuationWithOwner(
         val cont: CancellableContinuation<Unit>,
@@ -236,6 +229,24 @@ internal class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 
             cont.resume(value, onCancellation)
         }
     }
+
+    private inner class SelectInstanceWithOwner<Q>(
+        val select: SelectInstance<Q>,
+        val owner: Any?
+    ) : SelectInstance<Q> by select {
+        override fun trySelect(clauseObject: Any, result: Any?): Boolean {
+            return select.trySelect(clauseObject, result).also { success ->
+                if (success) this@MutexImpl.owner.value = owner
+            }
+        }
+
+        override fun selectInRegistrationPhase(internalResult: Any?) {
+            select.selectInRegistrationPhase(internalResult)
+            this@MutexImpl.owner.value = owner
+        }
+    }
+
+    override fun toString() = "Mutex@${hexAddress}"
 }
 
 @SharedImmutable

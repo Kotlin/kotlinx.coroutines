@@ -19,7 +19,7 @@ import kotlin.native.concurrent.*
  * Each [release] adds a permit, potentially releasing a suspended acquirer.
  * Semaphore is fair and maintains a FIFO order of acquirers.
  *
- * Semaphores are mostly used to limit the number of coroutines that have an access to particular resource.
+ * Semaphores are mostly used to limit the number of coroutines that have access to particular resource.
  * Semaphore with `permits = 1` is essentially a [Mutex].
  **/
 public interface Semaphore {
@@ -43,7 +43,7 @@ public interface Semaphore {
      * Use [CoroutineScope.isActive] or [CoroutineScope.ensureActive] to periodically
      * check for cancellation in tight loops if needed.
      *
-     * Use [tryAcquire] to try acquire a permit of this semaphore without suspension.
+     * Use [tryAcquire] to try to acquire a permit of this semaphore without suspension.
      */
     public suspend fun acquire()
 
@@ -194,8 +194,8 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     }
 
     @JsName("acquireCont")
-    protected fun acquire(cont: CancellableContinuation<Unit>) = acquire(
-        waiter = cont,
+    protected fun acquire(waiter: CancellableContinuation<Unit>) = acquire(
+        waiter = waiter,
         suspend = { cont -> addAcquireToQueue(cont) },
         onAcquired = { cont -> cont.resume(Unit, onCancellationRelease) }
     )
@@ -216,18 +216,20 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     }
 
     val onAcquire: SelectClause1<Semaphore> get() = SelectClause1Impl(
-        objForSelect = this,
+        clauseObject = this,
         regFunc = SemaphoreImpl::onAcquireRegFunction as RegistrationFunction,
         processResFunc = SemaphoreImpl::onAcquireProcessResultFunction as ProcessResultFunction
     )
 
+    @Suppress("UNUSED_PARAMETER")
     private fun onAcquireRegFunction(select: SelectInstance<*>, ignoredParam: Any?) =
         acquire(
             waiter = select,
             suspend = { s -> addAcquireToQueue(s) },
-            onAcquired = { s -> s.selectInRegPhase(Unit) }
+            onAcquired = { s -> s.selectInRegistrationPhase(Unit) }
         )
 
+    @Suppress("UNUSED_PARAMETER", "RedundantNullableReturnType")
     private fun onAcquireProcessResultFunction(param: Any?, result: Any?): Any? {
         return this
     }
@@ -303,7 +305,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
                     waiter.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
                 }
                 is SelectInstance<*> -> {
-                    waiter.invokeOnCompletion { CancelSemaphoreAcquisitionHandler(segment, i).invoke(null) }
+                    waiter.disposeOnCompletion(CancelSemaphoreAcquisitionHandler(segment, i))
                 }
                 else -> error("unexpected: $waiter")
             }
@@ -319,7 +321,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
                     waiter.resume(Unit, onCancellationRelease)
                 }
                 is SelectInstance<*> -> {
-                    waiter.selectInRegPhase(Unit)
+                    waiter.selectInRegistrationPhase(Unit)
                 }
                 else -> error("unexpected: $waiter")
             }
@@ -350,7 +352,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
                 // Try to break the slot in order not to wait
                 return !segment.cas(i, PERMIT, BROKEN)
             }
-            cellState === CANCELLED -> return false // the acquire was already cancelled
+            cellState === CANCELLED -> return false // the acquirer has already been cancelled
             else -> return cellState.tryResumeAcquire()
         }
     }
@@ -374,8 +376,10 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
 private class CancelSemaphoreAcquisitionHandler(
     private val segment: SemaphoreSegment,
     private val index: Int
-) : CancelHandler() {
-    override fun invoke(cause: Throwable?) {
+) : CancelHandler(), DisposableHandle {
+    override fun invoke(cause: Throwable?) = dispose()
+
+    override fun dispose() {
         segment.cancel(index)
     }
 
@@ -386,7 +390,7 @@ private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(
 
 private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int) : Segment<SemaphoreSegment>(id, prev, pointers) {
     val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
-    override val maxSlots: Int get() = SEGMENT_SIZE
+    override val numberOfSlots: Int get() = SEGMENT_SIZE
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun get(index: Int): Any? = acquirers[index].value

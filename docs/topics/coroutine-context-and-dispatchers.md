@@ -148,7 +148,7 @@ The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in I
 The **Debug** tool window contains the **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
 The coroutines are grouped by the dispatcher they are running on.
 
-![Debugging coroutines](coroutine-idea-debugging-1.png)
+![Debugging coroutines](coroutine-idea-debugging-1.png){width=700}
 
 With the coroutine debugger, you can:
 * Check the state of each coroutine.

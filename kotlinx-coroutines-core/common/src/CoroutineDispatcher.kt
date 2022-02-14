@@ -88,7 +88,8 @@ public abstract class CoroutineDispatcher :
      * // At most 1 thread will be doing IO
      * private val fileWriterDispatcher = backgroundDispatcher.limitedParallelism(1)
      * ```
-     * is 6. Yet at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism.
+     * Note how in this example the application has an executor with 4 threads, but the total sum of all limits
+     * is 6. Still, at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism.
      *
      * Note that this example was structured in such a way that it illustrates the parallelism guarantees.
      * In practice, it is usually better to use [Dispatchers.IO] or [Dispatchers.Default] instead of creating a

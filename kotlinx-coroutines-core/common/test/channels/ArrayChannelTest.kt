@@ -165,6 +165,11 @@ class ArrayChannelTest : TestBase() {
         checkBufferChannel(channel, capacity)
     }
 
+    @Test
+    fun testBufferIsNotPreallocated() {
+        (0..100_000).map { Channel<Int>(Int.MAX_VALUE / 2) }
+    }
+
     private suspend fun CoroutineScope.checkBufferChannel(
         channel: Channel<Int>,
         capacity: Int

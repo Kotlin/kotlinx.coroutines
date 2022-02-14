@@ -558,19 +558,29 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cont.disposeOnCancellation(invokeOnCompletion(handler = ResumeOnCompletion(cont).asHandler))
     }
 
+    @Suppress("UNCHECKED_CAST")
     public final override val onJoin: SelectClause0
         get() = SelectClause0Impl(
-            objForSelect = this@JobSupport,
+            clauseObject = this@JobSupport,
             regFunc = JobSupport::registerSelectForOnJoin as RegistrationFunction
         )
 
+    @Suppress("UNUSED_PARAMETER")
     private fun registerSelectForOnJoin(select: SelectInstance<*>, ignoredParam: Any?) {
         if (!joinInternal()) {
-            select.selectInRegPhase(Unit)
+            select.selectInRegistrationPhase(Unit)
             return
         }
-        val disposableHandle = invokeOnCompletion { select.trySelect(this@JobSupport, Unit) }
-        select.invokeOnCompletion { disposableHandle.dispose() }
+        val disposableHandle = invokeOnCompletion(SelectOnJoinCompletionHandler(select).asHandler)
+        select.disposeOnCompletion(disposableHandle)
+    }
+
+    private inner class SelectOnJoinCompletionHandler(
+        private val select: SelectInstance<*>
+    ) : JobNode() {
+        override fun invoke(cause: Throwable?) {
+            select.trySelect(this@JobSupport, Unit)
+        }
     }
 
     /**
@@ -1226,35 +1236,44 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
 
+    @Suppress("UNCHECKED_CAST")
     internal val onAwaitInternal: SelectClause1<*> get() = SelectClause1Impl<Any?>(
-        objForSelect = this,
+        clauseObject = this@JobSupport,
         regFunc = JobSupport::onAwaitInternalRegFunc as RegistrationFunction,
         processResFunc = JobSupport::onAwaitInternalProcessResFunc as ProcessResultFunction
     )
 
+    @Suppress("UNUSED_PARAMETER")
     private fun onAwaitInternalRegFunc(select: SelectInstance<*>, ignoredParam: Any?) {
         while (true) {
             val state = this.state
             if (state !is Incomplete) {
                 val result = if (state is CompletedExceptionally) state else state.unboxState()
-                select.selectInRegPhase(result)
+                select.selectInRegistrationPhase(result)
                 return
             }
             if (startInternal(state) >= 0) break // break unless needs to retry
         }
-        val disposableHandle = invokeOnCompletion {
-            val state = this.state
-            if (state !is Incomplete) {
-                val result = if (state is CompletedExceptionally) state else state.unboxState()
-                select.trySelect(this, result)
-            }
-        }
-        select.invokeOnCompletion { disposableHandle.dispose() }
+        val disposableHandle = invokeOnCompletion(SelectOnAwaitCompletionHandler(select).asHandler)
+        select.disposeOnCompletion(disposableHandle)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun onAwaitInternalProcessResFunc(ignoredParam: Any?, result: Any?): Any? {
         if (result is CompletedExceptionally) throw result.cause
         return result
+    }
+
+    private inner class SelectOnAwaitCompletionHandler(
+        private val select: SelectInstance<*>
+    ) : JobNode() {
+        override fun invoke(cause: Throwable?) {
+            val state = this@JobSupport.state
+            if (state !is Incomplete) {
+                val result = if (state is CompletedExceptionally) state else state.unboxState()
+                select.trySelect(this@JobSupport, result)
+            }
+        }
     }
 }
 

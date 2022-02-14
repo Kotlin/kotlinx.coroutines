@@ -7,31 +7,7 @@ package kotlinx.coroutines.reactive
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.internal.*
 import org.reactivestreams.*
-
-/**
- * Subscribes to this [Publisher] and returns a channel to receive the elements emitted by it.
- * The resulting channel needs to be [cancelled][ReceiveChannel.cancel] in order to unsubscribe from this publisher.
-
- * @param request how many items to request from the publisher in advance (optional, a single element by default).
- *
- * This method is deprecated in the favor of [Flow].
- * Instead of iterating over the resulting channel please use [collect][Flow.collect]:
- * ```
- * asFlow().collect { value ->
- *     // process value
- * }
- * ```
- */
-@Deprecated(
-    message = "Transforming publisher to channel is deprecated, use asFlow() instead",
-    level = DeprecationLevel.ERROR) // Will be error in 1.4
-public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
-    val channel = SubscriptionChannel<T>(request)
-    subscribe(channel)
-    return channel
-}
 
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
@@ -52,7 +28,7 @@ internal fun <T> Publisher<T>.toChannel(request: Int = 1): ReceiveChannel<T> {
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(null), Subscriber<T> {
+) : BufferedChannel<T>(capacity = Channel.UNLIMITED), Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }
@@ -63,7 +39,7 @@ private class SubscriptionChannel<T>(
     // can be negative if we have receivers, but no subscription yet
     private val _requested = atomic(0)
 
-    // --------------------- AbstractChannel overrides -------------------------------
+    // --------------------- BufferedChannel overrides -------------------------------
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveEnqueued() {
         _requested.loop { wasRequested ->
@@ -87,7 +63,7 @@ private class SubscriptionChannel<T>(
     }
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
+    override fun onClosedIdempotent() {
         _subscription.getAndSet(null)?.cancel() // cancel exactly once
     }
 
@@ -123,3 +99,12 @@ private class SubscriptionChannel<T>(
     }
 }
 
+/** @suppress */
+@Deprecated(
+    message = "Transforming publisher to channel is deprecated, use asFlow() instead",
+    level = DeprecationLevel.HIDDEN) // ERROR in 1.4, HIDDEN in 1.6.0
+public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>(request)
+    subscribe(channel)
+    return channel
+}

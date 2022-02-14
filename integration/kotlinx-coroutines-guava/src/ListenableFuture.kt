@@ -135,10 +135,8 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
     // Finally, if this isn't done yet, attach a Listener that will complete the Deferred.
     val deferred = CompletableDeferred<T>()
     Futures.addCallback(this, object : FutureCallback<T> {
-        override fun onSuccess(result: T?) {
-            // Here we work with flexible types, so we unchecked cast to trick the type system
-            @Suppress("UNCHECKED_CAST")
-            runCatching { deferred.complete(result as T) }
+        override fun onSuccess(result: T) {
+            runCatching { deferred.complete(result) }
                 .onFailure { handleCoroutineException(EmptyCoroutineContext, it) }
         }
 
@@ -351,7 +349,7 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
      *
      * To preserve Coroutine's [CancellationException], this future points to either `T` or [Cancelled].
      */
-    private val auxFuture = SettableFuture.create<Any>()
+    private val auxFuture = SettableFuture.create<Any?>()
 
     /**
      * `true` if [auxFuture.get][ListenableFuture.get] throws [ExecutionException].
@@ -436,7 +434,7 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
     }
 
     /** See [get()]. */
-    private fun getInternal(result: Any): T = if (result is Cancelled) {
+    private fun getInternal(result: Any?): T = if (result is Cancelled) {
         throw CancellationException().initCause(result.exception)
     } else {
         // We know that `auxFuture` can contain either `T` or `Cancelled`.

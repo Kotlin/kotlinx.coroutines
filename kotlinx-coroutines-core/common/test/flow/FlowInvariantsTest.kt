@@ -235,7 +235,7 @@ class FlowInvariantsTest : TestBase() {
             }
             expectUnreached()
         } catch (e: IllegalStateException) {
-            assertTrue(e.message!!.contains("Flow invariant is violated"))
+            assertTrue(e.message!!.contains("Flow invariant is violated"), "But had: ${e.message}")
             finish(2)
         }
     }

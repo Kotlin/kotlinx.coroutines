@@ -10,7 +10,6 @@ import kotlinx.coroutines.scheduling.*
 import reactor.blockhound.*
 import reactor.blockhound.integration.*
 
-@Suppress("UNUSED")
 public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
 
     override fun applyTo(builder: BlockHound.Builder): Unit = with(builder) {
@@ -19,6 +18,7 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowServiceLoaderInvocationsOnInit()
         allowBlockingCallsInReflectionImpl()
         allowBlockingCallsInDebugProbes()
+        allowBlockingCallsInWorkQueue()
         // Stacktrace recovery cache is guarded by lock
         allowBlockingCallsInside("kotlinx.coroutines.internal.ExceptionsConstructorKt", "tryCopyException")
         /* The predicates that define that BlockHound should only report blocking calls from threads that are part of
@@ -63,6 +63,14 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
     }
 
     /**
+     * Allow blocking calls inside [kotlinx.coroutines.scheduling.WorkQueue]
+     */
+    private fun BlockHound.Builder.allowBlockingCallsInWorkQueue() {
+        /** uses [Thread.yield] in a benign way. */
+        allowBlockingCallsInside("kotlinx.coroutines.scheduling.WorkQueue", "addLast")
+    }
+
+    /**
      * Allows blocking inside [kotlinx.coroutines.internal.ThreadSafeHeap].
      */
     private fun BlockHound.Builder.allowBlockingCallsInThreadSafeHeap() {
@@ -101,43 +109,39 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
     }
 
     private fun BlockHound.Builder.allowBlockingCallsInChannels() {
-        allowBlockingCallsInArrayChannel()
-        allowBlockingCallsInBroadcastChannel()
-        allowBlockingCallsInConflatedChannel()
+        allowBlockingCallsInBroadcastChannels()
+        allowBlockingCallsInConflatedChannels()
     }
 
     /**
-     * Allows blocking inside [kotlinx.coroutines.channels.ArrayChannel].
+     * Allows blocking inside [kotlinx.coroutines.channels.BroadcastChannel].
      */
-    private fun BlockHound.Builder.allowBlockingCallsInArrayChannel() {
-        for (method in listOf(
-            "pollInternal", "isEmpty", "isFull", "isClosedForReceive", "offerInternal", "offerSelectInternal",
-            "enqueueSend", "pollInternal", "pollSelectInternal", "enqueueReceiveInternal", "onCancelIdempotent"))
+    private fun BlockHound.Builder.allowBlockingCallsInBroadcastChannels() {
+        for (method in listOf("openSubscription", "removeSubscriber", "send", "trySend", "registerSelectForSend",
+                              "close", "cancelImpl", "isClosedForSend", "value", "valueOrNull"))
         {
-            allowBlockingCallsInside("kotlinx.coroutines.channels.ArrayChannel", method)
+            allowBlockingCallsInside("kotlinx.coroutines.channels.BroadcastChannelImpl", method)
+        }
+        for (method in listOf("cancelImpl")) {
+            allowBlockingCallsInside("kotlinx.coroutines.channels.BroadcastChannelImpl\$SubscriberConflated", method)
+        }
+        for (method in listOf("cancelImpl")) {
+            allowBlockingCallsInside("kotlinx.coroutines.channels.BroadcastChannelImpl\$SubscriberBuffered", method)
         }
     }
 
     /**
-     * Allows blocking inside [kotlinx.coroutines.channels.ArrayBroadcastChannel].
+     * Allows blocking inside [kotlinx.coroutines.channels.ConflatedBufferedChannel].
      */
-    private fun BlockHound.Builder.allowBlockingCallsInBroadcastChannel() {
-        for (method in listOf("offerInternal", "offerSelectInternal", "updateHead")) {
-            allowBlockingCallsInside("kotlinx.coroutines.channels.ArrayBroadcastChannel", method)
-        }
-        for (method in listOf("checkOffer", "pollInternal", "pollSelectInternal")) {
-            allowBlockingCallsInside("kotlinx.coroutines.channels.ArrayBroadcastChannel\$Subscriber", method)
-        }
-    }
-
-    /**
-     * Allows blocking inside [kotlinx.coroutines.channels.ConflatedChannel].
-     */
-    private fun BlockHound.Builder.allowBlockingCallsInConflatedChannel() {
-        for (method in listOf("offerInternal", "offerSelectInternal", "pollInternal", "pollSelectInternal",
-            "onCancelIdempotent", "isEmpty", "enqueueReceiveInternal"))
+    private fun BlockHound.Builder.allowBlockingCallsInConflatedChannels() {
+        for (method in listOf("receive", "receiveCatching", "tryReceive", "registerSelectForReceive",
+                              "send", "trySend", "sendBroadcast", "registerSelectForSend",
+                              "close", "cancelImpl", "isClosedForSend", "isClosedForReceive", "isEmpty"))
         {
-            allowBlockingCallsInside("kotlinx.coroutines.channels.ConflatedChannel", method)
+            allowBlockingCallsInside("kotlinx.coroutines.channels.ConflatedBufferedChannel", method)
+        }
+        for (method in listOf("hasNext")) {
+            allowBlockingCallsInside("kotlinx.coroutines.channels.ConflatedBufferedChannel\$ConflatedChannelIterator", method)
         }
     }
 

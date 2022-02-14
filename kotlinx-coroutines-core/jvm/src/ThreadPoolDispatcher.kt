@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @param name the base name of the created thread.
  */
 @DelicateCoroutinesApi
-public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
+public actual fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
 
 /**
@@ -59,7 +59,7 @@ public fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
  * @param name the base name of the created threads.
  */
 @DelicateCoroutinesApi
-public fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
+public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     val threadNo = AtomicInteger()
     val executor = Executors.newScheduledThreadPool(nThreads) { runnable ->

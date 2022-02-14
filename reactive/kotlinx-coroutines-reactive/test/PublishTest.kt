@@ -282,8 +282,6 @@ class PublishTest : TestBase() {
         val publisher = publish {
             assertFailsWith<NullPointerException> { send(null) }
             assertFailsWith<NullPointerException> { trySend(null) }
-            @Suppress("DEPRECATION")
-            assertFailsWith<NullPointerException> { offer(null) }
             send("OK")
         }
         assertEquals("OK", publisher.awaitFirstOrNull())
