@@ -12,32 +12,10 @@ repositories {
     mavenCentral()
 }
 
-val artifactType = Attribute.of("artifactType", String::class.java)
-val unpackedAar = Attribute.of("unpackedAar", Boolean::class.javaObjectType)
-
-configurations.configureEach {
-    afterEvaluate {
-        if (isCanBeResolved) {
-            attributes.attribute(unpackedAar, true) // request all AARs to be unpacked
-        }
-    }
-}
+project.configureAar()
 
 dependencies {
-    attributesSchema {
-        attribute(unpackedAar)
-    }
-
-    artifactTypes {
-        create("aar") {
-            attributes.attribute(unpackedAar, false)
-        }
-    }
-
-    registerTransform(UnpackAar::class.java) {
-        from.attribute(unpackedAar, false).attribute(artifactType, "aar")
-        to.attribute(unpackedAar, true).attribute(artifactType, "jar")
-    }
+    configureAarUnpacking()
 
     compileOnly("com.google.android:android:${version("android")}")
     compileOnly("androidx.annotation:annotation:${version("androidx_annotation")}")
