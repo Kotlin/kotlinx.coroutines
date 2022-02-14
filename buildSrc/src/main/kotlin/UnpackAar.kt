@@ -22,7 +22,7 @@ val unpackedAar = Attribute.of("unpackedAar", Boolean::class.javaObjectType)
 
 fun Project.configureAar() = configurations.configureEach {
     afterEvaluate {
-        if (isCanBeResolved) {
+        if (isCanBeResolved && !isCanBeConsumed) {
             attributes.attribute(unpackedAar, true) // request all AARs to be unpacked
         }
     }
