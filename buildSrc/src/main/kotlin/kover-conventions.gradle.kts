@@ -14,7 +14,7 @@ val expectedCoverage = mutableMapOf(
     "kotlinx-coroutines-javafx" to 39, // JavaFx is not tested on TC because its graphic subsystem cannot be initialized in headless mode
 
     // Reactor has lower coverage in general due to various fatal error handling features
-    "kotlinx-coroutines-reactor" to 80)
+    "kotlinx-coroutines-reactor" to 75)
 
 extensions.configure<KoverExtension> {
     disabledProjects = notCovered
