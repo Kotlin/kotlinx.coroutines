@@ -25,10 +25,16 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 
 /**
  * Creates context for coroutine builder functions that do not launch a new coroutine,
- * but change current coroutine context, such as [withContext] and `runBlocking`.
+ * but change current coroutine context, such as [withContext].
  */
 @ExperimentalCoroutinesApi
 public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
+    /*
+     * Fast-path: we only have to copy/merge if 'addedContext' (which typically has one or two elements)
+     * contains copyable element.
+     */
+    if (!addedContext.fold(false, hasCopyableElements)) return this + addedContext
+    // TODO Here addedContext will be re-evaluated, we can fix it later when the design converges to its final form.
     return foldCopies(this, addedContext, false)
 }
 
