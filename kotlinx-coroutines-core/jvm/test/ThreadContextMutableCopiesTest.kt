@@ -31,11 +31,11 @@ class ThreadContextMutableCopiesTest : TestBase() {
             threadLocalData.set(oldState)
         }
 
-        override fun copyForChildCoroutine(): MyMutableElement {
+        override fun copyForChild(): MyMutableElement {
             return MyMutableElement(ArrayList(mutableData))
         }
 
-        override fun merge(overwritingElement: CoroutineContext.Element): MyMutableElement {
+        override fun mergeForChild(overwritingElement: CoroutineContext.Element): MyMutableElement {
             overwritingElement as MyMutableElement // <- app-specific, may be another subtype
             return MyMutableElement((mutableData.toSet() + overwritingElement.mutableData).toMutableList())
         }

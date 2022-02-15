@@ -64,20 +64,20 @@ private fun foldCopies(originalContext: CoroutineContext, appendContext: Corouti
         // No, just copy it
         if (newElement == null) {
             // For 'withContext'-like builders we do not copy as the element is not shared
-            return@fold result + if (isNewCoroutine) element.copyForChildCoroutine() else element
+            return@fold result + if (isNewCoroutine) element.copyForChild() else element
         }
         // Yes, then first remove the element from append context
         leftoverContext = leftoverContext.minusKey(element.key)
         // Return the sum
         @Suppress("UNCHECKED_CAST")
-        return@fold result + (element as CopyableThreadContextElement<Any?>).merge(newElement)
+        return@fold result + (element as CopyableThreadContextElement<Any?>).mergeForChild(newElement)
     }
 
     if (hasElementsRight) {
         leftoverContext = leftoverContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
             // We're appending new context element -- we have to copy it, otherwise it may be shared with others
             if (element is CopyableThreadContextElement<*>) {
-                return@fold result + element.copyForChildCoroutine()
+                return@fold result + element.copyForChild()
             }
             return@fold result + element
         }

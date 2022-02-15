@@ -111,19 +111,18 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  *         traceThreadLocal.set(oldState)
  *     }
  *
- *     override fun copyForChildCoroutine(): TraceContextElement {
+ *     override fun copyForChild(): TraceContextElement {
  *         // Copy from the ThreadLocal source of truth at child coroutine launch time. This makes
  *         // ThreadLocal writes between resumption of the parent coroutine and the launch of the
  *         // child coroutine visible to the child.
  *         return TraceContextElement(traceThreadLocal.get()?.copy())
  *     }
  *
- *     override fun merge(element: TraceContextElement): TraceContextElement {
+ *     override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext
  *         // Merge operation defines how to handle situation when both
  *         // parent coroutine has the element in the context and it was also
  *         // explicitly passed to a child coroutine.
- *
- *         // TODO in this example there is no mutable data at all, so merge just copies
+ *         // If merge is not defined, the copy of the element can be returned.
  *         return TraceContextElement(traceThreadLocal.get()?.copy())
  *     }
  * }
@@ -132,6 +131,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * A coroutine using this mechanism can safely call Java code that assumes it's called using a
  * `Thread`.
  */
+@DelicateCoroutinesApi
 @ExperimentalCoroutinesApi
 public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
 
@@ -146,7 +146,7 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
      * Since this method is called whenever a new coroutine is launched in a context containing this
      * [CopyableThreadContextElement], implementations are performance-sensitive.
      */
-    public fun copyForChildCoroutine(): CopyableThreadContextElement<S>
+    public fun copyForChild(): CopyableThreadContextElement<S>
 
     /**
      * Returns a [CopyableThreadContextElement] to replace `this` `CopyableThreadContextElement` in the child
@@ -156,7 +156,7 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
      * This function is called on current element, supplied with an element retrieved from child's
      * coroutine context by the current [key].
      */
-    public fun merge(overwritingElement: CoroutineContext.Element): CoroutineContext
+    public fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext
 }
 
 /**
