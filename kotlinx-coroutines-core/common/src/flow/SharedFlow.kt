@@ -167,17 +167,14 @@ public interface SharedFlow<out T> : Flow<T> {
  */
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     /**
-     * Emits a [value] to this shared flow, suspending on buffer overflow if the shared flow was created
-     * with the default [BufferOverflow.SUSPEND] strategy.
+     * Emits a [value] to this shared flow, suspending on buffer overflow.
      *
-     * A buffer is only used by a shared flow to wait for slow subscribers.
-     * **When this shared flow has no subscribers, `emit` call never suspends.**
-     * Instead, it simply stores the most recently emitted value to its replay cache (if one was configured),
-     * dropping the older elements from the replay cache.
+     * This call can suspend only when the [BufferOverflow] strategy is
+     * [SUSPEND][BufferOverflow.SUSPEND **and** there are subscribers to this shared flow.
      *
-     * A shared flow configured with a [BufferOverflow] strategy other than [SUSPEND][BufferOverflow.SUSPEND]
-     * (either [DROP_OLDEST][BufferOverflow.DROP_OLDEST] or [DROP_LATEST][BufferOverflow.DROP_LATEST]) never
-     * suspends on [emit], since its buffer overflow is handled without suspension.
+     * If there are no subscribers, the buffer is not used.
+     * Instead, the most recently emitted value is simply stored in
+     * the replay cache (if one was configured), displacing the older elements there.
      *
      * See [tryEmit] for a non-suspending variant of this function.
      *
@@ -188,17 +185,16 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 
     /**
      * Tries to emit a [value] to this shared flow without suspending. It returns `true` if the value was
-     * emitted successfully. When this function returns `false`, it means that a call to a plain [emit]
+     * emitted successfully (see below). When this function returns `false`, it means that a call to a plain [emit]
      * function would suspend until there is buffer space available.
      *
-     * Buffer is only used by shared flow to wait for slow subscribers.
-     * **When this shared flow has no subscribers [emit] call never suspends, and thus `tryEmit` always returns `true`.**.
-     * It just stores the most recently emitted value to its replay cache (if it was configured),
-     * dropping the older elements from the replay cache.
+     * This call can return `false` only when the [BufferOverflow] strategy is
+     * [SUSPEND][BufferOverflow.SUSPEND **and** there are subscribers to this shared flow.
      *
-     * A shared flow configured with a [BufferOverflow] strategy other than [SUSPEND][BufferOverflow.SUSPEND]
-     * (either [DROP_OLDEST][BufferOverflow.DROP_OLDEST] or [DROP_LATEST][BufferOverflow.DROP_LATEST]) never
-     * suspends on [emit], and thus `tryEmit` to such a shared flow always returns `true`.
+     * If there are no subscribers, the buffer is not used.
+     * Instead, the most recently emitted value is simply stored in
+     * the replay cache (if one was configured), displacing the older elements there,
+     * and `tryEmit` always returns `true`.
      *
      * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
      * external synchronization.
