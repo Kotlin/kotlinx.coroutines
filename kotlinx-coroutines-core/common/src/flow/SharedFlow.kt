@@ -190,12 +190,12 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * function would suspend until there is buffer space available.
      *
      * This call can return `false` only when the [BufferOverflow] strategy is
-     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers to this shared flow.
+     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers collecting this shared flow.
      *
      * If there are no subscribers, the buffer is not used.
      * Instead, the most recently emitted value is simply stored into
-     * the replay cache (if one was configured), displacing the older elements there,
-     * or dropped (if no replay cache was configured). In any case, `tryEmit` returns `true`.
+     * the replay cache if one was configured, displacing the older elements there,
+     * or dropped if no replay cache was configured. In any case, `tryEmit` returns `true`.
      *
      * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
      * external synchronization.
