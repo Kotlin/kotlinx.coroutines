@@ -13,7 +13,7 @@ import kotlin.native.concurrent.SharedImmutable
  * Returns the first segment `s` with `s.id >= id` or `CLOSED`
  * if all the segments in this linked list have lower `id`, and the list is closed for further segment additions.
  */
-private inline fun <S : Segment<S>> S.findSegmentInternal(
+internal inline fun <S : Segment<S>> S.findSegmentInternal(
     id: Long,
     createNewSegment: (id: Long, prev: S?) -> S
 ): SegmentOrClosed<S> {
@@ -196,6 +196,8 @@ internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers
      */
     abstract val maxSlots: Int
 
+    protected open val supportRemoves get() = true
+
     /**
      * Numbers of cleaned slots (the lowest bits) and AtomicRef pointers to this segment (the highest bits)
      */
@@ -206,18 +208,25 @@ internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers
      * There are no pointers to this segment from outside, and
      * it is not a physical tail in the linked list of segments.
      */
-    override val removed get() = cleanedAndPointers.value == maxSlots
+    override val removed get() =
+        if (!supportRemoves) false
+        else cleanedAndPointers.value == maxSlots
 
     // increments the number of pointers if this segment is not logically removed.
-    internal fun tryIncPointers() = cleanedAndPointers.addConditionally(1 shl POINTERS_SHIFT) { it != maxSlots }
+    internal fun tryIncPointers() =
+        if (!supportRemoves) true
+        else cleanedAndPointers.addConditionally(1 shl POINTERS_SHIFT) { it != maxSlots }
 
     // returns `true` if this segment is logically removed after the decrement.
-    internal fun decPointers() = cleanedAndPointers.addAndGet(-(1 shl POINTERS_SHIFT)) == maxSlots
+    internal fun decPointers() =
+        if (!supportRemoves) false
+        else cleanedAndPointers.addAndGet(-(1 shl POINTERS_SHIFT)) == maxSlots
 
     /**
      * Invoked on each slot clean-up; should not be invoked twice for the same slot.
      */
     fun onSlotCleaned() {
+        assert { supportRemoves }
         if (cleanedAndPointers.incrementAndGet() < maxSlots) return
         if (removed) remove()
     }

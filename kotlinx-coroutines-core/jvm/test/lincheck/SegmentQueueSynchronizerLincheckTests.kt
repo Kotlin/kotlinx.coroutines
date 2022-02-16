@@ -71,6 +71,463 @@ internal class AsyncSemaphore(permits: Int) : SegmentQueueSynchronizer<Unit>(), 
     override fun returnValue(value: Unit) = release()
 }
 
+
+interface BoundedBlockingQueue<E : Any> {
+    suspend fun send(element: E)
+    suspend fun sendSingleProducer(element: E)
+    suspend fun receive(): E
+    suspend fun receiveSingleConsumer(): E
+}
+
+class BoundedBlockingQueueSmartQueue1MPMCTest : BoundedBlockingQueueMPMCTest(1, BoundedBlockingQueueSmartQueue(1))
+class BoundedBlockingQueueSmartQueue1SPSCTest : BoundedBlockingQueueSPSCTest(1, BoundedBlockingQueueSmartQueue(1))
+class BoundedBlockingQueueSmartQueue2MPMCTest : BoundedBlockingQueueMPMCTest(2, BoundedBlockingQueueSmartQueue(2))
+class BoundedBlockingQueueSmartQueue2SPSCTest : BoundedBlockingQueueSPSCTest(2, BoundedBlockingQueueSmartQueue(2))
+
+class BoundedBlockingQueueSmartArray1MPMCTest : BoundedBlockingQueueMPMCTest(1, BoundedBlockingQueueSmartArray(1))
+class BoundedBlockingQueueSmartArray1SPSCTest : BoundedBlockingQueueSPSCTest(1, BoundedBlockingQueueSmartArray(1))
+class BoundedBlockingQueueSmartArray2MPMCTest : BoundedBlockingQueueMPMCTest(2, BoundedBlockingQueueSmartArray(2))
+class BoundedBlockingQueueSmartArray2SPSCTest : BoundedBlockingQueueSPSCTest(2, BoundedBlockingQueueSmartArray(2))
+
+class BoundedBlockingQueueSimpleArray1MPMCTest : BoundedBlockingQueueMPMCTest(1, BoundedBlockingQueueSimpleArray(1))
+class BoundedBlockingQueueSimpleArray1SPSCTest : BoundedBlockingQueueSPSCTest(1, BoundedBlockingQueueSimpleArray(1))
+class BoundedBlockingQueueSimpleArray2MPMCTest : BoundedBlockingQueueMPMCTest(2, BoundedBlockingQueueSimpleArray(2))
+class BoundedBlockingQueueSimpleArray2SPSCTest : BoundedBlockingQueueSPSCTest(2, BoundedBlockingQueueSimpleArray(2))
+
+class BoundedBlockingQueueSimpleQueue1MPMCTest : BoundedBlockingQueueMPMCTest(1, BoundedBlockingQueueSimpleQueue(1))
+class BoundedBlockingQueueSimpleQueue1SPSCTest : BoundedBlockingQueueSPSCTest(1, BoundedBlockingQueueSimpleQueue(1))
+class BoundedBlockingQueueSimpleQueue2MPMCTest : BoundedBlockingQueueMPMCTest(2, BoundedBlockingQueueSimpleQueue(2))
+class BoundedBlockingQueueSimpleQueue2SPSCTest : BoundedBlockingQueueSPSCTest(2, BoundedBlockingQueueSimpleQueue(2))
+
+abstract class BoundedBlockingQueueMPMCTest(capacity: Int, private val bc: BoundedBlockingQueue<Int>) : BoundedBlockingQueueTest(capacity) {
+    @Operation(cancellableOnSuspension = false, allowExtraSuspension = true)
+    suspend fun send(element: Int) = bc.send(element)
+
+    @Operation(cancellableOnSuspension = false, allowExtraSuspension = true)
+    suspend fun receive() = bc.receive()
+}
+@OpGroupConfig.OpGroupConfigs(
+    OpGroupConfig(name = "producer", nonParallel = true),
+    OpGroupConfig(name = "consumer", nonParallel = true)
+)
+abstract class BoundedBlockingQueueSPSCTest(capacity: Int, private val bc: BoundedBlockingQueue<Int>) : BoundedBlockingQueueTest(capacity) {
+    @Operation(cancellableOnSuspension = false, allowExtraSuspension = true, group = "producer")
+    suspend fun send(element: Int) = bc.sendSingleProducer(element)
+
+    @Operation(cancellableOnSuspension = false, allowExtraSuspension = true, group = "consumer")
+    suspend fun receive() = bc.receiveSingleConsumer()
+}
+abstract class BoundedBlockingQueueTest(val capacity: Int) : AbstractLincheckTest() {
+    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
+        sequentialSpecification(
+            if (capacity == 1) BoundedBlockingQueueSimpleInt1::class.java
+            else BoundedBlockingQueueSimpleInt2::class.java
+        ).requireStateEquivalenceImplCheck(false)
+
+    override fun ModelCheckingOptions.customize(isStressTest: Boolean) = verboseTrace()
+}
+class BoundedBlockingQueueSimpleInt1 {
+    private val bc = BoundedBlockingQueueSimpleQueue<Int>(1)
+    suspend fun send(e: Int) = bc.send(e)
+    suspend fun sendSingleProducer(e: Int) = bc.send(e)
+    suspend fun receive() = bc.receive()
+    suspend fun receiveSingleConsumer() = bc.receive()
+}
+class BoundedBlockingQueueSimpleInt2 {
+    private val bc = BoundedBlockingQueueSimpleQueue<Int>(2)
+    suspend fun send(e: Int) = bc.send(e)
+    suspend fun sendSingleProducer(e: Int) = bc.send(e)
+    suspend fun receive() = bc.receive()
+    suspend fun receiveSingleConsumer() = bc.receive()
+}
+
+
+abstract class BoundedBlockingQueueSimpleBase<E: Any>(capacity: Int) : BoundedBlockingQueue<E> {
+    private val semaphoreToRetrieve = Semaphore(permits = Int.MAX_VALUE / 2, acquiredPermits = Int.MAX_VALUE / 2)
+    private val semaphoreToSend = Semaphore(permits = Int.MAX_VALUE / 2, acquiredPermits = Int.MAX_VALUE / 2 - capacity)
+
+    override suspend fun send(element: E) {
+        semaphoreToSend.acquire()
+        enqueue(element)
+        semaphoreToRetrieve.release()
+    }
+    override suspend fun sendSingleProducer(element: E) {
+        semaphoreToSend.acquire()
+        enqueueSingleProducer(element)
+        semaphoreToRetrieve.release()
+    }
+
+    override suspend fun receive(): E {
+        semaphoreToRetrieve.acquire()
+        val element = dequeue()
+        semaphoreToSend.release()
+        return element
+    }
+    override suspend fun receiveSingleConsumer(): E {
+        semaphoreToRetrieve.acquire()
+        val element = dequeueSingleConsumer()
+        semaphoreToSend.release()
+        return element
+    }
+
+    protected abstract fun enqueue(element: E)
+    protected abstract fun enqueueSingleProducer(element: E)
+    protected abstract fun dequeue(): E
+    protected abstract fun dequeueSingleConsumer(): E
+}
+private class BoundedBlockingQueueSimpleQueue<E: Any>(capacity: Int) : BoundedBlockingQueueSimpleBase<E>(capacity) {
+    private val q = FastConcurrentQueue<E>()
+
+    override fun enqueue(element: E) = q.enqueue(element)
+    override fun enqueueSingleProducer(element: E) = q.enqueueSingleProducer(element)
+    override fun dequeue(): E = q.dequeue()!!
+    override fun dequeueSingleConsumer(): E = q.dequeueSingleConsumer()!!
+}
+private class BoundedBlockingQueueSimpleArray<E: Any>(capacity: Int) : BoundedBlockingQueueSimpleBase<E>(capacity) {
+    private val a = atomicArrayOfNulls<E>(capacity)
+    private val enqIdx = atomic(0L)
+    private val deqIdx = atomic(0L)
+
+    override fun enqueue(element: E) {
+        val i = (enqIdx.getAndIncrement() % a.size).toInt()
+        while (a[i].value != null) {}
+        a[i].value = element
+    }
+    override fun enqueueSingleProducer(element: E) {
+        val curEnqIdx = enqIdx.value
+        enqIdx.lazySet(curEnqIdx + 1)
+        val i = (curEnqIdx % a.size).toInt()
+        while (a[i].value != null) {}
+        a[i].value = element
+    }
+    override fun dequeue(): E  {
+        val i = (deqIdx.getAndIncrement() % a.size).toInt()
+        var element: E? = null
+        while (element == null) {
+            element = a[i].value
+        }
+        a[i].value = null
+        return element
+    }
+
+    override fun dequeueSingleConsumer(): E {
+        val curDeqIdx = deqIdx.value
+        deqIdx.lazySet(curDeqIdx + 1)
+        val i = (curDeqIdx % a.size).toInt()
+        var element: E? = null
+        while (element == null) {
+            element = a[i].value
+        }
+        a[i].value = null
+        return element
+    }
+}
+
+
+private abstract class BoundedBlockingQueueSmartBase<E : Any, S>(capacity: Int) : BoundedBlockingQueue<E> {
+    private val deqIdxAndSendPermits = atomic((capacity + INITIAL) * PERMIT)
+    private val enqIdxAndReceivePermits = atomic(INITIAL * PERMIT)
+
+    private val cqsToRetrieve = object : SegmentQueueSynchronizer<Unit>() {
+        override val resumeMode get() = ASYNC
+    }
+    private val cqsToSend = object : SegmentQueueSynchronizer<Unit>() {
+        override val resumeMode get() = ASYNC
+    }
+
+    protected abstract fun retrieveElement(index: Long, s: S): E
+    protected abstract fun storeElement(index: Long, element: E, s: S)
+
+    override suspend fun send(element: E) {
+        val sendPermits = decSendPermits()
+        if (sendPermits <= 0) {
+            suspendCancellableCoroutine<Unit> { cont ->
+                cqsToSend.suspend(cont)
+            }
+        }
+        incEnqIndexAndReceivePermits(this::sendBeforeEnqIdxInc) { index, receivePermits, s ->
+            storeElement(index, element, s)
+            if (receivePermits < 0) {
+                cqsToRetrieve.resume(Unit)
+            }
+        }
+    }
+
+    override suspend fun receive(): E {
+        val receivePermits = decReceivePermits()
+        if (receivePermits <= 0) {
+            suspendCancellableCoroutine<Unit> { cont ->
+                cqsToRetrieve.suspend(cont)
+            }
+        }
+        incDeqIndexAndSendPermits(this::receiveBeforeDeqIdxInc) { index, sendPermits, s ->
+            val element = retrieveElement(index, s)
+            if (sendPermits < 0) {
+                cqsToSend.resume(Unit)
+            }
+            return element
+        }
+    }
+
+    protected abstract fun sendBeforeEnqIdxInc(): S
+    protected abstract fun receiveBeforeDeqIdxInc(): S
+
+    override suspend fun sendSingleProducer(element: E) = send(element)
+    override suspend fun receiveSingleConsumer() = receive()
+
+    protected inline fun <S, R> incEnqIndexAndReceivePermits(setupBlock: () -> S, block: (index: Long, permits: Int, S) -> R): R {
+        val s = setupBlock()
+        val curEnqIdxAndReceivePermits = enqIdxAndReceivePermits.getAndAdd(INDEX + PERMIT)
+        val index = curEnqIdxAndReceivePermits.index
+        val permits = curEnqIdxAndReceivePermits.permits
+        return block(index, permits, s)
+    }
+    protected inline fun <S, R> incDeqIndexAndSendPermits(setupBlock: () -> S, block: (index: Long, permits: Int, S) -> R): R {
+        val s = setupBlock()
+        val curDeqIdxAndSendPermits = deqIdxAndSendPermits.getAndAdd(INDEX + PERMIT)
+        val index = curDeqIdxAndSendPermits.index
+        val permits = curDeqIdxAndSendPermits.permits
+        return block(index, permits, s)
+    }
+
+    protected fun incEnqIndex(): Long =
+        enqIdxAndReceivePermits.getAndAdd(INDEX).index
+    protected fun incDeqIndex(): Long =
+        deqIdxAndSendPermits.getAndAdd(INDEX).index
+
+    protected fun decReceivePermits(): Int =
+        enqIdxAndReceivePermits.getAndAdd(-PERMIT).permits
+    protected fun decSendPermits(): Int =
+        deqIdxAndSendPermits.getAndAdd(-PERMIT).permits
+}
+private const val INITIAL = 1 shl 8
+private const val OFFSET = 10
+private const val MASK = (1L shl OFFSET) - 1
+private const val PERMIT = 1L
+private const val INDEX = 1L shl OFFSET
+private inline val Long.permits: Int get() = (this and MASK).toInt() - INITIAL
+private inline val Long.index: Long get() = this shr OFFSET
+
+private class BoundedBlockingQueueSmartArray<E : Any>(capacity: Int) : BoundedBlockingQueueSmartBase<E, Unit>(capacity) {
+    private val a = atomicArrayOfNulls<E>(capacity * 2)
+
+    override fun retrieveElement(index: Long, ignored: Unit): E {
+        val i = (index % a.size).toInt()
+        var element: E? = null
+        while (element == null) {
+            element = a[i].value
+        }
+        a[i].value = null
+        return element
+    }
+
+    override fun storeElement(index: Long, element: E, ignored: Unit) {
+        val i = (index % a.size).toInt()
+        while (a[i].value != null) {}
+        a[i].value = element
+    }
+
+    override fun sendBeforeEnqIdxInc() = Unit
+    override fun receiveBeforeDeqIdxInc() = Unit
+}
+
+private class BoundedBlockingQueueSmartQueue<E : Any>(capacity: Int) : BoundedBlockingQueueSmartBase<E, FastConcurrentQueueSegment>(capacity) {
+    private val deqSegm: AtomicRef<FastConcurrentQueueSegment>
+    private val enqSegm: AtomicRef<FastConcurrentQueueSegment>
+
+    init {
+        val s = FastConcurrentQueueSegment(id = 0)
+        deqSegm = atomic(s)
+        enqSegm = atomic(s)
+    }
+
+    override fun storeElement(index: Long, element: E, segm: FastConcurrentQueueSegment) {
+        var segm = segm
+        val id = index / SIZE
+        val i = (index % SIZE).toInt()
+        if (segm.id != id) {
+            segm = findSegmentAndMoveForwardEnqueue(id, segm)
+        }
+        segm.install(i, element)
+}
+
+    override fun retrieveElement(index: Long, segm: FastConcurrentQueueSegment): E {
+        var segm = segm
+        val id = index / SIZE
+        val i = (index % SIZE).toInt()
+        if (segm.id != id) {
+            segm = findSegmentAndMoveForwardDequeue(id, segm)
+        }
+        return segm.extractBlocking(i) as E
+    }
+
+    override fun sendBeforeEnqIdxInc() = enqSegm.value
+    override fun receiveBeforeDeqIdxInc() = deqSegm.value
+
+    private fun FastConcurrentQueueSegment.findSegment(id: Long): FastConcurrentQueueSegment =
+        findSegmentInternal(id, ::createFastConcurrentQueueSegment).segment
+
+    private fun findSegmentAndMoveForwardEnqueue(id: Long, start: FastConcurrentQueueSegment): FastConcurrentQueueSegment =
+        enqSegm.findSegmentAndMoveForward(id, start, ::createFastConcurrentQueueSegment).segment
+
+    private fun findSegmentAndMoveForwardDequeue(id: Long, start: FastConcurrentQueueSegment): FastConcurrentQueueSegment =
+        deqSegm.findSegmentAndMoveForward(id, start, ::createFastConcurrentQueueSegment).segment
+}
+
+class FastConcurrentQueue<E : Any> {
+    private val _deqIdx = atomic(0L)
+    private val _enqIdx = atomic(0L)
+
+    private val deqSegm: AtomicRef<FastConcurrentQueueSegment>
+    private val enqSegm: AtomicRef<FastConcurrentQueueSegment>
+
+    init {
+        val s = FastConcurrentQueueSegment(id = 0)
+        deqSegm = atomic(s)
+        enqSegm = atomic(s)
+    }
+
+    fun enqueueSingleProducer(x: E) {
+        while (true) {
+            var s = enqSegm.value
+            val enqIdx = _enqIdx.value
+            _enqIdx.lazySet(enqIdx + 1)
+            val id = enqIdx / SIZE
+            val i = (enqIdx % SIZE).toInt()
+            if (s.id != id) {
+                s = s.findSegment(id)
+                enqSegm.lazySet(s)
+            }
+            if (s.tryInstall(i, x)) return
+        }
+    }
+
+    private fun FastConcurrentQueueSegment.findSegment(id: Long): FastConcurrentQueueSegment =
+        findSegmentInternal(id, ::createFastConcurrentQueueSegment).segment
+
+    fun enqueue(x: E) {
+        while (true) {
+            var s = enqSegm.value
+            val enqIdx = _enqIdx.getAndIncrement()
+            val id = enqIdx / SIZE
+            val i = (enqIdx % SIZE).toInt()
+            if (s.id != id) {
+                s = findSegmentAndMoveForwardEnqueue(id, s)
+            }
+            if (s.tryInstall(i, x)) return
+        }
+    }
+
+    private fun findSegmentAndMoveForwardEnqueue(id: Long, start: FastConcurrentQueueSegment): FastConcurrentQueueSegment =
+        enqSegm.findSegmentAndMoveForward(id, start, ::createFastConcurrentQueueSegment).segment
+
+    private fun findSegmentAndMoveForwardDequeue(id: Long, start: FastConcurrentQueueSegment): FastConcurrentQueueSegment =
+        deqSegm.findSegmentAndMoveForward(id, start, ::createFastConcurrentQueueSegment).segment
+
+
+    fun dequeue(): E? {
+        while (true) {
+//            if (_deqIdx.value >= _enqIdx.value) return null // TODO remove this line
+            var s = deqSegm.value
+            val deqIdx = _deqIdx.getAndIncrement()
+            val id = deqIdx / SIZE
+            val i = (deqIdx % SIZE).toInt()
+            if (s.id != id) {
+                s = findSegmentAndMoveForwardDequeue(id, s)
+            }
+            val e = s.tryExtract(i)
+            if (e != null) return e as E
+        }
+    }
+
+    fun dequeueSingleConsumer(): E? {
+        while (true) {
+//            if (_deqIdx.value >= _enqIdx.value) return null // TODO remove this line
+            var s = deqSegm.value
+            val deqIdx = _deqIdx.value
+            _deqIdx.lazySet(deqIdx + 1)
+            val id = deqIdx / SIZE
+            val i = (deqIdx % SIZE).toInt()
+            if (s.id != id) {
+                s = s.findSegment(id)
+                deqSegm.lazySet(s)
+            }
+            val e = s.tryExtract(i)
+            if (e != null) return e as E
+        }
+    }
+}
+internal class FastConcurrentQueueSegment(id: Long) : Segment<FastConcurrentQueueSegment>(id, null, 0) {
+    private val a = atomicArrayOfNulls<Any?>(SIZE)
+
+    override val maxSlots: Int get() = SIZE
+    override val supportRemoves get() = false
+
+    fun tryInstall(i: Int, value: Any) = a[i].compareAndSet(null, value)
+
+    fun install(i: Int, value: Any) {
+        a[i].value = value
+    }
+
+    fun tryExtract(i: Int): Any? {
+        val e = a[i].value
+        if (e != null) {
+            a[i].lazySet(null)
+            return e
+        }
+        return a[i].getAndSet(BROKEN)
+    }
+
+    fun extractBlocking(i: Int): Any {
+        var e: Any? = null
+        while (e === null) {
+            e = a[i].value
+        }
+        a[i].lazySet(null)
+        return e
+    }
+}
+private fun createFastConcurrentQueueSegment(id: Long, prev: FastConcurrentQueueSegment?) = FastConcurrentQueueSegment(id)
+private val BROKEN = Any()
+private const val SIZE = 64
+
+class FastConcurrentQueueLincheckTest : AbstractLincheckTest() {
+    val q = FastConcurrentQueue<Int>()
+
+    @Operation
+    fun enqueue(x: Int) {
+        q.enqueue(x)
+    }
+    @Operation
+    fun dequeue() = q.dequeue()
+
+    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean) =
+        sequentialSpecification(FastConcurrentQueueSequential::class.java)
+}
+@OpGroupConfig.OpGroupConfigs(
+    OpGroupConfig(name = "producer", nonParallel = true),
+    OpGroupConfig(name = "consumer", nonParallel = true)
+)
+class FastConcurrentQueueSPSCLincheckTest : AbstractLincheckTest() {
+    val q = FastConcurrentQueue<Int>()
+
+    @Operation(group = "producer")
+    fun enqueue(x: Int) {
+        q.enqueue(x)
+    }
+    @Operation(group = "consumer")
+    fun dequeue() = q.dequeue()
+
+    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean) =
+        sequentialSpecification(FastConcurrentQueueSequential::class.java)
+}
+class FastConcurrentQueueSequential : ArrayList<Int>() {
+    fun enqueue(x: Int) {
+        add(x)
+    }
+    fun dequeue() = removeFirstOrNull()
+}
+
 /**
  * This semaphore implementation is correct only if [release] is always
  * invoked after a successful [acquire]; in other words, when semaphore
