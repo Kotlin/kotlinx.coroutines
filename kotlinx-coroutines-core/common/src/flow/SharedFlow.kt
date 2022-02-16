@@ -170,7 +170,7 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * Emits a [value] to this shared flow, suspending on buffer overflow.
      *
      * This call can suspend only when the [BufferOverflow] strategy is
-     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers to this shared flow.
+     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers collecting this shared flow.
      *
      * If there are no subscribers, the buffer is not used.
      * Instead, the most recently emitted value is simply stored into
