@@ -167,8 +167,15 @@ public interface SharedFlow<out T> : Flow<T> {
  */
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     /**
-     * Emits a [value] to this shared flow, suspending on buffer overflow if the shared flow was created
-     * with the default [BufferOverflow.SUSPEND] strategy.
+     * Emits a [value] to this shared flow, suspending on buffer overflow.
+     *
+     * This call can suspend only when the [BufferOverflow] strategy is
+     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers collecting this shared flow.
+     *
+     * If there are no subscribers, the buffer is not used.
+     * Instead, the most recently emitted value is simply stored into
+     * the replay cache if one was configured, displacing the older elements there,
+     * or dropped if no replay cache was configured.
      *
      * See [tryEmit] for a non-suspending variant of this function.
      *
@@ -179,12 +186,16 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 
     /**
      * Tries to emit a [value] to this shared flow without suspending. It returns `true` if the value was
-     * emitted successfully. When this function returns `false`, it means that the call to a plain [emit]
-     * function will suspend until there is a buffer space available.
+     * emitted successfully (see below). When this function returns `false`, it means that a call to a plain [emit]
+     * function would suspend until there is buffer space available.
      *
-     * A shared flow configured with a [BufferOverflow] strategy other than [SUSPEND][BufferOverflow.SUSPEND]
-     * (either [DROP_OLDEST][BufferOverflow.DROP_OLDEST] or [DROP_LATEST][BufferOverflow.DROP_LATEST]) never
-     * suspends on [emit], and thus `tryEmit` to such a shared flow always returns `true`.
+     * This call can return `false` only when the [BufferOverflow] strategy is
+     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers collecting this shared flow.
+     *
+     * If there are no subscribers, the buffer is not used.
+     * Instead, the most recently emitted value is simply stored into
+     * the replay cache if one was configured, displacing the older elements there,
+     * or dropped if no replay cache was configured. In any case, `tryEmit` returns `true`.
      *
      * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
      * external synchronization.
