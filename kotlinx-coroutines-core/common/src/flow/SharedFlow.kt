@@ -170,11 +170,12 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * Emits a [value] to this shared flow, suspending on buffer overflow.
      *
      * This call can suspend only when the [BufferOverflow] strategy is
-     * [SUSPEND][BufferOverflow.SUSPEND **and** there are subscribers to this shared flow.
+     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers to this shared flow.
      *
      * If there are no subscribers, the buffer is not used.
-     * Instead, the most recently emitted value is simply stored in
-     * the replay cache (if one was configured), displacing the older elements there.
+     * Instead, the most recently emitted value is simply stored into
+     * the replay cache (if one was configured), displacing the older elements there,
+     * or dropped (if no replay cache was configured).
      *
      * See [tryEmit] for a non-suspending variant of this function.
      *
@@ -189,12 +190,12 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * function would suspend until there is buffer space available.
      *
      * This call can return `false` only when the [BufferOverflow] strategy is
-     * [SUSPEND][BufferOverflow.SUSPEND **and** there are subscribers to this shared flow.
+     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers to this shared flow.
      *
      * If there are no subscribers, the buffer is not used.
-     * Instead, the most recently emitted value is simply stored in
+     * Instead, the most recently emitted value is simply stored into
      * the replay cache (if one was configured), displacing the older elements there,
-     * and `tryEmit` always returns `true`.
+     * or dropped (if no replay cache was configured). In any case, `tryEmit` returns `true`.
      *
      * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
      * external synchronization.
