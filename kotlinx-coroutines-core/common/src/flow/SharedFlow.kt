@@ -174,8 +174,8 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      *
      * If there are no subscribers, the buffer is not used.
      * Instead, the most recently emitted value is simply stored into
-     * the replay cache (if one was configured), displacing the older elements there,
-     * or dropped (if no replay cache was configured).
+     * the replay cache if one was configured, displacing the older elements there,
+     * or dropped if no replay cache was configured.
      *
      * See [tryEmit] for a non-suspending variant of this function.
      *
