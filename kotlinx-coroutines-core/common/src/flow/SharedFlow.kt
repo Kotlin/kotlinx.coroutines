@@ -170,9 +170,9 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * Emits a [value] to this shared flow, suspending on buffer overflow if the shared flow was created
      * with the default [BufferOverflow.SUSPEND] strategy.
      *
-     * Buffer is only used by shared flow to wait for slow subscribers.
-     * **When this shared flow has no subscribers `emit` call never suspends.**
-     * It just stores the most recently emitted value to its replay cache (if it was configured),
+     * A buffer is only used by a shared flow to wait for slow subscribers.
+     * **When this shared flow has no subscribers, `emit` call never suspends.**
+     * Instead, it simply stores the most recently emitted value to its replay cache (if one was configured),
      * dropping the older elements from the replay cache.
      *
      * A shared flow configured with a [BufferOverflow] strategy other than [SUSPEND][BufferOverflow.SUSPEND]
