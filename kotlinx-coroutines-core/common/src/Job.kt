@@ -113,13 +113,7 @@ public interface Job : CoroutineContext.Element {
     /**
      * Key for [Job] instance in the coroutine context.
      */
-    public companion object Key : CoroutineContext.Key<Job> {
-        init {
-            // `Job` will necessarily be accessed early, so this is as good a place as any for the
-            // initialization logic that we want to happen as soon as possible
-            initializeDefaultExceptionHandlers()
-        }
-    }
+    public companion object Key : CoroutineContext.Key<Job>
 
     // ------------ state query ------------
 
