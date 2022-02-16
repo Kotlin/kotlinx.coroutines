@@ -188,8 +188,8 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 
     /**
      * Tries to emit a [value] to this shared flow without suspending. It returns `true` if the value was
-     * emitted successfully. When this function returns `false`, it means that the call to a plain [emit]
-     * function will suspend until there is a buffer space available.
+     * emitted successfully. When this function returns `false`, it means that a call to a plain [emit]
+     * function would suspend until there is buffer space available.
      *
      * Buffer is only used by shared flow to wait for slow subscribers.
      * **When this shared flow has no subscribers [emit] call never suspends, and thus `tryEmit` always returns `true`.**.
