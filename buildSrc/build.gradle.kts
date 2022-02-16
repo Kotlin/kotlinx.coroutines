@@ -59,5 +59,9 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
     implementation("ru.vyarus:gradle-animalsniffer-plugin:1.5.3") // Android API check
-    implementation("org.jetbrains.kotlinx:kover:${version("kover")}")
+    implementation("org.jetbrains.kotlinx:kover:${version("kover")}") {
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+    }
 }

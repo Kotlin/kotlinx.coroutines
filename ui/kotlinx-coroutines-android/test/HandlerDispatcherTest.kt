@@ -16,6 +16,7 @@ import kotlin.test.*
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [28])
+@LooperMode(LooperMode.Mode.LEGACY)
 class HandlerDispatcherTest : TestBase() {
     @Test
     fun testImmediateDispatcherYield() = runBlocking(Dispatchers.Main) {
@@ -121,7 +122,6 @@ class HandlerDispatcherTest : TestBase() {
     }
 
     private fun CoroutineScope.doTestAwaitWithDetectedChoreographer() {
-        ShadowChoreographer.reset()
         ShadowChoreographer.setPostFrameCallbackDelay(100)
         val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
         launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
