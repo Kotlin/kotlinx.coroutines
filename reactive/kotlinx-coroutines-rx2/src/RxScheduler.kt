@@ -68,9 +68,8 @@ private class DispatcherScheduler(@JvmField val dispatcher: CoroutineDispatcher)
 
         init {
             workerScope.launch {
-                while (isActive) {
-                    val task = blockChannel.receive()
-                    task()
+                blockChannel.consumeEach {
+                    it()
                 }
             }
         }

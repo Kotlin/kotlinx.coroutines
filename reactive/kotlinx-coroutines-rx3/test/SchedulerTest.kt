@@ -133,6 +133,16 @@ class SchedulerTest : TestBase() {
         }
     }
 
+    /** Tests that there are no uncaught exceptions if [Disposable.dispose] on a worker happens when tasks are present. */
+    @Test
+    fun testDisposingWorker() = runTest {
+        val dispatcher = currentDispatcher() as CoroutineDispatcher
+        val scheduler = dispatcher.asScheduler()
+        val worker = scheduler.createWorker()
+        yield() // so that the worker starts waiting on the channel
+        worker.dispose()
+    }
+
     @Test
     fun testSchedulerWithNoDelay(): Unit = runTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
