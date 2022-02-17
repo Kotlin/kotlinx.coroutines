@@ -40,6 +40,20 @@ class SchedulerTest : TestBase() {
         finish(4)
     }
 
+    /** Tests [toString] implementations of [CoroutineDispatcher.asScheduler] and its [Scheduler.Worker]. */
+    @Test
+    fun testSchedulerToString() {
+        val name = "Dispatchers.Default"
+        val scheduler = Dispatchers.Default.asScheduler()
+        assertContains(scheduler.toString(), name)
+        val worker = scheduler.createWorker()
+        val activeWorkerName = worker.toString()
+        assertContains(worker.toString(), name)
+        worker.dispose()
+        val disposedWorkerName = worker.toString()
+        assertNotEquals(activeWorkerName, disposedWorkerName)
+    }
+
     private fun runSchedulerTest(nThreads: Int = 1, action: (Scheduler) -> Unit) {
         val future = CompletableFuture<Unit>()
         try {

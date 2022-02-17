@@ -7,6 +7,7 @@ package kotlinx.coroutines.rx2
 import io.reactivex.*
 import io.reactivex.disposables.*
 import io.reactivex.plugins.*
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import java.util.concurrent.*
@@ -54,13 +55,14 @@ private class DispatcherScheduler(@JvmField val dispatcher: CoroutineDispatcher)
             Runnable { scope.launch { task() } }
         }
 
-    override fun createWorker(): Worker = DispatcherWorker(dispatcher, schedulerJob)
+    private val workerCounter = atomic(1L)
+    override fun createWorker(): Worker = DispatcherWorker(workerCounter.getAndIncrement(), dispatcher, schedulerJob)
 
     override fun shutdown() {
         schedulerJob.cancel()
     }
 
-    private class DispatcherWorker(dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
+    private class DispatcherWorker(val counter: Long, val dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
 
         private val workerJob = SupervisorJob(parentJob)
         private val workerScope = CoroutineScope(workerJob + dispatcher)
@@ -85,6 +87,8 @@ private class DispatcherScheduler(@JvmField val dispatcher: CoroutineDispatcher)
             blockChannel.close()
             workerJob.cancel()
         }
+
+        override fun toString(): String = "$dispatcher (worker $counter, ${if (isDisposed) "disposed" else "active"})"
     }
 
     override fun toString(): String = dispatcher.toString()
