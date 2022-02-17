@@ -22,11 +22,6 @@ private val handlers: List<CoroutineExceptionHandler> = ServiceLoader.load(
         CoroutineExceptionHandler::class.java.classLoader
 ).iterator().asSequence().toList()
 
-internal actual fun initializeDefaultExceptionHandlers() {
-    // Load CEH and handlers
-    CoroutineExceptionHandler
-}
-
 /**
  * Private exception without stacktrace that is added to suppressed exceptions of the original exception
  * when it is reported to the last-ditch current thread 'uncaughtExceptionHandler'.
