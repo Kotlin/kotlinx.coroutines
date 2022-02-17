@@ -6,14 +6,15 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
-import io.reactivex.observers.*
 import io.reactivex.plugins.*
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.*
 import org.junit.*
 import org.junit.Test
 import java.lang.Runnable
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -57,21 +58,24 @@ class SchedulerTest : TestBase() {
         future.getNow(Unit) // rethrow any encountered errors
     }
 
-    /**
-     * Tests [Scheduler.scheduleDirect] for [CoroutineDispatcher.asScheduler] on a single-threaded dispatcher.
-     */
-    @Test
-    fun testSingleThreadedDispatcherDirect(): Unit = runSchedulerTest {
+    private fun ensureSeparateThread(schedule: (Runnable, Long, TimeUnit) -> Unit, scheduleNoDelay: (Runnable) -> Unit) {
         val mainThread = Thread.currentThread()
         val cdl1 = CountDownLatch(1)
         val cdl2 = CountDownLatch(1)
         expect(1)
-        it.scheduleDirect({
+        val thread = AtomicReference<Thread?>(null)
+        fun checkThread() {
+            val current = Thread.currentThread()
+            thread.getAndSet(current)?.let { assertEquals(it, current) }
+        }
+        schedule({
             assertNotSame(mainThread, Thread.currentThread())
+            checkThread()
             cdl2.countDown()
         }, 300, TimeUnit.MILLISECONDS)
-        it.scheduleDirect {
+        scheduleNoDelay {
             expect(2)
+            checkThread()
             assertNotSame(mainThread, Thread.currentThread())
             cdl1.countDown()
         }
@@ -81,19 +85,32 @@ class SchedulerTest : TestBase() {
     }
 
     /**
-     * Test cancelling [Scheduler.scheduleDirect] for [CoroutineDispatcher.asScheduler].
+     * Tests [Scheduler.scheduleDirect] for [CoroutineDispatcher.asScheduler] on a single-threaded dispatcher.
      */
     @Test
-    fun testCancellingDirect(): Unit = runSchedulerTest {
+    fun testSingleThreadedDispatcherDirect(): Unit = runSchedulerTest(1) {
+        ensureSeparateThread(it::scheduleDirect, it::scheduleDirect)
+    }
+
+    /**
+     * Tests [Scheduler.Worker.schedule] for [CoroutineDispatcher.asScheduler] running its tasks on the correct thread.
+     */
+    @Test
+    fun testSingleThreadedWorker(): Unit = runSchedulerTest(1) {
+        val worker = it.createWorker()
+        ensureSeparateThread(worker::schedule, worker::schedule)
+    }
+
+    private fun checkCancelling(schedule: (Runnable, Long, TimeUnit) -> Disposable) {
         // cancel the task before it has a chance to run.
-        val handle1 = it.scheduleDirect({
+        val handle1 = schedule({
             throw IllegalStateException("should have been successfully cancelled")
         }, 10_000, TimeUnit.MILLISECONDS)
         handle1.dispose()
         // cancel the task after it started running.
         val cdl1 = CountDownLatch(1)
         val cdl2 = CountDownLatch(1)
-        val handle2 = it.scheduleDirect({
+        val handle2 = schedule({
             cdl1.countDown()
             cdl2.await()
             if (Thread.interrupted())
@@ -102,6 +119,23 @@ class SchedulerTest : TestBase() {
         cdl1.await()
         handle2.dispose()
         cdl2.countDown()
+    }
+
+    /**
+     * Test cancelling [Scheduler.scheduleDirect] for [CoroutineDispatcher.asScheduler].
+     */
+    @Test
+    fun testCancellingDirect(): Unit = runSchedulerTest {
+        checkCancelling(it::scheduleDirect)
+    }
+
+    /**
+     * Test cancelling [Scheduler.Worker.schedule] for [CoroutineDispatcher.asScheduler].
+     */
+    @Test
+    fun testCancellingWorker(): Unit = runSchedulerTest {
+        val worker = it.createWorker()
+        checkCancelling(worker::schedule)
     }
 
     /**
@@ -141,7 +175,53 @@ class SchedulerTest : TestBase() {
         val scheduler = dispatcher.asScheduler()
         val worker = scheduler.createWorker()
         yield() // so that the worker starts waiting on the channel
+        assertFalse(worker.isDisposed)
         worker.dispose()
+        assertTrue(worker.isDisposed)
+    }
+
+    /** Tests trying to use a [Scheduler.Worker]/[Scheduler] after [Scheduler.Worker.dispose]/[Scheduler.shutdown]. */
+    @Test
+    fun testSchedulingAfterDisposing() = runSchedulerTest {
+        expect(1)
+        val worker = it.createWorker()
+        // use CDL to ensure that the worker has properly initialized
+        val cdl1 = CountDownLatch(1)
+        setScheduler(2, 3)
+        val disposable1 = worker.schedule {
+            cdl1.countDown()
+        }
+        cdl1.await()
+        expect(4)
+        assertFalse(disposable1.isDisposed)
+        setScheduler(6, -1)
+        // check that the worker automatically disposes of the tasks after being disposed
+        assertFalse(worker.isDisposed)
+        worker.dispose()
+        assertTrue(worker.isDisposed)
+        expect(5)
+        val disposable2 = worker.schedule {
+            expectUnreached()
+        }
+        assertTrue(disposable2.isDisposed)
+        setScheduler(7, 8)
+        // ensure that the scheduler still works
+        val cdl2 = CountDownLatch(1)
+        val disposable3 = it.scheduleDirect {
+            cdl2.countDown()
+        }
+        cdl2.await()
+        expect(9)
+        assertFalse(disposable3.isDisposed)
+        // check that the scheduler automatically disposes of the tasks after being shut down
+        it.shutdown()
+        setScheduler(10, -1)
+        val disposable4 = it.scheduleDirect {
+            expectUnreached()
+        }
+        assertTrue(disposable4.isDisposed)
+        RxJavaPlugins.setScheduleHandler(null)
+        finish(11)
     }
 
     @Test
@@ -194,15 +274,12 @@ class SchedulerTest : TestBase() {
 
     private suspend fun testRunnableWithDelay(block: RxSchedulerBlockWithDelay, delayMillis: Long = 0) {
         expect(1)
-        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         suspendCancellableCoroutine<Unit> {
-            block(Runnable {
+            block({
                 expect(2)
                 it.resume(Unit)
             }, delayMillis, TimeUnit.MILLISECONDS)
         }
-
-        scheduler.shutdown()
         finish(3)
     }
 
@@ -219,32 +296,6 @@ class SchedulerTest : TestBase() {
     }
 
     @Test
-    fun testSchedulerDisposeDuringDelay(): Unit = runTest {
-        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        testRunnableDisposeDuringDelay(scheduler::scheduleDirect)
-    }
-
-    @Test
-    fun testSchedulerWorkerDisposeDuringDelay(): Unit = runTest {
-        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        testRunnableDisposeDuringDelay(scheduler.createWorker()::schedule)
-    }
-
-    private suspend fun testRunnableDisposeDuringDelay(block: RxSchedulerBlockWithDelay) {
-        expect(1)
-        val delayMillis = 300L
-        val disposable = block(Runnable {
-            expectUnreached()
-        }, delayMillis, TimeUnit.MILLISECONDS)
-        delay(100)
-        expect(2)
-        disposable.dispose()
-        delay(300)
-        yield()
-        finish(3)
-    }
-
-    @Test
     fun testSchedulerImmediateDispose(): Unit = runTest {
         val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
         testRunnableImmediateDispose(scheduler::scheduleDirect)
@@ -256,51 +307,27 @@ class SchedulerTest : TestBase() {
         testRunnableImmediateDispose(scheduler.createWorker()::schedule)
     }
 
-    private suspend fun testRunnableImmediateDispose(block: RxSchedulerBlockNoDelay) {
-        expect(1)
-        val disposable = block(Runnable {
+    private fun testRunnableImmediateDispose(block: RxSchedulerBlockNoDelay) {
+        val disposable = block {
             expectUnreached()
-        })
-        disposable.dispose()
-        yield()
-        finish(2)
-    }
-
-    @Test
-    fun testSchedulerWorksWithSchedulerCoroutineDispatcher(): Unit = runTest {
-        val scheduler = (currentDispatcher() as CoroutineDispatcher).asScheduler()
-        expect(1)
-        suspendCancellableCoroutine<Unit> {
-            scheduler.scheduleDirect {
-                expect(2)
-                it.resume(Unit)
-            }
         }
-        finish(3)
+        disposable.dispose()
     }
 
     @Test
     fun testConvertDispatcherToOriginalScheduler(): Unit = runTest {
-        expect(1)
-
         val originalScheduler = Schedulers.io()
         val dispatcher = originalScheduler.asCoroutineDispatcher()
         val scheduler = dispatcher.asScheduler()
-        assertEquals(originalScheduler, scheduler)
-
-        finish(2)
+        assertSame(originalScheduler, scheduler)
     }
 
     @Test
     fun testConvertSchedulerToOriginalDispatcher(): Unit = runTest {
-        expect(1)
-
         val originalDispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = originalDispatcher.asScheduler()
         val dispatcher = scheduler.asCoroutineDispatcher()
-        assertEquals(originalDispatcher, dispatcher)
-
-        finish(2)
+        assertSame(originalDispatcher, dispatcher)
     }
 
     @Test
@@ -319,22 +346,7 @@ class SchedulerTest : TestBase() {
 
     private suspend fun testRunnableExpectRxPluginsCall(block: RxSchedulerBlockNoDelay) {
         expect(1)
-
-        fun setScheduler(expectedCountOnSchedule: Int, expectCountOnRun: Int) {
-            RxJavaPlugins.setScheduleHandler {
-                expect(expectedCountOnSchedule)
-                Runnable {
-                    expect(expectCountOnRun)
-                    it.run()
-                }
-            }
-        }
-
-        val dispatcher = currentDispatcher() as CoroutineDispatcher
-        val scheduler = dispatcher.asScheduler()
-
         setScheduler(2, 4)
-
         suspendCancellableCoroutine<Unit> {
             block(Runnable {
                 expect(5)
@@ -342,9 +354,7 @@ class SchedulerTest : TestBase() {
             })
             expect(3)
         }
-
         RxJavaPlugins.setScheduleHandler(null)
-        scheduler.shutdown()
         finish(6)
     }
 
@@ -365,23 +375,15 @@ class SchedulerTest : TestBase() {
 
     private suspend fun testRunnableExpectRxPluginsCallDelay(block: RxSchedulerBlockWithDelay) {
         expect(1)
-
-        val dispatcher = currentDispatcher() as CoroutineDispatcher
-        val scheduler = dispatcher.asScheduler()
-
         setScheduler(2, 4)
-
         suspendCancellableCoroutine<Unit> {
-            block(Runnable {
+            block({
                 expect(5)
-                RxJavaPlugins.setScheduleHandler(null)
                 it.resume(Unit)
-            }, 300, TimeUnit.MILLISECONDS)
+            }, 10, TimeUnit.MILLISECONDS)
             expect(3)
         }
-
         RxJavaPlugins.setScheduleHandler(null)
-        scheduler.shutdown()
         finish(6)
     }
 
@@ -396,58 +398,24 @@ class SchedulerTest : TestBase() {
     }
 
     /**
-     * Let's test the [Scheduler.Worker] to make sure it satisfies the documented constraint of running all work
-     * sequentially
+     * Tests that [Scheduler.Worker] runs all work sequentially.
      */
     @Test
-    fun testSchedulerWorkerSequentialOrdering(): Unit = runTest {
+    fun testWorkerSequentialOrdering() = runTest {
         expect(1)
-
         val scheduler = Dispatchers.Default.asScheduler()
-
         val worker = scheduler.createWorker()
-
-        val iterations = 2
-        coroutineScope {
-            for (i in (0..iterations)) {
-                launch {
-                    suspendCancellableCoroutine<Unit> {
-                        worker.schedule {
-                            expect(2 + i)
-                            it.resume(Unit)
-                        }
-                    }
-                    yield()
-                }
+        val iterations = 100
+        for (i in 0..iterations) {
+            worker.schedule {
+                expect(2 + i)
             }
         }
-        yield()
-        finish((iterations + 2) + 1)
-    }
-
-    /**
-     * @see [testSchedulerWorkerSequentialOrdering]
-     */
-    @Test
-    fun testSchedulerWorkerSequentialOrderingDelayed(): Unit = runTest {
-        expect(1)
-
-        val scheduler = Dispatchers.Default.asScheduler()
-
-        val worker = scheduler.createWorker()
-
-        val iterations = 2
-        coroutineScope {
-            for (i in (0..iterations)) {
-                suspendCancellableCoroutine<Unit> {
-                    worker.schedule({
-                        expect(2 + i)
-                        it.resume(Unit)
-                    }, 10, TimeUnit.MILLISECONDS)
-                }
+        suspendCoroutine<Unit> {
+            worker.schedule {
+                it.resume(Unit)
             }
         }
-        yield()
         finish((iterations + 2) + 1)
     }
 
@@ -469,27 +437,17 @@ class SchedulerTest : TestBase() {
 
     private suspend fun testRunnableRespectsDelays(block: RxSchedulerBlockWithDelay) {
         expect(1)
-
-        coroutineScope {
-            launch {
-                suspendCancellableCoroutine<Unit> {
-                    block(Runnable {
-                        expect(3)
-                        it.resume(Unit)
-                    }, 100, TimeUnit.MILLISECONDS)
-                }
-            }
-
-            launch {
-                suspendCancellableCoroutine<Unit> {
-                    block(Runnable {
-                        expect(2)
-                        it.resume(Unit)
-                    }, 1, TimeUnit.MILLISECONDS)
-                }
-            }
-        }
-
+        val semaphore = Semaphore(2, 2)
+        block({
+            expect(3)
+            semaphore.release()
+        }, 100, TimeUnit.MILLISECONDS)
+        block({
+            expect(2)
+            semaphore.release()
+        }, 1, TimeUnit.MILLISECONDS)
+        semaphore.acquire()
+        semaphore.acquire()
         finish(4)
     }
 
@@ -501,28 +459,21 @@ class SchedulerTest : TestBase() {
     @Test
     fun testMultipleWorkerCancellation(): Unit = runTest {
         expect(1)
-
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
-
-        coroutineScope {
-            suspendCancellableCoroutine<Unit> {
-                val workerOne = scheduler.createWorker()
-                workerOne.schedule({
-                    expect(3)
-                    it.resume(Unit)
-                }, 10, TimeUnit.MILLISECONDS)
-
-                expect(2)
-
-                val workerTwo = scheduler.createWorker()
-                workerTwo.schedule({
-                    expectUnreached()
-                }, 10, TimeUnit.MILLISECONDS)
-                workerTwo.dispose()
-            }
+        suspendCancellableCoroutine<Unit> {
+            val workerOne = scheduler.createWorker()
+            workerOne.schedule({
+                expect(3)
+                it.resume(Unit)
+            }, 50, TimeUnit.MILLISECONDS)
+            val workerTwo = scheduler.createWorker()
+            workerTwo.schedule({
+                expectUnreached()
+            }, 1000, TimeUnit.MILLISECONDS)
+            workerTwo.dispose()
+            expect(2)
         }
-
         finish(4)
     }
 }
