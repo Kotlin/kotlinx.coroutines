@@ -298,7 +298,6 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
      * moves [resumeIdx] to the first possibly non-cancelled cell, i.e.,
      * to the first segment id multiplied by [SEGMENT_SIZE].
      */
-    @OptIn(InternalCoroutinesApi::class)
     @Suppress("UNCHECKED_CAST")
     private fun tryResumeImpl(value: T, adjustResumeIdx: Boolean): Int {
         // Check that `adjustResumeIdx` is `false` in the simple cancellation mode.
