@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("unused")
 package kotlinx.coroutines.debug.internal
@@ -20,7 +20,7 @@ internal class ByteBuddyDynamicAttach : Function1<Boolean, Unit> {
     private fun attach() {
         ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE)
         val cl = Class.forName("kotlin.coroutines.jvm.internal.DebugProbesKt")
-        val cl2 = Class.forName("kotlinx.coroutines.debug.DebugProbesKt")
+        val cl2 = Class.forName("kotlinx.coroutines.debug.internal.DebugProbesKt")
 
         ByteBuddy()
             .redefine(cl2)

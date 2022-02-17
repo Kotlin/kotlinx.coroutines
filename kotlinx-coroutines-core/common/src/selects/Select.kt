@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:OptIn(ExperimentalContracts::class)
 
@@ -177,26 +177,22 @@ public interface SelectInstance<in R> {
  * corresponding non-suspending version that can be used with a regular `when` expression to select one
  * of the alternatives or to perform the default (`else`) action if none of them can be immediately selected.
  *
- * | **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
- * | ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------
- * | [Job]            | [join][Job.join]                              | [onJoin][Job.onJoin]                             | [isCompleted][Job.isCompleted]
- * | [Deferred]       | [await][Deferred.await]                       | [onAwait][Deferred.onAwait]                      | [isCompleted][Job.isCompleted]
- * | [SendChannel]    | [send][SendChannel.send]                      | [onSend][SendChannel.onSend]                     | [offer][SendChannel.offer]
- * | [ReceiveChannel] | [receive][ReceiveChannel.receive]             | [onReceive][ReceiveChannel.onReceive]            | [poll][ReceiveChannel.poll]
- * | [ReceiveChannel] | [receiveOrNull][ReceiveChannel.receiveOrNull] | [onReceiveOrNull][ReceiveChannel.onReceiveOrNull]| [poll][ReceiveChannel.poll]
- * | [Mutex]          | [lock][Mutex.lock]                            | [onLock][Mutex.onLock]                           | [tryLock][Mutex.tryLock]
- * | none             | [delay]                                       | [onTimeout][SelectBuilder.onTimeout]             | none
+ * ### List of supported select methods
+ *
+ * | **Receiver**     | **Suspending function**                           | **Select clause**
+ * | ---------------- | ---------------------------------------------     | -----------------------------------------------------
+ * | [Job]            | [join][Job.join]                                  | [onJoin][Job.onJoin]
+ * | [Deferred]       | [await][Deferred.await]                           | [onAwait][Deferred.onAwait]
+ * | [SendChannel]    | [send][SendChannel.send]                          | [onSend][SendChannel.onSend]
+ * | [ReceiveChannel] | [receive][ReceiveChannel.receive]                 | [onReceive][ReceiveChannel.onReceive]
+ * | [ReceiveChannel] | [receiveCatching][ReceiveChannel.receiveCatching] | [onReceiveCatching][ReceiveChannel.onReceiveCatching]
+ * | [Mutex]          | [lock][Mutex.lock]                                | [onLock][Mutex.onLock]
+ * | none             | [delay]                                           | [onTimeout][SelectBuilder.onTimeout]
  *
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
  * function is suspended, this function immediately resumes with [CancellationException].
- *
- * Atomicity of cancellation depends on the clause: [onSend][SendChannel.onSend], [onReceive][ReceiveChannel.onReceive],
- * [onReceiveOrNull][ReceiveChannel.onReceiveOrNull], and [onLock][Mutex.onLock] clauses are
- * *atomically cancellable*. When select throws [CancellationException] it means that those clauses had not performed
- * their respective operations.
- * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
- * continue to execute even after it was cancelled from the same thread in the case when this select operation
- * was already resumed on atomically cancellable clause and the continuation was posted for execution to the thread's queue.
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  *
  * Note that this function does not check for cancellation when it is not suspended.
  * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -333,19 +329,18 @@ internal class SelectBuilderImpl<in R>(
     private fun initCancellability() {
         val parent = context[Job] ?: return
         val newRegistration = parent.invokeOnCompletion(
-            onCancelling = true, handler = SelectOnCancelling(parent).asHandler)
+            onCancelling = true, handler = SelectOnCancelling().asHandler)
         parentHandle = newRegistration
         // now check our state _after_ registering
         if (isSelected) newRegistration.dispose()
     }
 
-    private inner class SelectOnCancelling(job: Job) : JobCancellingNode<Job>(job) {
+    private inner class SelectOnCancelling : JobCancellingNode() {
         // Note: may be invoked multiple times, but only the first trySelect succeeds anyway
         override fun invoke(cause: Throwable?) {
             if (trySelect())
                 resumeSelectWithException(job.getCancellationException())
         }
-        override fun toString(): String = "SelectOnCancelling[${this@SelectBuilderImpl}]"
     }
 
     @PublishedApi
@@ -559,7 +554,7 @@ internal class SelectBuilderImpl<in R>(
             return decision
         }
 
-        override val atomicOp: AtomicOp<*>?
+        override val atomicOp: AtomicOp<*>
             get() = otherOp.atomicOp
     }
 
@@ -655,7 +650,7 @@ internal class SelectBuilderImpl<in R>(
             if (trySelect())
                 block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
         }
-        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action))
+        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action, context))
     }
 
     private class DisposeNode(

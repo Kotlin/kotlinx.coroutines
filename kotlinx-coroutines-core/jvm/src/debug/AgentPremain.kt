@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.debug
@@ -21,9 +21,9 @@ internal object AgentPremain {
 
     public var isInstalledStatically = false
 
-    private val enableCreationStackTraces =
+    private val enableCreationStackTraces = runCatching {
         System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()
-            ?: DebugProbesImpl.enableCreationStackTraces
+    }.getOrNull() ?: DebugProbesImpl.enableCreationStackTraces
 
     @JvmStatic
     public fun premain(args: String?, instrumentation: Instrumentation) {

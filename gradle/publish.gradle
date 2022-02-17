@@ -1,0 +1,89 @@
+/*
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+import org.gradle.util.VersionNumber
+
+// Configures publishing of Maven artifacts to Maven Central
+
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+// ------------- tasks
+
+def isMultiplatform = project.name == "kotlinx-coroutines-core"
+def isBom = project.name == "kotlinx-coroutines-bom"
+
+if (!isBom) {
+    apply plugin: "com.github.johnrengelman.shadow"
+
+    // empty xxx-javadoc.jar
+    task javadocJar(type: Jar) {
+        archiveClassifier = 'javadoc'
+    }
+}
+
+if (!isMultiplatform && !isBom) {
+    // Regular java modules need 'java-library' plugin for proper publication
+    apply plugin: 'java-library'
+
+    // MPP projects pack their sources automatically, java libraries need to explicitly pack them
+    task sourcesJar(type: Jar) {
+        archiveClassifier = 'sources'
+        from sourceSets.main.allSource
+    }
+}
+
+publishing {
+    repositories {
+        PublishingKt.configureMavenPublication(delegate, project)
+    }
+
+    if (!isMultiplatform && !isBom) {
+        // Configure java publications for regular non-MPP modules
+        publications {
+            maven(MavenPublication) {
+                if (project.name == "kotlinx-coroutines-debug") {
+                    project.shadow.component(it)
+                } else {
+                    from components.java
+                }
+                artifact sourcesJar
+            }
+        }
+    }
+
+    publications.all {
+        PublishingKt.configureMavenCentralMetadata(pom, project)
+        PublishingKt.signPublicationIfKeyPresent(project, it)
+        // add empty javadocs
+        if (!isBom && it.name != "kotlinMultiplatform") {
+            it.artifact(javadocJar)
+        }
+
+        def type = it.name
+        switch (type) {
+            case 'kotlinMultiplatform':
+                // With Kotlin 1.4 & HMPP, the root module should have no suffix in the ID, but for compatibility with
+                // the consumers who can't read Gradle module metadata, we publish the JVM artifacts in it, too
+                it.artifactId =  project.name
+                apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
+                publishPlatformArtifactsInRootModule(publications["jvm"])
+                break
+            case 'metadata':
+            case 'jvm':
+            case 'js':
+            case 'native':
+                it.artifactId = "$project.name-$type"
+                break
+        }
+    }
+}
+
+tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
+    dependsOn(tasks["generatePomFileForJvmPublication"])
+}
+
+// Compatibility with old TeamCity configurations that perform :kotlinx-coroutines-core:bintrayUpload
+task bintrayUpload(dependsOn: publish)

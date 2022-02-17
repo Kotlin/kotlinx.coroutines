@@ -1,8 +1,8 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("UNCHECKED_CAST", "NO_EXPLICIT_VISIBILITY_IN_API_MODE")
+@file:Suppress("UNCHECKED_CAST")
 
 package kotlinx.coroutines.internal
 
@@ -29,7 +29,7 @@ private val stackTraceRecoveryClassName = runCatching {
 internal actual fun <E : Throwable> recoverStackTrace(exception: E): E {
     if (!RECOVER_STACK_TRACES) return exception
     // No unwrapping on continuation-less path: exception is not reported multiple times via slow paths
-    val copy = tryCopyException(exception) ?: return exception
+    val copy = tryCopyAndVerify(exception) ?: return exception
     return copy.sanitizeStackTrace()
 }
 
@@ -66,9 +66,7 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
     val (cause, recoveredStacktrace) = exception.causeAndStacktrace()
 
     // Try to create an exception of the same type and get stacktrace from continuation
-    val newException = tryCopyException(cause) ?: return exception
-    // Verify that the new exception has the same message as the original one (bail out if not, see #1631)
-    if (newException.message != cause.message) return exception
+    val newException = tryCopyAndVerify(cause) ?: return exception
     // Update stacktrace
     val stacktrace = createStackTrace(continuation)
     if (stacktrace.isEmpty()) return exception
@@ -78,6 +76,14 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
     }
     // Take recovered stacktrace, merge it with existing one if necessary and return
     return createFinalException(cause, newException, stacktrace)
+}
+
+private fun <E : Throwable> tryCopyAndVerify(exception: E): E? {
+    val newException = tryCopyException(exception) ?: return null
+    // Verify that the new exception has the same message as the original one (bail out if not, see #1631)
+    // CopyableThrowable has control over its message and thus can modify it the way it wants
+    if (exception !is CopyableThrowable<*> && newException.message != exception.message) return null
+    return newException
 }
 
 /*
@@ -210,6 +216,7 @@ internal actual typealias CoroutineStackFrame = kotlin.coroutines.jvm.internal.C
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias StackTraceElement = java.lang.StackTraceElement
 
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 internal actual fun Throwable.initCause(cause: Throwable) {
     // Resolved to member, verified by test
     initCause(cause)

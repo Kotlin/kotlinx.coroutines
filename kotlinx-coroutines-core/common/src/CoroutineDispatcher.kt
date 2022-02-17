@@ -1,9 +1,10 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**
@@ -98,9 +99,13 @@ public abstract class CoroutineDispatcher :
     public final override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
         DispatchedContinuation(this, continuation)
 
-    @InternalCoroutinesApi
-    public override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
-        (continuation as DispatchedContinuation<*>).reusableCancellableContinuation?.detachChild()
+    public final override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
+        /*
+         * Unconditional cast is safe here: we only return DispatchedContinuation from `interceptContinuation`,
+         * any ClassCastException can only indicate compiler bug
+         */
+        val dispatched = continuation as DispatchedContinuation<*>
+        dispatched.release()
     }
 
     /**

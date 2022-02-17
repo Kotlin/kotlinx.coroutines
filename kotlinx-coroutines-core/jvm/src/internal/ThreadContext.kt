@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -7,17 +7,26 @@ package kotlinx.coroutines.internal
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-
-private val ZERO = Symbol("ZERO")
+@JvmField
+internal val NO_THREAD_ELEMENTS = Symbol("NO_THREAD_ELEMENTS")
 
 // Used when there are >= 2 active elements in the context
-private class ThreadState(val context: CoroutineContext, n: Int) {
-    private var a = arrayOfNulls<Any>(n)
+@Suppress("UNCHECKED_CAST")
+private class ThreadState(@JvmField val context: CoroutineContext, n: Int) {
+    private val values = arrayOfNulls<Any>(n)
+    private val elements = arrayOfNulls<ThreadContextElement<Any?>>(n)
     private var i = 0
 
-    fun append(value: Any?) { a[i++] = value }
-    fun take() = a[i++]
-    fun start() { i = 0 }
+    fun append(element: ThreadContextElement<*>, value: Any?) {
+        values[i] = value
+        elements[i++] = element as ThreadContextElement<Any?>
+    }
+
+    fun restore(context: CoroutineContext) {
+        for (i in elements.indices.reversed()) {
+            elements[i]!!.restoreThreadContext(context, values[i])
+        }
+    }
 }
 
 // Counts ThreadContextElements in the context
@@ -42,17 +51,7 @@ private val findOne =
 private val updateState =
     fun (state: ThreadState, element: CoroutineContext.Element): ThreadState {
         if (element is ThreadContextElement<*>) {
-            state.append(element.updateThreadContext(state.context))
-        }
-        return state
-    }
-
-// Restores state for all ThreadContextElements in the context from the given ThreadState
-private val restoreState =
-    fun (state: ThreadState, element: CoroutineContext.Element): ThreadState {
-        @Suppress("UNCHECKED_CAST")
-        if (element is ThreadContextElement<*>) {
-            (element as ThreadContextElement<Any?>).restoreThreadContext(state.context, state.take())
+            state.append(element, element.updateThreadContext(state.context))
         }
         return state
     }
@@ -60,12 +59,13 @@ private val restoreState =
 internal actual fun threadContextElements(context: CoroutineContext): Any = context.fold(0, countAll)!!
 
 // countOrElement is pre-cached in dispatched continuation
+// returns NO_THREAD_ELEMENTS if the contest does not have any ThreadContextElements
 internal fun updateThreadContext(context: CoroutineContext, countOrElement: Any?): Any? {
     @Suppress("NAME_SHADOWING")
     val countOrElement = countOrElement ?: threadContextElements(context)
     @Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS")
     return when {
-        countOrElement === 0 -> ZERO // very fast path when there are no active ThreadContextElements
+        countOrElement === 0 -> NO_THREAD_ELEMENTS // very fast path when there are no active ThreadContextElements
         //    ^^^ identity comparison for speed, we know zero always has the same identity
         countOrElement is Int -> {
             // slow path for multiple active ThreadContextElements, allocates ThreadState for multiple old values
@@ -82,11 +82,10 @@ internal fun updateThreadContext(context: CoroutineContext, countOrElement: Any?
 
 internal fun restoreThreadContext(context: CoroutineContext, oldState: Any?) {
     when {
-        oldState === ZERO -> return // very fast path when there are no ThreadContextElements
+        oldState === NO_THREAD_ELEMENTS -> return // very fast path when there are no ThreadContextElements
         oldState is ThreadState -> {
             // slow path with multiple stored ThreadContextElements
-            oldState.start()
-            context.fold(oldState, restoreState)
+            oldState.restore(context)
         }
         else -> {
             // fast path for one ThreadContextElement, but need to find it

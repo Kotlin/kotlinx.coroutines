@@ -29,7 +29,7 @@ class HandlerDispatcherTest : TestBase() {
     fun mainIsAsync() = runTest {
         ReflectionHelpers.setStaticField(Build.VERSION::class.java, "SDK_INT", 28)
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
@@ -48,7 +48,7 @@ class HandlerDispatcherTest : TestBase() {
 
         val main = Looper.getMainLooper().asHandler(async = true).asCoroutineDispatcher()
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
@@ -67,7 +67,7 @@ class HandlerDispatcherTest : TestBase() {
 
         val main = Looper.getMainLooper().asHandler(async = true).asCoroutineDispatcher()
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
@@ -86,7 +86,7 @@ class HandlerDispatcherTest : TestBase() {
 
         val main = Looper.getMainLooper().asHandler(async = true).asCoroutineDispatcher()
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
@@ -105,7 +105,7 @@ class HandlerDispatcherTest : TestBase() {
 
         val main = Looper.getMainLooper().asHandler(async = false).asCoroutineDispatcher()
 
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         val mainMessageQueue = shadowOf(Looper.getMainLooper().queue)
 
@@ -123,8 +123,8 @@ class HandlerDispatcherTest : TestBase() {
         ReflectionHelpers.setStaticField(Build.VERSION::class.java, "SDK_INT", 28)
         val main = Looper.getMainLooper().asHandler(async = true).asCoroutineDispatcher("testName")
         assertEquals("testName", main.toString())
-        assertEquals("testName [immediate]", main.immediate.toString())
-        assertEquals("testName [immediate]", main.immediate.immediate.toString())
+        assertEquals("testName.immediate", main.immediate.toString())
+        assertEquals("testName.immediate", main.immediate.immediate.toString())
     }
 
     private suspend fun Job.join(mainLooper: ShadowLooper) {
@@ -154,5 +154,11 @@ class HandlerDispatcherTest : TestBase() {
         expect(3) // after yield
         yield() // yield back
         finish(5)
+    }
+
+    @Test
+    fun testMainDispatcherToString() {
+        assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
+        assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
     }
 }

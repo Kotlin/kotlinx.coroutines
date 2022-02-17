@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("unused")
@@ -7,8 +7,8 @@
 package kotlinx.coroutines.android
 
 import android.os.*
-import androidx.annotation.*
 import android.view.*
+import androidx.annotation.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import java.lang.reflect.*
@@ -52,17 +52,24 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
 internal class AndroidDispatcherFactory : MainDispatcherFactory {
 
     override fun createDispatcher(allFactories: List<MainDispatcherFactory>) =
-        HandlerContext(Looper.getMainLooper().asHandler(async = true), "Main")
+        HandlerContext(Looper.getMainLooper().asHandler(async = true))
 
-    override fun hintOnError(): String? = "For tests Dispatchers.setMain from kotlinx-coroutines-test module can be used"
+    override fun hintOnError(): String = "For tests Dispatchers.setMain from kotlinx-coroutines-test module can be used"
 
     override val loadPriority: Int
         get() = Int.MAX_VALUE / 2
 }
 
 /**
- * Represents an arbitrary [Handler] as a implementation of [CoroutineDispatcher]
+ * Represents an arbitrary [Handler] as an implementation of [CoroutineDispatcher]
  * with an optional [name] for nicer debugging
+ *
+ * ## Rejected execution
+ *
+ * If the underlying handler is closed and its message-scheduling methods start to return `false` on
+ * an attempt to submit a continuation task to the resulting dispatcher,
+ * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
+ * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
 @JvmOverloads
@@ -97,7 +104,7 @@ internal fun Looper.asHandler(async: Boolean): Handler {
 
 @JvmField
 @Deprecated("Use Dispatchers.Main instead", level = DeprecationLevel.HIDDEN)
-internal val Main: HandlerDispatcher? = runCatching { HandlerContext(Looper.getMainLooper().asHandler(async = true), "Main") }.getOrNull()
+internal val Main: HandlerDispatcher? = runCatching { HandlerContext(Looper.getMainLooper().asHandler(async = true)) }.getOrNull()
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary Android [Handler].
@@ -113,7 +120,7 @@ internal class HandlerContext private constructor(
      * @param handler a handler.
      * @param name an optional name for debugging.
      */
-    public constructor(
+    constructor(
         handler: Handler,
         name: String? = null
     ) : this(handler, name, false)
@@ -129,32 +136,39 @@ internal class HandlerContext private constructor(
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        handler.post(block)
+        if (!handler.post(block)) {
+            cancelOnRejection(context, block)
+        }
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val block = Runnable {
             with(continuation) { resumeUndispatched(Unit) }
         }
-        handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))
-        continuation.invokeOnCancellation { handler.removeCallbacks(block) }
-    }
-
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
-        handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))
-        return object : DisposableHandle {
-            override fun dispose() {
-                handler.removeCallbacks(block)
-            }
-        }
-    }
-
-    override fun toString(): String =
-        if (name != null) {
-            if (invokeImmediately) "$name [immediate]" else name
+        if (handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))) {
+            continuation.invokeOnCancellation { handler.removeCallbacks(block) }
         } else {
-            handler.toString()
+            cancelOnRejection(continuation.context, block)
         }
+    }
+
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+        if (handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))) {
+            return DisposableHandle { handler.removeCallbacks(block) }
+        }
+        cancelOnRejection(context, block)
+        return NonDisposableHandle
+    }
+
+    private fun cancelOnRejection(context: CoroutineContext, block: Runnable) {
+        context.cancel(CancellationException("The task was rejected, the handler underlying the dispatcher '${toString()}' was closed"))
+        Dispatchers.IO.dispatch(context, block)
+    }
+
+    override fun toString(): String = toStringInternalImpl() ?: run {
+        val str = name ?: handler.toString()
+        if (invokeImmediately) "$str.immediate" else str
+    }
 
     override fun equals(other: Any?): Boolean = other is HandlerContext && other.handler === handler
     override fun hashCode(): Int = System.identityHashCode(handler)

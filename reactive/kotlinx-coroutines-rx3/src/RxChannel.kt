@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.rx3
@@ -9,6 +9,7 @@ import io.reactivex.rxjava3.disposables.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.flow.*
 
 /**
  * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
@@ -40,21 +41,25 @@ internal fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
 
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
- * Cancels subscription if any exception happens during collect.
+ *
+ * If [action] throws an exception at some point or if the [MaybeSource] raises an error, the exception is rethrown from
+ * [collect].
  */
 public suspend inline fun <T> MaybeSource<T>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 /**
  * Subscribes to this [ObservableSource] and performs the specified action for each received element.
- * Cancels subscription if any exception happens during collect.
+ *
+ * If [action] throws an exception at some point, the subscription is cancelled, and the exception is rethrown from
+ * [collect]. Also, if the [ObservableSource] signals an error, that error is rethrown from [collect].
  */
 public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(), Observer<T>, MaybeObserver<T>
+    LinkedListChannel<T>(null), Observer<T>, MaybeObserver<T>
 {
     private val _subscription = atomic<Disposable?>(null)
 
@@ -69,11 +74,12 @@ private class SubscriptionChannel<T> :
     }
 
     override fun onSuccess(t: T) {
-        offer(t)
+        trySend(t)
+        close(cause = null)
     }
 
     override fun onNext(t: T) {
-        offer(t)
+        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onComplete() {

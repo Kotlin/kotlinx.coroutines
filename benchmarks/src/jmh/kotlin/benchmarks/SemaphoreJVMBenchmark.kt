@@ -80,11 +80,11 @@ class SemaJVM(permits: Int) : Sema {
     override fun release() = s.release()
 }
 
-class SemaSQS_Async_Simple(permits: Int): SegmentQueueSynchronizerJVM<Unit>(), Sema {
+class SemaSQS_Async_Simple(permits: Int, acquiredPermits: Int = 0): SegmentQueueSynchronizerJVM<Unit>(), Sema {
     override val resumeMode get() = ResumeMode.ASYNC
     override val cancellationMode: CancellationMode get() = CancellationMode.SIMPLE
 
-    private val _availablePermits = atomic(permits)
+    private val _availablePermits = atomic(permits - acquiredPermits)
 
     override fun acquire() {
         val p = _availablePermits.getAndDecrement()

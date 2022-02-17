@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 apply plugin: "com.github.johnrengelman.shadow"
@@ -20,12 +20,21 @@ configurations {
 
 dependencies {
     compileOnly "junit:junit:$junit_version"
+    compileOnly "org.junit.jupiter:junit-jupiter-api:$junit5_version"
+    testCompile "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
+    testCompile "org.junit.platform:junit-platform-testkit:1.7.0"
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
     compileOnly "io.projectreactor.tools:blockhound:$blockhound_version"
-    testCompile "io.projectreactor.tools:blockhound:$blockhound_version"
+    testImplementation "io.projectreactor.tools:blockhound:$blockhound_version"
     api "net.java.dev.jna:jna:$jna_version"
     api "net.java.dev.jna:jna-platform:$jna_version"
+}
+
+java {
+    /* This is needed to be able to run JUnit5 tests. Otherwise, Gradle complains that it can't find the
+    JVM1.6-compatible version of the `junit-jupiter-api` artifact. */
+    disableAutoTargetJvm()
 }
 
 jar {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 
@@ -11,13 +11,13 @@ import kotlinx.coroutines.*
 private typealias Node = LockFreeLinkedListNode
 
 @PublishedApi
-internal const val UNDECIDED = 0
+internal const val UNDECIDED: Int = 0
 
 @PublishedApi
-internal const val SUCCESS = 1
+internal const val SUCCESS: Int = 1
 
 @PublishedApi
-internal const val FAILURE = 2
+internal const val FAILURE: Int = 2
 
 @PublishedApi
 internal val CONDITION_FALSE: Any = Symbol("CONDITION_FALSE")
@@ -259,7 +259,7 @@ public actual open class LockFreeLinkedListNode {
     // Helps with removal of this node
     public actual fun helpRemove() {
         // Note: this node must be already removed
-        (next as Removed).ref.correctPrev(null)
+        (next as Removed).ref.helpRemovePrev()
     }
 
     // Helps with removal of nodes that are previous to this
@@ -322,7 +322,7 @@ public actual open class LockFreeLinkedListNode {
 
         private val _affectedNode = atomic<Node?>(null)
         final override val affectedNode: Node? get() = _affectedNode.value
-        final override val originalNext: Node? get() = queue
+        final override val originalNext: Node get() = queue
 
         override fun retry(affected: Node, next: Any): Boolean = next !== queue
 
@@ -416,20 +416,26 @@ public actual open class LockFreeLinkedListNode {
                 val next = this.next
                 val removed = next.removed()
                 if (affected._next.compareAndSet(this, removed)) {
+                    // The element was actually removed
+                    desc.onRemoved(affected)
                     // Complete removal operation here. It bails out if next node is also removed and it becomes
                     // responsibility of the next's removes to call correctPrev which would help fix all the links.
                     next.correctPrev(null)
                 }
                 return REMOVE_PREPARED
             }
-            val isDecided = if (decision != null) {
+            // We need to ensure progress even if it operation result consensus was already decided
+            val consensus = if (decision != null) {
                 // some other logic failure, including RETRY_ATOMIC -- reach consensus on decision fail reason ASAP
                 atomicOp.decide(decision)
-                true // atomicOp.isDecided will be true as a result
             } else {
-                atomicOp.isDecided // consult with current decision status like in Harris DCSS
+                atomicOp.consensus // consult with current decision status like in Harris DCSS
             }
-            val update: Any = if (isDecided) next else atomicOp // restore if decision was already reached
+            val update: Any = when {
+                consensus === NO_DECISION -> atomicOp // desc.onPrepare returned null -> start doing atomic op
+                consensus == null -> desc.updatedNext(affected, next) // move forward if consensus on success
+                else -> next // roll back if consensus if failure
+            }
             affected._next.compareAndSet(this, update)
             return null
         }
@@ -445,8 +451,9 @@ public actual open class LockFreeLinkedListNode {
         protected open fun takeAffectedNode(op: OpDescriptor): Node? = affectedNode!! // null for RETRY_ATOMIC
         protected open fun failure(affected: Node): Any? = null // next: Node | Removed
         protected open fun retry(affected: Node, next: Any): Boolean = false // next: Node | Removed
-        protected abstract fun updatedNext(affected: Node, next: Node): Any
         protected abstract fun finishOnSuccess(affected: Node, next: Node)
+
+        public abstract fun updatedNext(affected: Node, next: Node): Any
 
         public abstract fun finishPrepare(prepareOp: PrepareOp)
 
@@ -455,6 +462,8 @@ public actual open class LockFreeLinkedListNode {
             finishPrepare(prepareOp)
             return null
         }
+
+        public open fun onRemoved(affected: Node) {} // called once when node was prepared & later removed
 
         @Suppress("UNCHECKED_CAST")
         final override fun prepare(op: AtomicOp<*>): Any? {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 import kotlinx.coroutines.flow.unsafeTransform as transform
 
 /**
- * Returns a flow containing only values of the original flow that matches the given [predicate].
+ * Returns a flow containing only values of the original flow that match the given [predicate].
  */
 public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = transform { value ->
     if (predicate(value)) return@transform emit(value)
@@ -67,7 +67,7 @@ public fun <T> Flow<T>.withIndex(): Flow<IndexedValue<T>> = flow {
 }
 
 /**
- * Returns a flow which performs the given [action] on each value of the original flow.
+ * Returns a flow that invokes the given [action] **before** each value of the upstream flow is emitted downstream.
  */
 public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform { value ->
     action(value)
@@ -82,9 +82,23 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform 
  * flowOf(1, 2, 3).scan(emptyList<Int>()) { acc, value -> acc + value }.toList()
  * ```
  * will produce `[], [1], [1, 2], [1, 2, 3]]`.
+ *
+ * This function is an alias to [runningFold] operator.
  */
 @ExperimentalCoroutinesApi
-public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
+public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = runningFold(initial, operation)
+
+/**
+ * Folds the given flow with [operation], emitting every intermediate result, including [initial] value.
+ * Note that initial value should be immutable (or should not be mutated) as it is shared between different collectors.
+ * For example:
+ * ```
+ * flowOf(1, 2, 3).scan(emptyList<Int>()) { acc, value -> acc + value }.toList()
+ * ```
+ * will produce `[], [1], [1, 2], [1, 2, 3]]`.
+ */
+@ExperimentalCoroutinesApi
+public fun <T, R> Flow<T>.runningFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
     var accumulator: R = initial
     emit(accumulator)
     collect { value ->
@@ -100,12 +114,12 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  *
  * For example:
  * ```
- * flowOf(1, 2, 3, 4).scanReduce { (v1, v2) -> v1 + v2 }.toList()
+ * flowOf(1, 2, 3, 4).runningReduce { acc, value -> acc + value }.toList()
  * ```
  * will produce `[1, 3, 6, 10]`
  */
 @ExperimentalCoroutinesApi
-public fun <T> Flow<T>.scanReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
+public fun <T> Flow<T>.runningReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
     var accumulator: Any? = NULL
     collect { value ->
         accumulator = if (accumulator === NULL) {

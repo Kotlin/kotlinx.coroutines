@@ -7,6 +7,7 @@ package kotlinx.coroutines.guide.exampleExceptions01
 
 import kotlinx.coroutines.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
     val job = GlobalScope.launch { // root coroutine with launch
         println("Throwing exception from launch")

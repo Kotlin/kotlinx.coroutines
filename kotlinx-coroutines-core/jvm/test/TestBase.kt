@@ -30,6 +30,9 @@ public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMu
 
 public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roundToInt()
 
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+public actual typealias TestResult = Unit
+
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
  * thread can be written. Use it like this:
@@ -50,6 +53,7 @@ public val stressTestMultiplierCbrt = cbrt(stressTestMultiplier.toDouble()).roun
  * ```
  */
 public actual open class TestBase actual constructor() {
+    public actual val isBoundByJsTestTimeout = false
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
     private var error = AtomicReference<Throwable>()
@@ -68,6 +72,8 @@ public actual open class TestBase actual constructor() {
     public actual fun error(message: Any, cause: Throwable? = null): Nothing {
         throw makeError(message, cause)
     }
+
+    public fun hasError() = error.get() != null
 
     private fun makeError(message: Any, cause: Throwable? = null): IllegalStateException =
         IllegalStateException(message.toString(), cause).also {
@@ -107,7 +113,7 @@ public actual open class TestBase actual constructor() {
      * Asserts that this line is never executed.
      */
     public actual fun expectUnreached() {
-        error("Should not be reached")
+        error("Should not be reached, current action index is ${actionIndex.get()}")
     }
 
     /**
@@ -185,7 +191,7 @@ public actual open class TestBase actual constructor() {
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    ) {
+    ): TestResult {
         var exCount = 0
         var ex: Throwable? = null
         try {

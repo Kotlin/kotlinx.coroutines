@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -20,6 +20,7 @@ internal expect fun <E: Throwable> recoverStackTrace(exception: E, continuation:
 /**
  * initCause on JVM, nop on other platforms
  */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 internal expect fun Throwable.initCause(cause: Throwable)
 
 /**

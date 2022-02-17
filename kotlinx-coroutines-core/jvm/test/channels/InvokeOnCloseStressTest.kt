@@ -39,7 +39,7 @@ class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
     private suspend fun runStressTest(kind: TestChannelKind) {
         repeat(iterations) {
             val counter = AtomicInteger(0)
-            val channel = kind.create()
+            val channel = kind.create<Int>()
 
             val latch = CountDownLatch(1)
             val j1 = async {

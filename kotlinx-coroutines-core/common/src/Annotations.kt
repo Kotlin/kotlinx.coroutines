@@ -1,10 +1,26 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
 import kotlinx.coroutines.flow.*
+
+/**
+ * Marks declarations in the coroutines that are **delicate** &mdash;
+ * they have limited use-case and shall be used with care in general code.
+ * Any use of a delicate declaration has to be carefully reviewed to make sure it is
+ * properly used and does not create problems like memory and resource leaks.
+ * Carefully read documentation of any declaration marked as `DelicateCoroutinesApi`.
+ */
+@MustBeDocumented
+@Retention(value = AnnotationRetention.BINARY)
+@RequiresOptIn(
+    level = RequiresOptIn.Level.WARNING,
+    message = "This is a delicate API and its use requires care." +
+        " Make sure you fully read and understand documentation of the declaration that is marked as a delicate API."
+)
+public annotation class DelicateCoroutinesApi
 
 /**
  * Marks declarations that are still **experimental** in coroutines API, which means that the design of the
@@ -59,7 +75,7 @@ public annotation class ObsoleteCoroutinesApi
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPEALIAS, AnnotationTarget.PROPERTY)
 @RequiresOptIn(
     level = RequiresOptIn.Level.ERROR, message = "This is an internal kotlinx.coroutines API that " +
-            "should not be used from outside of kotlinx.coroutines. No compatibility guarantees are provided." +
+            "should not be used from outside of kotlinx.coroutines. No compatibility guarantees are provided. " +
             "It is recommended to report your use-case of internal API to kotlinx.coroutines issue tracker, " +
             "so stable API could be provided instead"
 )

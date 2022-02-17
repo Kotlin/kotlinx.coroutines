@@ -13,7 +13,22 @@ import kotlin.test.*
 public expect val isStressTest: Boolean
 public expect val stressTestMultiplier: Int
 
+/**
+ * The result of a multiplatform asynchronous test.
+ * Aliases into Unit on K/JVM and K/N, and into Promise on K/JS.
+ */
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+public expect class TestResult
+
 public expect open class TestBase constructor() {
+    /*
+     * In common tests we emulate parameterized tests
+     * by iterating over parameters space in the single @Test method.
+     * This kind of tests is too slow for JS and does not fit into
+     * the default Mocha timeout, so we're using this flag to bail-out
+     * and run such tests only on JVM and K/N.
+     */
+    public val isBoundByJsTestTimeout: Boolean
     public fun error(message: Any, cause: Throwable? = null): Nothing
     public fun expect(index: Int)
     public fun expectUnreached()
@@ -25,7 +40,7 @@ public expect open class TestBase constructor() {
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    )
+    ): TestResult
 }
 
 public suspend inline fun hang(onCancellation: () -> Unit) {
@@ -84,4 +99,13 @@ class BadClass {
     override fun equals(other: Any?): Boolean = error("equals")
     override fun hashCode(): Int = error("hashCode")
     override fun toString(): String = error("toString")
+}
+
+/**
+ * Tries to resume this continuation, returns `true` if succeeds and `false` otherwise.
+ */
+internal fun <T> CancellableContinuation<T>.tryResume0(value: T, onCancellation: ((cause: Throwable) -> Unit)?): Boolean {
+    val token = tryResume(value, null, onCancellation) ?: return false
+    completeResume(token)
+    return true
 }

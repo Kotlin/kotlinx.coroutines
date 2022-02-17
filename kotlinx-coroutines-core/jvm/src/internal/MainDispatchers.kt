@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -35,7 +35,7 @@ internal object MainDispatcherLoader {
                 ).iterator().asSequence().toList()
             }
             @Suppress("ConstantConditionIf")
-            factories.maxBy { it.loadPriority }?.tryCreateDispatcher(factories)
+            factories.maxByOrNull { it.loadPriority }?.tryCreateDispatcher(factories)
                 ?: createMissingDispatcher()
         } catch (e: Throwable) {
             // Service loader can throw an exception as well
@@ -67,7 +67,10 @@ public fun MainCoroutineDispatcher.isMissing(): Boolean = this is MissingMainCor
 @Suppress("MayBeConstant")
 private val SUPPORT_MISSING = true
 
-@Suppress("ConstantConditionIf")
+@Suppress(
+    "ConstantConditionIf",
+    "IMPLICIT_NOTHING_TYPE_ARGUMENT_AGAINST_NOT_NOTHING_EXPECTED_TYPE" // KT-47626
+)
 private fun createMissingDispatcher(cause: Throwable? = null, errorHint: String? = null) =
     if (SUPPORT_MISSING) MissingMainCoroutineDispatcher(cause, errorHint) else
         cause?.let { throw it } ?: throwMissingMainDispatcherException()
@@ -87,17 +90,14 @@ private class MissingMainCoroutineDispatcher(
 
     override val immediate: MainCoroutineDispatcher get() = this
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean {
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
         missing()
-    }
 
-    override suspend fun delay(time: Long) {
+    override suspend fun delay(time: Long) =
         missing()
-    }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         missing()
-    }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
         missing()
@@ -114,7 +114,7 @@ private class MissingMainCoroutineDispatcher(
         }
     }
 
-    override fun toString(): String = "Main[missing${if (cause != null) ", cause=$cause" else ""}]"
+    override fun toString(): String = "Dispatchers.Main[missing${if (cause != null) ", cause=$cause" else ""}]"
 }
 
 /**

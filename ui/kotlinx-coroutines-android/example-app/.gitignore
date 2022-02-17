@@ -1,7 +1,0 @@
-local.properties
-.gradle
-.idea
-build
-example-app.iml
-app/build
-app/app.iml

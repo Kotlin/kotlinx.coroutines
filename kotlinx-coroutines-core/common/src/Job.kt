@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -113,16 +113,7 @@ public interface Job : CoroutineContext.Element {
     /**
      * Key for [Job] instance in the coroutine context.
      */
-    public companion object Key : CoroutineContext.Key<Job> {
-        init {
-            /*
-             * Here we make sure that CoroutineExceptionHandler is always initialized in advance, so
-             * that if a coroutine fails due to StackOverflowError we don't fail to report this error
-             * trying to initialize CoroutineExceptionHandler
-             */
-            CoroutineExceptionHandler
-        }
-    }
+    public companion object Key : CoroutineContext.Key<Job>
 
     // ------------ state query ------------
 
@@ -217,11 +208,10 @@ public interface Job : CoroutineContext.Element {
      *   immediately cancels all its children.
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
      *   complete in _completing_ or _cancelling_ state.
-     * * Uncaught exception in a child, by default, cancels parent. In particular, this applies to
-     *   children created with [launch][CoroutineScope.launch] coroutine builder. Note that
-     *   [async][CoroutineScope.async] and other future-like
-     *   coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
-     *   caught and are encapsulated in their result.
+     * * Uncaught exception in a child, by default, cancels parent. This applies even to
+     *   children created with [async][CoroutineScope.async] and other future-like
+     *   coroutine builders, even though their exceptions are caught and are encapsulated in their result.
+     *   This default behavior can be overridden with [SupervisorJob].
      */
     public val children: Sequence<Job>
 
@@ -262,9 +252,9 @@ public interface Job : CoroutineContext.Element {
      * suspending function is invoked or while it is suspended, this function
      * throws [CancellationException].
      *
-     * In particular, it means that a parent coroutine invoking `join` on a child coroutine that was started using
-     * `launch(coroutineContext) { ... }` builder throws [CancellationException] if the child
-     * had crashed, unless a non-standard [CoroutineExceptionHandler] is installed in the context.
+     * In particular, it means that a parent coroutine invoking `join` on a child coroutine throws
+     * [CancellationException] if the child had failed, since a failure of a child coroutine cancels parent by default,
+     * unless the child was launched from within [supervisorScope].
      *
      * This function can be used in [select] invocation with [onJoin] clause.
      * Use [isCompleted] to check for a completion of this job without waiting.
@@ -467,6 +457,14 @@ public interface ParentJob : Job {
 @InternalCoroutinesApi
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
 public interface ChildHandle : DisposableHandle {
+
+    /**
+     * Returns the parent of the current parent-child relationship.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    @InternalCoroutinesApi
+    public val parent: Job?
+
     /**
      * Child is cancelling its parent by invoking this method.
      * This method is invoked by the child twice. The first time child report its root cause as soon as possible,
@@ -490,7 +488,7 @@ public interface ChildHandle : DisposableHandle {
  * ```
  */
 internal fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
-    invokeOnCompletion(handler = DisposeOnCompletion(this, handle).asHandler)
+    invokeOnCompletion(handler = DisposeOnCompletion(handle).asHandler)
 
 /**
  * Cancels the job and suspends the invoking coroutine until the cancelled job is complete.
@@ -500,9 +498,9 @@ internal fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle
  * suspending function is invoked or while it is suspended, this function
  * throws [CancellationException].
  *
- * In particular, it means that a parent coroutine invoking `cancelAndJoin` on a child coroutine that was started using
- * `launch(coroutineContext) { ... }` builder throws [CancellationException] if the child
- * had crashed, unless a non-standard [CoroutineExceptionHandler] is installed in the context.
+ * In particular, it means that a parent coroutine invoking `cancelAndJoin` on a child coroutine throws
+ * [CancellationException] if the child had failed, since a failure of a child coroutine cancels parent by default,
+ * unless the child was launched from within [supervisorScope].
  *
  * This is a shortcut for the invocation of [cancel][Job.cancel] followed by [join][Job.join].
  */
@@ -635,6 +633,15 @@ public fun CoroutineContext.cancelChildren(cause: CancellationException? = null)
 public fun CoroutineContext.cancelChildren(): Unit = cancelChildren(null)
 
 /**
+ * Retrieves the current [Job] instance from the given [CoroutineContext] or
+ * throws [IllegalStateException] if no job is present in the context.
+ *
+ * This method is a short-cut for `coroutineContext[Job]!!` and should be used only when it is known in advance that
+ * the context does have instance of the job in it.
+ */
+public val CoroutineContext.job: Job get() = get(Job) ?: error("Current context doesn't contain Job in it: $this")
+
+/**
  * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [CoroutineContext.cancelChildren].
  */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
@@ -651,6 +658,9 @@ private fun Throwable?.orCancellation(job: Job): Throwable = this ?: JobCancella
  */
 @InternalCoroutinesApi
 public object NonDisposableHandle : DisposableHandle, ChildHandle {
+
+    override val parent: Job? get() = null
+
     /**
      * Does not do anything.
      * @suppress

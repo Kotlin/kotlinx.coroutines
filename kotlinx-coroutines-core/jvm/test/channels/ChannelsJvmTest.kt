@@ -11,15 +11,44 @@ import kotlin.test.*
 class ChannelsJvmTest : TestBase() {
 
     @Test
-    fun testBlocking() {
+    fun testTrySendBlocking() {
         val ch = Channel<Int>()
         val sum = GlobalScope.async {
-            ch.sumBy { it }
+            var sum = 0
+            ch.consumeEach { sum += it }
+            sum
         }
         repeat(10) {
-            ch.sendBlocking(it)
+            assertTrue(ch.trySendBlocking(it).isSuccess)
         }
         ch.close()
         assertEquals(45, runBlocking { sum.await() })
+    }
+
+    @Test
+    fun testTrySendBlockingClosedChannel() {
+        run {
+            val channel = Channel<Unit>().also { it.close() }
+            channel.trySendBlocking(Unit)
+                .onSuccess { expectUnreached() }
+                .onFailure { assertTrue(it is ClosedSendChannelException) }
+                .also { assertTrue { it.isClosed } }
+        }
+
+        run {
+            val channel = Channel<Unit>().also { it.close(TestException()) }
+            channel.trySendBlocking(Unit)
+                .onSuccess { expectUnreached() }
+                .onFailure { assertTrue(it is TestException) }
+                .also { assertTrue { it.isClosed } }
+        }
+
+        run {
+            val channel = Channel<Unit>().also { it.cancel(TestCancellationException()) }
+            channel.trySendBlocking(Unit)
+                .onSuccess { expectUnreached() }
+                .onFailure { assertTrue(it is TestCancellationException) }
+                .also { assertTrue { it.isClosed } }
+        }
     }
 }

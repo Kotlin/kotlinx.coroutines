@@ -45,7 +45,7 @@ class StackTraceRecoverySelectTest : TestBase() {
     private suspend fun doSelectAwait(deferred: Deferred<Unit>): Int {
         return select {
             deferred.onAwait {
-                yield() // Hide the stackstrace
+                yield() // Hide the frame
                 42
             }
         }

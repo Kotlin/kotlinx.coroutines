@@ -9,7 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.system.*
 
-fun foo(): Flow<Int> = flow {
+fun simple(): Flow<Int> = flow {
     for (i in 1..3) {
         delay(100) // pretend we are asynchronously waiting 100 ms
         emit(i) // emit next value
@@ -18,7 +18,7 @@ fun foo(): Flow<Int> = flow {
 
 fun main() = runBlocking<Unit> { 
     val time = measureTimeMillis {
-        foo()
+        simple()
             .collectLatest { value -> // cancel & restart on the latest value
                 println("Collecting $value") 
                 delay(300) // pretend we are processing it for 300 ms

@@ -192,7 +192,7 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testEmptyCoroutineContext() = runTest {
+    fun testEmptyCoroutineContextMap() = runTest {
         emptyContextTest {
             map {
                 expect(it)
@@ -212,7 +212,18 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testEmptyCoroutineContextViolation() = runTest {
+    fun testEmptyCoroutineContextTransformWhile() = runTest {
+        emptyContextTest {
+            transformWhile {
+                expect(it)
+                emit(it + 1)
+                true
+            }
+        }
+    }
+
+    @Test
+    fun testEmptyCoroutineContextViolationTransform() = runTest {
         try {
             emptyContextTest {
                 transform {
@@ -220,6 +231,25 @@ class FlowInvariantsTest : TestBase() {
                     withContext(Dispatchers.Unconfined) {
                         emit(it + 1)
                     }
+                }
+            }
+            expectUnreached()
+        } catch (e: IllegalStateException) {
+            assertTrue(e.message!!.contains("Flow invariant is violated"))
+            finish(2)
+        }
+    }
+
+    @Test
+    fun testEmptyCoroutineContextViolationTransformWhile() = runTest {
+        try {
+            emptyContextTest {
+                transformWhile {
+                    expect(it)
+                    withContext(Dispatchers.Unconfined) {
+                        emit(it + 1)
+                    }
+                    true
                 }
             }
             expectUnreached()

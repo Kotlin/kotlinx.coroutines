@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.selects
@@ -36,7 +36,7 @@ internal class UnbiasedSelectBuilderImpl<in R>(uCont: Continuation<R>) :
     val clauses = arrayListOf<() -> Unit>()
 
     @PublishedApi
-    internal fun handleBuilderException(e: Throwable) = instance.handleBuilderException(e)
+    internal fun handleBuilderException(e: Throwable): Unit = instance.handleBuilderException(e)
 
     @PublishedApi
     internal fun initSelectResult(): Any? {

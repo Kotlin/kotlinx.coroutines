@@ -244,7 +244,7 @@ public abstract class SegmentQueueSynchronizerJVM<T : Any> {
 
     // false -> failed
     // true -> success
-    protected fun suspendCurThread(): T? {
+    public fun suspendCurThread(): T? {
         val t = Thread.currentThread()
         // Increment `enqIdx` and find the segment
         // with the corresponding id. It is guaranteed
