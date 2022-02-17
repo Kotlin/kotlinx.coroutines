@@ -5,7 +5,6 @@
 package kotlinx.coroutines.rx3
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.test.*
 import org.junit.*
 import java.util.concurrent.*
 
@@ -16,8 +15,8 @@ class SchedulerStressTest : TestBase() {
     }
 
     /**
-     * Test that we don't get an OOM if we schedule many jobs at once. It's expected that if you don't dispose that you'd
-     * see a OOM error.
+     * Test that we don't get an OOM if we schedule many jobs at once.
+     * It's expected that if you don't dispose you'd see an OOM error.
      */
     @Test
     fun testSchedulerDisposed(): Unit = runTest {
@@ -30,42 +29,28 @@ class SchedulerStressTest : TestBase() {
     fun testSchedulerWorkerDisposed(): Unit = runTest {
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
-        testRunnableDisposed(scheduler.createWorker()::schedule)
+        val worker = scheduler.createWorker()
+        testRunnableDisposed(worker::schedule)
     }
 
     private suspend fun testRunnableDisposed(block: RxSchedulerBlockNoDelay) {
-        expect(1)
-
-        val dispatcher = currentDispatcher() as CoroutineDispatcher
-        val scheduler = dispatcher.asScheduler()
-
         val n = 2000 * stressTestMultiplier
-        coroutineScope {
-            repeat(n) { i ->
-                launch {
-                    val a = ByteArray(1000000) //1MB
-                    val disposable = block(Runnable {
-                        expectUnreached()
-                        runBlocking {
-                            keepMe(a)
-                        }
-                    })
-                    disposable.dispose()
-                    expect(i + 2)
-                }
-                yield()
-            }
+        repeat(n) {
+            val a = ByteArray(1000000) //1MB
+            val disposable = block(Runnable {
+                keepMe(a)
+                expectUnreached()
+            })
+            disposable.dispose()
+            yield() // allow the scheduled task to observe that it was disposed
         }
-
-        scheduler.shutdown()
-        finish(n + 2)
     }
 
     /**
      * Test function that holds a reference. Used for testing OOM situations
      */
-    private suspend fun keepMe(a: ByteArray) {
-        delay(10)
+    private fun keepMe(a: ByteArray) {
+        Thread.sleep(a.size / (a.size + 1) + 10L)
     }
 
     /**
@@ -83,31 +68,20 @@ class SchedulerStressTest : TestBase() {
     fun testSchedulerWorkerDisposedDuringDelay(): Unit = runTest {
         val dispatcher = currentDispatcher() as CoroutineDispatcher
         val scheduler = dispatcher.asScheduler()
-        testRunnableDisposedDuringDelay(scheduler.createWorker()::schedule)
+        val worker = scheduler.createWorker()
+        testRunnableDisposedDuringDelay(worker::schedule)
     }
 
-    private suspend fun testRunnableDisposedDuringDelay(block: RxSchedulerBlockWithDelay) {
-        expect(1)
-
-        val dispatcher = currentDispatcher() as CoroutineDispatcher
-        val scheduler = dispatcher.asScheduler()
-
+    private fun testRunnableDisposedDuringDelay(block: RxSchedulerBlockWithDelay) {
         val n = 2000 * stressTestMultiplier
-        coroutineScope {
-            repeat(n) { i ->
-                val a = ByteArray(1000000) //1MB
-                val delayMillis: Long = 10
-                val disposable = block(Runnable {
-                    runBlocking {
-                        keepMe(a)
-                    }
-                }, delayMillis, TimeUnit.MILLISECONDS)
-                disposable.dispose()
-                yield()
-            }
+        repeat(n) {
+            val a = ByteArray(1000000) //1MB
+            val delayMillis: Long = 10
+            val disposable = block(Runnable {
+                keepMe(a)
+                expectUnreached()
+            }, delayMillis, TimeUnit.MILLISECONDS)
+            disposable.dispose()
         }
-
-        scheduler.shutdown()
-        finish(2)
     }
 }
