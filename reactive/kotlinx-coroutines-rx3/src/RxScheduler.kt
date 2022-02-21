@@ -51,19 +51,27 @@ private class DispatcherScheduler(@JvmField val dispatcher: CoroutineDispatcher)
      */
     private val scope = CoroutineScope(schedulerJob + dispatcher)
 
+    /**
+     * The counter of created workers, for their pretty-printing.
+     */
+    private val workerCounter = atomic(1L)
+
     override fun scheduleDirect(block: Runnable, delay: Long, unit: TimeUnit): Disposable =
         scope.scheduleTask(block, unit.toMillis(delay)) { task ->
             Runnable { scope.launch { task() } }
         }
 
-    private val workerCounter = atomic(1L)
     override fun createWorker(): Worker = DispatcherWorker(workerCounter.getAndIncrement(), dispatcher, schedulerJob)
 
     override fun shutdown() {
         schedulerJob.cancel()
     }
 
-    private class DispatcherWorker(val counter: Long, val dispatcher: CoroutineDispatcher, parentJob: Job) : Worker() {
+    private class DispatcherWorker(
+        private val counter: Long,
+        private val dispatcher: CoroutineDispatcher,
+        parentJob: Job
+    ) : Worker() {
 
         private val workerJob = SupervisorJob(parentJob)
         private val workerScope = CoroutineScope(workerJob + dispatcher)
@@ -123,6 +131,7 @@ private fun CoroutineScope.scheduleTask(
             handleUndeliverableException(e, ctx)
         }
     }
+
     val toSchedule = adaptForScheduling(::task)
     if (!isActive) return Disposable.disposed()
     if (delayMillis <= 0) {
