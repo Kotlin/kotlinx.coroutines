@@ -8,6 +8,10 @@ import kotlinx.coroutines.*
 import org.junit.*
 
 class SafeCollectorMemoryLeakTest : TestBase() {
+    // custom List.forEach impl to avoid using iterator (FieldWalker cannot scan it)
+    private inline fun <T> List<T>.listForEach(action: (T) -> Unit) {
+        for (i in indices) action(get(i))
+    }
 
     @Test
     fun testCompletionIsProperlyCleanedUp() = runBlocking {
@@ -15,7 +19,7 @@ class SafeCollectorMemoryLeakTest : TestBase() {
             emit(listOf(239))
             expect(2)
             hang {}
-        }.transform { l -> l.forEach { _ -> emit(42) } }
+        }.transform { l -> l.listForEach { _ -> emit(42) } }
             .onEach { expect(1) }
             .launchIn(this)
         yield()
@@ -30,7 +34,7 @@ class SafeCollectorMemoryLeakTest : TestBase() {
         val job = flow {
             emit(listOf(239))
             hang {}
-        }.transform { l -> l.forEach { _ -> emit(42) } }
+        }.transform { l -> l.listForEach { _ -> emit(42) } }
             .onEach {
                 expect(1)
                 hang { finish(3) }

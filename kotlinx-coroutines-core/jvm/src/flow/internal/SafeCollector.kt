@@ -30,7 +30,7 @@ internal actual class SafeCollector<T> actual constructor(
     @JvmField // Note, it is non-capturing lambda, so no extra allocation during init of SafeCollector
     internal actual val collectContextSize = collectContext.fold(0) { count, _ -> count + 1 }
 
-    // Either context of the last emission or wrapper 'DownstreamExceptionElement'
+    // Either context of the last emission or wrapper 'DownstreamExceptionContext'
     private var lastEmissionContext: CoroutineContext? = null
     // Completion if we are currently suspended or within completion body or null otherwise
     private var completion: Continuation<Unit>? = null
@@ -44,7 +44,7 @@ internal actual class SafeCollector<T> actual constructor(
         get() = lastEmissionContext ?: EmptyCoroutineContext
 
     override fun invokeSuspend(result: Result<Any?>): Any {
-        result.onFailure { lastEmissionContext = DownstreamExceptionElement(it, context) }
+        result.onFailure { lastEmissionContext = DownstreamExceptionContext(it, context) }
         completion?.resumeWith(result as Result<Unit>)
         return COROUTINE_SUSPENDED
     }
@@ -66,7 +66,9 @@ internal actual class SafeCollector<T> actual constructor(
                 emit(uCont, value)
             } catch (e: Throwable) {
                 // Save the fact that exception from emit (or even check context) has been thrown
-                lastEmissionContext = DownstreamExceptionElement(e, context)
+                // Note, that this can the first emit and lastEmissionContext may not be saved yet,
+                // hence we use `uCont.context` here.
+                lastEmissionContext = DownstreamExceptionContext(e, uCont.context)
                 throw e
             }
         }
@@ -78,8 +80,8 @@ internal actual class SafeCollector<T> actual constructor(
         // This check is triggered once per flow on happy path.
         val previousContext = lastEmissionContext
         if (previousContext !== currentContext) {
-            // lastEmissionContext will be updated here
             checkContext(currentContext, previousContext, value)
+            lastEmissionContext = currentContext
         }
         completion = uCont
         val result = emitFun(collector as FlowCollector<Any?>, value, this as Continuation<Unit>)
@@ -98,14 +100,13 @@ internal actual class SafeCollector<T> actual constructor(
         previousContext: CoroutineContext?,
         value: T
     ) {
-        if (previousContext is DownstreamExceptionElement) {
+        if (previousContext is DownstreamExceptionContext) {
             exceptionTransparencyViolated(previousContext, value)
         }
         checkContext(currentContext)
-        lastEmissionContext = currentContext
     }
 
-    private fun exceptionTransparencyViolated(exception: DownstreamExceptionElement, value: Any?) {
+    private fun exceptionTransparencyViolated(exception: DownstreamExceptionContext, value: Any?) {
         /*
          * Exception transparency ensures that if a `collect` block or any intermediate operator
          * throws an exception, then no more values will be received by it.
@@ -140,7 +141,7 @@ internal actual class SafeCollector<T> actual constructor(
     }
 }
 
-internal class DownstreamExceptionElement(
+internal class DownstreamExceptionContext(
     @JvmField val e: Throwable,
     originalContext: CoroutineContext
 ) : CoroutineContext by originalContext
