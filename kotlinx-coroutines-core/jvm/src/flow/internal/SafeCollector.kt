@@ -29,15 +29,22 @@ internal actual class SafeCollector<T> actual constructor(
 
     @JvmField // Note, it is non-capturing lambda, so no extra allocation during init of SafeCollector
     internal actual val collectContextSize = collectContext.fold(0) { count, _ -> count + 1 }
+
+    // Either context of the last emission or wrapper 'DownstreamExceptionContext'
     private var lastEmissionContext: CoroutineContext? = null
+    // Completion if we are currently suspended or within completion body or null otherwise
     private var completion: Continuation<Unit>? = null
 
-    // ContinuationImpl
+    /*
+     * This property is accessed in two places:
+     * * ContinuationImpl invokes this in its `releaseIntercepted` as `context[ContinuationInterceptor]!!`
+     * * When we are within a callee, it is used to create its continuation object with this collector as completion
+     */
     override val context: CoroutineContext
-        get() = completion?.context ?: EmptyCoroutineContext
+        get() = lastEmissionContext ?: EmptyCoroutineContext
 
     override fun invokeSuspend(result: Result<Any?>): Any {
-        result.onFailure { lastEmissionContext = DownstreamExceptionElement(it) }
+        result.onFailure { lastEmissionContext = DownstreamExceptionContext(it, context) }
         completion?.resumeWith(result as Result<Unit>)
         return COROUTINE_SUSPENDED
     }
@@ -59,7 +66,9 @@ internal actual class SafeCollector<T> actual constructor(
                 emit(uCont, value)
             } catch (e: Throwable) {
                 // Save the fact that exception from emit (or even check context) has been thrown
-                lastEmissionContext = DownstreamExceptionElement(e)
+                // Note, that this can the first emit and lastEmissionContext may not be saved yet,
+                // hence we use `uCont.context` here.
+                lastEmissionContext = DownstreamExceptionContext(e, uCont.context)
                 throw e
             }
         }
@@ -72,9 +81,18 @@ internal actual class SafeCollector<T> actual constructor(
         val previousContext = lastEmissionContext
         if (previousContext !== currentContext) {
             checkContext(currentContext, previousContext, value)
+            lastEmissionContext = currentContext
         }
         completion = uCont
-        return emitFun(collector as FlowCollector<Any?>, value, this as Continuation<Unit>)
+        val result = emitFun(collector as FlowCollector<Any?>, value, this as Continuation<Unit>)
+        /*
+         * If the callee hasn't suspended, that means that it won't (it's forbidden) call 'resumeWith` (-> `invokeSuspend`)
+         * and we don't have to retain a strong reference to it to avoid memory leaks.
+         */
+        if (result != COROUTINE_SUSPENDED) {
+            completion = null
+        }
+        return result
     }
 
     private fun checkContext(
@@ -82,14 +100,13 @@ internal actual class SafeCollector<T> actual constructor(
         previousContext: CoroutineContext?,
         value: T
     ) {
-        if (previousContext is DownstreamExceptionElement) {
+        if (previousContext is DownstreamExceptionContext) {
             exceptionTransparencyViolated(previousContext, value)
         }
         checkContext(currentContext)
-        lastEmissionContext = currentContext
     }
 
-    private fun exceptionTransparencyViolated(exception: DownstreamExceptionElement, value: Any?) {
+    private fun exceptionTransparencyViolated(exception: DownstreamExceptionContext, value: Any?) {
         /*
          * Exception transparency ensures that if a `collect` block or any intermediate operator
          * throws an exception, then no more values will be received by it.
@@ -122,14 +139,12 @@ internal actual class SafeCollector<T> actual constructor(
                 For a more detailed explanation, please refer to Flow documentation.
             """.trimIndent())
     }
-
 }
 
-internal class DownstreamExceptionElement(@JvmField val e: Throwable) : CoroutineContext.Element {
-    companion object Key : CoroutineContext.Key<DownstreamExceptionElement>
-
-    override val key: CoroutineContext.Key<*> = Key
-}
+internal class DownstreamExceptionContext(
+    @JvmField val e: Throwable,
+    originalContext: CoroutineContext
+) : CoroutineContext by originalContext
 
 private object NoOpContinuation : Continuation<Any?> {
     override val context: CoroutineContext = EmptyCoroutineContext
