@@ -260,36 +260,41 @@ public abstract class SegmentQueueSynchronizerJVM<T : Any> {
         // this is the regular path.
         val i = (enqIdx % SEGMENT_SIZE).toInt()
         // Spin-loop optimization here
-        var x = 1
-        while (x < 100) {
-            val value = segment.get(i)
-            if (value != null) {
-                if (value !== BROKEN && segment.cas(i, value, TAKEN)) {
-                    // The elimination is successfully performed,
-                    // resume the continuation with the value and complete.
-                    return value as T
-                }
-                // The cell is broken, this can happen only in `SYNC` resumption mode.
-                return null
-            }
-            doGeomDistrWork(x*x)
-            x++
-        }
-        if (segment.cas(i, null, t)) {
-            do {
-                LockSupport.park()
-            } while (segment.get(i) === t)
-            val value = segment.get(i) as T
-            segment.set(i, RESUMED)
-            return value
-        }
+//        var x = 1
+//        while (x < 100) {
+
+//            val value2 = segment.get(i)
+//            if (value2 != null) {
+//                if (value2 !== BROKEN && segment.cas(i, value2, TAKEN)) {
+//                    // The elimination is successfully performed,
+//                    // resume the continuation with the value and complete.
+//                    return value2 as T
+//                }
+//                // The cell is broken, this can happen only in `SYNC` resumption mode.
+//                return null
+//            }
+//            doGeomDistrWork(x*x)
+//            x++
+//        }
         // The continuation installation failed. This can happen only
         // if a concurrent `resume` comes earlier to this cell and put
         // its value into it. Note, that in `SYNC` resumption mode
         // this concurrent `resume` can mark the cell as broken.
         //
         // Try to grab the value if the cell is not in the `BROKEN` state.
-        val value = segment.get(i)
+        var value = segment.get(i)
+        if (value == null) {
+            if (segment.cas(i, null, t)) {
+                do {
+                    LockSupport.park()
+                } while (segment.get(i) === t)
+                val value = segment.get(i) as T
+                segment.set(i, RESUMED)
+                return value
+            } else {
+                value = segment.get(i)
+            }
+        }
         if (value !== BROKEN && segment.cas(i, value, TAKEN)) {
             // The elimination is successfully performed,
             // resume the continuation with the value and complete.

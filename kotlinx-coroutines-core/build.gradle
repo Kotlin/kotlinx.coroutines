@@ -253,24 +253,6 @@ static void configureJvmForLincheck(task) {
     task.systemProperty 'kotlinx.coroutines.sqs.maxSpinCycles', '1' // better for the model checking mode
 }
 
-task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
-    classpath = files { jvmTest.classpath }
-    testClassesDirs = files { jvmTest.testClassesDirs }
-    include '**/*LincheckTest.*'
-    enableAssertions = true
-    testLogging.showStandardStreams = true
-    configureJvmForLincheck(jvmLincheckTest)
-}
-
-static void configureJvmForLincheck(task) {
-    task.minHeapSize = '1g'
-    task.maxHeapSize = '6g' // we may need more space for building an interleaving tree in the model checking mode
-    task.jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
-                     '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
-    task.systemProperty 'kotlinx.coroutines.sqs.segmentSize', '2'
-    task.systemProperty 'kotlinx.coroutines.sqs.maxSpinCycles', '1' // better for the model checking mode
-}
-
 task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
