@@ -142,7 +142,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     // shared objects while we have no waiters
     private val _state = atomic<Any?>(if (locked) EMPTY_LOCKED else EMPTY_UNLOCKED)
 
-    public override val isLocked: Boolean get() {
+    override val isLocked: Boolean get() {
         _state.loop { state ->
             when (state) {
                 is Empty -> return state.locked !== UNLOCKED
@@ -159,7 +159,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         return state is LockedQueue && state.isEmpty
     }
 
-    public override fun tryLock(owner: Any?): Boolean {
+    override fun tryLock(owner: Any?): Boolean {
         _state.loop { state ->
             when (state) {
                 is Empty -> {
@@ -179,7 +179,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         }
     }
 
-    public override suspend fun lock(owner: Any?) {
+    override suspend fun lock(owner: Any?) {
         // fast-path -- try lock
         if (tryLock(owner)) return
         // slow-path -- suspend
@@ -309,7 +309,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         }
     }
 
-    public override fun holdsLock(owner: Any) =
+    override fun holdsLock(owner: Any) =
             _state.value.let { state ->
                 when (state) {
                     is Empty -> state.locked === owner

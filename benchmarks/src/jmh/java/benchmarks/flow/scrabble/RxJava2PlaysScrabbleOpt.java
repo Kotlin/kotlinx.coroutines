@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import hu.akarnokd.rxjava2.math.MathFlowable;
+import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
 import benchmarks.flow.scrabble.optimizations.*;
 import io.reactivex.*;
@@ -19,8 +20,8 @@ import io.reactivex.functions.Function;
  * @author José
  * @author akarnokd
  */
-@Warmup(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 7, time = 1)
+@Measurement(iterations = 7, time = 1)
 @Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -31,6 +32,7 @@ public class RxJava2PlaysScrabbleOpt extends ShakespearePlaysScrabble {
         return StringFlowable.characters(word);
     }
 
+    @NotNull
     @Benchmark
     @Override
     public List<Entry<Integer, List<String>>> play() throws Exception {
@@ -49,8 +51,7 @@ public class RxJava2PlaysScrabbleOpt extends ShakespearePlaysScrabble {
                     ;
 
 
-        Function<String, Flowable<Integer>> toIntegerFlowable =
-                string -> chars(string);
+        Function<String, Flowable<Integer>> toIntegerFlowable = RxJava2PlaysScrabbleOpt::chars;
 
         Map<String, Single<HashMap<Integer, MutableLong>>> histoCache = new HashMap<>();
         // Histogram of the letters in a given word
@@ -58,8 +59,7 @@ public class RxJava2PlaysScrabbleOpt extends ShakespearePlaysScrabble {
                 word -> { Single<HashMap<Integer, MutableLong>> s = histoCache.get(word);
                         if (s == null) {
                             s = toIntegerFlowable.apply(word)
-                            .collect(
-                                () -> new HashMap<>(),
+                            .collect(HashMap::new,
                                 (HashMap<Integer, MutableLong> map, Integer value) ->
                                     {
                                         MutableLong newValue = map.get(value) ;
@@ -89,9 +89,7 @@ public class RxJava2PlaysScrabbleOpt extends ShakespearePlaysScrabble {
         // number of blanks for a given word
         Function<String, Flowable<Long>> nBlanks =
                 word -> MathFlowable.sumLong(
-                            histoOfLetters.apply(word).flattenAsFlowable(
-                                    map -> map.entrySet()
-                            )
+                            histoOfLetters.apply(word).flattenAsFlowable(HashMap::entrySet)
                             .map(blank)
                         )
                     ;
@@ -105,9 +103,7 @@ public class RxJava2PlaysScrabbleOpt extends ShakespearePlaysScrabble {
         // score taking blanks into account letterScore1
         Function<String, Flowable<Integer>> score2 =
                 word -> MathFlowable.sumInt(
-                            histoOfLetters.apply(word).flattenAsFlowable(
-                                map -> map.entrySet()
-                            )
+                            histoOfLetters.apply(word).flattenAsFlowable(HashMap::entrySet)
                             .map(letterScore)
                             ) ;
 
@@ -143,32 +139,22 @@ public class RxJava2PlaysScrabbleOpt extends ShakespearePlaysScrabble {
                                 .filter(scrabbleWords::contains)
                                 .filter(word -> checkBlanks.apply(word).blockingFirst())
                                 .collect(
-                                    () -> new TreeMap<Integer, List<String>>(Comparator.reverseOrder()),
+                                    () -> new TreeMap<>(Comparator.reverseOrder()),
                                     (TreeMap<Integer, List<String>> map, String word) -> {
                                         Integer key = score.apply(word).blockingFirst() ;
-                                        List<String> list = map.get(key) ;
-                                        if (list == null) {
-                                            list = new ArrayList<>() ;
-                                            map.put(key, list) ;
-                                        }
+                                        List<String> list = map.computeIfAbsent(key, k -> new ArrayList<>());
                                         list.add(word) ;
                                     }
                                 ) ;
 
         // best key / value pairs
-        List<Entry<Integer, List<String>>> finalList2 =
-                    buildHistoOnScore.apply(score3).flattenAsFlowable(
-                            map -> map.entrySet()
-                    )
-                    .take(3)
-                    .collect(
-                        () -> new ArrayList<Entry<Integer, List<String>>>(),
-                        (list, entry) -> {
-                            list.add(entry) ;
-                        }
-                    )
-                    .blockingGet();
 
-        return finalList2 ;
+        return buildHistoOnScore.apply(score3).flattenAsFlowable(TreeMap::entrySet)
+        .take(3)
+        .collect(
+            () -> new ArrayList<Entry<Integer, List<String>>>(),
+            ArrayList::add
+        )
+        .blockingGet();
     }
 }

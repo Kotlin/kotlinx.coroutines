@@ -9,7 +9,7 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-public abstract class SimpleChannel {
+abstract class SimpleChannel {
     companion object {
         const val NULL_SURROGATE: Int = -1
     }

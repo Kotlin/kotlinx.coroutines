@@ -104,11 +104,11 @@ public abstract class AbstractCoroutine<in T>(
 
     protected open fun afterResume(state: Any?): Unit = afterCompletion(state)
 
-    internal final override fun handleOnCompletionException(exception: Throwable) {
+    final override fun handleOnCompletionException(exception: Throwable) {
         handleCoroutineException(context, exception)
     }
 
-    internal override fun nameString(): String {
+    override fun nameString(): String {
         val coroutineName = context.coroutineName ?: return super.nameString()
         return "\"$coroutineName\":${super.nameString()}"
     }

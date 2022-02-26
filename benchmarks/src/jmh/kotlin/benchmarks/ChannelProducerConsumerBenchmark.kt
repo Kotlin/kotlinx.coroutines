@@ -71,8 +71,7 @@ open class ChannelProducerConsumerBenchmark {
     @Benchmark
     fun mpmc() {
         val producers = if (_2_coroutines == 0) (_4_parallelism + 1) / 2 else _2_coroutines / 2
-        val consumers = producers
-        run(producers, consumers)
+        run(producers, producers)
     }
 
     private fun run(producers: Int, consumers: Int) {

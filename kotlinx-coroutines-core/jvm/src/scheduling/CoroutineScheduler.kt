@@ -273,7 +273,7 @@ internal class CoroutineScheduler(
 
     private inline fun createdWorkers(state: Long): Int = (state and CREATED_MASK).toInt()
     private inline fun blockingTasks(state: Long): Int = (state and BLOCKING_MASK shr BLOCKING_SHIFT).toInt()
-    public inline fun availableCpuPermits(state: Long): Int = (state and CPU_PERMITS_MASK shr CPU_PERMITS_SHIFT).toInt()
+    inline fun availableCpuPermits(state: Long): Int = (state and CPU_PERMITS_MASK shr CPU_PERMITS_SHIFT).toInt()
 
     // Guarded by synchronization
     private inline fun incrementCreatedWorkers(): Int = createdWorkers(controlState.incrementAndGet())

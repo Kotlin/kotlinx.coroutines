@@ -153,7 +153,7 @@ internal abstract class ChannelFlowOperator<S, T>(
     }
 
     // Slow path when output channel is required
-    protected override suspend fun collectTo(scope: ProducerScope<T>) =
+    override suspend fun collectTo(scope: ProducerScope<T>) =
         flowCollect(SendingCollector(scope))
 
     // Optimizations for fast-path when channel creation is optional

@@ -37,7 +37,7 @@ public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it 
 /**
  * Returns a flow containing only values of the original flow that are not null.
  */
-public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = transform<T?, T> { value ->
+public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = transform { value ->
     if (value != null) return@transform emit(value)
 }
 

@@ -17,8 +17,8 @@ import kotlin.coroutines.*
 @State(Scope.Benchmark)
 @Fork(1)
 open class ChannelSinkBenchmark {
-    private val tl = ThreadLocal.withInitial({ 42 })
-    private val tl2 = ThreadLocal.withInitial({ 239 })
+    private val tl = ThreadLocal.withInitial { 42 }
+    private val tl2 = ThreadLocal.withInitial { 239 }
 
     private val unconfined = Dispatchers.Unconfined
     private val unconfinedOneElement = Dispatchers.Unconfined + tl.asContextElement()

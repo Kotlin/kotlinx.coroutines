@@ -27,17 +27,17 @@ open class TakeWhileBenchmark {
             .map { it * it }.count()
 
     @Benchmark
-    fun baseline() = runBlocking<Int> {
+    fun baseline() = runBlocking {
         (0L until size).asFlow().consume()
     }
 
     @Benchmark
-    fun takeWhileDirect() = runBlocking<Int> {
+    fun takeWhileDirect() = runBlocking {
         (0L..Long.MAX_VALUE).asFlow().takeWhileDirect { it < size }.consume()
     }
 
     @Benchmark
-    fun takeWhileViaCollectWhile() = runBlocking<Int> {
+    fun takeWhileViaCollectWhile() = runBlocking {
         (0L..Long.MAX_VALUE).asFlow().takeWhileViaCollectWhile { it < size }.consume()
     }
 

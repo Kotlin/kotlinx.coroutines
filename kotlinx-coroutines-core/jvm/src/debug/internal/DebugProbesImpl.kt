@@ -49,8 +49,8 @@ internal object DebugProbesImpl {
      */
     private val coroutineStateLock = ReentrantReadWriteLock()
 
-    public var sanitizeStackTraces: Boolean = true
-    public var enableCreationStackTraces: Boolean = true
+    var sanitizeStackTraces: Boolean = true
+    var enableCreationStackTraces: Boolean = true
 
     /*
      * Substitute for service loader, DI between core and debug modules.
@@ -78,14 +78,14 @@ internal object DebugProbesImpl {
      */
     private val callerInfoCache = ConcurrentWeakMap<CoroutineStackFrame, DebugCoroutineInfoImpl>(weakRefQueue = true)
 
-    public fun install(): Unit = coroutineStateLock.write {
+    fun install(): Unit = coroutineStateLock.write {
         if (++installations > 1) return
         startWeakRefCleanerThread()
         if (AgentInstallationType.isInstalledStatically) return
         dynamicAttach?.invoke(true) // attach
     }
 
-    public fun uninstall(): Unit = coroutineStateLock.write {
+    fun uninstall(): Unit = coroutineStateLock.write {
         check(isInstalled) { "Agent was not installed" }
         if (--installations != 0) return
         stopWeakRefCleanerThread()
@@ -108,7 +108,7 @@ internal object DebugProbesImpl {
         thread.join()
     }
 
-    public fun hierarchyToString(job: Job): String = coroutineStateLock.write {
+    fun hierarchyToString(job: Job): String = coroutineStateLock.write {
         check(isInstalled) { "Debug probes are not installed" }
         val jobToStack = capturedCoroutines
             .filter { it.delegate.context[Job] != null }
@@ -124,11 +124,11 @@ internal object DebugProbesImpl {
         if (info == null) { // Append coroutine without stacktrace
             // Do not print scoped coroutines and do not increase indentation level
             @Suppress("INVISIBLE_REFERENCE")
-            if (this !is ScopeCoroutine<*>) {
+            newIndent = if (this !is ScopeCoroutine<*>) {
                 builder.append("$indent$debugString\n")
-                newIndent = indent + "\t"
+                "$indent\t"
             } else {
-                newIndent = indent
+                indent
             }
         } else {
             // Append coroutine with its last stacktrace element
@@ -185,7 +185,7 @@ internal object DebugProbesImpl {
      * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
      */
     @OptIn(ExperimentalStdlibApi::class)
-    public fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> {
+    fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> {
         val coroutinesInfo = dumpCoroutinesInfo()
         val size = coroutinesInfo.size
         val lastObservedThreads = ArrayList<Thread?>(size)
@@ -221,7 +221,7 @@ internal object DebugProbesImpl {
     /*
      * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
      */
-    public fun enhanceStackTraceWithThreadDumpAsJson(info: DebugCoroutineInfo): String {
+    fun enhanceStackTraceWithThreadDumpAsJson(info: DebugCoroutineInfo): String {
         val stackTraceElements = enhanceStackTraceWithThreadDump(info, info.lastObservedStackTrace)
         val stackTraceElementsInfoAsJson = mutableListOf<String>()
         for (element in stackTraceElements) {
@@ -245,17 +245,17 @@ internal object DebugProbesImpl {
     /*
      * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
      */
-    public fun dumpCoroutinesInfo(): List<DebugCoroutineInfo> =
+    fun dumpCoroutinesInfo(): List<DebugCoroutineInfo> =
         dumpCoroutinesInfoImpl { owner, context -> DebugCoroutineInfo(owner.info, context) }
 
     /*
      * Internal (JVM-public) method to be used by IDEA debugger in the future (not used as of 1.4-M3).
      * It is equivalent to [dumpCoroutinesInfo], but returns serializable (and thus less typed) objects.
      */
-    public fun dumpDebuggerInfo(): List<DebuggerInfo> =
+    fun dumpDebuggerInfo(): List<DebuggerInfo> =
         dumpCoroutinesInfoImpl { owner, context -> DebuggerInfo(owner.info, context) }
 
-    public fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {
+    fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {
         /*
          * This method synchronizes both on `out` and `this` for a reason:
          * 1) Taking a write lock is required to have a consistent snapshot of coroutines.
@@ -317,7 +317,7 @@ internal object DebugProbesImpl {
      * It is similar to [enhanceStackTraceWithThreadDumpImpl], but uses debugger-facing [DebugCoroutineInfo] type.
      */
     @Suppress("unused")
-    public fun enhanceStackTraceWithThreadDump(
+    fun enhanceStackTraceWithThreadDump(
         info: DebugCoroutineInfo,
         coroutineTrace: List<StackTraceElement>
     ): List<StackTraceElement> =

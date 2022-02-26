@@ -21,14 +21,14 @@ import kotlin.math.*
 open class FlowPlaysScrabbleBase : ShakespearePlaysScrabble() {
 
     @Benchmark
-    public override fun play(): List<Map.Entry<Int, List<String>>> {
-        val scoreOfALetter = { letter: Int -> flowOf(letterScores[letter - 'a'.toInt()]) }
+    override fun play(): List<Map.Entry<Int, List<String>>> {
+        val scoreOfALetter = { letter: Int -> flowOf(letterScores[letter - 'a'.code]) }
 
         val letterScore = { entry: Map.Entry<Int, LongWrapper> ->
             flowOf(
-                letterScores[entry.key - 'a'.toInt()] * Integer.min(
+                letterScores[entry.key - 'a'.code] * Integer.min(
                     entry.value.get().toInt(),
-                    scrabbleAvailableLetters[entry.key - 'a'.toInt()]
+                    scrabbleAvailableLetters[entry.key - 'a'.code]
                 )
             )
         }
@@ -51,14 +51,14 @@ open class FlowPlaysScrabbleBase : ShakespearePlaysScrabble() {
         }
 
         val blank = { entry: Map.Entry<Int, LongWrapper> ->
-            flowOf(max(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.toInt()]))
+            flowOf(max(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.code]))
         }
 
         val nBlanks = { word: String ->
             flow {
                 emit(histoOfLetters(word)
                     .flatMapConcat { map -> map.entries.iterator().asFlow() }
-                    .flatMapConcat({ blank(it) })
+                    .flatMapConcat { blank(it) }
                     .reduce { a, b -> a + b })
             }
         }
@@ -109,7 +109,7 @@ open class FlowPlaysScrabbleBase : ShakespearePlaysScrabble() {
         val buildHistoOnScore: (((String) -> Flow<Int>) -> Flow<TreeMap<Int, List<String>>>) = { score ->
             flow {
                 emit(shakespeareWords.asFlow()
-                    .filter({ scrabbleWords.contains(it) && checkBlanks(it).single() })
+                    .filter { scrabbleWords.contains(it) && checkBlanks(it).single() }
                     .fold(TreeMap<Int, List<String>>(Collections.reverseOrder())) { acc, value ->
                         val key = score(value).single()
                         var list = acc[key] as MutableList<String>?

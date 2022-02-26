@@ -18,10 +18,10 @@ import kotlinx.coroutines.selects.*
  * This channel is created by `Channel(Channel.CONFLATED)` factory function invocation.
  */
 internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
-    protected final override val isBufferAlwaysEmpty: Boolean get() = false
-    protected final override val isBufferEmpty: Boolean get() = value === EMPTY
-    protected final override val isBufferAlwaysFull: Boolean get() = false
-    protected final override val isBufferFull: Boolean get() = false
+    final override val isBufferAlwaysEmpty: Boolean get() = false
+    final override val isBufferEmpty: Boolean get() = value === EMPTY
+    final override val isBufferAlwaysFull: Boolean get() = false
+    final override val isBufferFull: Boolean get() = false
 
     override val isEmpty: Boolean get() = lock.withLock { isEmptyImpl }
 
@@ -30,7 +30,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
     private var value: Any? = EMPTY
 
     // result is `OFFER_SUCCESS | Closed`
-    protected override fun offerInternal(element: E): Any {
+    override fun offerInternal(element: E): Any {
         var receive: ReceiveOrClosed<E>? = null
         lock.withLock {
             closedForSend?.let { return it }
@@ -58,7 +58,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
     }
 
     // result is `ALREADY_SELECTED | OFFER_SUCCESS | Closed`
-    protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
+    override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
         var receive: ReceiveOrClosed<E>? = null
         lock.withLock {
             closedForSend?.let { return it }
@@ -91,7 +91,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
     }
 
     // result is `E | POLL_FAILED | Closed`
-    protected override fun pollInternal(): Any? {
+    override fun pollInternal(): Any? {
         var result: Any? = null
         lock.withLock {
             if (value === EMPTY) return closedForSend ?: POLL_FAILED
@@ -102,7 +102,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
     }
 
     // result is `E | POLL_FAILED | Closed`
-    protected override fun pollSelectInternal(select: SelectInstance<*>): Any? {
+    override fun pollSelectInternal(select: SelectInstance<*>): Any? {
         var result: Any? = null
         lock.withLock {
             if (value === EMPTY) return closedForSend ?: POLL_FAILED
@@ -114,7 +114,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
         return result
     }
 
-    protected override fun onCancelIdempotent(wasClosed: Boolean) {
+    override fun onCancelIdempotent(wasClosed: Boolean) {
         var undeliveredElementException: UndeliveredElementException? = null // resource cancel exception
         lock.withLock {
             undeliveredElementException = updateValueLocked(EMPTY)

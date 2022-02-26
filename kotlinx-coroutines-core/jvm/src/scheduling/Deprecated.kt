@@ -27,14 +27,14 @@ internal open class ExperimentalCoroutineDispatcher(
     private val idleWorkerKeepAliveNs: Long,
     private val schedulerName: String = "CoroutineScheduler"
 ) : ExecutorCoroutineDispatcher() {
-    public constructor(
+    constructor(
         corePoolSize: Int = CORE_POOL_SIZE,
         maxPoolSize: Int = MAX_POOL_SIZE,
         schedulerName: String = DEFAULT_SCHEDULER_NAME
     ) : this(corePoolSize, maxPoolSize, IDLE_WORKER_KEEP_ALIVE_NS, schedulerName)
 
     @Deprecated(message = "Binary compatibility for Ktor 1.0-beta", level = DeprecationLevel.HIDDEN)
-    public constructor(
+    constructor(
         corePoolSize: Int = CORE_POOL_SIZE,
         maxPoolSize: Int = MAX_POOL_SIZE
     ) : this(corePoolSize, maxPoolSize, IDLE_WORKER_KEEP_ALIVE_NS)

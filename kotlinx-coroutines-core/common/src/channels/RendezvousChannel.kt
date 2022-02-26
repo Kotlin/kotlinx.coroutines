@@ -16,8 +16,8 @@ import kotlinx.coroutines.internal.*
  * This implementation is fully lock-free.
  **/
 internal open class RendezvousChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
-    protected final override val isBufferAlwaysEmpty: Boolean get() = true
-    protected final override val isBufferEmpty: Boolean get() = true
-    protected final override val isBufferAlwaysFull: Boolean get() = true
-    protected final override val isBufferFull: Boolean get() = true
+    final override val isBufferAlwaysEmpty: Boolean get() = true
+    final override val isBufferEmpty: Boolean get() = true
+    final override val isBufferAlwaysFull: Boolean get() = true
+    final override val isBufferFull: Boolean get() = true
 }

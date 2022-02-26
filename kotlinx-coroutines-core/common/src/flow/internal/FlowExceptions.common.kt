@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.*
  * (see usages of [checkOwnership]).
  */
 internal expect class AbortFlowException(owner: FlowCollector<*>) : CancellationException {
-    public val owner: FlowCollector<*>
+    val owner: FlowCollector<*>
 }
 
 internal fun AbortFlowException.checkOwnership(owner: FlowCollector<*>) {

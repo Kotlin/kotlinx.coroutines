@@ -88,7 +88,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
 internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
     unsafeFlow {
         coroutineScope {
-            val second = produce<Any> {
+            val second = produce {
                 flow2.collect { value ->
                     return@collect channel.send(value ?: NULL)
                 }

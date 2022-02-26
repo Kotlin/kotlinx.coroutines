@@ -17,12 +17,12 @@ import kotlinx.coroutines.*
  */
 @PublishedApi
 internal class DebuggerInfo(source: DebugCoroutineInfoImpl, context: CoroutineContext) : Serializable {
-    public val coroutineId: Long? = context[CoroutineId]?.id
-    public val dispatcher: String? = context[ContinuationInterceptor]?.toString()
-    public val name: String? = context[CoroutineName]?.name
-    public val state: String = source.state
-    public val lastObservedThreadState: String? = source.lastObservedThread?.state?.toString()
-    public val lastObservedThreadName = source.lastObservedThread?.name
-    public val lastObservedStackTrace: List<StackTraceElement> = source.lastObservedStackTrace()
-    public val sequenceNumber: Long = source.sequenceNumber
+    val coroutineId: Long? = context[CoroutineId]?.id
+    val dispatcher: String? = context[ContinuationInterceptor]?.toString()
+    val name: String? = context[CoroutineName]?.name
+    val state: String = source.state
+    val lastObservedThreadState: String? = source.lastObservedThread?.state?.toString()
+    val lastObservedThreadName = source.lastObservedThread?.name
+    val lastObservedStackTrace: List<StackTraceElement> = source.lastObservedStackTrace()
+    val sequenceNumber: Long = source.sequenceNumber
 }

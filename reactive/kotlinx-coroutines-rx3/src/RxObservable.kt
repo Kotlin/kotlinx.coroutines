@@ -81,7 +81,7 @@ private class RxObservableCoroutine<T : Any>(
             }
         }
 
-    public override suspend fun send(element: T) {
+    override suspend fun send(element: T) {
         mutex.lock()
         doLockedNext(element)?.let { throw it }
     }

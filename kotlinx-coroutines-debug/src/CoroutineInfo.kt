@@ -58,7 +58,7 @@ public class CoroutineInfo internal constructor(delegate: DebugCoroutineInfo) {
     private fun creationStackTrace(): List<StackTraceElement> {
         val bottom = creationStackBottom ?: return emptyList()
         // Skip "Coroutine creation stacktrace" frame
-        return sequence<StackTraceElement> { yieldFrames(bottom.callerFrame) }.toList()
+        return sequence { yieldFrames(bottom.callerFrame) }.toList()
     }
 
     private tailrec suspend fun SequenceScope<StackTraceElement>.yieldFrames(frame: CoroutineStackFrame?) {

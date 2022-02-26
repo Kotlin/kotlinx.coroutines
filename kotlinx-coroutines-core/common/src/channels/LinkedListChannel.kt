@@ -18,13 +18,13 @@ import kotlinx.coroutines.selects.*
  * @suppress **This an internal API and should not be used from general code.**
  */
 internal open class LinkedListChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
-    protected final override val isBufferAlwaysEmpty: Boolean get() = true
-    protected final override val isBufferEmpty: Boolean get() = true
-    protected final override val isBufferAlwaysFull: Boolean get() = false
-    protected final override val isBufferFull: Boolean get() = false
+    final override val isBufferAlwaysEmpty: Boolean get() = true
+    final override val isBufferEmpty: Boolean get() = true
+    final override val isBufferAlwaysFull: Boolean get() = false
+    final override val isBufferFull: Boolean get() = false
 
     // result is always `OFFER_SUCCESS | Closed`
-    protected override fun offerInternal(element: E): Any {
+    override fun offerInternal(element: E): Any {
         while (true) {
             val result = super.offerInternal(element)
             when {
@@ -43,7 +43,7 @@ internal open class LinkedListChannel<E>(onUndeliveredElement: OnUndeliveredElem
     }
 
     // result is always `ALREADY_SELECTED | OFFER_SUCCESS | Closed`.
-    protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
+    override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
         while (true) {
             val result = if (hasReceiveOrClosed)
                 super.offerSelectInternal(element, select) else

@@ -61,7 +61,7 @@ open class NumbersBenchmark {
     }
 
     @Benchmark
-    fun primesRx() = generateRxPrimes().take(primes.toLong()).count().blockingGet()
+    fun primesRx(): Long = generateRxPrimes().take(primes.toLong()).count().blockingGet()
 
     @Benchmark
     fun zip() = runBlocking {
@@ -84,7 +84,7 @@ open class NumbersBenchmark {
         val second = numbers
             .filter { it % 2L == 0L }
             .map { it * it }
-        first.zipWith(second, { v1, v2 -> v1 + v2 }).filter { it % 3 == 0L }.count()
+        first.zipWith(second) { v1, v2 -> v1 + v2 }.filter { it % 3 == 0L }.count()
             .blockingGet()
     }
 

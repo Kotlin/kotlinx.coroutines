@@ -28,30 +28,30 @@ open class TakeBenchmark {
             .map { it * it }.count()
 
     @Benchmark
-    fun baseline() = runBlocking<Int> {
+    fun baseline() = runBlocking {
         (0L until size).asFlow().consume()
     }
 
     @Benchmark
-    fun originalTake() = runBlocking<Int> {
+    fun originalTake() = runBlocking {
         (0L..Long.MAX_VALUE).asFlow().originalTake(size).consume()
     }
 
     @Benchmark
-    fun fastPathTake() = runBlocking<Int> {
+    fun fastPathTake() = runBlocking {
         (0L..Long.MAX_VALUE).asFlow().fastPathTake(size).consume()
     }
 
     @Benchmark
-    fun mergedStateMachine() = runBlocking<Int> {
+    fun mergedStateMachine() = runBlocking {
         (0L..Long.MAX_VALUE).asFlow().mergedStateMachineTake(size).consume()
     }
 
-    internal class StacklessCancellationException() : CancellationException() {
+    internal class StacklessCancellationException : CancellationException() {
         override fun fillInStackTrace(): Throwable = this
     }
 
-    public fun <T> Flow<T>.originalTake(count: Int): Flow<T> {
+    fun <T> Flow<T>.originalTake(count: Int): Flow<T> {
         return unsafeFlow {
             var consumed = 0
             try {
@@ -72,7 +72,7 @@ open class TakeBenchmark {
         throw StacklessCancellationException()
     }
 
-    public fun <T> Flow<T>.fastPathTake(count: Int): Flow<T> {
+    fun <T> Flow<T>.fastPathTake(count: Int): Flow<T> {
         return unsafeFlow {
             var consumed = 0
             try {
@@ -90,8 +90,8 @@ open class TakeBenchmark {
     }
 
 
-    public fun <T> Flow<T>.mergedStateMachineTake(count: Int): Flow<T> {
-        return unsafeFlow() {
+    fun <T> Flow<T>.mergedStateMachineTake(count: Int): Flow<T> {
+        return unsafeFlow {
             try {
                 val takeCollector = FlowTakeCollector(count, this)
                 collect(takeCollector)

@@ -126,10 +126,10 @@ internal abstract class AbstractSendChannel<E>(
 
     // ------ SendChannel ------
 
-    public final override val isClosedForSend: Boolean get() = closedForSend != null
+    final override val isClosedForSend: Boolean get() = closedForSend != null
     private val isFullImpl: Boolean get() = queue.nextNode !is ReceiveOrClosed<*> && isBufferFull
 
-    public final override suspend fun send(element: E) {
+    final override suspend fun send(element: E) {
         // fast path -- try offer non-blocking
         if (offerInternal(element) === OFFER_SUCCESS) return
         // slow-path does suspend or throws exception
@@ -151,7 +151,7 @@ internal abstract class AbstractSendChannel<E>(
         }
     }
 
-    public final override fun trySend(element: E): ChannelResult<Unit> {
+    final override fun trySend(element: E): ChannelResult<Unit> {
         val result = offerInternal(element)
         return when {
             result === OFFER_SUCCESS -> ChannelResult.success(Unit)
@@ -258,7 +258,7 @@ internal abstract class AbstractSendChannel<E>(
         return null
     }
 
-    public override fun close(cause: Throwable?): Boolean {
+    override fun close(cause: Throwable?): Boolean {
         val closed = Closed<E>(cause)
         /*
          * Try to commit close by adding a close token to the end of the queue.
@@ -355,7 +355,7 @@ internal abstract class AbstractSendChannel<E>(
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected open fun takeFirstReceiveOrPeekClosed(): ReceiveOrClosed<E>? =
-        queue.removeFirstIfIsInstanceOfOrPeekIf<ReceiveOrClosed<E>>({ it is Closed<*> })
+        queue.removeFirstIfIsInstanceOfOrPeekIf<ReceiveOrClosed<E>> { it is Closed<*> }
 
     // ------ registerSelectSend ------
 
@@ -429,7 +429,7 @@ internal abstract class AbstractSendChannel<E>(
 
     // ------ debug ------
 
-    public override fun toString() =
+    override fun toString() =
         "$classSimpleName@$hexAddress{$queueDebugStateString}$bufferDebugString"
 
     private val queueDebugStateString: String
@@ -495,7 +495,7 @@ internal abstract class AbstractSendChannel<E>(
         @JvmField val element: E
     ) : Send() {
         override val pollResult: Any? get() = element
-        override fun tryResumeSend(otherOp: PrepareOp?): Symbol? = RESUME_TOKEN.also { otherOp?.finishPrepare() }
+        override fun tryResumeSend(otherOp: PrepareOp?): Symbol = RESUME_TOKEN.also { otherOp?.finishPrepare() }
         override fun completeResumeSend() {}
 
         /**
@@ -575,11 +575,11 @@ internal abstract class AbstractChannel<E>(
 
     // ------ ReceiveChannel ------
 
-    public override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
-    public override val isEmpty: Boolean get() = isEmptyImpl
+    override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
+    override val isEmpty: Boolean get() = isEmptyImpl
     protected val isEmptyImpl: Boolean get() = queue.nextNode !is Send && isBufferEmpty
 
-    public final override suspend fun receive(): E {
+    final override suspend fun receive(): E {
         // fast path -- try poll non-blocking
         val result = pollInternal()
         /*
@@ -625,7 +625,7 @@ internal abstract class AbstractChannel<E>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    public final override suspend fun receiveCatching(): ChannelResult<E> {
+    final override suspend fun receiveCatching(): ChannelResult<E> {
         // fast path -- try poll non-blocking
         val result = pollInternal()
         if (result !== POLL_FAILED) return result.toResult()
@@ -634,7 +634,7 @@ internal abstract class AbstractChannel<E>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    public final override fun tryReceive(): ChannelResult<E> {
+    final override fun tryReceive(): ChannelResult<E> {
         val result = pollInternal()
         if (result === POLL_FAILED) return ChannelResult.failure()
         if (result is Closed<*>) return ChannelResult.closed(result.closeCause)
@@ -696,7 +696,7 @@ internal abstract class AbstractChannel<E>(
         list.forEachReversed { it.resumeSendClosed(closed) }
     }
 
-    public final override fun iterator(): ChannelIterator<E> = Itr(this)
+    final override fun iterator(): ChannelIterator<E> = Itr(this)
 
     // ------ registerSelectReceive ------
 
@@ -908,8 +908,8 @@ internal abstract class AbstractChannel<E>(
         override fun completeResumeReceive(value: E) = cont.completeResume(RESUME_TOKEN)
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
-            when {
-                receiveMode == RECEIVE_RESULT -> cont.resume(closed.toResult<Any>())
+            when (receiveMode) {
+                RECEIVE_RESULT -> cont.resume(closed.toResult<Any>())
                 else -> cont.resumeWithException(closed.receiveException)
             }
         }
@@ -921,7 +921,7 @@ internal abstract class AbstractChannel<E>(
         receiveMode: Int,
         @JvmField val onUndeliveredElement: OnUndeliveredElement<E>
     ) : ReceiveElement<E>(cont, receiveMode) {
-        override fun resumeOnCancellationFun(value: E): ((Throwable) -> Unit)? =
+        override fun resumeOnCancellationFun(value: E): (Throwable) -> Unit =
             onUndeliveredElement.bindCancellationFun(value, cont.context)
     }
 

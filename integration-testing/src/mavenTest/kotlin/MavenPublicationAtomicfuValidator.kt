@@ -35,7 +35,7 @@ class MavenPublicationAtomicfuValidator {
             if (!e.name.endsWith(".class")) continue
             val bytes = getInputStream(e).use { it.readBytes() }
             loop@for (i in 0 until bytes.size - ATOMIC_FU_REF.size) {
-                for (j in 0 until ATOMIC_FU_REF.size) {
+                for (j in ATOMIC_FU_REF.indices) {
                     if (bytes[i + j] != ATOMIC_FU_REF[j]) continue@loop
                 }
                 foundClasses += e.name // report error at the end with all class names

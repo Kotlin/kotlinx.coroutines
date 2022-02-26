@@ -88,11 +88,7 @@ internal class WindowDispatcher(private val window: Window) : CoroutineDispatche
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val handle = window.setTimeout({ block.run() }, delayToInt(timeMillis))
-        return object : DisposableHandle {
-            override fun dispose() {
-                window.clearTimeout(handle)
-            }
-        }
+        return DisposableHandle { window.clearTimeout(handle) }
     }
 }
 
@@ -109,7 +105,7 @@ private class WindowMessageQueue(private val window: Window) : MessageQueue() {
     }
 
     override fun schedule() {
-        Promise.resolve(Unit).then({ process() })
+        Promise.resolve(Unit).then { process() }
     }
 
     override fun reschedule() {

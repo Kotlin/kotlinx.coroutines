@@ -27,7 +27,7 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
         return delegate.invokeOnTimeout(timeMillis, block, context)
     }
 
-    actual fun enqueue(task: Runnable): Unit {
+    actual fun enqueue(task: Runnable) {
         checkState()
         delegate.dispatch(EmptyCoroutineContext, task)
     }

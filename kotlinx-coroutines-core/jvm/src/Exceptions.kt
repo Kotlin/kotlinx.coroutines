@@ -26,7 +26,7 @@ public actual fun CancellationException(message: String?, cause: Throwable?) : C
  * without cause, or with a cause or exception that is not [CancellationException]
  * (see [Job.getCancellationException]).
  */
-internal actual class JobCancellationException public actual constructor(
+internal actual class JobCancellationException actual constructor(
     message: String,
     cause: Throwable?,
     @JvmField internal actual val job: Job

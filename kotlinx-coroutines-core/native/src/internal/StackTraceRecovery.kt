@@ -13,8 +13,8 @@ internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothin
 
 @Suppress("UNUSED")
 internal actual interface CoroutineStackFrame {
-    public actual val callerFrame: CoroutineStackFrame?
-    public actual fun getStackTraceElement(): StackTraceElement?
+    actual val callerFrame: CoroutineStackFrame?
+    actual fun getStackTraceElement(): StackTraceElement?
 }
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")

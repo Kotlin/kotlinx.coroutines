@@ -21,7 +21,7 @@ import kotlin.math.*
 open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
 
     @Benchmark
-    public override fun play(): List<Map.Entry<Int, List<String>>> {
+    override fun play(): List<Map.Entry<Int, List<String>>> {
         val histoOfLetters = { word: String ->
             flow {
                 emit(word.asFlow().fold(HashMap<Int, MutableLong>()) { accumulator, value ->
@@ -37,14 +37,14 @@ open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
         }
 
         val blank = { entry: Map.Entry<Int, MutableLong> ->
-            max(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.toInt()])
+            max(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.code])
         }
 
         val nBlanks = { word: String ->
             flow {
                 emit(histoOfLetters(word)
                     .flatMapConcatIterable { it.entries }
-                    .map({ blank(it) })
+                    .map { blank(it) }
                     .sum()
                 )
             }
@@ -55,9 +55,9 @@ open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
         }
 
         val letterScore = { entry: Map.Entry<Int, MutableLong> ->
-                letterScores[entry.key - 'a'.toInt()] * Integer.min(
+                letterScores[entry.key - 'a'.code] * Integer.min(
                     entry.value.get().toInt(),
-                    scrabbleAvailableLetters[entry.key - 'a'.toInt()]
+                    scrabbleAvailableLetters[entry.key - 'a'.code]
                 )
         }
 
@@ -77,7 +77,7 @@ open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
         val bonusForDoubleLetter = { word: String ->
             flow {
                 emit(toBeMaxed(word)
-                    .map { letterScores[it.toInt() - 'a'.toInt()] }
+                    .map { letterScores[it.code - 'a'.code] }
                     .max())
             }
         }
@@ -92,7 +92,7 @@ open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
         val buildHistoOnScore: (((String) -> Flow<Int>) -> Flow<TreeMap<Int, List<String>>>) = { score ->
             flow {
                 emit(shakespeareWords.asFlow()
-                    .filter({ scrabbleWords.contains(it) && checkBlanks(it).single() })
+                    .filter { scrabbleWords.contains(it) && checkBlanks(it).single() }
                     .fold(TreeMap<Int, List<String>>(Collections.reverseOrder())) { acc, value ->
                         val key = score(value).single()
                         var list = acc[key] as MutableList<String>?
@@ -115,18 +115,18 @@ open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
     }
 }
 
-public fun String.asFlow() = flow {
+fun String.asFlow() = flow {
     forEach {
-        emit(it.toInt())
+        emit(it.code)
     }
 }
 
-public fun String.asFlow(startIndex: Int = 0, endIndex: Int = length) =
+fun String.asFlow(startIndex: Int = 0, endIndex: Int = length) =
     StringByCharFlow(this, startIndex, endIndex.coerceAtMost(this.length))
 
-public suspend inline fun Flow<Int>.sum(): Int {
+suspend inline fun Flow<Int>.sum(): Int {
     val collector = object : FlowCollector<Int> {
-        public var sum = 0
+        var sum = 0
 
         override suspend fun emit(value: Int) {
             sum += value
@@ -136,9 +136,9 @@ public suspend inline fun Flow<Int>.sum(): Int {
     return collector.sum
 }
 
-public suspend inline fun Flow<Int>.max(): Int {
+suspend inline fun Flow<Int>.max(): Int {
     val collector = object : FlowCollector<Int> {
-        public var max = 0
+        var max = 0
 
         override suspend fun emit(value: Int) {
             max = max(max, value)
@@ -149,9 +149,9 @@ public suspend inline fun Flow<Int>.max(): Int {
 }
 
 @JvmName("longSum")
-public suspend inline fun Flow<Long>.sum(): Long {
+suspend inline fun Flow<Long>.sum(): Long {
     val collector = object : FlowCollector<Long> {
-        public var sum = 0L
+        var sum = 0L
 
         override suspend fun emit(value: Long) {
             sum += value
@@ -161,13 +161,13 @@ public suspend inline fun Flow<Long>.sum(): Long {
     return collector.sum
 }
 
-public class StringByCharFlow(private val source: String, private val startIndex: Int, private val endIndex: Int): Flow<Char> {
+class StringByCharFlow(private val source: String, private val startIndex: Int, private val endIndex: Int): Flow<Char> {
     override suspend fun collect(collector: FlowCollector<Char>) {
         for (i in startIndex until endIndex) collector.emit(source[i])
     }
 }
 
-public fun <T> concat(first: Flow<T>, second: Flow<T>): Flow<T> = flow {
+fun <T> concat(first: Flow<T>, second: Flow<T>): Flow<T> = flow {
     first.collect { value ->
         return@collect emit(value)
     }
@@ -177,7 +177,7 @@ public fun <T> concat(first: Flow<T>, second: Flow<T>): Flow<T> = flow {
     }
 }
 
-public fun <T, R> Flow<T>.flatMapConcatIterable(transformer: (T) -> Iterable<R>): Flow<R> = flow {
+fun <T, R> Flow<T>.flatMapConcatIterable(transformer: (T) -> Iterable<R>): Flow<R> = flow {
     collect { value ->
         transformer(value).forEach { r ->
             emit(r)
@@ -185,7 +185,7 @@ public fun <T, R> Flow<T>.flatMapConcatIterable(transformer: (T) -> Iterable<R>)
     }
 }
 
-public inline fun <T> flow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+inline fun <T> flow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
     return object : Flow<T> {
         override suspend fun collect(collector: FlowCollector<T>) {
             collector.block()

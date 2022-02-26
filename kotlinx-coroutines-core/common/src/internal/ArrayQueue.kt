@@ -11,14 +11,14 @@ internal open class ArrayQueue<T : Any> {
 
     val isEmpty: Boolean get() = head == tail
 
-    public fun addLast(element: T) {
+    fun addLast(element: T) {
         elements[tail] = element
         tail = (tail + 1) and elements.size - 1
         if (tail == head) ensureCapacity()
     }
 
     @Suppress("UNCHECKED_CAST")
-    public fun removeFirstOrNull(): T? {
+    fun removeFirstOrNull(): T? {
         if (head == tail) return null
         val element = elements[head]
         elements[head] = null
@@ -26,7 +26,7 @@ internal open class ArrayQueue<T : Any> {
         return element as T
     }
 
-    public fun clear() {
+    fun clear() {
         head = 0
         tail = 0
         elements = arrayOfNulls(elements.size)

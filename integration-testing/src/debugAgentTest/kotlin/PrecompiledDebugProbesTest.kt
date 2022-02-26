@@ -16,7 +16,7 @@ class PrecompiledDebugProbesTest {
     @Test
     fun testClassFileContent() {
         val clz = Class.forName("kotlin.coroutines.jvm.internal.DebugProbesKt")
-        val className: String = clz.getName()
+        val className: String = clz.name
         val classFileResourcePath = className.replace(".", "/") + ".class"
         val stream = clz.classLoader.getResourceAsStream(classFileResourcePath)!!
         val array = stream.readBytes()

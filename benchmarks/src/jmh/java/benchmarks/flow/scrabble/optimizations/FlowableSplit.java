@@ -13,6 +13,7 @@ import io.reactivex.internal.queue.SpscArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
+import org.jetbrains.annotations.NotNull;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -35,8 +36,9 @@ final class FlowableSplit extends Flowable<String> implements FlowableTransforme
         this.bufferSize = bufferSize;
     }
 
+    @NotNull
     @Override
-    public Publisher<String> apply(Flowable<String> upstream) {
+    public Publisher<String> apply(@NotNull Flowable<String> upstream) {
         return new FlowableSplit(upstream, pattern, bufferSize);
     }
 
@@ -87,7 +89,7 @@ final class FlowableSplit extends Flowable<String> implements FlowableTransforme
             this.pattern = pattern;
             this.bufferSize = bufferSize;
             this.limit = bufferSize - (bufferSize >> 2);
-            this.queue = new SpscArrayQueue<String[]>(bufferSize);
+            this.queue = new SpscArrayQueue<>(bufferSize);
             this.requested = new AtomicLong();
         }
 
@@ -111,7 +113,7 @@ final class FlowableSplit extends Flowable<String> implements FlowableTransforme
         }
 
         @Override
-        public void onSubscribe(Subscription s) {
+        public void onSubscribe(@NotNull Subscription s) {
             if (SubscriptionHelper.validate(this.upstream, s)) {
                 this.upstream = s;
 

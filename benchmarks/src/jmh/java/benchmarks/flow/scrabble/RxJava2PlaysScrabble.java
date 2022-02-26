@@ -4,12 +4,11 @@
 
 package benchmarks.flow.scrabble;
 
-import benchmarks.flow.scrabble.IterableSpliterator;
-import benchmarks.flow.scrabble.ShakespearePlaysScrabble;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
+import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.*;
@@ -21,14 +20,15 @@ import java.util.concurrent.TimeUnit;
  * @author José
  * @author akarnokd
  */
-@Warmup(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 7, time = 1)
+@Measurement(iterations = 7, time = 1)
 @Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 public class RxJava2PlaysScrabble extends ShakespearePlaysScrabble {
 
+    @NotNull
     @Benchmark
     @Override
     public List<Entry<Integer, List<String>>> play() throws Exception {
@@ -53,8 +53,7 @@ public class RxJava2PlaysScrabble extends ShakespearePlaysScrabble {
         // Histogram of the letters in a given word
         Function<String, Single<HashMap<Integer, LongWrapper>>> histoOfLetters =
                 word -> toIntegerFlowable.apply(word)
-                            .collect(
-                                () -> new HashMap<>(),
+                            .collect(HashMap::new,
                                 (HashMap<Integer, LongWrapper> map, Integer value) ->
                                     {
                                         LongWrapper newValue = map.get(value) ;
@@ -63,7 +62,6 @@ public class RxJava2PlaysScrabble extends ShakespearePlaysScrabble {
                                         }
                                         map.put(value, newValue.incAndSet()) ;
                                     }
-
                             ) ;
 
         // number of blanks for a given letter
@@ -130,34 +128,26 @@ public class RxJava2PlaysScrabble extends ShakespearePlaysScrabble {
                 .reduce(Integer::sum) ;
 
         Function<Function<String, Maybe<Integer>>, Single<TreeMap<Integer, List<String>>>> buildHistoOnScore =
-                score -> Flowable.fromIterable(() -> shakespeareWords.iterator())
+                score -> Flowable.fromIterable(shakespeareWords)
                                 .filter(scrabbleWords::contains)
                                 .filter(word -> checkBlanks.apply(word).blockingGet())
                                 .collect(
                                     () -> new TreeMap<>(Comparator.reverseOrder()),
                                     (TreeMap<Integer, List<String>> map, String word) -> {
                                         Integer key = score.apply(word).blockingGet() ;
-                                        List<String> list = map.get(key) ;
-                                        if (list == null) {
-                                            list = new ArrayList<>() ;
-                                            map.put(key, list) ;
-                                        }
+                                        List<String> list = map.computeIfAbsent(key, k -> new ArrayList<>());
                                         list.add(word) ;
                                     }
                                 ) ;
 
         // best key / value pairs
-        List<Entry<Integer, List<String>>> finalList2 =
-                buildHistoOnScore.apply(score3)
-                    .flatMapPublisher(map -> Flowable.fromIterable(() -> map.entrySet().iterator()))
-                    .take(3)
-                    .collect(
-                        () -> new ArrayList<Entry<Integer, List<String>>>(),
-                        (list, entry) -> {
-                            list.add(entry) ;
-                        }
-                    )
-                    .blockingGet() ;
-        return finalList2 ;
+        return buildHistoOnScore.apply(score3)
+            .flatMapPublisher(map -> Flowable.fromIterable(() -> map.entrySet().iterator()))
+            .take(3)
+            .collect(
+                () -> new ArrayList<Entry<Integer, List<String>>>(),
+                    ArrayList::add
+            )
+            .blockingGet();
     }
 }

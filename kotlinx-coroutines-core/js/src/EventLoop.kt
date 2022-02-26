@@ -20,7 +20,7 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
 }
 
 internal actual object DefaultExecutor {
-    public actual fun enqueue(task: Runnable): Unit = unsupported()
+    actual fun enqueue(task: Runnable): Unit = unsupported()
 }
 
 private fun unsupported(): Nothing =

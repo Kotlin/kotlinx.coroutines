@@ -17,14 +17,14 @@ import kotlin.coroutines.jvm.internal.*
 @PublishedApi
 internal class DebugCoroutineInfo(
     source: DebugCoroutineInfoImpl,
-    public val context: CoroutineContext // field is used as of 1.4-M3
+    val context: CoroutineContext // field is used as of 1.4-M3
 ) {
-    public val creationStackBottom: CoroutineStackFrame? = source.creationStackBottom // field is used as of 1.4-M3
-    public val sequenceNumber: Long = source.sequenceNumber // field is used as of 1.4-M3
-    public val creationStackTrace = source.creationStackTrace // getter is used as of 1.4-M3
-    public val state: String = source.state // getter is used as of 1.4-M3
-    public val lastObservedThread: Thread? = source.lastObservedThread // field is used as of 1.4-M3
-    public val lastObservedFrame: CoroutineStackFrame? = source.lastObservedFrame // field is used as of 1.4-M3
+    val creationStackBottom: CoroutineStackFrame? = source.creationStackBottom // field is used as of 1.4-M3
+    val sequenceNumber: Long = source.sequenceNumber // field is used as of 1.4-M3
+    val creationStackTrace = source.creationStackTrace // getter is used as of 1.4-M3
+    val state: String = source.state // getter is used as of 1.4-M3
+    val lastObservedThread: Thread? = source.lastObservedThread // field is used as of 1.4-M3
+    val lastObservedFrame: CoroutineStackFrame? = source.lastObservedFrame // field is used as of 1.4-M3
     @get:JvmName("lastObservedStackTrace") // method with this name is used as of 1.4-M3
-    public val lastObservedStackTrace: List<StackTraceElement> = source.lastObservedStackTrace()
+    val lastObservedStackTrace: List<StackTraceElement> = source.lastObservedStackTrace()
 }

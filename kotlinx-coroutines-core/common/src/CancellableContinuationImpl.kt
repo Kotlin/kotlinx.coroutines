@@ -31,7 +31,7 @@ internal open class CancellableContinuationImpl<in T>(
         assert { resumeMode != MODE_UNINITIALIZED } // invalid mode for CancellableContinuationImpl
     }
 
-    public override val context: CoroutineContext = delegate.context
+    override val context: CoroutineContext = delegate.context
 
     /*
      * Implementation notes
@@ -76,11 +76,11 @@ internal open class CancellableContinuationImpl<in T>(
 
     internal val state: Any? get() = _state.value
 
-    public override val isActive: Boolean get() = state is NotCompleted
+    override val isActive: Boolean get() = state is NotCompleted
 
-    public override val isCompleted: Boolean get() = state !is NotCompleted
+    override val isCompleted: Boolean get() = state !is NotCompleted
 
-    public override val isCancelled: Boolean get() = state is CancelledContinuation
+    override val isCancelled: Boolean get() = state is CancelledContinuation
 
     // We cannot invoke `state.toString()` since it may cause a circular dependency
     private val stateDebugRepresentation get() = when(state) {
@@ -89,7 +89,7 @@ internal open class CancellableContinuationImpl<in T>(
         else -> "Completed"
     }
 
-    public override fun initCancellability() {
+    override fun initCancellability() {
         /*
         * Invariant: at the moment of invocation, `this` has not yet
         * leaked to user code and no one is able to invoke `resume` or `cancel`
@@ -129,10 +129,10 @@ internal open class CancellableContinuationImpl<in T>(
         return true
     }
 
-    public override val callerFrame: CoroutineStackFrame?
+    override val callerFrame: CoroutineStackFrame?
         get() = delegate as? CoroutineStackFrame
 
-    public override fun getStackTraceElement(): StackTraceElement? = null
+    override fun getStackTraceElement(): StackTraceElement? = null
 
     override fun takeState(): Any? = state
 
@@ -170,7 +170,7 @@ internal open class CancellableContinuationImpl<in T>(
         return dispatched.postponeCancellation(cause)
     }
 
-    public override fun cancel(cause: Throwable?): Boolean {
+    override fun cancel(cause: Throwable?): Boolean {
         _state.loop { state ->
             if (state !is NotCompleted) return false // false if already complete or cancelling
             // Active -- update to final state
@@ -330,7 +330,7 @@ internal open class CancellableContinuationImpl<in T>(
     override fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?) =
         resumeImpl(value, resumeMode, onCancellation)
 
-    public override fun invokeOnCancellation(handler: CompletionHandler) {
+    override fun invokeOnCancellation(handler: CompletionHandler) {
         val cancelHandler = makeCancelHandler(handler)
         _state.loop { state ->
             when (state) {
@@ -536,7 +536,7 @@ internal open class CancellableContinuationImpl<in T>(
         super.getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
 
     // For nicer debugging
-    public override fun toString(): String =
+    override fun toString(): String =
         "${nameString()}(${delegate.toDebugString()}){$stateDebugRepresentation}@$hexAddress"
 
     protected open fun nameString(): String =

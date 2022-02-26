@@ -112,6 +112,4 @@ public suspend fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) {
 /** @suppress */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Backwards compatibility with JS and K/N")
 public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit =
-    collect(object : FlowCollector<T> {
-        override suspend fun emit(value: T) = action(value)
-    })
+    collect { value -> action(value) }

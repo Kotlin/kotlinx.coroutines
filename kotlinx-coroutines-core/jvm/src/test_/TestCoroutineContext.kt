@@ -213,23 +213,19 @@ public class TestCoroutineContext(private val name: String? = null) : CoroutineC
 
         override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
             val node = postDelayed(block, timeMillis)
-            return object : DisposableHandle {
-                override fun dispose() {
-                    queue.remove(node)
-                }
-            }
+            return DisposableHandle { queue.remove(node) }
         }
 
         override fun processNextEvent() = this@TestCoroutineContext.processNextEvent()
 
-        public override fun toString(): String = "Dispatcher(${this@TestCoroutineContext})"
+        override fun toString(): String = "Dispatcher(${this@TestCoroutineContext})"
     }
 }
 
 private class TimedRunnableObsolete(
     private val run: Runnable,
     private val count: Long = 0,
-    @JvmField internal val time: Long = 0
+    @JvmField val time: Long = 0
 ) : Comparable<TimedRunnableObsolete>, Runnable by run, ThreadSafeHeapNode {
     override var heap: ThreadSafeHeap<*>? = null
     override var index: Int = 0

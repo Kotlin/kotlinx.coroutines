@@ -62,17 +62,17 @@ internal class CoroutinesTimeoutExtension internal constructor(
     /**
      * Creates the [CoroutinesTimeoutExtension] extension with the given timeout in milliseconds.
      */
-    public constructor(timeoutMs: Long, cancelOnTimeout: Boolean = false,
+    constructor(timeoutMs: Long, cancelOnTimeout: Boolean = false,
                        enableCoroutineCreationStackTraces: Boolean = true):
         this(enableCoroutineCreationStackTraces, timeoutMs, cancelOnTimeout)
 
-    public companion object {
+    companion object {
         /**
          * Creates the [CoroutinesTimeoutExtension] extension with the given timeout in seconds.
          */
         @JvmOverloads
-        public fun seconds(timeout: Int, cancelOnTimeout: Boolean = false,
-                           enableCoroutineCreationStackTraces: Boolean = true): CoroutinesTimeoutExtension =
+        fun seconds(timeout: Int, cancelOnTimeout: Boolean = false,
+                    enableCoroutineCreationStackTraces: Boolean = true): CoroutinesTimeoutExtension =
             CoroutinesTimeoutExtension(enableCoroutineCreationStackTraces, timeout.toLong() * 1000, cancelOnTimeout)
     }
 

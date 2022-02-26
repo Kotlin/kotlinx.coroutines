@@ -21,12 +21,10 @@ private class StreamFlow<T>(private val stream: Stream<T>) : Flow<T> {
 
     override suspend fun collect(collector: FlowCollector<T>) {
         if (!consumed.compareAndSet(false, true)) error("Stream.consumeAsFlow can be collected only once")
-        try {
+        stream.use { stream ->
             for (value in stream.iterator()) {
                 collector.emit(value)
             }
-        } finally {
-            stream.close()
         }
     }
 }

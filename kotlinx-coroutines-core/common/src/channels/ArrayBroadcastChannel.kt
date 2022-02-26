@@ -71,12 +71,12 @@ internal class ArrayBroadcastChannel<E>(
     override val isBufferAlwaysFull: Boolean get() = false
     override val isBufferFull: Boolean get() = size >= capacity
 
-    public override fun openSubscription(): ReceiveChannel<E> =
+    override fun openSubscription(): ReceiveChannel<E> =
         Subscriber(this).also {
             updateHead(addSub = it)
         }
 
-    public override fun close(cause: Throwable?): Boolean {
+    override fun close(cause: Throwable?): Boolean {
         if (!super.close(cause)) return false
         checkSubOffers()
         return true

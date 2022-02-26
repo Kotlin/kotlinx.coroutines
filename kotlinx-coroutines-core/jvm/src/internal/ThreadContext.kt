@@ -122,7 +122,7 @@ internal class ThreadLocalElement<T>(
     }
 
     // this method is overridden to perform value comparison (==) on key
-    public override operator fun <E : CoroutineContext.Element> get(key: CoroutineContext.Key<E>): E? =
+    override operator fun <E : CoroutineContext.Element> get(key: CoroutineContext.Key<E>): E? =
         @Suppress("UNCHECKED_CAST")
         if (this.key == key) this as E else null
 

@@ -87,7 +87,7 @@ public fun <T> CoroutineScope.async(
     val newContext = newCoroutineContext(context)
     val coroutine = if (start.isLazy)
         LazyDeferredCoroutine(newContext, block) else
-        DeferredCoroutine<T>(newContext, active = true)
+        DeferredCoroutine(newContext, active = true)
     coroutine.start(start, coroutine, block)
     return coroutine
 }

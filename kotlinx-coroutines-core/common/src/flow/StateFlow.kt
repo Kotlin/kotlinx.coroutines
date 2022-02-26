@@ -313,7 +313,7 @@ private class StateFlowImpl<T>(
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
 
     @Suppress("UNCHECKED_CAST")
-    public override var value: T
+    override var value: T
         get() = NULL.unbox(_state.value)
         set(value) { updateState(null, value ?: NULL) }
 

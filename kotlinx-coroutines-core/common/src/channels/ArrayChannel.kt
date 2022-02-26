@@ -44,16 +44,16 @@ internal open class ArrayChannel<E>(
     private var head: Int = 0
     private val size = atomic(0) // Invariant: size <= capacity
 
-    protected final override val isBufferAlwaysEmpty: Boolean get() = false
-    protected final override val isBufferEmpty: Boolean get() = size.value == 0
-    protected final override val isBufferAlwaysFull: Boolean get() = false
-    protected final override val isBufferFull: Boolean get() = size.value == capacity && onBufferOverflow == BufferOverflow.SUSPEND
+    final override val isBufferAlwaysEmpty: Boolean get() = false
+    final override val isBufferEmpty: Boolean get() = size.value == 0
+    final override val isBufferAlwaysFull: Boolean get() = false
+    final override val isBufferFull: Boolean get() = size.value == capacity && onBufferOverflow == BufferOverflow.SUSPEND
 
     override val isEmpty: Boolean get() = lock.withLock { isEmptyImpl }
     override val isClosedForReceive: Boolean get() = lock.withLock { super.isClosedForReceive }
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
-    protected override fun offerInternal(element: E): Any {
+    override fun offerInternal(element: E): Any {
         var receive: ReceiveOrClosed<E>? = null
         lock.withLock {
             val size = this.size.value
@@ -85,7 +85,7 @@ internal open class ArrayChannel<E>(
     }
 
     // result is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`
-    protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
+    override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
         var receive: ReceiveOrClosed<E>? = null
         lock.withLock {
             val size = this.size.value
@@ -174,7 +174,7 @@ internal open class ArrayChannel<E>(
     }
 
     // result is `E | POLL_FAILED | Closed`
-    protected override fun pollInternal(): Any? {
+    override fun pollInternal(): Any? {
         var send: Send? = null
         var resumed = false
         var result: Any? = null
@@ -214,7 +214,7 @@ internal open class ArrayChannel<E>(
     }
 
     // result is `ALREADY_SELECTED | E | POLL_FAILED | Closed`
-    protected override fun pollSelectInternal(select: SelectInstance<*>): Any? {
+    override fun pollSelectInternal(select: SelectInstance<*>): Any? {
         var send: Send? = null
         var success = false
         var result: Any? = null

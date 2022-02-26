@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  */
 @JvmName("flowCombine")
 public fun <T1, T2, R> Flow<T1>.combine(flow: Flow<T2>, transform: suspend (a: T1, b: T2) -> R): Flow<R> = flow {
-    combineInternal(arrayOf(this@combine, flow), nullArrayFactory(), { emit(transform(it[0] as T1, it[1] as T2)) })
+    combineInternal(arrayOf(this@combine, flow), nullArrayFactory()) { emit(transform(it[0] as T1, it[1] as T2)) }
 }
 
 /**
@@ -259,7 +259,7 @@ private inline fun <reified T, R> combineUnsafe(
     vararg flows: Flow<T>,
     crossinline transform: suspend (Array<T>) -> R
 ): Flow<R> = flow {
-    combineInternal(flows, nullArrayFactory(), { emit(transform(it)) })
+    combineInternal(flows, nullArrayFactory()) { emit(transform(it)) }
 }
 
 /*
@@ -270,7 +270,7 @@ private inline fun <reified T, R> combineTransformUnsafe(
     vararg flows: Flow<T>,
     @BuilderInference crossinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
 ): Flow<R> = safeFlow {
-    combineInternal(flows, nullArrayFactory(), { transform(it) })
+    combineInternal(flows, nullArrayFactory()) { transform(it) }
 }
 
 // Saves bunch of anonymous classes

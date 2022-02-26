@@ -64,16 +64,14 @@ final class FlowableCharSequence extends Flowable<Integer> {
         }
 
         void fastPath() {
-            int e = end;
-            CharSequence s = string;
             Subscriber<? super Integer> a = downstream;
 
-            for (int i = index; i != e; i++) {
+            for (int i = index; i != end; i++) {
                 if (cancelled) {
                     return;
                 }
 
-                a.onNext((int)s.charAt(i));
+                a.onNext((int) string.charAt(i));
             }
 
             if (!cancelled) {
@@ -85,7 +83,6 @@ final class FlowableCharSequence extends Flowable<Integer> {
             long e = 0L;
             int i = index;
             int f = end;
-            CharSequence s = string;
             Subscriber<? super Integer> a = downstream;
 
             for (;;) {
@@ -95,7 +92,7 @@ final class FlowableCharSequence extends Flowable<Integer> {
                         return;
                     }
 
-                    a.onNext((int)s.charAt(i));
+                    a.onNext((int) string.charAt(i));
 
                     i++;
                     e++;

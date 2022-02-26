@@ -1171,7 +1171,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             return parent.getCancellationException()
         }
 
-        protected override fun nameString(): String =
+        override fun nameString(): String =
             "AwaitContinuation"
     }
 

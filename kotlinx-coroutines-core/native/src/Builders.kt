@@ -68,7 +68,7 @@ private class BlockingCoroutine<T>(
         // wake up blocked thread
         if (joinWorker != Worker.current) {
             // Unpark waiting worker
-            joinWorker.executeAfter(0L, {}) // send an empty task to unpark the waiting event loop
+            joinWorker.executeAfter(0L) {} // send an empty task to unpark the waiting event loop
         }
     }
 
@@ -77,13 +77,8 @@ private class BlockingCoroutine<T>(
         try {
             eventLoop?.incrementUseCount()
             while (true) {
-                var parkNanos: Long
                 // Workaround for bug in BE optimizer that cannot eliminate boxing here
-                if (eventLoop != null) {
-                    parkNanos = eventLoop.processNextEvent()
-                } else {
-                    parkNanos = Long.MAX_VALUE
-                }
+                val parkNanos: Long = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                 // note: processNextEvent may lose unpark flag, so check if completed before parking
                 if (isCompleted) break
                 joinWorker.park(parkNanos / 1000L, true)

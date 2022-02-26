@@ -371,7 +371,7 @@ public interface ReceiveChannel<out E> {
                 @InternalCoroutinesApi
                 override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (E?) -> R) {
                     onReceiveCatching.registerSelectClause1(select) {
-                        it.exceptionOrNull()?.let { throw it }
+                        it.exceptionOrNull()?.let { e-> throw e }
                         block(it.getOrNull())
                     }
                 }

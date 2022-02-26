@@ -29,22 +29,18 @@ public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
+        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS) {
             with(continuation) { resumeUndispatched(Unit) }
-        })
+        }
         continuation.invokeOnCancellation { timer.stop() }
     }
 
     /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
+        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS) {
             block.run()
-        })
-        return object : DisposableHandle {
-            override fun dispose() {
-                timer.stop()
-            }
         }
+        return DisposableHandle { timer.stop() }
     }
 
     private fun schedule(time: Long, unit: TimeUnit, action: ActionListener): Timer =

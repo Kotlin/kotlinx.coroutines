@@ -43,7 +43,7 @@ internal actual class SafeCollector<T> actual constructor(
     }
 
     // Escalate visibility to manually release intercepted continuation
-    public actual override fun releaseIntercepted() {
+    actual override fun releaseIntercepted() {
         super.releaseIntercepted()
     }
 

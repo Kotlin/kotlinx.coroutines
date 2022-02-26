@@ -21,7 +21,7 @@ internal class DebugCoroutineInfoImpl(
      * A reference to a stack-trace that is converted to a [StackTraceFrame] which implements [CoroutineStackFrame].
      * The actual reference to the coroutine is not stored here, so we keep a strong reference.
      */
-    public val creationStackBottom: StackTraceFrame?,
+    val creationStackBottom: StackTraceFrame?,
     @JvmField internal val sequenceNumber: Long
 ) {
     /**
@@ -30,16 +30,16 @@ internal class DebugCoroutineInfoImpl(
      * garbage-collection of. The reference to context will not disappear as long as the coroutine itself is not lost.
      */
     private val _context = WeakReference(context)
-    public val context: CoroutineContext? // can be null when the coroutine was already garbage-collected
+    val context: CoroutineContext? // can be null when the coroutine was already garbage-collected
         get() = _context.get()
 
-    public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
+    val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
 
     /**
      * Last observed state of the coroutine.
      * Can be CREATED, RUNNING, SUSPENDED.
      */
-    public val state: String get() = _state
+    val state: String get() = _state
     private var _state: String = CREATED
 
     @JvmField
@@ -59,7 +59,7 @@ internal class DebugCoroutineInfoImpl(
      * It means that for [running][State.RUNNING] coroutines resulting stacktrace is inaccurate and
      * reflects stacktrace of the resumption point, not the actual current stacktrace.
      */
-    public fun lastObservedStackTrace(): List<StackTraceElement> {
+    fun lastObservedStackTrace(): List<StackTraceElement> {
         var frame: CoroutineStackFrame? = lastObservedFrame ?: return emptyList()
         val result = ArrayList<StackTraceElement>()
         while (frame != null) {

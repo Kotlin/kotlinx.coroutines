@@ -8,6 +8,7 @@ import benchmarks.*
 import kotlinx.coroutines.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
+import kotlin.math.*
 
 /*
  * Comparison of fork-join tasks using specific FJP API and classic [async] jobs.
@@ -103,7 +104,7 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
         private fun compute(coefficients: LongArray, start: Int, end: Int): Double {
             var result = 0.0
             for (i in start until end) {
-                result += Math.sin(Math.pow(coefficients[i].toDouble(), 1.1)) + 1e-8
+                result += sin(coefficients[i].toDouble().pow(1.1)) + 1e-8
             }
 
             return result
@@ -160,7 +161,7 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
 private fun compute(coefficients: LongArray, start: Int, end: Int): Double {
     var result = 0.0
     for (i in start until end) {
-        result += Math.sin(Math.pow(coefficients[i].toDouble(), 1.1)) + 1e-8
+        result += sin(coefficients[i].toDouble().pow(1.1)) + 1e-8
     }
 
     return result

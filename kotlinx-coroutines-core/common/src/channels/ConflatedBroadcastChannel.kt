@@ -89,7 +89,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      */
     public val valueOrNull: E? get() = when (val state = _state.value) {
         is Closed -> null
-        is State<*> -> UNDEFINED.unbox<E?>(state.value)
+        is State<*> -> UNDEFINED.unbox(state.value)
         else -> error("Invalid state $state")
     }
 

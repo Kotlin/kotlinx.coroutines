@@ -46,6 +46,6 @@ internal expect fun <E: Throwable> unwrap(exception: E): E
 internal expect class StackTraceElement
 
 internal expect interface CoroutineStackFrame {
-    public val callerFrame: CoroutineStackFrame?
-    public fun getStackTraceElement(): StackTraceElement?
+    val callerFrame: CoroutineStackFrame?
+    fun getStackTraceElement(): StackTraceElement?
 }

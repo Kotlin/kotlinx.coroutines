@@ -6,6 +6,7 @@ package benchmarks.flow.scrabble
 
 import org.openjdk.jmh.annotations.*
 import java.io.*
+import java.util.*
 import java.util.stream.*
 import java.util.zip.*
 
@@ -14,7 +15,7 @@ abstract class ShakespearePlaysScrabble {
     @Throws(Exception::class)
     abstract fun play(): List<Map.Entry<Int, List<String>>>
 
-    public class MutableLong {
+    class MutableLong {
         var value: Long = 0
         fun get(): Long {
             return value
@@ -31,7 +32,7 @@ abstract class ShakespearePlaysScrabble {
         }
     }
 
-    public interface LongWrapper {
+    interface LongWrapper {
         fun get(): Long
 
         @JvmDefault
@@ -58,21 +59,21 @@ abstract class ShakespearePlaysScrabble {
     }
 
     @JvmField
-    public val letterScores: IntArray = intArrayOf(1, 3, 3, 2, 1, 4, 2, 4, 1, 8, 5, 1, 3, 1, 1, 3, 10, 1, 1, 1, 1, 4, 4, 8, 4, 10)
+    val letterScores: IntArray = intArrayOf(1, 3, 3, 2, 1, 4, 2, 4, 1, 8, 5, 1, 3, 1, 1, 3, 10, 1, 1, 1, 1, 4, 4, 8, 4, 10)
 
     @JvmField
-    public val scrabbleAvailableLetters: IntArray =
+    val scrabbleAvailableLetters: IntArray =
         intArrayOf(9, 2, 2, 1, 12, 2, 3, 2, 9, 1, 1, 4, 2, 6, 8, 2, 1, 6, 4, 6, 4, 2, 2, 1, 2, 1)
 
     @JvmField
-    public val scrabbleWords: Set<String> = readResource("ospd.txt.gz")
+    val scrabbleWords: Set<String> = readResource("ospd.txt.gz")
 
     @JvmField
-    public val shakespeareWords: Set<String> = readResource("words.shakespeare.txt.gz")
+    val shakespeareWords: Set<String> = readResource("words.shakespeare.txt.gz")
 
     private fun readResource(path: String) =
         BufferedReader(InputStreamReader(GZIPInputStream(this.javaClass.classLoader.getResourceAsStream(path)))).lines()
-            .map { it.toLowerCase() }.collect(Collectors.toSet())
+            .map { it.lowercase(Locale.getDefault()) }.collect(Collectors.toSet())
 
     init {
         val expected = listOf(120 to listOf("jezebel", "quickly"),

@@ -173,7 +173,7 @@ public class TimeoutCancellationException internal constructor(
     internal constructor(message: String) : this(message, null)
 
     // message is never null in fact
-    override fun createCopy(): TimeoutCancellationException? =
+    override fun createCopy(): TimeoutCancellationException =
         TimeoutCancellationException(message ?: "", coroutine).also { it.initCause(this) }
 }
 

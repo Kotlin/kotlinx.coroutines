@@ -33,16 +33,16 @@ For JUnit4 debug module provides special test rule, [CoroutinesTimeout], for ins
 and to dump coroutines on timeout to simplify tests debugging.
 
 Its usage is better demonstrated by the example (runnable code is [here](test/TestRuleExample.kt)):
- 
+
 ```kotlin
 class TestRuleExample {
     @get:Rule
-    public val timeout = CoroutinesTimeout.seconds(1)
+    val timeout = CoroutinesTimeout.seconds(1)
 
     private suspend fun someFunctionDeepInTheStack() {
         withContext(Dispatchers.IO) {
             delay(Long.MAX_VALUE) // Hang method
-        }  
+        }
     }
 
     @Test
