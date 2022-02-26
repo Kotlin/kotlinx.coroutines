@@ -45,7 +45,7 @@ class LimitedParallelismTest : TestBase() {
             }
         }.asCoroutineDispatcher()
         val view = executor.limitedParallelism(1)
-        view.dispatch(EmptyCoroutineContext, Runnable { throw TestException() })
+        view.dispatch(EmptyCoroutineContext) { throw TestException() }
         withContext(view) {
             // Verify it is in working state and establish happens-before
         }

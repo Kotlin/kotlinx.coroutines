@@ -60,9 +60,9 @@ class EventLoopsTest : TestBase() {
             assertTrue(Thread.currentThread().name.startsWith(DefaultExecutor.THREAD_NAME))
             expect(2)
             // now runBlocking inside default executor thread --> should use outer event loop
-            DefaultExecutor.enqueue(Runnable {
+            DefaultExecutor.enqueue {
                 expect(4) // will execute when runBlocking runs loop
-            })
+            }
             expect(3)
             runBlocking {
                 expect(5)

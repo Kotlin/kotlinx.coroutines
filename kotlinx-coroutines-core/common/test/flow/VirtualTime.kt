@@ -57,7 +57,7 @@ internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : Coroutine
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val task = TimedTask(Runnable { with(continuation) { resumeUndispatched(Unit) } }, deadline(timeMillis))
+        val task = TimedTask({ with(continuation) { resumeUndispatched(Unit) } }, deadline(timeMillis))
         heap += task
         continuation.invokeOnCancellation { task.dispose() }
     }

@@ -42,11 +42,11 @@ class CoroutineSchedulerStressTest : TestBase() {
        * 1) All of them are completed successfully
        * 2) Every thread executed task at least once
        */
-        dispatcher.dispatch(EmptyCoroutineContext, Runnable {
+        dispatcher.dispatch(EmptyCoroutineContext) {
             for (i in 1..tasksNum) {
                 dispatcher.dispatch(EmptyCoroutineContext, ValidatingRunnable())
             }
-        })
+        }
 
         finishLatch.await()
         val observed = observedThreads.size
@@ -63,7 +63,7 @@ class CoroutineSchedulerStressTest : TestBase() {
          * and then repeats, thus never executing its own tasks and relying only on work stealing.
          */
         var blockingThread: Thread? = null
-        dispatcher.dispatch(EmptyCoroutineContext, Runnable {
+        dispatcher.dispatch(EmptyCoroutineContext) {
             // Submit million tasks
             blockingThread = Thread.currentThread()
             var submittedTasks = 0
@@ -77,7 +77,7 @@ class CoroutineSchedulerStressTest : TestBase() {
             }
             // Block current thread
             finishLatch.await()
-        })
+        }
 
         finishLatch.await()
 

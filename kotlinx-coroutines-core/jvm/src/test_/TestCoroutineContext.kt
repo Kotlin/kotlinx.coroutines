@@ -206,7 +206,7 @@ public class TestCoroutineContext(private val name: String? = null) : CoroutineC
         override fun shouldBeProcessedFromContext(): Boolean = true
 
         override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-            postDelayed(Runnable {
+            postDelayed({
                 with(continuation) { resumeUndispatched(Unit) }
             }, timeMillis)
         }

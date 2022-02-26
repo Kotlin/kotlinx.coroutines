@@ -27,23 +27,23 @@ class BlockingCoroutineDispatcherMixedStealingStressTest : SchedulerTestBase() {
         repeat(iterations * stressTestMultiplier) {
             val cpuBlocker = CyclicBarrier(corePoolSize + 1)
             val blockingBlocker = CyclicBarrier(2)
-            regular.execute(Runnable {
+            regular.execute {
                 // Block all CPU cores except current one
                 repeat(corePoolSize - 1) {
-                    regular.execute(Runnable {
+                    regular.execute {
                         cpuBlocker.await()
-                    })
+                    }
                 }
 
-                blocking.execute(Runnable {
+                blocking.execute {
                     blockingBlocker.await()
-                })
+                }
 
-                regular.execute(Runnable {
+                regular.execute {
                     blockingBlocker.await()
                     cpuBlocker.await()
-                })
-            })
+                }
+            }
             cpuBlocker.await()
         }
     }
@@ -56,9 +56,9 @@ class BlockingCoroutineDispatcherMixedStealingStressTest : SchedulerTestBase() {
             val cpuBlocker = CyclicBarrier(corePoolSize + 1)
             val blockingBlocker = CyclicBarrier(2)
             repeat(corePoolSize) {
-                regular.execute(Runnable {
+                regular.execute {
                     cpuBlocker.await()
-                })
+                }
             }
             // Wait for all threads to park
             while (true) {
@@ -67,11 +67,11 @@ class BlockingCoroutineDispatcherMixedStealingStressTest : SchedulerTestBase() {
                 if (waiters >= corePoolSize) break
                 Thread.yield()
             }
-            blocking.execute(Runnable {
+            blocking.execute {
                 blockingBlocker.await()
-            })
-            regular.execute(Runnable {
-            })
+            }
+            regular.execute {
+            }
 
             blockingBlocker.await()
             cpuBlocker.await()

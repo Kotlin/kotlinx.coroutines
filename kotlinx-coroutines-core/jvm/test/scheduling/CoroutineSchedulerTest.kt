@@ -19,7 +19,7 @@ class CoroutineSchedulerTest : TestBase() {
         CoroutineScheduler(1, 1).use {
             for (mode in taskModes) {
                 val latch = CountDownLatch(1)
-                it.dispatch(Runnable {
+                it.dispatch({
                     latch.countDown()
                 }, TaskContextImpl(mode))
 
@@ -32,9 +32,9 @@ class CoroutineSchedulerTest : TestBase() {
     fun testModesInternalSubmission() { // Smoke
         CoroutineScheduler(2, 2).use {
             val latch = CountDownLatch(taskModes.size)
-            it.dispatch(Runnable {
+            it.dispatch({
                 for (mode in taskModes) {
-                    it.dispatch(Runnable {
+                    it.dispatch({
                         latch.countDown()
                     }, TaskContextImpl(mode))
                 }
@@ -50,13 +50,13 @@ class CoroutineSchedulerTest : TestBase() {
             val startLatch = CountDownLatch(1)
             val finishLatch = CountDownLatch(2)
 
-            it.dispatch(Runnable {
-                it.dispatch(Runnable {
+            it.dispatch({
+                it.dispatch({
                     expect(2)
                     finishLatch.countDown()
                 })
 
-                it.dispatch(Runnable {
+                it.dispatch({
                     expect(1)
                     finishLatch.countDown()
                 })
@@ -74,13 +74,13 @@ class CoroutineSchedulerTest : TestBase() {
             val startLatch = CountDownLatch(1)
             val finishLatch = CountDownLatch(2)
 
-            it.dispatch(Runnable {
-                it.dispatch(Runnable {
+            it.dispatch({
+                it.dispatch({
                     expect(1)
                     finishLatch.countDown()
                 })
 
-                it.dispatch(Runnable {
+                it.dispatch({
                     expect(2)
                     finishLatch.countDown()
                 }, tailDispatch = true)
@@ -123,9 +123,9 @@ class CoroutineSchedulerTest : TestBase() {
     fun testSelfClose() {
         val dispatcher = SchedulerCoroutineDispatcher(1, 1)
         val latch = CountDownLatch(1)
-        dispatcher.dispatch(EmptyCoroutineContext, Runnable {
+        dispatcher.dispatch(EmptyCoroutineContext) {
             dispatcher.close(); latch.countDown()
-        })
+        }
         latch.await()
     }
 
