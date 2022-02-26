@@ -177,7 +177,7 @@ import kotlin.coroutines.*
  * These implementations ensure that the context preservation property is not violated, and prevent most
  * of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.
  */
-public interface Flow<out T> {
+public fun interface Flow<out T> {
 
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.

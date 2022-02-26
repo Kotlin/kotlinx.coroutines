@@ -28,7 +28,7 @@ internal expect fun assert(value: () -> Boolean)
  * so on JVM their stacktraces will be properly recovered.
  */
 @ExperimentalCoroutinesApi // Since 1.2.0, no ETA on stability
-public interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable<T> {
+public fun interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable<T> {
 
     /**
      * Creates a copy of the current instance.
