@@ -8,7 +8,6 @@
 
 package kotlinx.coroutines
 
-import java.util.concurrent.locks.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
 

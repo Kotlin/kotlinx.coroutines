@@ -9,8 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
-import kotlin.coroutines.*
-import kotlin.coroutines.intrinsics.*
 
 private typealias Update = IndexedValue<Any?>
 

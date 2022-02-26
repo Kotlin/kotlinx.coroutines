@@ -11,7 +11,6 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
-import kotlin.coroutines.*
 import kotlin.jvm.*
 
 internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"

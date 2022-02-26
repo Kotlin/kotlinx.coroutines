@@ -9,7 +9,6 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.internal.Symbol
 import kotlin.jvm.*
 
 /**

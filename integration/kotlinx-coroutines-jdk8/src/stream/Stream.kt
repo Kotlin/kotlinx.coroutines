@@ -5,7 +5,6 @@
 package kotlinx.coroutines.stream
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.stream.*
 

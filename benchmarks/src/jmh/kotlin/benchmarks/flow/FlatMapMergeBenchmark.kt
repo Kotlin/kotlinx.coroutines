@@ -35,7 +35,7 @@ open class FlatMapMergeBenchmark {
 
     @Benchmark
     fun flatMapSafe() = runBlocking {
-        kotlinx.coroutines.flow.flow {
+        flow {
             repeat(iterations) { emit(it) }
         }.flatMapMerge { value ->
             flowOf(value)

@@ -4,7 +4,6 @@
 
 package benchmarks
 
-import benchmarks.akka.CORES_COUNT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.scheduling.*
 import org.openjdk.jmh.annotations.Param

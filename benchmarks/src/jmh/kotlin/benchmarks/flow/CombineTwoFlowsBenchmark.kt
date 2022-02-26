@@ -6,7 +6,6 @@ package benchmarks.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.internal.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 

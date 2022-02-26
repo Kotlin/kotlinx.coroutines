@@ -5,7 +5,6 @@
 package kotlinx.coroutines.flow.internal
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
