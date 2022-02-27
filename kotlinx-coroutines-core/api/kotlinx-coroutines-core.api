@@ -508,10 +508,6 @@ public final class kotlinx/coroutines/ParentJob$DefaultImpls {
 	public static fun plus (Lkotlinx/coroutines/ParentJob;Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 }
 
-public final class kotlinx/coroutines/RunnableKt {
-	public static final fun Runnable (Lkotlin/jvm/functions/Function0;)Ljava/lang/Runnable;
-}
-
 public final class kotlinx/coroutines/SupervisorKt {
 	public static final fun SupervisorJob (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableJob;
 	public static final synthetic fun SupervisorJob (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
