@@ -103,5 +103,9 @@ internal tailrec fun Job?.transitiveCoroutineParent(collectJob: Job?): Job? {
  */
 @PublishedApi
 internal inline fun <T> unsafeFlow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
-    return Flow { it.block() }
+    return object : Flow<T> {
+        override suspend fun collect(collector: FlowCollector<T>) {
+            collector.block()
+        }
+    }
 }
