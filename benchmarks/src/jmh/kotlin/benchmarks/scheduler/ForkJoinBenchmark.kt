@@ -6,6 +6,7 @@ package benchmarks.scheduler
 
 import benchmarks.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.scheduling.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 
@@ -29,7 +30,7 @@ import java.util.concurrent.*
  */
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 2)
+@Fork(value = 4)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
@@ -41,10 +42,12 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
          * Change batch size to control affinity/work stealing/scheduling overhead effects
          */
         const val TASK_SIZE = 8192 * 1024
-        const val BATCH_SIZE = 32 * 8192
+        const val BATCH_SIZE = 16
     }
 
     lateinit var coefficients: LongArray
+
+    @Param("fjp", "ftp_1", "ftp_8", "scheduler", "kotlin_scheduler")
     override var dispatcher: String = "scheduler"
 
     @Setup
@@ -54,26 +57,36 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
     }
 
     @Benchmark
-    fun asyncFjp() = runBlocking {
-        CoroutineScope(ForkJoinPool.commonPool().asCoroutineDispatcher()).startAsync(coefficients, 0, coefficients.size).await()
-    }
-
-    @Benchmark
-    fun asyncExperimental() = runBlocking {
+    fun forkJoin() = runBlocking {
         startAsync(coefficients, 0, coefficients.size).await()
     }
 
-    @Benchmark
-    fun fjpRecursiveTask(): Double {
-        val task = RecursiveAction(coefficients, 0, coefficients.size)
-        return ForkJoinPool.commonPool().submit(task).join()
-    }
-
-    @Benchmark
-    fun fjpTask(): Double {
-        val task = Task(coefficients, 0, coefficients.size)
-        return ForkJoinPool.commonPool().submit(task).join()
-    }
+//    @Benchmark
+//    fun asyncFjp() = runBlocking {
+//        CoroutineScope(ForkJoinPool.commonPool().asCoroutineDispatcher()).startAsync(coefficients, 0, coefficients.size).await()
+//    }
+//
+//    @Benchmark
+//    fun asyncKotlinDefault() = runBlocking {
+//        CoroutineScope(KotlinDefaultCoroutineDispatcher()).startAsync(coefficients, 0, coefficients.size).await()
+//    }
+//
+//    @Benchmark
+//    fun asyncGoBased() = runBlocking {
+//        CoroutineScope(ExperimentalCoroutineDispatcher()).startAsync(coefficients, 0, coefficients.size).await()
+//    }
+//
+//    @Benchmark
+//    fun fjpRecursiveTask(): Double {
+//        val task = RecursiveAction(coefficients, 0, coefficients.size)
+//        return ForkJoinPool.commonPool().submit(task).join()
+//    }
+//
+//    @Benchmark
+//    fun fjpTask(): Double {
+//        val task = Task(coefficients, 0, coefficients.size)
+//        return ForkJoinPool.commonPool().submit(task).join()
+//    }
 
     suspend fun CoroutineScope.startAsync(coefficients: LongArray, start: Int, end: Int): Deferred<Double> = async {
         if (end - start <= BATCH_SIZE) {

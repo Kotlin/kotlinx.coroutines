@@ -30,7 +30,7 @@ import java.util.concurrent.*
  */
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 1)
+@Fork(value = 4)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
@@ -40,7 +40,7 @@ open class CycledActorsBenchmark : ParametrizedDispatcherBase() {
         val NO_CHANNEL = Channel<Letter>(0)
     }
 
-    @Param("fjp", "ftp_1", "scheduler")
+    @Param("fjp", "ftp_1", "scheduler", "kotlin_scheduler")
     override var dispatcher: String = "fjp"
 
     @Param("1", "1024")

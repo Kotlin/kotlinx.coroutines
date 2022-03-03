@@ -6,6 +6,7 @@
 
 package benchmarks.flow
 
+import benchmarks.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.internal.*
@@ -18,9 +19,12 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
-open class TakeWhileBenchmark {
+open class TakeWhileBenchmark: ParametrizedDispatcherBase() {
     @Param("1", "10", "100", "1000")
     private var size: Int = 0
+
+    @Param("kotlin_scheduler", "fjp", "scheduler")
+    override var dispatcher: String = "fjp"
 
     private suspend inline fun Flow<Long>.consume() =
         filter { it % 2L != 0L }

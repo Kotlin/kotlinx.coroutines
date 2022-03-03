@@ -4,6 +4,7 @@
 
 package benchmarks.flow
 
+import benchmarks.*
 import benchmarks.common.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -20,7 +21,10 @@ import java.util.concurrent.TimeUnit
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @Fork(1)
-open class FlowFlattenMergeBenchmark {
+open class FlowFlattenMergeBenchmark: ParametrizedDispatcherBase() {
+    @Param("kotlin_scheduler", "fjp", "scheduler")
+    override var dispatcher: String = "fjp"
+
     @Param
     private var flowsNumberStrategy: FlowsNumberStrategy = FlowsNumberStrategy.`10xConcurrency flows`
 
@@ -30,7 +34,8 @@ open class FlowFlattenMergeBenchmark {
     private lateinit var flow: Flow<Flow<Int>>
 
     @Setup
-    fun setup() {
+    override fun setup() {
+        super.setup()
         val n = flowsNumberStrategy.get(concurrency)
         val flowElementsToProcess = ELEMENTS / n
 
@@ -45,7 +50,7 @@ open class FlowFlattenMergeBenchmark {
     }
 
     @Benchmark
-    fun flattenMerge() = runBlocking(Dispatchers.Default) {
+    fun flattenMerge() = runBlocking {
         flow.flattenMerge(concurrency = concurrency).collect()
     }
 }

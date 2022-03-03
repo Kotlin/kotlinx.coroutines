@@ -27,14 +27,14 @@ import java.util.concurrent.*
  */
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 1)
+@Fork(value = 4)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class PingPongActorBenchmark : ParametrizedDispatcherBase() {
     data class Letter(val message: Any?, val sender: SendChannel<Letter>)
 
-    @Param("scheduler", "fjp", "ftp_1")
+    @Param("scheduler", "kotlin_scheduler", "fjp", "ftp_1")
     override var dispatcher: String = "fjp"
 
     @Benchmark

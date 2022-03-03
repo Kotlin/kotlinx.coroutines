@@ -38,10 +38,10 @@ internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
 // TODO make internal (and rename) after complete integration
 @InternalCoroutinesApi
 public open class ExperimentalCoroutineDispatcher(
-    private val corePoolSize: Int,
-    private val maxPoolSize: Int,
-    private val idleWorkerKeepAliveNs: Long,
-    private val schedulerName: String = "CoroutineScheduler"
+    internal val corePoolSize: Int,
+    internal val maxPoolSize: Int,
+    internal val idleWorkerKeepAliveNs: Long,
+    internal val schedulerName: String = "CoroutineScheduler"
 ) : ExecutorCoroutineDispatcher() {
     public constructor(
         corePoolSize: Int = CORE_POOL_SIZE,
@@ -121,8 +121,10 @@ public open class ExperimentalCoroutineDispatcher(
         }
     }
 
-//    private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
-    private fun createScheduler() = GoBasedCoroutineScheduler(corePoolSize)
+    //    private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
+    internal open fun createScheduler(): Scheduler {
+        return GoBasedCoroutineScheduler(corePoolSize, maxPoolSize, schedulerName)
+    }
 
     // fot tests only
     @Synchronized
@@ -139,6 +141,40 @@ public open class ExperimentalCoroutineDispatcher(
 
     // for tests only
     internal fun restore() = usePrivateScheduler() // recreate scheduler
+}
+
+internal object KotlinDefaultScheduler : KotlinDefaultCoroutineDispatcher() {
+    val IO: CoroutineDispatcher = LimitingDispatcher(
+        this,
+        systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)),
+        "Dispatchers.IO",
+        TASK_PROBABLY_BLOCKING
+    )
+
+    override fun close() {
+        throw UnsupportedOperationException("$DEFAULT_DISPATCHER_NAME cannot be closed")
+    }
+
+    override fun toString(): String = DEFAULT_DISPATCHER_NAME
+
+    @InternalCoroutinesApi
+    @Suppress("UNUSED")
+    public fun toDebugString(): String = super.toString()
+}
+
+public open class KotlinDefaultCoroutineDispatcher(
+    corePoolSize: Int,
+    maxPoolSize: Int,
+    idleWorkerKeepAliveNs: Long,
+    schedulerName: String = "CoroutineScheduler"
+) : ExperimentalCoroutineDispatcher(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName) {
+    public constructor(
+        corePoolSize: Int = CORE_POOL_SIZE,
+        maxPoolSize: Int = MAX_POOL_SIZE,
+        schedulerName: String = DEFAULT_SCHEDULER_NAME
+    ) : this(corePoolSize, maxPoolSize, IDLE_WORKER_KEEP_ALIVE_NS, schedulerName)
+
+    override fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
 }
 
 private class LimitingDispatcher(

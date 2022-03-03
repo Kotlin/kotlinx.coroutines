@@ -4,6 +4,7 @@
 
 package benchmarks.tailcall
 
+import benchmarks.*
 import kotlinx.coroutines.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
@@ -14,7 +15,9 @@ import java.util.concurrent.*
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
-open class SimpleChannelBenchmark {
+open class SimpleChannelBenchmark : ParametrizedDispatcherBase() {
+    @Param("kotlin_scheduler", "fjp", "scheduler")
+    override var dispatcher: String = "fjp"
 
     private val iterations = 10_000
 

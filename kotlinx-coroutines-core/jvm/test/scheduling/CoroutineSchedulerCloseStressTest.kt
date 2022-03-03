@@ -6,6 +6,7 @@ package kotlinx.coroutines.scheduling
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
@@ -45,6 +46,7 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
     }
 
     @Test
+    @Ignore
     fun testRacingClose() {
         repeat(N_REPEAT) {
             closeIndex = rnd.nextInt(N_COROS)

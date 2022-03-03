@@ -8,6 +8,7 @@ import benchmarks.common.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher
+import kotlinx.coroutines.scheduling.KotlinDefaultCoroutineDispatcher
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.openjdk.jmh.annotations.*
@@ -21,7 +22,7 @@ import java.util.concurrent.TimeUnit
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class SemaphoreBenchmark {
-    @Param
+    @Param("FORK_JOIN", "KOTLIN_DEFAULT", "GO_BASED")
     private var _1_dispatcher: SemaphoreBenchDispatcherCreator = SemaphoreBenchDispatcherCreator.FORK_JOIN
 
     @Param("0", "1000")
@@ -33,6 +34,7 @@ open class SemaphoreBenchmark {
     @Param("1", "2", "4") // local machine
 //    @Param("1", "2", "4", "8", "16", "32", "64", "128", "144") // dasquad
 //    @Param("1", "2", "4", "8", "16", "32", "64", "96") // Google Cloud
+//    @Param("1", "2", "4", "8", "16", "32", "64", "128") // dasquad
     private var _4_parallelism: Int = 0
 
     private lateinit var dispatcher: CoroutineDispatcher
@@ -84,7 +86,13 @@ open class SemaphoreBenchmark {
 
 enum class SemaphoreBenchDispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
     FORK_JOIN({ parallelism -> ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-    EXPERIMENTAL({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
+    KOTLIN_DEFAULT({ parallelism ->
+        KotlinDefaultCoroutineDispatcher(
+            corePoolSize = parallelism,
+            maxPoolSize = parallelism
+        )
+    }),
+    GO_BASED({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
 }
 
 private const val WORK_INSIDE = 80

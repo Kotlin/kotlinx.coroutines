@@ -40,7 +40,7 @@ import java.util.concurrent.*
  */
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 2)
+@Fork(value = 4)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
@@ -53,7 +53,7 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
     @Param("1", "8", "16")
     var jobsCount = 1
 
-    @Param("fjp", "ftp_1", "dispatcher")
+    @Param("fjp", "ftp_1", "scheduler", "kotlin_scheduler")
     override var dispatcher: String = "fjp"
 
     @Volatile

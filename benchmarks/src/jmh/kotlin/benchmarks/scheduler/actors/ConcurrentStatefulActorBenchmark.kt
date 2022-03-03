@@ -52,7 +52,7 @@ import java.util.concurrent.*
  */
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 1)
+@Fork(value = 4)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
@@ -61,7 +61,7 @@ open class ConcurrentStatefulActorBenchmark : ParametrizedDispatcherBase() {
     @Param("1024", "8192")
     var stateSize: Int = -1
 
-    @Param("fjp", "scheduler")
+    @Param("kotlin_scheduler", "fjp", "scheduler")
     override var dispatcher: String = "fjp"
 
     @Benchmark

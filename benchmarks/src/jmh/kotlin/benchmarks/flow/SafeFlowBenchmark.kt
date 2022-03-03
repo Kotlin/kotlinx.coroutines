@@ -4,6 +4,7 @@
 
 package benchmarks.flow
 
+import benchmarks.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
@@ -17,7 +18,9 @@ import kotlinx.coroutines.flow.flow as safeFlow
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
-open class SafeFlowBenchmark {
+open class SafeFlowBenchmark: ParametrizedDispatcherBase() {
+    @Param("kotlin_scheduler", "fjp", "scheduler")
+    override var dispatcher: String = "fjp"
 
     private fun numbersSafe() = safeFlow {
         for (i in 2L..1000L) emit(i)

@@ -14,7 +14,7 @@ import kotlin.math.*
 
 @Warmup(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 7, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 1)
+@Fork(value = 4)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)

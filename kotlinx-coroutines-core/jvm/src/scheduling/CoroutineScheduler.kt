@@ -94,7 +94,7 @@ internal class CoroutineScheduler(
     @JvmField val maxPoolSize: Int,
     @JvmField val idleWorkerKeepAliveNs: Long = IDLE_WORKER_KEEP_ALIVE_NS,
     @JvmField val schedulerName: String = DEFAULT_SCHEDULER_NAME
-) : Executor, Closeable {
+) : Scheduler {
     init {
         require(corePoolSize >= MIN_SUPPORTED_POOL_SIZE) {
             "Core pool size $corePoolSize should be at least $MIN_SUPPORTED_POOL_SIZE"
@@ -329,7 +329,7 @@ internal class CoroutineScheduler(
     override fun close() = shutdown(10_000L)
 
     // Shuts down current scheduler and waits until all work is done and all threads are stopped.
-    fun shutdown(timeout: Long) {
+    override fun shutdown(timeout: Long) {
         // atomically set termination flag which is checked when workers are added or removed
         if (!_isTerminated.compareAndSet(false, true)) return
         // make sure we are not waiting for the current thread
@@ -380,7 +380,7 @@ internal class CoroutineScheduler(
      *   * [CoroutineStart.UNDISPATCHED]
      *   * Concurrent [close] that effectively shutdowns the worker thread
      */
-    fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, tailDispatch: Boolean = false) {
+    override fun dispatch(block: Runnable, taskContext: TaskContext, tailDispatch: Boolean) {
         trackTask() // this is needed for virtual time support
         val task = createTask(block, taskContext)
         // try to submit the task to the local queue and act depending on the result
@@ -403,7 +403,7 @@ internal class CoroutineScheduler(
         }
     }
 
-    fun createTask(block: Runnable, taskContext: TaskContext): Task {
+    override fun createTask(block: Runnable, taskContext: TaskContext): Task {
         val nanoTime = schedulerTimeSource.nanoTime()
         if (block is Task) {
             block.submissionTime = nanoTime

@@ -16,7 +16,10 @@ import kotlin.coroutines.*
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 @Fork(1)
-open class ChannelSinkBenchmark {
+open class ChannelSinkBenchmark: ParametrizedDispatcherBase() {
+    @Param("kotlin_scheduler", "fjp", "scheduler")
+    override var dispatcher: String = "fjp"
+
     private val tl = ThreadLocal.withInitial({ 42 })
     private val tl2 = ThreadLocal.withInitial({ 239 })
 

@@ -33,7 +33,7 @@ import java.util.concurrent.*
  */
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 1)
+@Fork(value = 4)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
@@ -41,7 +41,7 @@ open class StatefulActorBenchmark : ParametrizedDispatcherBase() {
 
     data class Letter(val message: Any, val sender: SendChannel<Letter>)
 
-    @Param("fjp", "ftp_1", "ftp_8", "scheduler")
+    @Param("fjp", "ftp_1", "ftp_8", "scheduler", "kotlin_scheduler")
     override var dispatcher: String = "fjp"
 
     @Benchmark
@@ -103,6 +103,7 @@ fun CoroutineScope.computationActor(stateSize: Int = STATE_SIZE) =
         val coefficients = LongArray(stateSize) { ThreadLocalRandom.current().nextLong(0, 100) }
 
         for (letter in channel) with(letter) {
+//            println("letter: $letter" )
             when (message) {
                 is Long -> {
                     var result = 0L

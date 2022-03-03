@@ -4,6 +4,7 @@
 
 package benchmarks.flow
 
+import benchmarks.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
@@ -15,7 +16,10 @@ import java.util.concurrent.*
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
-open class FlatMapMergeBenchmark {
+open class FlatMapMergeBenchmark : ParametrizedDispatcherBase() {
+
+    @Param("kotlin_scheduler", "fjp", "scheduler")
+    override var dispatcher: String = "fjp"
 
     // Note: tests only absence of contention on downstream
 

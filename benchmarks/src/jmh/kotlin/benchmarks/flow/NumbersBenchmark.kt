@@ -5,6 +5,7 @@
 
 package benchmarks.flow
 
+import benchmarks.*
 import benchmarks.flow.scrabble.flow
 import io.reactivex.*
 import io.reactivex.functions.*
@@ -20,7 +21,10 @@ import java.util.concurrent.Callable
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
-open class NumbersBenchmark {
+open class NumbersBenchmark: ParametrizedDispatcherBase() {
+
+    @Param("kotlin_scheduler", "fjp", "scheduler")
+    override var dispatcher: String = "fjp"
 
     companion object {
         private const val primes = 100

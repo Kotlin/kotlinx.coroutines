@@ -32,6 +32,9 @@ abstract class ParametrizedDispatcherBase : CoroutineScope {
             dispatcher == "scheduler" -> {
                 ExperimentalCoroutineDispatcher(CORES_COUNT).also { closeable = it }
             }
+            dispatcher == "kotlin_scheduler" -> {
+                KotlinDefaultCoroutineDispatcher(CORES_COUNT).also { closeable = it }
+            }
             dispatcher.startsWith("ftp") -> {
                 newFixedThreadPoolContext(dispatcher.substring(4).toInt(), dispatcher).also { closeable = it }
             }

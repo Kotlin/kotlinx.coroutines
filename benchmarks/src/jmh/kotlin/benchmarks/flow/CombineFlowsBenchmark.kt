@@ -4,6 +4,7 @@
 
 package benchmarks.flow
 
+import benchmarks.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
@@ -15,11 +16,14 @@ import java.util.concurrent.*
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-open class CombineFlowsBenchmark {
+open class CombineFlowsBenchmark: ParametrizedDispatcherBase() {
+    @Param("kotlin_scheduler", "fjp", "scheduler")
+    override var dispatcher: String = "fjp"
 
     @Param("10", "100", "1000")
     private var size = 10
 
+    //todo: use in set
     @Benchmark
     fun combine() = runBlocking {
         combine((1 until size).map { flowOf(it) }) { a -> a}.collect()

@@ -4,6 +4,7 @@
 
 package benchmarks.flow
 
+import benchmarks.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
@@ -19,9 +20,12 @@ import benchmarks.flow.scrabble.flow as unsafeFlow
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
-open class TakeBenchmark {
+open class TakeBenchmark : ParametrizedDispatcherBase() {
     @Param("1", "10", "100", "1000")
     private var size: Int = 0
+
+    @Param("kotlin_scheduler", "fjp", "scheduler")
+    override var dispatcher: String = "fjp"
 
     private suspend inline fun Flow<Long>.consume() =
         filter { it % 2L != 0L }
@@ -107,6 +111,7 @@ open class TakeBenchmark {
         downstream: FlowCollector<T>
     ) : FlowCollector<T>, Continuation<Unit> {
         private var consumed = 0
+
         // Workaround for KT-30991
         private val emitFun = run {
             val suspendFun: suspend (T) -> Unit = { downstream.emit(it) }

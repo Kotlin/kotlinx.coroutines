@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class ChannelProducerConsumerBenchmark {
-    @Param
+    @Param("FORK_JOIN", "KOTLIN_DEFAULT", "GO_BASED")
     private var _0_dispatcher: DispatcherCreator = DispatcherCreator.FORK_JOIN
 
     @Param
@@ -46,7 +46,7 @@ open class ChannelProducerConsumerBenchmark {
 
     @Param("1", "2", "4") // local machine
 //    @Param("1", "2", "4", "8", "12") // local machine
-//    @Param("1", "2", "4", "8", "16", "32", "64", "128", "144") // dasquad
+//    @Param("1", "2", "4", "8", "16", "32", "64", "128") // dasquad
 //    @Param("1", "2", "4", "8", "16", "32", "64", "96") // Google Cloud
     private var _4_parallelism: Int = 0
 
@@ -128,7 +128,19 @@ open class ChannelProducerConsumerBenchmark {
 }
 
 enum class DispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
-    FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() })
+    FORK_JOIN({ parallelism -> ForkJoinPool(parallelism).asCoroutineDispatcher() }),
+    KOTLIN_DEFAULT({ parallelism ->
+        kotlinx.coroutines.scheduling.KotlinDefaultCoroutineDispatcher(
+            corePoolSize = parallelism,
+            maxPoolSize = parallelism
+        )
+    }),
+    GO_BASED({ parallelism ->
+        kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher(
+            corePoolSize = parallelism,
+            maxPoolSize = parallelism
+        )
+    })
 }
 
 enum class ChannelCreator(private val capacity: Int) {
