@@ -11,7 +11,7 @@ This package provides utilities for efficiently testing coroutines.
 | [runTest] | Runs the test code, automatically skipping delays and handling uncaught exceptions. |
 | [TestCoroutineScheduler] | The shared source of virtual time, used for controlling execution order and skipping delays. |
 | [TestScope] | A [CoroutineScope] that integrates with [runTest], providing access to [TestCoroutineScheduler]. |
-| [TestDispatcher] | A [CoroutineDispatcher] that whose delays are controlled by a [TestCoroutineScheduler]. |
+| [TestDispatcher] | A [CoroutineDispatcher] whose delays are controlled by a [TestCoroutineScheduler]. |
 | [Dispatchers.setMain] | Mocks the main dispatcher using the provided one. If mocked with a [TestDispatcher], its [TestCoroutineScheduler] is used everywhere by default. |
 
 Provided [TestDispatcher] implementations:
