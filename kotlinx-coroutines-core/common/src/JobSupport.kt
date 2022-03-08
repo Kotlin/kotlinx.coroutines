@@ -1268,10 +1268,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     ) : JobNode() {
         override fun invoke(cause: Throwable?) {
             val state = this@JobSupport.state
-            if (state !is Incomplete) {
-                val result = if (state is CompletedExceptionally) state else state.unboxState()
-                select.trySelect(this@JobSupport, result)
-            }
+            val result = if (state is CompletedExceptionally) state else state.unboxState()
+            select.trySelect(this@JobSupport, result)
         }
     }
 }

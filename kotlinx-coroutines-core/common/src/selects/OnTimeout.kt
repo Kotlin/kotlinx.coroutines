@@ -8,38 +8,6 @@ import kotlinx.coroutines.*
 import kotlin.time.*
 
 /**
- * We implement [SelectBuilder.onTimeout] as a clause, so each invocation creates
- * an instance of [OnTimeout] that specifies the registration part according to
- * the [timeout][timeMillis] parameter.
- */
-private class OnTimeout(
-    private val timeMillis: Long
-) {
-    private fun register(select: SelectInstance<*>, ignoredParam: Any?) {
-        // Should this clause complete immediately?
-        if (timeMillis <= 0) {
-            select.selectInRegistrationPhase(Unit)
-            return
-        }
-        // Invoke `trySelect` after the timeout is reached.
-        val action = Runnable {
-            select.trySelect(this@OnTimeout, Unit)
-        }
-        select as SelectImplementation<*>
-        val context = select.context
-        val disposableHandle = context.delay.invokeOnTimeout(timeMillis, action, context)
-        // Do not forget to clean-up when this `select` is completed or cancelled.
-        select.disposeOnCompletion(disposableHandle)
-    }
-
-    val selectClause: SelectClause0
-        get() = SelectClause0Impl(
-            clauseObject = this@OnTimeout,
-            regFunc = OnTimeout::register as RegistrationFunction
-        )
-}
-
-/**
  * Clause that selects the given [block] after a specified timeout passes.
  * If timeout is negative or zero, [block] is selected immediately.
  *
@@ -61,3 +29,35 @@ public fun <R> SelectBuilder<R>.onTimeout(timeMillis: Long, block: suspend () ->
 @ExperimentalCoroutinesApi
 public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R): Unit =
     onTimeout(timeout.toDelayMillis(), block)
+
+/**
+ * We implement [SelectBuilder.onTimeout] as a clause, so each invocation creates
+ * an instance of [OnTimeout] that specifies the registration part according to
+ * the [timeout][timeMillis] parameter.
+ */
+private class OnTimeout(
+    private val timeMillis: Long
+) {
+    val selectClause: SelectClause0
+        get() = SelectClause0Impl(
+            clauseObject = this@OnTimeout,
+            regFunc = OnTimeout::register as RegistrationFunction
+        )
+
+    private fun register(select: SelectInstance<*>, ignoredParam: Any?) {
+        // Should this clause complete immediately?
+        if (timeMillis <= 0) {
+            select.selectInRegistrationPhase(Unit)
+            return
+        }
+        // Invoke `trySelect` after the timeout is reached.
+        val action = Runnable {
+            select.trySelect(this@OnTimeout, Unit)
+        }
+        select as SelectImplementation<*>
+        val context = select.context
+        val disposableHandle = context.delay.invokeOnTimeout(timeMillis, action, context)
+        // Do not forget to clean-up when this `select` is completed or cancelled.
+        select.disposeOnCompletion(disposableHandle)
+    }
+}

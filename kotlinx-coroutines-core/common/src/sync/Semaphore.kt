@@ -305,7 +305,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         // If the cell already has PERMIT from tryResumeNextFromQueue, try to grab it
         if (segment.cas(i, PERMIT, TAKEN)) { // took permit thus eliminating acquire/release pair
             /// This continuation is not yet published, but still can be cancelled via outer job
-            when(waiter) {
+            when (waiter) {
                 is CancellableContinuation<*> -> {
                     waiter as CancellableContinuation<Unit>
                     waiter.resume(Unit, onCancellationRelease)

@@ -9,7 +9,7 @@ import kotlinx.coroutines.sync.*
 import org.junit.*
 import java.util.concurrent.*
 
-class MutexStressTest : TestBase() {
+class MutexCancellationStressTest : TestBase() {
     @Test
     fun testStressCancellationDoesNotBreakMutex() = runTest {
         val mutex = Mutex()

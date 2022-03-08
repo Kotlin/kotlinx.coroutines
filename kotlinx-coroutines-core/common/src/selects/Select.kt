@@ -150,14 +150,14 @@ public typealias ProcessResultFunction = (clauseObject: Any, param: Any?, clause
  * cancellation while dispatching. Unfortunately, we cannot pass this function only in [SelectInstance.trySelect],
  * as [SelectInstance.selectInRegistrationPhase] can be called when the coroutine is already cancelled.
  */
+@InternalCoroutinesApi
 public typealias OnCancellationConstructor = (select: SelectInstance<*>, param: Any?, internalResult: Any?) -> (Throwable) -> Unit
 
 /**
  * Clause for [select] expression without additional parameters that does not select any value.
  */
 public interface SelectClause0 : SelectClause
-@InternalCoroutinesApi
-public class SelectClause0Impl(
+internal class SelectClause0Impl(
     override val clauseObject: Any,
     override val regFunc: RegistrationFunction,
     override val onCancellationConstructor: OnCancellationConstructor? = null
@@ -171,8 +171,7 @@ private val DUMMY_PROCESS_RESULT_FUNCTION: ProcessResultFunction = { _, _, _ -> 
  * Clause for [select] expression without additional parameters that selects value of type [Q].
  */
 public interface SelectClause1<out Q> : SelectClause
-@InternalCoroutinesApi
-public class SelectClause1Impl<Q>(
+internal class SelectClause1Impl<Q>(
     override val clauseObject: Any,
     override val regFunc: RegistrationFunction,
     override val processResFunc: ProcessResultFunction,
@@ -183,8 +182,7 @@ public class SelectClause1Impl<Q>(
  * Clause for [select] expression with additional parameter of type [P] that selects value of type [Q].
  */
 public interface SelectClause2<in P, out Q> : SelectClause
-@InternalCoroutinesApi
-public class SelectClause2Impl<P, Q>(
+internal class SelectClause2Impl<P, Q>(
     override val clauseObject: Any,
     override val regFunc: RegistrationFunction,
     override val processResFunc: ProcessResultFunction,
@@ -348,7 +346,7 @@ internal open class SelectImplementation<R> constructor(
             it === STATE_REG || it is List<*>
         }
     /**
-     * Returns `true` if this `select` is already selected or cancelled;
+     * Returns `true` if this `select` is already selected;
      * thus, other parties are bound to fail when making a rendezvous with it.
      */
     private val isSelected
@@ -437,8 +435,9 @@ internal open class SelectImplementation<R> constructor(
      * updates the state to this clause reference.
      */
     protected fun ClauseData<R>.register(reregister: Boolean = false) {
+        assert { state.value !is Cancelled }
         // Is there already selected clause?
-        if (state.value.let { it is ClauseData<*> || it is Cancelled }) return
+        if (state.value.let { it is ClauseData<*> }) return
         // For new clauses, check that there does not exist
         // another clause with the same object.
         if (!reregister) checkClauseObject(clauseObject)
@@ -459,13 +458,7 @@ internal open class SelectImplementation<R> constructor(
         } else {
             // This clause has been selected!
             // Update the state correspondingly.
-            state.update {
-                if (it is Cancelled) {
-                    createOnCancellationAction(this@SelectImplementation, internalResult)?.invoke(it.cause)
-                    return
-                }
-                this
-            }
+            state.value = this
         }
     }
 
@@ -529,8 +522,6 @@ internal open class SelectImplementation<R> constructor(
                     cont.resume(Unit, curState.createOnCancellationAction(this, internalResult))
                     return@sc
                 }
-                // Cancelled
-                curState is Cancelled -> return@sc
                 // This `select` cannot be in any other state.
                 else -> error("unexpected state: $curState")
             }
@@ -787,6 +778,8 @@ private val NO_RESULT = Symbol("NO_RESULT")
 // We use this marker parameter objects to distinguish
 // SelectClause[0,1,2] and invoke the user-specified block correctly.
 @SharedImmutable
+@JvmField
 internal val PARAM_CLAUSE_0 = Symbol("PARAM_CLAUSE_0")
 @SharedImmutable
+@JvmField
 internal val PARAM_CLAUSE_1 = Symbol("PARAM_CLAUSE_1")
