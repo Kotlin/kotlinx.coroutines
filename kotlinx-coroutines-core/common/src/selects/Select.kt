@@ -442,7 +442,7 @@ internal open class SelectImplementation<R> constructor(
         // another clause with the same object.
         if (!reregister) checkClauseObject(clauseObject)
         // Try to register in the corresponding object.
-        if (tryRegister(this@SelectImplementation)) {
+        if (tryRegisterAsWaiter(this@SelectImplementation)) {
             // Successfully registered, and this `select` instance
             // is stored as a waiter. Add this clause to the list
             // of registered clauses and store the provided via
@@ -679,16 +679,17 @@ internal open class SelectImplementation<R> constructor(
         @JvmField var disposableHandle: DisposableHandle? = null
     ) {
         /**
-         * Tries to register the specified [select] instance in [clauseObject].
-         * Returns `true` if this [select] is successfully registered and
-         * is waiting for a rendezvous, or `false` when this clause becomes
+         * Tries to register the specified [select] instance in [clauseObject] and check
+         * whether the registration succeeded or a rendezvous has happened during the registration.
+         * This function returns `true` if this [select] is successfully registered and
+         * is _waiting_ for a rendezvous, or `false` when this clause becomes
          * selected during registration.
          *
          * For example, the [Channel.onReceive] clause registration
          * on a non-empty channel retrieves the first element and completes
          * the corresponding [select] via [SelectInstance.selectInRegistrationPhase].
          */
-        fun tryRegister(select: SelectImplementation<R>): Boolean {
+        fun tryRegisterAsWaiter(select: SelectImplementation<R>): Boolean {
             assert { select.inRegistrationPhase || select.isCancelled }
             assert { select.internalResult === NO_RESULT }
             regFunc(clauseObject, select, param)

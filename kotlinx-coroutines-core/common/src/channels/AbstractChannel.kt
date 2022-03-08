@@ -705,6 +705,14 @@ internal abstract class AbstractChannel<E>(
             onCancellationConstructor = onUndeliveredElementReceiveCancellationConstructor
         )
 
+    override val onReceiveOrNull: SelectClause1<E?>
+        get() = SelectClause1Impl<E?>(
+            clauseObject = this,
+            regFunc = AbstractChannel<*>::registerSelectForReceive as RegistrationFunction,
+            processResFunc = AbstractChannel<*>::processResultSelectReceiveOrNull as ProcessResultFunction,
+            onCancellationConstructor = onUndeliveredElementReceiveCancellationConstructor
+        )
+
     private fun registerSelectForReceive(select: SelectInstance<*>, ignoredParam: Any?) {
         val result = pollInternal()
         if (result !== POLL_FAILED && result !is Closed<*>) {
@@ -721,6 +729,10 @@ internal abstract class AbstractChannel<E>(
     private fun processResultSelectReceiveCatching(ignoredParam: Any?, selectResult: Any?): Any? =
         if (selectResult is Closed<*>) ChannelResult.closed(selectResult.closeCause)
         else ChannelResult.success(selectResult as E)
+
+    private fun processResultSelectReceiveOrNull(ignoredParam: Any?, selectResult: Any?): Any? =
+        if (selectResult is Closed<*>) null
+        else selectResult as E
 
     private val onUndeliveredElementReceiveCancellationConstructor: OnCancellationConstructor? = onUndeliveredElement?.let {
         { select: SelectInstance<*>, ignoredParam: Any?, element: Any? ->

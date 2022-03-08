@@ -72,10 +72,6 @@ public interface Mutex {
      * Clause for [select] expression of [lock] suspending function that selects when the mutex is locked.
      * Additional parameter for the clause in the `owner` (see [lock]) and when the clause is selected
      * the reference to this mutex is passed into the corresponding block.
-     *
-     * It is recommended to use [withLock] for safety reasons, so that the acquired lock is always
-     * released at the end of the critical section, and [unlock] is never invoked before a successful
-     * lock acquisition.
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = "Mutex.onLock deprecated without replacement. " +
         "For additional details please refer to #2794") // WARNING since 1.6.0
