@@ -416,6 +416,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public fun <init> (Z)V
 	protected fun afterCompletion (Ljava/lang/Object;)V
 	public final fun attachChild (Lkotlinx/coroutines/ChildJob;)Lkotlinx/coroutines/ChildHandle;
+	protected final fun awaitInternal (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public synthetic fun cancel ()V
 	public synthetic fun cancel (Ljava/lang/Throwable;)Z
 	public fun cancel (Ljava/util/concurrent/CancellationException;)V
@@ -432,6 +433,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	protected final fun getCompletionCauseHandled ()Z
 	public final fun getCompletionExceptionOrNull ()Ljava/lang/Throwable;
 	public final fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	protected final fun getOnAwaitInternal ()Lkotlinx/coroutines/selects/SelectClause1;
 	public final fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
 	protected fun handleJobException (Ljava/lang/Throwable;)Z
 	protected final fun initParentJob (Lkotlinx/coroutines/Job;)V
@@ -581,7 +583,6 @@ public abstract interface class kotlinx/coroutines/channels/ActorScope : kotlinx
 
 public final class kotlinx/coroutines/channels/ActorScope$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/ActorScope;)V
-	public static fun getOnReceiveOrNull (Lkotlinx/coroutines/channels/ActorScope;)Lkotlinx/coroutines/selects/SelectClause1;
 	public static fun poll (Lkotlinx/coroutines/channels/ActorScope;)Ljava/lang/Object;
 	public static fun receiveOrNull (Lkotlinx/coroutines/channels/ActorScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
@@ -628,7 +629,6 @@ public abstract interface class kotlinx/coroutines/channels/Channel : kotlinx/co
 
 public final class kotlinx/coroutines/channels/Channel$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/Channel;)V
-	public static fun getOnReceiveOrNull (Lkotlinx/coroutines/channels/Channel;)Lkotlinx/coroutines/selects/SelectClause1;
 	public static fun offer (Lkotlinx/coroutines/channels/Channel;Ljava/lang/Object;)Z
 	public static fun poll (Lkotlinx/coroutines/channels/Channel;)Ljava/lang/Object;
 	public static fun receiveOrNull (Lkotlinx/coroutines/channels/Channel;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -825,7 +825,6 @@ public final class kotlinx/coroutines/channels/ReceiveChannel$DefaultImpls {
 	public static synthetic fun cancel (Lkotlinx/coroutines/channels/ReceiveChannel;)V
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/ReceiveChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/ReceiveChannel;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
-	public static fun getOnReceiveOrNull (Lkotlinx/coroutines/channels/ReceiveChannel;)Lkotlinx/coroutines/selects/SelectClause1;
 	public static fun poll (Lkotlinx/coroutines/channels/ReceiveChannel;)Ljava/lang/Object;
 	public static fun receiveOrNull (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
@@ -1215,37 +1214,10 @@ public abstract interface class kotlinx/coroutines/selects/SelectClause {
 public abstract interface class kotlinx/coroutines/selects/SelectClause0 : kotlinx/coroutines/selects/SelectClause {
 }
 
-public final class kotlinx/coroutines/selects/SelectClause0Impl : kotlinx/coroutines/selects/SelectClause0 {
-	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;)V
-	public synthetic fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun getClauseObject ()Ljava/lang/Object;
-	public fun getOnCancellationConstructor ()Lkotlin/jvm/functions/Function3;
-	public fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
-	public fun getRegFunc ()Lkotlin/jvm/functions/Function3;
-}
-
 public abstract interface class kotlinx/coroutines/selects/SelectClause1 : kotlinx/coroutines/selects/SelectClause {
 }
 
-public final class kotlinx/coroutines/selects/SelectClause1Impl : kotlinx/coroutines/selects/SelectClause1 {
-	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;)V
-	public synthetic fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun getClauseObject ()Ljava/lang/Object;
-	public fun getOnCancellationConstructor ()Lkotlin/jvm/functions/Function3;
-	public fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
-	public fun getRegFunc ()Lkotlin/jvm/functions/Function3;
-}
-
 public abstract interface class kotlinx/coroutines/selects/SelectClause2 : kotlinx/coroutines/selects/SelectClause {
-}
-
-public final class kotlinx/coroutines/selects/SelectClause2Impl : kotlinx/coroutines/selects/SelectClause2 {
-	public fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;)V
-	public synthetic fun <init> (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun getClauseObject ()Ljava/lang/Object;
-	public fun getOnCancellationConstructor ()Lkotlin/jvm/functions/Function3;
-	public fun getProcessResFunc ()Lkotlin/jvm/functions/Function3;
-	public fun getRegFunc ()Lkotlin/jvm/functions/Function3;
 }
 
 public class kotlinx/coroutines/selects/SelectImplementation : kotlinx/coroutines/selects/SelectBuilder, kotlinx/coroutines/selects/SelectInstance {
@@ -1276,7 +1248,7 @@ protected final class kotlinx/coroutines/selects/SelectImplementation$ClauseData
 	public final fun createOnCancellationAction (Lkotlinx/coroutines/selects/SelectInstance;Ljava/lang/Object;)Lkotlin/jvm/functions/Function1;
 	public final fun invokeBlock (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun processResult (Ljava/lang/Object;)Ljava/lang/Object;
-	public final fun tryRegister (Lkotlinx/coroutines/selects/SelectImplementation;)Z
+	public final fun tryRegisterAsWaiter (Lkotlinx/coroutines/selects/SelectImplementation;)Z
 }
 
 public abstract interface class kotlinx/coroutines/selects/SelectInstance {
