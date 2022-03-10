@@ -7,7 +7,7 @@ package kotlinx.coroutines.rx3
 import io.reactivex.rxjava3.core.*
 import io.reactivex.rxjava3.plugins.*
 
-fun <T> checkSingleValue(
+fun <T : Any> checkSingleValue(
     observable: Observable<T>,
     checker: (T) -> Unit
 ) {
@@ -24,7 +24,7 @@ fun checkErroneous(
     checker(error)
 }
 
-fun <T> checkSingleValue(
+fun <T : Any> checkSingleValue(
     single: Single<T>,
     checker: (T) -> Unit
 ) {
