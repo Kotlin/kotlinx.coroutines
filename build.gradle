@@ -46,6 +46,7 @@ buildscript {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        maven { url 'https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev' }
         mavenLocal()
     }
 
@@ -62,6 +63,8 @@ buildscript {
 
         // JMH plugins
         classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
+        // temporary fix to upgrade the transitive dependency version of kotlinx-metadata
+        classpath "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.4.2"
     }
 
     CacheRedirector.configureBuildScript(buildscript, rootProject)
@@ -128,6 +131,7 @@ allprojects {
         google()
         mavenCentral()
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        maven { url 'https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev' }
     }
 }
 
@@ -295,6 +299,8 @@ allprojects {
 def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm", true)
 
 task deploy(dependsOn: publishTasks)
+
+apply plugin: 'animalsniffer-convention'
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
 
