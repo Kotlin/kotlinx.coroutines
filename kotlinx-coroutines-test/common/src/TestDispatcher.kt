@@ -11,8 +11,10 @@ import kotlin.jvm.*
 /**
  * A test dispatcher that can interface with a [TestCoroutineScheduler].
  * 
- * @see StandardTestDispatcher A predictable, controllable dispatcher.
- * @see UnconfinedTestDispatcher A dispatcher that is not confined to any particular thread.
+ * The available implementations are:
+ * * [StandardTestDispatcher] is a dispatcher that places new tasks into a queue.
+ * * [UnconfinedTestDispatcher] is a dispatcher that behaves like [Dispatchers.Unconfined] while allowing to control
+ *   the virtual time.
  */
 @ExperimentalCoroutinesApi
 public abstract class TestDispatcher internal constructor(): CoroutineDispatcher(), Delay {
