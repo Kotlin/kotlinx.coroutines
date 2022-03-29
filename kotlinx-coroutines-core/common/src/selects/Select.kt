@@ -632,16 +632,24 @@ internal open class SelectImplementation<R> constructor(
             // is invoked at the very end.
             selectedClause.invokeBlock(blockArgument)
         } else {
+            // TAIL-CALL OPTIMIZATION: the `suspend`
+            // function is invoked at the very end.
+            // However, internally this `suspend` function
+            // constructs a state machine to recover a
+            // possible stack-trace.
+            selectedClause.invokeBlockRecoveringException(blockArgument)
+        }
+    }
+
+    private suspend fun ClauseData<R>.invokeBlockRecoveringException(blockArgument: Any?): R =
+        try {
             // In the debug mode, we need to recover
             // the stack-trace of possible exception.
             // Thus, the tail-call optimization cannot be applied.
-            try {
-                selectedClause.invokeBlock(blockArgument)
-            } catch (e: Throwable) {
-                throw recoverStackTrace(e)
-            }
+            invokeBlock(blockArgument)
+        } catch (e: Throwable) {
+            throw recoverStackTrace(e)
         }
-    }
 
     /**
      * Invokes all [DisposableHandle]-s provided via
