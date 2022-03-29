@@ -12,14 +12,6 @@ import kotlin.test.*
 class LimitedParallelismTest : TestBase() {
 
     @Test
-    fun testParallelismSpec() {
-        assertFailsWith<IllegalArgumentException> { Dispatchers.Default.limitedParallelism(0) }
-        assertFailsWith<IllegalArgumentException> { Dispatchers.Default.limitedParallelism(-1) }
-        assertFailsWith<IllegalArgumentException> { Dispatchers.Default.limitedParallelism(Int.MIN_VALUE) }
-        Dispatchers.Default.limitedParallelism(Int.MAX_VALUE)
-    }
-
-    @Test
     fun testTaskFairness() = runTest {
         val executor = newSingleThreadContext("test")
         val view = executor.limitedParallelism(1)
