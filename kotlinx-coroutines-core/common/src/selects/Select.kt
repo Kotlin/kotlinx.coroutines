@@ -627,9 +627,20 @@ internal open class SelectImplementation<R> constructor(
         // Perform the clean-up before the user-specified block
         // invocation to guarantee the absence of memory leaks.
         cleanup(selectedClause)
-        // TAIL-CALL OPTIMIZATION: the `suspend` block
-        // is invoked at the very end.
-        return selectedClause.invokeBlock(blockArgument)
+        return if (!RECOVER_STACK_TRACES) {
+            // TAIL-CALL OPTIMIZATION: the `suspend` block
+            // is invoked at the very end.
+            selectedClause.invokeBlock(blockArgument)
+        } else {
+            // In the debug mode, we need to recover
+            // the stack-trace of possible exception.
+            // Thus, the tail-call optimization cannot be applied.
+            try {
+                selectedClause.invokeBlock(blockArgument)
+            } catch (e: Throwable) {
+                throw recoverStackTrace(e)
+            }
+        }
     }
 
     /**
