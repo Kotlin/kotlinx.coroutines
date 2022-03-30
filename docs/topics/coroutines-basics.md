@@ -251,23 +251,22 @@ Coroutines are less resource-intensive than JVM threads. Code that exhausts the
 JVM's available memory when using threads can be expressed using coroutines
 without hitting resource limits. For example, the following code launches
 100000 distinct coroutines that each wait 5 seconds and then print a period
-('.'):
+('.') while consuming very little memory:
 
 ```kotlin
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-//sampleStart
     repeat(100_000) { // launch a lot of coroutines
         launch {
             delay(5000L)
             print(".")
         }
     }
-//sampleEnd
 }
 ```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
+<!-- While coroutines do have a smaller memory footprint than threads, this
+example will exhaust the playground's heap memory; don't make it runnable. -->
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
 >
