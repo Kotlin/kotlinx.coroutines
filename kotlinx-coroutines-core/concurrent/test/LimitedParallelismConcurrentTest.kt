@@ -7,7 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.exceptions.*
 import kotlin.test.*
 
-class LimitedParallelismSharedStressTest : TestBase() {
+class LimitedParallelismConcurrentTest : TestBase() {
 
     private val targetParallelism = 4
     private val iterations = 100_000
@@ -40,5 +40,20 @@ class LimitedParallelismSharedStressTest : TestBase() {
                 block()
             }
         }
+    }
+
+    @Test
+    fun testTaskFairness() = runMtTest {
+        val executor = newSingleThreadContext("test")
+        val view = executor.limitedParallelism(1)
+        val view2 = executor.limitedParallelism(1)
+        val j1 = launch(view) {
+            while (true) {
+                yield()
+            }
+        }
+        val j2 = launch(view2) { j1.cancel() }
+        joinAll(j1, j2)
+        executor.close()
     }
 }
