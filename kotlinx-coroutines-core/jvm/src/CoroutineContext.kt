@@ -11,7 +11,7 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 /**
  * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
  * [ContinuationInterceptor] is specified, and adds optional support for
- * copyable thread context [elements][CopyableThreadContextElement] and  debugging facilities (when turned on).
+ * copyable thread context [elements][CopyableThreadContextElement] and debugging facilities (when turned on).
  *
  * See [DEBUG_PROPERTY_NAME] for description of debugging facilities on JVM.
  */
@@ -24,17 +24,16 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 }
 
 /**
- * Creates context for coroutine builder functions that do not launch a new coroutine,
- * but change current coroutine context, such as [withContext].
+ * Creates context for coroutine builder functions that do not launch a new coroutine, namely [withContext].
+ * @suppress
  */
-@ExperimentalCoroutinesApi
+@InternalCoroutinesApi
 public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
     /*
      * Fast-path: we only have to copy/merge if 'addedContext' (which typically has one or two elements)
      * contains copyable element.
      */
     if (!addedContext.fold(false, hasCopyableElements)) return this + addedContext
-    // TODO Here addedContext will be re-evaluated, we can fix it later when the design converges to its final form.
     return foldCopies(this, addedContext, false)
 }
 
@@ -42,8 +41,15 @@ private val hasCopyableElements: (Boolean, CoroutineContext.Element) -> Boolean 
     result || it is CopyableThreadContextElement<*>
 }
 
-/*
- * Folds two contexts if there is need to.
+/**
+ * Folds two contexts properly applying [CopyableThreadContextElement] rules when necessary.
+ * The rules are the following:
+ * * If both context do not have CTCE, the sum of two contexts is returned
+ * * Every CTCE from left-hand side context that does not have matching (by key) element from right-hand side context
+ *   is [copied][CopyableThreadContextElement.copyForChild]
+ * * Every CTCE from left-hand side context that has matching element in right-hand side context is [merged][CopyableThreadContextElement.mergeForChild]
+ * * Every CTCE from right-hand side context that hasn't been merged is copied
+ * * Everything else is added to the resulting context as is.
  */
 private fun foldCopies(originalContext: CoroutineContext, appendContext: CoroutineContext, isNewCoroutine: Boolean): CoroutineContext {
     // Do we have something to copy left-hand side?
@@ -56,7 +62,6 @@ private fun foldCopies(originalContext: CoroutineContext, appendContext: Corouti
     }
 
     var leftoverContext = appendContext
-
     val folded = originalContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
         if (element !is CopyableThreadContextElement<*>) return@fold result + element
         // Will this element be overwritten?
