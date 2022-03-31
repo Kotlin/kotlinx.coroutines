@@ -7,8 +7,12 @@ package kotlinx.coroutines
 import kotlin.test.*
 
 class LimitedParallelismSharedTest : TestBase() {
+
     @Test
-    fun testTaskFairness() = runTest {
+    fun testLimitedDefault() = runTest {
+        // Test that evaluates the very basic completion of tasks in limited dispatcher
+        // for all supported platforms.
+        // For more specific and concurrent tests, see 'concurrent' package.
         val view = Dispatchers.Default.limitedParallelism(1)
         val view2 = Dispatchers.Default.limitedParallelism(1)
         val j1 = launch(view) {
