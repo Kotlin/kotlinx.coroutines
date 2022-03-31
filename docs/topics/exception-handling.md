@@ -75,12 +75,6 @@ You cannot recover from the exception in the `CoroutineExceptionHandler`. The co
 with the corresponding exception when the handler is called. Normally, the handler is used to
 log the exception, show some kind of error message, terminate, and/or restart the application.
 
-On JVM it is possible to redefine global exception handler for all coroutines by registering [CoroutineExceptionHandler] via
-[`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html).
-Global exception handler is similar to 
-[`Thread.defaultUncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setDefaultUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)) 
-which is used when no more specific handlers are registered.
-On Android, `uncaughtExceptionPreHandler` is installed as a global coroutine exception handler.
 
 `CoroutineExceptionHandler` is invoked only on **uncaught** exceptions &mdash; exceptions that were not handled in any other way.
 In particular, all _children_ coroutines (coroutines created in the context of another [Job]) delegate handling of
