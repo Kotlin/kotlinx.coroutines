@@ -44,7 +44,7 @@ private val hasCopyableElements: (Boolean, CoroutineContext.Element) -> Boolean 
 /**
  * Folds two contexts properly applying [CopyableThreadContextElement] rules when necessary.
  * The rules are the following:
- * * If both context do not have CTCE, the sum of two contexts is returned
+ * * If neither context has CTCE, the sum of two contexts is returned
  * * Every CTCE from left-hand side context that does not have matching (by key) element from right-hand side context
  *   is [copied][CopyableThreadContextElement.copyForChild]
  * * Every CTCE from left-hand side context that has matching element in right-hand side context is [merged][CopyableThreadContextElement.mergeForChild]
