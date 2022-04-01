@@ -31,7 +31,7 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
     /*
      * Fast-path: we only have to copy/merge if 'addedContext' (which typically has one or two elements)
-     * contains copyable element.
+     * contains copyable elements.
      */
     if (!addedContext.fold(false, hasCopyableElements)) return this + addedContext
     return foldCopies(this, addedContext, false)
