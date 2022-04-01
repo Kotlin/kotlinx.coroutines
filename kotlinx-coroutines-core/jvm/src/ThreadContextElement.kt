@@ -155,8 +155,8 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
      * coroutine's context when the child coroutine's context contains an element with the same [key] as the
      * current one.
      *
-     * This function is called on current element, supplied with an element retrieved from child's
-     * coroutine context by the current [key].
+     * This method is invoked on the original element, accepting as the parameter
+     * the element that is supposed to overwrite it.
      */
     public fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext
 }
