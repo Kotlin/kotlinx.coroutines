@@ -120,7 +120,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  *     }
  *
  *     override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext {
- *         // Merge operation defines how to handle situation when both
+ *         // Merge operation defines how to handle situations when both
  *         // the parent coroutine has an element in the context and
  *         // an element with the same key was also
  *         // explicitly passed to the child coroutine.
