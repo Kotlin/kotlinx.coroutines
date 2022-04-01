@@ -9,10 +9,9 @@ import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 
 /**
- * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
- * [ContinuationInterceptor] is specified and adds support for
- * copyable thread context [elements][CopyableThreadContextElement] and debugging facilities (optionally, when turned on).
- *
+ * Creates a context for a new coroutine. It installs [Dispatchers.Default] when no other dispatcher or
+ * [ContinuationInterceptor] is specified and adds optional support for debugging facilities (when turned on)
+ * and copyable-thread-local facilities on JVM.
  * See [DEBUG_PROPERTY_NAME] for description of debugging facilities on JVM.
  */
 @ExperimentalCoroutinesApi
@@ -24,7 +23,7 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 }
 
 /**
- * Creates context for coroutine builder functions that do not launch a new coroutine, namely [withContext].
+ * Creates a context for coroutine builder functions that do not launch a new coroutine, e.g. [withContext].
  * @suppress
  */
 @InternalCoroutinesApi
@@ -33,13 +32,12 @@ public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineCo
      * Fast-path: we only have to copy/merge if 'addedContext' (which typically has one or two elements)
      * contains copyable elements.
      */
-    if (!addedContext.fold(false, hasCopyableElements)) return this + addedContext
+    if (!addedContext.hasCopyableElements()) return this + addedContext
     return foldCopies(this, addedContext, false)
 }
 
-private val hasCopyableElements: (Boolean, CoroutineContext.Element) -> Boolean = { result, it ->
-    result || it is CopyableThreadContextElement<*>
-}
+private fun CoroutineContext.hasCopyableElements(): Boolean =
+    fold(false) { result, it -> result || it is CopyableThreadContextElement<*> }
 
 /**
  * Folds two contexts properly applying [CopyableThreadContextElement] rules when necessary.
@@ -53,8 +51,8 @@ private val hasCopyableElements: (Boolean, CoroutineContext.Element) -> Boolean 
  */
 private fun foldCopies(originalContext: CoroutineContext, appendContext: CoroutineContext, isNewCoroutine: Boolean): CoroutineContext {
     // Do we have something to copy left-hand side?
-    val hasElementsLeft = originalContext.fold(false, hasCopyableElements)
-    val hasElementsRight = appendContext.fold(false, hasCopyableElements)
+    val hasElementsLeft = originalContext.hasCopyableElements()
+    val hasElementsRight = appendContext.hasCopyableElements()
 
     // Nothing to fold, so just return the sum of contexts
     if (!hasElementsLeft && !hasElementsRight) {
@@ -126,7 +124,7 @@ internal actual inline fun <T> withContinuationContext(continuation: Continuatio
 internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineContext, oldValue: Any?): UndispatchedCoroutine<*>? {
     if (this !is CoroutineStackFrame) return null
     /*
-     * Fast-path to detect whether we have unispatched coroutine at all in our stack.
+     * Fast-path to detect whether we have undispatched coroutine at all in our stack.
      *
      * Implementation note.
      * If we ever find that stackwalking for thread-locals is way too slow, here is another idea:
@@ -137,8 +135,8 @@ internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineCont
      *    Both options should work, but it requires more careful studying of the performance
      *    and, mostly, maintainability impact.
      */
-    val potentiallyHasUndispatchedCorotuine = context[UndispatchedMarker] !== null
-    if (!potentiallyHasUndispatchedCorotuine) return null
+    val potentiallyHasUndispatchedCoroutine = context[UndispatchedMarker] !== null
+    if (!potentiallyHasUndispatchedCoroutine) return null
     val completion = undispatchedCompletion()
     completion?.saveThreadContext(context, oldValue)
     return completion

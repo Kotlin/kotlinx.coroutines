@@ -80,7 +80,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
 /**
  * A [ThreadContextElement] copied whenever a child coroutine inherits a context containing it.
  *
- * When an API uses a _mutable_ `ThreadLocal` for consistency, a [CopyableThreadContextElement]
+ * When an API uses a _mutable_ [ThreadLocal] for consistency, a [CopyableThreadContextElement]
  * can give coroutines "coroutine-safe" write access to that `ThreadLocal`.
  *
  * A write made to a `ThreadLocal` with a matching [CopyableThreadContextElement] by a coroutine
@@ -97,8 +97,9 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * is in a coroutine:
  *
  * ```
- * class TraceContextElement(private val traceData: TraceData?) : CopyableThreadContextElement<TraceData?, TraceContextElement> {
+ * class TraceContextElement(private val traceData: TraceData?) : CopyableThreadContextElement<TraceData?> {
  *     companion object Key : CoroutineContext.Key<TraceContextElement>
+ *
  *     override val key: CoroutineContext.Key<TraceContextElement> = Key
  *
  *     override fun updateThreadContext(context: CoroutineContext): TraceData? {
@@ -118,7 +119,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  *         return TraceContextElement(traceThreadLocal.get()?.copy())
  *     }
  *
- *     override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext
+ *     override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext {
  *         // Merge operation defines how to handle situation when both
  *         // the parent coroutine has an element in the context and
  *         // an element with the same key was also
