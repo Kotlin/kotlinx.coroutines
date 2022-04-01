@@ -9,7 +9,7 @@ import kotlin.coroutines.*
 /**
  * Creates a context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher or
  * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on)
- * and copyable thread local facilities on JVM.
+ * and copyable-thread-local facilities on JVM.
  */
 public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
 
