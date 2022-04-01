@@ -10,8 +10,8 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 
 /**
  * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
- * [ContinuationInterceptor] is specified, and adds optional support for
- * copyable thread context [elements][CopyableThreadContextElement] and debugging facilities (when turned on).
+ * [ContinuationInterceptor] is specified and adds support for
+ * copyable thread context [elements][CopyableThreadContextElement] and debugging facilities (optionally, when turned on).
  *
  * See [DEBUG_PROPERTY_NAME] for description of debugging facilities on JVM.
  */
