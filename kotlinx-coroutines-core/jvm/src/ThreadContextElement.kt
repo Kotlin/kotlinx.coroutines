@@ -120,9 +120,11 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  *
  *     override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext
  *         // Merge operation defines how to handle situation when both
- *         // parent coroutine has the element in the context and it was also
- *         // explicitly passed to a child coroutine.
- *         // If merge is not defined, the copy of the element can be returned.
+ *         // the parent coroutine has an element in the context and
+ *         // an element with the same key was also
+ *         // explicitly passed to the child coroutine.
+ *         // If merging does not require special behavior,
+ *         // the copy of the element can be returned.
  *         return TraceContextElement(traceThreadLocal.get()?.copy())
  *     }
  * }
