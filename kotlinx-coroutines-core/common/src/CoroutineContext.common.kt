@@ -14,7 +14,7 @@ import kotlin.coroutines.*
 public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
 
 /**
- * Creates context for coroutine builder functions that do not launch a new coroutine, namely [withContext].
+ * Creates a context for coroutine builder functions that do not launch a new coroutine, e.g. [withContext].
  * @suppress
  */
 @InternalCoroutinesApi
