@@ -47,7 +47,7 @@ private val hasCopyableElements: (Boolean, CoroutineContext.Element) -> Boolean 
  * * If neither context has CTCE, the sum of two contexts is returned
  * * Every CTCE from the left-hand side context that does not have a matching (by key) element from right-hand side context
  *   is [copied][CopyableThreadContextElement.copyForChild] if [isNewCoroutine] is `true`.
- * * Every CTCE from left-hand side context that has matching element in right-hand side context is [merged][CopyableThreadContextElement.mergeForChild]
+ * * Every CTCE from the left-hand side context that has a matching element in the right-hand side context is [merged][CopyableThreadContextElement.mergeForChild]
  * * Every CTCE from the right-hand side context that hasn't been merged is copied
  * * Everything else is added to the resulting context as is.
  */
