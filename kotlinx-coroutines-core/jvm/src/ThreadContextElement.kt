@@ -131,8 +131,8 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * }
  * ```
  *
- * A coroutine using this mechanism can safely call Java code that assumes it's called using a
- * `Thread`.
+ * A coroutine using this mechanism can safely call Java code that assumes the corresponding thread local element's
+ * value is installed into the target thread local.
  */
 @DelicateCoroutinesApi
 @ExperimentalCoroutinesApi
