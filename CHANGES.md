@@ -2,7 +2,7 @@
 
 ## Version 1.6.0
 
-Note that this is a full changelog relative to 1.5.2 version. Changelog relative to 1.6.0-RC3 can be found in the end.
+Note that this is a full changelog relative to the 1.5.2 version. Changelog relative to 1.6.0-RC3 can be found at the end.
 
 ### kotlinx-coroutines-test rework
 
@@ -25,6 +25,7 @@ Note that this is a full changelog relative to 1.5.2 version. Changelog relative
 * `Dispatchers.Main` is now used as the default source of time for `delay` and `withTimeout` when present(#2972).
     * To opt-out from this behaviour, `kotlinx.coroutines.main.delay` system property can be set to `false`.
 * Java target of coroutines build is now 8 instead of 6 (#1589).
+* **Source-breaking change**: extension `collect` no longer resolves when used with a non-in-place argument of a functional type. This is a candidate for a fix, uncovered after 1.6.0, see #3107 for the additional details.
 
 ### Bug fixes and improvements
 

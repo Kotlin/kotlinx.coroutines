@@ -146,18 +146,140 @@ No action on your part is required, other than replacing `runBlocking` with `run
 
 By now, calls to `pauseDispatcher` and `resumeDispatcher` should be purged from the code base, so only the unpaused
 variant of `TestCoroutineDispatcher` should be used.
-This version of the dispatcher, which can be observed has the property of eagerly entering `launch` and `async` blocks:
+This version of the dispatcher has the property of eagerly entering `launch` and `async` blocks:
 code until the first suspension is executed without dispatching.
 
-We ensured sure that, when run with an `UnconfinedTestDispatcher`, `runTest` also eagerly enters `launch` and `async`
-blocks, but *this only works at the top level*: if a child coroutine also called `launch` or `async`, we don't provide
+There are two common ways in which this property is useful.
+
+#### `TestCoroutineDispatcher` for the top-level coroutine
+
+Some tests that rely on `launch` and `async` blocks being entered immediately have a form similar to this:
+```kotlin
+runTest(TestCoroutineDispatcher()) {
+    launch {
+        updateSomething()
+    }
+    checkThatSomethingWasUpdated()
+    launch {
+        updateSomethingElse()
+    }
+    checkThatSomethingElseWasUpdated()
+}
+```
+
+If the `TestCoroutineDispatcher()` is simply removed, `StandardTestDispatcher()` will be used, which will cause
+the test to fail.
+
+In these cases, `UnconfinedTestDispatcher()` should be used.
+We ensured that, when run with an `UnconfinedTestDispatcher`, `runTest` also eagerly enters `launch` and `async`
+blocks.
+
+Note though that *this only works at the top level*: if a child coroutine also called `launch` or `async`, we don't provide
 any guarantees about their dispatching order.
 
-So, using `UnconfinedTestDispatcher` as an argument to `runTest` will probably lead to the test being executed as it
-did, but in the possible case that the test relies on the specific dispatching order of `TestCoroutineDispatcher`, it
-will need to be tweaked.
-If the test expects some code to have run at some point, but it hasn't, use `runCurrent` to force the tasks scheduled
+#### `TestCoroutineDispatcher` for testing intermediate emissions
+
+Some code tests `StateFlow` or channels in a manner similar to this:
+
+```kotlin
+@Test
+fun testAllEmissions() = runTest(TestCoroutineDispatcher()) {
+    val values = mutableListOf<Int>()
+    val stateFlow = MutableStateFlow(0)
+    val job = launch {
+        stateFlow.collect {
+            values.add(it)
+        }
+    }
+    stateFlow.value = 1
+    stateFlow.value = 2
+    stateFlow.value = 3
+    job.cancel()
+    // each assignment will immediately resume the collecting child coroutine,
+    // so no values will be skipped.
+    assertEquals(listOf(0, 1, 2, 3), values)
+}
+```
+
+Such code will fail when `TestCoroutineDispatcher()` is not used: not every emission will be listed.
+In this particular case, none will be listed at all.
+
+The reason for this is that setting `stateFlow.value` (as is sending to a channel, as are some other things) wakes up
+the coroutine waiting for the new value, but *typically* does not immediately run the collecting code, instead simply
+dispatching it.
+The exceptions are the coroutines running in dispatchers that don't (always) go through a dispatch,
+`Dispatchers.Unconfined`, `Dispatchers.Main.immediate`, `UnconfinedTestDispatcher`, or `TestCoroutineDispatcher` in
+the unpaused state.
+
+Therefore, a solution is to launch the collection in an unconfined dispatcher:
+
+```kotlin
+@Test
+fun testAllEmissions() = runTest {
+    val values = mutableListOf<Int>()
+    val stateFlow = MutableStateFlow(0)
+    val job = launch(UnconfinedTestDispatcher(testScheduler)) { // <------
+        stateFlow.collect {
+            values.add(it)
+        }
+    }
+    stateFlow.value = 1
+    stateFlow.value = 2
+    stateFlow.value = 3
+    job.cancel()
+    // each assignment will immediately resume the collecting child coroutine,
+    // so no values will be skipped.
+    assertEquals(listOf(0, 1, 2, 3), values)
+}
+```
+
+Note that `testScheduler` is passed so that the unconfined dispatcher is linked to `runTest`.
+Also, note that `UnconfinedTestDispatcher` is not passed to `runTest`.
+This is due to the fact that, *inside* the `UnconfinedTestDispatcher`, there are no execution order guarantees,
+so it would not be guaranteed that setting `stateFlow.value` would immediately run the collecting code
+(though in this case, it does).
+
+#### Other considerations
+
+Using `UnconfinedTestDispatcher` as an argument to `runTest` will probably lead to the test being executed as it
+did, but it's still possible that the test relies on the specific dispatching order of `TestCoroutineDispatcher`,
+so it will need to be tweaked.
+
+If some code is expected to have run at some point, but it hasn't, use `runCurrent` to force the tasks scheduled
 at this moment of time to run.
+For example, the `StateFlow` example above can also be forced to succeed by doing this:
+
+```kotlin
+@Test
+fun testAllEmissions() = runTest {
+    val values = mutableListOf<Int>()
+    val stateFlow = MutableStateFlow(0)
+    val job = launch {
+        stateFlow.collect {
+            values.add(it)
+        }
+    }
+    runCurrent()
+    stateFlow.value = 1
+    runCurrent()
+    stateFlow.value = 2
+    runCurrent()
+    stateFlow.value = 3
+    runCurrent()
+    job.cancel()
+    // each assignment will immediately resume the collecting child coroutine,
+    // so no values will be skipped.
+    assertEquals(listOf(0, 1, 2, 3), values)
+}
+```
+
+Be wary though of this approach: using `runCurrent`, `advanceTimeBy`, or `advanceUntilIdle` is, essentially,
+simulating some particular execution order, which is not guaranteed to happen in production code.
+For example, using `UnconfinedTestDispatcher` to fix this test reflects how, in production code, one could use
+`Dispatchers.Unconfined` to observe all emitted values without conflation, but the `runCurrent()` approach only
+states that the behavior would be observed if a dispatch were to happen at some chosen points.
+It is, therefore, recommended to structure tests in a way that does not rely on a particular interleaving, unless
+that is the intention.
 
 ### The job hierarchy is completely different.
 
