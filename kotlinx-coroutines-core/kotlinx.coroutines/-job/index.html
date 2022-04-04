@@ -3,7 +3,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>Job</title>
 </head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
-    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" defer></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
 const savedDarkMode = storage ? JSON.parse(storage) : false
 if(savedDarkMode === true){
     document.getElementsByTagName("html")[0].classList.add("theme-dark")
@@ -13,7 +13,7 @@ if(savedDarkMode === true){
     <div class="navigation-wrapper" id="navigation-wrapper">
       <div id="leftToggler"><span class="icon-toggler"></span></div>
       <div class="library-name"><a href="../../../index.html"><span>kotlinx.coroutines</span></a></div>
-      <div>1.6.0-SNAPSHOT</div>
+      <div>1.6.1-SNAPSHOT</div>
       <div class="pull-right d-flex">
         <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
 <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
@@ -24,14 +24,14 @@ if(savedDarkMode === true){
       <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
+      <div id="main">
         <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines/Job///PointingToDeclaration//1975948010">
           <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines</a>/<a href="index.html">Job</a></div>
           <div class="cover ">
             <h1 class="cover"><span><span>Job</span></span></h1>
             <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
               <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Job</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A background job. Conceptually, a job is a cancellable thing with a life-cycle that culminates in its completion.</p><p class="paragraph">Jobs can be arranged into parent-child hierarchies where cancellation of a parent leads to immediate cancellation of all its <a href="children.html">children</a> recursively. Failure of a child with an exception other than <a href="../-cancellation-exception/index.html">CancellationException</a> immediately cancels its parent and, consequently, all its other children. This behavior can be customized using <a href="../-supervisor-job.html">SupervisorJob</a>.</p><p class="paragraph">The most basic instances of <code class="lang-kotlin">Job</code> interface are created like this:</p><ul><li><p class="paragraph"><strong>Coroutine job</strong> is created with <a href="../launch.html">launch</a> coroutine builder. It runs a specified block of code and completes on completion of this block.</p></li><li><p class="paragraph"><a href="../-completable-job/index.html"><strong>CompletableJob</strong></a> is created with a <code class="lang-kotlin">Job()</code> factory function. It is completed by calling <a href="../-completable-job/complete.html">CompletableJob.complete</a>.</p></li></ul><p class="paragraph">Conceptually, an execution of a job does not produce a result value. Jobs are launched solely for their side-effects. See <a href="../-deferred/index.html">Deferred</a> interface for a job that produces a result.</p><h3 class=""> Job states</h3><p class="paragraph">A job has the following states:</p><table><thead><tr><th><strong>State</strong></th><th><a href="is-active.html">isActive</a></th><th><a href="is-completed.html">isCompleted</a></th><th><a href="is-cancelled.html">isCancelled</a></th></tr></thead><tbody><tr><td><i>New</i> (optional initial state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td></tr><tr><td><i>Active</i> (default initial state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td></tr><tr><td><i>Completing</i> (transient state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td></tr><tr><td><i>Cancelling</i> (transient state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td></tr><tr><td><i>Cancelled</i> (final state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td></tr><tr><td><i>Completed</i> (final state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td></tr></tbody></table><p class="paragraph">Usually, a job is created in the <i>active</i> state (it is created and started). However, coroutine builders that provide an optional <code class="lang-kotlin">start</code> parameter create a coroutine in the <i>new</i> state when this parameter is set to <a href="../-coroutine-start/-l-a-z-y/index.html">CoroutineStart.LAZY</a>. Such a job can be made <i>active</i> by invoking <a href="start.html">start</a> or <a href="join.html">join</a>.</p><p class="paragraph">A job is <i>active</i> while the coroutine is working or until <a href="../-completable-job/index.html">CompletableJob</a> is completed, or until it fails or cancelled.</p><p class="paragraph">Failure of an <i>active</i> job with an exception makes it <i>cancelling</i>. A job can be cancelled at any time with <a href="cancel.html">cancel</a> function that forces it to transition to the <i>cancelling</i> state immediately. The job becomes <i>cancelled</i>  when it finishes executing its work and all its children complete.</p><p class="paragraph">Completion of an <i>active</i> coroutine's body or a call to <a href="../-completable-job/complete.html">CompletableJob.complete</a> transitions the job to the <i>completing</i> state. It waits in the <i>completing</i> state for all its children to complete before transitioning to the <i>completed</i> state. Note that <i>completing</i> state is purely internal to the job. For an outside observer a <i>completing</i> job is still active, while internally it is waiting for its children.</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">                                          wait children<br>    +-----+ start  +--------+ complete   +-------------+  finish  +-----------+<br>    | New | -----&gt; | Active | ---------&gt; | Completing  | -------&gt; | Completed |<br>    +-----+        +--------+            +-------------+          +-----------+<br>                     |  cancel / fail       |<br>                     |     +----------------+<br>                     |     |<br>                     V     V<br>                 +------------+                           finish  +-----------+<br>                 | Cancelling | --------------------------------&gt; | Cancelled |<br>                 +------------+                                   +-----------+</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A <code class="lang-kotlin">Job</code> instance in the <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html">coroutineContext</a> represents the coroutine itself.</p><h3 class=""> Cancellation cause</h3><p class="paragraph">A coroutine job is said to <i>complete exceptionally</i> when its body throws an exception; a <a href="../-completable-job/index.html">CompletableJob</a> is completed exceptionally by calling <a href="../-completable-job/complete-exceptionally.html">CompletableJob.completeExceptionally</a>. An exceptionally completed job is cancelled and the corresponding exception becomes the <i>cancellation cause</i> of the job.</p><p class="paragraph">Normal cancellation of a job is distinguished from its failure by the type of this exception that caused its cancellation. A coroutine that threw <a href="../-cancellation-exception/index.html">CancellationException</a> is considered to be <i>cancelled normally</i>. If a cancellation cause is a different exception type, then the job is considered to have <i>failed</i>. When a job has <i>failed</i>, then its parent gets cancelled with the exception of the same type, thus ensuring transparency in delegating parts of the job to its children.</p><p class="paragraph">Note, that <a href="cancel.html">cancel</a> function on a job only accepts <a href="../-cancellation-exception/index.html">CancellationException</a> as a cancellation cause, thus calling <a href="cancel.html">cancel</a> always results in a normal cancellation of a job, which does not lead to cancellation of its parent. This way, a parent can <a href="cancel.html">cancel</a> its own children (cancelling all their children recursively, too) without cancelling itself.</p><h3 class=""> Concurrency and synchronization</h3><p class="paragraph">All functions on this interface and on all interfaces derived from it are <strong>thread-safe</strong> and can be safely invoked from concurrent coroutines without external synchronization.</p><h3 class=""> Not stable for inheritance</h3><p class="paragraph"><code class="strong lang-kotlin"><strong>Job</strong></code><strong> interface and all its derived interfaces are not stable for inheritance in 3rd party libraries</strong>, as new methods might be added to this interface in the future, but is stable for use.</p></div>            </div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Job</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/-element/index.html">CoroutineContext.Element</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A background job. Conceptually, a job is a cancellable thing with a life-cycle that culminates in its completion.</p><p class="paragraph">Jobs can be arranged into parent-child hierarchies where cancellation of a parent leads to immediate cancellation of all its <a href="children.html">children</a> recursively. Failure of a child with an exception other than <a href="../-cancellation-exception/index.html">CancellationException</a> immediately cancels its parent and, consequently, all its other children. This behavior can be customized using <a href="../-supervisor-job.html">SupervisorJob</a>.</p><p class="paragraph">The most basic instances of <code class="lang-kotlin">Job</code> interface are created like this:</p><ul><li><p class="paragraph"><strong>Coroutine job</strong> is created with <a href="../launch.html">launch</a> coroutine builder. It runs a specified block of code and completes on completion of this block.</p></li><li><p class="paragraph"><a href="../-completable-job/index.html"><strong>CompletableJob</strong></a> is created with a <code class="lang-kotlin">Job()</code> factory function. It is completed by calling <a href="../-completable-job/complete.html">CompletableJob.complete</a>.</p></li></ul><p class="paragraph">Conceptually, an execution of a job does not produce a result value. Jobs are launched solely for their side-effects. See <a href="../-deferred/index.html">Deferred</a> interface for a job that produces a result.</p><h3 class=""> Job states</h3><p class="paragraph">A job has the following states:</p><table><thead><tr><th><strong>State</strong></th><th><a href="is-active.html">isActive</a></th><th><a href="is-completed.html">isCompleted</a></th><th><a href="is-cancelled.html">isCancelled</a></th></tr></thead><tbody><tr><td><i>New</i> (optional initial state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td></tr><tr><td><i>Active</i> (default initial state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td></tr><tr><td><i>Completing</i> (transient state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td></tr><tr><td><i>Cancelling</i> (transient state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td></tr><tr><td><i>Cancelled</i> (final state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td></tr><tr><td><i>Completed</i> (final state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td></tr></tbody></table><p class="paragraph">Usually, a job is created in the <i>active</i> state (it is created and started). However, coroutine builders that provide an optional <code class="lang-kotlin">start</code> parameter create a coroutine in the <i>new</i> state when this parameter is set to <a href="../-coroutine-start/-l-a-z-y/index.html">CoroutineStart.LAZY</a>. Such a job can be made <i>active</i> by invoking <a href="start.html">start</a> or <a href="join.html">join</a>.</p><p class="paragraph">A job is <i>active</i> while the coroutine is working or until <a href="../-completable-job/index.html">CompletableJob</a> is completed, or until it fails or cancelled.</p><p class="paragraph">Failure of an <i>active</i> job with an exception makes it <i>cancelling</i>. A job can be cancelled at any time with <a href="cancel.html">cancel</a> function that forces it to transition to the <i>cancelling</i> state immediately. The job becomes <i>cancelled</i>  when it finishes executing its work and all its children complete.</p><p class="paragraph">Completion of an <i>active</i> coroutine's body or a call to <a href="../-completable-job/complete.html">CompletableJob.complete</a> transitions the job to the <i>completing</i> state. It waits in the <i>completing</i> state for all its children to complete before transitioning to the <i>completed</i> state. Note that <i>completing</i> state is purely internal to the job. For an outside observer a <i>completing</i> job is still active, while internally it is waiting for its children.</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">                                          wait children<br>    +-----+ start  +--------+ complete   +-------------+  finish  +-----------+<br>    | New | -----&gt; | Active | ---------&gt; | Completing  | -------&gt; | Completed |<br>    +-----+        +--------+            +-------------+          +-----------+<br>                     |  cancel / fail       |<br>                     |     +----------------+<br>                     |     |<br>                     V     V<br>                 +------------+                           finish  +-----------+<br>                 | Cancelling | --------------------------------&gt; | Cancelled |<br>                 +------------+                                   +-----------+</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">A <code class="lang-kotlin">Job</code> instance in the <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html">coroutineContext</a> represents the coroutine itself.</p><h3 class=""> Cancellation cause</h3><p class="paragraph">A coroutine job is said to <i>complete exceptionally</i> when its body throws an exception; a <a href="../-completable-job/index.html">CompletableJob</a> is completed exceptionally by calling <a href="../-completable-job/complete-exceptionally.html">CompletableJob.completeExceptionally</a>. An exceptionally completed job is cancelled and the corresponding exception becomes the <i>cancellation cause</i> of the job.</p><p class="paragraph">Normal cancellation of a job is distinguished from its failure by the type of this exception that caused its cancellation. A coroutine that threw <a href="../-cancellation-exception/index.html">CancellationException</a> is considered to be <i>cancelled normally</i>. If a cancellation cause is a different exception type, then the job is considered to have <i>failed</i>. When a job has <i>failed</i>, then its parent gets cancelled with the exception of the same type, thus ensuring transparency in delegating parts of the job to its children.</p><p class="paragraph">Note, that <a href="cancel.html">cancel</a> function on a job only accepts <a href="../-cancellation-exception/index.html">CancellationException</a> as a cancellation cause, thus calling <a href="cancel.html">cancel</a> always results in a normal cancellation of a job, which does not lead to cancellation of its parent. This way, a parent can <a href="cancel.html">cancel</a> its own children (cancelling all their children recursively, too) without cancelling itself.</p><h3 class=""> Concurrency and synchronization</h3><p class="paragraph">All functions on this interface and on all interfaces derived from it are <strong>thread-safe</strong> and can be safely invoked from concurrent coroutines without external synchronization.</p><h3 class=""> Not stable for inheritance</h3><p class="paragraph"><code class="strong lang-kotlin"><strong>Job</strong></code><strong> interface and all its derived interfaces are not stable for inheritance in 3rd party libraries</strong>, as new methods might be added to this interface in the future, but is stable for use.</p></div>            </div>
           </div>
           <div class="tabbedcontent">
             <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Extensions">Extensions</button><button class="section-tab" data-togglable="Sources">Sources</button><button class="section-tab" data-togglable="Inheritors">Inheritors</button></div>
@@ -40,7 +40,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Types"><a data-name="1254968480%2FClasslikes%2F1975948010" anchor-label="Key" id="1254968480%2FClasslikes%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="-key/index.html"><span><span>Key</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1254968480%2FClasslikes%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="-key/index.html"><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1254968480%2FClasslikes%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -57,7 +59,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Functions"><a data-name="-1323829921%2FFunctions%2F1975948010" anchor-label="cancel" id="-1323829921%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="cancel.html"><span><span>cancel</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1323829921%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="cancel.html"><span><span>cancel</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1323829921%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -72,7 +76,9 @@ if(savedDarkMode === true){
 <a data-name="1756523180%2FFunctions%2F1975948010" anchor-label="invokeOnCompletion" id="1756523180%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="invoke-on-completion.html"><span>invoke</span><wbr><span>On</span><wbr><span><span>Completion</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1756523180%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="invoke-on-completion.html"><span>invoke</span><wbr><span>On</span><wbr><span><span>Completion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1756523180%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -87,7 +93,9 @@ if(savedDarkMode === true){
 <a data-name="86493028%2FFunctions%2F1975948010" anchor-label="join" id="86493028%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="join.html"><span><span>join</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="86493028%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="join.html"><span><span>join</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="86493028%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -102,7 +110,9 @@ if(savedDarkMode === true){
 <a data-name="845358634%2FFunctions%2F1975948010" anchor-label="start" id="845358634%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="start.html"><span><span>start</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="845358634%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="start.html"><span><span>start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="845358634%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -119,7 +129,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Properties"><a data-name="1889943471%2FProperties%2F1975948010" anchor-label="children" id="1889943471%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="children.html">children</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1889943471%2FProperties%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="children.html">children</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1889943471%2FProperties%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -134,7 +146,9 @@ if(savedDarkMode === true){
 <a data-name="-826717698%2FProperties%2F1975948010" anchor-label="isActive" id="-826717698%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="is-active.html">isActive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-826717698%2FProperties%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="is-active.html">isActive</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-826717698%2FProperties%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -149,7 +163,9 @@ if(savedDarkMode === true){
 <a data-name="-592792667%2FProperties%2F1975948010" anchor-label="isCancelled" id="-592792667%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="is-cancelled.html">isCancelled</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-592792667%2FProperties%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="is-cancelled.html">isCancelled</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-592792667%2FProperties%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -164,7 +180,9 @@ if(savedDarkMode === true){
 <a data-name="-1339386901%2FProperties%2F1975948010" anchor-label="isCompleted" id="-1339386901%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="is-completed.html">isCompleted</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1339386901%2FProperties%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="is-completed.html">isCompleted</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1339386901%2FProperties%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -179,7 +197,9 @@ if(savedDarkMode === true){
 <a data-name="391293317%2FProperties%2F1975948010" anchor-label="onJoin" id="391293317%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="on-join.html">onJoin</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="391293317%2FProperties%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="on-join.html">onJoin</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="391293317%2FProperties%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -196,7 +216,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Inheritors"><a data-name="-1656381859%2FInheritors%2F1975948010" anchor-label="CompletableJob" id="-1656381859%2FInheritors%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-completable-job/index.html">CompletableJob</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1656381859%2FInheritors%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../-completable-job/index.html">CompletableJob</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1656381859%2FInheritors%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -205,7 +227,9 @@ if(savedDarkMode === true){
 <a data-name="763994005%2FInheritors%2F1975948010" anchor-label="Deferred" id="763994005%2FInheritors%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-deferred/index.html">Deferred</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="763994005%2FInheritors%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../-deferred/index.html">Deferred</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="763994005%2FInheritors%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -214,7 +238,9 @@ if(savedDarkMode === true){
 <a data-name="2116029621%2FInheritors%2F1975948010" anchor-label="NonCancellable" id="2116029621%2FInheritors%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-non-cancellable/index.html">NonCancellable</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2116029621%2FInheritors%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../-non-cancellable/index.html">NonCancellable</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2116029621%2FInheritors%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -225,7 +251,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Extensions"><a data-name="457259561%2FExtensions%2F1975948010" anchor-label="cancel" id="457259561%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../cancel.html"><span><span>cancel</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="457259561%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../cancel.html"><span><span>cancel</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="457259561%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -240,7 +268,9 @@ if(savedDarkMode === true){
 <a data-name="-1982656119%2FExtensions%2F1975948010" anchor-label="cancelAndJoin" id="-1982656119%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../cancel-and-join.html"><span>cancel</span><wbr><span>And</span><wbr><span><span>Join</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1982656119%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../cancel-and-join.html"><span>cancel</span><wbr><span>And</span><wbr><span><span>Join</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1982656119%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -255,7 +285,9 @@ if(savedDarkMode === true){
 <a data-name="-1592628032%2FExtensions%2F1975948010" anchor-label="cancelChildren" id="-1592628032%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../cancel-children.html"><span>cancel</span><wbr><span><span>Children</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1592628032%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../cancel-children.html"><span>cancel</span><wbr><span><span>Children</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1592628032%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -270,7 +302,9 @@ if(savedDarkMode === true){
 <a data-name="861085992%2FExtensions%2F1975948010" anchor-label="ensureActive" id="861085992%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../ensure-active.html"><span>ensure</span><wbr><span><span>Active</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="861085992%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../ensure-active.html"><span>ensure</span><wbr><span><span>Active</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="861085992%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -287,7 +321,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Sources"><a data-name="101088977%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L17" id="101088977%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L17">common source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="101088977%2FSource%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/Job.kt#L17">common source</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="101088977%2FSource%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -297,7 +333,7 @@ if(savedDarkMode === true){
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

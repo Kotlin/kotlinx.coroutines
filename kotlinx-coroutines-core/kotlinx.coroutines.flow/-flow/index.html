@@ -3,7 +3,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>Flow</title>
 </head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
-    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" defer></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
 const savedDarkMode = storage ? JSON.parse(storage) : false
 if(savedDarkMode === true){
     document.getElementsByTagName("html")[0].classList.add("theme-dark")
@@ -13,7 +13,7 @@ if(savedDarkMode === true){
     <div class="navigation-wrapper" id="navigation-wrapper">
       <div id="leftToggler"><span class="icon-toggler"></span></div>
       <div class="library-name"><a href="../../../index.html"><span>kotlinx.coroutines</span></a></div>
-      <div>1.6.0-SNAPSHOT</div>
+      <div>1.6.1-SNAPSHOT</div>
       <div class="pull-right d-flex">
         <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
 <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
@@ -24,14 +24,14 @@ if(savedDarkMode === true){
       <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
+      <div id="main">
         <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow/Flow///PointingToDeclaration//1975948010">
           <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines.flow</a>/<a href="index.html">Flow</a></div>
           <div class="cover ">
             <h1 class="cover"><span><span>Flow</span></span></h1>
             <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
               <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Flow</a><span class="token operator">&lt;</span><span class="token keyword">out </span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">An asynchronous data stream that sequentially emits values and completes normally or with an exception.</p><p class="paragraph"><i>Intermediate operators</i> on the flow such as <a href="../map.html">map</a>, <a href="../filter.html">filter</a>, <a href="../take.html">take</a>, <a href="../zip.html">zip</a>, etc are functions that are applied to the <i>upstream</i> flow or flows and return a <i>downstream</i> flow where further operators can be applied to. Intermediate operations do not execute any code in the flow and are not suspending functions themselves. They only set up a chain of operations for future execution and quickly return. This is known as a <i>cold flow</i> property.</p><p class="paragraph"><i>Terminal operators</i> on the flow are either suspending functions such as <a href="collect.html">collect</a>, <a href="../single.html">single</a>, <a href="../reduce.html">reduce</a>, <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.flow/index.html">toList</a>, etc. or <a href="../launch-in.html">launchIn</a> operator that starts collection of the flow in the given scope. They are applied to the upstream flow and trigger execution of all operations. Execution of the flow is also called <i>collecting the flow</i>  and is always performed in a suspending manner without actual blocking. Terminal operators complete normally or exceptionally depending on successful or failed execution of all the flow operations in the upstream. The most basic terminal operator is <a href="collect.html">collect</a>, for example:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">try {<br>    flow.collect { value -&gt;<br>        println("Received $value")<br>    }<br>} catch (e: Exception) {<br>    println("The flow has thrown an exception: $e")<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">By default, flows are <i>sequential</i> and all flow operations are executed sequentially in the same coroutine, with an exception for a few operations specifically designed to introduce concurrency into flow execution such as <a href="../buffer.html">buffer</a> and <a href="../flat-map-merge.html">flatMapMerge</a>. See their documentation for details.</p><p class="paragraph">The <code class="lang-kotlin">Flow</code> interface does not carry information whether a flow is a <i>cold</i> stream that can be collected repeatedly and triggers execution of the same code every time it is collected, or if it is a <i>hot</i> stream that emits different values from the same running source on each collection. Usually flows represent <i>cold</i> streams, but there is a <a href="../-shared-flow/index.html">SharedFlow</a> subtype that represents <i>hot</i> streams. In addition to that, any flow can be turned into a <i>hot</i> one by the <a href="../state-in.html">stateIn</a> and <a href="../share-in.html">shareIn</a> operators, or by converting the flow into a hot channel via the <a href="../produce-in.html">produceIn</a> operator.</p><h3 class=""> Flow builders</h3><p class="paragraph">There are the following basic ways to create a flow:</p><ul><li><p class="paragraph"><a href="../flow-of.html">flowOf(...)</a> functions to create a flow from a fixed set of values.</p></li><li><p class="paragraph"><a href="../as-flow.html">asFlow()</a> extension functions on various types to convert them into flows.</p></li><li><p class="paragraph"><a href="../flow.html">flow { ... }</a> builder function to construct arbitrary flows from sequential calls to <a href="../-flow-collector/emit.html">emit</a> function.</p></li><li><p class="paragraph"><a href="../channel-flow.html">channelFlow { ... }</a> builder function to construct arbitrary flows from potentially concurrent calls to the <a href="../../kotlinx.coroutines.channels/-send-channel/send.html">send</a> function.</p></li><li><p class="paragraph"><a href="../-mutable-state-flow/index.html">MutableStateFlow</a> and <a href="../-mutable-shared-flow/index.html">MutableSharedFlow</a> define the corresponding constructor functions to create a <i>hot</i> flow that can be directly updated.</p></li></ul><h3 class=""> Flow constraints</h3><p class="paragraph">All implementations of the <code class="lang-kotlin">Flow</code> interface must adhere to two key properties described in detail below:</p><ul><li><p class="paragraph">Context preservation.</p></li><li><p class="paragraph">Exception transparency.</p></li></ul><p class="paragraph">These properties ensure the ability to perform local reasoning about the code with flows and modularize the code in such a way that upstream flow emitters can be developed separately from downstream flow collectors. A user of a flow does not need to be aware of implementation details of the upstream flows it uses.</p><h3 class=""> Context preservation</h3><p class="paragraph">The flow has a context preservation property: it encapsulates its own execution context and never propagates or leaks it downstream, thus making reasoning about the execution context of particular transformations or terminal operations trivial.</p><p class="paragraph">There is only one way to change the context of a flow: the <a href="../flow-on.html">flowOn</a> operator that changes the upstream context ("everything above the <code class="lang-kotlin">flowOn</code> operator"). For additional information refer to its documentation.</p><p class="paragraph">This reasoning can be demonstrated in practice:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val flowA = flowOf(1, 2, 3)<br>    .map { it + 1 } // Will be executed in ctxA<br>    .flowOn(ctxA) // Changes the upstream context: flowOf and map<br><br>// Now we have a context-preserving flow: it is executed somewhere but this information is encapsulated in the flow itself<br><br>val filtered = flowA // ctxA is encapsulated in flowA<br>   .filter { it == 3 } // Pure operator without a context yet<br><br>withContext(Dispatchers.Main) {<br>    // All non-encapsulated operators will be executed in Main: filter and single<br>    val result = filtered.single()<br>    myUi.text = result<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">From the implementation point of view, it means that all flow implementations should only emit from the same coroutine. This constraint is efficiently enforced by the default <a href="../flow.html">flow</a> builder. The <a href="../flow.html">flow</a> builder should be used if the flow implementation does not start any coroutines. Its implementation prevents most of the development mistakes:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val myFlow = flow {<br>   // GlobalScope.launch { // is prohibited<br>   // launch(Dispatchers.IO) { // is prohibited<br>   // withContext(CoroutineName("myFlow")) // is prohibited<br>   emit(1) // OK<br>   coroutineScope {<br>       emit(2) // OK -- still the same coroutine<br>   }<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Use <a href="../channel-flow.html">channelFlow</a> if the collection and emission of a flow are to be separated into multiple coroutines. It encapsulates all the context preservation work and allows you to focus on your domain-specific problem, rather than invariant implementation details. It is possible to use any combination of coroutine builders from within <a href="../channel-flow.html">channelFlow</a>.</p><p class="paragraph">If you are looking for performance and are sure that no concurrent emits and context jumps will happen, the <a href="../flow.html">flow</a> builder can be used alongside a <a href="../../kotlinx.coroutines/coroutine-scope.html">coroutineScope</a> or <a href="../../kotlinx.coroutines/supervisor-scope.html">supervisorScope</a> instead:</p><ul><li><p class="paragraph">Scoped primitive should be used to provide a <a href="../../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.</p></li><li><p class="paragraph">Changing the context of emission is prohibited, no matter whether it is <code class="lang-kotlin">withContext(ctx)</code> or     a builder argument (e.g. <code class="lang-kotlin">launch(ctx)</code>).</p></li><li><p class="paragraph">Collecting another flow from a separate context is allowed, but it has the same effect as     applying the <a href="../flow-on.html">flowOn</a> operator to that flow, which is more efficient.</p></li></ul><h3 class=""> Exception transparency</h3><p class="paragraph">When <code class="lang-kotlin">emit</code> or <code class="lang-kotlin">emitAll</code> throws, the Flow implementations must immediately stop emitting new values and finish with an exception. For diagnostics or application-specific purposes, the exception may be different from the one thrown by the emit operation, suppressing the original exception as discussed below. If there is a need to emit values after the downstream failed, please use the <a href="../catch.html">catch</a> operator.</p><p class="paragraph">The <a href="../catch.html">catch</a> operator only catches upstream exceptions, but passes all downstream exceptions. Similarly, terminal operators like <a href="collect.html">collect</a> throw any unhandled exceptions that occur in their code or in upstream flows, for example:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">flow { emitData() }<br>    .map { computeOne(it) }<br>    .catch { ... } // catches exceptions in emitData and computeOne<br>    .map { computeTwo(it) }<br>    .collect { process(it) } // throws exceptions from process and computeTwo</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">The same reasoning can be applied to the <a href="../on-completion.html">onCompletion</a> operator that is a declarative replacement for the <code class="lang-kotlin">finally</code> block.</p><p class="paragraph">All exception-handling Flow operators follow the principle of exception suppression:</p><p class="paragraph">If the upstream flow throws an exception during its completion when the downstream exception has been thrown, the downstream exception becomes superseded and suppressed by the upstream exception, being a semantic equivalent of throwing from <code class="lang-kotlin">finally</code> block. However, this doesn't affect the operation of the exception-handling operators, which consider the downstream exception to be the root cause and behave as if the upstream didn't throw anything.</p><p class="paragraph">Failure to adhere to the exception transparency requirement can lead to strange behaviors which make it hard to reason about the code because an exception in the <code class="lang-kotlin">collect { ... }</code> could be somehow "caught" by an upstream flow, limiting the ability of local reasoning about the code.</p><p class="paragraph">Flow machinery enforces exception transparency at runtime and throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> on any attempt to emit a value, if an exception has been thrown on previous attempt.</p><h3 class=""> Reactive streams</h3><p class="paragraph">Flow is <a href="http://www.reactive-streams.org/">Reactive Streams</a> compliant, you can safely interop it with reactive streams using Flow.asPublisher and Publisher.asFlow from <code class="lang-kotlin">kotlinx-coroutines-reactive</code> module.</p><h3 class=""> Not stable for inheritance</h3><p class="paragraph"><strong>The </strong><code class="strong lang-kotlin"><strong>Flow</strong></code><strong> interface is not stable for inheritance in 3rd party libraries</strong>, as new methods might be added to this interface in the future, but is stable for use.</p><p class="paragraph">Use the <code class="lang-kotlin">flow { ... }</code> builder function to create an implementation, or extend <a href="../-abstract-flow/index.html">AbstractFlow</a>. These implementations ensure that the context preservation property is not violated, and prevent most of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.</p></div>            </div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">Flow</a><span class="token operator">&lt;</span><span class="token keyword">out </span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">An asynchronous data stream that sequentially emits values and completes normally or with an exception.</p><p class="paragraph"><i>Intermediate operators</i> on the flow such as <a href="../map.html">map</a>, <a href="../filter.html">filter</a>, <a href="../take.html">take</a>, <a href="../zip.html">zip</a>, etc are functions that are applied to the <i>upstream</i> flow or flows and return a <i>downstream</i> flow where further operators can be applied to. Intermediate operations do not execute any code in the flow and are not suspending functions themselves. They only set up a chain of operations for future execution and quickly return. This is known as a <i>cold flow</i> property.</p><p class="paragraph"><i>Terminal operators</i> on the flow are either suspending functions such as <a href="collect.html">collect</a>, <a href="../single.html">single</a>, <a href="../reduce.html">reduce</a>, <a href="../../../kotlinx-coroutines-core/kotlinx.coroutines.flow/index.html">toList</a>, etc. or <a href="../launch-in.html">launchIn</a> operator that starts collection of the flow in the given scope. They are applied to the upstream flow and trigger execution of all operations. Execution of the flow is also called <i>collecting the flow</i>  and is always performed in a suspending manner without actual blocking. Terminal operators complete normally or exceptionally depending on successful or failed execution of all the flow operations in the upstream. The most basic terminal operator is <a href="collect.html">collect</a>, for example:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">try {<br>    flow.collect { value -&gt;<br>        println("Received $value")<br>    }<br>} catch (e: Exception) {<br>    println("The flow has thrown an exception: $e")<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">By default, flows are <i>sequential</i> and all flow operations are executed sequentially in the same coroutine, with an exception for a few operations specifically designed to introduce concurrency into flow execution such as <a href="../buffer.html">buffer</a> and <a href="../flat-map-merge.html">flatMapMerge</a>. See their documentation for details.</p><p class="paragraph">The <code class="lang-kotlin">Flow</code> interface does not carry information whether a flow is a <i>cold</i> stream that can be collected repeatedly and triggers execution of the same code every time it is collected, or if it is a <i>hot</i> stream that emits different values from the same running source on each collection. Usually flows represent <i>cold</i> streams, but there is a <a href="../-shared-flow/index.html">SharedFlow</a> subtype that represents <i>hot</i> streams. In addition to that, any flow can be turned into a <i>hot</i> one by the <a href="../state-in.html">stateIn</a> and <a href="../share-in.html">shareIn</a> operators, or by converting the flow into a hot channel via the <a href="../produce-in.html">produceIn</a> operator.</p><h3 class=""> Flow builders</h3><p class="paragraph">There are the following basic ways to create a flow:</p><ul><li><p class="paragraph"><a href="../flow-of.html">flowOf(...)</a> functions to create a flow from a fixed set of values.</p></li><li><p class="paragraph"><a href="../as-flow.html">asFlow()</a> extension functions on various types to convert them into flows.</p></li><li><p class="paragraph"><a href="../flow.html">flow { ... }</a> builder function to construct arbitrary flows from sequential calls to <a href="../-flow-collector/emit.html">emit</a> function.</p></li><li><p class="paragraph"><a href="../channel-flow.html">channelFlow { ... }</a> builder function to construct arbitrary flows from potentially concurrent calls to the <a href="../../kotlinx.coroutines.channels/-send-channel/send.html">send</a> function.</p></li><li><p class="paragraph"><a href="../-mutable-state-flow/index.html">MutableStateFlow</a> and <a href="../-mutable-shared-flow/index.html">MutableSharedFlow</a> define the corresponding constructor functions to create a <i>hot</i> flow that can be directly updated.</p></li></ul><h3 class=""> Flow constraints</h3><p class="paragraph">All implementations of the <code class="lang-kotlin">Flow</code> interface must adhere to two key properties described in detail below:</p><ul><li><p class="paragraph">Context preservation.</p></li><li><p class="paragraph">Exception transparency.</p></li></ul><p class="paragraph">These properties ensure the ability to perform local reasoning about the code with flows and modularize the code in such a way that upstream flow emitters can be developed separately from downstream flow collectors. A user of a flow does not need to be aware of implementation details of the upstream flows it uses.</p><h3 class=""> Context preservation</h3><p class="paragraph">The flow has a context preservation property: it encapsulates its own execution context and never propagates or leaks it downstream, thus making reasoning about the execution context of particular transformations or terminal operations trivial.</p><p class="paragraph">There is only one way to change the context of a flow: the <a href="../flow-on.html">flowOn</a> operator that changes the upstream context ("everything above the <code class="lang-kotlin">flowOn</code> operator"). For additional information refer to its documentation.</p><p class="paragraph">This reasoning can be demonstrated in practice:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val flowA = flowOf(1, 2, 3)<br>    .map { it + 1 } // Will be executed in ctxA<br>    .flowOn(ctxA) // Changes the upstream context: flowOf and map<br><br>// Now we have a context-preserving flow: it is executed somewhere but this information is encapsulated in the flow itself<br><br>val filtered = flowA // ctxA is encapsulated in flowA<br>   .filter { it == 3 } // Pure operator without a context yet<br><br>withContext(Dispatchers.Main) {<br>    // All non-encapsulated operators will be executed in Main: filter and single<br>    val result = filtered.single()<br>    myUi.text = result<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">From the implementation point of view, it means that all flow implementations should only emit from the same coroutine. This constraint is efficiently enforced by the default <a href="../flow.html">flow</a> builder. The <a href="../flow.html">flow</a> builder should be used if the flow implementation does not start any coroutines. Its implementation prevents most of the development mistakes:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val myFlow = flow {<br>   // GlobalScope.launch { // is prohibited<br>   // launch(Dispatchers.IO) { // is prohibited<br>   // withContext(CoroutineName("myFlow")) { // is prohibited<br>   emit(1) // OK<br>   coroutineScope {<br>       emit(2) // OK -- still the same coroutine<br>   }<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Use <a href="../channel-flow.html">channelFlow</a> if the collection and emission of a flow are to be separated into multiple coroutines. It encapsulates all the context preservation work and allows you to focus on your domain-specific problem, rather than invariant implementation details. It is possible to use any combination of coroutine builders from within <a href="../channel-flow.html">channelFlow</a>.</p><p class="paragraph">If you are looking for performance and are sure that no concurrent emits and context jumps will happen, the <a href="../flow.html">flow</a> builder can be used alongside a <a href="../../kotlinx.coroutines/coroutine-scope.html">coroutineScope</a> or <a href="../../kotlinx.coroutines/supervisor-scope.html">supervisorScope</a> instead:</p><ul><li><p class="paragraph">Scoped primitive should be used to provide a <a href="../../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>.</p></li><li><p class="paragraph">Changing the context of emission is prohibited, no matter whether it is <code class="lang-kotlin">withContext(ctx)</code> or     a builder argument (e.g. <code class="lang-kotlin">launch(ctx)</code>).</p></li><li><p class="paragraph">Collecting another flow from a separate context is allowed, but it has the same effect as     applying the <a href="../flow-on.html">flowOn</a> operator to that flow, which is more efficient.</p></li></ul><h3 class=""> Exception transparency</h3><p class="paragraph">When <code class="lang-kotlin">emit</code> or <code class="lang-kotlin">emitAll</code> throws, the Flow implementations must immediately stop emitting new values and finish with an exception. For diagnostics or application-specific purposes, the exception may be different from the one thrown by the emit operation, suppressing the original exception as discussed below. If there is a need to emit values after the downstream failed, please use the <a href="../catch.html">catch</a> operator.</p><p class="paragraph">The <a href="../catch.html">catch</a> operator only catches upstream exceptions, but passes all downstream exceptions. Similarly, terminal operators like <a href="collect.html">collect</a> throw any unhandled exceptions that occur in their code or in upstream flows, for example:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">flow { emitData() }<br>    .map { computeOne(it) }<br>    .catch { ... } // catches exceptions in emitData and computeOne<br>    .map { computeTwo(it) }<br>    .collect { process(it) } // throws exceptions from process and computeTwo</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">The same reasoning can be applied to the <a href="../on-completion.html">onCompletion</a> operator that is a declarative replacement for the <code class="lang-kotlin">finally</code> block.</p><p class="paragraph">All exception-handling Flow operators follow the principle of exception suppression:</p><p class="paragraph">If the upstream flow throws an exception during its completion when the downstream exception has been thrown, the downstream exception becomes superseded and suppressed by the upstream exception, being a semantic equivalent of throwing from <code class="lang-kotlin">finally</code> block. However, this doesn't affect the operation of the exception-handling operators, which consider the downstream exception to be the root cause and behave as if the upstream didn't throw anything.</p><p class="paragraph">Failure to adhere to the exception transparency requirement can lead to strange behaviors which make it hard to reason about the code because an exception in the <code class="lang-kotlin">collect { ... }</code> could be somehow "caught" by an upstream flow, limiting the ability of local reasoning about the code.</p><p class="paragraph">Flow machinery enforces exception transparency at runtime and throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> on any attempt to emit a value, if an exception has been thrown on previous attempt.</p><h3 class=""> Reactive streams</h3><p class="paragraph">Flow is <a href="http://www.reactive-streams.org/">Reactive Streams</a> compliant, you can safely interop it with reactive streams using Flow.asPublisher and Publisher.asFlow from <code class="lang-kotlin">kotlinx-coroutines-reactive</code> module.</p><h3 class=""> Not stable for inheritance</h3><p class="paragraph"><strong>The </strong><code class="strong lang-kotlin"><strong>Flow</strong></code><strong> interface is not stable for inheritance in 3rd party libraries</strong>, as new methods might be added to this interface in the future, but is stable for use.</p><p class="paragraph">Use the <code class="lang-kotlin">flow { ... }</code> builder function to create an implementation, or extend <a href="../-abstract-flow/index.html">AbstractFlow</a>. These implementations ensure that the context preservation property is not violated, and prevent most of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.</p></div>            </div>
           </div>
           <div class="tabbedcontent">
             <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Extensions">Extensions</button><button class="section-tab" data-togglable="Sources">Sources</button><button class="section-tab" data-togglable="Inheritors">Inheritors</button></div>
@@ -40,7 +40,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Functions"><a data-name="-801554122%2FFunctions%2F1975948010" anchor-label="collect" id="-801554122%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="collect.html"><span><span>collect</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-801554122%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="collect.html"><span><span>collect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-801554122%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -57,7 +59,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Inheritors"><a data-name="456760220%2FInheritors%2F1975948010" anchor-label="AbstractFlow" id="456760220%2FInheritors%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-abstract-flow/index.html">AbstractFlow</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="456760220%2FInheritors%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../-abstract-flow/index.html">AbstractFlow</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="456760220%2FInheritors%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -66,7 +70,9 @@ if(savedDarkMode === true){
 <a data-name="-246905607%2FInheritors%2F1975948010" anchor-label="SharedFlow" id="-246905607%2FInheritors%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-shared-flow/index.html">SharedFlow</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-246905607%2FInheritors%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../-shared-flow/index.html">SharedFlow</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-246905607%2FInheritors%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -77,7 +83,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Extensions"><a data-name="-26015549%2FExtensions%2F1975948010" anchor-label="buffer" id="-26015549%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../buffer.html"><span><span>buffer</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-26015549%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../buffer.html"><span><span>buffer</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-26015549%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -92,7 +100,9 @@ if(savedDarkMode === true){
 <a data-name="2051072803%2FExtensions%2F1975948010" anchor-label="cancellable" id="2051072803%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../cancellable.html"><span><span>cancellable</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2051072803%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../cancellable.html"><span><span>cancellable</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2051072803%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -107,7 +117,9 @@ if(savedDarkMode === true){
 <a data-name="-1363243705%2FExtensions%2F1975948010" anchor-label="catch" id="-1363243705%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../catch.html"><span><span>catch</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1363243705%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../catch.html"><span><span>catch</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1363243705%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -122,7 +134,9 @@ if(savedDarkMode === true){
 <a data-name="-1012467941%2FExtensions%2F1975948010" anchor-label="collect" id="-1012467941%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../collect.html"><span><span>collect</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1012467941%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../collect.html"><span><span>collect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1012467941%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -137,7 +151,9 @@ if(savedDarkMode === true){
 <a data-name="-1189997749%2FExtensions%2F1975948010" anchor-label="collectIndexed" id="-1189997749%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../collect-indexed.html"><span>collect</span><wbr><span><span>Indexed</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1189997749%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../collect-indexed.html"><span>collect</span><wbr><span><span>Indexed</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1189997749%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -152,7 +168,9 @@ if(savedDarkMode === true){
 <a data-name="-511611762%2FExtensions%2F1975948010" anchor-label="collectLatest" id="-511611762%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../collect-latest.html"><span>collect</span><wbr><span><span>Latest</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-511611762%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../collect-latest.html"><span>collect</span><wbr><span><span>Latest</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-511611762%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -167,7 +185,9 @@ if(savedDarkMode === true){
 <a data-name="433481581%2FExtensions%2F1975948010" anchor-label="combine" id="433481581%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../combine.html"><span><span>combine</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="433481581%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../combine.html"><span><span>combine</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="433481581%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -182,7 +202,9 @@ if(savedDarkMode === true){
 <a data-name="2003207614%2FExtensions%2F1975948010" anchor-label="combineTransform" id="2003207614%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../combine-transform.html"><span>combine</span><wbr><span><span>Transform</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2003207614%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../combine-transform.html"><span>combine</span><wbr><span><span>Transform</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2003207614%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -197,7 +219,9 @@ if(savedDarkMode === true){
 <a data-name="1455786869%2FExtensions%2F1975948010" anchor-label="conflate" id="1455786869%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../conflate.html"><span><span>conflate</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1455786869%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../conflate.html"><span><span>conflate</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1455786869%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -212,7 +236,9 @@ if(savedDarkMode === true){
 <a data-name="-506130786%2FExtensions%2F1975948010" anchor-label="count" id="-506130786%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../count.html"><span><span>count</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-506130786%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../count.html"><span><span>count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-506130786%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -227,7 +253,9 @@ if(savedDarkMode === true){
 <a data-name="-100816000%2FExtensions%2F1975948010" anchor-label="debounce" id="-100816000%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../debounce.html"><span><span>debounce</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-100816000%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../debounce.html"><span><span>debounce</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-100816000%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -242,7 +270,9 @@ if(savedDarkMode === true){
 <a data-name="-1256316664%2FExtensions%2F1975948010" anchor-label="distinctUntilChanged" id="-1256316664%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../distinct-until-changed.html"><span>distinct</span><wbr><span>Until</span><wbr><span><span>Changed</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1256316664%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../distinct-until-changed.html"><span>distinct</span><wbr><span>Until</span><wbr><span><span>Changed</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1256316664%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -257,7 +287,9 @@ if(savedDarkMode === true){
 <a data-name="564885438%2FExtensions%2F1975948010" anchor-label="distinctUntilChangedBy" id="564885438%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../distinct-until-changed-by.html"><span>distinct</span><wbr><span>Until</span><wbr><span>Changed</span><wbr><span><span>By</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="564885438%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../distinct-until-changed-by.html"><span>distinct</span><wbr><span>Until</span><wbr><span>Changed</span><wbr><span><span>By</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="564885438%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -272,7 +304,9 @@ if(savedDarkMode === true){
 <a data-name="-824410376%2FExtensions%2F1975948010" anchor-label="drop" id="-824410376%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../drop.html"><span><span>drop</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-824410376%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../drop.html"><span><span>drop</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-824410376%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -287,7 +321,9 @@ if(savedDarkMode === true){
 <a data-name="-1110867529%2FExtensions%2F1975948010" anchor-label="dropWhile" id="-1110867529%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../drop-while.html"><span>drop</span><wbr><span><span>While</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1110867529%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../drop-while.html"><span>drop</span><wbr><span><span>While</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1110867529%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -302,7 +338,9 @@ if(savedDarkMode === true){
 <a data-name="-215447999%2FExtensions%2F1975948010" anchor-label="filter" id="-215447999%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../filter.html"><span><span>filter</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-215447999%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../filter.html"><span><span>filter</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-215447999%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -317,7 +355,9 @@ if(savedDarkMode === true){
 <a data-name="31270652%2FExtensions%2F1975948010" anchor-label="filterIsInstance" id="31270652%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../filter-is-instance.html"><span>filter</span><wbr><span>Is</span><wbr><span><span>Instance</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="31270652%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../filter-is-instance.html"><span>filter</span><wbr><span>Is</span><wbr><span><span>Instance</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="31270652%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -332,7 +372,9 @@ if(savedDarkMode === true){
 <a data-name="-234197136%2FExtensions%2F1975948010" anchor-label="filterNot" id="-234197136%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../filter-not.html"><span>filter</span><wbr><span><span>Not</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-234197136%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../filter-not.html"><span>filter</span><wbr><span><span>Not</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-234197136%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -347,7 +389,9 @@ if(savedDarkMode === true){
 <a data-name="-1196079471%2FExtensions%2F1975948010" anchor-label="filterNotNull" id="-1196079471%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../filter-not-null.html"><span>filter</span><wbr><span>Not</span><wbr><span><span>Null</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1196079471%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../filter-not-null.html"><span>filter</span><wbr><span>Not</span><wbr><span><span>Null</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1196079471%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -362,7 +406,9 @@ if(savedDarkMode === true){
 <a data-name="527375648%2FExtensions%2F1975948010" anchor-label="first" id="527375648%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../first.html"><span><span>first</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="527375648%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../first.html"><span><span>first</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="527375648%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -377,7 +423,9 @@ if(savedDarkMode === true){
 <a data-name="1071227188%2FExtensions%2F1975948010" anchor-label="firstOrNull" id="1071227188%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../first-or-null.html"><span>first</span><wbr><span>Or</span><wbr><span><span>Null</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1071227188%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../first-or-null.html"><span>first</span><wbr><span>Or</span><wbr><span><span>Null</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1071227188%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -392,7 +440,9 @@ if(savedDarkMode === true){
 <a data-name="-1318098279%2FExtensions%2F1975948010" anchor-label="flatMapConcat" id="-1318098279%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../flat-map-concat.html"><span>flat</span><wbr><span>Map</span><wbr><span><span>Concat</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1318098279%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../flat-map-concat.html"><span>flat</span><wbr><span>Map</span><wbr><span><span>Concat</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1318098279%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -407,7 +457,9 @@ if(savedDarkMode === true){
 <a data-name="796313798%2FExtensions%2F1975948010" anchor-label="flatMapLatest" id="796313798%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../flat-map-latest.html"><span>flat</span><wbr><span>Map</span><wbr><span><span>Latest</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="796313798%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../flat-map-latest.html"><span>flat</span><wbr><span>Map</span><wbr><span><span>Latest</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="796313798%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -422,7 +474,9 @@ if(savedDarkMode === true){
 <a data-name="1869777286%2FExtensions%2F1975948010" anchor-label="flatMapMerge" id="1869777286%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../flat-map-merge.html"><span>flat</span><wbr><span>Map</span><wbr><span><span>Merge</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1869777286%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../flat-map-merge.html"><span>flat</span><wbr><span>Map</span><wbr><span><span>Merge</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1869777286%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -437,7 +491,9 @@ if(savedDarkMode === true){
 <a data-name="199981969%2FExtensions%2F1975948010" anchor-label="flattenConcat" id="199981969%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../flatten-concat.html"><span>flatten</span><wbr><span><span>Concat</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="199981969%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../flatten-concat.html"><span>flatten</span><wbr><span><span>Concat</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="199981969%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -452,7 +508,9 @@ if(savedDarkMode === true){
 <a data-name="-448734625%2FExtensions%2F1975948010" anchor-label="flattenMerge" id="-448734625%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../flatten-merge.html"><span>flatten</span><wbr><span><span>Merge</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-448734625%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../flatten-merge.html"><span>flatten</span><wbr><span><span>Merge</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-448734625%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -467,7 +525,9 @@ if(savedDarkMode === true){
 <a data-name="-2050116133%2FExtensions%2F1975948010" anchor-label="flowOn" id="-2050116133%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../flow-on.html"><span>flow</span><wbr><span><span>On</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2050116133%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../flow-on.html"><span>flow</span><wbr><span><span>On</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2050116133%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -482,7 +542,9 @@ if(savedDarkMode === true){
 <a data-name="1850932565%2FExtensions%2F1975948010" anchor-label="fold" id="1850932565%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../fold.html"><span><span>fold</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1850932565%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../fold.html"><span><span>fold</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1850932565%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -497,7 +559,9 @@ if(savedDarkMode === true){
 <a data-name="-1299320255%2FExtensions%2F1975948010" anchor-label="last" id="-1299320255%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../last.html"><span><span>last</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1299320255%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../last.html"><span><span>last</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1299320255%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -512,7 +576,9 @@ if(savedDarkMode === true){
 <a data-name="-1536925461%2FExtensions%2F1975948010" anchor-label="lastOrNull" id="-1536925461%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../last-or-null.html"><span>last</span><wbr><span>Or</span><wbr><span><span>Null</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1536925461%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../last-or-null.html"><span>last</span><wbr><span>Or</span><wbr><span><span>Null</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1536925461%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -527,7 +593,9 @@ if(savedDarkMode === true){
 <a data-name="735705447%2FExtensions%2F1975948010" anchor-label="launchIn" id="735705447%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../launch-in.html"><span>launch</span><wbr><span><span>In</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="735705447%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../launch-in.html"><span>launch</span><wbr><span><span>In</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="735705447%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -542,7 +610,9 @@ if(savedDarkMode === true){
 <a data-name="-1902780106%2FExtensions%2F1975948010" anchor-label="map" id="-1902780106%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../map.html"><span><span>map</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1902780106%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../map.html"><span><span>map</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1902780106%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -557,7 +627,9 @@ if(savedDarkMode === true){
 <a data-name="-1716979473%2FExtensions%2F1975948010" anchor-label="mapLatest" id="-1716979473%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../map-latest.html"><span>map</span><wbr><span><span>Latest</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1716979473%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../map-latest.html"><span>map</span><wbr><span><span>Latest</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1716979473%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -572,7 +644,9 @@ if(savedDarkMode === true){
 <a data-name="-688558936%2FExtensions%2F1975948010" anchor-label="mapNotNull" id="-688558936%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../map-not-null.html"><span>map</span><wbr><span>Not</span><wbr><span><span>Null</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-688558936%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../map-not-null.html"><span>map</span><wbr><span>Not</span><wbr><span><span>Null</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-688558936%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -587,7 +661,9 @@ if(savedDarkMode === true){
 <a data-name="-349587874%2FExtensions%2F1975948010" anchor-label="onCompletion" id="-349587874%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../on-completion.html"><span>on</span><wbr><span><span>Completion</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-349587874%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../on-completion.html"><span>on</span><wbr><span><span>Completion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-349587874%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -602,7 +678,9 @@ if(savedDarkMode === true){
 <a data-name="99980203%2FExtensions%2F1975948010" anchor-label="onEach" id="99980203%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../on-each.html"><span>on</span><wbr><span><span>Each</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="99980203%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../on-each.html"><span>on</span><wbr><span><span>Each</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="99980203%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -617,7 +695,9 @@ if(savedDarkMode === true){
 <a data-name="-614538690%2FExtensions%2F1975948010" anchor-label="onEmpty" id="-614538690%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../on-empty.html"><span>on</span><wbr><span><span>Empty</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-614538690%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../on-empty.html"><span>on</span><wbr><span><span>Empty</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-614538690%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -632,7 +712,9 @@ if(savedDarkMode === true){
 <a data-name="-1620397613%2FExtensions%2F1975948010" anchor-label="onStart" id="-1620397613%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../on-start.html"><span>on</span><wbr><span><span>Start</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1620397613%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../on-start.html"><span>on</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1620397613%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -647,7 +729,9 @@ if(savedDarkMode === true){
 <a data-name="-60948114%2FExtensions%2F1975948010" anchor-label="produceIn" id="-60948114%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../produce-in.html"><span>produce</span><wbr><span><span>In</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-60948114%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../produce-in.html"><span>produce</span><wbr><span><span>In</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-60948114%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -662,7 +746,9 @@ if(savedDarkMode === true){
 <a data-name="-124705671%2FExtensions%2F1975948010" anchor-label="reduce" id="-124705671%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../reduce.html"><span><span>reduce</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-124705671%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../reduce.html"><span><span>reduce</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-124705671%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -677,7 +763,9 @@ if(savedDarkMode === true){
 <a data-name="-1861297700%2FExtensions%2F1975948010" anchor-label="retry" id="-1861297700%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../retry.html"><span><span>retry</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1861297700%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../retry.html"><span><span>retry</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1861297700%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -692,7 +780,9 @@ if(savedDarkMode === true){
 <a data-name="-515912202%2FExtensions%2F1975948010" anchor-label="retryWhen" id="-515912202%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../retry-when.html"><span>retry</span><wbr><span><span>When</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-515912202%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../retry-when.html"><span>retry</span><wbr><span><span>When</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-515912202%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -707,7 +797,9 @@ if(savedDarkMode === true){
 <a data-name="-1655583254%2FExtensions%2F1975948010" anchor-label="runningFold" id="-1655583254%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../running-fold.html"><span>running</span><wbr><span><span>Fold</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1655583254%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../running-fold.html"><span>running</span><wbr><span><span>Fold</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1655583254%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -722,7 +814,9 @@ if(savedDarkMode === true){
 <a data-name="1779370310%2FExtensions%2F1975948010" anchor-label="runningReduce" id="1779370310%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../running-reduce.html"><span>running</span><wbr><span><span>Reduce</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1779370310%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../running-reduce.html"><span>running</span><wbr><span><span>Reduce</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1779370310%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -737,7 +831,9 @@ if(savedDarkMode === true){
 <a data-name="1802528149%2FExtensions%2F1975948010" anchor-label="sample" id="1802528149%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../sample.html"><span><span>sample</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1802528149%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../sample.html"><span><span>sample</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1802528149%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -752,7 +848,9 @@ if(savedDarkMode === true){
 <a data-name="2025018969%2FExtensions%2F1975948010" anchor-label="scan" id="2025018969%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../scan.html"><span><span>scan</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2025018969%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../scan.html"><span><span>scan</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2025018969%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -767,7 +865,9 @@ if(savedDarkMode === true){
 <a data-name="593296918%2FExtensions%2F1975948010" anchor-label="shareIn" id="593296918%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../share-in.html"><span>share</span><wbr><span><span>In</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="593296918%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../share-in.html"><span>share</span><wbr><span><span>In</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="593296918%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -782,7 +882,9 @@ if(savedDarkMode === true){
 <a data-name="-1791197197%2FExtensions%2F1975948010" anchor-label="single" id="-1791197197%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../single.html"><span><span>single</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1791197197%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../single.html"><span><span>single</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1791197197%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -797,7 +899,9 @@ if(savedDarkMode === true){
 <a data-name="-481664739%2FExtensions%2F1975948010" anchor-label="singleOrNull" id="-481664739%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../single-or-null.html"><span>single</span><wbr><span>Or</span><wbr><span><span>Null</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-481664739%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../single-or-null.html"><span>single</span><wbr><span>Or</span><wbr><span><span>Null</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-481664739%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -812,7 +916,9 @@ if(savedDarkMode === true){
 <a data-name="-1492476111%2FExtensions%2F1975948010" anchor-label="stateIn" id="-1492476111%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../state-in.html"><span>state</span><wbr><span><span>In</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1492476111%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../state-in.html"><span>state</span><wbr><span><span>In</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1492476111%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -827,7 +933,9 @@ if(savedDarkMode === true){
 <a data-name="598631568%2FExtensions%2F1975948010" anchor-label="take" id="598631568%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../take.html"><span><span>take</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="598631568%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../take.html"><span><span>take</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="598631568%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -842,7 +950,9 @@ if(savedDarkMode === true){
 <a data-name="-1822149857%2FExtensions%2F1975948010" anchor-label="takeWhile" id="-1822149857%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../take-while.html"><span>take</span><wbr><span><span>While</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1822149857%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../take-while.html"><span>take</span><wbr><span><span>While</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1822149857%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -857,7 +967,9 @@ if(savedDarkMode === true){
 <a data-name="1575283364%2FExtensions%2F1975948010" anchor-label="toCollection" id="1575283364%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../to-collection.html"><span>to</span><wbr><span><span>Collection</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1575283364%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../to-collection.html"><span>to</span><wbr><span><span>Collection</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1575283364%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -872,7 +984,9 @@ if(savedDarkMode === true){
 <a data-name="1646125352%2FExtensions%2F1975948010" anchor-label="toList" id="1646125352%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../to-list.html"><span>to</span><wbr><span><span>List</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1646125352%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../to-list.html"><span>to</span><wbr><span><span>List</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1646125352%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -887,7 +1001,9 @@ if(savedDarkMode === true){
 <a data-name="654418444%2FExtensions%2F1975948010" anchor-label="toSet" id="654418444%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../to-set.html"><span>to</span><wbr><span><span>Set</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="654418444%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../to-set.html"><span>to</span><wbr><span><span>Set</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="654418444%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -902,7 +1018,9 @@ if(savedDarkMode === true){
 <a data-name="242489331%2FExtensions%2F1975948010" anchor-label="transform" id="242489331%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../transform.html"><span><span>transform</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="242489331%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../transform.html"><span><span>transform</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="242489331%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -917,7 +1035,9 @@ if(savedDarkMode === true){
 <a data-name="-662649958%2FExtensions%2F1975948010" anchor-label="transformLatest" id="-662649958%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../transform-latest.html"><span>transform</span><wbr><span><span>Latest</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-662649958%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../transform-latest.html"><span>transform</span><wbr><span><span>Latest</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-662649958%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -932,7 +1052,9 @@ if(savedDarkMode === true){
 <a data-name="157776916%2FExtensions%2F1975948010" anchor-label="transformWhile" id="157776916%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../transform-while.html"><span>transform</span><wbr><span><span>While</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="157776916%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../transform-while.html"><span>transform</span><wbr><span><span>While</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="157776916%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -947,7 +1069,9 @@ if(savedDarkMode === true){
 <a data-name="-550879549%2FExtensions%2F1975948010" anchor-label="withIndex" id="-550879549%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../with-index.html"><span>with</span><wbr><span><span>Index</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-550879549%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../with-index.html"><span>with</span><wbr><span><span>Index</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-550879549%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -962,7 +1086,9 @@ if(savedDarkMode === true){
 <a data-name="765490251%2FExtensions%2F1975948010" anchor-label="zip" id="765490251%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../zip.html"><span><span>zip</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="765490251%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../zip.html"><span><span>zip</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="765490251%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -979,7 +1105,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Sources"><a data-name="-1244243042%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L11" id="-1244243042%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L11">common source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1244243042%2FSource%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Flow.kt#L11">common source</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1244243042%2FSource%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -989,7 +1117,7 @@ if(savedDarkMode === true){
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

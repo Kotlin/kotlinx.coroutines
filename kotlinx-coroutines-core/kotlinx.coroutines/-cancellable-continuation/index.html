@@ -3,7 +3,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>CancellableContinuation</title>
 </head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
-    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" defer></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
 const savedDarkMode = storage ? JSON.parse(storage) : false
 if(savedDarkMode === true){
     document.getElementsByTagName("html")[0].classList.add("theme-dark")
@@ -13,7 +13,7 @@ if(savedDarkMode === true){
     <div class="navigation-wrapper" id="navigation-wrapper">
       <div id="leftToggler"><span class="icon-toggler"></span></div>
       <div class="library-name"><a href="../../../index.html"><span>kotlinx.coroutines</span></a></div>
-      <div>1.6.0-SNAPSHOT</div>
+      <div>1.6.1-SNAPSHOT</div>
       <div class="pull-right d-flex">
         <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button></div>
 <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
@@ -24,14 +24,14 @@ if(savedDarkMode === true){
       <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
+      <div id="main">
         <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines/CancellableContinuation///PointingToDeclaration//1975948010">
           <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines</a>/<a href="index.html">CancellableContinuation</a></div>
           <div class="cover ">
             <h1 class="cover"><span>Cancellable</span><wbr><span><span>Continuation</span></span></h1>
             <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
               <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">CancellableContinuation</a><span class="token operator">&lt;</span><span class="token keyword">in </span><a href="index.html">T</a><span class="token operator">&gt;</span> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html">Continuation</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt; </span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Cancellable continuation. It is <i>completed</i> when resumed or cancelled. When the <a href="cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with a <a href="../-cancellation-exception/index.html">CancellationException</a> or the specified cancel cause.</p><p class="paragraph">An instance of <code class="lang-kotlin">CancellableContinuation</code> is created by the <a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> function.</p><p class="paragraph">Cancellable continuation has three states (as subset of <a href="../-job/index.html">Job</a> states):</p><table><thead><tr><th><strong>State</strong></th><th><a href="is-active.html">isActive</a></th><th><a href="is-completed.html">isCompleted</a></th><th><a href="is-cancelled.html">isCancelled</a></th></tr></thead><tbody><tr><td><i>Active</i> (initial state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td></tr><tr><td><i>Resumed</i> (final <i>completed</i> state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td></tr><tr><td><i>Canceled</i> (final <i>completed</i> state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@65ef9f7c lang-kotlin">true</code></td></tr></tbody></table><p class="paragraph">Invocation of <a href="cancel.html">cancel</a> transitions this continuation from <i>active</i> to <i>cancelled</i> state, while invocation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resumeWithException</a> transitions it from <i>active</i> to <i>resumed</i> state.</p><p class="paragraph">A <a href="is-cancelled.html">cancelled</a> continuation implies that it is <a href="is-completed.html">completed</a>.</p><p class="paragraph">Invocation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resumeWithException</a> in <i>resumed</i> state produces an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>, but is ignored in <i>cancelled</i> state.</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">    +-----------+   resume    +---------+<br>    |  Active   | ----------&gt; | Resumed |<br>    +-----------+             +---------+<br>          |<br>          | cancel<br>          V<br>    +-----------+<br>    | Cancelled |<br>    +-----------+</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div>            </div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">CancellableContinuation</a><span class="token operator">&lt;</span><span class="token keyword">in </span><a href="index.html">T</a><span class="token operator">&gt;</span> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html">Continuation</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt; </span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Cancellable continuation. It is <i>completed</i> when resumed or cancelled. When the <a href="cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with a <a href="../-cancellation-exception/index.html">CancellationException</a> or the specified cancel cause.</p><p class="paragraph">An instance of <code class="lang-kotlin">CancellableContinuation</code> is created by the <a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> function.</p><p class="paragraph">Cancellable continuation has three states (as subset of <a href="../-job/index.html">Job</a> states):</p><table><thead><tr><th><strong>State</strong></th><th><a href="is-active.html">isActive</a></th><th><a href="is-completed.html">isCompleted</a></th><th><a href="is-cancelled.html">isCancelled</a></th></tr></thead><tbody><tr><td><i>Active</i> (initial state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td></tr><tr><td><i>Resumed</i> (final <i>completed</i> state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td></tr><tr><td><i>Canceled</i> (final <i>completed</i> state)</td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">false</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td><td><code class="org.jetbrains.dokka.pages.commenttable@15dac864 lang-kotlin">true</code></td></tr></tbody></table><p class="paragraph">Invocation of <a href="cancel.html">cancel</a> transitions this continuation from <i>active</i> to <i>cancelled</i> state, while invocation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resumeWithException</a> transitions it from <i>active</i> to <i>resumed</i> state.</p><p class="paragraph">A <a href="is-cancelled.html">cancelled</a> continuation implies that it is <a href="is-completed.html">completed</a>.</p><p class="paragraph">Invocation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/index.html">Continuation.resumeWithException</a> in <i>resumed</i> state produces an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>, but is ignored in <i>cancelled</i> state.</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">    +-----------+   resume    +---------+<br>    |  Active   | ----------&gt; | Resumed |<br>    +-----------+             +---------+<br>          |<br>          | cancel<br>          V<br>    +-----------+<br>    | Cancelled |<br>    +-----------+</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div>            </div>
           </div>
           <div class="tabbedcontent">
             <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Extensions">Extensions</button><button class="section-tab" data-togglable="Sources">Sources</button></div>
@@ -40,7 +40,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Functions"><a data-name="-1038330596%2FFunctions%2F1975948010" anchor-label="cancel" id="-1038330596%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="cancel.html"><span><span>cancel</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1038330596%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="cancel.html"><span><span>cancel</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1038330596%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -55,7 +57,9 @@ if(savedDarkMode === true){
 <a data-name="-51446163%2FFunctions%2F1975948010" anchor-label="invokeOnCancellation" id="-51446163%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="invoke-on-cancellation.html"><span>invoke</span><wbr><span>On</span><wbr><span><span>Cancellation</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-51446163%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="invoke-on-cancellation.html"><span>invoke</span><wbr><span>On</span><wbr><span><span>Cancellation</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-51446163%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -70,7 +74,9 @@ if(savedDarkMode === true){
 <a data-name="-916287119%2FFunctions%2F1975948010" anchor-label="resume" id="-916287119%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="resume.html"><span><span>resume</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-916287119%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="resume.html"><span><span>resume</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-916287119%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -85,7 +91,9 @@ if(savedDarkMode === true){
 <a data-name="109412102%2FFunctions%2F1975948010" anchor-label="resumeUndispatched" id="109412102%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="resume-undispatched.html"><span>resume</span><wbr><span><span>Undispatched</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="109412102%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="resume-undispatched.html"><span>resume</span><wbr><span><span>Undispatched</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="109412102%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -100,7 +108,9 @@ if(savedDarkMode === true){
 <a data-name="-1262816564%2FFunctions%2F1975948010" anchor-label="resumeUndispatchedWithException" id="-1262816564%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="resume-undispatched-with-exception.html"><span>resume</span><wbr><span>Undispatched</span><wbr><span>With</span><wbr><span><span>Exception</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1262816564%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="resume-undispatched-with-exception.html"><span>resume</span><wbr><span>Undispatched</span><wbr><span>With</span><wbr><span><span>Exception</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1262816564%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -117,7 +127,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Properties"><a data-name="2075884324%2FProperties%2F1975948010" anchor-label="isActive" id="2075884324%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="is-active.html">isActive</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2075884324%2FProperties%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="is-active.html">isActive</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2075884324%2FProperties%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -132,7 +144,9 @@ if(savedDarkMode === true){
 <a data-name="247474367%2FProperties%2F1975948010" anchor-label="isCancelled" id="247474367%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="is-cancelled.html">isCancelled</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="247474367%2FProperties%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="is-cancelled.html">isCancelled</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="247474367%2FProperties%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -147,7 +161,9 @@ if(savedDarkMode === true){
 <a data-name="-499119867%2FProperties%2F1975948010" anchor-label="isCompleted" id="-499119867%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="is-completed.html">isCompleted</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-499119867%2FProperties%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="is-completed.html">isCompleted</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-499119867%2FProperties%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -164,7 +180,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Extensions"><a data-name="-1946995197%2FExtensions%2F-1316292404" anchor-label="cancelFutureOnCancellation" id="-1946995197%2FExtensions%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../cancel-future-on-cancellation.html"><span>cancel</span><wbr><span>Future</span><wbr><span>On</span><wbr><span><span>Cancellation</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1946995197%2FExtensions%2F-1316292404"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../cancel-future-on-cancellation.html"><span>cancel</span><wbr><span>Future</span><wbr><span>On</span><wbr><span><span>Cancellation</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1946995197%2FExtensions%2F-1316292404"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -181,7 +199,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Sources"><a data-name="966740715%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L13" id="966740715%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L13">common source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="966740715%2FSource%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/CancellableContinuation.kt#L13">common source</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="966740715%2FSource%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -191,7 +211,7 @@ if(savedDarkMode === true){
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

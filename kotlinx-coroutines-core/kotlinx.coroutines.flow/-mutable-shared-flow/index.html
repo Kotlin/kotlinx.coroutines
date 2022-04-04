@@ -3,7 +3,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>MutableSharedFlow</title>
 </head><body><link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
-    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" async></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+    <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script><link href="../../../styles/style.css" rel="Stylesheet"><link href="../../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../../styles/main.css" rel="Stylesheet"><link href="../../../styles/prism.css" rel="Stylesheet"><link href="../../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../../scripts/main.js" defer></script><script type="text/javascript" src="../../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
 const savedDarkMode = storage ? JSON.parse(storage) : false
 if(savedDarkMode === true){
     document.getElementsByTagName("html")[0].classList.add("theme-dark")
@@ -13,7 +13,7 @@ if(savedDarkMode === true){
     <div class="navigation-wrapper" id="navigation-wrapper">
       <div id="leftToggler"><span class="icon-toggler"></span></div>
       <div class="library-name"><a href="../../../index.html"><span>kotlinx.coroutines</span></a></div>
-      <div>1.6.0-SNAPSHOT</div>
+      <div>1.6.1-SNAPSHOT</div>
       <div class="pull-right d-flex">
         <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
 <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
@@ -24,7 +24,7 @@ if(savedDarkMode === true){
       <div id="leftColumn">
         <div id="sideMenu"></div>
       </div>
-      <div id="main"><script type="text/javascript" src="../../../scripts/main.js"></script>
+      <div id="main">
         <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow/MutableSharedFlow///PointingToDeclaration//1975948010">
           <div class="breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a>/<a href="../index.html">kotlinx.coroutines.flow</a>/<a href="index.html">MutableSharedFlow</a></div>
           <div class="cover ">
@@ -40,14 +40,16 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Functions"><a data-name="1664019279%2FFunctions%2F1975948010" anchor-label="emit" id="1664019279%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="emit.html"><span><span>emit</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1664019279%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="emit.html"><span><span>emit</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1664019279%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
                       <div class="title">
                         <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
                           <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="emit.html"><span class="token function">emit</span></a><span class="token punctuation">(</span>value<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Emits a <a href="emit.html">value</a> to this shared flow, suspending on buffer overflow if the shared flow was created with the default <a href="../../kotlinx.coroutines.channels/-buffer-overflow/-s-u-s-p-e-n-d/index.html">BufferOverflow.SUSPEND</a> strategy.</p></div></div>                        </div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="emit.html"><span class="token function">emit</span></a><span class="token punctuation">(</span>value<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Emits a <a href="emit.html">value</a> to this shared flow, suspending on buffer overflow.</p></div></div>                        </div>
                       </div>
                     </div>
                   </div>
@@ -55,7 +57,9 @@ if(savedDarkMode === true){
 <a data-name="-1132500938%2FFunctions%2F1975948010" anchor-label="resetReplayCache" id="-1132500938%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="reset-replay-cache.html"><span>reset</span><wbr><span>Replay</span><wbr><span><span>Cache</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1132500938%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="reset-replay-cache.html"><span>reset</span><wbr><span>Replay</span><wbr><span><span>Cache</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1132500938%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -70,14 +74,16 @@ if(savedDarkMode === true){
 <a data-name="2089488660%2FFunctions%2F1975948010" anchor-label="tryEmit" id="2089488660%2FFunctions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="try-emit.html"><span>try</span><wbr><span><span>Emit</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2089488660%2FFunctions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="try-emit.html"><span>try</span><wbr><span><span>Emit</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2089488660%2FFunctions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
                       <div class="title">
                         <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
                           <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="try-emit.html"><span class="token function">tryEmit</span></a><span class="token punctuation">(</span>value<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Tries to emit a <a href="try-emit.html">value</a> to this shared flow without suspending. It returns <code class="lang-kotlin">true</code> if the value was emitted successfully. When this function returns <code class="lang-kotlin">false</code>, it means that the call to a plain <a href="emit.html">emit</a> function will suspend until there is a buffer space available.</p></div></div>                        </div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="try-emit.html"><span class="token function">tryEmit</span></a><span class="token punctuation">(</span>value<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Tries to emit a <a href="try-emit.html">value</a> to this shared flow without suspending. It returns <code class="lang-kotlin">true</code> if the value was emitted successfully (see below). When this function returns <code class="lang-kotlin">false</code>, it means that a call to a plain <a href="emit.html">emit</a> function would suspend until there is buffer space available.</p></div></div>                        </div>
                       </div>
                     </div>
                   </div>
@@ -87,7 +93,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Properties"><a data-name="729949350%2FProperties%2F1975948010" anchor-label="subscriptionCount" id="729949350%2FProperties%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="subscription-count.html">subscriptionCount</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="729949350%2FProperties%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="subscription-count.html">subscriptionCount</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="729949350%2FProperties%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -104,7 +112,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Inheritors"><a data-name="-1230178861%2FInheritors%2F1975948010" anchor-label="MutableStateFlow" id="-1230178861%2FInheritors%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../-mutable-state-flow/index.html">MutableStateFlow</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1230178861%2FInheritors%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../-mutable-state-flow/index.html">MutableStateFlow</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1230178861%2FInheritors%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -115,7 +125,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Extensions"><a data-name="-769642035%2FExtensions%2F1975948010" anchor-label="asSharedFlow" id="-769642035%2FExtensions%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="../as-shared-flow.html"><span>as</span><wbr><span>Shared</span><wbr><span><span>Flow</span></span></a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-769642035%2FExtensions%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="../as-shared-flow.html"><span>as</span><wbr><span>Shared</span><wbr><span><span>Flow</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-769642035%2FExtensions%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div>
@@ -132,7 +144,9 @@ if(savedDarkMode === true){
               <div class="table" data-togglable="Sources"><a data-name="-1995951523%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L146" id="-1995951523%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
                 <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
                   <div class="main-subrow keyValue ">
-                    <div class=""><span class="inline-flex"><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L146">common source</a><span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1995951523%2FSource%2F1975948010"></span>
+                    <div class=""><span class="inline-flex">
+                        <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L146">common source</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1995951523%2FSource%2F1975948010"></span>
                           <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                         </span></span></div>
                     <div></div>
@@ -142,7 +156,7 @@ if(savedDarkMode === true){
             </div>
           </div>
         </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2021 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
       </div>
     </div>
   

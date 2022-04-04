@@ -228,6 +228,7 @@ html ::-webkit-scrollbar-thumb {
     margin-top: 8px;
 }
 
+p.paragraph:first-child,
 .brief p.paragraph {
     margin-top: 0;
 }
@@ -746,7 +747,6 @@ td.content {
 }
 
 .main-subrow .anchor-icon {
-    padding: 0 8px;
     opacity: 0;
     transition: 0.2s 0.5s;
 }
@@ -765,8 +765,9 @@ td.content {
 
 .main-subrow .anchor-wrapper {
     position: relative;
-    width: 16px;
+    width: 24px;
     height: 16px;
+    margin-left: 3px;
 }
 
 .inline-flex {
@@ -776,7 +777,6 @@ td.content {
 .platform-hinted {
     flex: auto;
     display: block;
-    margin-bottom: 5px;
 }
 
 .platform-hinted > .platform-bookmarks-row > .platform-bookmark {
