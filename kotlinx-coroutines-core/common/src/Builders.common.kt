@@ -148,7 +148,8 @@ public suspend fun <T> withContext(
     return suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
         // compute new context
         val oldContext = uCont.context
-        val newContext = oldContext + context
+        // Copy CopyableThreadContextElement if necessary
+        val newContext = oldContext.newCoroutineContext(context)
         // always check for cancellation of new context
         newContext.ensureActive()
         // FAST PATH #1 -- new context is the same as the old one

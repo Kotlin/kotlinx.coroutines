@@ -115,7 +115,7 @@ import kotlin.native.concurrent.*
  * ### Implementation notes
  *
  * Shared flow implementation uses a lock to ensure thread-safety, but suspending collector and emitter coroutines are
- * resumed outside of this lock to avoid dead-locks when using unconfined coroutines. Adding new subscribers
+ * resumed outside of this lock to avoid deadlocks when using unconfined coroutines. Adding new subscribers
  * has `O(1)` amortized cost, but emitting has `O(N)` cost, where `N` is the number of subscribers.
  *
  * ### Not stable for inheritance
@@ -132,13 +132,13 @@ public interface SharedFlow<out T> : Flow<T> {
 
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
-     * This method should never be used directly. To emit values from a shared flow into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
-     * should be used.
+     * To emit values from a shared flow into a specific collector, either `collector.emitAll(flow)` or `collect { ... }`
+     * SAM-conversion can be used.
      *
      * **A shared flow never completes**. A call to [Flow.collect] or any other terminal operator
      * on a shared flow never completes normally.
      *
-     * @see [Flow.collect]
+     * @see [Flow.collect] for implementation and inheritance details.
      */
     override suspend fun collect(collector: FlowCollector<T>): Nothing
 }
@@ -167,8 +167,15 @@ public interface SharedFlow<out T> : Flow<T> {
  */
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     /**
-     * Emits a [value] to this shared flow, suspending on buffer overflow if the shared flow was created
-     * with the default [BufferOverflow.SUSPEND] strategy.
+     * Emits a [value] to this shared flow, suspending on buffer overflow.
+     *
+     * This call can suspend only when the [BufferOverflow] strategy is
+     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers collecting this shared flow.
+     *
+     * If there are no subscribers, the buffer is not used.
+     * Instead, the most recently emitted value is simply stored into
+     * the replay cache if one was configured, displacing the older elements there,
+     * or dropped if no replay cache was configured.
      *
      * See [tryEmit] for a non-suspending variant of this function.
      *
@@ -179,12 +186,16 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 
     /**
      * Tries to emit a [value] to this shared flow without suspending. It returns `true` if the value was
-     * emitted successfully. When this function returns `false`, it means that the call to a plain [emit]
-     * function will suspend until there is a buffer space available.
+     * emitted successfully (see below). When this function returns `false`, it means that a call to a plain [emit]
+     * function would suspend until there is buffer space available.
      *
-     * A shared flow configured with a [BufferOverflow] strategy other than [SUSPEND][BufferOverflow.SUSPEND]
-     * (either [DROP_OLDEST][BufferOverflow.DROP_OLDEST] or [DROP_LATEST][BufferOverflow.DROP_LATEST]) never
-     * suspends on [emit], and thus `tryEmit` to such a shared flow always returns `true`.
+     * This call can return `false` only when the [BufferOverflow] strategy is
+     * [SUSPEND][BufferOverflow.SUSPEND] **and** there are subscribers collecting this shared flow.
+     *
+     * If there are no subscribers, the buffer is not used.
+     * Instead, the most recently emitted value is simply stored into
+     * the replay cache if one was configured, displacing the older elements there,
+     * or dropped if no replay cache was configured. In any case, `tryEmit` returns `true`.
      *
      * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
      * external synchronization.

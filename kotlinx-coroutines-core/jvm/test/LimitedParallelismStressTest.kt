@@ -23,7 +23,7 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
 
     @get:Rule
     val executor = ExecutorRule(targetParallelism * 2)
-    private val iterations = 100_000 * stressTestMultiplier
+    private val iterations = 100_000
 
     private val parallelism = AtomicInteger(0)
 
@@ -37,9 +37,11 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
     @Test
     fun testLimitedExecutor() = runTest {
         val view = executor.limitedParallelism(targetParallelism)
-        repeat(iterations) {
-            launch(view) {
-                checkParallelism()
+        doStress {
+            repeat(iterations) {
+                launch(view) {
+                    checkParallelism()
+                }
             }
         }
     }
@@ -47,9 +49,11 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
     @Test
     fun testLimitedDispatchersIo() = runTest {
         val view = Dispatchers.IO.limitedParallelism(targetParallelism)
-        repeat(iterations) {
-            launch(view) {
-                checkParallelism()
+        doStress {
+            repeat(iterations) {
+                launch(view) {
+                    checkParallelism()
+                }
             }
         }
     }
@@ -57,7 +61,7 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
     @Test
     fun testLimitedDispatchersIoDispatchYield() = runTest {
         val view = Dispatchers.IO.limitedParallelism(targetParallelism)
-        repeat(iterations) {
+        doStress {
             launch(view) {
                 yield()
                 checkParallelism()
@@ -68,16 +72,26 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
     @Test
     fun testLimitedExecutorReachesTargetParallelism() = runTest {
         val view = executor.limitedParallelism(targetParallelism)
-        repeat(iterations) {
-            val barrier = CyclicBarrier(targetParallelism + 1)
-            repeat(targetParallelism) {
-                launch(view) {
-                    barrier.await()
+        doStress {
+            repeat(iterations) {
+                val barrier = CyclicBarrier(targetParallelism + 1)
+                repeat(targetParallelism) {
+                    launch(view) {
+                        barrier.await()
+                    }
                 }
+                // Successfully awaited parallelism + 1
+                barrier.await()
+                coroutineContext.job.children.toList().joinAll()
             }
-            // Successfully awaited parallelism + 1
-            barrier.await()
-            coroutineContext.job.children.toList().joinAll()
+        }
+    }
+
+    private suspend inline fun doStress(crossinline block: suspend CoroutineScope.() -> Unit) {
+        repeat(stressTestMultiplier) {
+            coroutineScope {
+                block()
+            }
         }
     }
 }

@@ -102,6 +102,7 @@ class MDCContextTest : TestBase() {
         val mainDispatcher = kotlin.coroutines.coroutineContext[ContinuationInterceptor]!!
         withContext(Dispatchers.Default + MDCContext()) {
             assertEquals("myValue", MDC.get("myKey"))
+            assertEquals("myValue", coroutineContext[MDCContext]?.contextMap?.get("myKey"))
             withContext(mainDispatcher) {
                 assertEquals("myValue", MDC.get("myKey"))
             }

@@ -58,7 +58,9 @@ public final class kotlinx/coroutines/rx3/RxObservableKt {
 }
 
 public final class kotlinx/coroutines/rx3/RxSchedulerKt {
-	public static final fun asCoroutineDispatcher (Lio/reactivex/rxjava3/core/Scheduler;)Lkotlinx/coroutines/rx3/SchedulerCoroutineDispatcher;
+	public static final fun asCoroutineDispatcher (Lio/reactivex/rxjava3/core/Scheduler;)Lkotlinx/coroutines/CoroutineDispatcher;
+	public static final synthetic fun asCoroutineDispatcher (Lio/reactivex/rxjava3/core/Scheduler;)Lkotlinx/coroutines/rx3/SchedulerCoroutineDispatcher;
+	public static final fun asScheduler (Lkotlinx/coroutines/CoroutineDispatcher;)Lio/reactivex/rxjava3/core/Scheduler;
 }
 
 public final class kotlinx/coroutines/rx3/RxSingleKt {

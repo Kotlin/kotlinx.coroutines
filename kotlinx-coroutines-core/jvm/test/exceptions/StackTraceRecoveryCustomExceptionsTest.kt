@@ -124,4 +124,22 @@ class StackTraceRecoveryCustomExceptionsTest : TestBase() {
         assertTrue(ex is CopyableWithCustomMessage)
         assertEquals("Recovered: [OK]", ex.message)
     }
+
+    @Test
+    fun testTryCopyThrows() = runTest {
+        class FailingException : Exception(), CopyableThrowable<FailingException> {
+            override fun createCopy(): FailingException? {
+                TODO("Not yet implemented")
+            }
+        }
+
+        val e = FailingException()
+        val result = runCatching {
+            coroutineScope<Unit> {
+                throw e
+            }
+        }
+
+        assertSame(e, result.exceptionOrNull())
+    }
 }
