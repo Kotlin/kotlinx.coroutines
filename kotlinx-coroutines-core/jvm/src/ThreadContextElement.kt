@@ -140,8 +140,7 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
 
     /**
      * Returns a [CopyableThreadContextElement] to replace `this` `CopyableThreadContextElement` in the child
-     * coroutine's context that is under construction if the added context does not contain an element with the same key.
-     * an element with the same [key].
+     * coroutine's context that is under construction if the added context does not contain an element with the same [key].
      *
      * This function is called on the element each time a new coroutine inherits a context containing it,
      * and the returned value is folded into the context given to the child.
@@ -153,8 +152,7 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
 
     /**
      * Returns a [CopyableThreadContextElement] to replace `this` `CopyableThreadContextElement` in the child
-     * coroutine's context that is under construction if the added context does contain an element with the same key.
-     * an element with the same [key].
+     * coroutine's context that is under construction if the added context does contain an element with the same [key].
      *
      * This method is invoked on the original element, accepting as the parameter
      * the element that is supposed to overwrite it.
