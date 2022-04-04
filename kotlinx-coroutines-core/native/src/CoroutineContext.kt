@@ -49,6 +49,10 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
         combined + (DefaultDelay as CoroutineContext.Element) else combined
 }
 
+public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
+    return this + addedContext
+}
+
 // No debugging facilities on native
 internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T = block()
 internal actual inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T = block()

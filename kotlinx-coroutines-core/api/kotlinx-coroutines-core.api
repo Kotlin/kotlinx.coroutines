@@ -141,7 +141,8 @@ public final class kotlinx/coroutines/CompletionHandlerException : java/lang/Run
 }
 
 public abstract interface class kotlinx/coroutines/CopyableThreadContextElement : kotlinx/coroutines/ThreadContextElement {
-	public abstract fun copyForChildCoroutine ()Lkotlinx/coroutines/CopyableThreadContextElement;
+	public abstract fun copyForChild ()Lkotlinx/coroutines/CopyableThreadContextElement;
+	public abstract fun mergeForChild (Lkotlin/coroutines/CoroutineContext$Element;)Lkotlin/coroutines/CoroutineContext;
 }
 
 public final class kotlinx/coroutines/CopyableThreadContextElement$DefaultImpls {
@@ -156,6 +157,7 @@ public abstract interface class kotlinx/coroutines/CopyableThrowable {
 }
 
 public final class kotlinx/coroutines/CoroutineContextKt {
+	public static final fun newCoroutineContext (Lkotlin/coroutines/CoroutineContext;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
 	public static final fun newCoroutineContext (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
 }
 

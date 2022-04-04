@@ -42,6 +42,10 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
         combined + Dispatchers.Default else combined
 }
 
+public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
+    return this + addedContext
+}
+
 // No debugging facilities on JS
 internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T = block()
 internal actual inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T = block()
