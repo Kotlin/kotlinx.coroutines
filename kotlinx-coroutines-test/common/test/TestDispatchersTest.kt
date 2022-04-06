@@ -23,7 +23,6 @@ class TestDispatchersTest: OrderedExecutionTestBase() {
 
     /** Tests that asynchronous execution of tests does not happen concurrently with [AfterTest]. */
     @Test
-    @NoJs
     fun testMainMocking() = runTest {
         val mainAtStart = TestMainDispatcher.currentTestDispatcher
         assertNotNull(mainAtStart)
