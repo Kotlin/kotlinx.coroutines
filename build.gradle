@@ -42,6 +42,12 @@ buildscript {
         }
     }
 
+    if (using_snapshot_version) {
+        repositories {
+            mavenLocal()
+        }
+    }
+
     repositories {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
@@ -95,6 +101,12 @@ allprojects {
         }
 
         kotlin_version = rootProject.properties['kotlin_snapshot_version']
+    }
+
+    if (using_snapshot_version) {
+        repositories {
+            mavenLocal()
+        }
     }
 
     ext.unpublished = unpublished
