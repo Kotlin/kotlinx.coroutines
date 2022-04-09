@@ -26,9 +26,9 @@ public expect object Dispatchers {
      *
      * Access to this property may throw an [IllegalStateException] if no main dispatchers are present in the classpath.
      *
-     * Depending on platform and classpath it can be mapped to different dispatchers:
+     * Depending on platform and classpath, it can be mapped to different dispatchers:
      * - On JS and Native it is equivalent to the [Default] dispatcher.
-     * - On JVM it either the Android main thread dispatcher, JavaFx or Swing EDT dispatcher. It is chosen by the
+     * - On JVM it is either the Android main thread dispatcher, JavaFx or Swing EDT dispatcher. It is chosen by the
      *   [`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html).
      *
      * In order to work with the `Main` dispatcher, the following artifact should be added to the project runtime dependencies:
@@ -48,7 +48,7 @@ public expect object Dispatchers {
      * stack overflows.
      *
      * ### Event loop
-     * Event loop semantics is a purely internal concept and have no guarantees on the order of execution
+     * Event loop semantics is a purely internal concept and has no guarantees on the order of execution
      * except that all queued coroutines will be executed on the current thread in the lexical scope of the outermost
      * unconfined coroutine.
      *
@@ -63,11 +63,11 @@ public expect object Dispatchers {
      * }
      * println("Done")
      * ```
-     * Can print both "1 2 3" and "1 3 2", this is an implementation detail that can be changed.
-     * But it is guaranteed that "Done" will be printed only when both `withContext` calls are completed.
+     * Can print both "1 2 3" and "1 3 2". This is an implementation detail that can be changed.
+     * However, it is guaranteed that "Done" will be printed only when both `withContext` calls are completed.
      *
      * If you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
-     * but still want to execute it in the current call-frame until its first suspension, then you can use
+     * but still want to execute it in the current call-frame until its first suspension, you can use
      * an optional [CoroutineStart] parameter in coroutine builders like
      * [launch][CoroutineScope.launch] and [async][CoroutineScope.async] setting it to
      * the value of [CoroutineStart.UNDISPATCHED].

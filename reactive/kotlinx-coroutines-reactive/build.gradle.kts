@@ -34,3 +34,17 @@ tasks.check {
 externalDocumentationLink(
     url = "https://www.reactive-streams.org/reactive-streams-$reactiveStreamsVersion-javadoc/"
 )
+
+val commonKoverExcludes = listOf(
+    "kotlinx.coroutines.reactive.FlowKt", // Deprecated
+    "kotlinx.coroutines.reactive.FlowKt__MigrationKt", // Deprecated
+    "kotlinx.coroutines.reactive.ConvertKt" // Deprecated
+)
+
+tasks.koverHtmlReport {
+    excludes = commonKoverExcludes
+}
+
+tasks.koverVerify {
+    excludes = commonKoverExcludes
+}

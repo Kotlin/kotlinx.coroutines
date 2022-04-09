@@ -27,3 +27,16 @@ tasks {
 externalDocumentationLink(
     url = "https://projectreactor.io/docs/core/$reactorVersion/api/"
 )
+
+val commonKoverExcludes = listOf(
+    "kotlinx.coroutines.reactor.FlowKt", // Deprecated
+    "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
+)
+
+tasks.koverHtmlReport {
+    excludes = commonKoverExcludes
+}
+
+tasks.koverVerify {
+    excludes = commonKoverExcludes
+}

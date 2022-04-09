@@ -684,7 +684,7 @@ public interface ChannelIterator<out E> {
  * exception which is either rethrown from the caller method or handed off to the exception handler in the current context
  * (see [CoroutineExceptionHandler]) when one is available.
  *
- * A typical usage for `onDeliveredElement` is to close a resource that is being transferred via the channel. The
+ * A typical usage for `onUndeliveredElement` is to close a resource that is being transferred via the channel. The
  * following code pattern guarantees that opened resources are closed even if producer, consumer, and/or channel
  * are cancelled. Resources are never lost.
  *

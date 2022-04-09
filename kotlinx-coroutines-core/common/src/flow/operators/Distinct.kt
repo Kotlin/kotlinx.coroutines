@@ -15,7 +15,7 @@ import kotlin.native.concurrent.*
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out.
  *
- * Note that any instance of [StateFlow] already behaves as if `distinctUtilChanged` operator is
+ * Note that any instance of [StateFlow] already behaves as if `distinctUntilChanged` operator is
  * applied to it, so applying `distinctUntilChanged` to a `StateFlow` has no effect.
  * See [StateFlow] documentation on Operator Fusion.
  * Also, repeated application of `distinctUntilChanged` operator on any flow has no effect.

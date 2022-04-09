@@ -1,5 +1,19 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.6.1
+
+* Rollback of time-related functions dispatching on `Dispatchers.Main`.
+  This behavior was introduced in 1.6.0 and then found inconvenient and erroneous (#3106, #3113).
+* Reworked the newly-introduced `CopyableThreadContextElement` to solve issues uncovered after the initial release (#3227).
+* Fixed a bug with `ThreadLocalElement` not being properly updated in racy scenarios (#2930).
+* Reverted eager loading of default `CoroutineExceptionHandler` that triggered ANR on some devices (#3180).
+* New API to convert a `CoroutineDispatcher` to a Rx scheduler (#968, #548). Thanks @recheej!
+* Fixed a memory leak with the very last element emitted from `flow` builder being retained in memory (#3197).
+* Fixed a bug with `limitedParallelism` on K/N with new memory model throwing `ClassCastException` (#3223).
+* `CoroutineContext` is added to the exception printed to the default `CoroutineExceptionHandler` to improve debuggability (#3153).
+* Static memory consumption of `Dispatchers.Default` was significantly reduced (#3137).
+* Updated slf4j version in `kotlinx-coroutines-slf4j` from 1.7.25 to 1.7.32.
+
 ## Version 1.6.0
 
 Note that this is a full changelog relative to the 1.5.2 version. Changelog relative to 1.6.0-RC3 can be found at the end.
