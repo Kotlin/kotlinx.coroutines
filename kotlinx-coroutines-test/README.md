@@ -362,7 +362,7 @@ This API is experimental and it is may change before migrating out of experiment
 Changes during experimental may have deprecation applied when possible, but it is not
 advised to use the API in stable code before it leaves experimental due to possible breaking changes.
 
-If you have any suggestions for improvements to this experimental API please share them them on the
+If you have any suggestions for improvements to this experimental API please share them on the
 [issue tracker](https://github.com/Kotlin/kotlinx.coroutines/issues).
 
 <!--- MODULE kotlinx-coroutines-core -->
