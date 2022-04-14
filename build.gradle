@@ -3,11 +3,11 @@
  */
 
 
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 import static Projects.*
 
@@ -53,6 +53,13 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven { url 'https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev' }
+        maven {
+            url "https://maven.pkg.jetbrains.space/public/p/kotlinx-atomicfu/maven"
+            credentials {
+                username = spaceUsername
+                password = spacePassword
+            }
+        }
         mavenLocal()
     }
 
@@ -147,6 +154,13 @@ allprojects {
         mavenCentral()
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven { url 'https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev' }
+        maven {
+            url "https://maven.pkg.jetbrains.space/public/p/kotlinx-atomicfu/maven"
+            credentials {
+                username = spaceUsername
+                password = spacePassword
+            }
+        }
     }
 }
 
