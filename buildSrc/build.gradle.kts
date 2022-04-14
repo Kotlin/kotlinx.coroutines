@@ -19,6 +19,7 @@ repositories {
         maven("https://plugins.gradle.org/m2")
     }
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev")
     if (buildSnapshotTrain) {
         mavenLocal()
     }
