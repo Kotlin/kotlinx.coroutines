@@ -208,7 +208,7 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
              */
             val values = updateThreadContext(context, null)
             restoreThreadContext(context, values)
-            threadStateToRecover.set(context to values)
+            saveThreadContext(context, values)
         }
     }
 

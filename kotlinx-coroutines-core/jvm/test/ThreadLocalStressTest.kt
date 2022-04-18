@@ -85,7 +85,7 @@ class ThreadLocalStressTest : TestBase() {
         repeat(100) {
             doTestWithPreparation(
                 ::doTest,
-                { threadLocal.set(null) }) { threadLocal.get() != null }
+                { threadLocal.set(null) }) { threadLocal.get() == null }
             assertNull(threadLocal.get())
         }
     }
@@ -93,7 +93,7 @@ class ThreadLocalStressTest : TestBase() {
     @Test
     fun testNonDispatcheableLeakWithInitial() {
         repeat(100) {
-            doTestWithPreparation(::doTest, { threadLocal.set("initial") }) { threadLocal.get() != "initial" }
+            doTestWithPreparation(::doTest, { threadLocal.set("initial") }) { threadLocal.get() == "initial" }
             assertEquals("initial", threadLocal.get())
         }
     }
@@ -103,7 +103,7 @@ class ThreadLocalStressTest : TestBase() {
         repeat(100) {
             doTestWithPreparation(
                 ::doTestWithContextSwitch,
-                { threadLocal.set(null) }) { threadLocal.get() != null }
+                { threadLocal.set(null) }) { threadLocal.get() == null }
             assertNull(threadLocal.get())
         }
     }
@@ -113,17 +113,17 @@ class ThreadLocalStressTest : TestBase() {
         repeat(100) {
             doTestWithPreparation(
                 ::doTestWithContextSwitch,
-                { threadLocal.set("initial") }) { false /* can randomly wake up on the non-main thread */ }
+                { threadLocal.set("initial") }) { true /* can randomly wake up on the non-main thread */ }
             // Here we are always on the main thread
             assertEquals("initial", threadLocal.get())
         }
     }
 
-    private fun doTestWithPreparation(testBody: suspend () -> Unit, setup: () -> Unit, isInvalid: () -> Boolean) {
+    private fun doTestWithPreparation(testBody: suspend () -> Unit, setup: () -> Unit, isValid: () -> Boolean) {
         setup()
         val latch = CountDownLatch(1)
         testBody.startCoroutineUninterceptedOrReturn(Continuation(EmptyCoroutineContext) {
-            if (isInvalid()) {
+            if (!isValid()) {
                 Thread.currentThread().uncaughtExceptionHandler.uncaughtException(
                     Thread.currentThread(),
                     IllegalStateException("Unexpected error: thread local was not cleaned")
