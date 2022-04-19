@@ -28,6 +28,7 @@ It can be demonstrated by a simple example that creates root coroutines using th
 ```kotlin
 import kotlinx.coroutines.*
 
+//sampleStart
 @OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
     val job = GlobalScope.launch { // root coroutine with launch
@@ -47,7 +48,9 @@ fun main() = runBlocking {
         println("Caught ArithmeticException")
     }
 }
+//sampleEnd
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-01.kt).
 >
