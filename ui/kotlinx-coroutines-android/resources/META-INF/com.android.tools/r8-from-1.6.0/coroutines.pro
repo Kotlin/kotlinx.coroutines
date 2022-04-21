@@ -9,8 +9,6 @@
     boolean ANDROID_DETECTED return true;
 }
 
--keep class kotlinx.coroutines.android.AndroidDispatcherFactory {*;}
-
 # Disable support for "Missing Main Dispatcher", since we always have Android main dispatcher
 -assumenosideeffects class kotlinx.coroutines.internal.MainDispatchersKt {
     boolean SUPPORT_MISSING return false;

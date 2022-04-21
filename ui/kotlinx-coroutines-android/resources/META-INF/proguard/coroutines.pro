@@ -5,3 +5,4 @@
 # - META-INF/com.android.tools/r8-upto-1.6.0/coroutines.pro
 
 -keep class kotlinx.coroutines.android.AndroidDispatcherFactory {*;}
+-keep class kotlinx.coroutines.android.AndroidExceptionPreHandler {*;}

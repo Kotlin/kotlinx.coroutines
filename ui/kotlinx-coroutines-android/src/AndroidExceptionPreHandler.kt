@@ -5,12 +5,10 @@
 package kotlinx.coroutines.android
 
 import android.os.*
-import androidx.annotation.*
 import kotlinx.coroutines.*
 import java.lang.reflect.*
 import kotlin.coroutines.*
 
-@Keep
 internal class AndroidExceptionPreHandler :
     AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler
 {

@@ -3,3 +3,4 @@
 # - META-INF/proguard/coroutines.pro
 
 -keep class kotlinx.coroutines.android.AndroidDispatcherFactory {*;}
+-keep class kotlinx.coroutines.android.AndroidExceptionPreHandler {*;}
