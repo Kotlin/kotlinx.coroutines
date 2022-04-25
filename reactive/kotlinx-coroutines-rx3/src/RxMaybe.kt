@@ -17,19 +17,19 @@ import kotlin.coroutines.*
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * Method throws [IllegalArgumentException] if provided [context] contains a [Job] instance.
  */
-public fun <T: Any> rxMaybe(
+public fun <T> rxMaybe(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend CoroutineScope.() -> T
+    block: suspend CoroutineScope.() -> T?
 ): Maybe<T> {
     require(context[Job] === null) { "Maybe context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return rxMaybeInternal(GlobalScope, context, block)
 }
 
-private fun <T: Any> rxMaybeInternal(
+private fun <T> rxMaybeInternal(
     scope: CoroutineScope, // support for legacy rxMaybe in scope
     context: CoroutineContext,
-    block: suspend CoroutineScope.() -> T
+    block: suspend CoroutineScope.() -> T?
 ): Maybe<T> = Maybe.create { subscriber ->
     val newContext = scope.newCoroutineContext(context)
     val coroutine = RxMaybeCoroutine(newContext, subscriber)
@@ -37,7 +37,7 @@ private fun <T: Any> rxMaybeInternal(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-private class RxMaybeCoroutine<T : Any>(
+private class RxMaybeCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: MaybeEmitter<T>
 ) : AbstractCoroutine<T>(parentContext, false, true) {
