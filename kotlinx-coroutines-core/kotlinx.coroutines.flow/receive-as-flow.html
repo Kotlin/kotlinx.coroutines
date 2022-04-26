@@ -1,56 +1,72 @@
+<!doctype html>
 <html>
-  <head>
+<head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>receiveAsFlow</title>
-</head><body><link href="../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script>
-    <script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><link href="../../styles/prism.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" defer></script><script type="text/javascript" src="../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
 const savedDarkMode = storage ? JSON.parse(storage) : false
 if(savedDarkMode === true){
     document.getElementsByTagName("html")[0].classList.add("theme-dark")
 }</script>
-
-  
-    <div class="navigation-wrapper" id="navigation-wrapper">
-      <div id="leftToggler"><span class="icon-toggler"></span></div>
-      <div class="library-name"><a href="../../index.html"><span>kotlinx.coroutines</span></a></div>
-      <div>1.6.1-SNAPSHOT</div>
-      <div class="pull-right d-flex">
-        <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<button id="theme-toggle-button"><span id="theme-toggle"></span></button>
-        <div id="searchBar"></div>
-      </div>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../index.html">
+<span>kotlinx.coroutines</span>            </a>    </div>
+    <div>1.6.1
     </div>
-    <div id="container">
-      <div id="leftColumn">
-        <div id="sideMenu"></div>
-      </div>
-      <div id="main">
-        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow//receiveAsFlow/kotlinx.coroutines.channels.ReceiveChannel[TypeParam(bounds=[kotlin.Any?])]#/PointingToDeclaration//1975948010">
-          <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines.flow</a>/<a href="receive-as-flow.html">receiveAsFlow</a></div>
-          <div class="cover ">
-            <h1 class="cover"><span>receive</span><wbr><span>As</span><wbr><span><span>Flow</span></span></h1>
-          </div>
-          <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-            <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="receive-as-flow.html">T</a><span class="token operator">&gt; </span><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="receive-as-flow.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="receive-as-flow.html"><span class="token function">receiveAsFlow</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-flow/index.html">Flow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="receive-as-flow.html">T</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Represents the given receive channel as a hot flow and <a href="../kotlinx.coroutines.channels/-receive-channel/receive.html">receives</a> from the channel in fan-out fashion every time this flow is collected. One element will be emitted to one collector only.</p><p class="paragraph">See also <a href="consume-as-flow.html">consumeAsFlow</a> which ensures that the resulting flow is collected just once.</p><h3 class=""> Cancellation semantics</h3><ul><li><p class="paragraph">Flow collectors are cancelled when the original channel is <a href="../kotlinx.coroutines.channels/-send-channel/close.html">closed</a> with an exception.</p></li><li><p class="paragraph">Flow collectors complete normally when the original channel is <a href="../kotlinx.coroutines.channels/-send-channel/close.html">closed</a> normally.</p></li><li><p class="paragraph">Failure or cancellation of the flow collector does not affect the channel.</p></li></ul><h3 class=""> Operator fusion</h3><p class="paragraph">Adjacent applications of <a href="flow-on.html">flowOn</a>, <a href="buffer.html">buffer</a>, <a href="conflate.html">conflate</a>, and <a href="produce-in.html">produceIn</a> to the result of <code class="lang-kotlin">receiveAsFlow</code> are fused. In particular, <a href="produce-in.html">produceIn</a> returns the original channel. Calls to <a href="flow-on.html">flowOn</a> have generally no effect, unless <a href="buffer.html">buffer</a> is used to explicitly request buffering.</p></div>          </div>
-          <h2 class="">Sources</h2>
-          <div class="table" data-togglable="Sources"><a data-name="-574497526%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L72" id="-574497526%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-            <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-              <div class="main-subrow keyValue ">
-                <div class=""><span class="inline-flex">
-                    <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L72">common source</a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-574497526%2FSource%2F1975948010"></span>
-                      <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                    </span></span></div>
-                <div></div>
-              </div>
+    <div class="pull-right d-flex">
+            <div class="filter-section" id="filter-section">
+                    <button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button>
             </div>
-          </div>
-        </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow//receiveAsFlow/kotlinx.coroutines.channels.ReceiveChannel[TypeParam(bounds=[kotlin.Any?])]#/PointingToDeclaration//1975948010">
+  <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a><span class="delimiter">/</span><a href="index.html">kotlinx.coroutines.flow</a><span class="delimiter">/</span><a href="receive-as-flow.html">receiveAsFlow</a></div>
+  <div class="cover ">
+    <h1 class="cover"><span>receive</span><wbr><span>As</span><wbr><span><span>Flow</span></span></h1>
+  </div>
+  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="receive-as-flow.html">T</a><span class="token operator">&gt; </span><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="receive-as-flow.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="receive-as-flow.html"><span class="token function">receiveAsFlow</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-flow/index.html">Flow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="receive-as-flow.html">T</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Represents the given receive channel as a hot flow and <a href="../kotlinx.coroutines.channels/-receive-channel/receive.html">receives</a> from the channel in fan-out fashion every time this flow is collected. One element will be emitted to one collector only.</p><p class="paragraph">See also <a href="consume-as-flow.html">consumeAsFlow</a> which ensures that the resulting flow is collected just once.</p><h3 class=""> Cancellation semantics</h3><ul><li><p class="paragraph">Flow collectors are cancelled when the original channel is <a href="../kotlinx.coroutines.channels/-send-channel/close.html">closed</a> with an exception.</p></li><li><p class="paragraph">Flow collectors complete normally when the original channel is <a href="../kotlinx.coroutines.channels/-send-channel/close.html">closed</a> normally.</p></li><li><p class="paragraph">Failure or cancellation of the flow collector does not affect the channel.</p></li></ul><h3 class=""> Operator fusion</h3><p class="paragraph">Adjacent applications of <a href="flow-on.html">flowOn</a>, <a href="buffer.html">buffer</a>, <a href="conflate.html">conflate</a>, and <a href="produce-in.html">produceIn</a> to the result of <code class="lang-kotlin">receiveAsFlow</code> are fused. In particular, <a href="produce-in.html">produceIn</a> returns the original channel. Calls to <a href="flow-on.html">flowOn</a> have generally no effect, unless <a href="buffer.html">buffer</a> is used to explicitly request buffering.</p></div>  </div>
+  <h2 class="">Sources</h2>
+  <div class="table" data-togglable="Sources"><a data-name="-574497526%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L72" id="-574497526%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+    <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+      <div class="main-subrow keyValue ">
+        <div class=""><span class="inline-flex">
+            <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L72">common source</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-574497526%2FSource%2F1975948010"></span>
+              <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+            </span></span></div>
+        <div></div>
       </div>
     </div>
-  
-</body></html>
+  </div>
+</div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+        </div>
+    </div>
+</div>
 
+</body></html>
 

@@ -1,56 +1,72 @@
+<!doctype html>
 <html>
-  <head>
+<head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>select</title>
-</head><body><link href="../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script>
-    <script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><link href="../../styles/prism.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" defer></script><script type="text/javascript" src="../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
 const savedDarkMode = storage ? JSON.parse(storage) : false
 if(savedDarkMode === true){
     document.getElementsByTagName("html")[0].classList.add("theme-dark")
 }</script>
-
-  
-    <div class="navigation-wrapper" id="navigation-wrapper">
-      <div id="leftToggler"><span class="icon-toggler"></span></div>
-      <div class="library-name"><a href="../../index.html"><span>kotlinx.coroutines</span></a></div>
-      <div>1.6.1-SNAPSHOT</div>
-      <div class="pull-right d-flex">
-        <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<button id="theme-toggle-button"><span id="theme-toggle"></span></button>
-        <div id="searchBar"></div>
-      </div>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../index.html">
+<span>kotlinx.coroutines</span>            </a>    </div>
+    <div>1.6.1
     </div>
-    <div id="container">
-      <div id="leftColumn">
-        <div id="sideMenu"></div>
-      </div>
-      <div id="main">
-        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.selects//select/#kotlin.Function1[kotlinx.coroutines.selects.SelectBuilder[TypeParam(bounds=[kotlin.Any?])],kotlin.Unit]/PointingToDeclaration//1975948010">
-          <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines.selects</a>/<a href="select.html">select</a></div>
-          <div class="cover ">
-            <h1 class="cover"><span><span>select</span></span></h1>
-          </div>
-          <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-            <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">inline suspend </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="select.html">R</a><span class="token operator">&gt; </span><a href="select.html"><span class="token function">select</span></a><span class="token punctuation">(</span><span class="token keyword">crossinline </span>builder<span class="token operator">: </span><span class="token keyword"></span><a href="-select-builder/index.html">SelectBuilder</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="select.html">R</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="select.html">R</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Waits for the result of multiple suspending functions simultaneously, which are specified using <i>clauses</i> in the <a href="select.html">builder</a> scope of this select invocation. The caller is suspended until one of the clauses is either <i>selected</i> or <i>fails</i>.</p><p class="paragraph">At most one clause is <i>atomically</i> selected and its block is executed. The result of the selected clause becomes the result of the select. If any clause <i>fails</i>, then the select invocation produces the corresponding exception. No clause is selected in this case.</p><p class="paragraph">This select function is <i>biased</i> to the first clause. When multiple clauses can be selected at the same time, the first one of them gets priority. Use <a href="select-unbiased.html">selectUnbiased</a> for an unbiased (randomized) selection among the clauses.</p><p class="paragraph">There is no <code class="lang-kotlin">default</code> clause for select expression. Instead, each selectable suspending function has the corresponding non-suspending version that can be used with a regular <code class="lang-kotlin">when</code> expression to select one of the alternatives or to perform the default (<code class="lang-kotlin">else</code>) action if none of them can be immediately selected.</p><h3 class=""> List of supported select methods</h3><table><thead><tr><th><strong>Receiver</strong></th><th><strong>Suspending function</strong></th><th><strong>Select clause</strong></th></tr></thead><tbody><tr><td><a href="../kotlinx.coroutines/-job/index.html">Job</a></td><td><a href="../kotlinx.coroutines/-job/join.html">join</a></td><td><a href="../kotlinx.coroutines/-job/on-join.html">onJoin</a></td></tr><tr><td><a href="../kotlinx.coroutines/-deferred/index.html">Deferred</a></td><td><a href="../kotlinx.coroutines/-deferred/await.html">await</a></td><td><a href="../kotlinx.coroutines/-deferred/on-await.html">onAwait</a></td></tr><tr><td><a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a></td><td><a href="../kotlinx.coroutines.channels/-send-channel/send.html">send</a></td><td><a href="../kotlinx.coroutines.channels/-send-channel/on-send.html">onSend</a></td></tr><tr><td><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a></td><td><a href="../kotlinx.coroutines.channels/-receive-channel/receive.html">receive</a></td><td><a href="../kotlinx.coroutines.channels/-receive-channel/on-receive.html">onReceive</a></td></tr><tr><td><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a></td><td><a href="../kotlinx.coroutines.channels/-receive-channel/receive-catching.html">receiveCatching</a></td><td><a href="../kotlinx.coroutines.channels/-receive-channel/on-receive-catching.html">onReceiveCatching</a></td></tr><tr><td>none</td><td><a href="../kotlinx.coroutines/delay.html">delay</a></td><td><a href="-select-builder/on-timeout.html">onTimeout</a></td></tr></tbody></table><p class="paragraph">This suspending function is cancellable. If the <a href="../kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this function is suspended, this function immediately resumes with <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>. There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was suspended, it will not resume successfully. See <a href="../kotlinx.coroutines/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> documentation for low-level details.</p><p class="paragraph">Note that this function does not check for cancellation when it is not suspended. Use <a href="../kotlinx.coroutines/yield.html">yield</a> or <a href="../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p></div>          </div>
-          <h2 class="">Sources</h2>
-          <div class="table" data-togglable="Sources"><a data-name="-1862292643%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/selects/Select.kt#L162" id="-1862292643%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-            <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-              <div class="main-subrow keyValue ">
-                <div class=""><span class="inline-flex">
-                    <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/selects/Select.kt#L162">common source</a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1862292643%2FSource%2F1975948010"></span>
-                      <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                    </span></span></div>
-                <div></div>
-              </div>
+    <div class="pull-right d-flex">
+            <div class="filter-section" id="filter-section">
+                    <button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button>
             </div>
-          </div>
-        </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.selects//select/#kotlin.Function1[kotlinx.coroutines.selects.SelectBuilder[TypeParam(bounds=[kotlin.Any?])],kotlin.Unit]/PointingToDeclaration//1975948010">
+  <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a><span class="delimiter">/</span><a href="index.html">kotlinx.coroutines.selects</a><span class="delimiter">/</span><a href="select.html">select</a></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>select</span></span></h1>
+  </div>
+  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">inline suspend </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="select.html">R</a><span class="token operator">&gt; </span><a href="select.html"><span class="token function">select</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">crossinline </span>builder<span class="token operator">: </span><span class="token keyword"></span><a href="-select-builder/index.html">SelectBuilder</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="select.html">R</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="select.html">R</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Waits for the result of multiple suspending functions simultaneously, which are specified using <i>clauses</i> in the <a href="select.html">builder</a> scope of this select invocation. The caller is suspended until one of the clauses is either <i>selected</i> or <i>fails</i>.</p><p class="paragraph">At most one clause is <i>atomically</i> selected and its block is executed. The result of the selected clause becomes the result of the select. If any clause <i>fails</i>, then the select invocation produces the corresponding exception. No clause is selected in this case.</p><p class="paragraph">This select function is <i>biased</i> to the first clause. When multiple clauses can be selected at the same time, the first one of them gets priority. Use <a href="select-unbiased.html">selectUnbiased</a> for an unbiased (randomized) selection among the clauses.</p><p class="paragraph">There is no <code class="lang-kotlin">default</code> clause for select expression. Instead, each selectable suspending function has the corresponding non-suspending version that can be used with a regular <code class="lang-kotlin">when</code> expression to select one of the alternatives or to perform the default (<code class="lang-kotlin">else</code>) action if none of them can be immediately selected.</p><h3 class=""> List of supported select methods</h3><table><thead><tr><th><strong>Receiver</strong></th><th><strong>Suspending function</strong></th><th><strong>Select clause</strong></th></tr></thead><tbody><tr><td><a href="../kotlinx.coroutines/-job/index.html">Job</a></td><td><a href="../kotlinx.coroutines/-job/join.html">join</a></td><td><a href="../kotlinx.coroutines/-job/on-join.html">onJoin</a></td></tr><tr><td><a href="../kotlinx.coroutines/-deferred/index.html">Deferred</a></td><td><a href="../kotlinx.coroutines/-deferred/await.html">await</a></td><td><a href="../kotlinx.coroutines/-deferred/on-await.html">onAwait</a></td></tr><tr><td><a href="../kotlinx.coroutines.channels/-send-channel/index.html">SendChannel</a></td><td><a href="../kotlinx.coroutines.channels/-send-channel/send.html">send</a></td><td><a href="../kotlinx.coroutines.channels/-send-channel/on-send.html">onSend</a></td></tr><tr><td><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a></td><td><a href="../kotlinx.coroutines.channels/-receive-channel/receive.html">receive</a></td><td><a href="../kotlinx.coroutines.channels/-receive-channel/on-receive.html">onReceive</a></td></tr><tr><td><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a></td><td><a href="../kotlinx.coroutines.channels/-receive-channel/receive-catching.html">receiveCatching</a></td><td><a href="../kotlinx.coroutines.channels/-receive-channel/on-receive-catching.html">onReceiveCatching</a></td></tr><tr><td>none</td><td><a href="../kotlinx.coroutines/delay.html">delay</a></td><td><a href="-select-builder/on-timeout.html">onTimeout</a></td></tr></tbody></table><p class="paragraph">This suspending function is cancellable. If the <a href="../kotlinx.coroutines/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this function is suspended, this function immediately resumes with <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a>. There is a <strong>prompt cancellation guarantee</strong>. If the job was cancelled while this function was suspended, it will not resume successfully. See <a href="../kotlinx.coroutines/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> documentation for low-level details.</p><p class="paragraph">Note that this function does not check for cancellation when it is not suspended. Use <a href="../kotlinx.coroutines/yield.html">yield</a> or <a href="../kotlinx.coroutines/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p></div>  </div>
+  <h2 class="">Sources</h2>
+  <div class="table" data-togglable="Sources"><a data-name="-1862292643%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/selects/Select.kt#L162" id="-1862292643%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+    <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+      <div class="main-subrow keyValue ">
+        <div class=""><span class="inline-flex">
+            <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/selects/Select.kt#L162">common source</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1862292643%2FSource%2F1975948010"></span>
+              <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+            </span></span></div>
+        <div></div>
       </div>
     </div>
-  
-</body></html>
+  </div>
+</div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+        </div>
+    </div>
+</div>
 
+</body></html>
 

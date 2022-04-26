@@ -1,56 +1,72 @@
+<!doctype html>
 <html>
-  <head>
+<head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>produceIn</title>
-</head><body><link href="../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script>
-    <script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><link href="../../styles/prism.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" defer></script><script type="text/javascript" src="../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
 const savedDarkMode = storage ? JSON.parse(storage) : false
 if(savedDarkMode === true){
     document.getElementsByTagName("html")[0].classList.add("theme-dark")
 }</script>
-
-  
-    <div class="navigation-wrapper" id="navigation-wrapper">
-      <div id="leftToggler"><span class="icon-toggler"></span></div>
-      <div class="library-name"><a href="../../index.html"><span>kotlinx.coroutines</span></a></div>
-      <div>1.6.1-SNAPSHOT</div>
-      <div class="pull-right d-flex">
-        <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<button id="theme-toggle-button"><span id="theme-toggle"></span></button>
-        <div id="searchBar"></div>
-      </div>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../index.html">
+<span>kotlinx.coroutines</span>            </a>    </div>
+    <div>1.6.1
     </div>
-    <div id="container">
-      <div id="leftColumn">
-        <div id="sideMenu"></div>
-      </div>
-      <div id="main">
-        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow//produceIn/kotlinx.coroutines.flow.Flow[TypeParam(bounds=[kotlin.Any?])]#kotlinx.coroutines.CoroutineScope/PointingToDeclaration//1975948010">
-          <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines.flow</a>/<a href="produce-in.html">produceIn</a></div>
-          <div class="cover ">
-            <h1 class="cover"><span>produce</span><wbr><span><span>In</span></span></h1>
-          </div>
-          <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-            <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
-<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation">@</span><a href="../kotlinx.coroutines/-flow-preview/index.html"><span class="token annotation">FlowPreview</span></a></div></div><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="produce-in.html">T</a><span class="token operator">&gt; </span><a href="-flow/index.html">Flow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="produce-in.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="produce-in.html"><span class="token function">produceIn</span></a><span class="token punctuation">(</span>scope<span class="token operator">: </span><a href="../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="produce-in.html">T</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Creates a <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine that collects the given flow.</p><p class="paragraph">This transformation is <strong>stateful</strong>, it launches a <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine that collects the given flow, and has the same behavior:</p><ul><li><p class="paragraph">if collecting the flow throws, the channel will be closed with that exception</p></li><li><p class="paragraph">if the <a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a> is cancelled, the collection of the flow will be cancelled</p></li><li><p class="paragraph">if collecting the flow completes normally, the <a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a> will be closed normally</p></li></ul><p class="paragraph">A channel with <a href="../kotlinx.coroutines.channels/-channel/-factory/-b-u-f-f-e-r-e-d.html">default</a> buffer size is created. Use <a href="buffer.html">buffer</a> operator on the flow before calling <code class="lang-kotlin">produceIn</code> to specify a value other than default and to control what happens when data is produced faster than it is consumed, that is to control backpressure behavior.</p></div>          </div>
-          <h2 class="">Sources</h2>
-          <div class="table" data-togglable="Sources"><a data-name="-60948114%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L181" id="-60948114%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
-            <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
-              <div class="main-subrow keyValue ">
-                <div class=""><span class="inline-flex">
-                    <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L181">common source</a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-60948114%2FSource%2F1975948010"></span>
-                      <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                    </span></span></div>
-                <div></div>
-              </div>
+    <div class="pull-right d-flex">
+            <div class="filter-section" id="filter-section">
+                    <button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button>
             </div>
-          </div>
-        </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines.flow//produceIn/kotlinx.coroutines.flow.Flow[TypeParam(bounds=[kotlin.Any?])]#kotlinx.coroutines.CoroutineScope/PointingToDeclaration//1975948010">
+  <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a><span class="delimiter">/</span><a href="index.html">kotlinx.coroutines.flow</a><span class="delimiter">/</span><a href="produce-in.html">produceIn</a></div>
+  <div class="cover ">
+    <h1 class="cover"><span>produce</span><wbr><span><span>In</span></span></h1>
+  </div>
+  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">common</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation">@</span><a href="../kotlinx.coroutines/-flow-preview/index.html"><span class="token annotation">FlowPreview</span></a></div></div><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="produce-in.html">T</a><span class="token operator">&gt; </span><a href="-flow/index.html">Flow</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="produce-in.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="produce-in.html"><span class="token function">produceIn</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">scope<span class="token operator">: </span><a href="../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="produce-in.html">T</a><span class="token operator">&gt;</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Creates a <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine that collects the given flow.</p><p class="paragraph">This transformation is <strong>stateful</strong>, it launches a <a href="../kotlinx.coroutines.channels/produce.html">produce</a> coroutine that collects the given flow, and has the same behavior:</p><ul><li><p class="paragraph">if collecting the flow throws, the channel will be closed with that exception</p></li><li><p class="paragraph">if the <a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a> is cancelled, the collection of the flow will be cancelled</p></li><li><p class="paragraph">if collecting the flow completes normally, the <a href="../kotlinx.coroutines.channels/-receive-channel/index.html">ReceiveChannel</a> will be closed normally</p></li></ul><p class="paragraph">A channel with <a href="../kotlinx.coroutines.channels/-channel/-factory/-b-u-f-f-e-r-e-d.html">default</a> buffer size is created. Use <a href="buffer.html">buffer</a> operator on the flow before calling <code class="lang-kotlin">produceIn</code> to specify a value other than default and to control what happens when data is produced faster than it is consumed, that is to control backpressure behavior.</p></div>  </div>
+  <h2 class="">Sources</h2>
+  <div class="table" data-togglable="Sources"><a data-name="-60948114%2FSource%2F1975948010" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L181" id="-60948114%2FSource%2F1975948010" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain"></a>
+    <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/commonMain">
+      <div class="main-subrow keyValue ">
+        <div class=""><span class="inline-flex">
+            <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/common/src/flow/Channels.kt#L181">common source</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-60948114%2FSource%2F1975948010"></span>
+              <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+            </span></span></div>
+        <div></div>
       </div>
     </div>
-  
-</body></html>
+  </div>
+</div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+        </div>
+    </div>
+</div>
 
+</body></html>
 

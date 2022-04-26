@@ -146,6 +146,10 @@ html ::-webkit-scrollbar-thumb {
     overflow-wrap: break-word;
 }
 
+.breadcrumbs .delimiter {
+    margin: auto 2px;
+}
+
 .tabs-section > .section-tab:first-child,
 .platform-hinted > .platform-bookmarks-row > .platform-bookmark:first-child {
     margin-left: 0;
@@ -297,6 +301,7 @@ code.paragraph {
 }
 
 .overview > .navButton {
+    position: absolute;
     align-items: center;
     display: flex;
     justify-content: flex-end;
@@ -429,6 +434,7 @@ code.paragraph {
     align-items: center;
     color: var(--default-font-color);
     overflow: hidden;
+    padding-left: 23px;
 }
 
 
@@ -880,7 +886,17 @@ td.content {
     padding-bottom: 0;
 }
 
-.table-row .with-platform-tabs .sourceset-depenent-content .brief {
+.parameters.wrapped > .parameter {
+    display: block;
+}
+
+.table-row .inline-comment {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.table-row .with-platform-tabs .sourceset-depenent-content .brief,
+.table-row .with-platform-tabs .sourceset-depenent-content .inline-comment {
     padding: 8px;
 }
 

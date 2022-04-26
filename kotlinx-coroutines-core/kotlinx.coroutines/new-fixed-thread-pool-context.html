@@ -1,67 +1,85 @@
+<!doctype html>
 <html>
-  <head>
+<head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>newFixedThreadPoolContext</title>
-</head><body><link href="../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script>
-    <script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script><link href="../../styles/style.css" rel="Stylesheet"><link href="../../styles/jetbrains-mono.css" rel="Stylesheet"><link href="../../styles/main.css" rel="Stylesheet"><link href="../../styles/prism.css" rel="Stylesheet"><link href="../../styles/logo-styles.css" rel="Stylesheet"><script type="text/javascript" src="../../scripts/clipboard.js" async></script><script type="text/javascript" src="../../scripts/navigation-loader.js" async></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script><script type="text/javascript" src="../../scripts/main.js" defer></script><script type="text/javascript" src="../../scripts/prism.js" async></script><script>const storage = localStorage.getItem("dokka-dark-mode")
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
 const savedDarkMode = storage ? JSON.parse(storage) : false
 if(savedDarkMode === true){
     document.getElementsByTagName("html")[0].classList.add("theme-dark")
 }</script>
-
-  
-    <div class="navigation-wrapper" id="navigation-wrapper">
-      <div id="leftToggler"><span class="icon-toggler"></span></div>
-      <div class="library-name"><a href="../../index.html"><span>kotlinx.coroutines</span></a></div>
-      <div>1.6.1-SNAPSHOT</div>
-      <div class="pull-right d-flex">
-        <div class="filter-section" id="filter-section"><button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain">concurrent</button><button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-tag platform-selector native-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain">native</button></div>
-<button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../index.html">
+<span>kotlinx.coroutines</span>            </a>    </div>
+    <div>1.6.1
+    </div>
+    <div class="pull-right d-flex">
+            <div class="filter-section" id="filter-section">
+                    <button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain">concurrent</button>
+                    <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button>
+                    <button class="platform-tag platform-selector common-like" data-active="" data-filter=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain">native</button>
+            </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
         <div id="searchBar"></div>
-      </div>
     </div>
-    <div id="container">
-      <div id="leftColumn">
+</div>
+<div id="container">
+    <div id="leftColumn">
         <div id="sideMenu"></div>
-      </div>
-      <div id="main">
-        <div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines//newFixedThreadPoolContext/#kotlin.Int#kotlin.String/PointingToDeclaration//716110432">
-          <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a>/<a href="index.html">kotlinx.coroutines</a>/<a href="new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a></div>
-          <div class="cover ">
-            <h1 class="cover"><span>new</span><wbr><span>Fixed</span><wbr><span>Thread</span><wbr><span>Pool</span><wbr><span><span>Context</span></span></h1>
-          </div>
-          <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-            <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain">concurrent</button><button class="platform-bookmark jvm-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark native-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain">native</button></div>
-<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation">@</span><a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html"><span class="token annotation">ExperimentalCoroutinesApi</span></a></div></div><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="new-fixed-thread-pool-context.html"><span class="token function">newFixedThreadPoolContext</span></a><span class="token punctuation">(</span>nThreads<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span>name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-closeable-coroutine-dispatcher/index.html">CloseableCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div><div class="content sourceset-depenent-content" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation">@</span><a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-delicate-coroutines-api/index.html"><span class="token annotation">DelicateCoroutinesApi</span></a></div></div><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="new-fixed-thread-pool-context.html"><span class="token function">newFixedThreadPoolContext</span></a><span class="token punctuation">(</span>nThreads<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span>name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="-closeable-coroutine-dispatcher/index.html">CloseableCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Creates a coroutine execution context with the fixed-size thread-pool and built-in <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/index.html">yield</a> support. <strong>NOTE: The resulting </strong><a href="-executor-coroutine-dispatcher/index.html"><strong>ExecutorCoroutineDispatcher</strong></a><strong> owns native resources (its threads). Resources are reclaimed by </strong><a href="-executor-coroutine-dispatcher/close.html"><strong>ExecutorCoroutineDispatcher.close</strong></a><strong>.</strong></p><p class="paragraph">If the resulting dispatcher is <a href="-executor-coroutine-dispatcher/close.html">closed</a> and attempt to submit a continuation task is made, then the <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> of the affected task is <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html">cancelled</a> and the task is submitted to the <a href="-dispatchers/-i-o.html">Dispatchers.IO</a>, so that the affected coroutine can cleanup its resources and promptly complete.</p><p class="paragraph">This is a <strong>delicate</strong> API. The result of this method is a closeable resource with the associated native resources (threads). It should not be allocated in place, should be closed at the end of its lifecycle, and has non-trivial memory and CPU footprint. If you do not need a separate thread-pool, but only have to limit effective parallelism of the dispatcher, it is recommended to use <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/limited-parallelism.html">CoroutineDispatcher.limitedParallelism</a> instead.</p><p class="paragraph">If you need a completely separate thread-pool with scheduling policy that is based on the standard JDK executors, use the following expression: <code class="lang-kotlin">Executors.newFixedThreadPool().asCoroutineDispatcher()</code>. See <a href="as-coroutine-dispatcher.html">Executor.asCoroutineDispatcher</a> for details.</p><h2 class="">Parameters</h2><div data-togglable="Parameters"><div class="table" data-togglable="Parameters"><div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><span>n</span><wbr><span><span>Threads</span></span></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">the number of threads.</p></div></div></div></div></div><div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><span><span>name</span></span></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">the base name of the created threads.</p></div></div></div></div></div></div></div></div><div class="content sourceset-depenent-content" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="new-fixed-thread-pool-context.html"><span class="token function">newFixedThreadPoolContext</span></a><span class="token punctuation">(</span>nThreads<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span>name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">)</span><span class="token operator">: </span><a href="-closeable-coroutine-dispatcher/index.html">CloseableCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div>          </div>
-          <h2 class="">Sources</h2>
-          <div class="table" data-togglable="Sources"><a data-name="-421076131%2FSource%2F-1316292404" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadPoolDispatcher.kt#L37" id="-421076131%2FSource%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
-            <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
-              <div class="main-subrow keyValue ">
-                <div class=""><span class="inline-flex">
-                    <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadPoolDispatcher.kt#L37">jvm source</a></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="kotlinx-coroutines-core::kotlinx.coroutines//newFixedThreadPoolContext/#kotlin.Int#kotlin.String/PointingToDeclaration//-62039284">
+  <div class="breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a><span class="delimiter">/</span><a href="index.html">kotlinx.coroutines</a><span class="delimiter">/</span><a href="new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a></div>
+  <div class="cover ">
+    <h1 class="cover"><span>new</span><wbr><span>Fixed</span><wbr><span>Thread</span><wbr><span>Pool</span><wbr><span><span>Context</span></span></h1>
+  </div>
+  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain">concurrent</button><button class="platform-bookmark jvm-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark common-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain">native</button></div>
+<div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/concurrentMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation">@</span><a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-experimental-coroutines-api/index.html"><span class="token annotation">ExperimentalCoroutinesApi</span></a></div></div><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="new-fixed-thread-pool-context.html"><span class="token function">newFixedThreadPoolContext</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nThreads<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-closeable-coroutine-dispatcher/index.html">CloseableCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div><div class="content sourceset-depenent-content" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation">@</span><a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-delicate-coroutines-api/index.html"><span class="token annotation">DelicateCoroutinesApi</span></a></div></div><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="new-fixed-thread-pool-context.html"><span class="token function">newFixedThreadPoolContext</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nThreads<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-closeable-coroutine-dispatcher/index.html">CloseableCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Creates a coroutine execution context with the fixed-size thread-pool and built-in <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/index.html">yield</a> support. <strong>NOTE: The resulting </strong><a href="-executor-coroutine-dispatcher/index.html"><strong>ExecutorCoroutineDispatcher</strong></a><strong> owns native resources (its threads). Resources are reclaimed by </strong><a href="-executor-coroutine-dispatcher/close.html"><strong>ExecutorCoroutineDispatcher.close</strong></a><strong>.</strong></p><p class="paragraph">If the resulting dispatcher is <a href="-executor-coroutine-dispatcher/close.html">closed</a> and attempt to submit a continuation task is made, then the <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> of the affected task is <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html">cancelled</a> and the task is submitted to the <a href="-dispatchers/-i-o.html">Dispatchers.IO</a>, so that the affected coroutine can cleanup its resources and promptly complete.</p><p class="paragraph">This is a <strong>delicate</strong> API. The result of this method is a closeable resource with the associated native resources (threads). It should not be allocated in place, should be closed at the end of its lifecycle, and has non-trivial memory and CPU footprint. If you do not need a separate thread-pool, but only have to limit effective parallelism of the dispatcher, it is recommended to use <a href="../../kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/limited-parallelism.html">CoroutineDispatcher.limitedParallelism</a> instead.</p><p class="paragraph">If you need a completely separate thread-pool with scheduling policy that is based on the standard JDK executors, use the following expression: <code class="lang-kotlin">Executors.newFixedThreadPool().asCoroutineDispatcher()</code>. See <a href="as-coroutine-dispatcher.html">Executor.asCoroutineDispatcher</a> for details.</p><h2 class="">Parameters</h2><div data-togglable="Parameters"><div class="table" data-togglable="Parameters"><div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><span>n</span><wbr><span><span>Threads</span></span></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">the number of threads.</p></div></div></div></div></div><div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><span><span>name</span></span></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">the base name of the created threads.</p></div></div></div></div></div></div></div></div><div class="content sourceset-depenent-content" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="new-fixed-thread-pool-context.html"><span class="token function">newFixedThreadPoolContext</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">nThreads<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-closeable-coroutine-dispatcher/index.html">CloseableCoroutineDispatcher</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div>  </div>
+  <h2 class="">Sources</h2>
+  <div class="table" data-togglable="Sources"><a data-name="-421076131%2FSource%2F-1316292404" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadPoolDispatcher.kt#L37" id="-421076131%2FSource%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+    <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
+      <div class="main-subrow keyValue ">
+        <div class=""><span class="inline-flex">
+            <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadPoolDispatcher.kt#L37">jvm source</a></div>
 <span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-421076131%2FSource%2F-1316292404"></span>
-                      <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                    </span></span></div>
-                <div></div>
-              </div>
-            </div>
-<a data-name="-421076131%2FSource%2F8792766" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/native/src/MultithreadedDispatchers.kt#L18" id="-421076131%2FSource%2F8792766" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain"></a>
-            <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain">
-              <div class="main-subrow keyValue ">
-                <div class=""><span class="inline-flex">
-                    <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/native/src/MultithreadedDispatchers.kt#L18">native source</a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-421076131%2FSource%2F8792766"></span>
-                      <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                    </span></span></div>
-                <div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span></div>
+              <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+            </span></span></div>
+        <div></div>
       </div>
     </div>
-  
-</body></html>
+<a data-name="-421076131%2FSource%2F-769356950" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/native/src/MultithreadedDispatchers.kt#L18" id="-421076131%2FSource%2F-769356950" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain"></a>
+    <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/nativeMain">
+      <div class="main-subrow keyValue ">
+        <div class=""><span class="inline-flex">
+            <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/native/src/MultithreadedDispatchers.kt#L18">native source</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-421076131%2FSource%2F-769356950"></span>
+              <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+            </span></span></div>
+        <div></div>
+      </div>
+    </div>
+  </div>
+</div>
+        <div class="footer"><span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+        </div>
+    </div>
+</div>
 
+</body></html>
 
