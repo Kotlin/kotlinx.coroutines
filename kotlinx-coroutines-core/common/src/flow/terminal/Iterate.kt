@@ -87,12 +87,8 @@ suspend fun <T, R> Flow<T>.iterate(block: FlowIterator<T>.() -> R): R = coroutin
     val itr = object : FlowIterator<T> {
         private var next = ChannelResult.failure<T>()
 
-        private fun checkValid() {
-            check(usable) { "FlowIterator is only usable within the body of the corresponding iterate call" }
-        }
-
         override suspend fun hasNext(): Boolean {
-            checkValid()
+            check(usable) { "FlowIterator is only usable within the body of the corresponding iterate call" }
             if (next.isFailure && !next.isClosed) {
                 next = suspendCancellableCoroutine { cont ->
                     channel
