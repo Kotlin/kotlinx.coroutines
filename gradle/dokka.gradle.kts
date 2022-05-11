@@ -39,10 +39,6 @@ tasks.withType(DokkaTaskPartial::class).configureEach {
 
         if (!project.isMultiplatform) {
             dependsOn(project.configurations["compileClasspath"])
-            doFirst {
-                // resolve classpath only during execution
-                classpath.from(project.configurations["compileClasspath"].files)// + project.sourceSets.main.output.files)
-            }
         }
     }
 }

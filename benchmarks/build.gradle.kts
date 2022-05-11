@@ -8,7 +8,6 @@ import me.champeau.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
-    id("net.ltgt.apt")
     id("com.github.johnrengelman.shadow")
     id("me.champeau.gradle.jmh") apply false
 }
@@ -31,8 +30,6 @@ tasks.named<KotlinCompile>("compileJmhKotlin") {
     }
 }
 
-
-
 // It is better to use the following to run benchmarks, otherwise you may get unexpected errors:
 // ./gradlew --no-daemon cleanJmhJar jmh -Pjmh="MyBenchmark"
 extensions.configure<JMHPluginExtension>("jmh") {
@@ -54,6 +51,12 @@ val jmhJarTask = tasks.named<Jar>("jmhJar") {
 }
 
 tasks {
+    // For some reason the DuplicatesStrategy from jmh is not enough
+    // and errors with duplicates appear unless I force it to WARN only:
+    withType<Copy> {
+        duplicatesStrategy = DuplicatesStrategy.WARN
+    }
+
     build {
         dependsOn(jmhJarTask)
     }

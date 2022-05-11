@@ -60,7 +60,7 @@ compileTestJsLegacy.configure {
 task populateNodeModules(type: Copy, dependsOn: compileTestJsLegacy) {
     // we must copy output that is transformed by atomicfu
     from(kotlin.js().compilations.main.output.allOutputs)
-    into "$node.nodeModulesDir/node_modules"
+    into node.nodeProjectDir.dir("node_modules")
 
     def configuration = configurations.hasProperty("jsLegacyTestRuntimeClasspath")
             ? configurations.jsLegacyTestRuntimeClasspath

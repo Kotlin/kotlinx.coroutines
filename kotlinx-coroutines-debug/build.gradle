@@ -21,8 +21,8 @@ configurations {
 dependencies {
     compileOnly "junit:junit:$junit_version"
     compileOnly "org.junit.jupiter:junit-jupiter-api:$junit5_version"
-    testCompile "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
-    testCompile "org.junit.platform:junit-platform-testkit:1.7.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
+    testImplementation "org.junit.platform:junit-platform-testkit:1.7.0"
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
     compileOnly "io.projectreactor.tools:blockhound:$blockhound_version"

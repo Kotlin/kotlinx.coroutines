@@ -2,13 +2,13 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-apply plugin: 'com.moowork.node'
+apply plugin: 'com.github.node-gradle.node'
 
 node {
     version = "$node_version"
     npmVersion = "$npm_version"
     download = true
-    nodeModulesDir = file(buildDir)
+    nodeProjectDir = file(buildDir)
 }
 
 // Configures testing for JS modules
@@ -25,7 +25,7 @@ task prepareNodePackage(type: Copy) {
     from("npm") {
         exclude 'package.json'
     }
-    into "$node.nodeModulesDir"
+    into node.nodeProjectDir
 }
 
 npmInstall.dependsOn prepareNodePackage

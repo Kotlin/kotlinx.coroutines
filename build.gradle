@@ -54,13 +54,13 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "org.jetbrains.kotlinx:kotlinx-knit:$knit_version"
-        classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+        classpath "com.github.node-gradle:gradle-node-plugin:$gradle_node_version"
         classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
-        classpath "ru.vyarus:gradle-animalsniffer-plugin:1.5.3" // Android API check
+        classpath "ru.vyarus:gradle-animalsniffer-plugin:1.5.4" // Android API check
         classpath "org.jetbrains.kotlinx:kover:$kover_version"
 
         // JMH plugins
-        classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
+        classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
     }
 
     CacheRedirector.configureBuildScript(buildscript, rootProject)
@@ -129,6 +129,9 @@ allprojects {
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
     }
 }
+
+// needs to be before evaluationDependsOn due to weird Gradle ordering
+apply plugin: "animalsniffer-conventions"
 
 // Add dependency to core source sets. Core is configured in kx-core/build.gradle
 configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
@@ -232,7 +235,7 @@ def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
 def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
 apply plugin: "org.jetbrains.dokka"
 
-configure(subprojects.findAll { !unpublished.contains(it.name) }) {
+configure(subprojects.findAll { !unpublished.contains(it.name) && it.name != coreModule }) {
     if (it.name != 'kotlinx-coroutines-bom') {
         apply from: rootProject.file('gradle/dokka.gradle.kts')
     }
@@ -302,8 +305,6 @@ allprojects {
 def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm", true)
 
 task deploy(dependsOn: publishTasks)
-
-apply plugin: "animalsniffer-conventions"
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
 
