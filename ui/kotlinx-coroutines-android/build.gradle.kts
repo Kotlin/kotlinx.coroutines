@@ -4,6 +4,9 @@
 
 import kotlinx.kover.api.*
 
+
+apply<AndroidJarPlugin>()
+
 configurations {
     create("r8")
 }
@@ -13,6 +16,11 @@ repositories {
 }
 
 project.configureAar()
+
+configure<AndroidJarExtension> {
+    minSdkVersion = 14
+    namespace = "org.jetbrains.kotlinx.coroutines.android"
+}
 
 dependencies {
     configureAarUnpacking()
