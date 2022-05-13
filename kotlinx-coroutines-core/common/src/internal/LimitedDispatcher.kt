@@ -23,6 +23,9 @@ internal class LimitedDispatcher(
 
     private val queue = LockFreeTaskQueue<Runnable>(singleConsumer = false)
 
+    // A separate object that we can synchronize on for K/N
+    private val workerAllocationLock = SynchronizedObject()
+
     @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
         parallelism.checkParallelism()
@@ -50,8 +53,7 @@ internal class LimitedDispatcher(
                 continue
             }
 
-            @Suppress("CAST_NEVER_SUCCEEDS")
-            synchronized(this as SynchronizedObject) {
+            synchronized(workerAllocationLock) {
                 --runningWorkers
                 if (queue.size == 0) return
                 ++runningWorkers
@@ -87,8 +89,7 @@ internal class LimitedDispatcher(
     }
 
     private fun tryAllocateWorker(): Boolean {
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        synchronized(this as SynchronizedObject) {
+        synchronized(workerAllocationLock) {
             if (runningWorkers >= parallelism) return false
             ++runningWorkers
             return true

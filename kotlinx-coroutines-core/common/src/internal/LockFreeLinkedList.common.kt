@@ -15,6 +15,7 @@ public expect open class LockFreeLinkedListNode() {
     public val prevNode: LockFreeLinkedListNode
     public fun addLast(node: LockFreeLinkedListNode)
     public fun addOneIfEmpty(node: LockFreeLinkedListNode): Boolean
+    public inline fun addLastIf(node: LockFreeLinkedListNode, crossinline condition: () -> Boolean): Boolean
     public inline fun addLastIfPrev(
         node: LockFreeLinkedListNode,
         predicate: (LockFreeLinkedListNode) -> Boolean

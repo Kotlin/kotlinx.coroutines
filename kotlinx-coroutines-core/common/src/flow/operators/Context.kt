@@ -171,7 +171,7 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> = buffer(capaci
  * ```
  *
  * Note that `conflate` operator is a shortcut for [buffer] with `capacity` of [Channel.CONFLATED][Channel.CONFLATED],
- * with is, in turn, a shortcut to a buffer that only keeps the latest element as
+ * which is, in turn, a shortcut to a buffer that only keeps the latest element as
  * created by `buffer(onBufferOverflow = `[`BufferOverflow.DROP_OLDEST`][BufferOverflow.DROP_OLDEST]`)`.
  *
  * ### Operator fusion

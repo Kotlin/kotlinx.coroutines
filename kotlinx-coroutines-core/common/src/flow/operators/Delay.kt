@@ -17,7 +17,6 @@ import kotlin.time.*
 /* Scaffolding for Knit code examples
 <!--- TEST_NAME FlowDelayTest -->
 <!--- PREFIX .*-duration-.*
-@file:OptIn(ExperimentalTime::class)
 ----- INCLUDE .*-duration-.*
 import kotlin.time.*
 ----- INCLUDE .*
@@ -150,7 +149,6 @@ public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeout] milliseconds.
  */
-@ExperimentalTime
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
     debounce(timeout.toDelayMillis())
@@ -197,7 +195,6 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
  *
  * @param timeout [T] is the emitted value and the return value is timeout in [Duration].
  */
-@ExperimentalTime
 @FlowPreview
 @JvmName("debounceDuration")
 @OptIn(kotlin.experimental.ExperimentalTypeInference::class)
@@ -346,6 +343,5 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
  *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
-@ExperimentalTime
 @FlowPreview
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())

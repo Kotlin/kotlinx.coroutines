@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class SampleTest : TestBase() {
     @Test
@@ -273,26 +274,25 @@ class SampleTest : TestBase() {
         finish(4)
     }
 
-    @ExperimentalTime
     @Test
-    public fun testDurationBasic() = withVirtualTime {
+    fun testDurationBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)
             emit("A")
-            delay(Duration.milliseconds(1500))
+            delay(1500.milliseconds)
             emit("B")
-            delay(Duration.milliseconds(500))
+            delay(500.milliseconds)
             emit("C")
-            delay(Duration.milliseconds(250))
+            delay(250.milliseconds)
             emit("D")
-            delay(Duration.milliseconds(2000))
+            delay(2000.milliseconds)
             emit("E")
             expect(4)
         }
 
         expect(2)
-        val result = flow.sample(Duration.milliseconds(1000)).toList()
+        val result = flow.sample(1000.milliseconds).toList()
         assertEquals(listOf("A", "B", "D"), result)
         finish(5)
     }

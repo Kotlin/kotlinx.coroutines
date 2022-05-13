@@ -148,7 +148,7 @@ The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in I
 The **Debug** tool window contains the **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
 The coroutines are grouped by the dispatcher they are running on.
 
-![Debugging coroutines](coroutine-idea-debugging-1.png)
+![Debugging coroutines](coroutine-idea-debugging-1.png){width=700}
 
 With the coroutine debugger, you can:
 * Check the state of each coroutine.
@@ -306,7 +306,7 @@ However, this parent-child relation can be explicitly overriden in one of two wa
 
 1. When a different scope is explicitly specified when launching a coroutine (for example, `GlobalScope.launch`), 
    then it does not inherit a `Job` from the parent scope.
-2. When a different `Job` object is passed as the context for the new coroutine (as show in the example below),
+2. When a different `Job` object is passed as the context for the new coroutine (as shown in the example below),
    then it overrides the `Job` of the parent scope.
    
 In both cases, the launched coroutine is not tied to the scope it was launched from and operates independently.

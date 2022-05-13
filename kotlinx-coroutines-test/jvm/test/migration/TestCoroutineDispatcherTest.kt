@@ -7,37 +7,10 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class TestCoroutineDispatcherTest {
     @Test
-    fun whenStringCalled_itReturnsString() {
-        val subject = TestCoroutineDispatcher()
-        assertEquals("TestCoroutineDispatcher[currentTime=0ms, queued=0]", subject.toString())
-    }
-
-    @Test
-    fun whenStringCalled_itReturnsCurrentTime() {
-        val subject = TestCoroutineDispatcher()
-        subject.advanceTimeBy(1000)
-        assertEquals("TestCoroutineDispatcher[currentTime=1000ms, queued=0]", subject.toString())
-    }
-
-    @Test
-    fun whenStringCalled_itShowsQueuedJobs() {
-        val subject = TestCoroutineDispatcher()
-        val scope = TestCoroutineScope(subject)
-        scope.pauseDispatcher()
-        scope.launch {
-            delay(1_000)
-        }
-        assertEquals("TestCoroutineDispatcher[currentTime=0ms, queued=1]", subject.toString())
-        scope.advanceTimeBy(50)
-        assertEquals("TestCoroutineDispatcher[currentTime=50ms, queued=1]", subject.toString())
-        scope.advanceUntilIdle()
-        assertEquals("TestCoroutineDispatcher[currentTime=1000ms, queued=0]", subject.toString())
-    }
-
-    @Test
-    fun whenDispatcherPaused_doesntAutoProgressCurrent() {
+    fun whenDispatcherPaused_doesNotAutoProgressCurrent() {
         val subject = TestCoroutineDispatcher()
         subject.pauseDispatcher()
         val scope = CoroutineScope(subject)

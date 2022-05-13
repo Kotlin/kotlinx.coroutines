@@ -108,7 +108,7 @@ import kotlin.coroutines.*
  * val myFlow = flow {
  *    // GlobalScope.launch { // is prohibited
  *    // launch(Dispatchers.IO) { // is prohibited
- *    // withContext(CoroutineName("myFlow")) // is prohibited
+ *    // withContext(CoroutineName("myFlow")) { // is prohibited
  *    emit(1) // OK
  *    coroutineScope {
  *        emit(2) // OK -- still the same coroutine
@@ -172,19 +172,29 @@ import kotlin.coroutines.*
  *
  * **The `Flow` interface is not stable for inheritance in 3rd party libraries**, as new methods
  * might be added to this interface in the future, but is stable for use.
- * Use the `flow { ... }` builder function to create an implementation.
+ *
+ * Use the `flow { ... }` builder function to create an implementation, or extend [AbstractFlow].
+ * These implementations ensure that the context preservation property is not violated, and prevent most
+ * of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.
  */
 public interface Flow<out T> {
+
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
-     * This method should never be implemented or used directly.
      *
-     * The only way to implement the `Flow` interface directly is to extend [AbstractFlow].
-     * To collect it into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
-     * should be used. Such limitation ensures that the context preservation property is not violated and prevents most
-     * of the developer mistakes related to concurrency, inconsistent flow dispatchers and cancellation.
+     * This method can be used along with SAM-conversion of [FlowCollector]:
+     * ```
+     * myFlow.collect { value -> println("Collected $value") }
+     * ```
+     *
+     * ### Method inheritance
+     *
+     * To ensure the context preservation property, it is not recommended implementing this method directly.
+     * Instead, [AbstractFlow] can be used as the base type to properly ensure flow's properties.
+     *
+     * All default flow implementations ensure context preservation and exception transparency properties on a best-effort basis
+     * and throw [IllegalStateException] if a violation was detected.
      */
-    @InternalCoroutinesApi
     public suspend fun collect(collector: FlowCollector<T>)
 }
 
@@ -214,7 +224,6 @@ public interface Flow<out T> {
 @FlowPreview
 public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
-    @InternalCoroutinesApi
     public final override suspend fun collect(collector: FlowCollector<T>) {
         val safeCollector = SafeCollector(collector, coroutineContext)
         try {

@@ -13,6 +13,7 @@ import org.robolectric.annotation.*
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [28])
+@LooperMode(LooperMode.Mode.LEGACY)
 class DisabledHandlerTest : TestBase() {
 
     private var delegateToSuper = false

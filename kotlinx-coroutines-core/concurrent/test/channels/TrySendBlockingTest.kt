@@ -1,17 +1,16 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import org.junit.Test
 import kotlin.test.*
 
-class ChannelsJvmTest : TestBase() {
+class TrySendBlockingTest : TestBase() {
 
     @Test
-    fun testTrySendBlocking() {
+    fun testTrySendBlocking() = runBlocking<Unit> { // For old MM
         val ch = Channel<Int>()
         val sum = GlobalScope.async {
             var sum = 0

@@ -10,7 +10,7 @@ import kotlin.native.concurrent.*
 
 internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
-    private val delegate = WorkerDispatcher(name = "Dispatchers.Default")
+    private val delegate = WorkerDispatcher(name = "DefaultExecutor")
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         checkState()
@@ -47,6 +47,10 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
     val combined = coroutineContext + context
     return if (combined !== DefaultDelay && combined[ContinuationInterceptor] == null)
         combined + (DefaultDelay as CoroutineContext.Element) else combined
+}
+
+public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
+    return this + addedContext
 }
 
 // No debugging facilities on native

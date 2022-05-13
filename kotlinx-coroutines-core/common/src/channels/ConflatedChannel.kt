@@ -19,7 +19,7 @@ import kotlinx.coroutines.selects.*
  */
 internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredElement<E>?) : AbstractChannel<E>(onUndeliveredElement) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
-    protected final override val isBufferEmpty: Boolean get() = value === EMPTY
+    protected final override val isBufferEmpty: Boolean get() = lock.withLock { value === EMPTY }
     protected final override val isBufferAlwaysFull: Boolean get() = false
     protected final override val isBufferFull: Boolean get() = false
 
@@ -139,5 +139,5 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
     // ------ debug ------
 
     override val bufferDebugString: String
-        get() = "(value=$value)"
+        get() = lock.withLock { "(value=$value)" }
 }

@@ -44,6 +44,4 @@ internal expect val CancelHandlerBase.asHandler: CompletionHandler
 // because we play type tricks on Kotlin/JS and handler is not necessarily a function there
 internal expect fun CompletionHandler.invokeIt(cause: Throwable?)
 
-// :KLUDGE: We have to use `isHandlerOf` extension, because performing this type check directly in the code
-// causes Incompatible types error during Kotlin/JS compilation
 internal inline fun <reified T> CompletionHandler.isHandlerOf(): Boolean = this is T

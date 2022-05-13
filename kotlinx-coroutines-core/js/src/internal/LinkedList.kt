@@ -59,6 +59,12 @@ public open class LinkedListNode {
         return true
     }
 
+    public inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
+        if (!condition()) return false
+        addLast(node)
+        return true
+    }
+
     public inline fun addLastIfPrev(node: Node, predicate: (Node) -> Boolean): Boolean {
         if (!predicate(_prev)) return false
         addLast(node)
