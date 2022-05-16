@@ -361,7 +361,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     }
 
     private class LockedQueue(
-        @JvmField var owner: Any
+        @Volatile @JvmField var owner: Any
     ) : LockFreeLinkedListHead() {
         override fun toString(): String = "LockedQueue[$owner]"
     }
