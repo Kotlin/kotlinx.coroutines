@@ -236,8 +236,13 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         if (timeNanos < MAX_DELAY_NS) {
             val now = nanoTime()
             DelayedResumeTask(now + timeNanos, continuation).also { task ->
-                continuation.disposeOnCancellation(task)
+                /*
+                 * Order is important here: first we schedule heap and only then
+                 * publish it to continuation. Otherwise, `DelayedResumeTask` should know
+                 * how to be disposed when it's in the process of scheduling.
+                 */
                 schedule(now, task)
+                continuation.disposeOnCancellation(task)
             }
         }
     }
@@ -410,6 +415,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
          */
         @JvmField var nanoTime: Long
     ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
+        @Volatile
         private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
 
         override var heap: ThreadSafeHeap<*>?
