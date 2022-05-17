@@ -4,17 +4,19 @@
 
 import ru.vyarus.gradle.plugin.animalsniffer.*
 
-subprojects {
+configure(subprojects) {
     // Skip JDK 8 projects or unpublished ones
-    if (!shouldSniff()) return@subprojects
+    if (!shouldSniff()) return@configure
     apply(plugin = "ru.vyarus.animalsniffer")
-    configure<AnimalSnifferExtension> {
-        sourceSets = listOf((project.extensions.getByName("sourceSets") as SourceSetContainer).getByName("main"))
-    }
-    val signature: Configuration by configurations
-    dependencies {
-        signature("net.sf.androidscents.signature:android-api-level-14:4.0_r4@signature")
-        signature("org.codehaus.mojo.signature:java17:1.0@signature")
+    project.plugins.withType(JavaPlugin::class.java) {
+        configure<AnimalSnifferExtension> {
+            sourceSets = listOf((project.extensions.getByName("sourceSets") as SourceSetContainer).getByName("main"))
+        }
+        val signature: Configuration by configurations
+        dependencies {
+            signature("net.sf.androidscents.signature:android-api-level-14:4.0_r4@signature")
+            signature("org.codehaus.mojo.signature:java17:1.0@signature")
+        }
     }
 }
 
