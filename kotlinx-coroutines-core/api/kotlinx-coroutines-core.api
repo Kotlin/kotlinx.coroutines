@@ -1299,36 +1299,3 @@ public final class kotlinx/coroutines/sync/SemaphoreKt {
 	public static final fun withPermit (Lkotlinx/coroutines/sync/Semaphore;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class kotlinx/coroutines/test/TestCoroutineContext : kotlin/coroutines/CoroutineContext {
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun advanceTimeBy (JLjava/util/concurrent/TimeUnit;)J
-	public static synthetic fun advanceTimeBy$default (Lkotlinx/coroutines/test/TestCoroutineContext;JLjava/util/concurrent/TimeUnit;ILjava/lang/Object;)J
-	public final fun advanceTimeTo (JLjava/util/concurrent/TimeUnit;)V
-	public static synthetic fun advanceTimeTo$default (Lkotlinx/coroutines/test/TestCoroutineContext;JLjava/util/concurrent/TimeUnit;ILjava/lang/Object;)V
-	public final fun assertAllUnhandledExceptions (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun assertAllUnhandledExceptions$default (Lkotlinx/coroutines/test/TestCoroutineContext;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public final fun assertAnyUnhandledException (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun assertAnyUnhandledException$default (Lkotlinx/coroutines/test/TestCoroutineContext;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public final fun assertExceptions (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun assertExceptions$default (Lkotlinx/coroutines/test/TestCoroutineContext;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public final fun assertUnhandledException (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun assertUnhandledException$default (Lkotlinx/coroutines/test/TestCoroutineContext;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public final fun cancelAllActions ()V
-	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
-	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
-	public final fun getExceptions ()Ljava/util/List;
-	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
-	public final fun now (Ljava/util/concurrent/TimeUnit;)J
-	public static synthetic fun now$default (Lkotlinx/coroutines/test/TestCoroutineContext;Ljava/util/concurrent/TimeUnit;ILjava/lang/Object;)J
-	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
-	public fun toString ()Ljava/lang/String;
-	public final fun triggerActions ()V
-}
-
-public final class kotlinx/coroutines/test/TestCoroutineContextKt {
-	public static final fun withTestContext (Lkotlinx/coroutines/test/TestCoroutineContext;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun withTestContext$default (Lkotlinx/coroutines/test/TestCoroutineContext;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-}
-
