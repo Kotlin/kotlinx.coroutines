@@ -26,6 +26,6 @@ fun main() = runBlocking<Unit> {
     }
     delay(500)
     request.cancel() // cancel processing of the request
-    delay(1000) // delay a second to see what happens
     println("main: Who has survived request cancellation?")
+    delay(1000) // delay the main thread for a second to see what happens
 }
