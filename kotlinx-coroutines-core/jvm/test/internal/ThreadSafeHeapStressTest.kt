@@ -49,7 +49,7 @@ class ThreadSafeHeapStressTest : TestBase() {
             try {
                 runBlocking { // Use event loop impl
                     withContext(jobToCancel) {
-                        // This one is to workaround heap allocation optimization
+                        // This one is to work around heap allocation optimization
                         launch(start = CoroutineStart.UNDISPATCHED) {
                             delay(100_000)
                         }
