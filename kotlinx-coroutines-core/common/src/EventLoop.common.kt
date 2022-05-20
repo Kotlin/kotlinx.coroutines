@@ -237,9 +237,9 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             val now = nanoTime()
             DelayedResumeTask(now + timeNanos, continuation).also { task ->
                 /*
-                 * Order is important here: first we schedule heap and only then
-                 * publish it to continuation. Otherwise, `DelayedResumeTask` should know
-                 * how to be disposed when it's in the process of scheduling.
+                 * Order is important here: first we schedule the heap and only then
+                 * publish it to continuation. Otherwise, `DelayedResumeTask` would
+                 * have to know how to be disposed of even when it wasn't scheduled yet.
                  */
                 schedule(now, task)
                 continuation.disposeOnCancellation(task)
