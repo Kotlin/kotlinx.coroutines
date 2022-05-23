@@ -73,34 +73,40 @@ interface FlowIterator<T> {
  * by multiple coroutines.
  */
 suspend fun <T, R> Flow<T>.iterate(block: FlowIterator<T>.() -> R): R = coroutineScope {
-    val channel = Channel<CancellableContinuation<ChannelResult<T>>>(capacity = 1)
+    // Instead of a channel-based approach, we pass continuations back and forth between the collector and the
+    // iterator.
+
+    val firstCont = CompletableDeferred<CancellableContinuation<ContToken<T>>>()
     val collectorJob = launch {
-        var cont = channel.receive()
+        var tokenCont = firstCont.await()
         onCompletion { thrown ->
-            cont.resume(ChannelResult.closed(thrown))
+            suspendCancellableContinuation { collectionCont ->
+                tokenCont.resume(ContToken(ChannelResult.closed(thrown), collectionCont))
+            }
         }.collect { elem ->
-            cont.resume(ChannelResult.success(elem))
-            cont = channel.receive()
+            tokenCont = suspendCancellableContinuation { collectionCont ->
+                tokenCont.resume(ContToken(ChannelResult.success(elem), collectionCont))
+            }
         }
     }
     var usable = true
     val itr = object : FlowIterator<T> {
         private var next = ChannelResult.failure<T>()
+        private var collectionCont: CancellableContinuation<ContToken<T>>? = null
 
         override suspend fun hasNext(): Boolean {
             check(usable) { "FlowIterator is only usable within the body of the corresponding iterate call" }
             if (next.isFailure && !next.isClosed) {
-                next = suspendCancellableCoroutine { cont ->
-                    channel
-                        .trySend(cont)
-                        .onFailure {
-                            throw AssertionError(
-                                "Unexpected behavior in iterate.  Perhaps the iterator is being used" +
-                                    " concurrently, which is unsupported.",
-                                it
-                            )
-                        }
+                val (theNext, theCollectionCont) = suspendCancellableCoroutine { tokenCont ->
+                    // collectorJob is waiting for tokenCont.  Pass tokenCont to it and suspend until it replies
+                    // with a ChannelResult/element-or-termination and a continuation.
+                    when (val theCollectionCont = collectionCont) {
+                        null -> firstCont.complete(tokenCont)
+                        else -> theCollectionCont.resume(tokenCont)
+                    }
                 }
+                next = theNext
+                collectionCont = theCollectionCont
             }
 
             // next should never be failed now
@@ -120,11 +126,7 @@ suspend fun <T, R> Flow<T>.iterate(block: FlowIterator<T>.() -> R): R = coroutin
             if (!hasNext()) {
                 throw NoSuchElementException("No next element")
             }
-            return try {
-                next.getOrThrow()
-            } finally {
-                next = ChannelResult.failure()
-            }
+            return next.getOrThrow().also { next = ChannelResult.failure()}
         }
     }
     try {
@@ -135,3 +137,5 @@ suspend fun <T, R> Flow<T>.iterate(block: FlowIterator<T>.() -> R): R = coroutin
         // we don't actually want to close the channel, just let it die from leaving scope
     }
 }
+
+private class ContToken<T>(val nextValue: ChannelResult<T>, val resumption: CancellableContinuation<CancellableContinuation<ContToken<T>>>)
