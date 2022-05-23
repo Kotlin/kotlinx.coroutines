@@ -132,9 +132,9 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testOuterTimeout() = runTest {
         var counter = 0
-        val result = withTimeoutOrNull(250.milliseconds) {
+        val result = withTimeoutOrNull(320.milliseconds) {
             while (true) {
-                val inner = withTimeoutOrNull(100.milliseconds) {
+                val inner = withTimeoutOrNull(150.milliseconds) {
                     while (true) {
                         yield()
                     }
