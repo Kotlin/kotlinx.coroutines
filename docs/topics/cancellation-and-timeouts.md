@@ -103,6 +103,42 @@ job: I'm sleeping 4 ...
 main: Now I can quit.
 -->
 
+The same problem can be observed by catching a [CancellationException] and not rethrowing it:
+
+```kotlin
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
+    val job = launch(Dispatchers.Default) {
+        repeat(5) { i ->
+            try {
+                // print a message twice a second
+                println("job: I'm sleeping $i ...")
+                delay(500)
+            } catch (e: Exception) {
+                // log the exception
+                println(e)
+            }
+        }
+    }
+    delay(1300L) // delay a bit
+    println("main: I'm tired of waiting!")
+    job.cancelAndJoin() // cancels the job and waits for its completion
+    println("main: Now I can quit.")
+//sampleEnd    
+}
+```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
+
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-03.kt).
+>
+{type="note"}
+
+While catching `Exception` is an anti-pattern, this issue may surface in more subtle ways, like when using the
+[`runCatching`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/run-catching.html) function,
+which does not know rethrow [CancellationException].
+
 ## Making computation code cancellable
 
 There are two approaches to making computation code cancellable. The first one is to periodically 
@@ -137,7 +173,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-03.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-04.kt).
 >
 {type="note"}
 
@@ -182,7 +218,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-04.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-05.kt).
 >
 {type="note"}
 
@@ -237,7 +273,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-05.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-06.kt).
 >
 {type="note"}
 
@@ -275,7 +311,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-06.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-07.kt).
 >
 {type="note"}
 
@@ -318,7 +354,7 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-07.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-08.kt).
 >
 {type="note"}
 
@@ -378,7 +414,7 @@ fun main() {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-08.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-09.kt).
 >
 {type="note"}
 
@@ -431,7 +467,7 @@ fun main() {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-09.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-cancel-10.kt).
 >
 {type="note"}
 

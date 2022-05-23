@@ -3,7 +3,7 @@
  */
 
 // This file was automatically generated from cancellation-and-timeouts.md by Knit tool. Do not edit.
-package kotlinx.coroutines.guide.exampleCancel09
+package kotlinx.coroutines.guide.exampleCancel10
 
 import kotlinx.coroutines.*
 
@@ -18,11 +18,16 @@ fun main() {
     runBlocking {
         repeat(100_000) { // Launch 100K coroutines
             launch { 
-                val resource = withTimeout(60) { // Timeout of 60 ms
-                    delay(50) // Delay for 50 ms
-                    Resource() // Acquire a resource and return it from withTimeout block     
+                var resource: Resource? = null // Not acquired yet
+                try {
+                    withTimeout(60) { // Timeout of 60 ms
+                        delay(50) // Delay for 50 ms
+                        resource = Resource() // Store a resource to the variable if acquired      
+                    }
+                    // We can do something else with the resource here
+                } finally {  
+                    resource?.close() // Release the resource if it was acquired
                 }
-                resource.close() // Release the resource
             }
         }
     }
