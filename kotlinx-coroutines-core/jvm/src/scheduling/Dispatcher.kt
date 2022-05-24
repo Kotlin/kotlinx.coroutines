@@ -92,7 +92,7 @@ internal open class SchedulerCoroutineDispatcher(
     private var coroutineScheduler = createScheduler()
 
     private fun createScheduler() =
-        CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
+        GoBasedCoroutineScheduler(corePoolSize, maxPoolSize, schedulerName)
 
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = coroutineScheduler.dispatch(block)
 
