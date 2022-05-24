@@ -116,12 +116,7 @@ internal class WorkQueue {
      */
     fun tryStealFrom(victim: WorkQueue): Long {
         assert { bufferSize == 0 }
-        val task  = victim.pollBuffer()
-        if (task != null) {
-//            add(task)
-            stolenTask = task
-            return TASK_STOLEN
-        }
+        if (victim.pollBufferTo(this)) return TASK_STOLEN
         return tryStealLastScheduled(victim, blockingOnly = false)
     }
 
@@ -198,6 +193,30 @@ internal class WorkQueue {
                 val value = buffer.getAndSet(index, null) ?: continue
                 value.decrementIfBlocking()
                 return value
+            }
+        }
+    }
+
+    private fun pollBufferTo(to: WorkQueue): Boolean {
+        while (true) {
+            val tailLocal = consumerIndex.value
+            val pi = producerIndex.value
+            if (tailLocal - pi == 0) return false
+            val stealSize = (pi - tailLocal + 1) / 2
+            if (consumerIndex.compareAndSet(tailLocal, tailLocal + stealSize)) {
+                var stolen = false
+                repeat(stealSize) {
+                    val index = (tailLocal + it) and MASK
+                    // Nulls are allowed when blocking tasks are stolen from the middle of the queue.
+                    val value = buffer.getAndSet(index, null)
+                    if (value != null) {
+                        stolen = true
+                        value.decrementIfBlocking()
+                        to.add(value)
+                    }
+                }
+                if (!stolen) continue
+                return true
             }
         }
     }
