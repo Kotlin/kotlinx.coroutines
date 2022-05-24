@@ -105,7 +105,7 @@ internal open class ExperimentalCoroutineDispatcher(
         }
     }
 
-    private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
+    private fun createScheduler() = GoBasedCoroutineScheduler(corePoolSize, maxPoolSize, schedulerName)
 }
 
 private class LimitingDispatcher(
