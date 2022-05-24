@@ -54,6 +54,8 @@ internal class WorkQueue {
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
     private val lastScheduledTask = atomic<Task?>(null)
 
+    private var stolenTask: Task? = null
+
     private val producerIndex = atomic(0)
     private val consumerIndex = atomic(0)
     // Shortcut to avoid scanning queue without blocking tasks
@@ -63,7 +65,14 @@ internal class WorkQueue {
      * Retrieves and removes task from the head of the queue
      * Invariant: this method is called only by the owner of the queue.
      */
-    fun poll(): Task? = lastScheduledTask.getAndSet(null) ?: pollBuffer()
+    fun poll(): Task? {
+        val stolenTask = this.stolenTask
+        if (stolenTask != null) {
+            this.stolenTask = null
+            return stolenTask
+        }
+        return lastScheduledTask.getAndSet(null) ?: pollBuffer()
+    }
 
     /**
      * Invariant: Called only by the owner of the queue, returns
@@ -109,8 +118,8 @@ internal class WorkQueue {
         assert { bufferSize == 0 }
         val task  = victim.pollBuffer()
         if (task != null) {
-            val notAdded = add(task)
-            assert { notAdded == null }
+//            add(task)
+            stolenTask = task
             return TASK_STOLEN
         }
         return tryStealLastScheduled(victim, blockingOnly = false)
@@ -128,7 +137,8 @@ internal class WorkQueue {
             val value = buffer[index]
             if (value != null && value.isBlocking && buffer.compareAndSet(index, value, null)) {
                 victim.blockingTasksInBuffer.decrementAndGet()
-                add(value)
+//                add(value)
+                stolenTask = value
                 return TASK_STOLEN
             } else {
                 ++start
@@ -164,7 +174,8 @@ internal class WorkQueue {
              * and dispatched another one. In the latter case we should retry to avoid missing task.
              */
             if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                add(lastScheduled)
+                stolenTask = lastScheduled
+//                add(lastScheduled)
                 return TASK_STOLEN
             }
             continue
