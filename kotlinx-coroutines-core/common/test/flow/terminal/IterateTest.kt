@@ -24,4 +24,45 @@ class IterateTest : TestBase() {
         }
         assertEquals(listOf(1, 2), list)
     }
+
+    @Test
+    fun testCancelsAfterDone() = runTest {
+        val flow = flow {
+            emit(1)
+            error("Should not be executed")
+        }
+        val result = flow.iterate { next() }
+        assertEquals(1, result)
+    }
+
+    @Test
+    fun testDoesNotRace() = runTest {
+        val flow = flow {
+            emit(1)
+            error("Should not be executed")
+        }
+        val result = flow.iterate {
+            next().also {
+                yield()
+                // not obvious if this results in a deterministic test?
+                // advanceUntilIdle would make this clearly deterministic
+            }
+        }
+        assertEquals(1, result)
+    }
+
+    @Test
+    fun testBackingFlowFailure() = runTest {
+        val flow = flow {
+            emit(1)
+            throw IllegalStateException()
+        }
+        assertFailsWith<IllegalStateException> {
+            flow.iterate {
+                while (hasNext()) {
+                    next()
+                }
+            }
+        }
+    }
 }
