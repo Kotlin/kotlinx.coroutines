@@ -117,7 +117,7 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
     private fun BlockHound.Builder.allowBlockingCallsInArrayChannel() {
         for (method in listOf(
             "pollInternal", "isEmpty", "isFull", "isClosedForReceive", "offerInternal", "offerSelectInternal",
-            "enqueueSend", "pollInternal", "pollSelectInternal", "enqueueReceiveInternal", "onCancelIdempotent"))
+            "enqueueSend", "pollSelectInternal", "enqueueReceiveInternal", "onCancelIdempotent"))
         {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ArrayChannel", method)
         }

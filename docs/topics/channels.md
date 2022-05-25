@@ -573,6 +573,7 @@ Now let's see how it works in practice:
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
+//sampleStart
 fun main() = runBlocking<Unit> {
     val tickerChannel = ticker(delayMillis = 100, initialDelayMillis = 0) // create ticker channel
     var nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
@@ -596,7 +597,9 @@ fun main() = runBlocking<Unit> {
 
     tickerChannel.cancel() // indicate that no more elements are needed
 }
+//sampleEnd
 ```
+{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-10.kt).
 >
