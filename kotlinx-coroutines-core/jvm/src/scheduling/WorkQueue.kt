@@ -114,13 +114,14 @@ internal class WorkQueue {
      * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen
      * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
      */
-    fun tryStealFrom(victim: WorkQueue): Long {
+    fun tryStealFrom(victim: WorkQueue, stealLastScheduled: Boolean = true): Long {
         assert { bufferSize == 0 }
         if (victim.pollBufferTo(this)) return TASK_STOLEN
+        if (!stealLastScheduled) return NOTHING_TO_STEAL
         return tryStealLastScheduled(victim, blockingOnly = false)
     }
 
-    fun tryStealBlockingFrom(victim: WorkQueue): Long {
+    fun tryStealBlockingFrom(victim: WorkQueue,  stealLastScheduled: Boolean = true): Long {
         assert { bufferSize == 0 }
         var start = victim.consumerIndex.value
         val end = victim.producerIndex.value
@@ -139,6 +140,7 @@ internal class WorkQueue {
                 ++start
             }
         }
+        if (!stealLastScheduled) return NOTHING_TO_STEAL
         return tryStealLastScheduled(victim, blockingOnly = true)
     }
 

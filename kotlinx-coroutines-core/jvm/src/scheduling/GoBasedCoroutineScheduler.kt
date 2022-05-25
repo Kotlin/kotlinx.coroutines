@@ -12,7 +12,6 @@ import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
-import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.locks.LockSupport.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.ArrayDeque
@@ -329,9 +328,9 @@ internal class GoBasedCoroutineScheduler(
                 globalQueue.addAll(batchToMove)
             }
 
-            fun tryStealFrom(queue: ProcessorWorkQueue): Task? {
+            fun tryStealFrom(queue: ProcessorWorkQueue, stealLastScheduled: Boolean): Task? {
                 val tail = producerIndex.value
-                var n = tryGrabFrom(queue, tail)
+                var n = tryGrabFrom(queue, tail, stealLastScheduled)
                 if (n == 0) {
                     return null
                 }
@@ -341,21 +340,16 @@ internal class GoBasedCoroutineScheduler(
                 return task
             }
 
-            private fun tryGrabFrom(queue: ProcessorWorkQueue, batchStart: Int): Int {
+            private fun tryGrabFrom(queue: ProcessorWorkQueue, batchStart: Int, stealLastScheduled: Boolean): Int {
                 while (true) {
                     val head = queue.consumerIndex.value
                     val tail = queue.producerIndex.value
                     val n = (tail - head + 1) / 2
                     if (n == 0) {
-                        val lastScheduled = queue.lastScheduledTask.value
-                        if (lastScheduled != null) {
-                            val time = schedulerTimeSource.nanoTime()
-                            val staleness = time - lastScheduled.submissionTime
-                            if (staleness < WORK_STEALING_TIME_RESOLUTION_NS) {
-                                return 0
-                            }
-                            if (queue.lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                                buffer[batchStart and MASK] = lastScheduled
+                        if (stealLastScheduled) {
+                            val stolen = queue.lastScheduledTask.getAndSet(null)
+                            if (stolen != null) {
+                                buffer[batchStart and MASK] = stolen
                                 return 1
                             }
                         }
@@ -609,21 +603,20 @@ internal class GoBasedCoroutineScheduler(
             return null
         }
 
-        private fun stealTask(repeat: Boolean = true): StolenTask {
+        private fun stealTask(): StolenTask {
             val p = processor.value ?: throw IllegalStateException("worker runs without a processor")
 
-//            val stealTries = 4
-//            repeat(stealTries) { attempt ->
+            val stealTries = 4
+            repeat(stealTries) { attempt ->
                 var pos = nextInt(nProcessors)
                 val coprime = randomOrderCoprimes[pos % randomOrderCoprimes.size]
-//                val stealNextTask = attempt == stealTries - 1
+                val stealNextTask = attempt == stealTries - 1
 
-                var minDelay = Long.MAX_VALUE
                 repeat(nProcessors) {
                     val processor = processors[pos]
                     if (p !== processor) {
                         if (processor.status.value != ProcessorStatus.IDLE) {
-                            val stolen = p.queue.tryStealFrom(processor.queue)
+                            val stolen = p.queue.tryStealFrom(processor.queue, stealNextTask)
                             if (stolen != null) {
                                 return StolenTask(stolen, true)
                             }
@@ -632,13 +625,7 @@ internal class GoBasedCoroutineScheduler(
                     pos += coprime
                     pos %= nProcessors
                 }
-//            }
-
-            if (repeat) {
-                LockSupport.parkNanos(WORK_STEALING_TIME_RESOLUTION_NS)
-                return stealTask(repeat = false)
             }
-
             return StolenTask(null, false)
         }
 
