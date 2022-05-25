@@ -1,5 +1,15 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.6.2
+
+* Fixed a bug with `ThreadLocalElement` not being correctly updated when the most outer `suspend` function was called directly without `kotlinx.coroutines` (#2930).
+* Fixed multiple data races: one that might have been affecting `runBlocking` event loop, and a benign data race in `Mutex` (#3250, #3251).
+* Obsolete `TestCoroutineContext` is removed, which fixes the `kotlinx-coroutines-test` JPMS package being split between `kotlinx-coroutines-core` and `kotlinx-coroutines-test` (#3218).
+* Updated the ProGuard rules to further shrink the size of the resulting DEX file with coroutines (#3111, #3263). Thanks, @agrieve!
+* Atomicfu is updated to `0.17.2`, which includes a more efficient and robust JS IR transformer (#3255).
+* Kotlin is updated to `1.6.21`, Gradle version is updated to `7.4.2` (#3281). Thanks, @wojtek-kalicinski!
+* Various documentation improvements.
+
 ## Version 1.6.1
 
 * Rollback of time-related functions dispatching on `Dispatchers.Main`.
