@@ -76,6 +76,6 @@ fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication)
     }
 }
 
-private fun Project.getSensitiveProperty(name: String): String? {
+fun Project.getSensitiveProperty(name: String): String? {
     return project.findProperty(name) as? String ?: System.getenv(name)
 }
