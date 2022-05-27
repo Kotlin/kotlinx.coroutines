@@ -6,7 +6,6 @@ import org.gradle.util.VersionNumber
 
 // Configures publishing of Maven artifacts to Maven Central
 
-apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
@@ -16,7 +15,9 @@ def isMultiplatform = project.name == "kotlinx-coroutines-core" || project.name 
 def isBom = project.name == "kotlinx-coroutines-bom"
 
 if (!isBom) {
-    apply plugin: "com.github.johnrengelman.shadow"
+    if (project.name == "kotlinx-coroutines-debug") {
+        apply plugin: "com.github.johnrengelman.shadow"
+    }
 
     // empty xxx-javadoc.jar
     task javadocJar(type: Jar) {

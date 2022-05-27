@@ -98,9 +98,9 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     npmTestImplementation 'org.apache.commons:commons-compress:1.18'
     npmTestImplementation 'com.google.code.gson:gson:2.8.5'
-    debugAgentTestCompile project(':kotlinx-coroutines-core')
-    debugAgentTestCompile project(':kotlinx-coroutines-debug')
-    coreAgentTestCompile project(':kotlinx-coroutines-core')
+    debugAgentTestImplementation project(':kotlinx-coroutines-core')
+    debugAgentTestImplementation project(':kotlinx-coroutines-debug')
+    coreAgentTestImplementation project(':kotlinx-coroutines-core')
 }
 
 compileTestKotlin {

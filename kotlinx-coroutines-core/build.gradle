@@ -14,6 +14,8 @@ if (rootProject.ext.native_targets_enabled) {
 apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
 apply from: rootProject.file('gradle/publish-npm-js.gradle')
 
+apply from: rootProject.file('gradle/dokka.gradle.kts')
+apply from: rootProject.file('gradle/publish.gradle')
 /* ==========================================================================
   Configure source sets structure for kotlinx-coroutines-core:
 
@@ -272,8 +274,7 @@ tasks.jvmLincheckTest {
 }
 
 def commonKoverExcludes =
-        ["kotlinx.coroutines.test.*", // Deprecated package for removal
-         "kotlinx.coroutines.debug.*", // Tested by debug module
+        ["kotlinx.coroutines.debug.*", // Tested by debug module
          "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
          "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
          "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated

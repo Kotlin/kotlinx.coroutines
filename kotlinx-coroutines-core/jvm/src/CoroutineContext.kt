@@ -181,6 +181,37 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
      */
     private var threadStateToRecover = ThreadLocal<Pair<CoroutineContext, Any?>>()
 
+    init {
+        /*
+         * This is a hack for a very specific case in #2930 unless #3253 is implemented.
+         * 'ThreadLocalStressTest' covers this change properly.
+         *
+         * The scenario this change covers is the following:
+         * 1) The coroutine is being started as plain non kotlinx.coroutines related suspend function,
+         *    e.g. `suspend fun main` or, more importantly, Ktor `SuspendFunGun`, that is invoking
+         *    `withContext(tlElement)` which creates `UndispatchedCoroutine`.
+         * 2) It (original continuation) is then not wrapped into `DispatchedContinuation` via `intercept()`
+         *    and goes neither through `DC.run` nor through `resumeUndispatchedWith` that both
+         *    do thread context element tracking.
+         * 3) So thread locals never got chance to get properly set up via `saveThreadContext`,
+         *    but when `withContext` finishes, it attempts to recover thread locals in its `afterResume`.
+         *
+         * Here we detect precisely this situation and properly setup context to recover later.
+         *
+         */
+        if (uCont.context[ContinuationInterceptor] !is CoroutineDispatcher) {
+            /*
+             * We cannot just "read" the elements as there is no such API,
+             * so we update-restore it immediately and use the intermediate value
+             * as the initial state, leveraging the fact that thread context element
+             * is idempotent and such situations are increasingly rare.
+             */
+            val values = updateThreadContext(context, null)
+            restoreThreadContext(context, values)
+            saveThreadContext(context, values)
+        }
+    }
+
     fun saveThreadContext(context: CoroutineContext, oldValue: Any?) {
         threadStateToRecover.set(context to oldValue)
     }

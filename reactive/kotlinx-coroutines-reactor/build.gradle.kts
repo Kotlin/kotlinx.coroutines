@@ -5,8 +5,8 @@
 val reactorVersion = version("reactor")
 
 dependencies {
-    compile("io.projectreactor:reactor-core:$reactorVersion")
-    compile(project(":kotlinx-coroutines-reactive"))
+    api("io.projectreactor:reactor-core:$reactorVersion")
+    api(project(":kotlinx-coroutines-reactive"))
 }
 
 java {

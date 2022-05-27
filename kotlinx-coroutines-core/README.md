@@ -83,10 +83,6 @@ Select expression to perform multiple suspending operations simultaneously until
 
 Low-level primitives for finer-grained control of coroutines.
 
-# Package kotlinx.coroutines.test
-
-Obsolete and deprecated module to test coroutines. Replaced with `kotlinx-coroutines-test` module.
-
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
 

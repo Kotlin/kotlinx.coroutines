@@ -4,6 +4,10 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.sync.*
+import java.util.concurrent.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 import kotlin.test.*
 
 
@@ -63,10 +67,99 @@ class ThreadLocalStressTest : TestBase() {
             withContext(threadLocal.asContextElement("foo")) {
                 yield()
                 cancel()
-                suspendCancellableCoroutineReusable<Unit> {  }
+                suspendCancellableCoroutineReusable<Unit> { }
             }
         } finally {
             assertEquals(expectedValue, threadLocal.get())
+        }
+    }
+
+    /*
+     * Another set of tests for undispatcheable continuations that do not require stress test multiplier.
+     * Also note that `uncaughtExceptionHandler` is used as the only available mechanism to propagate error from
+     * `resumeWith`
+     */
+
+    @Test
+    fun testNonDispatcheableLeak() {
+        repeat(100) {
+            doTestWithPreparation(
+                ::doTest,
+                { threadLocal.set(null) }) { threadLocal.get() == null }
+            assertNull(threadLocal.get())
+        }
+    }
+
+    @Test
+    fun testNonDispatcheableLeakWithInitial() {
+        repeat(100) {
+            doTestWithPreparation(::doTest, { threadLocal.set("initial") }) { threadLocal.get() == "initial" }
+            assertEquals("initial", threadLocal.get())
+        }
+    }
+
+    @Test
+    fun testNonDispatcheableLeakWithContextSwitch() {
+        repeat(100) {
+            doTestWithPreparation(
+                ::doTestWithContextSwitch,
+                { threadLocal.set(null) }) { threadLocal.get() == null }
+            assertNull(threadLocal.get())
+        }
+    }
+
+    @Test
+    fun testNonDispatcheableLeakWithInitialWithContextSwitch() {
+        repeat(100) {
+            doTestWithPreparation(
+                ::doTestWithContextSwitch,
+                { threadLocal.set("initial") }) { true /* can randomly wake up on the non-main thread */ }
+            // Here we are always on the main thread
+            assertEquals("initial", threadLocal.get())
+        }
+    }
+
+    private fun doTestWithPreparation(testBody: suspend () -> Unit, setup: () -> Unit, isValid: () -> Boolean) {
+        setup()
+        val latch = CountDownLatch(1)
+        testBody.startCoroutineUninterceptedOrReturn(Continuation(EmptyCoroutineContext) {
+            if (!isValid()) {
+                Thread.currentThread().uncaughtExceptionHandler.uncaughtException(
+                    Thread.currentThread(),
+                    IllegalStateException("Unexpected error: thread local was not cleaned")
+                )
+            }
+            latch.countDown()
+        })
+        latch.await()
+    }
+
+    private suspend fun doTest() {
+        withContext(threadLocal.asContextElement("foo")) {
+            try {
+                coroutineScope {
+                    val semaphore = Semaphore(1, 1)
+                    cancel()
+                    semaphore.acquire()
+                }
+            } catch (e: CancellationException) {
+                // Ignore cancellation
+            }
+        }
+    }
+
+    private suspend fun doTestWithContextSwitch() {
+        withContext(threadLocal.asContextElement("foo")) {
+            try {
+                coroutineScope {
+                    val semaphore = Semaphore(1, 1)
+                    GlobalScope.launch { }.join()
+                    cancel()
+                    semaphore.acquire()
+                }
+            } catch (e: CancellationException) {
+                // Ignore cancellation
+            }
         }
     }
 }

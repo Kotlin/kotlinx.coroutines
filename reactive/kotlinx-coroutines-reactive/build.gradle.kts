@@ -5,8 +5,8 @@
 val reactiveStreamsVersion = property("reactive_streams_version")
 
 dependencies {
-    compile("org.reactivestreams:reactive-streams:$reactiveStreamsVersion")
-    testCompile("org.reactivestreams:reactive-streams-tck:$reactiveStreamsVersion")
+    api("org.reactivestreams:reactive-streams:$reactiveStreamsVersion")
+    testImplementation("org.reactivestreams:reactive-streams-tck:$reactiveStreamsVersion")
 }
 
 val testNG by tasks.registering(Test::class) {
