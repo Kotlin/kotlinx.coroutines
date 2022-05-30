@@ -42,14 +42,14 @@ import kotlin.coroutines.intrinsics.*
  * ### Custom usage
  *
  * `CoroutineScope` should be declared as a property on entities with a well-defined lifecycle that are
- * responsible for launching children coroutines. The corresponding instance of `CoroutineScope` shall be created
- * with either `CoroutineScope()` or `MainScope()` functions. The difference between them is only in the
- * [CoroutineDispatcher]:
+ * responsible for launching child coroutines. The corresponding instance of `CoroutineScope` shall be created
+ * with either `CoroutineScope()` or `MainScope()`:
  *
- * * `CoroutineScope()` uses [Dispatchers.Default] for its coroutines.
- * * `MainScope()` uses [Dispatchers.Main] for its coroutines.
+ * * `CoroutineScope()` uses the [context][CoroutineContext] provided to it as a parameter for its coroutines 
+ *   and adds a [Job] if one is not provided as part of the context.
+ * * `MainScope()` uses [Dispatchers.Main] for its coroutines and has a [SupervisorJob].
  *
- * **The key part of custom usage of `CustomScope` is cancelling it at the end of the lifecycle.**
+ * **The key part of custom usage of `CoroutineScope` is cancelling it at the end of the lifecycle.**
  * The [CoroutineScope.cancel] extension function shall be used when the entity that was launching coroutines
  * is no longer needed. It cancels all the coroutines that might still be running on behalf of it.
  *
