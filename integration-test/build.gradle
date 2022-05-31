@@ -1,0 +1,24 @@
+plugins {
+    id 'kotlin-multiplatform'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+}
+
+kotlin {
+    jvm()
+    js(IR) {
+        browser()
+    }
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            }
+        }
+    }
+}
