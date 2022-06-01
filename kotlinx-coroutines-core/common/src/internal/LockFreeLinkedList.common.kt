@@ -10,7 +10,7 @@ import kotlin.jvm.*
 import kotlin.native.concurrent.*
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public expect open class LockFreeLinkedListNode() : DisposableHandle {
+public expect open class LockFreeLinkedListNode() {
     public val isRemoved: Boolean
     public val nextNode: LockFreeLinkedListNode
     public val prevNode: LockFreeLinkedListNode
@@ -28,7 +28,6 @@ public expect open class LockFreeLinkedListNode() : DisposableHandle {
         crossinline condition: () -> Boolean // atomically checked condition
     ): Boolean
 
-    override fun dispose()
     public open fun remove(): Boolean
 
     /**

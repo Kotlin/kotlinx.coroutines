@@ -17,5 +17,4 @@ internal actual class LocalAtomicInt actual constructor(value: Int) {
     actual fun get(): Int = iRef.value
 
     actual fun decrementAndGet(): Int = iRef.decrementAndGet()
-    actual fun incrementAndGet(): Int = iRef.incrementAndGet()
 }

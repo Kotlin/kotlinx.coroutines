@@ -283,7 +283,7 @@ internal open class SelectImplementation<R> constructor(
      *       ⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢             ⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢         ⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢
      *
      *                                                 +-----------+                 +-----------+
-     *                                                 | Cancelled |                 | COMPLETED |
+     *                                                 | CANCELLED |                 | COMPLETED |
      *                                                 +-----------+                 +-----------+
      *                                                       ^                             ^
      *     INITIAL STATE                                     |                             | this `select`
@@ -322,11 +322,11 @@ internal open class SelectImplementation<R> constructor(
      *
      * Also, this implementation is NOT linearizable under some circumstances. The reason is that a rendezvous
      * attempt with `select` (via [SelectInstance.trySelect]) may fail when this `select` operation is still
-     * in REGESTRATION phase. Consider the following situation on two empty rendezvous channels `c1` and `c2`
+     * in REGISTRATION phase. Consider the following situation on two empty rendezvous channels `c1` and `c2`
      * and the `select` operation that tries to send an element to one of these channels. First, this `select`
      * instance is registered as a waiter in `c1`. After that, another thread can observe that `c1` is no longer
      * empty and try to receive an element from `c1` -- this receive attempt fails due to the `select` operation
-     * being in REGISRTATION phase.
+     * being in REGISTRATION phase.
      * It is also possible to observe that this `select` operation registered in `c2` first, and only after that in
      * `c1` (it has to re-register in `c1` after the unsuccessful rendezvous attempt), which is also non-linearizable.
      * We, however, find such a non-linearizable behaviour not so important in practice and leverage the correctness
@@ -355,7 +355,7 @@ internal open class SelectImplementation<R> constructor(
      * Returns `true` if this `select` is cancelled.
      */
     private val isCancelled
-        get() = state.value is Cancelled
+        get() = state.value === STATE_CANCELLED
 
     /**
      * List of clauses waiting on this `select` instance.
@@ -415,7 +415,7 @@ internal open class SelectImplementation<R> constructor(
     override fun SelectClause0.invoke(block: suspend () -> R) =
         ClauseData<R>(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_0, block, onCancellationConstructor).register()
     override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) =
-        ClauseData<R>(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_1, block, onCancellationConstructor).register()
+        ClauseData<R>(clauseObject, regFunc, processResFunc, null, block, onCancellationConstructor).register()
     override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) =
         ClauseData<R>(clauseObject, regFunc, processResFunc, param, block, onCancellationConstructor).register()
 
@@ -435,7 +435,7 @@ internal open class SelectImplementation<R> constructor(
      * updates the state to this clause reference.
      */
     protected fun ClauseData<R>.register(reregister: Boolean = false) {
-        assert { state.value !is Cancelled }
+        assert { state.value !== STATE_CANCELLED }
         // Is there already selected clause?
         if (state.value.let { it is ClauseData<*> }) return
         // For new clauses, check that there does not exist
@@ -490,7 +490,6 @@ internal open class SelectImplementation<R> constructor(
      * this function performs registration of such clauses. After that, it atomically stores
      * the continuation into the [state] field if there is no more clause to be re-registered.
      */
-    @OptIn(ExperimentalStdlibApi::class)
     private suspend fun waitUntilSelected() = suspendCancellableCoroutine<Unit> sc@ { cont ->
         // Update the state.
         state.loop { curState ->
@@ -578,7 +577,7 @@ internal open class SelectImplementation<R> constructor(
                 // Already selected.
                 STATE_COMPLETED, is ClauseData<*> -> return TRY_SELECT_ALREADY_SELECTED
                 // Already cancelled.
-                is Cancelled -> return TRY_SELECT_CANCELLED
+                STATE_CANCELLED -> return TRY_SELECT_CANCELLED
                 // This select is still in REGISTRATION phase, re-register the clause
                 // in order not to wait until this select moves to WAITING phase.
                 // This is a rare race, so we do not need to worry about performance here.
@@ -671,12 +670,11 @@ internal open class SelectImplementation<R> constructor(
 
     // [CompletionHandler] implementation, must be invoked on cancellation.
     override fun invoke(cause: Throwable?) {
-        val update = Cancelled(cause ?: CancellationException("This `select` has been cancelled"))
         // Update the state.
         state.update { cur ->
             // Finish immediately when this `select` is already completed.
             if (cur is ClauseData<*> || cur == STATE_COMPLETED) return
-            update
+            STATE_CANCELLED
         }
         // Remove this `select` instance from all the clause object (channels, mutexes, etc.).
         clauses?.forEach { it.disposableHandle?.dispose() }
@@ -766,9 +764,6 @@ private fun CancellableContinuation<Unit>.tryResume(onCancellation: ((cause: Thr
     return true
 }
 
-// Cancelled state with the specified cause.
-private class Cancelled(@JvmField val cause: Throwable)
-
 // trySelectInternal(..) results.
 private const val TRY_SELECT_SUCCESSFUL = 0
 private const val TRY_SELECT_REREGISTER = 1
@@ -786,11 +781,13 @@ private fun TrySelectDetailedResult(trySelectInternalResult: Int): TrySelectDeta
     else -> error("Unexpected internal result: $trySelectInternalResult")
 }
 
-// Markers for REGISTRATION and COMPLETED states.
+// Markers for REGISTRATION, COMPLETED, and CANCELLED states.
 @SharedImmutable
 private val STATE_REG = Symbol("STATE_REG")
 @SharedImmutable
 private val STATE_COMPLETED = Symbol("STATE_COMPLETED")
+@SharedImmutable
+private val STATE_CANCELLED = Symbol("STATE_CANCELLED")
 // As the selection result is nullable, we use this special
 // marker for the absence of result.
 @SharedImmutable
@@ -800,6 +797,3 @@ private val NO_RESULT = Symbol("NO_RESULT")
 @SharedImmutable
 @JvmField
 internal val PARAM_CLAUSE_0 = Symbol("PARAM_CLAUSE_0")
-@SharedImmutable
-@JvmField
-internal val PARAM_CLAUSE_1 = Symbol("PARAM_CLAUSE_1")

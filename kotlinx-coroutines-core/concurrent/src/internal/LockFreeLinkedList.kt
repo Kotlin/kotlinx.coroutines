@@ -62,7 +62,7 @@ public actual typealias PrepareOp = LockFreeLinkedListNode.PrepareOp
  */
 @Suppress("LeakingThis")
 @InternalCoroutinesApi
-public actual open class LockFreeLinkedListNode : DisposableHandle {
+public actual open class LockFreeLinkedListNode {
     private val _next = atomic<Any>(this) // Node | Removed | OpDescriptor
     private val _prev = atomic(this) // Node to the left (cannot be marked as removed)
     private val _removedRef = atomic<Removed?>(null) // lazily cached removed ref to this
@@ -243,8 +243,6 @@ public actual open class LockFreeLinkedListNode : DisposableHandle {
      */
     public actual open fun remove(): Boolean =
         removeOrNext() == null
-
-    override actual fun dispose() { remove() }
 
     // returns null if removed successfully or next node if this node is already removed
     @PublishedApi

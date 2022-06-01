@@ -197,7 +197,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         }
     }
 
-    @Suppress("UNCHECKED_CAST", "OverridingDeprecatedMember")
+    @Suppress("UNCHECKED_CAST", "OverridingDeprecatedMember", "OVERRIDE_DEPRECATION")
     override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
         clauseObject = this,
         regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,

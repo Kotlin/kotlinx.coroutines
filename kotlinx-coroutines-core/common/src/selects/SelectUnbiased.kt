@@ -45,7 +45,7 @@ internal open class UnbiasedSelectImplementation<R>(context: CoroutineContext) :
     }
 
     override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) {
-        clausesToRegister += ClauseData(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_1, block, onCancellationConstructor)
+        clausesToRegister += ClauseData(clauseObject, regFunc, processResFunc, null, block, onCancellationConstructor)
     }
 
     override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) {

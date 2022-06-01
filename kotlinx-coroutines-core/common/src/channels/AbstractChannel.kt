@@ -193,7 +193,7 @@ internal abstract class AbstractSendChannel<E>(
                 when {
                     enqueueResult == null -> { // enqueued successfully
                         if (waiter is SelectInstance<*>) {
-                            waiter.disposeOnCompletion(send)
+                            waiter.disposeOnCompletion { send.remove() }
                         } else {
                             waiter as CancellableContinuation<Unit>
                             waiter.removeOnCancellation(send)
