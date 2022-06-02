@@ -128,7 +128,7 @@ private class LazyDeferredCoroutine<T>(
  *
  * This function redispatches the given [block] if and only if a different [CoroutineDispatcher]
  * has been explicitly supplied with `coroutineContext` argument, shifting the execution
- * back to an original dispatcher when the [block] completes.
+ * back to the original dispatcher when the [block] completes.
  *
  * Note that the result of `withContext` invocation is dispatched into the original context in a cancellable way
  * with a **prompt cancellation guarantee**, which means that if the original [coroutineContext],
