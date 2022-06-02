@@ -127,7 +127,7 @@ private class LazyDeferredCoroutine<T>(
  * the resulting context and throws [CancellationException] if it is not [active][CoroutineContext.isActive].
  *
  * This function redispatches the given [block] if and only if a different [CoroutineDispatcher]
- * has been explicitly supplied with `coroutineContext` argument, shifting the execution
+ * was explicitly supplied with the `coroutineContext` argument, shifting the execution
  * back to the original dispatcher when the [block] completes.
  *
  * Note that the result of `withContext` invocation is dispatched into the original context in a cancellable way
