@@ -131,8 +131,8 @@ private class LazyDeferredCoroutine<T>(
  * back to the original dispatcher when the [block] completes.
  *
  * Note that the result of `withContext` invocation is dispatched into the original context in a cancellable way
- * with a **prompt cancellation guarantee**, which means that if the original [coroutineContext],
- * in which `withContext` was invoked, is cancelled by the time its dispatcher starts to execute the code,
+ * with a **prompt cancellation guarantee**, which means that if the original [coroutineContext]
+ * in which `withContext` was invoked is cancelled by the time its dispatcher starts to execute the code,
  * it discards the result of `withContext` and throws [CancellationException].
  *
  * The cancellation behaviour described above is enabled if and only if the dispatcher is being changed.
