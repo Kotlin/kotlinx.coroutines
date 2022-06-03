@@ -126,9 +126,11 @@ private class LazyDeferredCoroutine<T>(
  * This suspending function is cancellable. It immediately checks for cancellation of
  * the resulting context and throws [CancellationException] if it is not [active][CoroutineContext.isActive].
  *
- * This function redispatches the given [block] if and only if a different [CoroutineDispatcher]
- * was explicitly supplied with the `coroutineContext` argument, shifting the execution
- * back to the original dispatcher when the [block] completes.
+ * Calls to [withContext] whose [context] argument provides a [CoroutineDispatcher] that is
+ * different from the current one, by necessity, perform additional dispatches: the [block]
+ * can not be executed immediately and needs to be dispatched for execution on
+ * the passed [CoroutineDispatcher], and then when the [block] completes, the execution
+ * has to shift back to the original dispatcher.
  *
  * Note that the result of `withContext` invocation is dispatched into the original context in a cancellable way
  * with a **prompt cancellation guarantee**, which means that if the original [coroutineContext]
