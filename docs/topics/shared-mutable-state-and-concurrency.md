@@ -110,7 +110,7 @@ suspend fun massiveRun(action: suspend () -> Unit) {
 var counter = 0
 
 fun main() = runBlocking {
-    withContext(Dispatchers.Default) {
+    withContext(Dispatchers.IO) {
         massiveRun {
             counter++
         }
