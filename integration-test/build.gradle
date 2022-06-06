@@ -20,5 +20,11 @@ kotlin {
                 implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
             }
         }
+        commonTest {
+            dependencies {
+                implementation kotlin("test")
+                testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
+            }
+        }
     }
 }
