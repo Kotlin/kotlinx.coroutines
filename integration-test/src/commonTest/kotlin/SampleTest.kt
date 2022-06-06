@@ -5,9 +5,9 @@
 import kotlinx.coroutines.test.*
 import kotlin.test.*
 
-@Test
-fun test() {
-    runTest {
+class SampleTest {
+    @Test
+    fun test() = runTest {
         doWorld()
     }
 }
