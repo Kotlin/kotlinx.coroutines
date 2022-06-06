@@ -276,7 +276,7 @@ task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
     enableAssertions = true
     testLogging.showStandardStreams = true
     configureJvmForLincheck(jvmLincheckTest)
-    jvmArgs '-XX:+HeapDumpOnOutOfMemoryError  -XX:HeapDumpPath=/dumps/heapDumpjvmLincheckTest.hprof"'
+    jvmArgs '-XX:+HeapDumpOnOutOfMemoryError  -XX:HeapDumpPath=/dumps/heapDumpjvmLincheckTest.hprof'
 }
 
 static void configureJvmForLincheck(task) {
