@@ -151,7 +151,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * but it is guaranteed that every update will eventually receive its matching [restoreThreadContext].
  *
  * Even though an element is copied for each child coroutine, an implementation should be ready for the following
- * interleaving, when a coroutine with the corresponding element is launched on a multithreaded dispatcher:
+ * interleaving when a coroutine with the corresponding element is launched on a multithreaded dispatcher:
  *
  * ```
  * coroutine.updateThreadContext() // Thread #1
