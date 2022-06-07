@@ -59,6 +59,7 @@ task npmTest(type: Test) {
 
 task mavenTest(type: Test) {
     environment "version", version
+    environment "mavenLocalPath", repositories.mavenLocal().getUrl().toString()
     def sourceSet = sourceSets.mavenTest
     dependsOn(project(':').getTasksByName("publishToMavenLocal", true))
     testClassesDirs = sourceSet.output.classesDirs
@@ -68,12 +69,12 @@ task mavenTest(type: Test) {
     def mavenTestClasspathConfiguration = project.configurations.detachedConfiguration(
             project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"),
             project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-android:$version"))
-
     mavenTestClasspathConfiguration.attributes {
         attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
     }
-
-    classpath += mavenTestClasspathConfiguration
+    /* the order is this way because the first match is used, and if we ever accidentally add the wrong dependencies to
+    this source-set, they shouldn't override the dependencies to the local Maven repository */
+    classpath = mavenTestClasspathConfiguration + classpath
 }
 
 task debugAgentTest(type: Test) {
