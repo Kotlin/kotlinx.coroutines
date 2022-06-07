@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values
@@ -103,8 +104,8 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
     private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>) : JobNode() {
         lateinit var handle: DisposableHandle
 
-        private val _disposer = atomic<DisposeHandlersOnCancel?>(null)
-        var disposer: DisposeHandlersOnCancel? by _disposer
+        @Volatile
+        var disposer: DisposeHandlersOnCancel? = null
         
         override fun invoke(cause: Throwable?) {
             if (cause != null) {
