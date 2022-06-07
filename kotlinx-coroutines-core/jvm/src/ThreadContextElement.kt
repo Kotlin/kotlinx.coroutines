@@ -158,7 +158,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * coroutine.updateThreadContext() // Thread #2, coroutine is already resumed
  * // ... coroutine body after suspension point on Thread #2 ...
  * coroutine.restoreThreadContext() // Thread #1, is invoked late because Thread #1 is slow
- * coroutine.restoreThreadContext() // Thread #2, may happen concurrently with the previous restore
+ * coroutine.restoreThreadContext() // Thread #2, may happen in parallel with the previous restore
  * ```
  *
  * All implementations of [CopyableThreadContextElement] should be thread-safe and guard their internal mutable state
