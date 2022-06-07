@@ -150,7 +150,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * that [updateThreadContext] can be invoked multiple times prior to matching [restoreThreadContext],
  * but it is guaranteed that every update will eventually receive its matching [restoreThreadContext].
  *
- * Even though an element is copied for each child coroutine, an implementation should be ready for the following
+ * Even though an element is copied for each child coroutine, an implementation should be able to handle the following
  * interleaving when a coroutine with the corresponding element is launched on a multithreaded dispatcher:
  *
  * ```
