@@ -51,9 +51,8 @@ import kotlin.coroutines.*
  *
  * ### Reentrancy and thread-safety
  *
- * Correct implementation of this interface should be reentrant and expect
- * that [updateThreadContext] can be invoked multiple times prior to the matching [restoreThreadContext],
- * but it is guaranteed that every update will eventually receive its matching [restoreThreadContext].
+ * Correct implementations of this interface must expect that calls to [restoreThreadContext]
+ * may happen in parallel to the subsequent [updateThreadContext] and [restoreThreadContext] operations.
  * See [CopyableThreadContextElement] for advanced interleaving details.
  *
  * All implementations of [ThreadContextElement] should be thread-safe and guard their internal mutable state
@@ -146,9 +145,8 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  *
  * ### Reentrancy and thread-safety
  *
- * A correct implementation of this interface should be reentrant and expect
- * that [updateThreadContext] can be invoked multiple times prior to matching [restoreThreadContext],
- * but it is guaranteed that every update will eventually receive its matching [restoreThreadContext].
+ * Correct implementations of this interface must expect that calls to [restoreThreadContext]
+ * may happen in parallel to the subsequent [updateThreadContext] and [restoreThreadContext] operations.
  *
  * Even though an element is copied for each child coroutine, an implementation should be able to handle the following
  * interleaving when a coroutine with the corresponding element is launched on a multithreaded dispatcher:
@@ -160,7 +158,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * coroutine.updateThreadContext() // Thread #2, coroutine is already resumed
  * // ... coroutine body after suspension point on Thread #2 ...
  * coroutine.restoreThreadContext() // Thread #1, is invoked late because Thread #1 is slow
- * coroutine.restoreThreadContext() // Thread #2
+ * coroutine.restoreThreadContext() // Thread #2, may happen concurrently with the previous restore
  * ```
  *
  * All implementations of [CopyableThreadContextElement] should be thread-safe and guard their internal mutable state
