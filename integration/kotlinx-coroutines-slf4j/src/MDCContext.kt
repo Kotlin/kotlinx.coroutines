@@ -28,7 +28,7 @@ public typealias MDCContextMap = Map<String, String>?
  * }
  * ```
  *
- * Note that you cannot update MDC context from inside of the coroutine simply
+ * Note that you cannot update MDC context from inside the coroutine simply
  * using [MDC.put]. These updates are going to be lost on the next suspension and
  * reinstalled to the MDC context that was captured or explicitly specified in
  * [contextMap] when this object was created on the next resumption.

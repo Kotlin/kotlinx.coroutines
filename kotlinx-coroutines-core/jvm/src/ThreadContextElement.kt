@@ -48,6 +48,15 @@ import kotlin.coroutines.*
  * this coroutine suspends.
  *
  * To use [ThreadLocal] variable within the coroutine use [ThreadLocal.asContextElement][asContextElement] function.
+ *
+ * ### Reentrancy and thread-safety
+ *
+ * Correct implementation of this interface should be reentrant and expect
+ * that [updateThreadContext] can be invoked multiple times prior to matching [restoreThreadContext],
+ * but it is guaranteed that every update will eventually receive its matching [restoreThreadContext].
+ *
+ * All implementations of [ThreadContextElement] should be thread-safe and guard their internal mutable state
+ * within an element accordingly.
  */
 public interface ThreadContextElement<S> : CoroutineContext.Element {
     /**
