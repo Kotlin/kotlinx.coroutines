@@ -54,6 +54,7 @@ import kotlin.coroutines.*
  * Correct implementation of this interface should be reentrant and expect
  * that [updateThreadContext] can be invoked multiple times prior to matching [restoreThreadContext],
  * but it is guaranteed that every update will eventually receive its matching [restoreThreadContext].
+ * See [CopyableThreadContextElement] for advanced interleaving details.
  *
  * All implementations of [ThreadContextElement] should be thread-safe and guard their internal mutable state
  * within an element accordingly.
@@ -142,6 +143,28 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  *
  * A coroutine using this mechanism can safely call Java code that assumes the corresponding thread local element's
  * value is installed into the target thread local.
+ *
+ * ### Reentrancy and thread-safety
+ *
+ * Correct implementation of this interface should be reentrant and expect
+ * that [updateThreadContext] can be invoked multiple times prior to matching [restoreThreadContext],
+ * but it is guaranteed that every update will eventually receive its matching [restoreThreadContext].
+ *
+ * Even though an element is copied for each child coroutine, an implementation should be ready for the following
+ * interleaving, when a coroutine with the corresponding element is launched on a multithreaded dispatcher:
+ *
+ * ```
+ * coroutine.updateThreadContext() // Thread #1
+ * ... coroutine body ...
+ * // suspension + immediate dispatch happen here
+ * coroutine.updateThreadContext() // Thread #2, coroutine is already resumed
+ * // ... coroutine body after suspension point on Thread #2 ...
+ * coroutine.restoreThreadContext() // Thread #1, is invoked late because Thread #1 is slow
+ * coroutine.restoreThreadContext() // Thread #2
+ * ```
+ *
+ * All implementations of [CopyableThreadContextElement] should be thread-safe and guard their internal mutable state
+ * within an element accordingly.
  */
 @DelicateCoroutinesApi
 @ExperimentalCoroutinesApi
