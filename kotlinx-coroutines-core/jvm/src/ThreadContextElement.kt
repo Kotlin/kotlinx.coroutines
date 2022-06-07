@@ -146,7 +146,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  *
  * ### Reentrancy and thread-safety
  *
- * Correct implementation of this interface should be reentrant and expect
+ * A correct implementation of this interface should be reentrant and expect
  * that [updateThreadContext] can be invoked multiple times prior to matching [restoreThreadContext],
  * but it is guaranteed that every update will eventually receive its matching [restoreThreadContext].
  *
