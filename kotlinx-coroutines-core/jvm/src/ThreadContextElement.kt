@@ -52,7 +52,7 @@ import kotlin.coroutines.*
  * ### Reentrancy and thread-safety
  *
  * Correct implementation of this interface should be reentrant and expect
- * that [updateThreadContext] can be invoked multiple times prior to matching [restoreThreadContext],
+ * that [updateThreadContext] can be invoked multiple times prior to the matching [restoreThreadContext],
  * but it is guaranteed that every update will eventually receive its matching [restoreThreadContext].
  * See [CopyableThreadContextElement] for advanced interleaving details.
  *
