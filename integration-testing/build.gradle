@@ -51,22 +51,10 @@ compileDebugAgentTestKotlin {
 }
 
 task mavenTest(type: Test) {
-    environment "version", version
+    environment "version", coroutines_version
     def sourceSet = sourceSets.mavenTest
-    dependsOn(project(':').getTasksByName("publishToMavenLocal", true))
     testClassesDirs = sourceSet.output.classesDirs
     classpath = sourceSet.runtimeClasspath
-    // we can't depend on the subprojects because we need to test the classfiles that are published in the end.
-    // also, we can't put this in the `dependencies` block because the resolution would happen before publication.
-    def mavenTestClasspathConfiguration = project.configurations.detachedConfiguration(
-            project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"),
-            project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"))
-
-    mavenTestClasspathConfiguration.attributes {
-        attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-    }
-
-    classpath += mavenTestClasspathConfiguration
 }
 
 //task debugAgentTest(type: Test) {
@@ -89,6 +77,8 @@ task mavenTest(type: Test) {
 dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testImplementation 'junit:junit:4.12'
+    mavenTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    mavenTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
 //    debugAgentTestImplementation project(':kotlinx-coroutines-core')
 //    debugAgentTestImplementation project(':kotlinx-coroutines-debug')
 //    coreAgentTestImplementation project(':kotlinx-coroutines-core')
