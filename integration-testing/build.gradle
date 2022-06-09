@@ -5,7 +5,7 @@
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.6.20"
+    id "org.jetbrains.kotlin.jvm"
 }
 
 repositories {
@@ -22,8 +22,6 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     // Workaround to make addSuppressed work in tests
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    //testImplementation "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
-    //testImplementation "junit:junit:$junit_version"
 }
 
 sourceSets {
@@ -31,16 +29,30 @@ sourceSets {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
+
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
+        }
     }
     debugAgentTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
+
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutines_version"
+        }
     }
     coreAgentTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
+
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+        }
     }
 }
 
@@ -57,31 +69,24 @@ task mavenTest(type: Test) {
     classpath = sourceSet.runtimeClasspath
 }
 
-//task debugAgentTest(type: Test) {
-//    def sourceSet = sourceSets.debugAgentTest
-//    dependsOn(project(':kotlinx-coroutines-debug').shadowJar)
-//    jvmArgs ('-javaagent:' + project(':kotlinx-coroutines-debug').shadowJar.outputs.files.getFiles()[0])
-//    testClassesDirs = sourceSet.output.classesDirs
-//    classpath = sourceSet.runtimeClasspath
-//    systemProperties project.properties.subMap(["overwrite.probes"])
-//}
-//
-//task coreAgentTest(type: Test) {
-//    def sourceSet = sourceSets.coreAgentTest
-//    dependsOn(project(':kotlinx-coroutines-core').jvmJar)
-//    jvmArgs ('-javaagent:' + project(':kotlinx-coroutines-core').jvmJar.outputs.files.getFiles()[0])
-//    testClassesDirs = sourceSet.output.classesDirs
-//    classpath = sourceSet.runtimeClasspath
-//}
+task debugAgentTest(type: Test) {
+    def sourceSet = sourceSets.debugAgentTest
+    //dependsOn(project(':kotlinx-coroutines-debug').shadowJar)
+    def debugJar = null
+    sourceSet.runtimeClasspath.files.forEach {if (it.name.contains("kotlinx-coroutines-debug")) debugJar = it }
+    jvmArgs ('-javaagent:' + debugJar)
+    testClassesDirs = sourceSet.output.classesDirs
+    classpath = sourceSet.runtimeClasspath
+    systemProperties project.properties.subMap(["overwrite.probes"])
+}
 
-dependencies {
-    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testImplementation 'junit:junit:4.12'
-    mavenTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-    mavenTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
-//    debugAgentTestImplementation project(':kotlinx-coroutines-core')
-//    debugAgentTestImplementation project(':kotlinx-coroutines-debug')
-//    coreAgentTestImplementation project(':kotlinx-coroutines-core')
+task coreAgentTest(type: Test) {
+    def sourceSet = sourceSets.coreAgentTest
+    def coreJar = null
+    sourceSet.runtimeClasspath.files.forEach {if (it.name.contains("kotlinx-coroutines-core")) coreJar = it }
+    jvmArgs ('-javaagent:' + coreJar)
+    testClassesDirs = sourceSet.output.classesDirs
+    classpath = sourceSet.runtimeClasspath
 }
 
 compileTestKotlin {
@@ -89,5 +94,5 @@ compileTestKotlin {
 }
 
 check {
-    dependsOn([mavenTest])
+    dependsOn([mavenTest, coreAgentTest, ':smokeTest:build'])
 }
