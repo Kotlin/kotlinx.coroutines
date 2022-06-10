@@ -137,7 +137,7 @@ fun main() = runBlocking {
 
 While catching `Exception` is an anti-pattern, this issue may surface in more subtle ways, like when using the
 [`runCatching`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/run-catching.html) function,
-which does not know rethrow [CancellationException].
+which does not rethrow [CancellationException].
 
 ## Making computation code cancellable
 
@@ -190,8 +190,8 @@ main: Now I can quit.
 
 ## Closing resources with `finally`
 
-Cancellable suspending functions throw [CancellationException] on cancellation which can be handled in 
-the usual way. For example, `try {...} finally {...}` expression and Kotlin `use` function execute their
+Cancellable suspending functions throw [CancellationException] on cancellation, which can be handled in 
+the usual way. For example, the `try {...} finally {...}` expression and Kotlin's `use` function execute their
 finalization actions normally when a coroutine is cancelled:
 
 ```kotlin
@@ -423,13 +423,13 @@ fun main() {
 If you run the above code you'll see that it does not always print zero, though it may depend on the timings 
 of your machine you may need to tweak timeouts in this example to actually see non-zero values. 
 
-> Note, that incrementing and decrementing `acquired` counter here from 100K coroutines is completely safe,
+> Note that incrementing and decrementing `acquired` counter here from 100K coroutines is completely safe,
 > since it always happens from the same main thread. More on that will be explained in the chapter
 > on coroutine context.
 > 
 {type="note"}
 
-To workaround this problem you can store a reference to the resource in the variable as opposed to returning it 
+To work around this problem you can store a reference to the resource in the variable as opposed to returning it 
 from the `withTimeout` block. 
 
 ```kotlin
