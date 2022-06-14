@@ -11,6 +11,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.TrySelectDetailedResult.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
+import kotlin.internal.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
 
@@ -97,9 +98,11 @@ public interface SelectBuilder<in R> {
      * @param timeMillis timeout time in milliseconds.
      */
     @ExperimentalCoroutinesApi
+    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+    @LowPriorityInOverloadResolution
     @Deprecated(
         message = "Replaced with the same extension function",
-        level = DeprecationLevel.HIDDEN, replaceWith = ReplaceWith("onTimeout")
+        level = DeprecationLevel.ERROR, replaceWith = ReplaceWith(expression = "onTimeout", imports = ["kotlinx.coroutines.selects.onTimeout"])
     )
     public fun onTimeout(timeMillis: Long, block: suspend () -> R): Unit = onTimeout(timeMillis, block)
 }
