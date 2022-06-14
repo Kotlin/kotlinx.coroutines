@@ -23,9 +23,8 @@ class PrecompiledDebugProbesTest {
         val binFile = clz.classLoader.getResourceAsStream("DebugProbesKt.bin")!!
         val binContent = binFile.readBytes()
         if (overwrite) {
-            val url = clz.classLoader.getResource("DebugProbesKt.bin")!!
-            val base = url.toExternalForm().toString().removePrefix("jar:file:").substringBefore("/build")
-            val probes = File(base, "jvm/resources/DebugProbesKt.bin")
+            val base = File("kotlin.coroutines.jvm.internal.DebugProbesKt").absolutePath.substringBefore("integration-testing")
+            val probes = File(base, "kotlinx-coroutines-core/jvm/resources/DebugProbesKt.bin")
             FileOutputStream(probes).use { it.write(array) }
             println("Content was successfully overwritten!")
         } else {
