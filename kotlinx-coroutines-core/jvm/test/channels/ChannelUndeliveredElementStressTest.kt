@@ -176,7 +176,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
 
     private suspend fun stopSender() {
         stoppedSender++
-        sender.cancel()
+        sender.cancelAndJoin()
         senderDone.receive()
     }
 
@@ -224,7 +224,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         private val firstFailedToDeliverOrReceivedCallTrace = atomic<Exception?>(null)
 
         fun failedToDeliver() {
-            val trace = if (TRACING_ENABLED) Exception("First onUndeliveredElement() call") else DUMMY_TRACING_EXCEPTION
+            val trace = if (TRACING_ENABLED) Exception("First onUndeliveredElement() call") else DUMMY_TRACE_EXCEPTION
             if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) {
                 failedToDeliverCnt.incrementAndGet()
                 failedStatus[x] = 1
@@ -234,7 +234,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         }
 
         fun onReceived() {
-            val trace = if (TRACING_ENABLED) Exception("First onReceived() call") else DUMMY_TRACING_EXCEPTION
+            val trace = if (TRACING_ENABLED) Exception("First onReceived() call") else DUMMY_TRACE_EXCEPTION
             if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) return
             throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
         }
@@ -265,5 +265,5 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     }
 }
 
-private const val TRACING_ENABLED = false // Change to `true` to enable tracing while
-private val DUMMY_TRACING_EXCEPTION = Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")
+private const val TRACING_ENABLED = false // Change to `true` to enable the tracing
+private val DUMMY_TRACE_EXCEPTION = Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")

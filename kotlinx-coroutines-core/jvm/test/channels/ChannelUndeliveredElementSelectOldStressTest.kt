@@ -201,7 +201,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
 
     private suspend fun stopReceiver() {
         stoppedReceiver++
-        receiver.cancel()
+        receiver.cancelAndJoin()
         receiverDone.receive()
     }
 
@@ -209,7 +209,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
         private val firstFailedToDeliverOrReceivedCallTrace = atomic<Exception?>(null)
 
         fun failedToDeliver() {
-            val trace = Exception("First onUndeliveredElement() call")
+            val trace = if (TRACING_ENABLED) Exception("First onUndeliveredElement() call") else DUMMY_TRACE_EXCEPTION
             if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) {
                 failedToDeliverCnt.incrementAndGet()
                 failedStatus[x] = 1
@@ -219,7 +219,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
         }
 
         fun onReceived() {
-            val trace = Exception("First onReceived() call")
+            val trace = if (TRACING_ENABLED) Exception("First onReceived() call") else DUMMY_TRACE_EXCEPTION
             if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) return
             throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
         }
@@ -249,3 +249,6 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
         }
     }
 }
+
+private const val TRACING_ENABLED = false // Change to `true` to enable the tracing
+private val DUMMY_TRACE_EXCEPTION = Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")
