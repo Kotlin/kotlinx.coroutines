@@ -22,7 +22,7 @@ class MutexLincheckTest : AbstractLincheckTest() {
     @Operation(promptCancellation = true)
     suspend fun lock(@Param(name = "owner") owner: Int) = mutex.lock(owner.asOwnerOrNull)
 
-//    @Operation(promptCancellation = true)
+    @Operation(promptCancellation = true)
     suspend fun onLock(@Param(name = "owner") owner: Int) = select<Unit> { mutex.onLock(owner.asOwnerOrNull) {} }
 
     @Operation(handleExceptionsAsResult = [IllegalStateException::class])

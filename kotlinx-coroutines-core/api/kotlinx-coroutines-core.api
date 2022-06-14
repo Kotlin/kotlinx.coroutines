@@ -1261,10 +1261,6 @@ public final class kotlinx/coroutines/selects/SelectKt {
 	public static final fun select (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class kotlinx/coroutines/selects/SelectOldKt {
-	public static final fun selectOld (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-
 public final class kotlinx/coroutines/selects/SelectUnbiasedKt {
 	public static final fun selectUnbiased (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }

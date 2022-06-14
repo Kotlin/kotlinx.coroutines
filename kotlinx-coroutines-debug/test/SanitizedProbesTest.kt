@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
 import kotlinx.coroutines.selects.*
 import org.junit.*
-import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.*
 import kotlin.test.*
@@ -75,7 +74,6 @@ class SanitizedProbesTest : DebugTestBase() {
         deferred.cancelAndJoin()
     }
 
-    @Ignore
     @Test
     fun testSelectBuilder() = runTest {
         val selector = launchSelector()
