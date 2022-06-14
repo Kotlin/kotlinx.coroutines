@@ -1189,18 +1189,17 @@ public abstract interface class kotlinx/coroutines/selects/SelectBuilder {
 	public abstract fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V
 	public abstract fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public abstract fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
-	public abstract synthetic fun onTimeout (JLkotlin/jvm/functions/Function1;)V
+	public abstract fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 }
 
 public final class kotlinx/coroutines/selects/SelectBuilder$DefaultImpls {
 	public static fun invoke (Lkotlinx/coroutines/selects/SelectBuilder;Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun onTimeout (Lkotlinx/coroutines/selects/SelectBuilder;JLkotlin/jvm/functions/Function1;)V
+	public static fun onTimeout (Lkotlinx/coroutines/selects/SelectBuilder;JLkotlin/jvm/functions/Function1;)V
 }
 
 public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/coroutines/selects/SelectImplementation {
 	public fun <init> (Lkotlin/coroutines/Continuation;)V
 	public final fun getResult ()Ljava/lang/Object;
-	public final fun getUCont ()Lkotlin/coroutines/Continuation;
 	public final fun handleBuilderException (Ljava/lang/Throwable;)V
 }
 
@@ -1231,7 +1230,7 @@ public class kotlinx/coroutines/selects/SelectImplementation : kotlinx/coroutine
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
-	public synthetic fun onTimeout (JLkotlin/jvm/functions/Function1;)V
+	public fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 	protected final fun register (Lkotlinx/coroutines/selects/SelectImplementation$ClauseData;Z)V
 	public static synthetic fun register$default (Lkotlinx/coroutines/selects/SelectImplementation;Lkotlinx/coroutines/selects/SelectImplementation$ClauseData;ZILjava/lang/Object;)V
 	public fun selectInRegistrationPhase (Ljava/lang/Object;)V
@@ -1262,13 +1261,16 @@ public final class kotlinx/coroutines/selects/SelectKt {
 	public static final fun select (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/selects/SelectOldKt {
+	public static final fun selectOld (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class kotlinx/coroutines/selects/SelectUnbiasedKt {
 	public static final fun selectUnbiased (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/selects/UnbiasedSelectBuilderImpl : kotlinx/coroutines/selects/UnbiasedSelectImplementation {
 	public fun <init> (Lkotlin/coroutines/Continuation;)V
-	public final fun getUCont ()Lkotlin/coroutines/Continuation;
 	public final fun handleBuilderException (Ljava/lang/Throwable;)V
 	public final fun initSelectResult ()Ljava/lang/Object;
 }

@@ -68,37 +68,40 @@ private class RxObservableCoroutine<T : Any>(
         throw UnsupportedOperationException("RxObservableCoroutine doesn't support invokeOnClose")
 
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
-    private val mutex: Mutex = RxObservableCoroutineMutex()
+    private val mutex: Mutex = Mutex()
 
-    /**
-     * To send an element, [mutex] should be locked first, after which [doLockedNext]
-     * is called -- it releases the mutex at the end. To support the `select` operation
-     * and implement [onSend], we use a modified version of [Mutex.onLock], which
-     * invokes [doLockedNext] at the end and returns this [RxObservableCoroutine] as result
-     * (see [RxObservableCoroutineMutex.onLockProcessResult]).
-     *
-     * We use this dirty hack as we need to wait for a lock, and, therefore, the clause
-     * object should be a [Mutex] instance. Thus, the [doLockedNext] call must be a part
-     * of [RxObservableCoroutineMutex.onLockProcessResult] as well. A possible alternative
-     * would be to inherit [RxObservableCoroutine] from [Mutex], but it already extends [AbstractCoroutine].
-     */
-    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    private inner class RxObservableCoroutineMutex : MutexImpl(locked = false) {
-        override fun onLockRegFunction(select: SelectInstance<*>, element: Any?) {
-            super.onLockRegFunction(select, owner = null)
+    @Suppress("UNCHECKED_CAST", "INVISIBLE_MEMBER")
+    override val onSend: SelectClause2<T, SendChannel<T>> get() = SelectClause2Impl(
+        clauseObject = this,
+        regFunc = RxObservableCoroutine<*>::registerSelectForSend as RegistrationFunction,
+        processResFunc = RxObservableCoroutine<*>::processResultSelectSend as ProcessResultFunction
+    )
+
+    @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
+    private fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
+        // Try to acquire the mutex and complete in the registration phase.
+        if (mutex.tryLock()) {
+            select.selectInRegistrationPhase(Unit)
+            return
         }
-
-        @Suppress("UNCHECKED_CAST", "RedundantNullableReturnType")
-        override fun onLockProcessResult(element: Any?, result: Any?): Any? {
-            super.onLockProcessResult(owner = null, result)
-            doLockedNext(element as T)?.let { throw it }
-            return this@RxObservableCoroutine
+        // Start a new coroutine that waits for the mutex, invoking `trySelect(..)` after that.
+        // Please note that at the point of the `trySelect(..)` invocation the corresponding
+        // `select` can still be in the registration phase, making this `trySelect(..)` bound to fail.
+        // In this case, the `onSend` clause will be re-registered, which alongside with the mutex
+        // manipulation makes the resulting solution obstruction-free.
+        launch {
+            mutex.lock()
+            if (!select.trySelect(this@RxObservableCoroutine, Unit)) {
+                mutex.unlock()
+            }
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override val onSend: SelectClause2<T, SendChannel<T>>
-        get() = mutex.onLock as SelectClause2<T, SendChannel<T>>
+    @Suppress("RedundantNullableReturnType", "UNUSED_PARAMETER", "UNCHECKED_CAST")
+    private fun processResultSelectSend(element: Any?, selectResult: Any?): Any? {
+        doLockedNext(element as T)?.let { throw it }
+        return this@RxObservableCoroutine
+    }
 
     override fun trySend(element: T): ChannelResult<Unit> =
         if (!mutex.tryLock()) {
