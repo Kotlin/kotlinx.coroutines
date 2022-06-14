@@ -456,6 +456,8 @@ internal open class SelectImplementation<R> constructor(
             // carefully to ensure that the cancellation handler has not been
             // installed when clauses re-register, so the logic below cannot
             // be invoked concurrently with the clean-up procedure.
+            // This also guarantees that the list of clauses cannot be cleared
+            // in the registration phase, so it is safe to read it with "!!".
             if (!reregister) clauses!! += this
             disposableHandle = this@SelectImplementation.disposableHandle
             this@SelectImplementation.disposableHandle = null
@@ -470,7 +472,12 @@ internal open class SelectImplementation<R> constructor(
      * Checks that there does not exist another clause with the same object.
      */
     private fun checkClauseObject(clauseObject: Any) {
-        check(clauses!!.none { it.clauseObject === clauseObject }) {
+        // Read the list of clauses, it is guaranteed that it is non-null.
+        // In fact, it can become `null` only in the clean-up phase, while
+        // this check can be called only in the registration one.
+        val clauses = clauses!!
+        // Check that there does not exist another clause with the same object.
+        check(clauses.none { it.clauseObject === clauseObject }) {
             "Cannot use select clauses on the same object: $clauseObject"
         }
     }
@@ -538,7 +545,7 @@ internal open class SelectImplementation<R> constructor(
      * was still in REGISTRATION phase.
      */
     private fun reregisterClause(clauseObject: Any) {
-        val clause = findClause(clauseObject)!!
+        val clause = findClause(clauseObject)!! // it is guaranteed that the corresponding clause is presented
         clause.disposableHandle = null
         clause.register(reregister = true)
     }
@@ -601,8 +608,13 @@ internal open class SelectImplementation<R> constructor(
      * If the reference to the list of clauses is already cleared due to completion/cancellation,
      * this function returns `null`
      */
-    private fun findClause(clauseObject: Any) = clauses?.run {
-        find { it.clauseObject === clauseObject } ?: error("Clause with object $clauseObject is not found")
+    private fun findClause(clauseObject: Any): ClauseData<R>? {
+        // Read the list of clauses. If the `clauses` field is already `null`,
+        // the clean-up phase has already completed, and this function returns `null`.
+        val clauses = this.clauses ?: return null
+        // Find the clause with the specified clause object.
+        return clauses.find { it.clauseObject === clauseObject }
+            ?: error("Clause with object $clauseObject is not found")
     }
 
     // ==============
@@ -663,15 +675,18 @@ internal open class SelectImplementation<R> constructor(
      */
     private fun cleanup(selectedClause: ClauseData<R>) {
         assert { state.value == selectedClause }
+        // Read the list of clauses. If the `clauses` field is already `null`,
+        // a concurrent clean-up procedure has already completed, and it is safe to finish.
+        val clauses = this.clauses ?: return
         // Invoke all cancellation handlers except for the
         // one related to the selected clause, if specified.
-        clauses?.forEach { clause ->
+        clauses.forEach { clause ->
             if (clause !== selectedClause) clause.disposableHandle?.dispose()
         }
         // We do need to clean all the data to avoid memory leaks.
-        state.value = STATE_COMPLETED
-        internalResult = NO_RESULT
-        clauses = null
+        this.state.value = STATE_COMPLETED
+        this.internalResult = NO_RESULT
+        this.clauses = null
     }
 
     // [CompletionHandler] implementation, must be invoked on cancellation.
@@ -682,11 +697,14 @@ internal open class SelectImplementation<R> constructor(
             if (cur is ClauseData<*> || cur == STATE_COMPLETED) return
             STATE_CANCELLED
         }
+        // Read the list of clauses. If the `clauses` field is already `null`,
+        // a concurrent clean-up procedure has already completed, and it is safe to finish.
+        val clauses = this.clauses ?: return
         // Remove this `select` instance from all the clause object (channels, mutexes, etc.).
-        clauses?.forEach { it.disposableHandle?.dispose() }
+        clauses.forEach { it.disposableHandle?.dispose() }
         // We do need to clean all the data to avoid memory leaks.
-        internalResult = NO_RESULT
-        clauses = null
+        this.internalResult = NO_RESULT
+        this.clauses = null
     }
 
     /**
