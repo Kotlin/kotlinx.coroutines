@@ -23,7 +23,8 @@ class PrecompiledDebugProbesTest {
         val binFile = clz.classLoader.getResourceAsStream("DebugProbesKt.bin")!!
         val binContent = binFile.readBytes()
         if (overwrite) {
-            val base = File("kotlin.coroutines.jvm.internal.DebugProbesKt").absolutePath.substringBefore("integration-testing")
+            // we expect the integration testing project to be in a subdirectory of the main kotlinx.coroutines project
+            val base = File("").absoluteFile.parentFile
             val probes = File(base, "kotlinx-coroutines-core/jvm/resources/DebugProbesKt.bin")
             FileOutputStream(probes).use { it.write(array) }
             println("Content was successfully overwritten!")
