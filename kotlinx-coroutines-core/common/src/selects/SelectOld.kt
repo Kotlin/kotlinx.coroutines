@@ -18,12 +18,13 @@ import kotlin.coroutines.intrinsics.*
 
 @PublishedApi
 internal class SelectBuilderImpl<R>(
-    val uCont: Continuation<R> // unintercepted delegate continuation
+    uCont: Continuation<R> // unintercepted delegate continuation
 ) : SelectImplementation<R>(uCont.context) {
     private val cont = CancellableContinuationImpl(uCont.intercepted(), MODE_CANCELLABLE)
 
     @PublishedApi
     internal fun getResult(): Any? {
+        if (cont.isCompleted) return cont.getResult()
         // In the current `select` design, the [select] and [selectUnbiased] functions
         // do not wrap the operation in `suspendCoroutineUninterceptedOrReturn` and
         // suspend explicitly via [doSelect] call, which returns the final result.
@@ -35,7 +36,12 @@ internal class SelectBuilderImpl<R>(
         // 3) resume the created CancellableContinuationImpl after the [doSelect] invocation completes;
         // 4) use CancellableContinuationImpl.getResult() as a result of this function.
         CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
-            val result = doSelect()
+            val result = try {
+                doSelect()
+            } catch (e: Throwable) {
+                cont.resumeUndispatchedWithException(e)
+                return@launch
+            }
             cont.resumeUndispatched(result)
         }
         return cont.getResult()
@@ -49,15 +55,21 @@ internal class SelectBuilderImpl<R>(
 
 @PublishedApi
 internal class UnbiasedSelectBuilderImpl<R>(
-    val uCont: Continuation<R> // unintercepted delegate continuation
+    uCont: Continuation<R> // unintercepted delegate continuation
 ) : UnbiasedSelectImplementation<R>(uCont.context) {
     private val cont = CancellableContinuationImpl(uCont.intercepted(), MODE_CANCELLABLE)
 
     @PublishedApi
     internal fun initSelectResult(): Any? {
         // Here, we do the same trick as in [SelectBuilderImpl].
+        if (cont.isCompleted) return cont.getResult()
         CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
-            val result = doSelect()
+            val result = try {
+                doSelect()
+            } catch (e: Throwable) {
+                cont.resumeUndispatchedWithException(e)
+                return@launch
+            }
             cont.resumeUndispatched(result)
         }
         return cont.getResult()
@@ -70,7 +82,7 @@ internal class UnbiasedSelectBuilderImpl<R>(
 }
 
 // This is the old version of `select`. It should work to guarantee binary compatibility.
-internal suspend inline fun <R> selectOld(crossinline builder: SelectBuilder<R>.() -> Unit): R {
+public suspend inline fun <R> selectOld(crossinline builder: SelectBuilder<R>.() -> Unit): R {
     return suspendCoroutineUninterceptedOrReturn { uCont ->
         val scope = SelectBuilderImpl(uCont)
         try {
@@ -101,5 +113,15 @@ private fun <T> CancellableContinuation<T>.resumeUndispatched(result: T) {
         dispatcher.resumeUndispatched(result)
     } else {
         resume(result)
+    }
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+private fun CancellableContinuation<*>.resumeUndispatchedWithException(exception: Throwable) {
+    val dispatcher = context[CoroutineDispatcher]
+    if (dispatcher != null) {
+        dispatcher.resumeUndispatchedWithException(exception)
+    } else {
+        resumeWithException(exception)
     }
 }

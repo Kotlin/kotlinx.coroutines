@@ -56,6 +56,7 @@ public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() ->
     contract {
         callsInPlace(builder, InvocationKind.EXACTLY_ONCE)
     }
+    return selectOld(builder)
     return SelectImplementation<R>(coroutineContext).run {
         builder(this)
         // TAIL-CALL OPTIMIZATION: the only
@@ -469,7 +470,7 @@ internal open class SelectImplementation<R> constructor(
      * Checks that there does not exist another clause with the same object.
      */
     private fun checkClauseObject(clauseObject: Any) {
-        check(!clauses!!.any { it.clauseObject === clauseObject }) {
+        check(clauses!!.none { it.clauseObject === clauseObject }) {
             "Cannot use select clauses on the same object: $clauseObject"
         }
     }

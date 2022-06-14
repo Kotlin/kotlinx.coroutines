@@ -18,6 +18,7 @@ import kotlin.test.*
  * Tests resource transfer via channel send & receive operations, including their select versions,
  * using `onUndeliveredElement` to detect lost resources and close them properly.
  */
+@Ignore
 @RunWith(Parameterized::class)
 class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : TestBase() {
     companion object {
