@@ -75,6 +75,7 @@ class SanitizedProbesTest : DebugTestBase() {
         deferred.cancelAndJoin()
     }
 
+    @Ignore
     @Test
     fun testSelectBuilder() = runTest {
         val selector = launchSelector()
