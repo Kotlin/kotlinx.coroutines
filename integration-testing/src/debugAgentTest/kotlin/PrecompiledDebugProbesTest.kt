@@ -32,8 +32,8 @@ class PrecompiledDebugProbesTest {
             assertTrue(
                 array.contentEquals(binContent),
                 "Compiled DebugProbesKt.class does not match the file shipped as a resource in kotlinx-coroutines-core. " +
-                        "Typically it happens because of the Kotlin version update (-> binary metadata). In that case, run the same test with -Poverwrite.probes=true and " +
-                        "ensure that classfile has major version equal to 50 (Java 6 compliance)")
+                        "Typically it happens because of the Kotlin version update (-> binary metadata). In that case, run the same test with -Poverwrite.probes=true."
+            )
         }
     }
 }
