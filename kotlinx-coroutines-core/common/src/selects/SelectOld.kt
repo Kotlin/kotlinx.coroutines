@@ -24,17 +24,20 @@ internal class SelectBuilderImpl<R>(
 
     @PublishedApi
     internal fun getResult(): Any? {
-        if (cont.isCompleted) return cont.getResult()
         // In the current `select` design, the [select] and [selectUnbiased] functions
         // do not wrap the operation in `suspendCoroutineUninterceptedOrReturn` and
         // suspend explicitly via [doSelect] call, which returns the final result.
         // However, [doSelect] is a suspend function, so it cannot be invoked directly.
+        // In addition, the `select` builder is eligible to throw an exception, which
+        // should be handled properly.
         //
         // As a solution, we:
-        // 1) create a CancellableContinuationImpl with the provided unintercepted continuation as a delegate;
-        // 2) wrap the [doSelect] call in an additional coroutine, which we launch in UNDISPATCHED mode;
-        // 3) resume the created CancellableContinuationImpl after the [doSelect] invocation completes;
-        // 4) use CancellableContinuationImpl.getResult() as a result of this function.
+        // 1) check whether the `select` building is already completed with exception, finishing immediately in this case;
+        // 2) create a CancellableContinuationImpl with the provided unintercepted continuation as a delegate;
+        // 3) wrap the [doSelect] call in an additional coroutine, which we launch in UNDISPATCHED mode;
+        // 4) resume the created CancellableContinuationImpl after the [doSelect] invocation completes;
+        // 5) use CancellableContinuationImpl.getResult() as a result of this function.
+        if (cont.isCompleted) return cont.getResult()
         CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
             val result = try {
                 doSelect()
@@ -49,7 +52,7 @@ internal class SelectBuilderImpl<R>(
 
     @PublishedApi
     internal fun handleBuilderException(e: Throwable) {
-        cont.resumeWithException(e)
+        cont.resumeWithException(e) // will be thrown later via `cont.getResult()`
     }
 }
 

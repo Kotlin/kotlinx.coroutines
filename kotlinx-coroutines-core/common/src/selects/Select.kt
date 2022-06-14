@@ -625,11 +625,13 @@ internal open class SelectImplementation<R> constructor(
         // Get the selected clause.
         @Suppress("UNCHECKED_CAST")
         val selectedClause = state.value as ClauseData<R>
+        // Perform the clean-up before the internal result processing and
+        // the user-specified block invocation to guarantee the absence
+        // of memory leaks. Collect the internal result before that.
+        val internalResult = this.internalResult
+        cleanup(selectedClause)
         // Process the internal result.
         val blockArgument = selectedClause.processResult(internalResult)
-        // Perform the clean-up before the user-specified block
-        // invocation to guarantee the absence of memory leaks.
-        cleanup(selectedClause)
         return if (!RECOVER_STACK_TRACES) {
             // TAIL-CALL OPTIMIZATION: the `suspend` block
             // is invoked at the very end.
