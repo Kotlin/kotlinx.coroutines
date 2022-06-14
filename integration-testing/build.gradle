@@ -20,8 +20,6 @@ java {
 
 dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
-    // Workaround to make addSuppressed work in tests
-    testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 }
 
 sourceSets {
