@@ -11,7 +11,7 @@ repositories {
 kotlin {
     jvm()
     js(IR) {
-        browser()
+        nodejs()
     }
 
     sourceSets {
