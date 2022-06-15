@@ -1,14 +1,13 @@
 # Integration tests
 
-This is a supplementary subproject of kotlinx.coroutines that provides
-integration tests.
+This is a supplementary project that provides integration tests.
 
 The tests are the following:
-* `NpmPublicationValidator` tests that version of NPM artifact is correct and that it has neither source nor package dependencies on atomicfu
-  In order for the test to work, one needs to run gradle with `-PdryRun=true`.
-  `-PdryRun` affects `npmPublish` so that it only provides a packed publication
-  and does not in fact attempt to send the build for publication.
-* `MavenPublicationValidator` depends on the published artifacts and tests artifacts binary content and absence of atomicfu in the classpath
+* `MavenPublicationValidator` depends on the published artifacts and tests artifacts binary content and absence of atomicfu in the classpath.
+* `CoreAgentTest` checks that `kotlinx-coroutines-core` can be run as a Java agent.
 * `DebugAgentTest` checks that the coroutine debugger can be run as a Java agent.
+* `smokeTest` builds the test project that depends on coroutines.
 
-All the available tests can be run with `integration-testing:test`.
+The `integration-testing` project is expected to be in a subdirectory of the main `kotlinx.coroutines` project.
+
+To run all the available tests: `cd integration-testing` + `./gradlew check`.

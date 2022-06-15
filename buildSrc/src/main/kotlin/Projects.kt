@@ -12,8 +12,8 @@ val testModule = "kotlinx-coroutines-test"
 
 val multiplatform = setOf(coreModule, testModule)
 // Not applicable for Kotlin plugin
-val sourceless = setOf("kotlinx.coroutines", "kotlinx-coroutines-bom", "integration-testing")
-val internal = setOf("kotlinx.coroutines", "benchmarks", "integration-testing")
+val sourceless = setOf("kotlinx.coroutines", "kotlinx-coroutines-bom")
+val internal = setOf("kotlinx.coroutines", "benchmarks")
 // Not published
 val unpublished = internal + setOf("example-frontend-js", "android-unit-tests")
 

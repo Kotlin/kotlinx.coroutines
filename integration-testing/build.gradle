@@ -5,7 +5,7 @@
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
-    id("kotlin-jvm-conventions")
+    id "org.jetbrains.kotlin.jvm"
 }
 
 repositories {
@@ -13,22 +13,44 @@ repositories {
     mavenCentral()
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+}
+
 sourceSets {
     mavenTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
+
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
+        }
     }
     debugAgentTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
-    }
 
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutines_version"
+        }
+    }
     coreAgentTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
         runtimeClasspath += sourceSets.test.runtimeClasspath
+
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+        }
     }
 }
 
@@ -39,28 +61,16 @@ compileDebugAgentTestKotlin {
 }
 
 task mavenTest(type: Test) {
-    environment "version", version
+    environment "version", coroutines_version
     def sourceSet = sourceSets.mavenTest
-    dependsOn(project(':').getTasksByName("publishToMavenLocal", true))
     testClassesDirs = sourceSet.output.classesDirs
     classpath = sourceSet.runtimeClasspath
-    // we can't depend on the subprojects because we need to test the classfiles that are published in the end.
-    // also, we can't put this in the `dependencies` block because the resolution would happen before publication.
-    def mavenTestClasspathConfiguration = project.configurations.detachedConfiguration(
-            project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"),
-            project.dependencies.create("org.jetbrains.kotlinx:kotlinx-coroutines-android:$version"))
-
-    mavenTestClasspathConfiguration.attributes {
-        attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-    }
-
-    classpath += mavenTestClasspathConfiguration
 }
 
 task debugAgentTest(type: Test) {
     def sourceSet = sourceSets.debugAgentTest
-    dependsOn(project(':kotlinx-coroutines-debug').shadowJar)
-    jvmArgs ('-javaagent:' + project(':kotlinx-coroutines-debug').shadowJar.outputs.files.getFiles()[0])
+    def coroutinesDebugJar = sourceSet.runtimeClasspath.filter {it.name == "kotlinx-coroutines-debug-${coroutines_version}.jar" }.singleFile
+    jvmArgs ('-javaagent:' + coroutinesDebugJar)
     testClassesDirs = sourceSet.output.classesDirs
     classpath = sourceSet.runtimeClasspath
     systemProperties project.properties.subMap(["overwrite.probes"])
@@ -68,18 +78,10 @@ task debugAgentTest(type: Test) {
 
 task coreAgentTest(type: Test) {
     def sourceSet = sourceSets.coreAgentTest
-    dependsOn(project(':kotlinx-coroutines-core').jvmJar)
-    jvmArgs ('-javaagent:' + project(':kotlinx-coroutines-core').jvmJar.outputs.files.getFiles()[0])
+    def coroutinesCoreJar = sourceSet.runtimeClasspath.filter {it.name == "kotlinx-coroutines-core-jvm-${coroutines_version}.jar" }.singleFile
+    jvmArgs ('-javaagent:' + coroutinesCoreJar)
     testClassesDirs = sourceSet.output.classesDirs
     classpath = sourceSet.runtimeClasspath
-}
-
-dependencies {
-    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testImplementation 'junit:junit:4.12'
-    debugAgentTestImplementation project(':kotlinx-coroutines-core')
-    debugAgentTestImplementation project(':kotlinx-coroutines-debug')
-    coreAgentTestImplementation project(':kotlinx-coroutines-core')
 }
 
 compileTestKotlin {
@@ -87,5 +89,5 @@ compileTestKotlin {
 }
 
 check {
-    dependsOn([mavenTest, debugAgentTest, coreAgentTest])
+    dependsOn([mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
 }
