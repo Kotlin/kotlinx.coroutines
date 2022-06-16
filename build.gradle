@@ -5,9 +5,12 @@
 
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.gradle.api.internal.artifacts.repositories.resolver.DefaultMutableVariantFilesMetadata
+import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+
 
 import static Projects.*
 
