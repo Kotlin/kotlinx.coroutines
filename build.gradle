@@ -3,11 +3,13 @@
  */
 
 
+import org.gradle.api.internal.artifacts.repositories.resolver.DefaultMutableVariantFilesMetadata
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 
 import static Projects.*
 
@@ -179,6 +181,31 @@ configure(subprojects.findAll { !sourceless.contains(it.name) }) {
         kotlinOptions.freeCompilerArgs += "-XXLanguage:-ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated"
         // Remove null assertions to get smaller bytecode on Android
         kotlinOptions.freeCompilerArgs += ["-Xno-param-assertions", "-Xno-receiver-assertions", "-Xno-call-assertions"]
+    }
+
+    dependencies {
+        components {
+            it.withModule("org.jetbrains.kotlin:atomicfu") {
+                def componentMetadataDetails = it as ComponentMetadataDetails
+                componentMetadataDetails.withVariant("runtimeElements") {
+                   def runtimeElementsVariant = it as VariantMetadata
+                    componentMetadataDetails.addVariant("runtimeJsIrElements") {
+                       def runtimeJsIrElementsVariant = it
+                       runtimeElementsVariant.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.js)
+                       runtimeElementsVariant.attributes.attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir)
+                       runtimeElementsVariant.attributes.attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage, Usage.JAVA_RUNTIME))
+                       runtimeElementsVariant.withFiles {
+                           def runtimeElementsFiles = it as DefaultMutableVariantFilesMetadata
+                           runtimeJsIrElementsVariant.withFiles {
+                               runtimeElementsFiles.files.forEach {
+                                   addFile(it.name)
+                               }
+                           }
+                       }
+                   }
+               }
+            }
+        }
     }
 }
 
