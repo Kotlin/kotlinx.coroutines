@@ -1,4 +1,4 @@
-[//]: # (title: Introduction to Coroutines and Channels − tutorial)
+[//]: # (title: Coroutines and channels − tutorial)
 
 In this tutorial, you'll see how to use coroutines to perform network requests without blocking the underlying thread or
 callbacks.
@@ -96,10 +96,10 @@ interface GitHubService {
     ```kotlin
     fun loadContributorsBlocking(service: GitHubService, req: RequestData): List<User> {
         val repos = service
-            .getOrgReposCall(req.org)                 // #1
-            .execute()                                // #2
-            .also { logRepos(req, it) }               // #3
-            .body() ?: emptyList().body() ?: listOf() // #4
+            .getOrgReposCall(req.org)   // #1
+            .execute()                  // #2
+            .also { logRepos(req, it) } // #3
+            .body() ?: emptyList()      // #4
     
         return repos.flatMap { repo ->
             service
@@ -124,12 +124,12 @@ interface GitHubService {
       result in case
       there is an error and log the corresponding error (`#4`).
 
-2. To avoid repeating `.body() ?: emptyList().body() ?: listOf()` over and over, declare an extension
+2. To avoid repeating `.body() ?: emptyList()` over and over, declare an extension
    function `bodyList()`:
 
     ```kotlin
     fun <T> Response<List<T>>.bodyList(): List<T> {
-        return body() ?: listOf()
+        return body() ?: emptyList()
     }
     ```  
 
@@ -203,7 +203,7 @@ Sort the resulting list in descending order.
 ```kotlin
 fun List<User>.aggregate(): List<User> =
     groupBy { it.login }
-        .map { (login, group) -> User(login, group.sumOfsumBy { it.contributions }) }
+        .map { (login, group) -> User(login, group.sumOf { it.contributions }) }
         .sortedByDescending { it.contributions }
 ```
 
@@ -237,7 +237,7 @@ tasks:
 
 ![The freed main thread](background.png)
 
-The signature of the `loadContributorsBackground()loadContributors` function changes. It takes a `updateResults`
+The signature of the `loadContributorsBackground()` function changes. It takes a `updateResults`
 callback as the last argument to call it after all the loading completes:
 
 ```kotlin
@@ -251,7 +251,7 @@ Now when the `loadContributorsBackground()` is called, the `updateResults` call 
 afterward as it did before:
 
 ```kotlin
-loadContributorsBackground(service, reqreq) { users ->
+loadContributorsBackground(service, req) { users ->
     SwingUtilities.invokeLater {
         updateResults(users, startTime)
     }
@@ -561,7 +561,7 @@ The coroutine resumes only after the corresponding response is received:
 ![Suspending request](suspend-requests.png)
 
 While the response is waiting to be received, the thread is free to be occupied with other tasks. That's why when users
-are loaded using the `SUSPENDCOROUTINE` option, the UI stays responsive, despite all the requests taking place on the
+are loaded using the `SUSPEND` option, the UI stays responsive, despite all the requests taking place on the
 main UI thread.
 
 The log confirms that all the requests are sent on the main UI thread:
@@ -731,7 +731,7 @@ To change this code to run "contributors" coroutines on different threads from t
 specify `Dispatchers.Default` as the context argument for the `async` function:
 
 ```kotlin
-async(Dispatchers.Default) { ... }
+async(Dispatchers.Default) { }
 ```
 
 `CoroutineDispatcher` determines what thread or threads the corresponding coroutine should be run on. If you don't
@@ -813,10 +813,9 @@ suspending) until it completes: `launch(context) { ... }.join()`.
 
 ## Structured concurrency
 
-_Coroutine scope_ is responsible for the structure and parent-child relationships between different coroutines.
-Coroutine builders, like `launch` and `async`, need to be started in some scope. We always start new coroutines inside a
-scope.
-_Coroutine context_ stores additional technical information used to run a given coroutine, like the coroutine custom
+* _Coroutine scope_ is responsible for the structure and parent-child relationships between different coroutines.
+Coroutine builders, like `launch` and `async`, need to be started in some scope.
+* _Coroutine context_ stores additional technical information used to run a given coroutine, like the coroutine custom
 name, or the dispatcher specifying the threads the coroutine should be scheduled on.
 
 When `launch`, `async`, or `runBlocking` are used to start a new coroutine, they automatically create the corresponding
@@ -991,7 +990,7 @@ You can call the `setUpCancellation()` extension function on it (line `#1`), pas
 Another way you could express this would be to explicitly write:
 
 ```kotlin
-val job = launch { ... }
+val job = launch { }
 job.setUpCancellation()
 ```
 
@@ -1062,7 +1061,7 @@ state:
 suspend fun loadContributorsProgress(
     service: GitHubService,
     req: RequestData,
-    updateResults: suspendsuspend updateResults: (List<User>, completed: Boolean) -> Unit
+    updateResults: suspend (List<User>, completed: Boolean) -> Unit
 ) {
     // loading the data
     // calling `updateResults` on intermediate states
@@ -1296,7 +1295,7 @@ results to the same channel:
 val channel = Channel<List<User>>()
 for (repo in repos) {
     launch {
-        val users = ...
+        val users = TODO()
         // ...
         channel.send(users)
     }
@@ -1308,7 +1307,7 @@ Then the elements from this channel can be received one by one and processed:
 ```kotlin
 repeat(repos.size) {
     val users = channel.receive()
-    ...
+    // ...
 }
 ```
 
