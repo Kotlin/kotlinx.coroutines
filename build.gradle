@@ -5,15 +5,19 @@
 
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.gradle.api.internal.artifacts.repositories.resolver.DefaultMutableVariantFilesMetadata
+import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+
 
 import static Projects.*
 
 apply plugin: 'jdk-convention'
 
 buildscript {
+
     /*
      * These property group is used to build kotlinx.coroutines against Kotlin compiler snapshot.
      * How does it work:
@@ -53,13 +57,6 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven { url 'https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev' }
-        maven {
-            url "https://maven.pkg.jetbrains.space/public/p/kotlinx-atomicfu/maven"
-            credentials {
-                username = spaceUsername
-                password = spacePassword
-            }
-        }
         mavenLocal()
     }
 
@@ -154,13 +151,6 @@ allprojects {
         mavenCentral()
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven { url 'https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev' }
-        maven {
-            url "https://maven.pkg.jetbrains.space/public/p/kotlinx-atomicfu/maven"
-            credentials {
-                username = spaceUsername
-                password = spacePassword
-            }
-        }
     }
 }
 
