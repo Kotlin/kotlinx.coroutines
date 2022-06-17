@@ -14,6 +14,7 @@ import static Projects.*
 apply plugin: 'jdk-convention'
 
 buildscript {
+
     /*
      * These property group is used to build kotlinx.coroutines against Kotlin compiler snapshot.
      * How does it work:
@@ -53,13 +54,6 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven { url 'https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev' }
-        maven {
-            url "https://maven.pkg.jetbrains.space/public/p/kotlinx-atomicfu/maven"
-            credentials {
-                username = spaceUsername
-                password = spacePassword
-            }
-        }
         mavenLocal()
     }
 
@@ -151,13 +145,6 @@ allprojects {
         mavenCentral()
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         maven { url 'https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev' }
-        maven {
-            url "https://maven.pkg.jetbrains.space/public/p/kotlinx-atomicfu/maven"
-            credentials {
-                username = spaceUsername
-                password = spacePassword
-            }
-        }
     }
 }
 
