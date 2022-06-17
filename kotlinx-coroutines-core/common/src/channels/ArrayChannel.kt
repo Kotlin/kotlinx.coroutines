@@ -25,7 +25,8 @@ internal open class ArrayChannel<E>(
      */
     private val capacity: Int,
     private val onBufferOverflow: BufferOverflow,
-    onUndeliveredElement: OnUndeliveredElement<E>?
+    onUndeliveredElement: OnUndeliveredElement<E>?,
+    private val onDroppedElement: ((E) -> Unit)? = null
 ) : AbstractChannel<E>(onUndeliveredElement) {
     init {
         // This check is actually used by the Channel(...) constructor function which checks only for known
@@ -63,7 +64,8 @@ internal open class ArrayChannel<E>(
             // check for receivers that were waiting on empty queue
             if (size == 0) {
                 loop@ while (true) {
-                    receive = takeFirstReceiveOrPeekClosed() ?: break@loop // break when no receivers queued
+                    receive = takeFirstReceiveOrPeekClosed()
+                        ?: break@loop // break when no receivers queued
                     if (receive is Closed) {
                         this.size.value = size // restore size
                         return receive!!
@@ -153,6 +155,11 @@ internal open class ArrayChannel<E>(
         } else {
             // buffer is full
             assert { onBufferOverflow == BufferOverflow.DROP_OLDEST } // the only way we can get here
+            val dropped = buffer[head % buffer.size]
+            if (dropped != null) {
+                @Suppress("UNCHECKED_CAST")
+                onDroppedElement?.let { it(dropped as E) }
+            }
             buffer[head % buffer.size] = null // drop oldest element
             buffer[(head + currentSize) % buffer.size] = element // actually queue element
             head = (head + 1) % buffer.size
@@ -180,7 +187,8 @@ internal open class ArrayChannel<E>(
         var result: Any? = null
         lock.withLock {
             val size = this.size.value
-            if (size == 0) return closedForSend ?: POLL_FAILED // when nothing can be read from buffer
+            if (size == 0) return closedForSend
+                ?: POLL_FAILED // when nothing can be read from buffer
             // size > 0: not empty -- retrieve element
             result = buffer[head]
             buffer[head] = null
@@ -282,13 +290,18 @@ internal open class ArrayChannel<E>(
     override fun onCancelIdempotent(wasClosed: Boolean) {
         // clear buffer first, but do not wait for it in helpers
         val onUndeliveredElement = onUndeliveredElement
-        var undeliveredElementException: UndeliveredElementException? = null // first cancel exception, others suppressed
+        var undeliveredElementException: UndeliveredElementException? =
+            null // first cancel exception, others suppressed
         lock.withLock {
             repeat(size.value) {
                 val value = buffer[head]
                 if (onUndeliveredElement != null && value !== EMPTY) {
                     @Suppress("UNCHECKED_CAST")
-                    undeliveredElementException = onUndeliveredElement.callUndeliveredElementCatchingException(value as E, undeliveredElementException)
+                    undeliveredElementException =
+                        onUndeliveredElement.callUndeliveredElementCatchingException(
+                            value as E,
+                            undeliveredElementException
+                        )
                 }
                 buffer[head] = EMPTY
                 head = (head + 1) % buffer.size

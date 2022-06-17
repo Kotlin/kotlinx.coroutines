@@ -768,14 +768,15 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
 public fun <E> Channel(
     capacity: Int = RENDEZVOUS,
     onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
-    onUndeliveredElement: ((E) -> Unit)? = null
+    onUndeliveredElement: ((E) -> Unit)? = null,
+    onDroppedElement: ((E) -> Unit)? = null
 ): Channel<E> =
     when (capacity) {
         RENDEZVOUS -> {
             if (onBufferOverflow == BufferOverflow.SUSPEND)
                 RendezvousChannel(onUndeliveredElement) // an efficient implementation of rendezvous channel
             else
-                ArrayChannel(1, onBufferOverflow, onUndeliveredElement) // support buffer overflow with buffered channel
+                ArrayChannel(1, onBufferOverflow, onUndeliveredElement, onDroppedElement) // support buffer overflow with buffered channel
         }
         CONFLATED -> {
             require(onBufferOverflow == BufferOverflow.SUSPEND) {
@@ -786,13 +787,13 @@ public fun <E> Channel(
         UNLIMITED -> LinkedListChannel(onUndeliveredElement) // ignores onBufferOverflow: it has buffer, but it never overflows
         BUFFERED -> ArrayChannel( // uses default capacity with SUSPEND
             if (onBufferOverflow == BufferOverflow.SUSPEND) CHANNEL_DEFAULT_CAPACITY else 1,
-            onBufferOverflow, onUndeliveredElement
+            onBufferOverflow, onUndeliveredElement, onDroppedElement
         )
         else -> {
             if (capacity == 1 && onBufferOverflow == BufferOverflow.DROP_OLDEST)
                 ConflatedChannel(onUndeliveredElement) // conflated implementation is more efficient but appears to work in the same way
             else
-                ArrayChannel(capacity, onBufferOverflow, onUndeliveredElement)
+                ArrayChannel(capacity, onBufferOverflow, onUndeliveredElement, onDroppedElement)
         }
     }
 
