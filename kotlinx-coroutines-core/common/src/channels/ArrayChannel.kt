@@ -140,8 +140,8 @@ internal open class ArrayChannel<E>(
         // buffer is full
         return when (onBufferOverflow) {
             BufferOverflow.SUSPEND -> OFFER_FAILED
-            BufferOverflow.DROP_LATEST -> OFFER_SUCCESS
-            BufferOverflow.DROP_OLDEST -> null // proceed, will drop oldest in enqueueElement
+            BufferOverflow.DROP_LATEST,
+            BufferOverflow.DROP_OLDEST -> null // proceed, will drop oldest/latest in enqueueElement
         }
     }
 
@@ -152,10 +152,16 @@ internal open class ArrayChannel<E>(
             buffer[(head + currentSize) % buffer.size] = element // actually queue element
         } else {
             // buffer is full
-            assert { onBufferOverflow == BufferOverflow.DROP_OLDEST } // the only way we can get here
-            buffer[head % buffer.size] = null // drop oldest element
-            buffer[(head + currentSize) % buffer.size] = element // actually queue element
-            head = (head + 1) % buffer.size
+            if (onBufferOverflow == BufferOverflow.DROP_OLDEST) {
+                @Suppress("UNCHECKED_CAST")
+                onUndeliveredElement?.callUndeliveredElementCatchingException(buffer[head % buffer.size] as E)
+                buffer[head % buffer.size] = null // drop oldest element
+                buffer[(head + currentSize) % buffer.size] = element // actually queue element
+                head = (head + 1) % buffer.size
+            } else {
+                assert { onBufferOverflow == BufferOverflow.DROP_LATEST } // the only way we can get here
+                onUndeliveredElement?.callUndeliveredElementCatchingException(element)
+            }
         }
     }
 

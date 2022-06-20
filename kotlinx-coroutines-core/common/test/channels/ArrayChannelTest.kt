@@ -146,6 +146,42 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
+    fun testBufferOverflowOldest() = runTest {
+        val capacity = 3
+        val dropped = mutableListOf<Int>()
+        val expectedDropped = listOf(1, 2, 3)
+        val expectedValues = listOf(4, 5, 6)
+
+        val channel = Channel<Int>(capacity, BufferOverflow.DROP_OLDEST) { dropped.add(it) }
+        (1..6).forEach { value ->
+            channel.send(value)
+        }
+
+        assertContentEquals(expectedDropped, dropped)
+        expectedValues.forEach { expected ->
+            assertEquals(expected, channel.receive())
+        }
+    }
+
+    @Test
+    fun testBufferOverflowLatest() = runTest {
+        val capacity = 3
+        val dropped = mutableListOf<Int>()
+        val expectedDropped = listOf(4, 5, 6)
+        val expectedValues = listOf(1, 2, 3)
+
+        val channel = Channel<Int>(capacity, BufferOverflow.DROP_LATEST) { dropped.add(it) }
+        (1..6).forEach { value ->
+            channel.send(value)
+        }
+
+        assertContentEquals(expectedDropped, dropped)
+        expectedValues.forEach { expected ->
+            assertEquals(expected, channel.receive())
+        }
+    }
+
+    @Test
     fun testBufferSize() = runTest {
         val capacity = 42
         val channel = Channel<Int>(capacity)
