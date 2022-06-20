@@ -26,7 +26,7 @@ if(savedDarkMode === true){
     <div class="library-name">
 <a href="../../index.html">
 <span>kotlinx.coroutines</span>            </a>    </div>
-    <div>1.6.2
+    <div>1.6.3-SNAPSHOT
     </div>
     <div class="pull-right d-flex">
             <div class="filter-section" id="filter-section">
@@ -50,11 +50,11 @@ if(savedDarkMode === true){
     <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark jvm-like" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">jvm</button></div>
 <div class="content sourceset-depenent-content" data-active="" data-togglable=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">inline suspend </span><span class="token keyword">fun </span><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/ThreadLocal.html">ThreadLocal</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="is-present.html"><span class="token function">isPresent</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Return <code class="lang-kotlin">true</code> when current thread local is present in the coroutine context, <code class="lang-kotlin">false</code> otherwise. Thread local can be present in the context only if it was added via <a href="as-context-element.html">asContextElement</a> to the context.</p><p class="paragraph">Example of usage:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">suspend fun processRequest() {<br>  if (traceCurrentRequestThreadLocal.isPresent()) { // Probabilistic tracing<br>     // Do some heavy-weight tracing<br>  }<br>  // Process request regularly<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div>  </div>
   <h2 class="">Sources</h2>
-  <div class="table" data-togglable="Sources"><a data-name="-618079201%2FSource%2F-1316292404" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadContextElement.kt#L222" id="-618079201%2FSource%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
+  <div class="table" data-togglable="Sources"><a data-name="-618079201%2FSource%2F-1316292404" anchor-label="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadContextElement.kt#L252" id="-618079201%2FSource%2F-1316292404" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain"></a>
     <div class="table-row" data-filterable-current=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain" data-filterable-set=":kotlinx-coroutines-core:dokkaHtmlPartial/jvmMain">
       <div class="main-subrow keyValue ">
         <div class=""><span class="inline-flex">
-            <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadContextElement.kt#L222">jvm source</a></div>
+            <div><a href="https://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/jvm/src/ThreadContextElement.kt#L252">jvm source</a></div>
 <span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-618079201%2FSource%2F-1316292404"></span>
               <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
             </span></span></div>
