@@ -1,5 +1,9 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.6.3
+
+* Updated atomicfu version to 0.17.3 (#3321), fixing the projects using this library with JS IR failing to build (#3305).
+
 ## Version 1.6.2
 
 * Fixed a bug with `ThreadLocalElement` not being correctly updated when the most outer `suspend` function was called directly without `kotlinx.coroutines` (#2930).
