@@ -168,7 +168,7 @@ You can find this code in `src/contributors/Contributors.kt`.
 * The `loadContributors()` function is responsible for choosing how the contributors are loaded.
 * The `updateResults()` function updates the UI. As a result, it must always be called from the UI thread.
 
-#### Task
+#### Task 8
 
 To familiarize yourself with the task domain, complete the following task.
 
@@ -191,7 +191,7 @@ After implementing this task, the resulting list for the "Kotlin" organization s
 >
 {type="note"}
 
-#### Solution {initial-collapse-state="collapsed"}
+#### Solution 8 {initial-collapse-state="collapsed"}
 
 Group users by their login. You can use
 [`groupBy()`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/group-by.html) that returns a map from
@@ -211,7 +211,7 @@ An alternative is to use
 the [`groupingBy`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/grouping-by.html)function instead
 of `groupBy`.
 
-## Using callbacks
+## Callbacks
 
 The previous solution works, but blocks the thread and therefore freezes the UI. A traditional approach to avoiding this
 is to use callbacks.
@@ -264,12 +264,12 @@ the main UI thread(AWT event dispatching thread).
 However, if you try to load the contributors via the `BACKGROUND` option, you can see that the list is updated, but
 nothing changes.
 
-#### Task
+#### Task 1
 
 Fix the `loadContributorsBackground()` in `src/tasks/Request2Background.kt` so that the resulting list was shown in the
 UI.
 
-#### Solution {initial-collapse-state="collapsed"}
+#### Solution 1 {initial-collapse-state="collapsed"}
 
 Now the contributors are loaded, as you can see in the log, but the result isn't displayed. To fix this, call
 the `updateResults` on the resulting list of users:
@@ -334,11 +334,11 @@ option, you can see that nothing is shown. The tests that immediately return the
 
 Think about why the given code doesn't work as expected and try to fix it or check the solution below.
 
-#### Task (optional)
+#### Task 2 (optional)
 
 Rewrite the code so that the loaded list of contributors is shown.
 
-#### Solution (first attempt)  {initial-collapse-state="collapsed"}
+#### Solution 2 (first attempt)  {initial-collapse-state="collapsed"}
 
 Now many requests are started concurrently, which decreases the total loading time. However, the result isn't loaded.
 The `updateResults` callback is called right after all the loading requests are started, so the `allUsers` list is not
@@ -366,7 +366,7 @@ for ((index, repo) in repos.withIndex()) {   // #1
 
 However, this code is also incorrect. Try to find an answer yourself or check the solution below.
 
-#### Solution (second attempt) {initial-collapse-state="collapsed"}
+#### Solution 2 (second attempt) {initial-collapse-state="collapsed"}
 
 Since the loading requests are started concurrently, no one guarantees that the result for the last one comes last. The
 results can come in any order.
@@ -399,7 +399,7 @@ for (repo in repos) {
 >
 type={"note"}
 
-#### Solution (third attempt) {initial-collapse-state="collapsed"}
+#### Solution 2 (third attempt) {initial-collapse-state="collapsed"}
 
 An even better solution is to use the `CountDownLatch` class. It stores a counter initialized with the number of
 repositories. This counter is decremented after processing each repository. It then waits until the latch is counted
@@ -468,7 +468,7 @@ interface GitHubService {
 }
 ```
 
-#### Task
+#### Task 3
 
 The task is to change the code of the function loading contributors to make use of the new suspending functions.
 
@@ -482,7 +482,7 @@ Modify so that the new suspending functions are used instead of ones returning `
 Run the program by choosing the `SUSPEND` option and ensure that the UI is still responsive while the GitHub requests
 are performed.
 
-#### Solution {initial-collapse-state="collapsed"}
+#### Solution 3 {initial-collapse-state="collapsed"}
 
 Replace `.getOrgReposCall(req.org).execute()` with `.getOrgRepos(req.org)` and repeat the same replacement for the
 second "contributors" request:
@@ -667,12 +667,12 @@ can be sent before the result for the previous one is received:
 The total loading time is approximately the same as in the `CALLBACKS` version, but it doesn't need any callbacks.
 What's more, `async` explicitly emphasizes which parts run concurrently in the code.
 
-#### Task
+#### Task 4
 
 In the `Request5Concurrent.kt` file, implement a `loadContributorsConcurrent()` function. For that, use the
 previous `loadContributorsSuspend()` function.
 
-#### Tip {initial-collapse-state="collapsed"}
+#### Tip 4 {initial-collapse-state="collapsed"}
 
 As you'll see later, you can only start a new coroutine inside a coroutine scope. Copy the content
 from `loadContributorsSuspend()` to the `coroutineScope` call, so that you can call `async` functions there:
@@ -696,7 +696,7 @@ val deferreds: List<Deferred<List<User>>> = repos.map { repo ->
 deferreds.awaitAll() // List<List<User>>
 ```
 
-#### Solution {initial-collapse-state="collapsed"}
+#### Solution 4 {initial-collapse-state="collapsed"}
 
 Wrap each "contributors" request with `async` to create as many coroutines as the number of repositories. `async`
 returns `Deferred<List<User>>`.
@@ -1086,7 +1086,7 @@ call `withContext`, which is a `suspend` function inside the corresponding lambd
 `updateResults` callback takes an additional Boolean parameter as an argument saying whether all the loading completed
 and the results are final.
 
-#### Task
+#### Task 5
 
 In the `Request6Progress.kt` file, implement the `loadContributorsProgress()` function that shows the intermediate
 progress. Base it on the `loadContributorsSuspend` function from `Request4Suspend.kt`.
@@ -1099,7 +1099,7 @@ Use a simple version without concurrency; you'll add it later in the next sectio
 >
 {type="note"}
 
-#### Solution {initial-collapse-state="collapsed"}
+#### Solution 5 {initial-collapse-state="collapsed"}
 
 To store the intermediate list of loaded contributors in the "aggregated" state, define an `allUsers` variable which
 stores the list of users, and then update it after contributors for each new repository are loaded:
@@ -1278,7 +1278,7 @@ To get a better understanding, watch the following video:
 
 ![Video explaining the channels sample](https://youtu.be/HpWQUoVURWQ)
 
-#### Task
+#### Task 6
 
 Implement the function `loadContributorsChannels()` that requests all the GitHub contributors concurrently but shows
 intermediate progress at the same time.
@@ -1286,7 +1286,7 @@ intermediate progress at the same time.
 For this, use previous functions, `loadContributorsConcurrent()` from `Request5Concurrent.kt`
 and `loadContributorsProgress()` from `Request6Progress.kt`.
 
-#### Tip {initial-collapse-state="collapsed"}
+#### Tip 6 {initial-collapse-state="collapsed"}
 
 Different coroutines that concurrently receive contributor lists for different repositories can send all the received
 results to the same channel:
@@ -1313,7 +1313,7 @@ repeat(repos.size) {
 
 Since the `receive()` calls are sequential, no additional synchronization is needed.
 
-#### Solution {initial-collapse-state="collapsed"}
+#### Solution 6 {initial-collapse-state="collapsed"}
 
 As with the `loadContributorsProgress()` function, you can create an `allUsers` variable to store the intermediate
 states of the "all contributors" list.
@@ -1504,7 +1504,7 @@ compileTestKotlin {
 
 In the project corresponding to this tutorial it's already been added to the Gradle script.
 
-#### Task
+#### Task 7
 
 Refactor all the following tests in `tests/tasks/` to use virtual time instead of real-time:
 
@@ -1517,7 +1517,7 @@ Request7ChannelsKtTest.kt
 
 Compare the total running time with the time before this refactoring.
 
-#### Tip {initial-collapse-state="collapsed"}
+#### Tip 7 {initial-collapse-state="collapsed"}
 
 Replace `runBlocking` invocation with `runBlockingTest`, and
 `System.currentTimeMillis()` with `currentTime`:
@@ -1535,7 +1535,7 @@ fun test() = runBlockingTest {
 Uncomment the assertions checking the exact virtual time.
 Don't forget to add `@UseExperimental(ExperimentalCoroutinesApi::class)`.
 
-#### Solution {initial-collapse-state="collapsed"}
+#### Solution 7 {initial-collapse-state="collapsed"}
 
 Here's the solution for the concurrent case:
 
