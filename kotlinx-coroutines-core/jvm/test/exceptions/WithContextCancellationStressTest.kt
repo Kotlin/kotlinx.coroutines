@@ -27,8 +27,9 @@ class WithContextCancellationStressTest : TestBase() {
         var eCnt = 0
         var e1Cnt = 0
         var e2Cnt = 0
+        var loopsToMake = iterations
 
-        repeat(iterations) {
+        while (eCnt == 0 || e1Cnt == 0 || e2Cnt == 0 || loopsToMake-- > 0) {
             val barrier = CyclicBarrier(4)
             val ctx = pool + NonCancellable
             var e1 = false
@@ -74,10 +75,6 @@ class WithContextCancellationStressTest : TestBase() {
                 }
             }
         }
-
-        require(eCnt > 0) { "At least one TestException expected" }
-        require(e1Cnt > 0) { "At least one TestException1 expected" }
-        require(e2Cnt > 0) { "At least one TestException2 expected" }
     }
 
     private fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
