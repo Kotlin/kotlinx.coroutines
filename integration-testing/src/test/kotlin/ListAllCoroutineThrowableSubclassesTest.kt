@@ -41,8 +41,7 @@ class ListAllCoroutineThrowableSubclassesTest {
         classes.forEach {
             if (Throwable::class.java.isAssignableFrom(it.load())) {
                 ++throwables
-                // println(""""$it",""")
-                assertTrue(knownThrowables.contains(it.toString()))
+                assertTrue(knownThrowables.contains(it.toString()), "Unknown throwable $it")
             }
         }
 
