@@ -39,14 +39,10 @@ class ListAllCoroutineThrowableSubclassesTest {
         val classes = ClassPath.from(this.javaClass.classLoader)
             .getTopLevelClassesRecursive("kotlinx.coroutines");
         classes.forEach {
-            try {
-                if (Throwable::class.java.isAssignableFrom(it.load())) {
-                    ++throwables
-                    // println(""""$it",""")
-                    assertTrue(knownThrowables.contains(it.toString()))
-                }
-            } catch (e: LinkageError) {
-                // Ignore unloadable classes
+            if (Throwable::class.java.isAssignableFrom(it.load())) {
+                ++throwables
+                // println(""""$it",""")
+                assertTrue(knownThrowables.contains(it.toString()))
             }
         }
 
