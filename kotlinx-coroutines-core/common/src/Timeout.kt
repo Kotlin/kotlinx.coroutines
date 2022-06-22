@@ -163,7 +163,7 @@ private class TimeoutCoroutine<U, in T: U>(
  */
 public class TimeoutCancellationException internal constructor(
     message: String,
-    @JvmField internal val coroutine: Job?
+    @JvmField @Transient internal val coroutine: Job?
 ) : CancellationException(message), CopyableThrowable<TimeoutCancellationException> {
     /**
      * Creates a timeout exception with the given message.
@@ -173,7 +173,7 @@ public class TimeoutCancellationException internal constructor(
     internal constructor(message: String) : this(message, null)
 
     // message is never null in fact
-    override fun createCopy(): TimeoutCancellationException? =
+    override fun createCopy(): TimeoutCancellationException =
         TimeoutCancellationException(message ?: "", coroutine).also { it.initCause(this) }
 }
 
