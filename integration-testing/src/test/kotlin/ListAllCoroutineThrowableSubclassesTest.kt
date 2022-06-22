@@ -35,16 +35,9 @@ class ListAllCoroutineThrowableSubclassesTest {
 
     @Test
     fun testThrowableSubclassesAreSerializable() {
-        var throwables = 0
         val classes = ClassPath.from(this.javaClass.classLoader)
             .getTopLevelClassesRecursive("kotlinx.coroutines");
-        classes.forEach {
-            if (Throwable::class.java.isAssignableFrom(it.load())) {
-                ++throwables
-                assertTrue(knownThrowables.contains(it.toString()), "Unknown throwable $it")
-            }
-        }
-
-        assertEquals(knownThrowables.size, throwables)
+        val throwables = classes.filter { Throwable::class.java.isAssignableFrom(it.load()) }.map { it.toString() }
+        assertContentEquals(knownThrowables.sorted(), throwables.sorted())
     }
 }
