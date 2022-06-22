@@ -23,6 +23,13 @@ dependencies {
 }
 
 sourceSets {
+    test {
+        kotlin
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            implementation 'com.google.guava:guava:31.1-jre'
+        }
+    }
     mavenTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
@@ -89,5 +96,5 @@ compileTestKotlin {
 }
 
 check {
-    dependsOn([mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
+    dependsOn([test, mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
 }
