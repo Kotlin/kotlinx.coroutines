@@ -12,8 +12,8 @@ import kotlin.test.*
 class ListAllCoroutineThrowableSubclassesTest {
 
     /*
-     * These are all known throwables in kotlinx.coroutines.
-     * If you have added one, this test will fail to make
+     * These are all the known throwables in kotlinx.coroutines.
+     * If you add one, this test will fail to make
      * you ensure your exception type is java.io.Serializable.
      *
      * We do not have means to check it automatically, so checks are delegated to humans.
