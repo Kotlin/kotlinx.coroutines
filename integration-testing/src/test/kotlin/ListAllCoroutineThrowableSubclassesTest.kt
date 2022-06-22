@@ -38,6 +38,6 @@ class ListAllCoroutineThrowableSubclassesTest {
         val classes = ClassPath.from(this.javaClass.classLoader)
             .getTopLevelClassesRecursive("kotlinx.coroutines");
         val throwables = classes.filter { Throwable::class.java.isAssignableFrom(it.load()) }.map { it.toString() }
-        assertContentEquals(knownThrowables.sorted(), throwables.sorted())
+        assertEquals(knownThrowables.sorted(), throwables.sorted())
     }
 }
