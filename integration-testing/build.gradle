@@ -23,6 +23,16 @@ dependencies {
 }
 
 sourceSets {
+    withGuavaTest {
+        kotlin
+        compileClasspath += sourceSets.test.runtimeClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            implementation 'com.google.guava:guava:31.1-jre'
+        }
+    }
     mavenTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
@@ -60,6 +70,13 @@ compileDebugAgentTestKotlin {
     }
 }
 
+task withGuavaTest(type: Test) {
+    environment "version", coroutines_version
+    def sourceSet = sourceSets.withGuavaTest
+    testClassesDirs = sourceSet.output.classesDirs
+    classpath = sourceSet.runtimeClasspath
+}
+
 task mavenTest(type: Test) {
     environment "version", coroutines_version
     def sourceSet = sourceSets.mavenTest
@@ -89,5 +106,5 @@ compileTestKotlin {
 }
 
 check {
-    dependsOn([mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
+    dependsOn([withGuavaTest, mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
 }
