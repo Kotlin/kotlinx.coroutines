@@ -10,11 +10,10 @@ import java.lang.ref.*
 
 // This is very limited implementation, not suitable as a generic map replacement.
 // It has lock-free get and put with synchronized rehash for simplicity (and better CPU usage on contention)
-@OptIn(ExperimentalStdlibApi::class)
 @Suppress("UNCHECKED_CAST")
 internal class ConcurrentWeakMap<K : Any, V: Any>(
     /**
-     * Weak reference queue is needed when a small key is mapped to a large value and we need to promptly release a
+     * Weak reference queue is needed when a small key is mapped to a large value, and we need to promptly release a
      * reference to the value when the key was already disposed.
      */
     weakRefQueue: Boolean = false

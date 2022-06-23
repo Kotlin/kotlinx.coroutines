@@ -236,8 +236,9 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
             if (expected != null) {
                 if (!expected(e))
                     error("Unexpected exception: $e", e)
-            } else
+            } else {
                 throw e
+            }
         } finally {
             if (ex == null && expected != null) error("Exception was expected but none produced")
         }
