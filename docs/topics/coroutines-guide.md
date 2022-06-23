@@ -33,6 +33,6 @@ In order to use coroutines as well as follow the examples in this guide, you nee
 
 * [Guide to UI programming with coroutines](https://github.com/Kotlin/kotlinx.coroutines/blob/master/ui/coroutines-guide-ui.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md)
-* [Full kotlinx.coroutines API reference](https://kotlin.github.io/kotlinx.coroutines)
+* [Full kotlinx.coroutines API reference](https://kotlinlang.org/api/kotlinx.coroutines/)
 * [Best practices for coroutines in Android](https://developer.android.com/kotlin/coroutines/coroutines-best-practices)
 * [Additional Android resources for Kotlin coroutines and flow](https://developer.android.com/kotlin/coroutines/additional-resources)
