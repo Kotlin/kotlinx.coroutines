@@ -151,8 +151,7 @@ private class StandardTestDispatcherImpl(
 ) : TestDispatcher() {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        checkSchedulerInContext(scheduler, context)
-        scheduler.registerEvent(this, 0, block) { false }
+        scheduler.registerEvent(this, 0, block, context) { false }
     }
 
     override fun toString(): String = "${name ?: "StandardTestDispatcher"}[scheduler=$scheduler]"

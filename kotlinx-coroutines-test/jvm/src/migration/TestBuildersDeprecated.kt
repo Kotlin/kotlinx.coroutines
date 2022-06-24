@@ -87,11 +87,14 @@ public fun runBlockingTestOnTestScope(
         scope.testBody()
     }
     scope.testScheduler.advanceUntilIdle()
-    try {
+    val throwable = try {
         scope.getCompletionExceptionOrNull()
     } catch (e: IllegalStateException) {
         null // the deferred was not completed yet; `scope.leave()` should complain then about unfinished jobs
-    }?.let {
+    }
+    scope.backgroundWorkScope.cancel()
+    scope.testScheduler.advanceUntilIdle(backgroundIsIdle = false)
+    throwable?.let {
         val exceptions = try {
             scope.leave()
         } catch (e: UncompletedCoroutinesError) {

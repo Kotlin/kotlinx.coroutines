@@ -44,21 +44,20 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
             scheduler.sendDispatchEvent()
             block.run()
         } else {
-            post(block)
+            post(block, context)
         }
     }
 
     /** @suppress */
     override fun dispatchYield(context: CoroutineContext, block: Runnable) {
-        checkSchedulerInContext(scheduler, context)
-        post(block)
+        post(block, context)
     }
 
     /** @suppress */
     override fun toString(): String = "TestCoroutineDispatcher[scheduler=$scheduler]"
 
-    private fun post(block: Runnable) =
-        scheduler.registerEvent(this, 0, block) { false }
+    private fun post(block: Runnable, context: CoroutineContext) =
+        scheduler.registerEvent(this, 0, block, context) { false }
 
     /** @suppress */
     override suspend fun pauseDispatcher(block: suspend () -> Unit) {

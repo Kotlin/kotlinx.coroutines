@@ -164,7 +164,11 @@ public fun TestScope.runTest(
 ): TestResult = asSpecificImplementation().let {
     it.enter()
     createTestResult {
-        runTestCoroutine(it, dispatchTimeoutMs, TestScopeImpl::tryGetCompletionCause, testBody) { it.leave() }
+        runTestCoroutine(it, dispatchTimeoutMs, TestScopeImpl::tryGetCompletionCause, testBody) {
+            backgroundWorkScope.cancel()
+            testScheduler.advanceUntilIdle(backgroundIsIdle = false)
+            it.leave()
+        }
     }
 }
 

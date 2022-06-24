@@ -46,6 +46,23 @@ public sealed interface TestScope : CoroutineScope {
      */
     @ExperimentalCoroutinesApi
     public val testScheduler: TestCoroutineScheduler
+
+    /**
+     * A scope for background work.
+     *
+     * This scope is automatically cancelled when the test finishes.
+     * Additionally, while the coroutines in this scope are run as usual when
+     * using [advanceTimeBy] and [runCurrent], [advanceUntilIdle] will stop advancing the virtual time
+     * once only the coroutines in this scope are left unprocessed.
+     *
+     * Failures in coroutines in this scope do not terminate the test.
+     * Instead, they are reported at the end of the test.
+     *
+     * A typical use case for this scope is to launch tasks that would outlive the tested code in
+     * the production environment.
+     */
+    @ExperimentalCoroutinesApi
+    public val backgroundWorkScope: CoroutineScope
 }
 
 /**
@@ -170,6 +187,9 @@ internal class TestScopeImpl(context: CoroutineContext) :
     private val uncaughtExceptions = mutableListOf<Throwable>()
     private val lock = SynchronizedObject()
 
+    override val backgroundWorkScope: CoroutineScope =
+        CoroutineScope(coroutineContext + SupervisorJob() + BackgroundWork)
+
     /** Called upon entry to [runTest]. Will throw if called more than once. */
     fun enter() {
         val exceptions = synchronized(lock) {
@@ -233,6 +253,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
 }
 
 /** Use the knowledge that any [TestScope] that we receive is necessarily a [TestScopeImpl]. */
+@Suppress("NO_ELSE_IN_WHEN") // TODO: a problem with `sealed` in MPP not allowing total pattern-matching
 internal fun TestScope.asSpecificImplementation(): TestScopeImpl = when (this) {
     is TestScopeImpl -> this
 }
