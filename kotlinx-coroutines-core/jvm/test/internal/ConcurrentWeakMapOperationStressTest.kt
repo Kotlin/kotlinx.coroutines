@@ -34,7 +34,7 @@ class ConcurrentWeakMapOperationStressTest : TestBase() {
                 var generationOffset = 0L
                 while (!stop.value) {
                     val kvs = (generationOffset + batchSize * index until generationOffset + batchSize * (index + 1))
-                        .associateBy({ Key(it) }, {  it * it })
+                        .associateBy({ Key(it) }, { it * it })
                     generationOffset += batchSize * nThreads
                     for ((k, v) in kvs) {
                         assertEquals(null, m.put(k, v))
@@ -45,8 +45,8 @@ class ConcurrentWeakMapOperationStressTest : TestBase() {
                     for ((k, v) in kvs) {
                         assertEquals(v, m.remove(k))
                     }
-                    for ((k, v) in kvs) {
-                        assertEquals(null, m.get(k))
+                    for ((k, _) in kvs) {
+                        assertEquals(null, m[k])
                     }
                     count.incrementAndGet()
                 }
@@ -68,6 +68,6 @@ class ConcurrentWeakMapOperationStressTest : TestBase() {
         }
         stop.value = true
         threads.forEach { it.join() }
-        assertEquals(0, m.size)
+        assertEquals(0, m.size, "Unexpected map state: $m")
     }
 }
