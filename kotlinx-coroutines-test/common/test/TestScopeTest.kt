@@ -195,7 +195,6 @@ class TestScopeTest {
      * Tests that the background work gets cancelled after the test body finishes.
      */
     @Test
-    @NoNative
     fun testBackgroundWorkCancelled(): TestResult {
         var cancelled = false
         return testResultMap({
@@ -224,7 +223,6 @@ class TestScopeTest {
 
     /** Tests the interactions between the time-control commands and the background work. */
     @Test
-    @NoNative
     fun testBackgroundWorkTimeControl(): TestResult = runTest {
         var i = 0
         var j = 0
@@ -297,7 +295,6 @@ class TestScopeTest {
      * Tests that the background work gets to finish what it's doing after the test is completed.
      */
     @Test
-    @NoNative
     fun testBackgroundWorkFinalizing(): TestResult {
         var taskEnded = 0
         val nTasks = 10

@@ -39,10 +39,10 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
 
     public fun find(
         predicate: (value: T) -> Boolean
-    ): T? = synchronized(this) {
+    ): T? = synchronized(this) block@{
         for (i in 0 until size) {
             val value = a?.get(i)!!
-            if (predicate(value)) return value
+            if (predicate(value)) return@block value
         }
         null
     }

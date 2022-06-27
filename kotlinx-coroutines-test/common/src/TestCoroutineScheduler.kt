@@ -230,7 +230,7 @@ private class TestDispatchEvent<T>(
     override fun compareTo(other: TestDispatchEvent<*>) =
         compareValuesBy(this, other, TestDispatchEvent<*>::time, TestDispatchEvent<*>::count)
 
-    override fun toString() = "TestDispatchEvent(time=$time, dispatcher=$dispatcher)"
+    override fun toString() = "TestDispatchEvent(time=$time, dispatcher=$dispatcher${if (isForeground) "" else ", background"})"
 }
 
 // works with positive `a`, `b`
