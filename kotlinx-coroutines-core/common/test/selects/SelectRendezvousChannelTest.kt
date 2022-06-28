@@ -445,7 +445,6 @@ class SelectRendezvousChannelTest : TestBase() {
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) = onTimeout(0, block)
 
     @Test
-    @Ignore // TODO fix me
     fun testSelectSendAndReceive() = runTest {
         val c = Channel<Int>()
         assertFailsWith<IllegalStateException> {
@@ -458,7 +457,6 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    @Ignore // TODO fix me
     fun testSelectReceiveAndSend() = runTest {
         val c = Channel<Int>()
         assertFailsWith<IllegalStateException> {

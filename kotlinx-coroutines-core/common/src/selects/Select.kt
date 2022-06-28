@@ -490,7 +490,7 @@ internal open class SelectImplementation<R> constructor(
             // For new clauses, check that there does not exist
             // another clause with the same object.
             if (!reregister) {
-                checkClauseObject(this)
+                checkClauseObject(this.clauseObject)
                 clauses!! += this
             }
             if (curState is Selected<*>) {
