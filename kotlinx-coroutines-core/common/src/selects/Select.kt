@@ -12,6 +12,7 @@ import kotlinx.coroutines.selects.TrySelectDetailedResult.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.internal.*
+import kotlin.js.*
 import kotlin.jvm.*
 import kotlin.native.concurrent.*
 
@@ -770,6 +771,7 @@ internal open class SelectImplementation<R> constructor(
         this.clauses = null
     }
 
+    @JsName("cleanup0")
     public fun cleanup() = cleanup((this.state.value as Selected<R>).selectedClause)
 
     // [CompletionHandler] implementation, must be invoked on cancellation.

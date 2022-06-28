@@ -1221,8 +1221,10 @@ public abstract interface class kotlinx/coroutines/selects/SelectClause2 : kotli
 
 public class kotlinx/coroutines/selects/SelectImplementation : kotlinx/coroutines/selects/SelectBuilder, kotlinx/coroutines/selects/SelectInstance {
 	public fun <init> (Lkotlin/coroutines/CoroutineContext;)V
+	public final fun cleanup ()V
 	public fun disposeOnCompletion (Lkotlinx/coroutines/DisposableHandle;)V
 	public fun doSelect (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun doSelectWhile (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public synthetic fun invoke (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun invoke (Ljava/lang/Throwable;)V
@@ -1259,6 +1261,8 @@ public abstract interface class kotlinx/coroutines/selects/SelectInstance {
 
 public final class kotlinx/coroutines/selects/SelectKt {
 	public static final fun select (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun selectLoop (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun whileSelect (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/selects/SelectUnbiasedKt {
@@ -1277,10 +1281,6 @@ public class kotlinx/coroutines/selects/UnbiasedSelectImplementation : kotlinx/c
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause0;Lkotlin/jvm/functions/Function1;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
-}
-
-public final class kotlinx/coroutines/selects/WhileSelectKt {
-	public static final fun whileSelect (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/sync/Mutex {
