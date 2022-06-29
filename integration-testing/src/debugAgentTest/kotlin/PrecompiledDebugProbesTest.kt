@@ -20,20 +20,19 @@ class PrecompiledDebugProbesTest {
         val classFileResourcePath = className.replace(".", "/") + ".class"
         val stream = clz.classLoader.getResourceAsStream(classFileResourcePath)!!
         val array = stream.readBytes()
-        val binFile = clz.classLoader.getResourceAsStream("DebugProbesKt.bin")!!
-        val binContent = binFile.readBytes()
+        // we expect the integration testing project to be in a subdirectory of the main kotlinx.coroutines project
+        val base = File("").absoluteFile.parentFile
+        val probes = File(base, "kotlinx-coroutines-core/jvm/resources/DebugProbesKt.bin")
+        val binContent = probes.readBytes()
         if (overwrite) {
-            val url = clz.classLoader.getResource("DebugProbesKt.bin")!!
-            val base = url.toExternalForm().toString().removePrefix("jar:file:").substringBefore("/build")
-            val probes = File(base, "jvm/resources/DebugProbesKt.bin")
             FileOutputStream(probes).use { it.write(array) }
             println("Content was successfully overwritten!")
         } else {
             assertTrue(
                 array.contentEquals(binContent),
                 "Compiled DebugProbesKt.class does not match the file shipped as a resource in kotlinx-coroutines-core. " +
-                        "Typically it happens because of the Kotlin version update (-> binary metadata). In that case, run the same test with -Poverwrite.probes=true and " +
-                        "ensure that classfile has major version equal to 50 (Java 6 compliance)")
+                        "Typically it happens because of the Kotlin version update (-> binary metadata). In that case, run the same test with -Poverwrite.probes=true."
+            )
         }
     }
 }

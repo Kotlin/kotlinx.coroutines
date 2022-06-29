@@ -683,6 +683,7 @@ internal class CoroutineScheduler(
                  * No tasks were found:
                  * 1) Either at least one of the workers has stealable task in its FIFO-buffer with a stealing deadline.
                  *    Then its deadline is stored in [minDelayUntilStealableTask]
+                 * // '2)' can be found below
                  *
                  * Then just park for that duration (ditto re-scanning).
                  * While it could potentially lead to short (up to WORK_STEALING_TIME_RESOLUTION_NS ns) starvations,
