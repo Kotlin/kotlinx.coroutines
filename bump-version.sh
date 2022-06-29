@@ -21,6 +21,7 @@ update_version "kotlinx-coroutines-debug/README.md"
 update_version "kotlinx-coroutines-test/README.md"
 update_version "ui/coroutines-guide-ui.md"
 update_version "gradle.properties"
+update_version "integration-test/gradle.properties"
 
 # Escape dots, e.g. 1.0.0 -> 1\.0\.0
 escaped_old_version=$(echo $old_version | sed s/[.]/\\\\./g)
