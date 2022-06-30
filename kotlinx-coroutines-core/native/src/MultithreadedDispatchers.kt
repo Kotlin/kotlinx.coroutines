@@ -35,9 +35,25 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        // No API to cancel on timeout
-        worker.executeAfter(timeMillis.toMicrosSafe()) { block.run() }
-        return NonDisposableHandle
+        // Workers don't have an API to cancel sent "executeAfter" block, but we are trying
+        // to control the damage and reduce reachable objects by nulling out `block`
+        // that may retain a lot of references, and leaving only an empty shell after a timely disposal
+        // This is a class and not an object with `block` in a closure because that would defeat the purpose.
+        class DisposableBlock(block: Runnable) : DisposableHandle, Function0<Unit> {
+            private val disposableHolder = AtomicReference<Runnable?>(block)
+
+            override fun invoke() {
+                disposableHolder.value?.run()
+            }
+
+            override fun dispose() {
+                disposableHolder.value = null
+            }
+        }
+
+        val disposableBlock = DisposableBlock(block)
+        worker.executeAfter(timeMillis.toMicrosSafe(), disposableBlock)
+        return disposableBlock
     }
 
     override fun close() {
