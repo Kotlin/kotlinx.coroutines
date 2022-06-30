@@ -38,6 +38,7 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
         // Workers don't have an API to cancel sent "executeAfter" block, but we are trying
         // to control the damage and reduce reachable objects by nulling out `block`
         // that may retain a lot of references, and leaving only an empty shell after a timely disposal
+        // This is a class and not an object with `block` in a closure because that would defeat the purpose.
         class DisposableBlock(block: Runnable) : DisposableHandle, Function0<Unit> {
             private val disposableHolder = AtomicReference<Runnable?>(block)
 
