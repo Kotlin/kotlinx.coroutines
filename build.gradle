@@ -231,7 +231,7 @@ configure(subprojects.findAll {
     }
 }
 
-def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
+def core_docs_url = "https://kotlinlang.org/api/kotlinx.coroutines/$coreModule/"
 def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
 apply plugin: "org.jetbrains.dokka"
 
@@ -313,7 +313,7 @@ clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
 apply plugin: 'kotlinx-knit'
 
 knit {
-    siteRoot = "https://kotlin.github.io/kotlinx.coroutines"
+    siteRoot = "https://kotlinlang.org/api/kotlinx.coroutines"
     moduleRoots = [".", "integration", "reactive", "ui"]
     moduleDocs = "build/dokka/htmlPartial"
     dokkaMultiModuleRoot = "build/dokka/htmlMultiModule/"

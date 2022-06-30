@@ -62,19 +62,20 @@ To release a new `<version>` of `kotlinx-coroutines`:
    * Create a release named `<version>`, creating the `<version>` tag.
    * Cut & paste lines from [`CHANGES.md`](CHANGES.md) into description.
 
-4. Build and publish the documentation for the web-site: <br>
-   `site/deploy.sh <version> push`
+4. Announce the new release in [Slack](https://kotlinlang.slack.com)
 
-5. Announce the new release in [Slack](https://kotlinlang.slack.com)
-
-6. Switch onto the `develop` branch:<br>
+5. Switch onto the `develop` branch:<br>
    `git checkout develop`
 
-7. Fetch the latest `master`:<br>
+6. Fetch the latest `master`:<br>
    `git fetch`
 
-8. Merge the release from `master`:<br>
+7. Merge the release from `master`:<br>
    `git merge origin/master`
 
-9. Push the updates to GitHub:<br>
+8. Push the updates to GitHub:<br>
    `git push`
+
+9. Build and publish the documentation for the web-site: <br>
+   * Set new value for [`kotlinx.coroutines.release.tag`](https://buildserver.labs.intellij.net/admin/editProject.html?projectId=Kotlin_KotlinSites_Builds_KotlinlangOrg_LibrariesAPIs&tab=projectParams)
+   * And run deploy [configuration](https://buildserver.labs.intellij.net/buildConfiguration/Kotlin_KotlinSites_Builds_KotlinlangOrg_KotlinCoroutinesApi?branch=%3Cdefault%3E&buildTypeTab=overview&mode=builds)
