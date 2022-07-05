@@ -8,14 +8,6 @@ configurations {
     shadowDeps // shaded dependencies, not included into the resulting .pom file
     compileOnly.extendsFrom(shadowDeps)
     runtimeOnly.extendsFrom(shadowDeps)
-
-    /*
-     * It is possible to extend a particular configuration with shadow,
-     * but in that case it changes dependency type to "runtime" and resolves it
-     * (so it cannot be further modified). Otherwise, shadow just ignores all dependencies.
-     */
-    shadow.extendsFrom(api) // shadow - resulting configuration with shaded jar file
-    configureKotlinJvmPlatform(shadow)
 }
 
 dependencies {
@@ -39,17 +31,25 @@ java {
 }
 
 jar {
+    setEnabled(false)
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Redefine-Classes": "true"
     }
 }
 
-shadowJar {
+def shadowJarTask = shadowJar {
     classifier null
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = [project.configurations.shadowDeps]
     relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
+}
+
+configurations {
+    artifacts {
+        add("apiElements", shadowJarTask)
+        add("runtimeElements", shadowJarTask)
+    }
 }
 
 def commonKoverExcludes =
