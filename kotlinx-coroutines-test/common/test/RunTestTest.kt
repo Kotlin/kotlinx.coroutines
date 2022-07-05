@@ -71,6 +71,7 @@ class RunTestTest {
 
     /** Tests that a dispatch timeout of `0` will fail the test if there are some dispatches outside the scheduler. */
     @Test
+    @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestWithZeroTimeoutWithUncontrolledDispatches() = testResultMap({ fn ->
         assertFailsWith<UncompletedCoroutinesError> { fn() }
     }) {

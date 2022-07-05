@@ -5,6 +5,8 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -325,6 +327,102 @@ class TestScopeTest {
                 throw TestException()
             }
         }
+    }
+
+    /**
+     * Tests using [Flow.stateIn] as a background job.
+     */
+    @Test
+    fun testExampleBackgroundJob1() = runTest {
+        val myFlow = flow {
+            var i = 0
+            while (true) {
+                emit(++i)
+                delay(1)
+            }
+        }
+        val stateFlow = myFlow.stateIn(backgroundWorkScope, SharingStarted.Eagerly, 0)
+        var j = 0
+        repeat(100) {
+            assertEquals(j++, stateFlow.value)
+            delay(1)
+        }
+    }
+
+    /**
+     * A test from the documentation of [TestScope.backgroundWorkScope].
+     */
+    @Test
+    fun testExampleBackgroundJob2() = runTest {
+        val channel = Channel<Int>()
+        backgroundWorkScope.launch {
+            var i = 0
+            while (true) {
+                channel.send(i++)
+            }
+        }
+        repeat(100) {
+            assertEquals(it, channel.receive())
+        }
+    }
+
+    /**
+     * Tests that the test will timeout due to idleness even if some background tasks are running.
+     */
+    @Test
+    fun testBackgroundWorkNotPreventingTimeout(): TestResult = testResultMap({
+        try {
+            it()
+            fail("unreached")
+        } catch (_: UncompletedCoroutinesError) {
+
+        }
+    }) {
+        runTest(dispatchTimeoutMs = 100) {
+            backgroundWorkScope.launch {
+                while (true) {
+                    yield()
+                }
+            }
+            backgroundWorkScope.launch {
+                while (true) {
+                    delay(1)
+                }
+            }
+            val deferred = CompletableDeferred<Unit>()
+            deferred.await()
+        }
+
+    }
+
+    @Test
+    fun testUnconfinedBackgroundWorkNotPreventingTimeout(): TestResult = testResultMap({
+        try {
+            it()
+            fail("unreached")
+        } catch (_: UncompletedCoroutinesError) {
+
+        }
+    }) {
+        runTest(UnconfinedTestDispatcher(), dispatchTimeoutMs = 100) {
+            /**
+             * Having a coroutine like this will still cause the test to hang:
+                 backgroundWorkScope.launch {
+                     while (true) {
+                         yield()
+                     }
+                 }
+             * The reason is that even the initial [advanceUntilIdle] will never return in this case.
+             */
+            backgroundWorkScope.launch {
+                while (true) {
+                    delay(1)
+                }
+            }
+            val deferred = CompletableDeferred<Unit>()
+            deferred.await()
+        }
+
     }
 
     companion object {

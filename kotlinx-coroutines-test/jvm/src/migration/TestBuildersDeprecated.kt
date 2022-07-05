@@ -93,7 +93,7 @@ public fun runBlockingTestOnTestScope(
         null // the deferred was not completed yet; `scope.leave()` should complain then about unfinished jobs
     }
     scope.backgroundWorkScope.cancel()
-    scope.testScheduler.advanceUntilIdle(backgroundIsIdle = false)
+    scope.testScheduler.advanceUntilIdleOr { false }
     throwable?.let {
         val exceptions = try {
             scope.leave()

@@ -75,7 +75,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             events.addLast(event)
             /** can't be moved above: otherwise, [onDispatchEvent] could consume the token sent here before there's
              * actually anything in the event queue. */
-            sendDispatchEvent()
+            sendDispatchEvent(context)
             DisposableHandle {
                 synchronized(lock) {
                     events.remove(event)
@@ -86,11 +86,11 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
 
     /**
      * Runs the next enqueued task, advancing the virtual time to the time of its scheduled awakening,
-     * unless all the remaining tasks are the background ones.
+     * unless [condition] holds.
      */
-    private fun tryRunNextTask(backgroundIsIdle: Boolean): Boolean {
+    internal fun tryRunNextTaskUnless(condition: () -> Boolean): Boolean {
         val event = synchronized(lock) {
-            if (backgroundIsIdle && events.none(TestDispatchEvent<*>::isForeground)) return false
+            if (condition()) return false
             val event = events.removeFirstOrNull() ?: return false
             if (currentTime > event.time)
                 currentTimeAheadOfEvents()
@@ -110,15 +110,14 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * functionality, query [currentTime] before and after the execution to achieve the same result.
      */
     @ExperimentalCoroutinesApi
-    public fun advanceUntilIdle(): Unit = advanceUntilIdle(backgroundIsIdle = true)
+    public fun advanceUntilIdle(): Unit = advanceUntilIdleOr { events.none(TestDispatchEvent<*>::isForeground) }
 
     /**
-     * [backgroundIsIdle]: `true` if the background tasks should not be considered
-     * when checking if the scheduler is already idle.
+     * [condition]: guaranteed to be invoked under the lock.
      */
-    internal fun advanceUntilIdle(backgroundIsIdle: Boolean) {
+    internal fun advanceUntilIdleOr(condition: () -> Boolean) {
         while (true) {
-            if (!tryRunNextTask(backgroundIsIdle = backgroundIsIdle))
+            if (!tryRunNextTaskUnless(condition))
                 return
         }
     }
@@ -188,9 +187,12 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
 
     /**
      * Notifies this scheduler about a dispatch event.
+     *
+     * [context] is the context in which the task will be dispatched.
      */
-    internal fun sendDispatchEvent() {
-        dispatchEvents.trySend(Unit)
+    internal fun sendDispatchEvent(context: CoroutineContext) {
+        if (context[BackgroundWork] !== BackgroundWork)
+            dispatchEvents.trySend(Unit)
     }
 
     /**

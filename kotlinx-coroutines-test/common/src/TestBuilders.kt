@@ -166,7 +166,7 @@ public fun TestScope.runTest(
     createTestResult {
         runTestCoroutine(it, dispatchTimeoutMs, TestScopeImpl::tryGetCompletionCause, testBody) {
             backgroundWorkScope.cancel()
-            testScheduler.advanceUntilIdle(backgroundIsIdle = false)
+            testScheduler.advanceUntilIdleOr { false }
             it.leave()
         }
     }
@@ -176,7 +176,7 @@ public fun TestScope.runTest(
  * Runs [testProcedure], creating a [TestResult].
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT") // actually suppresses `TestResult`
-internal expect fun createTestResult(testProcedure: suspend () -> Unit): TestResult
+internal expect fun createTestResult(testProcedure: suspend CoroutineScope.() -> Unit): TestResult
 
 /** A coroutine context element indicating that the coroutine is running inside `runTest`. */
 internal object RunningInRunTest : CoroutineContext.Key<RunningInRunTest>, CoroutineContext.Element {
@@ -199,7 +199,7 @@ internal const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
  * The [cleanup] procedure may either throw [UncompletedCoroutinesError] to denote that child coroutines were leaked, or
  * return a list of uncaught exceptions that should be reported at the end of the test.
  */
-internal suspend fun <T: AbstractCoroutine<Unit>> runTestCoroutine(
+internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutine(
     coroutine: T,
     dispatchTimeoutMs: Long,
     tryGetCompletionCause: T.() -> Throwable?,
@@ -220,16 +220,27 @@ internal suspend fun <T: AbstractCoroutine<Unit>> runTestCoroutine(
             completed = true
             continue
         }
-        select<Unit> {
-            coroutine.onJoin {
-                completed = true
+        // in case progress depends on some background work, we need to keep spinning it.
+        val backgroundWorkRunner = launch(CoroutineName("background work runner")) {
+            while (true) {
+                scheduler.tryRunNextTaskUnless { !isActive }
+                yield()
             }
-            scheduler.onDispatchEvent {
-                // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
+        }
+        try {
+            select<Unit> {
+                coroutine.onJoin {
+                    completed = true
+                }
+                scheduler.onDispatchEvent {
+                    // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
+                }
+                onTimeout(dispatchTimeoutMs) {
+                    handleTimeout(coroutine, dispatchTimeoutMs, tryGetCompletionCause, cleanup)
+                }
             }
-            onTimeout(dispatchTimeoutMs) {
-                handleTimeout(coroutine, dispatchTimeoutMs, tryGetCompletionCause, cleanup)
-            }
+        } finally {
+            backgroundWorkRunner.cancelAndJoin()
         }
     }
     coroutine.getCompletionExceptionOrNull()?.let { exception ->

@@ -41,7 +41,7 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         checkSchedulerInContext(scheduler, context)
         if (dispatchImmediately) {
-            scheduler.sendDispatchEvent()
+            scheduler.sendDispatchEvent(context)
             block.run()
         } else {
             post(block, context)
