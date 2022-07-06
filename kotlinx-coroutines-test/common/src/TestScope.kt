@@ -57,9 +57,29 @@ public sealed interface TestScope : CoroutineScope {
      *
      * Failures in coroutines in this scope do not terminate the test.
      * Instead, they are reported at the end of the test.
+     * Likewise, failure in the [TestScope] itself will not affect its [backgroundScope],
+     * because there's no parent-child relationship between them.
      *
      * A typical use case for this scope is to launch tasks that would outlive the tested code in
      * the production environment.
+     *
+     * In this example, the coroutine that continuously sends new elements to the channel will get
+     * cancelled:
+     * ```
+     * @Test
+     * fun testExampleBackgroundJob() = runTest {
+     *   val channel = Channel<Int>()
+     *   backgroundScope.launch {
+     *     var i = 0
+     *     while (true) {
+     *       channel.send(i++)
+     *     }
+     *   }
+     *   repeat(100) {
+     *     assertEquals(it, channel.receive())
+     *   }
+     * }
+     * ```
      */
     @ExperimentalCoroutinesApi
     public val backgroundScope: CoroutineScope
