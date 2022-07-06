@@ -176,10 +176,10 @@ class TestScopeTest {
     fun testBackgroundWorkBeingRun(): TestResult = runTest {
         var i = 0
         var j = 0
-        backgroundWorkScope.launch {
+        backgroundScope.launch {
             ++i
         }
-        backgroundWorkScope.launch {
+        backgroundScope.launch {
             delay(10)
             ++j
         }
@@ -205,7 +205,7 @@ class TestScopeTest {
         }) {
             runTest {
                 var i = 0
-                backgroundWorkScope.launch {
+                backgroundScope.launch {
                     try {
                         while (isActive) {
                             ++i
@@ -228,13 +228,13 @@ class TestScopeTest {
     fun testBackgroundWorkTimeControl(): TestResult = runTest {
         var i = 0
         var j = 0
-        backgroundWorkScope.launch {
+        backgroundScope.launch {
             while (true) {
                 ++i
                 delay(100)
             }
         }
-        backgroundWorkScope.launch {
+        backgroundScope.launch {
             while (true) {
                 ++j
                 delay(50)
@@ -284,7 +284,7 @@ class TestScopeTest {
             }
         }) {
             runTest {
-                backgroundWorkScope.launch {
+                backgroundScope.launch {
                     throw exception
                 }
                 delay(1000)
@@ -311,7 +311,7 @@ class TestScopeTest {
         }) {
             runTest {
                 repeat(nTasks) {
-                    backgroundWorkScope.launch {
+                    backgroundScope.launch {
                         try {
                             while (true) {
                                 delay(1)
@@ -341,7 +341,7 @@ class TestScopeTest {
                 delay(1)
             }
         }
-        val stateFlow = myFlow.stateIn(backgroundWorkScope, SharingStarted.Eagerly, 0)
+        val stateFlow = myFlow.stateIn(backgroundScope, SharingStarted.Eagerly, 0)
         var j = 0
         repeat(100) {
             assertEquals(j++, stateFlow.value)
@@ -350,12 +350,12 @@ class TestScopeTest {
     }
 
     /**
-     * A test from the documentation of [TestScope.backgroundWorkScope].
+     * A test from the documentation of [TestScope.backgroundScope].
      */
     @Test
     fun testExampleBackgroundJob2() = runTest {
         val channel = Channel<Int>()
-        backgroundWorkScope.launch {
+        backgroundScope.launch {
             var i = 0
             while (true) {
                 channel.send(i++)
@@ -379,12 +379,12 @@ class TestScopeTest {
         }
     }) {
         runTest(dispatchTimeoutMs = 100) {
-            backgroundWorkScope.launch {
+            backgroundScope.launch {
                 while (true) {
                     yield()
                 }
             }
-            backgroundWorkScope.launch {
+            backgroundScope.launch {
                 while (true) {
                     delay(1)
                 }
@@ -407,14 +407,14 @@ class TestScopeTest {
         runTest(UnconfinedTestDispatcher(), dispatchTimeoutMs = 100) {
             /**
              * Having a coroutine like this will still cause the test to hang:
-                 backgroundWorkScope.launch {
+                 backgroundScope.launch {
                      while (true) {
                          yield()
                      }
                  }
              * The reason is that even the initial [advanceUntilIdle] will never return in this case.
              */
-            backgroundWorkScope.launch {
+            backgroundScope.launch {
                 while (true) {
                     delay(1)
                 }

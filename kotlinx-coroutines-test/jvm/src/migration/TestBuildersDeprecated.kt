@@ -92,7 +92,7 @@ public fun runBlockingTestOnTestScope(
     } catch (e: IllegalStateException) {
         null // the deferred was not completed yet; `scope.leave()` should complain then about unfinished jobs
     }
-    scope.backgroundWorkScope.cancel()
+    scope.backgroundScope.cancel()
     scope.testScheduler.advanceUntilIdleOr { false }
     throwable?.let {
         val exceptions = try {

@@ -165,7 +165,7 @@ public fun TestScope.runTest(
     it.enter()
     createTestResult {
         runTestCoroutine(it, dispatchTimeoutMs, TestScopeImpl::tryGetCompletionCause, testBody) {
-            backgroundWorkScope.cancel()
+            backgroundScope.cancel()
             testScheduler.advanceUntilIdleOr { false }
             it.leave()
         }

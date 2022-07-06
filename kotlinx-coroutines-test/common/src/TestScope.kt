@@ -62,7 +62,7 @@ public sealed interface TestScope : CoroutineScope {
      * the production environment.
      */
     @ExperimentalCoroutinesApi
-    public val backgroundWorkScope: CoroutineScope
+    public val backgroundScope: CoroutineScope
 }
 
 /**
@@ -187,7 +187,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
     private val uncaughtExceptions = mutableListOf<Throwable>()
     private val lock = SynchronizedObject()
 
-    override val backgroundWorkScope: CoroutineScope =
+    override val backgroundScope: CoroutineScope =
         CoroutineScope(coroutineContext + SupervisorJob() + BackgroundWork)
 
     /** Called upon entry to [runTest]. Will throw if called more than once. */

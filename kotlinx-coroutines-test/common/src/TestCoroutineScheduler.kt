@@ -249,7 +249,7 @@ internal fun checkSchedulerInContext(scheduler: TestCoroutineScheduler, context:
 
 /**
  * A coroutine context key denoting that the work is to be executed in the background.
- * @see [TestScope.backgroundWorkScope]
+ * @see [TestScope.backgroundScope]
  */
 internal object BackgroundWork : CoroutineContext.Key<BackgroundWork>, CoroutineContext.Element {
     override val key: CoroutineContext.Key<*>
