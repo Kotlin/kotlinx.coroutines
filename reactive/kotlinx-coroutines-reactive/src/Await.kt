@@ -202,8 +202,9 @@ private suspend fun <T> Publisher<T>.awaitOne(
                 return
             }
             subscription = sub
-            cont.invokeOnCancellation { sub.cancel() }
             sub.request(if (mode == Mode.FIRST || mode == Mode.FIRST_OR_DEFAULT) 1 else Long.MAX_VALUE)
+            // Due to rule 2.7 ensuring that Subscription request is finished before registering cancellation handler
+            cont.invokeOnCancellation { sub.cancel() }
         }
 
         override fun onNext(t: T) {
