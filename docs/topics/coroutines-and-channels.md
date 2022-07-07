@@ -1529,4 +1529,4 @@ can see the difference in tests using virtual time.
 ## What's next
 
 * Check out the [Asynchronous Programming with Kotlin](https://kotlinconf.com/workshops/) workshop by Roman Elizarov at KotlinConf.
-* Find out more about using [virtual time and experimental testing package](kotlinx-coroutines-test.md).
+* Find out more about using [virtual time and experimental testing package](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/).
