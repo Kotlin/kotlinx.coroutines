@@ -5,7 +5,6 @@
 package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.*
 import org.junit.*
 import org.reactivestreams.*
 
@@ -38,46 +37,6 @@ class AwaitTest: TestBase() {
         }
         expect(4)
         job.cancelAndJoin()
-        finish(7)
-    }
-
-    @Test
-    fun testAwaitCancellationPerformedSerially() = runTest {
-        val requestCompletion = Mutex(locked = true)
-        val subscriptionStarted = Mutex(locked = true)
-        expect(1)
-        val publisher = Publisher<Int> { s ->
-            s.onSubscribe(object : Subscription {
-                override fun request(n: Long) {
-                    expect(2)
-                    subscriptionStarted.unlock()
-                    runBlocking { requestCompletion.lock() }
-                    expect(4)
-                }
-
-                override fun cancel() {
-                    expect(5)
-                }
-            })
-        }
-        val job = launch(Dispatchers.Default) {
-            try {
-                publisher.awaitFirst()
-            } catch (e: CancellationException) {
-                expect(6)
-                throw e
-            }
-        }
-        subscriptionStarted.lock()
-        expect(3)
-
-        launch(Dispatchers.Default) {
-            job.cancel()
-        }
-        delay(10)
-        requestCompletion.unlock()
-        job.join()
-
         finish(7)
     }
 }

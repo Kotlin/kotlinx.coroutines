@@ -204,13 +204,11 @@ private suspend fun <T> Publisher<T>.awaitOne(
                 return
             }
             subscription = sub
-
             cont.invokeOnCancellation {
                 withSubscriptionLock {
                     sub.cancel()
                 }
             }
-
             withSubscriptionLock {
                 sub.request(if (mode == Mode.FIRST || mode == Mode.FIRST_OR_DEFAULT) 1 else Long.MAX_VALUE)
             }
