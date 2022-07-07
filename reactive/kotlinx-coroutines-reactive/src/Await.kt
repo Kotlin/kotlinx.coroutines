@@ -198,13 +198,22 @@ private suspend fun <T> Publisher<T>.awaitOne(
             /** cancelling the new subscription due to rule 2.5, though the publisher would either have to
              * subscribe more than once, which would break 2.12, or leak this [Subscriber]. */
             if (subscription != null) {
-                sub.cancel()
+                withSubscriptionLock {
+                    sub.cancel()
+                }
                 return
             }
             subscription = sub
-            sub.request(if (mode == Mode.FIRST || mode == Mode.FIRST_OR_DEFAULT) 1 else Long.MAX_VALUE)
-            // Due to rule 2.7 ensuring that Subscription request is finished before registering cancellation handler
-            cont.invokeOnCancellation { sub.cancel() }
+
+            cont.invokeOnCancellation {
+                withSubscriptionLock {
+                    sub.cancel()
+                }
+            }
+
+            withSubscriptionLock {
+                sub.request(if (mode == Mode.FIRST || mode == Mode.FIRST_OR_DEFAULT) 1 else Long.MAX_VALUE)
+            }
         }
 
         override fun onNext(t: T) {
@@ -229,12 +238,16 @@ private suspend fun <T> Publisher<T>.awaitOne(
                         return
                     }
                     seenValue = true
-                    sub.cancel()
+                    withSubscriptionLock {
+                        sub.cancel()
+                    }
                     cont.resume(t)
                 }
                 Mode.LAST, Mode.SINGLE, Mode.SINGLE_OR_DEFAULT -> {
                     if ((mode == Mode.SINGLE || mode == Mode.SINGLE_OR_DEFAULT) && seenValue) {
-                        sub.cancel()
+                        withSubscriptionLock {
+                            sub.cancel()
+                        }
                         /* the check for `cont.isActive` is needed in case `sub.cancel() above calls `onComplete` or
                          `onError` on its own. */
                         if (cont.isActive) {
@@ -289,6 +302,14 @@ private suspend fun <T> Publisher<T>.awaitOne(
             }
             inTerminalState = true
             return true
+        }
+
+        /**
+         * Enforce rule 2.7: [Subscription.request] and [Subscription.cancel] must be executed serially
+         */
+        @Synchronized
+        private fun withSubscriptionLock(block: () -> Unit) {
+            block()
         }
     })
 }

@@ -60,7 +60,7 @@ class AwaitTest: TestBase() {
                 }
             })
         }
-        val job = launch(Dispatchers.IO) {
+        val job = launch(Dispatchers.Default) {
             try {
                 publisher.awaitFirst()
             } catch (e: CancellationException) {
@@ -71,7 +71,10 @@ class AwaitTest: TestBase() {
         subscriptionStarted.lock()
         expect(3)
 
-        job.cancel()
+        launch(Dispatchers.Default) {
+            job.cancel()
+        }
+        delay(10)
         requestCompletion.unlock()
         job.join()
 
