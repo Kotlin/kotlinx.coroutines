@@ -381,6 +381,12 @@ public final class kotlinx/coroutines/Job$DefaultImpls {
 public final class kotlinx/coroutines/Job$Key : kotlin/coroutines/CoroutineContext$Key {
 }
 
+public class kotlinx/coroutines/JobImpl : kotlinx/coroutines/JobSupport, kotlinx/coroutines/CompletableJob {
+	public fun <init> (Lkotlinx/coroutines/Job;)V
+	public fun complete ()Z
+	public fun completeExceptionally (Ljava/lang/Throwable;)Z
+}
+
 public final class kotlinx/coroutines/JobKt {
 	public static final fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableJob;
 	public static final synthetic fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
