@@ -6,6 +6,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.test.internal.*
 import kotlin.coroutines.*
 import kotlin.time.*
 
@@ -208,7 +209,46 @@ internal class TestScopeImpl(context: CoroutineContext) :
     private val lock = SynchronizedObject()
 
     override val backgroundScope: CoroutineScope =
-        CoroutineScope(coroutineContext + SupervisorJob() + BackgroundWork)
+        CoroutineScope(coroutineContext + BackgroundWork + ReportingSupervisorJob {
+            if (it !is CancellationException) reportException(it)
+        })
+
+    /**
+     * Collect the uncaught exceptions where possible.
+     *
+     * The exceptions caught in a [CoroutineExceptionHandler] via [reportException] will be collected.
+     * Additionally, this will collect exceptions with which coroutines in [backgroundScope] failed,
+     * unless they already were reported via the [CoroutineExceptionHandler].
+     * This allows us to report the situations where a background coroutine silently failed. For example:
+     * ```
+     * @Test
+     * fun foo() = runTest {
+     *   backgroundWorkScope.async {
+     *     throw TestException()
+     *   }
+     *   backgroundWorkScope.produce<Unit> {
+     *     throw TestException()
+     *   }
+     *   delay(1)
+     * }
+     * ```
+     */
+    // Only call this in a `synchronized(lock)` block.
+    @Suppress("INVISIBLE_MEMBER")
+    private fun collectUncaughtExceptions(): List<Throwable> {
+        val exceptions = LinkedHashSet(uncaughtExceptions)
+        val unwrappedExceptions = LinkedHashSet(uncaughtExceptions.map { unwrap(it) })
+        for (child in backgroundScope.coroutineContext.job.children) {
+            val exception = try {
+                child.getCancellationException()
+            } catch (e: IllegalStateException) {
+                continue
+            }
+            if (!(exception in exceptions || unwrap(exception) in unwrappedExceptions))
+                exceptions.add(exception)
+        }
+        return exceptions.toList()
+    }
 
     /** Called upon entry to [runTest]. Will throw if called more than once. */
     fun enter() {
@@ -217,7 +257,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
                 throw IllegalStateException("Only a single call to `runTest` can be performed during one test.")
             entered = true
             check(!finished)
-            uncaughtExceptions
+            collectUncaughtExceptions()
         }
         if (exceptions.isNotEmpty()) {
             throw UncaughtExceptionsBeforeTest().apply {
@@ -233,7 +273,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
             if(!entered || finished)
                 throw IllegalStateException("An internal error. Please report to the Kotlinx Coroutines issue tracker")
             finished = true
-            uncaughtExceptions
+            collectUncaughtExceptions()
         }
         val activeJobs = children.filter { it.isActive }.toList() // only non-empty if used with `runBlockingTest`
         if (exceptions.isEmpty()) {

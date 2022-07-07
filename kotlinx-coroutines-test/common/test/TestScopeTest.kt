@@ -395,6 +395,10 @@ class TestScopeTest {
 
     }
 
+    /**
+     * Tests that the background work will not prevent the test from timing out even in some cases
+     * when the unconfined dispatcher is used.
+     */
     @Test
     fun testUnconfinedBackgroundWorkNotPreventingTimeout(): TestResult = testResultMap({
         try {
@@ -422,7 +426,31 @@ class TestScopeTest {
             val deferred = CompletableDeferred<Unit>()
             deferred.await()
         }
+    }
 
+    /**
+     * Tests that even the exceptions in the background scope that don't typically get reported and need to be queried
+     * (like failures in [async]) will still surface in some simple scenarios.
+     */
+    @Test
+    fun testAsyncFailureInBackgroundReported() = testResultMap({
+        try {
+            it()
+        } catch (e: TestException) {
+            assertEquals("z", e.message)
+            assertEquals(setOf("x", "y"), e.suppressedExceptions.map { it.message }.toSet())
+        }
+    }) {
+        runTest {
+            backgroundScope.async {
+                throw TestException("x")
+            }
+            backgroundScope.produce<Unit> {
+                throw TestException("y")
+            }
+            delay(1)
+            throw TestException("z")
+        }
     }
 
     companion object {
