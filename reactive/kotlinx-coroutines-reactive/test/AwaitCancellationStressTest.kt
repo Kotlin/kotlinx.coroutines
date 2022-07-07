@@ -16,7 +16,7 @@ class AwaitCancellationStressTest : TestBase() {
     private val jobsToRun = 1000 * stressTestMultiplier
 
     @Test
-    fun testRequestStress() = runTest {
+    fun testAwaitCancellationOrder() = runTest {
         val jobs = (1..jobsToRun).map {
             launch(Dispatchers.Default) {
                 testPublisher().awaitFirst()
