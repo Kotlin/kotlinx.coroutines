@@ -39,4 +39,5 @@ class AwaitTest: TestBase() {
         job.cancelAndJoin()
         finish(7)
     }
+
 }
