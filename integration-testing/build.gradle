@@ -53,6 +53,18 @@ sourceSets {
             implementation "org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutines_version"
         }
     }
+
+    debugDynamicAgentTest {
+        kotlin
+        compileClasspath += sourceSets.test.runtimeClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutines_version"
+        }
+    }
+
     coreAgentTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
@@ -93,6 +105,14 @@ task debugAgentTest(type: Test) {
     systemProperties project.properties.subMap(["overwrite.probes"])
 }
 
+task debugDynamicAgentTest(type: Test) {
+    environment "version", coroutines_version
+    def sourceSet = sourceSets.debugDynamicAgentTest
+    testClassesDirs = sourceSet.output.classesDirs
+    classpath = sourceSet.runtimeClasspath
+}
+
+
 task coreAgentTest(type: Test) {
     def sourceSet = sourceSets.coreAgentTest
     def coroutinesCoreJar = sourceSet.runtimeClasspath.filter {it.name == "kotlinx-coroutines-core-jvm-${coroutines_version}.jar" }.singleFile
@@ -106,5 +126,5 @@ compileTestKotlin {
 }
 
 check {
-    dependsOn([withGuavaTest, mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
+    dependsOn([withGuavaTest, debugDynamicAgentTest, mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
 }
