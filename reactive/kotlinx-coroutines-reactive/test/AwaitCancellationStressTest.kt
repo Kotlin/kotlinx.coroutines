@@ -7,37 +7,36 @@ package kotlinx.coroutines.reactive
 import kotlinx.coroutines.*
 import org.junit.*
 import org.reactivestreams.*
-import java.util.concurrent.atomic.*
+import java.util.concurrent.locks.*
 
 /**
  * This test checks implementation of rule 2.7 for await methods - serial execution of subscription methods
  */
 class AwaitCancellationStressTest : TestBase() {
-    private val jobsToRun = 1000 * stressTestMultiplier
+    private val iterations = 10_000 * stressTestMultiplier
 
     @Test
     fun testAwaitCancellationOrder() = runTest {
-        val jobs = (1..jobsToRun).map {
-            launch(Dispatchers.Default) {
+        repeat(iterations) {
+            val job = launch(Dispatchers.Default) {
                 testPublisher().awaitFirst()
             }
+            job.cancelAndJoin()
         }
-        jobs.forEach { it.cancel() }
-        jobs.joinAll()
     }
 
     private fun testPublisher() = Publisher<Int> { s ->
-        val counter = AtomicInteger()
+        val lock = ReentrantLock()
         s.onSubscribe(object : Subscription {
             override fun request(n: Long) {
-                check(counter.getAndIncrement() == 0)
-                Thread.sleep(10)
-                counter.decrementAndGet()
+                check(lock.tryLock())
+                s.onNext(42)
+                lock.unlock()
             }
 
             override fun cancel() {
-                check(counter.getAndIncrement() == 0)
-                counter.decrementAndGet()
+                check(lock.tryLock())
+                lock.unlock()
             }
         })
     }
