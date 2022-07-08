@@ -32,10 +32,6 @@ java {
 
 jar {
     setEnabled(false)
-    manifest {
-        attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
-        attributes "Can-Redefine-Classes": "true"
-    }
 }
 
 def shadowJarTask = shadowJar {
@@ -43,6 +39,11 @@ def shadowJarTask = shadowJar {
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = [project.configurations.shadowDeps]
     relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
+
+    manifest {
+        attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
+        attributes "Can-Redefine-Classes": "true"
+    }
 }
 
 configurations {
