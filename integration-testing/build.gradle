@@ -23,6 +23,7 @@ dependencies {
 }
 
 sourceSets {
+    // Test that relies on Guava to reflectively check all Throwable subclasses in coroutines
     withGuavaTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
@@ -33,6 +34,7 @@ sourceSets {
             implementation 'com.google.guava:guava:31.1-jre'
         }
     }
+    // Checks correctness of Maven publication (JAR resources) and absence of atomicfu symbols
     mavenTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
@@ -43,6 +45,7 @@ sourceSets {
             implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
         }
     }
+    // Checks that kotlinx-coroutines-debug can be used as -javaagent parameter
     debugAgentTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
@@ -53,6 +56,20 @@ sourceSets {
             implementation "org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutines_version"
         }
     }
+
+    // Checks that kotlinx-coroutines-debug agent can self-attach dynamically to JVM as standalone dependency
+    debugDynamicAgentTest {
+        kotlin
+        compileClasspath += sourceSets.test.runtimeClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+
+        dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutines_version"
+        }
+    }
+
+    // Checks that kotlinx-coroutines-core can be used as -javaagent parameter
     coreAgentTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
@@ -93,6 +110,12 @@ task debugAgentTest(type: Test) {
     systemProperties project.properties.subMap(["overwrite.probes"])
 }
 
+task debugDynamicAgentTest(type: Test) {
+    def sourceSet = sourceSets.debugDynamicAgentTest
+    testClassesDirs = sourceSet.output.classesDirs
+    classpath = sourceSet.runtimeClasspath
+}
+
 task coreAgentTest(type: Test) {
     def sourceSet = sourceSets.coreAgentTest
     def coroutinesCoreJar = sourceSet.runtimeClasspath.filter {it.name == "kotlinx-coroutines-core-jvm-${coroutines_version}.jar" }.singleFile
@@ -106,5 +129,5 @@ compileTestKotlin {
 }
 
 check {
-    dependsOn([withGuavaTest, mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
+    dependsOn([withGuavaTest, debugDynamicAgentTest, mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
 }
