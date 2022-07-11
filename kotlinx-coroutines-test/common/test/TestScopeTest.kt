@@ -453,6 +453,28 @@ class TestScopeTest {
         }
     }
 
+    /**
+     * Tests that, if an exception reaches the [TestScope] exception reporting mechanism via several
+     * channels, it will only be reported once.
+     */
+    @Test
+    fun testNoDuplicateExceptions() = testResultMap({
+        try {
+            it()
+        } catch (e: TestException) {
+            assertEquals("y", e.message)
+            assertEquals(listOf("x"), e.suppressedExceptions.map { it.message })
+        }
+    }) {
+        runTest {
+            backgroundScope.launch {
+                throw TestException("x")
+            }
+            delay(1)
+            throw TestException("y")
+        }
+    }
+
     companion object {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]
