@@ -358,4 +358,15 @@ class RunTestTest {
             }
         }
     }
+
+    /**
+     * Tests that if the main coroutine is completed without a dispatch, [runTest] will not consider this to be
+     * inactivity.
+     *
+     * The test will hang if this is not the case.
+     */
+    @Test
+    fun testCoroutineCompletingWithoutDispatch() = runTest(dispatchTimeoutMs = Long.MAX_VALUE) {
+        launch(Dispatchers.Default) { delay(100) }
+    }
 }
