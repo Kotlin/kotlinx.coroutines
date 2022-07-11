@@ -255,7 +255,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
     }
 
     /** Stores an exception to report after [runTest], or rethrows it if not inside [runTest]. */
-    inline fun reportException(throwable: Throwable) {
+    fun reportException(throwable: Throwable) {
         synchronized(lock) {
             if (finished) {
                 throw throwable
