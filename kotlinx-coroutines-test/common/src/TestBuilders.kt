@@ -253,6 +253,7 @@ internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutin
             select<Unit> {
                 coroutine.onJoin {
                     // observe that someone completed the test coroutine and leave without waiting for the timeout
+                    // TODO: looks like this can never happen
                     completed = true
                 }
                 scheduler.onDispatchEvent {
