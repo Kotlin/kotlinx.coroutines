@@ -1,5 +1,15 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.6.4
+
+* Added `TestScope.backgroundScope` for launching coroutines that perform work in the background and need to be cancelled at the end of the test (#3287).
+* Fixed the POM of `kotlinx-coroutines-debug` having an incorrect reference to `kotlinx-coroutines-bom`, which cause the builds of Maven projects using the debug module to break (#3334).
+* Fixed the `Publisher.await` functions in `kotlinx-coroutines-reactive` not ensuring that the `Subscriber` methods are invoked serially (#3360). Thank you, @EgorKulbachka!
+* Fixed a memory leak in `withTimeout` on K/N with the new memory model (#3351).
+* Added the guarantee that all `Throwable` implementations in the core library are serializable (#3328).
+* Moved the documentation to <https://kotlinlang.org/api/kotlinx.coroutines/> (#3342).
+* Various documentation improvements.
+
 ## Version 1.6.3
 
 * Updated atomicfu version to 0.17.3 (#3321), fixing the projects using this library with JS IR failing to build (#3305).
