@@ -45,6 +45,9 @@ public abstract class CoroutineDispatcher :
      * potentially forming an event-loop to prevent stack overflows.
      * The event loop is an advanced topic and its implications can be found in [Dispatchers.Unconfined] documentation.
      *
+     * The [context] parameter represents the context of the coroutine that is being dispatched,
+     * or [EmptyCoroutineContext] if a non-coroutine-specific [Runnable] is dispatched instead.
+     *
      * A dispatcher can override this method to provide a performance optimization and avoid paying a cost of an unnecessary dispatch.
      * E.g. [MainCoroutineDispatcher.immediate] checks whether we are already in the required UI thread in this method and avoids
      * an additional dispatch when it is not required.
@@ -58,6 +61,9 @@ public abstract class CoroutineDispatcher :
      *
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
+     *
+     * @see dispatch
+     * @see Dispatchers.Unconfined
      */
     public open fun isDispatchNeeded(context: CoroutineContext): Boolean = true
 
@@ -102,18 +108,31 @@ public abstract class CoroutineDispatcher :
     }
 
     /**
-     * Dispatches execution of a runnable [block] onto another thread in the given [context].
+     * Requests execution of a runnable [block].
+     * The dispatcher guarantees that [block] will eventually execute, typically by dispatching it to a thread pool,
+     * using a dedicated thread, or just executing the block in place.
+     * The [context] parameter represents the context of the coroutine that is being dispatched,
+     * or [EmptyCoroutineContext] if a non-coroutine-specific [Runnable] is dispatched instead.
+     * Implementations may use [context] for additional context-specific information,
+     * such as priority, whether the dispatched coroutine can be invoked in place,
+     * coroutine name, and additional diagnostic elements.
+     *
      * This method should guarantee that the given [block] will be eventually invoked,
      * otherwise the system may reach a deadlock state and never leave it.
-     * Cancellation mechanism is transparent for [CoroutineDispatcher] and is managed by [block] internals.
+     * The cancellation mechanism is transparent for [CoroutineDispatcher] and is managed by [block] internals.
      *
      * This method should generally be exception-safe. An exception thrown from this method
-     * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
+     * may leave the coroutines that use this dispatcher in an inconsistent and hard-to-debug state.
      *
-     * This method must not immediately call [block]. Doing so would result in [StackOverflowError]
-     * when [yield] is repeatedly called from a loop. However, an implementation that returns `false` from
-     * [isDispatchNeeded] can delegate this function to `dispatch` method of [Dispatchers.Unconfined], which is
-     * integrated with [yield] to avoid this problem.
+     * This method must not immediately call [block]. Doing so may result in `StackOverflowError`
+     * when `dispatch` is invoked repeatedly, for example when [yield] is called in a loop.
+     * In order to execute a block in place, it is required to return `false` from [isDispatchNeeded]
+     * and delegate the `dispatch` implementation to `Dispatchers.Unconfined.dispatch` in such cases.
+     * To support this, the coroutines machinery ensures in-place execution and forms an event-loop to
+     * avoid unbound recursion.
+     *
+     * @see isDispatchNeeded
+     * @see Dispatchers.Unconfined
      */
     public abstract fun dispatch(context: CoroutineContext, block: Runnable)
 
