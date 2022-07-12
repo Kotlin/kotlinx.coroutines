@@ -17,7 +17,8 @@ internal class ReportingSupervisorJob(parent: Job? = null, val onChildCancellati
             onChildCancellation(cause)
         } catch (e: Throwable) {
             cause.addSuppressed(e)
-            // the coroutine context does not matter here, because we're only interested in
+            /* the coroutine context does not matter here, because we're only interested in reporting this exception
+            to the platform-specific global handler, not to a [CoroutineExceptionHandler] of any sort. */
             handleCoroutineException(this, cause)
         }.let { false }
 }

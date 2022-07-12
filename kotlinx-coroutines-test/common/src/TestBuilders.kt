@@ -218,7 +218,7 @@ internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutin
      * 2. Wait until we run out of foreground work to do. This could mean one of the following:
      *    * The main coroutine is already completed. This is checked separately; then we leave the procedure.
      *    * It's switched to another dispatcher that doesn't know about the [TestCoroutineScheduler].
-     *    * Generally, i's waiting for something external (like a network request, or just an arbitrary callback).
+     *    * Generally, it's waiting for something external (like a network request, or just an arbitrary callback).
      *    * The test simply hanged.
      *    * The main coroutine is waiting for some background work.
      *
