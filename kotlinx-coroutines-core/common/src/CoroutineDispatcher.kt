@@ -126,7 +126,7 @@ public abstract class CoroutineDispatcher :
      * when `dispatch` is invoked repeatedly, for example when [yield] is called in a loop.
      * In order to execute block in place, it is required to return `false` from [isDispatchNeeded]
      * and delegate `dispatch` implementation to `Dispatchers.Unconfined.dispatch` in such cases.
-     * For that, coroutines machinery ensures in place execution and forms an event-loop to
+     * To support this, the coroutines machinery ensures in-place execution and forms an event-loop to
      * avoid unbound recursion.
      *
      * @see isDispatchNeeded
