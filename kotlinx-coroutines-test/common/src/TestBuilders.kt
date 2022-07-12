@@ -164,7 +164,11 @@ public fun TestScope.runTest(
 ): TestResult = asSpecificImplementation().let {
     it.enter()
     createTestResult {
-        runTestCoroutine(it, dispatchTimeoutMs, TestScopeImpl::tryGetCompletionCause, testBody) { it.leave() }
+        runTestCoroutine(it, dispatchTimeoutMs, TestScopeImpl::tryGetCompletionCause, testBody) {
+            backgroundScope.cancel()
+            testScheduler.advanceUntilIdleOr { false }
+            it.leave()
+        }
     }
 }
 
@@ -172,7 +176,7 @@ public fun TestScope.runTest(
  * Runs [testProcedure], creating a [TestResult].
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT") // actually suppresses `TestResult`
-internal expect fun createTestResult(testProcedure: suspend () -> Unit): TestResult
+internal expect fun createTestResult(testProcedure: suspend CoroutineScope.() -> Unit): TestResult
 
 /** A coroutine context element indicating that the coroutine is running inside `runTest`. */
 internal object RunningInRunTest : CoroutineContext.Key<RunningInRunTest>, CoroutineContext.Element {
@@ -195,7 +199,7 @@ internal const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
  * The [cleanup] procedure may either throw [UncompletedCoroutinesError] to denote that child coroutines were leaked, or
  * return a list of uncaught exceptions that should be reported at the end of the test.
  */
-internal suspend fun <T: AbstractCoroutine<Unit>> runTestCoroutine(
+internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutine(
     coroutine: T,
     dispatchTimeoutMs: Long,
     tryGetCompletionCause: T.() -> Throwable?,
@@ -207,6 +211,27 @@ internal suspend fun <T: AbstractCoroutine<Unit>> runTestCoroutine(
     coroutine.start(CoroutineStart.UNDISPATCHED, coroutine) {
         testBody()
     }
+    /**
+     * The general procedure here is as follows:
+     * 1. Try running the work that the scheduler knows about, both background and foreground.
+     *
+     * 2. Wait until we run out of foreground work to do. This could mean one of the following:
+     *    * The main coroutine is already completed. This is checked separately; then we leave the procedure.
+     *    * It's switched to another dispatcher that doesn't know about the [TestCoroutineScheduler].
+     *    * Generally, it's waiting for something external (like a network request, or just an arbitrary callback).
+     *    * The test simply hanged.
+     *    * The main coroutine is waiting for some background work.
+     *
+     * 3. We await progress from things that are not the code under test:
+     *    the background work that the scheduler knows about, the external callbacks,
+     *    the work on dispatchers not linked to the scheduler, etc.
+     *
+     *    When we observe that the code under test can proceed, we go to step 1 again.
+     *    If there is no activity for [dispatchTimeoutMs] milliseconds, we consider the test to have hanged.
+     *
+     *    The background work is not running on a dedicated thread.
+     *    Instead, the test thread itself is used, by spawning a separate coroutine.
+     */
     var completed = false
     while (!completed) {
         scheduler.advanceUntilIdle()
@@ -216,16 +241,29 @@ internal suspend fun <T: AbstractCoroutine<Unit>> runTestCoroutine(
             completed = true
             continue
         }
-        select<Unit> {
-            coroutine.onJoin {
-                completed = true
+        // in case progress depends on some background work, we need to keep spinning it.
+        val backgroundWorkRunner = launch(CoroutineName("background work runner")) {
+            while (true) {
+                scheduler.tryRunNextTaskUnless { !isActive }
+                // yield so that the `select` below has a chance to check if its conditions are fulfilled
+                yield()
             }
-            scheduler.onDispatchEvent {
-                // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
+        }
+        try {
+            select<Unit> {
+                coroutine.onJoin {
+                    // observe that someone completed the test coroutine and leave without waiting for the timeout
+                    completed = true
+                }
+                scheduler.onDispatchEvent {
+                    // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
+                }
+                onTimeout(dispatchTimeoutMs) {
+                    handleTimeout(coroutine, dispatchTimeoutMs, tryGetCompletionCause, cleanup)
+                }
             }
-            onTimeout(dispatchTimeoutMs) {
-                handleTimeout(coroutine, dispatchTimeoutMs, tryGetCompletionCause, cleanup)
-            }
+        } finally {
+            backgroundWorkRunner.cancelAndJoin()
         }
     }
     coroutine.getCompletionExceptionOrNull()?.let { exception ->

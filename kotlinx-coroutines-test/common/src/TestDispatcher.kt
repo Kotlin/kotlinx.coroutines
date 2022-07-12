@@ -10,14 +10,14 @@ import kotlin.jvm.*
 
 /**
  * A test dispatcher that can interface with a [TestCoroutineScheduler].
- * 
+ *
  * The available implementations are:
  * * [StandardTestDispatcher] is a dispatcher that places new tasks into a queue.
  * * [UnconfinedTestDispatcher] is a dispatcher that behaves like [Dispatchers.Unconfined] while allowing to control
  *   the virtual time.
  */
 @ExperimentalCoroutinesApi
-public abstract class TestDispatcher internal constructor(): CoroutineDispatcher(), Delay {
+public abstract class TestDispatcher internal constructor() : CoroutineDispatcher(), Delay {
     /** The scheduler that this dispatcher is linked to. */
     @ExperimentalCoroutinesApi
     public abstract val scheduler: TestCoroutineScheduler
@@ -30,16 +30,13 @@ public abstract class TestDispatcher internal constructor(): CoroutineDispatcher
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        checkSchedulerInContext(scheduler, continuation.context)
         val timedRunnable = CancellableContinuationRunnable(continuation, this)
-        scheduler.registerEvent(this, timeMillis, timedRunnable, ::cancellableRunnableIsCancelled)
+        scheduler.registerEvent(this, timeMillis, timedRunnable, continuation.context, ::cancellableRunnableIsCancelled)
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        checkSchedulerInContext(scheduler, context)
-        return scheduler.registerEvent(this, timeMillis, block) { false }
-    }
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        scheduler.registerEvent(this, timeMillis, block, context) { false }
 }
 
 /**

@@ -37,6 +37,16 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
         _size.value = 0
     }
 
+    public fun find(
+        predicate: (value: T) -> Boolean
+    ): T? = synchronized(this) block@{
+        for (i in 0 until size) {
+            val value = a?.get(i)!!
+            if (predicate(value)) return@block value
+        }
+        null
+    }
+
     public fun peek(): T? = synchronized(this) { firstImpl() }
 
     public fun removeFirstOrNull(): T? = synchronized(this) {

@@ -40,7 +40,7 @@ internal expect suspend inline fun recoverAndThrow(exception: Throwable): Nothin
  * The opposite of [recoverStackTrace].
  * It is guaranteed that `unwrap(recoverStackTrace(e)) === e`
  */
-@PublishedApi // only published for the multiplatform tests in our own code
+@PublishedApi // published for the multiplatform implementation of kotlinx-coroutines-test
 internal expect fun <E: Throwable> unwrap(exception: E): E
 
 internal expect class StackTraceElement

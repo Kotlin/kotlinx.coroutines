@@ -62,17 +62,20 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
         dispatcher: TestDispatcher,
         timeDeltaMillis: Long,
         marker: T,
+        context: CoroutineContext,
         isCancelled: (T) -> Boolean
     ): DisposableHandle {
         require(timeDeltaMillis >= 0) { "Attempted scheduling an event earlier in time (with the time delta $timeDeltaMillis)" }
+        checkSchedulerInContext(this, context)
         val count = count.getAndIncrement()
+        val isForeground = context[BackgroundWork] === null
         return synchronized(lock) {
             val time = addClamping(currentTime, timeDeltaMillis)
-            val event = TestDispatchEvent(dispatcher, count, time, marker as Any) { isCancelled(marker) }
+            val event = TestDispatchEvent(dispatcher, count, time, marker as Any, isForeground) { isCancelled(marker) }
             events.addLast(event)
             /** can't be moved above: otherwise, [onDispatchEvent] could consume the token sent here before there's
              * actually anything in the event queue. */
-            sendDispatchEvent()
+            sendDispatchEvent(context)
             DisposableHandle {
                 synchronized(lock) {
                     events.remove(event)
@@ -82,10 +85,12 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     }
 
     /**
-     * Runs the next enqueued task, advancing the virtual time to the time of its scheduled awakening.
+     * Runs the next enqueued task, advancing the virtual time to the time of its scheduled awakening,
+     * unless [condition] holds.
      */
-    private fun tryRunNextTask(): Boolean {
+    internal fun tryRunNextTaskUnless(condition: () -> Boolean): Boolean {
         val event = synchronized(lock) {
+            if (condition()) return false
             val event = events.removeFirstOrNull() ?: return false
             if (currentTime > event.time)
                 currentTimeAheadOfEvents()
@@ -105,9 +110,15 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * functionality, query [currentTime] before and after the execution to achieve the same result.
      */
     @ExperimentalCoroutinesApi
-    public fun advanceUntilIdle() {
-        while (!synchronized(lock) { events.isEmpty }) {
-            tryRunNextTask()
+    public fun advanceUntilIdle(): Unit = advanceUntilIdleOr { events.none(TestDispatchEvent<*>::isForeground) }
+
+    /**
+     * [condition]: guaranteed to be invoked under the lock.
+     */
+    internal fun advanceUntilIdleOr(condition: () -> Boolean) {
+        while (true) {
+            if (!tryRunNextTaskUnless(condition))
+                return
         }
     }
 
@@ -169,24 +180,19 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /**
      * Checks that the only tasks remaining in the scheduler are cancelled.
      */
-    internal fun isIdle(strict: Boolean = true): Boolean {
+    internal fun isIdle(strict: Boolean = true): Boolean =
         synchronized(lock) {
-            if (strict)
-                return events.isEmpty
-            // TODO: also completely empties the queue, as there's no nondestructive way to iterate over [ThreadSafeHeap]
-            val presentEvents = mutableListOf<TestDispatchEvent<*>>()
-            while (true) {
-                presentEvents += events.removeFirstOrNull() ?: break
-            }
-            return presentEvents.all { it.isCancelled() }
+            if (strict) events.isEmpty else events.none { !it.isCancelled() }
         }
-    }
 
     /**
      * Notifies this scheduler about a dispatch event.
+     *
+     * [context] is the context in which the task will be dispatched.
      */
-    internal fun sendDispatchEvent() {
-        dispatchEvents.trySend(Unit)
+    internal fun sendDispatchEvent(context: CoroutineContext) {
+        if (context[BackgroundWork] !== BackgroundWork)
+            dispatchEvents.trySend(Unit)
     }
 
     /**
@@ -216,6 +222,8 @@ private class TestDispatchEvent<T>(
     private val count: Long,
     @JvmField val time: Long,
     @JvmField val marker: T,
+    @JvmField val isForeground: Boolean,
+    // TODO: remove once the deprecated API is gone
     @JvmField val isCancelled: () -> Boolean
 ) : Comparable<TestDispatchEvent<*>>, ThreadSafeHeapNode {
     override var heap: ThreadSafeHeap<*>? = null
@@ -224,7 +232,7 @@ private class TestDispatchEvent<T>(
     override fun compareTo(other: TestDispatchEvent<*>) =
         compareValuesBy(this, other, TestDispatchEvent<*>::time, TestDispatchEvent<*>::count)
 
-    override fun toString() = "TestDispatchEvent(time=$time, dispatcher=$dispatcher)"
+    override fun toString() = "TestDispatchEvent(time=$time, dispatcher=$dispatcher${if (isForeground) "" else ", background"})"
 }
 
 // works with positive `a`, `b`
@@ -238,3 +246,17 @@ internal fun checkSchedulerInContext(scheduler: TestCoroutineScheduler, context:
         }
     }
 }
+
+/**
+ * A coroutine context key denoting that the work is to be executed in the background.
+ * @see [TestScope.backgroundScope]
+ */
+internal object BackgroundWork : CoroutineContext.Key<BackgroundWork>, CoroutineContext.Element {
+    override val key: CoroutineContext.Key<*>
+        get() = this
+
+    override fun toString(): String = "BackgroundWork"
+}
+
+private fun<T> ThreadSafeHeap<T>.none(predicate: (T) -> Boolean) where T: ThreadSafeHeapNode, T: Comparable<T> =
+    find(predicate) == null
