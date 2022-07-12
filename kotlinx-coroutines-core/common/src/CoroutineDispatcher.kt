@@ -120,7 +120,7 @@ public abstract class CoroutineDispatcher :
      * The cancellation mechanism is transparent for [CoroutineDispatcher] and is managed by [block] internals.
      *
      * This method should generally be exception-safe. An exception thrown from this method
-     * may leave the coroutines that use this dispatcher in the inconsistent and hard-to-debug state.
+     * may leave the coroutines that use this dispatcher in an inconsistent and hard-to-debug state.
      *
      * This method must not immediately call [block]. Doing so may result in `StackOverflowError`
      * when `dispatch` is invoked repeatedly, for example when [yield] is called in a loop.
