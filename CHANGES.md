@@ -83,7 +83,7 @@ Note that this is a full changelog relative to the 1.5.2 version. Changelog rela
 * Support of deprecated `CommonPool` is removed.
 * `@ExperimentalTime` is no longer needed for methods that use `Duration` (#3041).
 * JDK 1.6 is no longer required for building the project (#3043).
-* New version of Dokka is used, fixing the memory leak when building the coroutines and providing brand new reference visuals (https://kotlin.github.io/kotlinx.coroutines/) (#3051, #3054).
+* New version of Dokka is used, fixing the memory leak when building the coroutines and providing brand new reference visuals (https://kotlinlang.org/api/kotlinx.coroutines/) (#3051, #3054).
 
 ### Changelog relative to version 1.6.0-RC3
 
@@ -106,7 +106,7 @@ Note that this is a full changelog relative to the 1.5.2 version. Changelog rela
 * `SendChannel.trySendBlocking` is now available on Kotlin/Native (#3064).
 * Fixed the bug due to which `Dispatchers.Main` was not used for `delay` and `withTimeout` (#3046).
 * JDK 1.6 is no longer required for building the project (#3043).
-* New version of Dokka is used, fixing the memory leak when building the coroutines and providing brand new reference visuals (https://kotlin.github.io/kotlinx.coroutines/) (#3051, #3054).
+* New version of Dokka is used, fixing the memory leak when building the coroutines and providing brand new reference visuals (https://kotlinlang.org/api/kotlinx.coroutines/) (#3051, #3054).
 
 ## Version 1.6.0-RC
 
@@ -519,7 +519,7 @@ Gradle version 5.3 or later to use this version of kotlinx.coroutines in your Ko
 
 ### Flow
 
-This version is the first stable release with [`Flow`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html) API.
+This version is the first stable release with [`Flow`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/index.html) API.
 
 All `Flow` API not marked with `@FlowPreview` or `@ExperimentalCoroutinesApi` annotations are stable and here to stay.
 Flow declarations marked with `@ExperimentalCoroutinesApi` have [the same guarantees](/docs/topics/compatibility.md#experimental-api) as regular experimental API.
@@ -848,9 +848,9 @@ Visible consequences of include more robust exception handling for large corouti
   * All coroutine builders are now extensions on `CoroutineScope` and inherit its `coroutineContext`. Standalone builders are deprecated.
   * As a consequence, all nested coroutines launched via builders now automatically establish parent-child relationship and inherit `CoroutineDispatcher`.
   * All coroutine builders use `Dispatchers.Default` by default if `CoroutineInterceptor` is not present in their context.
-  * [CoroutineScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/) became the first-class citizen in `kolinx.coroutines`.
+  * [CoroutineScope](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html) became the first-class citizen in `kolinx.coroutines`.
   * `withContext` `block` argument has `CoroutineScope` as a receiver.
-  * [GlobalScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/) is introduced to simplify migration to new API and to launch global-level coroutines.
+  * [GlobalScope](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/index.html) is introduced to simplify migration to new API and to launch global-level coroutines.
   * `currentScope` and `coroutineScope` builders are introduced to extract and provide `CoroutineScope`.
   * Factory methods to create `CoroutineScope` from `CoroutineContext` are introduced.
   * `CoroutineScope.isActive` became an extension property.
