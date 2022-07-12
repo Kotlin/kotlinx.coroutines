@@ -112,7 +112,7 @@ public abstract class CoroutineDispatcher :
      * [context] parameter represents a context of the coroutine that is being dispatched
      * or [EmptyCoroutineContext] if a non-coroutine-specific [Runnable] is dispatched instead.
      * Implementations may use [context] for additional context-specific information,
-     * such as priority, whether dispatched coroutine can be invoked in place,
+     * such as priority, whether the dispatched coroutine can be invoked in place,
      * coroutine name, and additional diagnostic elements.
      *
      * This method should guarantee that the given [block] will be eventually invoked,
