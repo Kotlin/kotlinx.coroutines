@@ -109,7 +109,7 @@ public abstract class CoroutineDispatcher :
 
     /**
      * Dispatches execution of a runnable [block] in the given [context] onto another thread.
-     * [context] parameter represents a context of the coroutine that is being dispatched
+     * The [context] parameter represents the context of the coroutine that is being dispatched,
      * or [EmptyCoroutineContext] if a non-coroutine-specific [Runnable] is dispatched instead.
      * Implementations may use [context] for additional context-specific information,
      * such as priority, whether the dispatched coroutine can be invoked in place,
