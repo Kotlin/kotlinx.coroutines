@@ -45,7 +45,7 @@ public abstract class CoroutineDispatcher :
      * potentially forming an event-loop to prevent stack overflows.
      * The event loop is an advanced topic and its implications can be found in [Dispatchers.Unconfined] documentation.
      *
-     * [context] parameter represents a context of the coroutine that is being dispatched
+     * The [context] parameter represents the context of the coroutine that is being dispatched,
      * or [EmptyCoroutineContext] if a non-coroutine-specific [Runnable] is dispatched instead.
      *
      * A dispatcher can override this method to provide a performance optimization and avoid paying a cost of an unnecessary dispatch.
