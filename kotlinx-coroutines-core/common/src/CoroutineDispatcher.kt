@@ -124,8 +124,8 @@ public abstract class CoroutineDispatcher :
      *
      * This method must not immediately call [block]. Doing so may result in `StackOverflowError`
      * when `dispatch` is invoked repeatedly, for example when [yield] is called in a loop.
-     * In order to execute block in place, it is required to return `false` from [isDispatchNeeded]
-     * and delegate `dispatch` implementation to `Dispatchers.Unconfined.dispatch` in such cases.
+     * In order to execute a block in place, it is required to return `false` from [isDispatchNeeded]
+     * and delegate the `dispatch` implementation to `Dispatchers.Unconfined.dispatch` in such cases.
      * To support this, the coroutines machinery ensures in-place execution and forms an event-loop to
      * avoid unbound recursion.
      *
