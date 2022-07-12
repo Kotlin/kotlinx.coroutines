@@ -50,6 +50,7 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
 
     /** @suppress */
     override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+        checkSchedulerInContext(scheduler, context)
         post(block, context)
     }
 

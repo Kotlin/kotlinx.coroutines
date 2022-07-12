@@ -436,6 +436,7 @@ class TestScopeTest {
     fun testAsyncFailureInBackgroundReported() = testResultMap({
         try {
             it()
+            fail("unreached")
         } catch (e: TestException) {
             assertEquals("z", e.message)
             assertEquals(setOf("x", "y"), e.suppressedExceptions.map { it.message }.toSet())
@@ -461,6 +462,7 @@ class TestScopeTest {
     fun testNoDuplicateExceptions() = testResultMap({
         try {
             it()
+            fail("unreached")
         } catch (e: TestException) {
             assertEquals("y", e.message)
             assertEquals(listOf("x"), e.suppressedExceptions.map { it.message })
