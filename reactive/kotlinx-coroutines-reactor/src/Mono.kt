@@ -46,30 +46,17 @@ public fun <T> mono(
  * function immediately cancels its [Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
-    /** Enforcing the rule 2.7 of the Reactive Streams spec:
-     * [Subscription.request] and [Subscription.cancel] should be serialized.
-     * The write lock is for [Subscription.cancel] operation, whereas the read lock is for
-     * [Subscription.request].
-     *
-     * The reason for this being so complex is that [Mono] proxies the calls to the actual [Subscription] and
-     * [Subscription.request] that we perform in [Subscriber.onSubscribe] below only modifies the internal state of
-     * the proxy. Only later, after [Subscriber.onSubscribe] is finished, the actual [Subscriber] receives the request.
-     *
-     * However, in general, it is not an error for [Publisher.subscribe] and [Subscriber.onSubscribe] to happen in
-     * different threads, so we need to make sure that `s.request` and `subscribe(subscriber)` are allowed to happen at
-     * the same time. This is why we need a read lock.
-     */
-    val rwLock = ReentrantReadWriteLock()
+    val lock = java.util.concurrent.locks.ReentrantLock()
     val subscriber = object : Subscriber<T> {
         private var seenValue = false
 
         override fun onSubscribe(s: Subscription) {
             cont.invokeOnCancellation {
-                rwLock.writeLock().withLock {
+                lock.withLock {
                     s.cancel()
                 }
             }
-            rwLock.readLock().withLock {
+            lock.withLock {
                 s.request(Long.MAX_VALUE)
             }
         }
@@ -85,9 +72,7 @@ public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCorou
 
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
     }
-    rwLock.readLock().withLock {
-        injectCoroutineContext(cont.context).subscribe(subscriber)
-    }
+    injectCoroutineContext(cont.context).subscribe(subscriber)
 }
 
 /**
