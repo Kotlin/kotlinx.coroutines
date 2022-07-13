@@ -21,7 +21,7 @@ To release a new `<version>` of `kotlinx-coroutines`:
      * [`gradle.properties`](gradle.properties)
    * Make sure to **exclude** `CHANGES.md` from replacements.
 
-   As an alternative approach, you can use `./bump-version.sh old_version new_version`
+   As an alternative approach, you can use `./bump-version.sh new_version`
 
 5. Write release notes in [`CHANGES.md`](CHANGES.md):
    * Use the old releases for style guidance.
@@ -43,7 +43,7 @@ To release a new `<version>` of `kotlinx-coroutines`:
    * Get approval for it.
 
 0. On [TeamCity integration server](https://teamcity.jetbrains.com/project.html?projectId=KotlinTools_KotlinxCoroutines):
-   * Wait until "Build" configuration for committed `master` branch passes tests.
+   * Wait until "Build" configuration for committed `version-<version>` branch passes tests.
    * Run "Deploy (Configure, RUN THIS ONE)" configuration with the corresponding new version:
      - Use the `version-<version>` branch
      - Set the `DeployVersion` build parameter to `<version>`
