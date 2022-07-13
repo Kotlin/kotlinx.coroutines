@@ -15,28 +15,31 @@ class MonoAwaitCancellationStressTest {
     private val iterations = 10_000 * stressTestMultiplier
 
     @Test
+    @Ignore // Will be able to test this after https://github.com/reactor/reactor-core/issues/3117 is fixed
     fun testAwaitCancellationOrder() = runBlocking {
         repeat(iterations) {
             val job = launch(Dispatchers.Default) {
-                testMono().awaitSingleOrNull()
+                TestMono.awaitSingleOrNull()
             }
             job.cancelAndJoin()
         }
     }
 
-   private fun testMono(): Mono<Int> = Mono.from { s ->
-       val lock = ReentrantLock()
-       s.onSubscribe(object : Subscription {
-           override fun request(n: Long) {
-               check(lock.tryLock())
-               s.onNext(42)
-               lock.unlock()
-           }
+    private object TestMono: Mono<Int>() {
+        override fun subscribe(s: CoreSubscriber<in Int>) {
+            val lock = ReentrantLock()
+            s.onSubscribe(object : Subscription {
+                override fun request(n: Long) {
+                    check(lock.tryLock())
+                    s.onNext(42)
+                    lock.unlock()
+                }
 
-           override fun cancel() {
-               check(lock.tryLock())
-               lock.unlock()
-           }
-       })
-   }
+                override fun cancel() {
+                    check(lock.tryLock())
+                    lock.unlock()
+                }
+            })
+        }
+    }
 }

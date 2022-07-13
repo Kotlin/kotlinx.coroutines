@@ -46,17 +46,16 @@ public fun <T> mono(
  * function immediately cancels its [Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
-    val lock = java.util.concurrent.locks.ReentrantLock()
     val subscriber = object : Subscriber<T> {
         private var seenValue = false
 
         override fun onSubscribe(s: Subscription) {
             cont.invokeOnCancellation {
-                lock.withLock {
+                withSubscriptionLock {
                     s.cancel()
                 }
             }
-            lock.withLock {
+            withSubscriptionLock {
                 s.request(Long.MAX_VALUE)
             }
         }
@@ -71,6 +70,14 @@ public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCorou
         }
 
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
+
+        /**
+         * Enforce rule 2.7: [Subscription.request] and [Subscription.cancel] must be executed serially
+         */
+        @Synchronized
+        private fun withSubscriptionLock(block: () -> Unit) {
+            block()
+        }
     }
     injectCoroutineContext(cont.context).subscribe(subscriber)
 }
