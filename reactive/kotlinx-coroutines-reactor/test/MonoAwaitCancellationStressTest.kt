@@ -18,27 +18,25 @@ class MonoAwaitCancellationStressTest {
     fun testAwaitCancellationOrder() = runBlocking {
         repeat(iterations) {
             val job = launch(Dispatchers.Default) {
-                TestMono.awaitSingleOrNull()
+                testMono().awaitSingleOrNull()
             }
             job.cancelAndJoin()
         }
     }
 
-   object TestMono: Mono<Int>() {
-        override fun subscribe(s: CoreSubscriber<in Int>) {
-            val lock = ReentrantLock()
-            s.onSubscribe(object : Subscription {
-                override fun request(n: Long) {
-                    check(lock.tryLock())
-                    s.onNext(42)
-                    lock.unlock()
-                }
+   private fun testMono(): Mono<Int> = Mono.from { s ->
+       val lock = ReentrantLock()
+       s.onSubscribe(object : Subscription {
+           override fun request(n: Long) {
+               check(lock.tryLock())
+               s.onNext(42)
+               lock.unlock()
+           }
 
-                override fun cancel() {
-                    check(lock.tryLock())
-                    lock.unlock()
-                }
-            })
-        }
-    }
+           override fun cancel() {
+               check(lock.tryLock())
+               lock.unlock()
+           }
+       })
+   }
 }
