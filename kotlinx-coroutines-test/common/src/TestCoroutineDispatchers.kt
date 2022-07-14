@@ -96,7 +96,7 @@ private class UnconfinedTestDispatcherImpl(
     @Suppress("INVISIBLE_MEMBER")
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         checkSchedulerInContext(scheduler, context)
-        scheduler.sendDispatchEvent()
+        scheduler.sendDispatchEvent(context)
 
         /** copy-pasted from [kotlinx.coroutines.Unconfined.dispatch] */
         /** It can only be called by the [yield] function. See also code of [yield] function. */
@@ -151,8 +151,7 @@ private class StandardTestDispatcherImpl(
 ) : TestDispatcher() {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        checkSchedulerInContext(scheduler, context)
-        scheduler.registerEvent(this, 0, block) { false }
+        scheduler.registerEvent(this, 0, block, context) { false }
     }
 
     override fun toString(): String = "${name ?: "StandardTestDispatcher"}[scheduler=$scheduler]"

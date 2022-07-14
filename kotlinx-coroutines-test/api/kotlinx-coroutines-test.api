@@ -105,6 +105,7 @@ public final class kotlinx/coroutines/test/TestDispatchers {
 }
 
 public abstract interface class kotlinx/coroutines/test/TestScope : kotlinx/coroutines/CoroutineScope {
+	public abstract fun getBackgroundScope ()Lkotlinx/coroutines/CoroutineScope;
 	public abstract fun getTestScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
 }
 

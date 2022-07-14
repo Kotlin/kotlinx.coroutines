@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit
 
-internal actual fun createTestResult(testProcedure: suspend () -> Unit) {
+internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() -> Unit) {
     runBlocking {
         testProcedure()
     }

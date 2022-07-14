@@ -6,6 +6,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.test.internal.*
 import kotlin.coroutines.*
 import kotlin.time.*
 
@@ -46,6 +47,43 @@ public sealed interface TestScope : CoroutineScope {
      */
     @ExperimentalCoroutinesApi
     public val testScheduler: TestCoroutineScheduler
+
+    /**
+     * A scope for background work.
+     *
+     * This scope is automatically cancelled when the test finishes.
+     * Additionally, while the coroutines in this scope are run as usual when
+     * using [advanceTimeBy] and [runCurrent], [advanceUntilIdle] will stop advancing the virtual time
+     * once only the coroutines in this scope are left unprocessed.
+     *
+     * Failures in coroutines in this scope do not terminate the test.
+     * Instead, they are reported at the end of the test.
+     * Likewise, failure in the [TestScope] itself will not affect its [backgroundScope],
+     * because there's no parent-child relationship between them.
+     *
+     * A typical use case for this scope is to launch tasks that would outlive the tested code in
+     * the production environment.
+     *
+     * In this example, the coroutine that continuously sends new elements to the channel will get
+     * cancelled:
+     * ```
+     * @Test
+     * fun testExampleBackgroundJob() = runTest {
+     *   val channel = Channel<Int>()
+     *   backgroundScope.launch {
+     *     var i = 0
+     *     while (true) {
+     *       channel.send(i++)
+     *     }
+     *   }
+     *   repeat(100) {
+     *     assertEquals(it, channel.receive())
+     *   }
+     * }
+     * ```
+     */
+    @ExperimentalCoroutinesApi
+    public val backgroundScope: CoroutineScope
 }
 
 /**
@@ -170,6 +208,11 @@ internal class TestScopeImpl(context: CoroutineContext) :
     private val uncaughtExceptions = mutableListOf<Throwable>()
     private val lock = SynchronizedObject()
 
+    override val backgroundScope: CoroutineScope =
+        CoroutineScope(coroutineContext + BackgroundWork + ReportingSupervisorJob {
+            if (it !is CancellationException) reportException(it)
+        })
+
     /** Called upon entry to [runTest]. Will throw if called more than once. */
     fun enter() {
         val exceptions = synchronized(lock) {
@@ -190,8 +233,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
     /** Called at the end of the test. May only be called once. */
     fun leave(): List<Throwable> {
         val exceptions = synchronized(lock) {
-            if(!entered || finished)
-                throw IllegalStateException("An internal error. Please report to the Kotlinx Coroutines issue tracker")
+            check(entered && !finished)
             finished = true
             uncaughtExceptions
         }
@@ -218,6 +260,12 @@ internal class TestScopeImpl(context: CoroutineContext) :
             if (finished) {
                 throw throwable
             } else {
+                @Suppress("INVISIBLE_MEMBER")
+                for (existingThrowable in uncaughtExceptions) {
+                    // avoid reporting exceptions that already were reported.
+                    if (unwrap(throwable) == unwrap(existingThrowable))
+                        return
+                }
                 uncaughtExceptions.add(throwable)
                 if (!entered)
                     throw UncaughtExceptionsBeforeTest().apply { addSuppressed(throwable) }
@@ -233,6 +281,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
 }
 
 /** Use the knowledge that any [TestScope] that we receive is necessarily a [TestScopeImpl]. */
+@Suppress("NO_ELSE_IN_WHEN") // TODO: a problem with `sealed` in MPP not allowing total pattern-matching
 internal fun TestScope.asSpecificImplementation(): TestScopeImpl = when (this) {
     is TestScopeImpl -> this
 }

@@ -1312,6 +1312,7 @@ private class Empty(override val isActive: Boolean) : Incomplete {
     override fun toString(): String = "Empty{${if (isActive) "Active" else "New" }}"
 }
 
+@PublishedApi // for a custom job in the test module
 internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
     init { initParentJob(parent) }
     override val onCancelComplete get() = true

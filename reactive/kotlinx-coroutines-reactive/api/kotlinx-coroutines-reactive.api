@@ -15,6 +15,7 @@ public final class kotlinx/coroutines/reactive/ChannelKt {
 	public static final synthetic fun openSubscription (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/channels/ReceiveChannel;
 	public static synthetic fun openSubscription$default (Lorg/reactivestreams/Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/channels/ReceiveChannel;
 	public static final fun toChannel (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/channels/ReceiveChannel;
+	public static synthetic fun toChannel$default (Lorg/reactivestreams/Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/channels/ReceiveChannel;
 }
 
 public abstract interface class kotlinx/coroutines/reactive/ContextInjector {

@@ -45,11 +45,7 @@ publishing {
         // Configure java publications for regular non-MPP modules
         publications {
             maven(MavenPublication) {
-                if (project.name == "kotlinx-coroutines-debug") {
-                    project.shadow.component(it)
-                } else {
-                    from components.java
-                }
+                from components.java
                 artifact sourcesJar
             }
         }
