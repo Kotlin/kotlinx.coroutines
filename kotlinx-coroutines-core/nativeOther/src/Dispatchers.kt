@@ -5,6 +5,7 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
+import kotlin.native.*
 
 internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher =
     MissingMainDispatcher
@@ -12,10 +13,9 @@ internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoro
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultDispatcher
 
 private object DefaultDispatcher : CoroutineDispatcher() {
-
-    // Delegated, so users won't be able to downcast and call 'close'
-    // The precise number of threads cannot be obtained until KT-48179 is implemented, 4 is just "good enough" number.
-    private val ctx = newFixedThreadPoolContext(4, "Dispatchers.Default")
+    // Be consistent with JVM -- at least 2 threads to provide some liveness guarantees in case of improper uses
+    @OptIn(ExperimentalStdlibApi::class)
+    private val ctx = newFixedThreadPoolContext(Platform.getAvailableProcessors().coerceAtLeast(2), "Dispatchers.Default")
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         ctx.dispatch(context, block)
