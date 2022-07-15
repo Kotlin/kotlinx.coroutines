@@ -377,29 +377,4 @@ allprojects { subProject ->
                                     "triggering all sort of incompatible class changes errors")
                 }
             }
-
-    dependencies {
-        components { component ->
-            component.withModule("org.jetbrains.kotlin:atomicfu") { ComponentMetadataDetails componentMetadataDetails ->
-                componentMetadataDetails.withVariant("runtimeElements") { VariantMetadata runtimeElementsVariant ->
-                    [KotlinJsCompilerAttribute.legacy, KotlinJsCompilerAttribute.ir].forEach { jsType ->
-                        componentMetadataDetails.addVariant("runtimeJs${jsType.name().capitalize()}Elements") { jsVariant ->
-                            jsVariant.attributes {
-                                it.attribute(KotlinPlatformType.attribute, KotlinPlatformType.js)
-                                it.attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, jsType)
-                                it.attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage, Usage.JAVA_RUNTIME))
-                            }
-                            runtimeElementsVariant.withFiles { DefaultMutableVariantFilesMetadata runtimeElementsFiles ->
-                                jsVariant.withFiles {
-                                    runtimeElementsFiles.files.forEach { file ->
-                                        addFile(file.name)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
