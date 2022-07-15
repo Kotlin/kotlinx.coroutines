@@ -29,7 +29,7 @@ private val handlers: List<CoroutineExceptionHandler> = ServiceLoader.load(
  * The purpose of this exception is to add an otherwise inaccessible diagnostic information and to
  * be able to poke the failing coroutine context in the debugger.
  */
-private class DiagnosticCoroutineContextException(private val context: CoroutineContext) : RuntimeException() {
+private class DiagnosticCoroutineContextException(@Transient private val context: CoroutineContext) : RuntimeException() {
     override fun getLocalizedMessage(): String {
         return context.toString()
     }
