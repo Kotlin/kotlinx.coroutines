@@ -1259,8 +1259,6 @@ public final class kotlinx/coroutines/selects/SelectUnbiasedKt {
 
 public final class kotlinx/coroutines/selects/UnbiasedSelectBuilderImpl : kotlinx/coroutines/selects/SelectBuilder {
 	public fun <init> (Lkotlin/coroutines/Continuation;)V
-	public final fun getClauses ()Ljava/util/ArrayList;
-	public final fun getInstance ()Lkotlinx/coroutines/selects/SelectBuilderImpl;
 	public final fun handleBuilderException (Ljava/lang/Throwable;)V
 	public final fun initSelectResult ()Ljava/lang/Object;
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause0;Lkotlin/jvm/functions/Function1;)V
