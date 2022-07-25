@@ -33,6 +33,7 @@ public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<
 internal class UnbiasedSelectBuilderImpl<in R>(
     uCont: Continuation<R>
 ) : SelectBuilder<R> {
+
     private val instance = SelectBuilderImpl(uCont)
     private val clauses = arrayListOf<() -> Unit>()
 
