@@ -5,7 +5,6 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
-import kotlin.native.concurrent.*
 import kotlinx.atomicfu.locks.withLock as withLock2
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
@@ -32,7 +31,3 @@ internal open class SuppressSupportingThrowableImpl : Throwable() {
     }
 }
 
-// getter instead of a property due to the bug in the initialization dependencies tracking with '-Xir-property-lazy-initialization=disabled' that Ktor uses 
-@OptIn(ExperimentalStdlibApi::class)
-internal val multithreadingSupported: Boolean
-    get() = kotlin.native.isExperimentalMM()
