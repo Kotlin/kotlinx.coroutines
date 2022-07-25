@@ -64,7 +64,6 @@ class StandardTestDispatcherTest: OrderedExecutionTestBase() {
 
     /** Tests that the [TestCoroutineScheduler] used for [Dispatchers.Main] gets used by default. */
     @Test
-    @NoNative
     fun testSchedulerReuse() {
         val dispatcher1 = StandardTestDispatcher()
         Dispatchers.setMain(dispatcher1)
