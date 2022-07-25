@@ -30,10 +30,12 @@ public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<
 
 
 @PublishedApi
-internal class UnbiasedSelectBuilderImpl<in R>(uCont: Continuation<R>) :
-    SelectBuilder<R> {
-    val instance = SelectBuilderImpl(uCont)
-    val clauses = arrayListOf<() -> Unit>()
+internal class UnbiasedSelectBuilderImpl<in R>(
+    uCont: Continuation<R>
+) : SelectBuilder<R> {
+
+    private val instance = SelectBuilderImpl(uCont)
+    private val clauses = arrayListOf<() -> Unit>()
 
     @PublishedApi
     internal fun handleBuilderException(e: Throwable): Unit = instance.handleBuilderException(e)
