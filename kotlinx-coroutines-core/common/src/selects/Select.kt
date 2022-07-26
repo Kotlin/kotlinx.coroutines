@@ -10,12 +10,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
-import kotlinx.coroutines.sync.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 import kotlin.time.*
 
 /**

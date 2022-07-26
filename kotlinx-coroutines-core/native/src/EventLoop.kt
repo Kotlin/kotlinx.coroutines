@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlinx.cinterop.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 import kotlin.system.*

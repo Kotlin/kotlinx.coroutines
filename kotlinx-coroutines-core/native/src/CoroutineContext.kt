@@ -6,7 +6,6 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.native.concurrent.*
 
 internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 

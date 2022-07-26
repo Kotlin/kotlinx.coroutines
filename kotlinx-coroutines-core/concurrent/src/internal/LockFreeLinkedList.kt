@@ -8,7 +8,6 @@ package kotlinx.coroutines.internal
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 private typealias Node = LockFreeLinkedListNode
 

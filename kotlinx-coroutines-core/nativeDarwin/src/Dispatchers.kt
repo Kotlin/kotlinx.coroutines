@@ -5,7 +5,6 @@
 package kotlinx.coroutines
 
 import kotlinx.cinterop.*
-import kotlinx.coroutines.internal.*
 import platform.CoreFoundation.*
 import platform.darwin.*
 import kotlin.coroutines.*

@@ -8,9 +8,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.contracts.*
-import kotlin.coroutines.*
 import kotlin.math.*
-import kotlin.native.concurrent.SharedImmutable
 
 /**
  * A counting semaphore for coroutines that logically maintains a number of available permits.

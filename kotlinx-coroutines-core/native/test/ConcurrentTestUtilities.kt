@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.exceptions
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import platform.posix.*
 import kotlin.native.concurrent.*
@@ -31,7 +30,7 @@ internal actual typealias SuppressSupportingThrowable = SuppressSupportingThrowa
 actual val Throwable.suppressed: Array<Throwable>
     get() = (this as? SuppressSupportingThrowableImpl)?.suppressed ?: emptyArray()
 
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "unused")
 actual fun Throwable.printStackTrace() = printStackTrace()
 
 actual fun currentThreadName(): String = Worker.current.name

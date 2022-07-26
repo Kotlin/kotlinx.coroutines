@@ -9,7 +9,6 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 private const val UNDECIDED = 0
 private const val SUSPENDED = 1

@@ -6,7 +6,6 @@
 package kotlinx.coroutines.internal
 
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public expect open class LockFreeLinkedListNode() {

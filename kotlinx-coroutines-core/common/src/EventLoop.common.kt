@@ -123,6 +123,10 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     open fun shutdown() {}
 }
 
+/*
+ * This is marked with `ThreadLocal` on purpose: the loop itself is supposed to be thread-local,
+ * but `CommonThreadLocal` is not supported on K/N properly, so we emulate it with this annotation.
+ */
 @ThreadLocal
 internal object ThreadLocalEventLoop {
     private val ref = CommonThreadLocal<EventLoop?>()

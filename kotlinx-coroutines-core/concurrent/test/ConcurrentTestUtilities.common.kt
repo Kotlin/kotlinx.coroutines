@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 
 internal expect open class SuppressSupportingThrowable() : Throwable
 expect val Throwable.suppressed: Array<Throwable>
+// Unused on purpose, used manually during debugging sessions
 expect fun Throwable.printStackTrace()
 
 expect fun randomWait()

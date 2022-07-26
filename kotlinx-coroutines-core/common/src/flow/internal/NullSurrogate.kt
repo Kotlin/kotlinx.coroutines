@@ -6,7 +6,6 @@ package kotlinx.coroutines.flow.internal
 
 import kotlinx.coroutines.internal.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * This value is used a a surrogate `null` value when needed.

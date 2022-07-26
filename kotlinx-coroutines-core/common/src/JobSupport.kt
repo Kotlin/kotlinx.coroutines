@@ -13,7 +13,6 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.js.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * A concrete implementation of [Job]. It is optionally a child to a parent job.

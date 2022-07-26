@@ -7,10 +7,8 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out.
