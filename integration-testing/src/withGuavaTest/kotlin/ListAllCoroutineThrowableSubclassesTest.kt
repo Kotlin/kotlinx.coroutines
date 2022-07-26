@@ -45,7 +45,7 @@ class ListAllCoroutineThrowableSubclassesTest {
                 if (Modifier.isStatic(field.modifiers)) continue
                 val type = field.type
                 assertTrue(type.isPrimitive || Serializable::class.java.isAssignableFrom(type),
-                "Throwable $throwable has non-serializable field $field")
+                    "Throwable $throwable has non-serializable field $field")
             }
         }
         assertEquals(knownThrowables.sorted(), throwables.sorted())
