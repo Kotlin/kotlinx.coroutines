@@ -38,7 +38,6 @@ public abstract class OpDescriptor {
     }
 }
 
-@SharedImmutable
 @JvmField
 internal val NO_DECISION: Any = Symbol("NO_DECISION")
 
@@ -117,5 +116,4 @@ public abstract class AtomicDesc {
  * using [AtomicOp.opSequence] numbers.
  */
 @JvmField
-@SharedImmutable
 internal val RETRY_ATOMIC: Any = Symbol("RETRY_ATOMIC")

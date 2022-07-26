@@ -237,5 +237,4 @@ internal value class SegmentOrClosed<S : Segment<S>>(private val value: Any?) {
 
 private const val POINTERS_SHIFT = 16
 
-@SharedImmutable
 private val CLOSED = Symbol("CLOSED")

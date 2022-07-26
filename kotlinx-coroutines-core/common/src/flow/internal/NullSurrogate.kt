@@ -14,7 +14,6 @@ import kotlin.native.concurrent.*
  * Its usage typically are paired with [Symbol.unbox] usages.
  */
 @JvmField
-@SharedImmutable
 internal val NULL = Symbol("NULL")
 
 /**
@@ -22,7 +21,6 @@ internal val NULL = Symbol("NULL")
  * It should never leak to the outside world.
  */
 @JvmField
-@SharedImmutable
 internal val UNINITIALIZED = Symbol("UNINITIALIZED")
 
 /*
@@ -30,5 +28,4 @@ internal val UNINITIALIZED = Symbol("UNINITIALIZED")
  * It should never leak to the outside world.
  */
 @JvmField
-@SharedImmutable
 internal val DONE = Symbol("DONE")

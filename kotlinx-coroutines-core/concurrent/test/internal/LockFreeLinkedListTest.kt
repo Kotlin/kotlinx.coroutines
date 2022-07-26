@@ -46,6 +46,7 @@ class LockFreeLinkedListTest {
         assertContents(list, 1, 3)
     }
 
+    @Suppress("UNUSED_VARIABLE")
     @Test
     fun testAtomicOpsSingle() {
         val list = LockFreeLinkedListHead()

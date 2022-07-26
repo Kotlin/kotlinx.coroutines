@@ -16,7 +16,6 @@ private const val SUSPENDED = 1
 private const val RESUMED = 2
 
 @JvmField
-@SharedImmutable
 internal val RESUME_TOKEN = Symbol("RESUME_TOKEN")
 
 /**

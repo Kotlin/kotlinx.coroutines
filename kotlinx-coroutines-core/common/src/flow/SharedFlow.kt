@@ -710,7 +710,6 @@ internal open class SharedFlowImpl<T>(
     }
 }
 
-@SharedImmutable
 @JvmField
 internal val NO_VALUE = Symbol("NO_VALUE")
 

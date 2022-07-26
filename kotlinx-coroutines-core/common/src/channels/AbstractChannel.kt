@@ -1008,27 +1008,21 @@ internal const val RECEIVE_THROWS_ON_CLOSE = 0
 internal const val RECEIVE_RESULT = 1
 
 @JvmField
-@SharedImmutable
 internal val EMPTY = Symbol("EMPTY") // marker for Conflated & Buffered channels
 
 @JvmField
-@SharedImmutable
 internal val OFFER_SUCCESS = Symbol("OFFER_SUCCESS")
 
 @JvmField
-@SharedImmutable
 internal val OFFER_FAILED = Symbol("OFFER_FAILED")
 
 @JvmField
-@SharedImmutable
 internal val POLL_FAILED = Symbol("POLL_FAILED")
 
 @JvmField
-@SharedImmutable
 internal val ENQUEUE_FAILED = Symbol("ENQUEUE_FAILED")
 
 @JvmField
-@SharedImmutable
 internal val HANDLER_INVOKED = Symbol("ON_CLOSE_HANDLER_INVOKED")
 
 internal typealias Handler = (Throwable?) -> Unit

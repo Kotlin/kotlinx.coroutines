@@ -86,5 +86,4 @@ public expect class PrepareOp: OpDescriptor {
 }
 
 @JvmField
-@SharedImmutable
 internal val REMOVE_PREPARED: Any = Symbol("REMOVE_PREPARED")

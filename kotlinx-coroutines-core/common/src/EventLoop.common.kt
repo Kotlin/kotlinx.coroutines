@@ -142,7 +142,6 @@ internal object ThreadLocalEventLoop {
     }
 }
 
-@SharedImmutable
 private val DISPOSED_TASK = Symbol("REMOVED_TASK")
 
 // results for scheduleImpl
@@ -168,7 +167,6 @@ internal fun delayToNanos(timeMillis: Long): Long = when {
 internal fun delayNanosToMillis(timeNanos: Long): Long =
     timeNanos / MS_TO_NS
 
-@SharedImmutable
 private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
 private typealias Queue<T> = LockFreeTaskQueueCore<T>

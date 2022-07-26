@@ -238,10 +238,8 @@ public inline fun <T> MutableStateFlow<T>.update(function: (T) -> T) {
 
 // ------------------------------------ Implementation ------------------------------------
 
-@SharedImmutable
 private val NONE = Symbol("NONE")
 
-@SharedImmutable
 private val PENDING = Symbol("PENDING")
 
 // StateFlow slots are allocated for its collectors

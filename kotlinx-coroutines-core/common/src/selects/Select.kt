@@ -211,13 +211,9 @@ public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() ->
 }
 
 
-@SharedImmutable
 internal val NOT_SELECTED: Any = Symbol("NOT_SELECTED")
-@SharedImmutable
 internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
-@SharedImmutable
 private val UNDECIDED: Any = Symbol("UNDECIDED")
-@SharedImmutable
 private val RESUMED: Any = Symbol("RESUMED")
 
 // Global counter of all atomic select operations for their deadlock resolution
@@ -228,7 +224,6 @@ internal class SeqNumber {
     fun next() = number.incrementAndGet()
 }
 
-@SharedImmutable
 private val selectOpSequenceNumber = SeqNumber()
 
 @PublishedApi

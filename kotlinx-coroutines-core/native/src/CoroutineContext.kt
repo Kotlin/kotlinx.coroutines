@@ -31,7 +31,6 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
 internal expect fun createDefaultDispatcher(): CoroutineDispatcher
 
-@SharedImmutable
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
