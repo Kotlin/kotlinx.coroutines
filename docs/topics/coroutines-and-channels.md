@@ -13,12 +13,12 @@ You'll learn:
 * How to send requests concurrently using coroutines
 * How to share information between different coroutines using channels
 
-For network requests, you'll need the [Retrofit](https://square.github.io/retrofit/) library, which already
-supports coroutines, but the approach shown in this tutorial is universal and works similarly for different libraries.
+For network requests, you'll need the [Retrofit](https://square.github.io/retrofit/) library, but the approach shown in
+this tutorial is universal and works similarly for other libraries supporting coroutines.
 
 > You can find solutions for all the tasks on the `solutions` branch of the [project's repository](http://github.com/kotlin-hands-on/intro-coroutines).
 > 
-{type="note"}
+{type="tip"}
 
 ## Before you start
 
@@ -58,8 +58,8 @@ is "kotlin", but it could be any other. Later you'll add logic to sort the users
    If the font is too small, adjust it in `setDefaultFontSize(18f)` in the `main()` function.
 
 2. Fill in the GitHub username and token (or password) in the corresponding fields.
-3. Make sure that the **BLOCKING** option is chosen in the **Variant** dropdown menu.
-4. Click **Load contributors**. The UI should freeze for some time and then show the list of the contributors.
+3. Make sure that the _BLOCKING_ option is chosen in the _Variant_ dropdown menu.
+4. Click _Load contributors_. The UI should freeze for some time and then show the list of the contributors.
 5. Open the program output to ensure the data is loaded. The information is logged after each successful request.
 
 There are different ways of implementing this logic: using [blocking requests](#blocking-requests)
@@ -141,7 +141,7 @@ This API is used by the `loadContributorsBlocking()` function to fetch the list 
      name in square brackets. You can see from which thread the loading request is called on.
    * The final item on each line is the actual message: how many repositories or contributors were loaded.
 
-    This log output demonstrates that all the results were logged from the main thread. When you run the code with a **BLOCKING**
+    This log output demonstrates that all the results were logged from the main thread. When you run the code with a _BLOCKING_
     option, the window freezes and don't react to input until the loading is finished. All the requests are executed from
     the same thread as the one called `loadContributorsBlocking()` from, which is the main UI thread (in Swing, it's an AWT
     event dispatching thread). This main thread gets blocked, and that's why the UI is frozen:
@@ -150,7 +150,8 @@ This API is used by the `loadContributorsBlocking()` function to fetch the list 
     
     After the list of contributors has loaded, the result is updated.
 
-4. In `src/contributors/Contributors.kt`, look at how `loadContributorsBlocking()` is called:
+4. In `src/contributors/Contributors.kt`, find the `loadContributors()` function responsible for choosing how 
+   the contributors are loaded and look at how `loadContributorsBlocking()` is called:
 
     ```kotlin
     when (getSelectedVariant()) {
@@ -161,32 +162,32 @@ This API is used by the `loadContributorsBlocking()` function to fetch the list 
     }
     ```
 
-   * The `updateResults()` goes right after the `loadContributorsBlocking()` call.
-   * The `loadContributors()` function is responsible for choosing how the contributors are loaded.
-   * The `updateResults()` function updates the UI. As a result, it must always be called from the UI thread.
+   * The `updateResults()` call goes right after the `loadContributorsBlocking()` call.
+   * `updateResults()` updates the UI, so it must always be called from the UI thread. 
+   * Since `loadContributorsBlocking()` is also called from the UI thread, the UI thread gets blocked and the UI gets
+   frozen.
 
 ### Task 1
 
-Currently, each contributor's name is repeated several times, once for every project they have taken part in. The task
-is to implement the `aggregate()` function combining the users so that each contributor is added only once.
-The `User.contributions` property should contain the total number of contributions of the given user to _all_ the
-projects. The resulting list should be sorted in descending order according to the number of contributions.
+The first task helps you familiarize yourself with the task domain. Currently, each contributor's name is repeated
+several times, once for every project they have taken part in. Implement the `aggregate()` function combining the users
+so that each contributor is added only once. The `User.contributions` property should contain the total number of
+contributions of the given user to _all_ the projects. The resulting list should be sorted in descending order according
+to the number of contributions.
 
-Open `src/tasks/Aggregation.kt` and implement the `List<User>.aggregate()` function. The corresponding test
-file `test/tasks/AggregationKtTest.kt` shows an example of the expected result.
+Open `src/tasks/Aggregation.kt` and implement the `List<User>.aggregate()` function. Users should be sorted by the total
+number of their contributions.
+
+The corresponding test file `test/tasks/AggregationKtTest.kt` shows an example of the expected result.
 
 > You can jump between the source code and the test class automatically using the [IntelliJ IDEA
-> shortcut](https://www.jetbrains.com/help/idea/create-tests.html#test-code-navigation) `⇧ ⌘ T`.
+> shortcut](https://www.jetbrains.com/help/idea/create-tests.html#test-code-navigation) `Ctrl+Shift+T` / `⇧ ⌘ T`.
 >
 {type="tip"} 
 
 After implementing this task, the resulting list for the "kotlin" organization should be similar to the following:
 
 ![The list for the "kotlin" organization](aggregate.png){width=500}
-
-> Users are sorted by the total number of their contributions.
->
-{type="note"}
 
 #### Solution for task 1 {initial-collapse-state="collapsed"}
 
@@ -214,8 +215,8 @@ is to use _callbacks_.
 Instead of calling the code that should be invoked after the operation is completed straightaway, you can extract it
 into a separate callback, often a lambda, and pass this lambda to the caller in order for it to be called later.
 
-To make the UI responsive, you can either move the whole computation to a separate thread or switch to the Retrofit API
-and start using callbacks instead of blocking calls.
+To make the UI responsive, you can either move the whole computation to a separate thread or switch to the Retrofit API,
+which uses callbacks instead of blocking calls.
 
 ### Use a background thread
 
@@ -228,7 +229,7 @@ thread. The `thread()` function starts a new thread:
     }
     ```
 
-    Now that all the loading has been moved to a separate thread, the main thread is free and can be occupied with different
+    Now that all the loading has been moved to a separate thread, the main thread is free and can be occupied with other
     tasks:
     
     ![The freed main thread](background.png){width=700}
@@ -309,22 +310,23 @@ fun loadContributorsCallbacks(
 
         val allUsers = mutableListOf<User>()
         for (repo in repos) {
-            service.getRepoContributorsCall(req.org, repo.name).onResponse { responseUsers ->   // #2
-                logUsers(repo, responseUsers)
-                val users = responseUsers.bodyList()
-                allUsers += users
+            service.getRepoContributorsCall(req.org, repo.name)
+                .onResponse { responseUsers ->
+                    logUsers(repo, responseUsers)
+                    val users = responseUsers.bodyList()
+                    allUsers += users
+                }
             }
         }
         // TODO: Why this code doesn't work? How to fix that?
         updateResults(allUsers.aggregate())
     }
-}
 ```
 * For convenience, the `onResponse()` extension function declared in the same file is used. It takes a lambda as an argument
 rather than an object expression.
 * The logic handling the responses is extracted into callbacks: the corresponding lambdas start at lines `#1` and `#2`.
 
-However, the provided solution doesn't work. If you run the program and load contributors by choosing the **CALLBACKS**
+However, the provided solution doesn't work. If you run the program and load contributors by choosing the _CALLBACKS_
 option, you'll see that nothing is shown. The tests that immediately return the result, however, pass.
 
 Think about why the given code doesn't work as expected and try to fix it or check solutions below.
@@ -344,15 +346,16 @@ You can try to fix this with the following change:
 ```kotlin
 val allUsers = mutableListOf<User>()
 for ((index, repo) in repos.withIndex()) {   // #1
-    service.getRepoContributorsCall(req.org, repo.name).onResponse { responseUsers ->
-        logUsers(repo, responseUsers)
-        val users = responseUsers.bodyList()
-        allUsers += users
-        if (index == repos.lastIndex) {      // #2
-            updateResults(allUsers.aggregate())
+    service.getRepoContributorsCall(req.org, repo.name)
+        .onResponse { responseUsers ->
+            logUsers(repo, responseUsers)
+            val users = responseUsers.bodyList()
+            allUsers += users
+            if (index == repos.lastIndex) {    // #2
+                updateResults(allUsers.aggregate())
+            }
         }
-    }
-} 
+}
 ```
 
 * First, you iterate over the list of repos with an index (`#1`).
@@ -378,21 +381,20 @@ One of the ways to fix this is to introduce an index and check whether all the r
 val allUsers = Collections.synchronizedList(mutableListOf<User>())
 val numberOfProcessed = AtomicInteger()
 for (repo in repos) {
-    service.getRepoContributorsCall(req.org, repo.name).onResponse { responseUsers ->
-        logUsers(repo, responseUsers)
-        val users = responseUsers.bodyList()
-        allUsers += users
-        if (numberOfProcessed.incrementAndGet() == repos.size) {
-            updateResults(allUsers.aggregate())
+    service.getRepoContributorsCall(req.org, repo.name)
+        .onResponse { responseUsers ->
+            logUsers(repo, responseUsers)
+            val users = responseUsers.bodyList()
+            allUsers += users
+            if (numberOfProcessed.incrementAndGet() == repos.size) {
+                updateResults(allUsers.aggregate())
+            }
         }
-    }
 }
 ```
 
-> An asynchronized version of the list and `AtomicInteger()` are used because, in general, there's no guarantee that
-> different callback processing `getRepoContributors()` requests will always be called from the same thread.
->
-{type="note"}
+A synchronized version of the list and `AtomicInteger()` are used because, in general, there's no guarantee that
+different callback processing `getRepoContributors()` requests will always be called from the same thread.
 
 #### Third solution for task 3 {initial-collapse-state="collapsed"}
 
@@ -403,10 +405,11 @@ down to zero before updating the results:
 ```kotlin
 val countDownLatch = CountDownLatch(repos.size)
 for (repo in repos) {
-    service.getRepoContributorsCall(req.org, repo.name).onResponse { responseUsers ->
-        // processing repository
-        countDownLatch.countDown()
-    }
+    service.getRepoContributorsCall(req.org, repo.name)
+        .onResponse { responseUsers ->
+            // processing repository
+            countDownLatch.countDown()
+        }
 }
 countDownLatch.await()
 updateResults(allUsers.aggregate())
@@ -437,12 +440,13 @@ interface GitHubService {
 }
 ```
 
-* When you use a suspending function to perform a request, the underlying thread isn't blocked.
-* `getOrgRepos()` returns the result directly instead of returning a `Call`.
-* If the result is unsuccessful, an exception is thrown.
+* `getOrgRepos()` is defined as a `suspend` function. When you use a suspending function to perform a request, the
+underlying thread isn't blocked. You'll find the details on how it works exactly later.
+* `getOrgRepos()` returns the result directly instead of returning a `Call`. If the result is unsuccessful, an
+exception is thrown.
 
 Alternatively, Retrofit also allows returning the result wrapped in `Response`. In this case, the result body is
-provided, and it is possible to check for errors manually.
+provided, and it is possible to check for errors manually. This tutorial uses the versions returning `Response`.
 
 In `src/contributors/GitHubService.kt`, add following declarations to the `GitHubService` interface:
 
@@ -465,18 +469,20 @@ interface GitHubService {
 
 ### Task 4
 
-Your task is to change the code of the function that loads contributors to make use of new suspending functions.
+Your task is to change the code of the function that loads contributors to make use of new suspending functions
+`getOrgRepos()` and `getRepoContributors()`. The new `loadContributorsSuspend()` function is marked as `suspend` to use the
+new API.
 
 > Suspending functions can't be called everywhere. There will be an error if a suspending function is called
-from `loadContributorsBlocking()`.
+from `loadContributorsBlocking()`: "Suspend function 'getOrgRepos' should be called only from a coroutine or another
+suspend function".
 > 
 {type="note"}
 
 1. Copy the implementation of `loadContributorsBlocking()` defined in `src/tasks/Request1Blocking.kt`
 into `loadContributorsSuspend()` defined in `src/tasks/Request4Suspend.kt`.
-2. Mark the new version of the `loadContributors()` function as `suspend` to use this new API.
-3. Modify the code so that the new suspending functions are used instead of ones returning `Call`s.
-4. Run the program by choosing the **SUSPEND** option and ensure that the UI is still responsive while the GitHub requests
+2. Modify the code so that the new suspending functions are used instead of ones returning `Call`s.
+3. Run the program by choosing the _SUSPEND_ option and ensure that the UI is still responsive while the GitHub requests
 are performed.
 
 #### Solution for task 4 {initial-collapse-state="collapsed"}
@@ -514,13 +520,15 @@ block -> suspend
 thread -> coroutine
 ```
 
-Coroutines are often called lightweight threads because you can run code on coroutines, similar to how you run code on
-threads. The operations that were blocking before (and had to be avoided) can now suspend the coroutine instead.
+> Coroutines are often called lightweight threads because you can run code on coroutines, similar to how you run code on
+> threads. The operations that were blocking before (and had to be avoided) can now suspend the coroutine instead.
+>
+{type="note"}
 
 ### Starting a new coroutine
 
-If you look at `loadContributorsSuspend()` in `src/tasks/Request4Suspend.kt`, you can see that it's called inside `launch`.
-`launch` is a library function that takes a lambda as an argument:
+If you look at how `loadContributorsSuspend()` is used in `src/contributors/Contributors.kt`, you can see that it's 
+called inside `launch`. `launch` is a library function that takes a lambda as an argument:
 
 ```kotlin
 launch {
@@ -555,7 +563,7 @@ The coroutine resumes only after the corresponding response is received:
 While the response is waiting to be received, the thread is free to be occupied with other tasks. The UI stays responsive,
 despite all the requests taking place on the main UI thread:
 
-1. Run the program using the **SUSPEND** option. The log confirms that all the requests are sent on the main UI thread:
+1. Run the program using the _SUSPEND_ option. The log confirms that all the requests are sent on the main UI thread:
 
     ```text
     2538 [AWT-EventQueue-0 @coroutine#1] INFO  Contributors - kotlin: loaded 30 repos
@@ -565,8 +573,8 @@ despite all the requests taking place on the main UI thread:
     11252 [AWT-EventQueue-0 @coroutine#1] INFO  Contributors - kotlin-coroutines-workshop: loaded 1 contributors
     ```
 
-2. The log can also show you what coroutine the corresponding code runs on. To enable it, open **Run | Edit
-configurations** and add the `-Dkotlinx.coroutines.debug` VM option:
+2. The log can show you what coroutine the corresponding code runs on. To enable it, open **Run | Edit configurations**
+and add the `-Dkotlinx.coroutines.debug` VM option:
 
     ![Edit run configuration](run-configuration.png){width=500}
 
@@ -588,13 +596,15 @@ Each time you want to start a new computation asynchronously, you can create a n
 To start a new coroutine, one of the main _coroutine builders_ is used: `launch`, `async`, or `runBlocking`. Different
 libraries can define additional coroutine builders.
 
-* `async` starts a new coroutine and returns a `Deferred` object. `Deferred` represents a concept known by other names
+`async` starts a new coroutine and returns a `Deferred` object. `Deferred` represents a concept known by other names
 such as `Future` or `Promise`. It stores a computation, but it _defers_ the moment you get the final result;
 It _promises_ the result sometime in the _future_.
-* The main difference between `async` and `launch` is that `launch` is used to start a computation that isn't expected to
+
+The main difference between `async` and `launch` is that `launch` is used to start a computation that isn't expected to
 return a specific result. `launch` returns `Job`, representing the coroutine. It is possible to wait until it completes
 by calling `Job.join()`.
-* `Deferred` is a generic type that extends `Job`. An `async` call can return a `Deferred<Int>` or `Deferred<CustomType>`
+
+`Deferred` is a generic type that extends `Job`. An `async` call can return a `Deferred<Int>` or `Deferred<CustomType>`
 depending on what the lambda returns (the last expression inside the lambda is the result).
 
 To get the result of a coroutine, you can call `await()` on the `Deferred` instance. While waiting for the result,
@@ -623,7 +633,7 @@ suspend fun loadData(): Int {
 as an adaptor for starting the top-level main coroutine. It is intended primarily to be used in `main()` functions and
 tests.
 
-> To get a better understanding, watch [this video about coroutines](https://www.youtube.com/watch?v=zEZc5AmHQhk) on the Kotlin YouTube channel.
+> To get a better understanding, watch [this video about coroutines](https://www.youtube.com/watch?v=zEZc5AmHQhk).
 > 
 {type="tip"}
 
@@ -650,7 +660,7 @@ can be sent before the result for the previous one is received:
 
 ![Concurrent coroutines](concurrency.png){width=700}
 
-The total loading time is approximately the same as in the **CALLBACKS** version, but it doesn't need any callbacks.
+The total loading time is approximately the same as in the _CALLBACKS_ version, but it doesn't need any callbacks.
 What's more, `async` explicitly emphasizes which parts run concurrently in the code.
 
 ### Task 5
@@ -664,7 +674,10 @@ You can only start a new coroutine inside a coroutine scope. Copy the content
 from `loadContributorsSuspend()` to the `coroutineScope` call, so that you can call `async` functions there:
 
 ```kotlin
-suspend fun loadContributorsConcurrent(service: GitHubService, req: RequestData): List<User> = coroutineScope {
+suspend fun loadContributorsConcurrent(
+    service: GitHubService,
+    req: RequestData
+): List<User> = coroutineScope {
     // ...
 }
 ```
@@ -690,7 +703,10 @@ create as many as you need.
 `awaitAll()` returns `List<List<User>>`, so to get the result, call `flatten().aggregate()`:
 
     ```kotlin
-    suspend fun loadContributorsConcurrent(service: GitHubService, req: RequestData): List<User> = coroutineScope {
+    suspend fun loadContributorsConcurrent(
+        service: GitHubService, 
+        req: RequestData
+    ): List<User> = coroutineScope {
         val repos = service
             .getOrgRepos(req.org)
             .also { logRepos(req, it) }
@@ -749,7 +765,7 @@ thread pool and resumed on another:
     For instance, in this log excerpt, `coroutine#4` is started on the thread `worker-2` and continued on the
     thread `worker-1`.
 
-In `src/contributors/Contributors.kt`, check the implementation of the **CONCURRENT** option:
+In `src/contributors/Contributors.kt`, check the implementation of the _CONCURRENT_ option:
 
 1. To run the coroutine only on the main UI thread, specify `Dispatchers.Main` as an argument:
 
@@ -783,19 +799,15 @@ letting `loadContributorsConcurrent` start coroutines in the inherited context:
 
    * `updateResults()` should be called on the main UI thread, so you call it with the context of `Dispatchers.Main`.
    * `withContext()` calls the given code with the specified coroutine context, suspends until it completes, and returns
-     the result.
+     the result. An alternative but a more verbose way to express this would be to start a new coroutine and explicitly 
+     wait (by suspending) until it completes: `launch(context) { ... }.join()`.
 
 3. Run the code and ensure that the coroutines are executed on the threads from the thread pool.
 
-> An alternative but a more verbose way to express this would be to start a new coroutine and explicitly wait (by
-> suspending) until it completes: `launch(context) { ... }.join()`.
-> 
-{type="tip"}
-
 ## Structured concurrency
 
-* _Coroutine scope_ is responsible for the structure and parent-child relationships between different coroutines.
-Coroutine builders, like `launch` and `async`, need to be started in some scope.
+* _Coroutine scope_ is responsible for the structure and parent-child relationships between different coroutines. New
+coroutines usually need to be started inside a scope.
 * _Coroutine context_ stores additional technical information used to run a given coroutine, like the coroutine custom
 name, or the dispatcher specifying the threads the coroutine should be scheduled on.
 
@@ -863,31 +875,17 @@ The first uses `coroutineScope` to start all the child coroutines and the second
 versions behave when trying to cancel the parent coroutine.
 
 1. Copy the implementation of `loadContributorsConcurrent()` from `Request5Concurrent.kt` to
-`loadContributorsNotCancellable()` in `Request5NotCancellable.kt`:
-2. Add a 3-second delay to all the coroutines sending requests, so that there's enough time to cancel the loading
-after the coroutines are started, but before the requests are sent:
+`loadContributorsNotCancellable()` in `Request5NotCancellable.kt` and remove the creation of a new `coroutineScope`.
+2. The `async` calls now fail to resolve, so start them using `GlobalScope.async`:
 
     ```kotlin
-    suspend fun loadContributorsConcurrent(service: GitHubService, req: RequestData): List<User> = coroutineScope {
-        // ...
-        async {
-            log("starting loading for ${repo.name}")
-            delay(3000)
-            // load repo contributors
-        }
-        // ...
-        result
-    }
-    ```
-
-3. The `async` calls now fail to resolve, so start them using `GlobalScope.async`:
-
-    ```kotlin
-    suspend fun loadContributorsNotCancellable(service: GitHubService, req: RequestData): List<User> {   // #1
+    suspend fun loadContributorsNotCancellable(
+        service: GitHubService,
+        req: RequestData
+    ): List<User> {   // #1
         // ...
         GlobalScope.async {   // #2
             log("starting loading for ${repo.name}")
-            delay(3000)
             // load repo contributors
         }
         // ...
@@ -897,10 +895,27 @@ after the coroutines are started, but before the requests are sent:
 
     * The function now returns the result directly, not as the last expression inside the lambda (lines `#1` and `#3`),
     * All the "contributors" coroutines are started inside the `GlobalScope`, not as children of the coroutine scope (
-    line `#2`).
+      line `#2`).
+3. Add a 3-second delay to all the coroutines sending requests, so that there's enough time to cancel the loading
+after the coroutines are started, but before the requests are sent:
 
-4. Run the program and choose the **CONCURRENT** option to load the contributors.
-5. Wait until all the "contributors" coroutines are started, and then click **Cancel**. In the log, you can see that all
+    ```kotlin
+    suspend fun loadContributorsConcurrent(
+        service: GitHubService, 
+        req: RequestData
+    ): List<User> = coroutineScope {
+        // ...
+        GlobalScope.async {
+            log("starting loading for ${repo.name}")
+            delay(3000)
+            // load repo contributors
+        }
+        // ...
+    }
+    ```
+
+4. Run the program and choose the _CONCURRENT_ option to load the contributors.
+5. Wait until all the "contributors" coroutines are started, and then click _Cancel_. In the log, you can see that all
 the requests were indeed canceled because no new results are logged:
 
     ```text
@@ -928,7 +943,7 @@ the requests were indeed canceled because no new results are logged:
 
     In this case, no coroutines are canceled, and all the requests are still sent.
 
-7. Check how the cancellation is implemented in your "contributors" program. When the **Cancel** button is clicked,
+7. Check how the cancellation is triggered in the "contributors" program. When the _Cancel_ button is clicked,
 the main "loading" coroutine is explicitly cancelled. Then it automatically cancels all the child coroutines:
 
     ```kotlin
@@ -954,16 +969,18 @@ the main "loading" coroutine is explicitly cancelled. Then it automatically canc
                 loadingJob.cancel()            // #3
                 updateLoadingStatus(CANCELED)
             }
+            // add a listener to the 'cancel' button:
             addCancelListener(listener)
     
-            // update the status and remove the listener after the loading job is completed
+            // update the status and remove the listener
+            // after the loading job is completed
         }
     }   
     ```
 
-* The `launch` function returns an instance of `Job`.
-* `Job` stores a reference to the "loading coroutine", which loads all the data and updates the results.
-* You can call the `setUpCancellation()` extension function on it (line `#1`), passing an instance of `Job` as a receiver.
+The `launch` function returns an instance of `Job`. `Job` stores a reference to the "loading coroutine", which loads 
+all the data and updates the results. You can call the `setUpCancellation()` extension function on it (line `#1`), 
+passing an instance of `Job` as a receiver.
 
 Another way you could express this would be to explicitly write:
 
@@ -974,14 +991,14 @@ job.setUpCancellation()
 
 * For readability, you could refer to the `setUpCancellation()` function receiver inside the function with the
 new `loadingJob` variable (line `#2`).
-* Then you can add a listener to the **Cancel** button, so then when it's clicked, the `loadingJob` is canceled (line `#3`).
+* Then you can add a listener to the _Cancel_ button, so then when it's clicked, the `loadingJob` is canceled (line `#3`).
 
 With structured concurrency, you only need to cancel the parent coroutine and this automatically propagates cancellation
 to all the child coroutines.
 
 ### Using the outer scope's context
 
-When you start new coroutines inside the given scope, it's much easier to ensure that all of them are run with the same
+When you start new coroutines inside the given scope, it's much easier to ensure that all of them run with the same
 context. And it's much easier to replace the context if needed.
 
 Now it's time to learn how using the dispatcher from the outer scope works. The new scope created by
@@ -1046,7 +1063,7 @@ suspend fun loadContributorsProgress(
 ```
 
 On the call site in `Contributors.kt`, the callback is passed updating the results from the `Main` thread for
-the **PROGRESS** option:
+the _PROGRESS_ option:
 
 ```kotlin
 launch(Dispatchers.Default) {
@@ -1058,8 +1075,8 @@ launch(Dispatchers.Default) {
 }
 ```
 
-* The `updateResults()` parameter is declared as `suspend` in `loadContributorsProgress()`.
-* It's necessary to call `withContext`, which is a `suspend` function inside the corresponding lambda argument.
+* The `updateResults()` parameter is declared as `suspend` in `loadContributorsProgress()`. It's necessary to call 
+`withContext`, which is a `suspend` function inside the corresponding lambda argument.
 * `updateResults()` callback takes an additional Boolean parameter as an argument saying whether all the loading
   completed and the results are final.
 
@@ -1102,12 +1119,16 @@ suspend fun loadContributorsProgress(
 }
 ```
 
+#### Consecutive vs concurrent 
+
 An `updateResults()` callback is called after each request is completed:
 
 ![Progress on requests](progress.png){width=700}
 
-This solution doesn't include concurrency. This code is sequential, so you don't need synchronization. The best option
-would be to send requests concurrently and update the intermediate results after getting the response for each repository:
+This code doesn't include concurrency. It's sequential, so you don't need synchronization.
+
+The best option would be to send requests concurrently and update the intermediate results after getting the response
+for each repository:
 
 ![Concurrent requests](progress-and-concurrency.png){width=700}
 
@@ -1125,27 +1146,24 @@ some information to a channel, while the other one can _receive_ this informatio
 ![Using channels](using-channel.png)
 
 A coroutine that sends (produces) information is often called a producer, and a coroutine that receives (consumes)
-information is called a consumer. Coroutines can send information to the same channel, and coroutines can receive data
-from it:
+information is called a consumer. Several coroutines can send information to the same channel, and several coroutines
+can receive data from it:
 
 ![Using channels with many coroutines](using-channel-many-coroutines.png)
 
-> When many coroutines receive information from the same channel, each element is handled only once by one of the
-> consumers. Handling it means removing this element from the channel.
->
-{type="note"}
+When many coroutines receive information from the same channel, each element is handled only once by one of the
+consumers. Handling it automatically means removing this element from the channel.
 
 You can think of a channel as similar to a collection of elements
 (the direct analog would be a queue: elements are added to one end and received from another). However, there's an
 important difference, unlike collections, even in their synchronized versions, a channel can _suspend_ `send()`
-and `receive()` operations.
-
-This happens when the channel is empty or full, in case the channel size might be constrained, and then it can be full.
+and `receive()` operations. This happens when the channel is empty or full, in case the channel size might be
+constrained, and then it can be full.
 
 `Channel` is represented with three different interfaces: `SendChannel`, `ReceiveChannel`, and `Channel` that extends
 the first two. You usually create a channel and give it to producers as a `SendChannel` instance so that only they can
 send it to it.
-You give a channel to consumers as `ReceiveChannel` instance so that only they can receive from it. Both `send`
+You give a channel to consumers as a `ReceiveChannel` instance so that only they can receive from it. Both `send`
 and `receive` methods are declared as `suspend`:
 
 ```kotlin
@@ -1185,12 +1203,11 @@ When the channel is full, the next `send` call on it suspends until more free sp
     </def>
     <def title="Rendezvous channel">
         <p>The "Rendezvous" channel is a channel without a buffer. It's the same as creating a buffered channel with a zero size.
-One of the functions (<code>send()</code> or <code>receive()</code>) always gets suspended until the other is called.
-If the <code>send()</code> function is called and there's no suspended <code>receive</code> call ready to process the element, <code>send()</code>
-suspends.</p>
-        <p>Similarly, if the <code>receive</code> function is called and the channel is empty or, in other words, there's no
-suspended <code>send()</code> call ready to send the element, the <code>receive()</code> call suspends.
-The "rendezvous" name ("a meeting at an agreed time and place") refers to the fact that <code>send()</code> and <code>receive()</code>
+One of the functions (<code>send()</code> or <code>receive()</code>) always gets suspended until the other is called. </p>
+        <p>If the <code>send()</code> function is called and there's no suspended <code>receive</code> call ready to process the element, <code>send()</code>
+suspends. Similarly, if the <code>receive</code> function is called and the channel is empty or, in other words, there's no
+suspended <code>send()</code> call ready to send the element, the <code>receive()</code> call suspends. </p>
+        <p>The "rendezvous" name ("a meeting at an agreed time and place") refers to the fact that <code>send()</code> and <code>receive()</code>
 should "meet on time".</p>
         <img src="rendezvous-channel.png" alt="Rendezvous channel" width="500"/>
     </def>
@@ -1242,15 +1259,14 @@ fun log(message: Any?) {
 }
 ```
 
-> To get a better understanding, watch [this video about channels](https://www.youtube.com/watch?v=HpWQUoVURWQ) on
-> the Kotlin YouTube channel.
+> To get a better understanding, watch [this video about channels](https://www.youtube.com/watch?v=HpWQUoVURWQ).
 >
 {type="tip"}
 
 ### Task 7
 
 In the `src/tasks/Request7Channels.kt`, implement the function `loadContributorsChannels()` that requests all the GitHub
-contributors concurrently but shows intermediate progress at the same time.
+contributors concurrently and shows intermediate progress at the same time.
 
 For this, use previous functions, `loadContributorsConcurrent()` from `Request5Concurrent.kt`
 and `loadContributorsProgress()` from `Request6Progress.kt`.
@@ -1284,7 +1300,7 @@ Since the `receive()` calls are sequential, no additional synchronization is nee
 
 #### Solution for task 7 {initial-collapse-state="collapsed"}
 
-As with the `loadContributorsProgress()` function, you can create an `allUsers` variable to store the intermediate
+As with the `loadContributorsProgress()` function, you can create the `allUsers` variable to store the intermediate
 states of the "all contributors" list.
 Each new list received from the channel is added to the list of all users. You aggregate the result and update the state
 using the `updateResults` callback:
@@ -1325,7 +1341,7 @@ suspends.
 * Then, when the list of users is sent to the channel, the "load contributors" coroutine resumes, the `receive()` call
 returns this list, and the results are immediately updated.
 
-You can now run the program and choose the **CHANNELS** option to load the contributors and see the result.
+You can now run the program and choose the _CHANNELS_ option to load the contributors and see the result.
 
 Although neither coroutines, nor channels completely eradicate the complexity that comes from concurrency,
 they still make life easier when you need to reason it and understand what's going on.
@@ -1399,10 +1415,8 @@ suspend fun foo() {
 
 You can check the current virtual time using the `currentTime` property of `TestCoroutineScope`.
 
-> The actual running time in this example is several milliseconds, while virtual time equals the delay argument, which
-> is 1000 milliseconds.
->
-{type="note"}
+The actual running time in this example is several milliseconds, while virtual time equals the delay argument, which
+is 1000 milliseconds.
 
 To get the full effect of "virtual" `delay` in child coroutines,
 start all the child coroutines with `TestCoroutineDispatcher`. Otherwise, it won't work. This dispatcher is
@@ -1438,12 +1452,12 @@ You can specify the context elements like the dispatcher when _calling_ a functi
 is more flexible and easier to test.
 
 > The testing API that supports virtual time is [Experimental](components-stability.md) and may change in the future.
-> By default, the compiler shows warnings if you use it.
 >
 {type="warning"}
 
-To suppress these warnings, annotate the test function or the whole class containing the tests with
-`@OptIn(ExperimentalCoroutinesApi::class)`. Add the compiler argument telling it that you're using the experimental API:
+By default, the compiler shows warnings if you use the experimental testing API. To suppress these warnings, annotate
+the test function or the whole class containing the tests with `@OptIn(ExperimentalCoroutinesApi::class)`. 
+Add the compiler argument telling it that you're using the experimental API:
 
 ```kotlin
 compileTestKotlin {
@@ -1485,7 +1499,7 @@ Compare the total running time with the time before this refactoring.
 
 #### Solution for task 8 {initial-collapse-state="collapsed"}
 
-Here're the solutions for the concurrent and channels cases:
+Here are the solutions for the concurrent and channels cases:
 
 ```kotlin
 fun testConcurrent() = runBlockingTest {
@@ -1527,9 +1541,9 @@ can see the difference in tests using virtual time.
 > The tests for the remaining "suspend" and "progress" tasks are very similar; you can find them in the project's
 > `solutions` branch.
 > 
-{type="note"}
+{type="tip"}
 
 ## What's next
 
-* Check out the [Asynchronous Programming with Kotlin](https://kotlinconf.com/workshops/) workshop by Roman Elizarov at KotlinConf.
+* Check out the [Asynchronous Programming with Kotlin](https://kotlinconf.com/workshops/) workshop at KotlinConf.
 * Find out more about using [virtual time and experimental testing package](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/).
