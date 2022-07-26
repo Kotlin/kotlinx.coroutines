@@ -85,11 +85,12 @@ kotlin {
      * All new MM targets are build with optimize = true to have stress tests properly run.
      */
     targets.withType(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests.class).configureEach {
-        def defaultTests = binaries.getTest("DEBUG")
-        // Test for memory leaks using a special entry point that does not exit but returns from main
-        defaultTests.freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
-        defaultTests.optimized = true
-        defaultTests.binaryOptions["memoryModel"] = "experimental"
+        binaries.getTest("DEBUG").with {
+            optimized = true
+            // Test for memory leaks using a special entry point that does not exit but returns from main
+            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
+            binaryOptions["memoryModel"] = "experimental"
+        }
 
         binaries.test("workerWithNewMM", [DEBUG]) {
             def thisTest = it
