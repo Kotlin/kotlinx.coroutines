@@ -7,6 +7,8 @@ package kotlinx.coroutines
 import com.google.common.reflect.*
 import kotlinx.coroutines.*
 import org.junit.Test
+import java.io.Serializable
+import java.lang.reflect.Modifier
 import kotlin.test.*
 
 class ListAllCoroutineThrowableSubclassesTest {
@@ -31,13 +33,21 @@ class ListAllCoroutineThrowableSubclassesTest {
         "kotlinx.coroutines.channels.ClosedReceiveChannelException",
         "kotlinx.coroutines.flow.internal.ChildCancelledException",
         "kotlinx.coroutines.flow.internal.AbortFlowException",
-        )
+    )
 
     @Test
     fun testThrowableSubclassesAreSerializable() {
         val classes = ClassPath.from(this.javaClass.classLoader)
             .getTopLevelClassesRecursive("kotlinx.coroutines");
         val throwables = classes.filter { Throwable::class.java.isAssignableFrom(it.load()) }.map { it.toString() }
+        for (throwable in throwables) {
+            for (field in throwable.javaClass.declaredFields) {
+                if (Modifier.isStatic(field.modifiers)) continue
+                val type = field.type
+                assertTrue(type.isPrimitive || Serializable::class.java.isAssignableFrom(type),
+                    "Throwable $throwable has non-serializable field $field")
+            }
+        }
         assertEquals(knownThrowables.sorted(), throwables.sorted())
     }
 }
