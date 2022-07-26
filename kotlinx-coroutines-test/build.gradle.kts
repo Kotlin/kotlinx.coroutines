@@ -14,8 +14,9 @@ kotlin {
     sourceSets.all { configureMultiplatform() }
 
     targets.withType(KotlinNativeTargetWithTests::class.java).configureEach {
-        val tests = binaries.getTest("DEBUG")
-        tests.optimized = true
-        tests.binaryOptions["memoryModel"] = "experimental"
+        binaries.getTest("DEBUG").apply {
+            optimized = true
+            binaryOptions["memoryModel"] = "experimental"
+        }
     }
 }
