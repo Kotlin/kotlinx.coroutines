@@ -13,7 +13,6 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.js.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * A concrete implementation of [Job]. It is optionally a child to a parent job.
@@ -1286,25 +1285,18 @@ internal fun Any?.unboxState(): Any? = (this as? IncompleteStateBox)?.state ?: t
 
 // --------------- helper classes & constants for job implementation
 
-@SharedImmutable
 private val COMPLETING_ALREADY = Symbol("COMPLETING_ALREADY")
 @JvmField
-@SharedImmutable
 internal val COMPLETING_WAITING_CHILDREN = Symbol("COMPLETING_WAITING_CHILDREN")
-@SharedImmutable
 private val COMPLETING_RETRY = Symbol("COMPLETING_RETRY")
-@SharedImmutable
 private val TOO_LATE_TO_CANCEL = Symbol("TOO_LATE_TO_CANCEL")
 
 private const val RETRY = -1
 private const val FALSE = 0
 private const val TRUE = 1
 
-@SharedImmutable
 private val SEALED = Symbol("SEALED")
-@SharedImmutable
 private val EMPTY_NEW = Empty(false)
-@SharedImmutable
 private val EMPTY_ACTIVE = Empty(true)
 
 private class Empty(override val isActive: Boolean) : Incomplete {

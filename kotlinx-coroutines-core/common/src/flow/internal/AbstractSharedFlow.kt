@@ -9,10 +9,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 @JvmField
-@SharedImmutable
 internal val EMPTY_RESUMES = arrayOfNulls<Continuation<Unit>?>(0)
 
 internal abstract class AbstractSharedFlowSlot<F> {

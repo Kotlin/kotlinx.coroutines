@@ -7,7 +7,6 @@ package kotlinx.coroutines.internal
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.SharedImmutable
 
 /**
  * Returns the first segment `s` with `s.id >= id` or `CLOSED`
@@ -237,5 +236,4 @@ internal value class SegmentOrClosed<S : Segment<S>>(private val value: Any?) {
 
 private const val POINTERS_SHIFT = 16
 
-@SharedImmutable
 private val CLOSED = Symbol("CLOSED")

@@ -6,7 +6,6 @@
 package kotlinx.coroutines.internal
 
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public expect open class LockFreeLinkedListNode() {
@@ -86,5 +85,4 @@ public expect class PrepareOp: OpDescriptor {
 }
 
 @JvmField
-@SharedImmutable
 internal val REMOVE_PREPARED: Any = Symbol("REMOVE_PREPARED")

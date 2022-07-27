@@ -5,18 +5,15 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 
 @ExperimentalCoroutinesApi
 public actual fun newSingleThreadContext(name: String): CloseableCoroutineDispatcher {
-    if (!multithreadingSupported) throw IllegalStateException("This API is only supported for experimental K/N memory model")
     return WorkerDispatcher(name)
 }
 
 public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): CloseableCoroutineDispatcher {
-    if (!multithreadingSupported) throw IllegalStateException("This API is only supported for experimental K/N memory model")
     require(nThreads >= 1) { "Expected at least one thread, but got: $nThreads"}
     return MultiWorkerDispatcher(name, nThreads)
 }

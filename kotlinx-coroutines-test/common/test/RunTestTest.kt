@@ -71,7 +71,6 @@ class RunTestTest {
 
     /** Tests that a dispatch timeout of `0` will fail the test if there are some dispatches outside the scheduler. */
     @Test
-    @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestWithZeroTimeoutWithUncontrolledDispatches() = testResultMap({ fn ->
         assertFailsWith<UncompletedCoroutinesError> { fn() }
     }) {
@@ -86,7 +85,6 @@ class RunTestTest {
 
     /** Tests that too low of a dispatch timeout causes crashes. */
     @Test
-    @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestWithSmallTimeout() = testResultMap({ fn ->
         assertFailsWith<UncompletedCoroutinesError> { fn() }
     }) {
@@ -112,7 +110,7 @@ class RunTestTest {
                 it()
                 fail("unreached")
             } catch (e: UncompletedCoroutinesError) {
-                assertTrue((e.message ?: "").contains(name1))
+                assertContains(e.message ?: "", name1)
                 assertFalse((e.message ?: "").contains(name2))
             }
         }) {
@@ -162,7 +160,6 @@ class RunTestTest {
 
     /** Tests uncaught exceptions being suppressed by the dispatch timeout error. */
     @Test
-    @NoNative // TODO: timeout leads to `Cannot execute task because event loop was shut down` on Native
     fun testRunTestTimingOutAndThrowing() = testResultMap({ fn ->
         try {
             fn()

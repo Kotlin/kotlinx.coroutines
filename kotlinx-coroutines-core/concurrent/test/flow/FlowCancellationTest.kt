@@ -12,7 +12,7 @@ import kotlin.test.*
 class FlowCancellationTest : TestBase() {
 
     @Test
-    fun testEmitIsCooperative() = runMtTest {
+    fun testEmitIsCooperative() = runTest {
         val latch = Channel<Unit>(1)
         val job = flow {
             expect(1)
@@ -29,7 +29,7 @@ class FlowCancellationTest : TestBase() {
     }
 
     @Test
-    fun testIsActiveOnCurrentContext() = runMtTest {
+    fun testIsActiveOnCurrentContext() = runTest {
         val latch = Channel<Unit>(1)
         val job = flow<Unit> {
             expect(1)
@@ -46,7 +46,7 @@ class FlowCancellationTest : TestBase() {
     }
 
     @Test
-    fun testFlowWithEmptyContext() = runMtTest {
+    fun testFlowWithEmptyContext() = runTest {
         expect(1)
         withEmptyContext {
             val flow = flow {

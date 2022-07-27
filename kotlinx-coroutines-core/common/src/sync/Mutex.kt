@@ -11,7 +11,6 @@ import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * Mutual exclusion for coroutines.
@@ -117,18 +116,12 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
     }
 }
 
-@SharedImmutable
 private val LOCK_FAIL = Symbol("LOCK_FAIL")
-@SharedImmutable
 private val UNLOCK_FAIL = Symbol("UNLOCK_FAIL")
-@SharedImmutable
 private val LOCKED = Symbol("LOCKED")
-@SharedImmutable
 private val UNLOCKED = Symbol("UNLOCKED")
 
-@SharedImmutable
 private val EMPTY_LOCKED = Empty(LOCKED)
-@SharedImmutable
 private val EMPTY_UNLOCKED = Empty(UNLOCKED)
 
 private class Empty(

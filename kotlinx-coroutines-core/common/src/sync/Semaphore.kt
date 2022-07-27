@@ -8,9 +8,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.contracts.*
-import kotlin.coroutines.*
 import kotlin.math.*
-import kotlin.native.concurrent.SharedImmutable
 
 /**
  * A counting semaphore for coroutines that logically maintains a number of available permits.
@@ -289,15 +287,9 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int)
 
     override fun toString() = "SemaphoreSegment[id=$id, hashCode=${hashCode()}]"
 }
-@SharedImmutable
 private val MAX_SPIN_CYCLES = systemProp("kotlinx.coroutines.semaphore.maxSpinCycles", 100)
-@SharedImmutable
 private val PERMIT = Symbol("PERMIT")
-@SharedImmutable
 private val TAKEN = Symbol("TAKEN")
-@SharedImmutable
 private val BROKEN = Symbol("BROKEN")
-@SharedImmutable
 private val CANCELLED = Symbol("CANCELLED")
-@SharedImmutable
 private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.semaphore.segmentSize", 16)

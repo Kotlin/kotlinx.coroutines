@@ -5,12 +5,10 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
-import kotlin.native.concurrent.*
 
 /**
  * Test dispatchers that emulate multiplatform context tracking.
  */
-@ThreadLocal
 public object NamedDispatchers {
 
     private val stack = ArrayStack()

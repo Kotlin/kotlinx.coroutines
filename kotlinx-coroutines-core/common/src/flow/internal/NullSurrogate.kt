@@ -6,7 +6,6 @@ package kotlinx.coroutines.flow.internal
 
 import kotlinx.coroutines.internal.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * This value is used a a surrogate `null` value when needed.
@@ -14,7 +13,6 @@ import kotlin.native.concurrent.*
  * Its usage typically are paired with [Symbol.unbox] usages.
  */
 @JvmField
-@SharedImmutable
 internal val NULL = Symbol("NULL")
 
 /**
@@ -22,7 +20,6 @@ internal val NULL = Symbol("NULL")
  * It should never leak to the outside world.
  */
 @JvmField
-@SharedImmutable
 internal val UNINITIALIZED = Symbol("UNINITIALIZED")
 
 /*
@@ -30,5 +27,4 @@ internal val UNINITIALIZED = Symbol("UNINITIALIZED")
  * It should never leak to the outside world.
  */
 @JvmField
-@SharedImmutable
 internal val DONE = Symbol("DONE")

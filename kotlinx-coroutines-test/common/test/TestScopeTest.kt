@@ -54,7 +54,6 @@ class TestScopeTest {
 
     /** Part of [testCreateProvidesScheduler], disabled for Native */
     @Test
-    @NoNative
     fun testCreateReusesScheduler() {
         // Reuses the scheduler of `Dispatchers.Main`
         run {

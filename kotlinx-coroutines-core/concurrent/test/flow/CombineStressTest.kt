@@ -10,7 +10,7 @@ import kotlin.test.*
 class CombineStressTest : TestBase() {
 
     @Test
-    fun testCancellation() = runMtTest {
+    fun testCancellation() = runTest {
         withContext(Dispatchers.Default + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {
             flow {
                 expect(1)
@@ -26,7 +26,7 @@ class CombineStressTest : TestBase() {
     }
 
     @Test
-    fun testFailure() = runMtTest {
+    fun testFailure() = runTest {
         val innerIterations = 100 * stressTestMultiplierSqrt
         val outerIterations = 10 * stressTestMultiplierSqrt
         withContext(Dispatchers.Default + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {

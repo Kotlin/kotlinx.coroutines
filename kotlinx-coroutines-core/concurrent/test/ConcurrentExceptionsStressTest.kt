@@ -22,7 +22,7 @@ class ConcurrentExceptionsStressTest : TestBase() {
     }
 
     @Test
-    fun testStress() = runMtTest {
+    fun testStress() = runTest {
         workers = Array(nWorkers) { index ->
             newSingleThreadContext("JobExceptionsStressTest-$index")
         }

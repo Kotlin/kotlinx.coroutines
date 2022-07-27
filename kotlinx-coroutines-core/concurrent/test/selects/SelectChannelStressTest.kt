@@ -15,7 +15,7 @@ class SelectChannelStressTest: TestBase() {
     private val iterations = (if (isNative) 1_000 else 1_000_000) * stressTestMultiplier
 
     @Test
-    fun testSelectSendResourceCleanupArrayChannel() = runMtTest {
+    fun testSelectSendResourceCleanupArrayChannel() = runTest {
         val channel = Channel<Int>(1)
         expect(1)
         channel.send(-1) // fill the buffer, so all subsequent sends cannot proceed
@@ -29,7 +29,7 @@ class SelectChannelStressTest: TestBase() {
     }
 
     @Test
-    fun testSelectReceiveResourceCleanupArrayChannel() = runMtTest {
+    fun testSelectReceiveResourceCleanupArrayChannel() = runTest {
         val channel = Channel<Int>(1)
         expect(1)
         repeat(iterations) { i ->
@@ -42,7 +42,7 @@ class SelectChannelStressTest: TestBase() {
     }
 
     @Test
-    fun testSelectSendResourceCleanupRendezvousChannel() = runMtTest {
+    fun testSelectSendResourceCleanupRendezvousChannel() = runTest {
         val channel = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         repeat(iterations) { i ->
@@ -55,7 +55,7 @@ class SelectChannelStressTest: TestBase() {
     }
 
     @Test
-    fun testSelectReceiveResourceRendezvousChannel() = runMtTest {
+    fun testSelectReceiveResourceRendezvousChannel() = runTest {
         val channel = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         repeat(iterations) { i ->

@@ -4,10 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlinx.cinterop.*
-import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.internal.multithreadingSupported
-import platform.posix.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 import kotlin.system.*
@@ -21,21 +17,13 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
     }
 
     protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
-        if (multithreadingSupported) {
-            DefaultExecutor.invokeOnTimeout(now, delayedTask, EmptyCoroutineContext)
-        } else {
-            error("Cannot execute task because event loop was shut down")
-        }
+        DefaultExecutor.invokeOnTimeout(now, delayedTask, EmptyCoroutineContext)
     }
 }
 
 internal class EventLoopImpl: EventLoopImplBase() {
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        if (!multithreadingSupported) {
-            return scheduleInvokeOnTimeout(timeMillis, block)
-        }
-        return DefaultDelay.invokeOnTimeout(timeMillis, block, context)
-    }
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        DefaultDelay.invokeOnTimeout(timeMillis, block, context)
 }
 
 internal actual fun createEventLoop(): EventLoop = EventLoopImpl()

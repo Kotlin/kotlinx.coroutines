@@ -25,6 +25,7 @@ class AtomicCancellationTest : TestBase() {
         finish(4)
     }
 
+    @Suppress("UNUSED_VARIABLE")
     @Test
     fun testSelectSendCancellable() = runBlocking {
         expect(1)

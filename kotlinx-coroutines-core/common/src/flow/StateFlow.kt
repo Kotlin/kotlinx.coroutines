@@ -10,7 +10,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.native.concurrent.*
 
 /**
  * A [SharedFlow] that represents a read-only state with a single updatable data [value] that emits updates
@@ -238,10 +237,8 @@ public inline fun <T> MutableStateFlow<T>.update(function: (T) -> T) {
 
 // ------------------------------------ Implementation ------------------------------------
 
-@SharedImmutable
 private val NONE = Symbol("NONE")
 
-@SharedImmutable
 private val PENDING = Symbol("PENDING")
 
 // StateFlow slots are allocated for its collectors

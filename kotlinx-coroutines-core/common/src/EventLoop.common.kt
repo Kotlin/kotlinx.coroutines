@@ -8,7 +8,6 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * Extended by [CoroutineDispatcher] implementations that have event loop inside and can
@@ -123,9 +122,8 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     open fun shutdown() {}
 }
 
-@ThreadLocal
 internal object ThreadLocalEventLoop {
-    private val ref = CommonThreadLocal<EventLoop?>()
+    private val ref = commonThreadLocal<EventLoop?>(Symbol("ThreadLocalEventLoop"))
 
     internal val eventLoop: EventLoop
         get() = ref.get() ?: createEventLoop().also { ref.set(it) }
@@ -142,7 +140,6 @@ internal object ThreadLocalEventLoop {
     }
 }
 
-@SharedImmutable
 private val DISPOSED_TASK = Symbol("REMOVED_TASK")
 
 // results for scheduleImpl
@@ -168,7 +165,6 @@ internal fun delayToNanos(timeMillis: Long): Long = when {
 internal fun delayNanosToMillis(timeNanos: Long): Long =
     timeNanos / MS_TO_NS
 
-@SharedImmutable
 private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
 private typealias Queue<T> = LockFreeTaskQueueCore<T>

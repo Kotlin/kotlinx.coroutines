@@ -13,7 +13,7 @@ class SemaphoreStressTest : TestBase() {
     private val iterations = (if (isNative) 1_000 else 10_000) * stressTestMultiplier
 
     @Test
-    fun testStressTestAsMutex() = runMtTest {
+    fun testStressTestAsMutex() = runTest {
         val n = iterations
         val k = 100
         var shared = 0
@@ -32,7 +32,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testStress() = runMtTest {
+    fun testStress() = runTest {
         val n = iterations
         val k = 100
         val semaphore = Semaphore(10)
@@ -48,7 +48,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testStressAsMutex() = runMtTest {
+    fun testStressAsMutex() = runTest {
         runBlocking(Dispatchers.Default) {
             val n = iterations
             val k = 100
@@ -69,7 +69,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testStressCancellation() = runMtTest {
+    fun testStressCancellation() = runTest {
         val n = iterations
         val semaphore = Semaphore(1)
         semaphore.acquire()
@@ -90,7 +90,7 @@ class SemaphoreStressTest : TestBase() {
      * the semaphore into an incorrect state where permits are leaked.
      */
     @Test
-    fun testStressReleaseCancelRace() = runMtTest {
+    fun testStressReleaseCancelRace() = runTest {
         val n = iterations
         val semaphore = Semaphore(1, 1)
         newSingleThreadContext("SemaphoreStressTest").use { pool ->
@@ -120,7 +120,7 @@ class SemaphoreStressTest : TestBase() {
     }
 
     @Test
-    fun testShouldBeUnlockedOnCancellation() = runMtTest {
+    fun testShouldBeUnlockedOnCancellation() = runTest {
         val semaphore = Semaphore(1)
         val n = 1000 * stressTestMultiplier
         repeat(n) {
