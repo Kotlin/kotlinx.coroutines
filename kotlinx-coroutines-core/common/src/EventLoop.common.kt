@@ -8,7 +8,6 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * Extended by [CoroutineDispatcher] implementations that have event loop inside and can
@@ -123,13 +122,8 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     open fun shutdown() {}
 }
 
-/*
- * This is marked with `ThreadLocal` on purpose: the loop itself is supposed to be thread-local,
- * but `CommonThreadLocal` is not supported on K/N properly, so we emulate it with this annotation.
- */
-@ThreadLocal
 internal object ThreadLocalEventLoop {
-    private val ref = CommonThreadLocal<EventLoop?>()
+    private val ref = commonThreadLocal<EventLoop?>(Symbol("ThreadLocalEventLoop"))
 
     internal val eventLoop: EventLoop
         get() = ref.get() ?: createEventLoop().also { ref.set(it) }

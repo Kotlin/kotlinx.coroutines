@@ -4,9 +4,13 @@
 
 package kotlinx.coroutines.internal
 
-internal actual class CommonThreadLocal<T> actual constructor() {
-    private var value: T? = null
+internal actual class CommonThreadLocal<T>(private val name: Symbol) {
     @Suppress("UNCHECKED_CAST")
-    actual fun get(): T = value as T
-    actual fun set(value: T) { this.value = value }
+    actual fun get(): T = Storage[name] as T
+    actual fun set(value: T) { Storage[name] = value }
 }
+
+internal actual fun <T> commonThreadLocal(name: Symbol): CommonThreadLocal<T> = CommonThreadLocal(name)
+
+@ThreadLocal
+private object Storage: MutableMap<Symbol, Any?> by mutableMapOf()
