@@ -118,7 +118,7 @@ public interface Job : CoroutineContext.Element {
     // ------------ state query ------------
 
     /**
-     * Returns a parent of the current job if the parent-child relationship
+     * Returns the parent of the current job if the parent-child relationship
      * is established or `null` if the job has no parent or was successfully completed.
      *
      * Accesses to this property are not idempotent, the property becomes `null` as soon
