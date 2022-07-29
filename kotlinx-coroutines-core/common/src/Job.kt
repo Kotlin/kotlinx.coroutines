@@ -125,7 +125,7 @@ public interface Job : CoroutineContext.Element {
      * as the job is transitioned to its final state, whether it is cancelled or completed,
      * and all job children are completed.
      *
-     * For coroutines, its corresponding job completes as soon as the coroutine itself
+     * For a coroutine, its corresponding job completes as soon as the coroutine itself
      * and all its children are complete.
      *
      * @see [Job] state transitions for additional details.
