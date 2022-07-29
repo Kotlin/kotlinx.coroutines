@@ -31,7 +31,7 @@ import kotlin.jvm.*
  *   It is completed by calling [CompletableJob.complete].
  *
  * Conceptually, an execution of a job does not produce a result value. Jobs are launched solely for their
- * side-effects. See [Deferred] interface for a job that produces a result.
+ * side effects. See [Deferred] interface for a job that produces a result.
  *
  * ### Job states
  *
@@ -116,6 +116,22 @@ public interface Job : CoroutineContext.Element {
     public companion object Key : CoroutineContext.Key<Job>
 
     // ------------ state query ------------
+
+    /**
+     * Returns the parent of the current job if the parent-child relationship
+     * is established or `null` if the job has no parent or was successfully completed.
+     *
+     * Accesses to this property are not idempotent, the property becomes `null` as soon
+     * as the job is transitioned to its final state, whether it is cancelled or completed,
+     * and all job children are completed.
+     *
+     * For a coroutine, its corresponding job completes as soon as the coroutine itself
+     * and all its children are complete.
+     *
+     * @see [Job] state transitions for additional details.
+     */
+    @ExperimentalCoroutinesApi
+    public val parent: Job?
 
     /**
      * Returns `true` when this job is active -- it was already started and has not completed nor was cancelled yet.

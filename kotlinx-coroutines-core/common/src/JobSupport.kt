@@ -132,6 +132,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         get() = _parentHandle.value
         set(value) { _parentHandle.value = value }
 
+    override val parent: Job?
+        get() = parentHandle?.parent
+
     // ------------ initialization ------------
 
     /**
