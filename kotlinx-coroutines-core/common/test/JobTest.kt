@@ -12,6 +12,7 @@ class JobTest : TestBase() {
     @Test
     fun testState() {
         val job = Job()
+        assertNull(job.parent)
         assertTrue(job.isActive)
         job.cancel()
         assertTrue(!job.isActive)
@@ -210,11 +211,13 @@ class JobTest : TestBase() {
 
     @Test
     fun testIncompleteJobState() = runTest {
+        val parent = coroutineContext.job
         val job = launch {
             coroutineContext[Job]!!.invokeOnCompletion {  }
         }
-
+        assertSame(parent, job.parent)
         job.join()
+        assertNull(job.parent)
         assertTrue(job.isCompleted)
         assertFalse(job.isActive)
         assertFalse(job.isCancelled)

@@ -21,7 +21,6 @@ internal open class ScopeCoroutine<in T>(
     final override fun getStackTraceElement(): StackTraceElement? = null
 
     final override val isScopedCoroutine: Boolean get() = true
-    internal val parent: Job? get() = parentHandle?.parent
 
     override fun afterCompletion(state: Any?) {
         // Resume in a cancellable way by default when resuming from another context

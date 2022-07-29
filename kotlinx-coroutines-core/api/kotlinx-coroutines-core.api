@@ -360,6 +360,7 @@ public abstract interface class kotlinx/coroutines/Job : kotlin/coroutines/Corou
 	public abstract fun getCancellationException ()Ljava/util/concurrent/CancellationException;
 	public abstract fun getChildren ()Lkotlin/sequences/Sequence;
 	public abstract fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
+	public abstract fun getParent ()Lkotlinx/coroutines/Job;
 	public abstract fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public abstract fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public abstract fun isActive ()Z
@@ -443,6 +444,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public final fun getCompletionExceptionOrNull ()Ljava/lang/Throwable;
 	public final fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
 	public final fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
+	public fun getParent ()Lkotlinx/coroutines/Job;
 	protected fun handleJobException (Ljava/lang/Throwable;)Z
 	protected final fun initParentJob (Lkotlinx/coroutines/Job;)V
 	public final fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
@@ -485,6 +487,7 @@ public final class kotlinx/coroutines/NonCancellable : kotlin/coroutines/Abstrac
 	public fun getCancellationException ()Ljava/util/concurrent/CancellationException;
 	public fun getChildren ()Lkotlin/sequences/Sequence;
 	public fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
+	public fun getParent ()Lkotlinx/coroutines/Job;
 	public fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public fun isActive ()Z
