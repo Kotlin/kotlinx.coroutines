@@ -7,7 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.selects.TrySelectDetailedResult.*
 import kotlin.math.*
 
 /**
@@ -68,55 +68,13 @@ internal open class ArrayChannel<E>(
                         this.size.value = size // restore size
                         return receive!!
                     }
-                    val token = receive!!.tryResumeReceive(element, null)
+                    val token = receive!!.tryResumeReceive(element)
                     if (token != null) {
                         assert { token === RESUME_TOKEN }
                         this.size.value = size // restore size
                         return@withLock
                     }
                 }
-            }
-            enqueueElement(size, element)
-            return OFFER_SUCCESS
-        }
-        // breaks here if offer meets receiver
-        receive!!.completeResumeReceive(element)
-        return receive!!.offerResult
-    }
-
-    // result is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`
-    protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
-        var receive: ReceiveOrClosed<E>? = null
-        lock.withLock {
-            val size = this.size.value
-            closedForSend?.let { return it }
-            // update size before checking queue (!!!)
-            updateBufferSize(size)?.let { return it }
-            // check for receivers that were waiting on empty queue
-            if (size == 0) {
-                loop@ while (true) {
-                    val offerOp = describeTryOffer(element)
-                    val failure = select.performAtomicTrySelect(offerOp)
-                    when {
-                        failure == null -> { // offered successfully
-                            this.size.value = size // restore size
-                            receive = offerOp.result
-                            return@withLock
-                        }
-                        failure === OFFER_FAILED -> break@loop // cannot offer -> Ok to queue to buffer
-                        failure === RETRY_ATOMIC -> {} // retry
-                        failure === ALREADY_SELECTED || failure is Closed<*> -> {
-                            this.size.value = size // restore size
-                            return failure
-                        }
-                        else -> error("performAtomicTrySelect(describeTryOffer) returned $failure")
-                    }
-                }
-            }
-            // let's try to select sending this element to buffer
-            if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
-                this.size.value = size // restore size
-                return ALREADY_SELECTED
             }
             enqueueElement(size, element)
             return OFFER_SUCCESS
@@ -197,8 +155,12 @@ internal open class ArrayChannel<E>(
                         replacement = send!!.pollResult
                         break@loop
                     }
-                    // too late, already cancelled, but we removed it from the queue and need to notify on undelivered element
-                    send!!.undeliveredElement()
+                    // Too late, already cancelled, but we removed it from the queue and need to notify on undelivered element.
+                    // The only exception is when this "send" operation is an `onSend` clause that has to be re-registered
+                    // in the corresponding `select` invocation.
+                    val send = send!!
+                    if (!(send is SendElementSelectWithUndeliveredHandler<*> && send.trySelectResult == REREGISTER))
+                        send.undeliveredElement()
                 }
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
@@ -209,67 +171,6 @@ internal open class ArrayChannel<E>(
         }
         // complete send the we're taken replacement from
         if (resumed)
-            send!!.completeResumeSend()
-        return result
-    }
-
-    // result is `ALREADY_SELECTED | E | POLL_FAILED | Closed`
-    protected override fun pollSelectInternal(select: SelectInstance<*>): Any? {
-        var send: Send? = null
-        var success = false
-        var result: Any? = null
-        lock.withLock {
-            val size = this.size.value
-            if (size == 0) return closedForSend ?: POLL_FAILED
-            // size > 0: not empty -- retrieve element
-            result = buffer[head]
-            buffer[head] = null
-            this.size.value = size - 1 // update size before checking queue (!!!)
-            // check for senders that were waiting on full queue
-            var replacement: Any? = POLL_FAILED
-            if (size == capacity) {
-                loop@ while (true) {
-                    val pollOp = describeTryPoll()
-                    val failure = select.performAtomicTrySelect(pollOp)
-                    when {
-                        failure == null -> { // polled successfully
-                            send = pollOp.result
-                            success = true
-                            replacement = send!!.pollResult
-                            break@loop
-                        }
-                        failure === POLL_FAILED -> break@loop // cannot poll -> Ok to take from buffer
-                        failure === RETRY_ATOMIC -> {} // retry
-                        failure === ALREADY_SELECTED -> {
-                            this.size.value = size // restore size
-                            buffer[head] = result // restore head
-                            return failure
-                        }
-                        failure is Closed<*> -> {
-                            send = failure
-                            success = true
-                            replacement = failure
-                            break@loop
-                        }
-                        else -> error("performAtomicTrySelect(describeTryOffer) returned $failure")
-                    }
-                }
-            }
-            if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
-                this.size.value = size // restore size
-                buffer[(head + size) % buffer.size] = replacement
-            } else {
-                // failed to poll or is already closed --> let's try to select receiving this element from buffer
-                if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
-                    this.size.value = size // restore size
-                    buffer[head] = result // restore head
-                    return ALREADY_SELECTED
-                }
-            }
-            head = (head + 1) % buffer.size
-        }
-        // complete send the we're taken replacement from
-        if (success)
             send!!.completeResumeSend()
         return result
     }

@@ -5,6 +5,7 @@
 
 package kotlinx.coroutines.internal
 
+import kotlinx.coroutines.*
 import kotlin.jvm.*
 
 /** @suppress **This is unstable API and it is subject to change.** */

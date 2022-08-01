@@ -5,7 +5,6 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.selects.*
 
 /**
  * Channel with linked-list buffer of a unlimited capacity (limited only by available memory).
@@ -38,23 +37,6 @@ internal open class LinkedListChannel<E>(onUndeliveredElement: OnUndeliveredElem
                 }
                 result is Closed<*> -> return result
                 else -> error("Invalid offerInternal result $result")
-            }
-        }
-    }
-
-    // result is always `ALREADY_SELECTED | OFFER_SUCCESS | Closed`.
-    protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
-        while (true) {
-            val result = if (hasReceiveOrClosed)
-                super.offerSelectInternal(element, select) else
-                (select.performAtomicTrySelect(describeSendBuffered(element)) ?: OFFER_SUCCESS)
-            when {
-                result === ALREADY_SELECTED -> return ALREADY_SELECTED
-                result === OFFER_SUCCESS -> return OFFER_SUCCESS
-                result === OFFER_FAILED -> {} // retry
-                result === RETRY_ATOMIC -> {} // retry
-                result is Closed<*> -> return result
-                else -> error("Invalid result $result")
             }
         }
     }

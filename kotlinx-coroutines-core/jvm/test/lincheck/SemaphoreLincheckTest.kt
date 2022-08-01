@@ -11,7 +11,7 @@ import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
 
 abstract class SemaphoreLincheckTestBase(permits: Int) : AbstractLincheckTest() {
-    private val semaphore = Semaphore(permits)
+    private val semaphore = SemaphoreImpl(permits = permits, acquiredPermits = 0)
 
     @Operation
     fun tryAcquire() = semaphore.tryAcquire()

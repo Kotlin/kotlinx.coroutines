@@ -6,6 +6,8 @@
 
 package kotlinx.coroutines.internal
 
+import kotlinx.coroutines.*
+
 private typealias Node = LinkedListNode
 /** @suppress **This is unstable API and it is subject to change.** */
 @Suppress("NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS") // :TODO: Remove when fixed: https://youtrack.jetbrains.com/issue/KT-23703
@@ -15,7 +17,7 @@ public actual typealias LockFreeLinkedListNode = LinkedListNode
 public actual typealias LockFreeLinkedListHead = LinkedListHead
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public open class LinkedListNode {
+public open class LinkedListNode : DisposableHandle {
     @PublishedApi internal var _next = this
     @PublishedApi internal var _prev = this
     @PublishedApi internal var _removed: Boolean = false
@@ -40,6 +42,10 @@ public open class LinkedListNode {
      */
     public open fun remove(): Boolean {
         return removeImpl()
+    }
+
+    override fun dispose() {
+        remove()
     }
 
     @PublishedApi

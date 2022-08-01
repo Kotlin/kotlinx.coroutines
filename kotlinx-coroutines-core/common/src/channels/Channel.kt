@@ -365,18 +365,7 @@ public interface ReceiveChannel<out E> {
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("onReceiveCatching")
     ) // Warning since 1.3.0, error in 1.5.0, will be hidden or removed in 1.7.0
-    public val onReceiveOrNull: SelectClause1<E?>
-        get() {
-            return object : SelectClause1<E?> {
-                @InternalCoroutinesApi
-                override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (E?) -> R) {
-                    onReceiveCatching.registerSelectClause1(select) {
-                        it.exceptionOrNull()?.let { throw it }
-                        block(it.getOrNull())
-                    }
-                }
-            }
-        }
+    public val onReceiveOrNull: SelectClause1<E?> get() = (this as AbstractChannel<E>).onReceiveOrNull
 }
 
 /**
