@@ -41,10 +41,10 @@ val commonKoverExcludes = listOf(
     "kotlinx.coroutines.reactive.ConvertKt" // Deprecated
 )
 
-tasks.koverHtmlReport {
-    excludes = commonKoverExcludes
-}
-
-tasks.koverVerify {
-    excludes = commonKoverExcludes
+kover {
+    filters {
+        classes {
+            excludes += commonKoverExcludes
+        }
+    }
 }
