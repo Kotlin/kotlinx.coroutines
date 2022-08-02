@@ -70,7 +70,28 @@ internal open class CancellableContinuationImpl<in T>(
      */
     private val _state = atomic<Any?>(Active)
 
-    private var parentHandle: DisposableHandle? = null
+    /*
+     * This field has a concurrent rendezvous in the following scenario:
+     *
+     * - installParentHandle publishes this instance on T1
+     *
+     * T1 writes:
+     * * handle = installed; right after the installation
+     * * Shortly after: if (isComplete) handle = NonDisposableHandle
+     *
+     * Any other T writes if the parent job is cancelled in detachChild:
+     * * handle = NonDisposableHandle
+     *
+     * We want to preserve a strict invariant on parentHandle transition, allowing only three of them:
+     * null -> anyHandle
+     * anyHandle -> NonDisposableHandle
+     * null -> NonDisposableHandle
+     *
+     * With a guarantee that after disposal the only state handle may end up in is NonDisposableHandle
+     */
+    private val _parentHandle = atomic<DisposableHandle?>(null)
+    private val parentHandle: DisposableHandle?
+        get() = _parentHandle.value
 
     internal val state: Any? get() = _state.value
 
@@ -101,7 +122,7 @@ internal open class CancellableContinuationImpl<in T>(
         if (isCompleted) {
             // Can be invoked concurrently in 'parentCancelled', no problems here
             handle.dispose()
-            parentHandle = NonDisposableHandle
+            _parentHandle.value = NonDisposableHandle
         }
     }
 
@@ -307,7 +328,7 @@ internal open class CancellableContinuationImpl<in T>(
             onCancelling = true,
             handler = ChildContinuation(this).asHandler
         )
-        parentHandle = handle
+        _parentHandle.compareAndSet(null, handle)
         return handle
     }
 
@@ -492,7 +513,7 @@ internal open class CancellableContinuationImpl<in T>(
     internal fun detachChild() {
         val handle = parentHandle ?: return
         handle.dispose()
-        parentHandle = NonDisposableHandle
+        _parentHandle.value = NonDisposableHandle
     }
 
     // Note: Always returns RESUME_TOKEN | null
