@@ -63,14 +63,14 @@ import kotlinx.coroutines.selects.*
 
 fun CoroutineScope.fizz() = produce<String> {
     while (true) { // sends "Fizz" every 300 ms
-        delay(300)
+        delay(500)
         send("Fizz")
     }
 }
 
 fun CoroutineScope.buzz() = produce<String> {
     while (true) { // sends "Buzz!" every 500 ms
-        delay(500)
+        delay(1000)
         send("Buzz!")
     }
 }
@@ -112,7 +112,7 @@ fizz -> 'Fizz'
 fizz -> 'Fizz'
 buzz -> 'Buzz!'
 fizz -> 'Fizz'
-buzz -> 'Buzz!'
+fizz -> 'Fizz'
 ```
 
 <!--- TEST -->
