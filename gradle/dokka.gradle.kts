@@ -27,6 +27,8 @@ tasks.withType(DokkaTaskPartial::class).configureEach {
 
 tasks.withType(DokkaTaskPartial::class).configureEach {
     suppressInheritedMembers.set(true)
+    pluginsMapConfiguration.set(mapOf("org.jetbrains.dokka.base.DokkaBase" to """{ "templatesDir" : "${rootProject.projectDir.toString().replace('\\', '/')}/dokka-templates" }"""))
+
     dokkaSourceSets.configureEach {
         jdkVersion.set(11)
         includes.from("README.md")
