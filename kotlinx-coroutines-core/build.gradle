@@ -260,12 +260,12 @@ def commonKoverExcludes =
          "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
         ]
 
-tasks.koverHtmlReport {
-    excludes = commonKoverExcludes
-}
-
-tasks.koverVerify {
-    excludes = commonKoverExcludes
+kover {
+    filters {
+        classes {
+            excludes.addAll(commonKoverExcludes)
+        }
+    }
 }
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {

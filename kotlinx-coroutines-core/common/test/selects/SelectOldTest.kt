@@ -91,6 +91,34 @@ class SelectOldTest : TestBase() {
     }
 
     @Test
+    fun testSelectUnbiasedComplete() = runTest {
+        expect(1)
+        val job = Job()
+        job.complete()
+        expect(2)
+        val res = selectUnbiasedOld<String> {
+            job.onJoin {
+                expect(3)
+                "OK"
+            }
+        }
+        assertEquals("OK", res)
+        finish(4)
+    }
+
+    @Test
+    fun testSelectUnbiasedThrows() = runTest {
+        try {
+            select<Unit> {
+                expect(1)
+                throw TestException()
+            }
+        } catch (e: TestException) {
+            finish(2)
+        }
+    }
+
+    @Test
     fun testSelectLazy() = runTest {
         expect(1)
         val job = launch(start = CoroutineStart.LAZY) {
