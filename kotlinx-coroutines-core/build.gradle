@@ -168,6 +168,7 @@ kotlin.sourceSets {
         api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
         api "org.jetbrains.kotlinx:kotlinx-knit-test:$knit_version"
         implementation project(":android-unit-tests")
+        implementation "org.openjdk.jol:jol-core:0.16"
     }
 }
 
