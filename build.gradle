@@ -125,7 +125,6 @@ allprojects {
 
 apply plugin: "binary-compatibility-validator"
 apply plugin: "base"
-apply plugin: "kover-conventions"
 
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
