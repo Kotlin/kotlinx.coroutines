@@ -19,7 +19,7 @@ import kotlin.test.*
  * using `onUndeliveredElement` to detect lost resources and close them properly.
  */
 @RunWith(Parameterized::class)
-class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : TestBase() {
+class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannelKind) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
@@ -155,14 +155,9 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                 var counter = 0
                 while (true) {
                     val trySendData = Data(sentCnt++)
-                    val sendMode = Random.nextInt(2) + 1
-                    sentStatus[trySendData.x] = sendMode
-                    when (sendMode) {
-                        1 -> channel.send(trySendData)
-                        2 -> select<Unit> { channel.onSend(trySendData) {} }
-                        else -> error("cannot happen")
-                    }
-                    sentStatus[trySendData.x] = sendMode + 2
+                    sentStatus[trySendData.x] = 1
+                    selectOld<Unit> { channel.onSend(trySendData) {} }
+                    sentStatus[trySendData.x] = 3
                     when {
                         // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
                         kind == TestChannelKind.LINKED_LIST -> while (sentCnt > lastReceived + 100) yield()
@@ -184,27 +179,17 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         receiver = scope.launch(start = CoroutineStart.ATOMIC) {
             cancellable(receiverDone) {
                 while (true) {
-                    val receiveMode = Random.nextInt(6) + 1
-                    val receivedData = when (receiveMode) {
-                        1 -> channel.receive()
-                        2 -> select { channel.onReceive { it } }
-                        3 -> channel.receiveCatching().getOrElse { error("Should not be closed") }
-                        4 -> select { channel.onReceiveCatching { it.getOrElse { error("Should not be closed") } } }
-                        5 -> channel.receiveCatching().getOrThrow()
-                        6 -> {
-                            val iterator = channel.iterator()
-                            check(iterator.hasNext()) { "Should not be closed" }
-                            iterator.next()
+                   selectOld<Unit> {
+                        channel.onReceive { receivedData ->
+                            receivedData.onReceived()
+                            receivedCnt++
+                            val received = receivedData.x
+                            if (received <= lastReceived)
+                                dupCnt++
+                            lastReceived = received
+                            receivedStatus[received] = 1
                         }
-                        else -> error("cannot happen")
                     }
-                    receivedData.onReceived()
-                    receivedCnt++
-                    val received = receivedData.x
-                    if (received <= lastReceived)
-                        dupCnt++
-                    lastReceived = received
-                    receivedStatus[received] = receiveMode
                 }
             }
         }
@@ -216,7 +201,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
 
     private suspend fun stopReceiver() {
         stoppedReceiver++
-        receiver.cancel()
+        receiver.cancelAndJoin()
         receiverDone.receive()
     }
 

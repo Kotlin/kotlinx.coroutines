@@ -1,11 +1,12 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines.selects
 
+import kotlin.contracts.*
 import kotlin.coroutines.*
-import kotlin.coroutines.intrinsics.*
 
 /**
  * Waits for the result of multiple suspending functions simultaneously like [select], but in an _unbiased_
@@ -17,55 +18,51 @@ import kotlin.coroutines.intrinsics.*
  *
  * See [select] function description for all the other details.
  */
-public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<R>.() -> Unit): R =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
-        val scope = UnbiasedSelectBuilderImpl(uCont)
-        try {
-            builder(scope)
-        } catch (e: Throwable) {
-            scope.handleBuilderException(e)
-        }
-        scope.initSelectResult()
+@OptIn(ExperimentalContracts::class)
+public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<R>.() -> Unit): R {
+    contract {
+        callsInPlace(builder, InvocationKind.EXACTLY_ONCE)
     }
+    return UnbiasedSelectImplementation<R>(coroutineContext).run {
+        builder(this)
+        doSelect()
+    }
+}
 
-
+/**
+ * The unbiased `select` inherits the [standard one][SelectImplementation],
+ * but does not register clauses immediately. Instead, it stores all of them
+ * in [clausesToRegister] lists, shuffles and registers them in the beginning of [doSelect]
+ * (see [shuffleAndRegisterClauses]), and then delegates the rest
+ * to the parent's [doSelect] implementation.
+ */
 @PublishedApi
-internal class UnbiasedSelectBuilderImpl<in R>(
-    uCont: Continuation<R>
-) : SelectBuilder<R> {
-
-    private val instance = SelectBuilderImpl(uCont)
-    private val clauses = arrayListOf<() -> Unit>()
-
-    @PublishedApi
-    internal fun handleBuilderException(e: Throwable): Unit = instance.handleBuilderException(e)
-
-    @PublishedApi
-    internal fun initSelectResult(): Any? {
-        if (!instance.isSelected) {
-            try {
-                clauses.shuffle()
-                clauses.forEach { it.invoke() }
-            } catch (e: Throwable) {
-                instance.handleBuilderException(e)
-            }
-        }
-        return instance.getResult()
-    }
+internal open class UnbiasedSelectImplementation<R>(context: CoroutineContext) : SelectImplementation<R>(context) {
+    private val clausesToRegister: MutableList<ClauseData<R>> = arrayListOf()
 
     override fun SelectClause0.invoke(block: suspend () -> R) {
-        clauses += { registerSelectClause0(instance, block) }
+        clausesToRegister += ClauseData(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_0, block, onCancellationConstructor)
     }
 
     override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) {
-        clauses += { registerSelectClause1(instance, block) }
+        clausesToRegister += ClauseData(clauseObject, regFunc, processResFunc, null, block, onCancellationConstructor)
     }
 
     override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) {
-        clauses += { registerSelectClause2(instance, param, block) }
+        clausesToRegister += ClauseData(clauseObject, regFunc, processResFunc, param, block, onCancellationConstructor)
     }
 
-    override fun onTimeout(timeMillis: Long, block: suspend () -> R) {
-        clauses += { instance.onTimeout(timeMillis, block) }
+    @PublishedApi
+    override suspend fun doSelect(): R {
+        shuffleAndRegisterClauses()
+        return super.doSelect()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun shuffleAndRegisterClauses() = try {
+        clausesToRegister.shuffle()
+        clausesToRegister.forEach { it.register() }
+    } finally {
+        clausesToRegister.clear()
     }
 }

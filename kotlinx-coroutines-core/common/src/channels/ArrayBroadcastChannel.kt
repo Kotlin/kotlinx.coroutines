@@ -112,27 +112,6 @@ internal class ArrayBroadcastChannel<E>(
         return OFFER_SUCCESS
     }
 
-    // result is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`
-    override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
-        bufferLock.withLock {
-            // check if closed for send (under lock, so size cannot change)
-            closedForSend?.let { return it }
-            val size = this.size
-            if (size >= capacity) return OFFER_FAILED
-            // let's try to select sending this element to buffer
-            if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
-                return ALREADY_SELECTED
-            }
-            val tail = this.tail
-            buffer[(tail % capacity).toInt()] = element
-            this.size = size + 1
-            this.tail = tail + 1
-        }
-        // if offered successfully, then check subscribers outside of lock
-        checkSubOffers()
-        return OFFER_SUCCESS
-    }
-
     private fun checkSubOffers() {
         var updated = false
         var hasSubs = false
@@ -262,7 +241,7 @@ internal class ArrayBroadcastChannel<E>(
                     // find a receiver for an element
                     receive = takeFirstReceiveOrPeekClosed() ?: break // break when no one's receiving
                     if (receive is Closed<*>) break // noting more to do if this sub already closed
-                    val token = receive.tryResumeReceive(result as E, null) ?: continue
+                    val token = receive.tryResumeReceive(result as E) ?: continue
                     assert { token === RESUME_TOKEN }
                     val subHead = this.subHead
                     this.subHead = subHead + 1 // retrieved element for this subscriber
@@ -290,40 +269,6 @@ internal class ArrayBroadcastChannel<E>(
                         val subHead = this.subHead
                         this.subHead = subHead + 1
                         updated = true
-                    }
-                }
-                result
-            }
-            // do close outside of lock
-            (result as? Closed<*>)?.also { close(cause = it.closeCause) }
-            // there could have been checkOffer attempt while we were holding lock
-            // now outside the lock recheck if anything else to offer
-            if (checkOffer())
-                updated = true
-            // and finally update broadcast's channel head if needed
-            if (updated)
-                broadcastChannel.updateHead()
-            return result
-        }
-
-        // result is `ALREADY_SELECTED | E | POLL_FAILED | Closed`
-        override fun pollSelectInternal(select: SelectInstance<*>): Any? {
-            var updated = false
-            val result = subLock.withLock {
-                var result = peekUnderLock()
-                when {
-                    result is Closed<*> -> { /* just bail out of lock */ }
-                    result === POLL_FAILED -> { /* just bail out of lock */ }
-                    else -> {
-                        // let's try to select receiving this element from buffer
-                        if (!select.trySelect()) { // :todo: move trySelect completion outside of lock
-                            result = ALREADY_SELECTED
-                        } else {
-                            // update subHead after retrieiving element from buffer
-                            val subHead = this.subHead
-                            this.subHead = subHead + 1
-                            updated = true
-                        }
                     }
                 }
                 result

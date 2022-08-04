@@ -56,4 +56,6 @@ private class ChannelViaBroadcast<E>(
         get() = sub.onReceive
     override val onReceiveCatching: SelectClause1<ChannelResult<E>>
         get() = sub.onReceiveCatching
+    override val onReceiveOrNull: SelectClause1<E?>
+        get() = error("unsupported")
 }

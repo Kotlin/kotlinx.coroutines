@@ -6,7 +6,6 @@ package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.selects.*
 
 /**
  * Channel that buffers at most one element and conflates all subsequent `send` and `trySend` invocations,
@@ -42,7 +41,7 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
                     if (receive is Closed) {
                         return receive!!
                     }
-                    val token = receive!!.tryResumeReceive(element, null)
+                    val token = receive!!.tryResumeReceive(element)
                     if (token != null) {
                         assert { token === RESUME_TOKEN }
                         return@withLock
@@ -57,57 +56,11 @@ internal open class ConflatedChannel<E>(onUndeliveredElement: OnUndeliveredEleme
         return receive!!.offerResult
     }
 
-    // result is `ALREADY_SELECTED | OFFER_SUCCESS | Closed`
-    protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
-        var receive: ReceiveOrClosed<E>? = null
-        lock.withLock {
-            closedForSend?.let { return it }
-            if (value === EMPTY) {
-                loop@ while(true) {
-                    val offerOp = describeTryOffer(element)
-                    val failure = select.performAtomicTrySelect(offerOp)
-                    when {
-                        failure == null -> { // offered successfully
-                            receive = offerOp.result
-                            return@withLock
-                        }
-                        failure === OFFER_FAILED -> break@loop // cannot offer -> Ok to queue to buffer
-                        failure === RETRY_ATOMIC -> {} // retry
-                        failure === ALREADY_SELECTED || failure is Closed<*> -> return failure
-                        else -> error("performAtomicTrySelect(describeTryOffer) returned $failure")
-                    }
-                }
-            }
-            // try to select sending this element to buffer
-            if (!select.trySelect()) {
-                return ALREADY_SELECTED
-            }
-            updateValueLocked(element)?.let { throw it }
-            return OFFER_SUCCESS
-        }
-        // breaks here if offer meets receiver
-        receive!!.completeResumeReceive(element)
-        return receive!!.offerResult
-    }
-
     // result is `E | POLL_FAILED | Closed`
     protected override fun pollInternal(): Any? {
         var result: Any? = null
         lock.withLock {
             if (value === EMPTY) return closedForSend ?: POLL_FAILED
-            result = value
-            value = EMPTY
-        }
-        return result
-    }
-
-    // result is `E | POLL_FAILED | Closed`
-    protected override fun pollSelectInternal(select: SelectInstance<*>): Any? {
-        var result: Any? = null
-        lock.withLock {
-            if (value === EMPTY) return closedForSend ?: POLL_FAILED
-            if (!select.trySelect())
-                return ALREADY_SELECTED
             result = value
             value = EMPTY
         }

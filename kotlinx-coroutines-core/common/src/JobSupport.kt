@@ -7,7 +7,6 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -24,7 +23,7 @@ import kotlin.jvm.*
  * @suppress **This is unstable API and it is subject to change.**
  */
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
-public open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob, SelectClause0 {
+public open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob {
     final override val key: CoroutineContext.Key<*> get() = Job
 
     /*
@@ -561,26 +560,28 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cont.disposeOnCancellation(invokeOnCompletion(handler = ResumeOnCompletion(cont).asHandler))
     }
 
+    @Suppress("UNCHECKED_CAST")
     public final override val onJoin: SelectClause0
-        get() = this
+        get() = SelectClause0Impl(
+            clauseObject = this@JobSupport,
+            regFunc = JobSupport::registerSelectForOnJoin as RegistrationFunction
+        )
 
-    // registerSelectJoin
-    public final override fun <R> registerSelectClause0(select: SelectInstance<R>, block: suspend () -> R) {
-        // fast-path -- check state and select/return if needed
-        loopOnState { state ->
-            if (select.isSelected) return
-            if (state !is Incomplete) {
-                // already complete -- select result
-                if (select.trySelect()) {
-                    block.startCoroutineUnintercepted(select.completion)
-                }
-                return
-            }
-            if (startInternal(state) == 0) {
-                // slow-path -- register waiter for completion
-                select.disposeOnSelect(invokeOnCompletion(handler = SelectJoinOnCompletion(select, block).asHandler))
-                return
-            }
+    @Suppress("UNUSED_PARAMETER")
+    private fun registerSelectForOnJoin(select: SelectInstance<*>, ignoredParam: Any?) {
+        if (!joinInternal()) {
+            select.selectInRegistrationPhase(Unit)
+            return
+        }
+        val disposableHandle = invokeOnCompletion(SelectOnJoinCompletionHandler(select).asHandler)
+        select.disposeOnCompletion(disposableHandle)
+    }
+
+    private inner class SelectOnJoinCompletionHandler(
+        private val select: SelectInstance<*>
+    ) : JobNode() {
+        override fun invoke(cause: Throwable?) {
+            select.trySelect(this@JobSupport, Unit)
         }
     }
 
@@ -1206,7 +1207,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal suspend fun awaitInternal(): Any? {
+    protected suspend fun awaitInternal(): Any? {
         // fast-path -- check state (avoid extra object creation)
         while (true) { // lock-free loop on state
             val state = this.state
@@ -1236,46 +1237,42 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cont.getResult()
     }
 
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    // registerSelectAwaitInternal
     @Suppress("UNCHECKED_CAST")
-    internal fun <T, R> registerSelectClause1Internal(select: SelectInstance<R>, block: suspend (T) -> R) {
-        // fast-path -- check state and select/return if needed
-        loopOnState { state ->
-            if (select.isSelected) return
+    protected val onAwaitInternal: SelectClause1<*> get() = SelectClause1Impl<Any?>(
+        clauseObject = this@JobSupport,
+        regFunc = JobSupport::onAwaitInternalRegFunc as RegistrationFunction,
+        processResFunc = JobSupport::onAwaitInternalProcessResFunc as ProcessResultFunction
+    )
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun onAwaitInternalRegFunc(select: SelectInstance<*>, ignoredParam: Any?) {
+        while (true) {
+            val state = this.state
             if (state !is Incomplete) {
-                // already complete -- select result
-                if (select.trySelect()) {
-                    if (state is CompletedExceptionally) {
-                        select.resumeSelectWithException(state.cause)
-                    }
-                    else {
-                        block.startCoroutineUnintercepted(state.unboxState() as T, select.completion)
-                    }
-                }
+                val result = if (state is CompletedExceptionally) state else state.unboxState()
+                select.selectInRegistrationPhase(result)
                 return
             }
-            if (startInternal(state) == 0) {
-                // slow-path -- register waiter for completion
-                select.disposeOnSelect(invokeOnCompletion(handler = SelectAwaitOnCompletion(select, block).asHandler))
-                return
-            }
+            if (startInternal(state) >= 0) break // break unless needs to retry
         }
+        val disposableHandle = invokeOnCompletion(SelectOnAwaitCompletionHandler(select).asHandler)
+        select.disposeOnCompletion(disposableHandle)
     }
 
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    @Suppress("UNCHECKED_CAST")
-    internal fun <T, R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (T) -> R) {
-        val state = this.state
-        // Note: await is non-atomic (can be cancelled while dispatched)
-        if (state is CompletedExceptionally)
-            select.resumeSelectWithException(state.cause)
-        else
-            block.startCoroutineCancellable(state.unboxState() as T, select.completion)
+    @Suppress("UNUSED_PARAMETER")
+    private fun onAwaitInternalProcessResFunc(ignoredParam: Any?, result: Any?): Any? {
+        if (result is CompletedExceptionally) throw result.cause
+        return result
+    }
+
+    private inner class SelectOnAwaitCompletionHandler(
+        private val select: SelectInstance<*>
+    ) : JobNode() {
+        override fun invoke(cause: Throwable?) {
+            val state = this@JobSupport.state
+            val result = if (state is CompletedExceptionally) state else state.unboxState()
+            select.trySelect(this@JobSupport, result)
+        }
     }
 }
 
@@ -1414,26 +1411,6 @@ internal class DisposeOnCompletion(
     private val handle: DisposableHandle
 ) : JobNode() {
     override fun invoke(cause: Throwable?) = handle.dispose()
-}
-
-private class SelectJoinOnCompletion<R>(
-    private val select: SelectInstance<R>,
-    private val block: suspend () -> R
-) : JobNode() {
-    override fun invoke(cause: Throwable?) {
-        if (select.trySelect())
-            block.startCoroutineCancellable(select.completion)
-    }
-}
-
-private class SelectAwaitOnCompletion<T, R>(
-    private val select: SelectInstance<R>,
-    private val block: suspend (T) -> R
-) : JobNode() {
-    override fun invoke(cause: Throwable?) {
-        if (select.trySelect())
-            job.selectAwaitCompletion(select, block)
-    }
 }
 
 // -------- invokeOnCancellation nodes

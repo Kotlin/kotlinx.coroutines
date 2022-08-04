@@ -149,8 +149,7 @@ private class LazyActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
     block: suspend ActorScope<E>.() -> Unit
-) : ActorCoroutine<E>(parentContext, channel, active = false),
-    SelectClause2<E, SendChannel<E>> {
+) : ActorCoroutine<E>(parentContext, channel, active = false) {
 
     private var continuation = block.createCoroutineUnintercepted(this, this)
 
@@ -182,12 +181,14 @@ private class LazyActorCoroutine<E>(
         return closed
     }
 
-    override val onSend: SelectClause2<E, SendChannel<E>>
-        get() = this
+    override val onSend: SelectClause2<E, SendChannel<E>> get() = SelectClause2Impl(
+        clauseObject = this,
+        regFunc = LazyActorCoroutine<*>::onSendRegFunction as RegistrationFunction,
+        processResFunc = super.onSend.processResFunc
+    )
 
-    // registerSelectSend
-    override fun <R> registerSelectClause2(select: SelectInstance<R>, param: E, block: suspend (SendChannel<E>) -> R) {
-        start()
-        super.onSend.registerSelectClause2(select, param, block)
+    private fun onSendRegFunction(select: SelectInstance<*>, element: Any?) {
+        onStart()
+        super.onSend.regFunc(this, select, element)
     }
 }

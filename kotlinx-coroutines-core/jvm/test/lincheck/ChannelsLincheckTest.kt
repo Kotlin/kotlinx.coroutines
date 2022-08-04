@@ -70,8 +70,7 @@ abstract class ChannelLincheckTestBase(
                 else false
             }
 
-    // TODO: this operation should be (and can be!) linearizable, but is not
-    // @Operation
+    @Operation(promptCancellation = true)
     suspend fun sendViaSelect(@Param(name = "value") value: Int): Any = try {
         select<Unit> { c.onSend(value) {} }
     } catch (e: NumberedCancellationException) {
@@ -91,8 +90,7 @@ abstract class ChannelLincheckTestBase(
             .onSuccess { return it }
             .onFailure { return if (it is NumberedCancellationException) it.testResult else null }
 
-    // TODO: this operation should be (and can be!) linearizable, but is not
-    // @Operation
+    @Operation(promptCancellation = true)
     suspend fun receiveViaSelect(): Any = try {
         select<Int> { c.onReceive { it } }
     } catch (e: NumberedCancellationException) {
