@@ -115,6 +115,6 @@ open class RunR8 : JavaExec() {
 
 tasks.withType<Test> {
     extensions.configure<KoverTaskExtension> {
-        excludes = excludes + listOf("com.android.*", "android.*") // Exclude robolectric-generated classes
+        excludes.addAll(listOf("com.android.*", "android.*")) // Exclude robolectric-generated classes
     }
 }
