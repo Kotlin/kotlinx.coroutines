@@ -76,6 +76,5 @@ To release a new `<version>` of `kotlinx-coroutines`:
 8. Push the updates to GitHub:<br>
    `git push`
 
-9. Build and publish the documentation for the web-site: <br>
-   * Set new value for [`kotlinx.coroutines.release.tag`](https://buildserver.labs.intellij.net/admin/editProject.html?projectId=Kotlin_KotlinSites_Builds_KotlinlangOrg_LibrariesAPIs&tab=projectParams)
-   * And run deploy [configuration](https://buildserver.labs.intellij.net/buildConfiguration/Kotlin_KotlinSites_Builds_KotlinlangOrg_KotlinCoroutinesApi?branch=%3Cdefault%3E&buildTypeTab=overview&mode=builds)
+9. Propose the website documentation update: <br>
+   * Set new value for [`KOTLINX_COROUTINES_RELEASE_TAG`](https://github.com/JetBrains/kotlin-web-site/blob/master/.teamcity/BuildParams.kt), creating a Pull Request in the website's repository. 
