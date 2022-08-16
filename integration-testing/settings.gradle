@@ -2,9 +2,11 @@ pluginManagement {
     repositories {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         mavenLocal()
     }
 }
+
 
 include 'smokeTest'
 
