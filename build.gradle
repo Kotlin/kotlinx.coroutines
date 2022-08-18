@@ -223,7 +223,9 @@ def core_docs_url = "https://kotlinlang.org/api/kotlinx.coroutines/$coreModule/"
 def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
 apply plugin: "org.jetbrains.dokka"
 
-configure(subprojects.findAll { !unpublished.contains(it.name) && it.name != coreModule }) {
+configure(subprojects.findAll { !unpublished.contains(it.name)
+        && it.name != coreModule
+        && it.name != jdk8ObsoleteModule}) {
     if (it.name != 'kotlinx-coroutines-bom') {
         apply from: rootProject.file('gradle/dokka.gradle.kts')
     }
@@ -232,7 +234,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) && it.name != cor
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     if (it.name != "kotlinx-coroutines-bom") {
-        if (it.name != coreModule) {
+        if (it.name != coreModule && it.name != jdk8ObsoleteModule) {
             tasks.withType(DokkaTaskPartial.class) {
                 dokkaSourceSets.configureEach {
                     externalDocumentationLink {
