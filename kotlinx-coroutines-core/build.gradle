@@ -53,6 +53,15 @@ For that, we have following compilations:
 * jvmCore compilation:  [commonMain]
 * jdk8    compilation: [commonMain, jvmCoreMain]
 
+Theoretically, "jvmCore" could've been "jvmMain", it is not for technical reasons,
+here is the explanation from Seb:
+
+"""
+The jvmCore is theoretically not necessary. All code for jdk6 compatibility can be in jvmMain and jdk8 dependent code can be in jdk8Main.
+Effectively there is no reason for ever putting code into jvmCoreMain.
+However, when creating a new compilation, we have to take care of creating a defaultSourceSet. Without creating the jvmCoreMain source set,
+ the creation of the compilation fails. That is the only reason for this source set.
+"""
  ========================================================================== */
 
 project.ext.sourceSetSuffixes = ["Main", "Test"]
