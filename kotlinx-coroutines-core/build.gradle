@@ -19,23 +19,41 @@ apply from: rootProject.file('gradle/publish.gradle')
 /* ==========================================================================
   Configure source sets structure for kotlinx-coroutines-core:
 
-  TARGETS                            SOURCE SETS
-  -------         ----------------------------------------------
+     TARGETS                            SOURCE SETS
+     -------         ----------------------------------------------
 
      js -----------------------------------------------------+
                                                              |
                                                              V
-     jvm -------------------------------> concurrent ---> common
-                                              ^
-     ios     \                                |
-     macos   | ---> nativeDarwin ---> native --+
+     jvmCore\ --------> jvm ---------> concurrent -------> common
+     jdk8   /                           ^
+                                        |
+     ios     \                          |
+     macos   | ---> nativeDarwin ---> native ---+
      tvos    |                         ^
      watchos /                         |
                                        |
      linux  \  ---> nativeOther -------+
      mingw  /
 
-   ========================================================================== */
+
+Explanation of JVM source sets structure:
+
+The overall structure is just a hack to support the scenario we are interested in:
+
+* We would like to have two source-sets "core" and "jdk8"
+* "jdk8" is allowed to use API from Java 8 and from "core"
+* "core" is prohibited to use any API from "jdk8"
+* It is okay to have test in a single test source-set
+* We want to validate source-sets with animal sniffer separately
+* And we want to publish a **single** artifact kotlinx-coroutines-core.jar that contains classes from both source-sets
+
+For that, we have following compilations:
+* jvmMain compilation: [jvmCoreMain, jdk8Main]
+* jvmCore compilation:  [commonMain]
+* jdk8    compilation: [commonMain, jvmCoreMain]
+
+ ========================================================================== */
 
 project.ext.sourceSetSuffixes = ["Main", "Test"]
 
@@ -68,15 +86,12 @@ if (rootProject.ext.native_targets_enabled) {
 
 /* ========================================================================== */
 
+
 /*
  * All platform plugins and configuration magic happens here instead of build.gradle
  * because JMV-only projects depend on core, thus core should always be initialized before configuration.
  */
 kotlin {
-    sourceSets.forEach {
-        SourceSetsKt.configureMultiplatform(it)
-    }
-
     /*
      * Configure two test runs:
      * 1) New memory model, Main thread
@@ -104,12 +119,35 @@ kotlin {
         }
     }
 
+    def jvmMain = sourceSets.jvmMain
+    def jvmCoreMain = sourceSets.create('jvmCoreMain')
+    def jdk8Main = sourceSets.create('jdk8Main')
+    jvmCoreMain.dependsOn(jvmMain)
+    jdk8Main.dependsOn(jvmMain)
+
+    sourceSets.forEach {
+        SourceSetsKt.configureMultiplatform(it)
+    }
+
+    jvm {
+        def main = compilations.main
+        main.source(jvmCoreMain)
+        main.source(jdk8Main)
+
+        /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
+        compilations.create('CoreMain') {
+            /* jvmCore is automatically matched as 'defaultSourceSet' for the compilation */
+            tasks.getByName('check').dependsOn(compileKotlinTaskProvider)
+        }
+    }
+}
+
+kotlin {
     jvm {
         // For animal sniffer
         withJava()
     }
 }
-
 
 configurations {
     configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
