@@ -17,6 +17,20 @@ configure(subprojects) {
             signature("net.sf.androidscents.signature:android-api-level-14:4.0_r4@signature")
             signature("org.codehaus.mojo.signature:java17:1.0@signature")
         }
+
+        if (project.name == coreModule) {
+            // Precise files so nothing from core is accidentally skipepd
+            tasks.withType<AnimalSniffer>().configureEach {
+                exclude("**/future/FutureKt*")
+                exclude("**/future/ContinuationConsumer*")
+                exclude("**/future/CompletableFutureCoroutine*")
+
+                exclude("**/stream/StreamKt*")
+                exclude("**/stream/StreamFlow*")
+
+                exclude("**/time/TimeKt*")
+            }
+        }
     }
 }
 
