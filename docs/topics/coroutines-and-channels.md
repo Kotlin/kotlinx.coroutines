@@ -142,8 +142,8 @@ This API is used by the `loadContributorsBlocking()` function to fetch the list 
    * The final item on each line is the actual message: how many repositories or contributors were loaded.
 
     This log output demonstrates that all the results were logged from the main thread. When you run the code with a _BLOCKING_
-    option, the window freezes and don't react to input until the loading is finished. All the requests are executed from
-    the same thread as the one called `loadContributorsBlocking()` from, which is the main UI thread (in Swing, it's an AWT
+    option, the window freezes and doesn't react to input until the loading is finished. All the requests are executed from
+    the same thread as the one that called `loadContributorsBlocking()`, which is the main UI thread (in Swing, it's an AWT
     event dispatching thread). This main thread gets blocked, and that's why the UI is frozen:
     
     ![The blocked main thread](blocking.png){width=700}
@@ -311,14 +311,14 @@ fun loadContributorsCallbacks(
         val allUsers = mutableListOf<User>()
         for (repo in repos) {
             service.getRepoContributorsCall(req.org, repo.name)
-                .onResponse { responseUsers ->
+                .onResponse { responseUsers ->  // #2
                     logUsers(repo, responseUsers)
                     val users = responseUsers.bodyList()
                     allUsers += users
                 }
             }
         }
-        // TODO: Why this code doesn't work? How to fix that?
+        // TODO: Why doesn't this code work? How to fix that?
         updateResults(allUsers.aggregate())
     }
 ```
@@ -441,7 +441,7 @@ interface GitHubService {
 ```
 
 * `getOrgRepos()` is defined as a `suspend` function. When you use a suspending function to perform a request, the
-underlying thread isn't blocked. You'll find the details on how it works exactly later.
+underlying thread isn't blocked. You'll find the details on how it exactly works later.
 * `getOrgRepos()` returns the result directly instead of returning a `Call`. If the result is unsuccessful, an
 exception is thrown.
 
