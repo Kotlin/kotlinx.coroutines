@@ -4,6 +4,7 @@
 
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: 'org.jetbrains.dokka'
+apply plugin: 'kotlinx-atomicfu' // todo: for some reason it's not applied in the root build.gradle
 apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
 apply from: rootProject.file("gradle/compile-common.gradle")
 
