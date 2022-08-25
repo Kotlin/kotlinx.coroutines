@@ -183,7 +183,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         acquireSlowPath()
     }
 
-    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
+    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable sc@ { cont ->
         // Try to suspend.
         if (addAcquireToQueue(cont)) return@sc
         // The suspension has been failed
