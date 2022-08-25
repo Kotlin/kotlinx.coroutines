@@ -15,7 +15,7 @@ fun KotlinSourceSet.configureMultiplatform() {
     languageSettings {
         optInAnnotations.forEach { optIn(it) }
         progressiveMode = true
-        apiVersion = "1.7"
-        languageVersion = "1.7"
+        apiVersion = "1.8"
+        languageVersion = "1.8"
     }
 }

@@ -542,7 +542,7 @@ internal open class SelectImplementation<R>(
      * this function performs registration of such clauses. After that, it atomically stores
      * the continuation into the [state] field if there is no more clause to be re-registered.
      */
-    private suspend fun waitUntilSelected() = suspendCancellableCoroutine<Unit> sc@ { cont ->
+    private suspend fun waitUntilSelected() = suspendCancellableCoroutine sc@ { cont ->
         // Update the state.
         state.loop { curState ->
             when {
