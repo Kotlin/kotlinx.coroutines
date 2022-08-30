@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
@@ -67,28 +68,54 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     }
 }
 
-private class MultiWorkerDispatcher(name: String, workersCount: Int) : CloseableCoroutineDispatcher() {
+private class MultiWorkerDispatcher(
+    private val name: String,
+    private val workersCount: Int
+) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
-    private val workers = Array(workersCount) { Worker.start(name = "$name-$it") }
-
-    init {
-        workers.forEach { w -> w.executeAfter(0L) { workerRunLoop() } }
-    }
+    private val workers = atomicArrayOfNulls<Worker>(workersCount)
+    private val activeWorkers = atomic(0)
 
     private fun workerRunLoop() = runBlocking {
         for (task in tasksQueue) {
-            // TODO error handling
+            /**
+             * Any unhandled exception here will pass through worker's boundary and will be properly reported.
+             */
             task.run()
         }
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        // TODO handle rejections
-        tasksQueue.trySend(block)
+        if (activeWorkers.value != workersCount) {
+            tryAddWorker()
+        }
+
+        tasksQueue.trySend(block).onClosed {
+            throw IllegalStateException("Dispatcher $name was closed, attempted to schedule : $block")
+        }
+    }
+
+    private fun tryAddWorker() {
+        activeWorkers.loop { curWorkers ->
+            if (curWorkers >= workersCount) return
+            if (activeWorkers.compareAndSet(curWorkers, curWorkers + 1)) {
+                val worker = Worker.start(name = "$name-$curWorkers")
+                worker.executeAfter { workerRunLoop() }
+                workers[curWorkers].value = worker
+                return
+            }
+        }
     }
 
     override fun close() {
         tasksQueue.close()
-        workers.forEach { it.requestTermination().result }
+        /*
+         * Here we cannot avoid not to wait on `.result`, otherwise it will lead
+         * to a native memory leak, including pthread handle.
+         */
+        val requests = Array(workersCount) {
+            workers[it].value?.requestTermination()
+        }
+        requests.map { it?.result }
     }
 }
