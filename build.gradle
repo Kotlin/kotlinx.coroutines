@@ -130,7 +130,7 @@ apply plugin: "kover-conventions"
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
     if (build_snapshot_train) {
-        ignoredProjects.remove("example-frontend-js")
+//        ignoredProjects.remove("example-frontend-js")
         ignoredProjects.add(coreModule)
     }
     ignoredPackages += "kotlinx.coroutines.internal"
