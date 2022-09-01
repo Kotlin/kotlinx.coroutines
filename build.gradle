@@ -315,7 +315,6 @@ def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm"
 
 task deploy(dependsOn: publishTasks)
 
-apply plugin: 'animalsniffer-convention'
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
 
