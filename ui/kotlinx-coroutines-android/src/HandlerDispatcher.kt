@@ -190,11 +190,14 @@ public suspend fun awaitFrame(): Long {
             postFrameCallback(choreographer, cont)
         }
     }
-    // post into looper thread to figure it out
     return suspendCancellableCoroutine { cont ->
-        Dispatchers.Main.dispatch(EmptyCoroutineContext, Runnable {
+        if (Looper.myLooper() === Looper.getMainLooper()) { // Check if we are already in the main looper thread
             updateChoreographerAndPostFrameCallback(cont)
-        })
+        } else { // post into looper thread to figure it out
+            Dispatchers.Main.dispatch(EmptyCoroutineContext, Runnable {
+                updateChoreographerAndPostFrameCallback(cont)
+            })
+        }
     }
 }
 
