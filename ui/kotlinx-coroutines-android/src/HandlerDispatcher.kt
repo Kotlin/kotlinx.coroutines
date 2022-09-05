@@ -191,24 +191,23 @@ public suspend fun awaitFrame(): Long {
         }
     }
     return suspendCancellableCoroutine { cont ->
-        if (Looper.myLooper() === Looper.getMainLooper()) { // Check if we are already in the main looper thread
-            updateChoreographerAndPostFrameCallback(cont)
-        } else { // post into looper thread to figure it out
+        if (Dispatchers.Main.immediate.isDispatchNeeded(cont.context)) {
             Dispatchers.Main.dispatch(EmptyCoroutineContext, Runnable {
                 updateChoreographerAndPostFrameCallback(cont)
             })
+        } else {
+            updateChoreographerAndPostFrameCallback(cont)
         }
     }
 }
 
 private fun updateChoreographerAndPostFrameCallback(cont: CancellableContinuation<Long>) {
-    val choreographer = choreographer ?:
-    Choreographer.getInstance()!!.also { choreographer = it }
+    val choreographer = choreographer ?: Choreographer.getInstance()!!.also { choreographer = it }
     postFrameCallback(choreographer, cont)
 }
 
 private fun postFrameCallback(choreographer: Choreographer, cont: CancellableContinuation<Long>) {
     choreographer.postFrameCallback { nanos ->
-        with(cont) { Dispatchers.Main.resumeUndispatched(nanos) }
+        with(cont) { Dispatchers.Main.immediate.resumeUndispatched(nanos) }
     }
 }
