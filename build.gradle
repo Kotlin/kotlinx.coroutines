@@ -356,3 +356,7 @@ allprojects { subProject ->
                 }
             }
 }
+
+tasks.named("dokkaHtmlMultiModule") {
+    pluginsMapConfiguration.set(["org.jetbrains.dokka.base.DokkaBase": """{ "templatesDir": "${projectDir.toString().replace('\\', '/')}/dokka-templates" }"""])
+}
