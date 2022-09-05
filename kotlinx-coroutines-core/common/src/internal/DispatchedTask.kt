@@ -48,7 +48,7 @@ internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE || this == M
 internal val Int.isReusableMode get() = this == MODE_CANCELLABLE_REUSABLE
 
 internal abstract class DispatchedTask<in T>(
-    @JvmField public var resumeMode: Int
+    @JvmField var resumeMode: Int
 ) : SchedulerTask() {
     internal abstract val delegate: Continuation<T>
 
@@ -151,11 +151,11 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
     assert { mode != MODE_UNINITIALIZED } // invalid mode value for this method
     val delegate = this.delegate
     val undispatched = mode == MODE_UNDISPATCHED
-    if (!undispatched && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
+    if (delegate is DispatchedContinuation<*>) {
         // dispatch directly using this instance's Runnable implementation
         val dispatcher = delegate.dispatcher
         val context = delegate.context
-        if (dispatcher.isDispatchNeeded(context)) {
+        if (!undispatched && dispatcher.isDispatchNeeded(context)) {
             dispatcher.dispatch(context, this)
         } else {
             resumeUnconfined()
@@ -167,7 +167,6 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
     }
 }
 
-@Suppress("UNCHECKED_CAST")
 internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, undispatched: Boolean) {
     // This resume is never cancellable. The result is always delivered to delegate continuation.
     val state = takeState()
@@ -214,7 +213,6 @@ internal inline fun DispatchedTask<*>.runUnconfinedEventLoop(
     }
 }
 
-@Suppress("NOTHING_TO_INLINE")
 internal inline fun Continuation<*>.resumeWithStackTrace(exception: Throwable) {
     resumeWith(Result.failure(recoverStackTrace(exception, this)))
 }

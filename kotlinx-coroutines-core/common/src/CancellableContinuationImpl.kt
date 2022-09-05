@@ -515,12 +515,20 @@ internal open class CancellableContinuationImpl<in T>(
 
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
         val dc = delegate as? DispatchedContinuation
-        resumeImpl(value, if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
+        val dispatcher = dc?.dispatcher
+        resumeImpl(
+            value,
+            if (dispatcher === this || dispatcher?.isDispatchNeeded(delegate.context) == false) MODE_UNDISPATCHED else resumeMode
+        )
     }
 
     override fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable) {
         val dc = delegate as? DispatchedContinuation
-        resumeImpl(CompletedExceptionally(exception), if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
+        val dispatcher = dc?.dispatcher
+        resumeImpl(
+            CompletedExceptionally(exception),
+            if (dispatcher === this || dispatcher?.isDispatchNeeded(delegate.context) == false) MODE_UNDISPATCHED else resumeMode
+        )
     }
 
     @Suppress("UNCHECKED_CAST")
