@@ -1,6 +1,7 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.CyclicBarrier
