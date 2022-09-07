@@ -112,7 +112,7 @@ private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) 
     override fun toString(): String = dispatcher.toString()
 }
 
-internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcher(), Delay {
+internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcher(), AbstractDelay<DisposableHandle> {
 
     /*
      * Attempts to reflectively (to be Java 6 compatible) invoke
@@ -133,26 +133,18 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
         }
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val future = (executor as? ScheduledExecutorService)?.scheduleBlock(
-            ResumeUndispatchedRunnable(this, continuation),
-            continuation.context,
-            timeMillis
-        )
-        // If everything went fine and the scheduling attempt was not rejected -- use it
-        if (future != null) {
-            continuation.cancelFutureOnCancellation(future)
-            return
-        }
-        // Otherwise fallback to default executor
-        DefaultExecutor.scheduleResumeAfterDelay(timeMillis, continuation)
-    }
+    override fun handleAsDisposable(handle: DisposableHandle): DisposableHandle = handle
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>): Runnable =
+        ResumeUndispatchedRunnable(this, continuation)
+
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val future = (executor as? ScheduledExecutorService)?.scheduleBlock(block, context, timeMillis)
         return when {
+            // If everything went fine and the scheduling attempt was not rejected -- use it
             future != null -> DisposableFutureHandle(future)
-            else -> DefaultExecutor.invokeOnTimeout(timeMillis, block, context)
+            // Otherwise fall back to default executor
+            else -> DefaultExecutor.schedule(timeMillis, block, context)
         }
     }
 

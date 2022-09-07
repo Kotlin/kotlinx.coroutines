@@ -14,7 +14,7 @@ private const val MAX_DELAY = Int.MAX_VALUE.toLong()
 private fun delayToInt(timeMillis: Long): Int =
     timeMillis.coerceIn(0, MAX_DELAY).toInt()
 
-internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
+internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), AbstractDelay<Int> {
     inner class ScheduledMessageQueue : MessageQueue() {
         internal val processQueue: dynamic = { process() }
 
@@ -40,16 +40,18 @@ internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
         messageQueue.enqueue(block)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val handle = setTimeout({ block.run() }, delayToInt(timeMillis))
-        return ClearTimeout(handle)
+    override fun CancellableContinuation<*>.registerForCleanup(handle: Int) {
+        invokeOnCancellation(handler = ClearTimeout(handle).asHandler)
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val handle = setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
-        // Actually on cancellation, but clearTimeout is idempotent
-        continuation.invokeOnCancellation(handler = ClearTimeout(handle).asHandler)
+    override fun handleAsDisposable(handle: Int): DisposableHandle = ClearTimeout(handle)
+
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>): Runnable = Runnable {
+        with(continuation) { resumeUndispatched(Unit) }
     }
+
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): Int =
+        setTimeout({ block.run() }, delayToInt(timeMillis))
 }
 
 internal object NodeDispatcher : SetTimeoutBasedDispatcher() {
@@ -77,23 +79,20 @@ private class ClearTimeout(private val handle: Int) : CancelHandler(), Disposabl
     override fun toString(): String = "ClearTimeout[$handle]"
 }
 
-internal class WindowDispatcher(private val window: Window) : CoroutineDispatcher(), Delay {
+internal class WindowDispatcher(private val window: Window) : CoroutineDispatcher(), AbstractDelay<Int> {
     private val queue = WindowMessageQueue(window)
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = queue.enqueue(block)
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
+    override fun handleAsDisposable(handle: Int): DisposableHandle =
+        DisposableHandle { window.clearTimeout(handle) }
+
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>): Runnable = Runnable {
+        with(continuation) { resumeUndispatched(Unit) }
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val handle = window.setTimeout({ block.run() }, delayToInt(timeMillis))
-        return object : DisposableHandle {
-            override fun dispose() {
-                window.clearTimeout(handle)
-            }
-        }
-    }
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): Int =
+        window.setTimeout({ block.run() }, delayToInt(timeMillis))
 }
 
 private class WindowMessageQueue(private val window: Window) : MessageQueue() {

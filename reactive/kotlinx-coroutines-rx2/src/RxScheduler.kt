@@ -150,25 +150,22 @@ public class SchedulerCoroutineDispatcher(
      * Underlying scheduler of current [CoroutineDispatcher].
      */
     public val scheduler: Scheduler
-) : CoroutineDispatcher(), Delay {
+) : CoroutineDispatcher(), AbstractDelay<Disposable> {
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         scheduler.scheduleDirect(block)
     }
 
-    /** @suppress */
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val disposable = scheduler.scheduleDirect({
-            with(continuation) { resumeUndispatched(Unit) }
-        }, timeMillis, TimeUnit.MILLISECONDS)
-        continuation.disposeOnCancellation(disposable)
+    override fun handleAsDisposable(handle: Disposable): DisposableHandle = DisposableHandle {
+        handle.dispose()
     }
 
-    /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val disposable = scheduler.scheduleDirect(block, timeMillis, TimeUnit.MILLISECONDS)
-        return DisposableHandle { disposable.dispose() }
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>): Runnable = Runnable {
+        with(continuation) { resumeUndispatched(Unit) }
     }
+
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): Disposable =
+        scheduler.scheduleDirect(block, timeMillis, TimeUnit.MILLISECONDS)
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()

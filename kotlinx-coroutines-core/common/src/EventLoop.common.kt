@@ -177,11 +177,11 @@ internal expect abstract class EventLoopImplPlatform() : EventLoop {
     protected fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask)
 }
 
-internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
+internal abstract class EventLoopImplBase: EventLoopImplPlatform(), AbstractDelay<DisposableHandle> {
     // null | CLOSED_EMPTY | task | Queue<Runnable>
     private val _queue = atomic<Any?>(null)
 
-    // Allocated only only once
+    // Allocated only once
     private val _delayed = atomic<DelayedTaskQueue?>(null)
 
     private val _isCompleted = atomic(false)
@@ -227,23 +227,13 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         rescheduleAllDelayed()
     }
 
-    public override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timeNanos = delayToNanos(timeMillis)
-        if (timeNanos < MAX_DELAY_NS) {
-            val now = nanoTime()
-            DelayedResumeTask(now + timeNanos, continuation).also { task ->
-                /*
-                 * Order is important here: first we schedule the heap and only then
-                 * publish it to continuation. Otherwise, `DelayedResumeTask` would
-                 * have to know how to be disposed of even when it wasn't scheduled yet.
-                 */
-                schedule(now, task)
-                continuation.disposeOnCancellation(task)
-            }
-        }
+    override fun handleAsDisposable(handle: DisposableHandle): DisposableHandle = handle
+
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>) = Runnable {
+        with(continuation) { resumeUndispatched(Unit) }
     }
 
-    protected fun scheduleInvokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val timeNanos = delayToNanos(timeMillis)
         return if (timeNanos < MAX_DELAY_NS) {
             val now = nanoTime()
@@ -492,7 +482,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
     private inner class DelayedResumeTask(
         nanoTime: Long,
         private val cont: CancellableContinuation<Unit>
-    ) : DelayedTask(nanoTime) {
+    ) : DelayedTask(nanoTime), Runnable {
         override fun run() { with(cont) { resumeUndispatched(Unit) } }
         override fun toString(): String = super.toString() + cont.toString()
     }

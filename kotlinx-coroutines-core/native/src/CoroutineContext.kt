@@ -15,15 +15,13 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
         delegate.dispatch(context, block)
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
         delegate.scheduleResumeAfterDelay(timeMillis, continuation)
-    }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        return delegate.invokeOnTimeout(timeMillis, block, context)
-    }
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        delegate.invokeOnTimeout(timeMillis, block, context)
 
-    actual fun enqueue(task: Runnable): Unit {
+    actual fun enqueue(task: Runnable) {
         delegate.dispatch(EmptyCoroutineContext, task)
     }
 }

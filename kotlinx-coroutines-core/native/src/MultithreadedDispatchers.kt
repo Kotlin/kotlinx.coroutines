@@ -18,20 +18,20 @@ public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): Closea
     return MultiWorkerDispatcher(name, nThreads)
 }
 
-internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), Delay {
+internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), AbstractDelay<DisposableHandle> {
     private val worker = Worker.start(name = name)
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         worker.executeAfter(0L) { block.run() }
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        worker.executeAfter(timeMillis.toMicrosSafe()) {
-            with(continuation) { resumeUndispatched(Unit) }
-        }
+    override fun handleAsDisposable(handle: DisposableHandle): DisposableHandle = handle
+
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>) = Runnable {
+        with(continuation) { resumeUndispatched(Unit) }
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         // Workers don't have an API to cancel sent "executeAfter" block, but we are trying
         // to control the damage and reduce reachable objects by nulling out `block`
         // that may retain a lot of references, and leaving only an empty shell after a timely disposal

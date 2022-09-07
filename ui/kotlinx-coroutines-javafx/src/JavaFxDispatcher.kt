@@ -27,26 +27,23 @@ public val Dispatchers.JavaFx: JavaFxDispatcher
  *
  * This class provides type-safety and a point for future extensions.
  */
-public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
+public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), AbstractDelay<Timeline> {
 
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = Platform.runLater(block)
 
-    /** @suppress */
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS) {
-            with(continuation) { resumeUndispatched(Unit) }
-        }
-        continuation.invokeOnCancellation { timeline.stop() }
+    override fun handleAsDisposable(handle: Timeline): DisposableHandle = DisposableHandle {
+        handle.stop()
     }
 
-    /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS) {
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>): Runnable = Runnable {
+        with(continuation) { resumeUndispatched(Unit) }
+    }
+
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): Timeline =
+        schedule(timeMillis, TimeUnit.MILLISECONDS) {
             block.run()
         }
-        return DisposableHandle { timeline.stop() }
-    }
 
     private fun schedule(time: Long, unit: TimeUnit, handler: EventHandler<ActionEvent>): Timeline =
         Timeline(KeyFrame(Duration.millis(unit.toMillis(time).toDouble()), handler)).apply { play() }

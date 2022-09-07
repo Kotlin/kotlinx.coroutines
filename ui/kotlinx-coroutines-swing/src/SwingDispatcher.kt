@@ -15,7 +15,7 @@ import kotlin.coroutines.*
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
 @Suppress("unused")
-public val Dispatchers.Swing : SwingDispatcher
+public val Dispatchers.Swing: SwingDispatcher
     get() = kotlinx.coroutines.swing.Swing
 
 /**
@@ -23,35 +23,25 @@ public val Dispatchers.Swing : SwingDispatcher
  *
  * This class provides type-safety and a point for future extensions.
  */
-public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
+public sealed class SwingDispatcher : MainCoroutineDispatcher(), AbstractDelay<Timer> {
     /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = SwingUtilities.invokeLater(block)
 
     /** @suppress */
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
-            with(continuation) { resumeUndispatched(Unit) }
-        })
-        continuation.invokeOnCancellation { timer.stop() }
-    }
-
-    /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): Timer =
+        Timer(TimeUnit.MILLISECONDS.toMillis(timeMillis).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()) { it: ActionEvent? ->
             block.run()
-        })
-        return object : DisposableHandle {
-            override fun dispose() {
-                timer.stop()
-            }
-        }
-    }
-
-    private fun schedule(time: Long, unit: TimeUnit, action: ActionListener): Timer =
-        Timer(unit.toMillis(time).coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), action).apply {
+        }.apply {
             isRepeats = false
             start()
         }
+
+    override fun handleAsDisposable(handle: Timer): DisposableHandle = DisposableHandle { handle.stop() }
+
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>): Runnable = Runnable {
+        with(continuation) { resumeUndispatched(Unit) }
+    }
+
 }
 
 internal class SwingDispatcherFactory : MainDispatcherFactory {

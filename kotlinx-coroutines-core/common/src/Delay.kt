@@ -144,3 +144,29 @@ internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) 
  */
 internal fun Duration.toDelayMillis(): Long =
     if (this > Duration.ZERO) inWholeMilliseconds.coerceAtLeast(1) else 0
+
+@InternalCoroutinesApi
+public interface AbstractDelay<Handle>: Delay {
+    public fun CancellableContinuation<*>.registerForCleanup(handle: Handle) {
+        disposeOnCancellation(handleAsDisposable(handle))
+    }
+
+    public fun handleAsDisposable(handle: Handle): DisposableHandle
+
+    public fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>): Runnable
+
+    public fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): Handle
+
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        val handle = schedule(timeMillis, cancellableContinuationToRunnable(continuation), continuation.context)
+        /*
+         * Order is important here: first we schedule the task and only then
+         * publish it to the continuation. Otherwise, the handle would
+         * have to know how to be disposed of even when it wasn't scheduled yet.
+         */
+        continuation.registerForCleanup(handle)
+    }
+
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        handleAsDisposable(schedule(timeMillis, block, context))
+}

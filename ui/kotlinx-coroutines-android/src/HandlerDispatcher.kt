@@ -115,7 +115,7 @@ internal class HandlerContext private constructor(
     private val handler: Handler,
     private val name: String?,
     private val invokeImmediately: Boolean
-) : HandlerDispatcher(), Delay {
+) : HandlerDispatcher(), AbstractDelay<DisposableHandle> {
     /**
      * Creates [CoroutineDispatcher] for the given Android [handler].
      *
@@ -143,24 +143,19 @@ internal class HandlerContext private constructor(
         }
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val block = Runnable {
-            with(continuation) { resumeUndispatched(Unit) }
-        }
-        if (handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))) {
-            continuation.invokeOnCancellation { handler.removeCallbacks(block) }
-        } else {
-            cancelOnRejection(continuation.context, block)
-        }
+    override fun handleAsDisposable(handle: DisposableHandle): DisposableHandle = handle
+
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>) = Runnable {
+        with(continuation) { resumeUndispatched(Unit) }
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         if (handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))) {
-            return DisposableHandle { handler.removeCallbacks(block) }
+            DisposableHandle { handler.removeCallbacks(block) }
+        } else {
+            cancelOnRejection(context, block)
+            NonDisposableHandle
         }
-        cancelOnRejection(context, block)
-        return NonDisposableHandle
-    }
 
     private fun cancelOnRejection(context: CoroutineContext, block: Runnable) {
         context.cancel(CancellationException("The task was rejected, the handler underlying the dispatcher '${toString()}' was closed"))

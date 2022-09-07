@@ -29,7 +29,7 @@ private object DarwinGlobalQueueDispatcher : CoroutineDispatcher() {
 
 private class DarwinMainDispatcher(
     private val invokeImmediately: Boolean
-) : MainCoroutineDispatcher(), Delay {
+) : MainCoroutineDispatcher(), AbstractDelay<Timer> {
     
     override val immediate: MainCoroutineDispatcher =
         if (invokeImmediately) this else DarwinMainDispatcher(true)
@@ -43,18 +43,14 @@ private class DarwinMainDispatcher(
             }
         }
     }
-    
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timer = Timer()
-        val timerBlock: TimerBlock = {
-            timer.dispose()
-            continuation.resume(Unit)
-        }
-        timer.start(timeMillis, timerBlock)
-        continuation.disposeOnCancellation(timer)
+
+    override fun handleAsDisposable(handle: Timer): DisposableHandle = handle
+
+    override fun cancellableContinuationToRunnable(continuation: CancellableContinuation<Unit>) = Runnable {
+        continuation.resume(Unit)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+    override fun schedule(timeMillis: Long, block: Runnable, context: CoroutineContext): Timer {
         val timer = Timer()
         val timerBlock: TimerBlock = {
             timer.dispose()
