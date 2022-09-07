@@ -38,7 +38,7 @@ public abstract class TestDispatcher internal constructor() : CoroutineDispatche
             continuation.context,
             ::cancellableRunnableIsCancelled
         )
-        continuation.invokeOnCancellation { handle.dispose() }
+        continuation.disposeOnCancellation(handle)
     }
 
     /** @suppress */
