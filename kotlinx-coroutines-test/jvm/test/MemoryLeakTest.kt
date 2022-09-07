@@ -3,26 +3,21 @@
  */
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
-import java.lang.ref.*
 import kotlin.test.*
 
 class MemoryLeakTest {
 
     @Test
     fun testCancellationLeakInTestCoroutineScheduler() = runTest {
-        lateinit var weakRef: WeakReference<*>
+        val leakingObject = Any()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            val leakingObject = Any()
-            weakRef = WeakReference(leakingObject)
-            delay(3)
+            delay(1)
             // This code is needed to hold a reference to `leakingObject` until the job itself is weakly reachable.
             leakingObject.hashCode()
         }
         job.cancel()
-        System.gc()
-        assertNotNull(weakRef.get()) // the cancellation handler has not run yet
+        FieldWalker.assertReachableCount(1, testScheduler) { it === leakingObject }
         runCurrent()
-        System.gc()
-        assertNull(weakRef.get()) // the cancellation handler has run, disposing of the job
+        FieldWalker.assertReachableCount(0, testScheduler) { it === leakingObject }
     }
 }
