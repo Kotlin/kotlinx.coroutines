@@ -129,7 +129,7 @@ private class WindowMessageQueue(private val window: Window) : MessageQueue() {
  *
  * Yet there could be a long tail of "slow" reschedules, but it should be amortized by the queue size.
  */
-internal abstract class MessageQueue : ArrayQueue<Runnable>() {
+internal abstract class MessageQueue : MutableList<Runnable> by ArrayDeque() {
     val yieldEvery = 16 // yield to JS macrotask event loop after this many processed messages
     private var scheduled = false
 
@@ -138,7 +138,7 @@ internal abstract class MessageQueue : ArrayQueue<Runnable>() {
     abstract fun reschedule()
 
     fun enqueue(element: Runnable) {
-        addLast(element)
+        add(element)
         if (!scheduled) {
             scheduled = true
             schedule()
@@ -153,7 +153,7 @@ internal abstract class MessageQueue : ArrayQueue<Runnable>() {
                 element.run()
             }
         } finally {
-            if (isEmpty) {
+            if (isEmpty()) {
                 scheduled = false
             } else {
                 reschedule()
