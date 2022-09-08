@@ -207,7 +207,6 @@ internal class DispatchedContinuation<in T>(
 
     // We inline it to save an entry on the stack in cases where it shows (unconfined dispatcher)
     // It is used only in Continuation<T>.resumeCancellableWith
-    @Suppress("NOTHING_TO_INLINE")
     inline fun resumeCancellableWith(
         result: Result<T>,
         noinline onCancellation: ((cause: Throwable) -> Unit)?
@@ -235,7 +234,8 @@ internal class DispatchedContinuation<in T>(
         }
     }
 
-    @Suppress("NOTHING_TO_INLINE")
+    // inline here is to save us an entry on the stack for the sake of better stacktraces
+
     inline fun resumeCancelled(state: Any?): Boolean {
         val job = context[Job]
         if (job != null && !job.isActive) {
@@ -247,7 +247,6 @@ internal class DispatchedContinuation<in T>(
         return false
     }
 
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatchedWith(result: Result<T>) {
         withContinuationContext(continuation, countOrElement) {
             continuation.resumeWith(result)

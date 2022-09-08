@@ -11,7 +11,6 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
-import kotlin.coroutines.*
 import kotlin.jvm.*
 
 internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
@@ -54,7 +53,6 @@ public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.()
 ) // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
-    @Suppress("DEPRECATION", "UNCHECKED_CAST")
     return (this as ReceiveChannel<E?>).receiveOrNull()
 }
 
@@ -66,7 +64,6 @@ public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
     level = DeprecationLevel.ERROR
 )  // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
-    @Suppress("DEPRECATION", "UNCHECKED_CAST")
     return (this as ReceiveChannel<E?>).onReceiveOrNull
 }
 

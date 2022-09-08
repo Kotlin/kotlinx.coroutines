@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-@file:Suppress("UNCHECKED_CAST", "NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE") // KT-32203
+@file:Suppress("UNCHECKED_CAST") // KT-32203
 
 package kotlinx.coroutines.flow.internal
 
@@ -9,9 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
-import kotlin.coroutines.*
-import kotlin.coroutines.intrinsics.*
-
 private typealias Update = IndexedValue<Any?>
 
 @PublishedApi

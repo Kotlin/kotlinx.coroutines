@@ -19,7 +19,6 @@ internal abstract class AbstractSharedFlowSlot<F> {
 }
 
 internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : SynchronizedObject() {
-    @Suppress("UNCHECKED_CAST")
     protected var slots: Array<S?>? = null // allocated when needed
         private set
     protected var nCollectors = 0 // number of allocated (!free) slots

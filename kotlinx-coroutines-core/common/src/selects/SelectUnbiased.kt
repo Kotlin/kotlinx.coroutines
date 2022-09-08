@@ -58,7 +58,6 @@ internal open class UnbiasedSelectImplementation<R>(context: CoroutineContext) :
         return super.doSelect()
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun shuffleAndRegisterClauses() = try {
         clausesToRegister.shuffle()
         clausesToRegister.forEach { it.register() }

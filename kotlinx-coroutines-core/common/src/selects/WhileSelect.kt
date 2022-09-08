@@ -28,5 +28,5 @@ import kotlinx.coroutines.*
  */
 @ExperimentalCoroutinesApi
 public suspend inline fun whileSelect(crossinline builder: SelectBuilder<Boolean>.() -> Unit) {
-    while(select<Boolean>(builder)) {}
+    while(select(builder)) { /* do nothing */ }
 }
