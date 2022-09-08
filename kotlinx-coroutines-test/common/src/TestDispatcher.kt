@@ -31,7 +31,14 @@ public abstract class TestDispatcher internal constructor() : CoroutineDispatche
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val timedRunnable = CancellableContinuationRunnable(continuation, this)
-        scheduler.registerEvent(this, timeMillis, timedRunnable, continuation.context, ::cancellableRunnableIsCancelled)
+        val handle = scheduler.registerEvent(
+            this,
+            timeMillis,
+            timedRunnable,
+            continuation.context,
+            ::cancellableRunnableIsCancelled
+        )
+        continuation.disposeOnCancellation(handle)
     }
 
     /** @suppress */
