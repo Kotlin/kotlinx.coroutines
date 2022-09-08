@@ -26,12 +26,16 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        worker.executeAfter(timeMillis.toMicrosSafe()) {
+        val handle = schedule(timeMillis, Runnable {
             with(continuation) { resumeUndispatched(Unit) }
-        }
+        })
+        continuation.disposeOnCancellation(handle)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        schedule(timeMillis, block)
+
+    private fun schedule(timeMillis: Long, block: Runnable): DisposableHandle {
         // Workers don't have an API to cancel sent "executeAfter" block, but we are trying
         // to control the damage and reduce reachable objects by nulling out `block`
         // that may retain a lot of references, and leaving only an empty shell after a timely disposal
