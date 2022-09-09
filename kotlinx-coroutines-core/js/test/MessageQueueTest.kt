@@ -36,41 +36,41 @@ class MessageQueueTest {
 
     @Test
     fun testBasic() {
-        assertTrue(queue.isEmpty)
+        assertTrue(queue.isEmpty())
         queue.enqueue(Box(1))
-        assertFalse(queue.isEmpty)
+        assertFalse(queue.isEmpty())
         assertTrue(scheduled)
         queue.enqueue(Box(2))
-        assertFalse(queue.isEmpty)
+        assertFalse(queue.isEmpty())
         scheduled = false
         queue.process()
         assertEquals(listOf(1, 2), processed)
         assertFalse(scheduled)
-        assertTrue(queue.isEmpty)
+        assertTrue(queue.isEmpty())
     }
 
     @Test fun testRescheduleFromProcess()  {
-        assertTrue(queue.isEmpty)
+        assertTrue(queue.isEmpty())
         queue.enqueue(ReBox(1))
-        assertFalse(queue.isEmpty)
+        assertFalse(queue.isEmpty())
         assertTrue(scheduled)
         queue.enqueue(ReBox(2))
-        assertFalse(queue.isEmpty)
+        assertFalse(queue.isEmpty())
         scheduled = false
         queue.process()
         assertEquals(listOf(1, 2, 11, 12), processed)
         assertFalse(scheduled)
-        assertTrue(queue.isEmpty)
+        assertTrue(queue.isEmpty())
     }
 
     @Test
     fun testResizeAndWrap() {
         repeat(10) { phase ->
             val n = 10 * (phase + 1)
-            assertTrue(queue.isEmpty)
+            assertTrue(queue.isEmpty())
             repeat(n) {
                 queue.enqueue(Box(it))
-                assertFalse(queue.isEmpty)
+                assertFalse(queue.isEmpty())
                 assertTrue(scheduled)
             }
             var countYields = 0
