@@ -10,7 +10,7 @@
     <chunk include-id="coroutines">
         <toc-element id="coroutines-guide.md"/>
         <toc-element id="coroutines-basics.md" accepts-web-file-names="basics.html,coroutines-basic-jvm.html"/>
-        <toc-element toc-title="Intro to coroutines and channels – hands-on tutorial" href="https://play.kotlinlang.org/hands-on/Introduction%20to%20Coroutines%20and%20Channels/"/>
+        <toc-element id="coroutines-and-channels.md"/>
         <toc-element id="cancellation-and-timeouts.md"/>
         <toc-element id="composing-suspending-functions.md"/>
         <toc-element id="coroutine-context-and-dispatchers.md"/>

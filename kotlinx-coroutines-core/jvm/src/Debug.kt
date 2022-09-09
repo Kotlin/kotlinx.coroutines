@@ -59,7 +59,7 @@ public const val DEBUG_PROPERTY_VALUE_AUTO: String = "auto"
 public const val DEBUG_PROPERTY_VALUE_ON: String = "on"
 
 /**
- * Debug turned on value for [DEBUG_PROPERTY_NAME].
+ * Debug turned off value for [DEBUG_PROPERTY_NAME].
  */
 public const val DEBUG_PROPERTY_VALUE_OFF: String = "off"
 

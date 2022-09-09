@@ -57,7 +57,7 @@ public expect class TestResult
  *
  * The test is run in a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
  * Because of this, child coroutines are not executed in parallel to the test body.
- * In order to for the spawned-off asynchronous code to actually be executed, one must either [yield] or suspend the
+ * In order for the spawned-off asynchronous code to actually be executed, one must either [yield] or suspend the
  * test body some other way, or use commands that control scheduling (see [TestCoroutineScheduler]).
  *
  * ```
