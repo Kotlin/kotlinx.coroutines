@@ -40,7 +40,7 @@ internal data class CompletedWithCancellation(
  *        or artificial [CancellationException] if no cause was provided
  */
 internal open class CompletedExceptionally(
-    @JvmField public val cause: Throwable,
+    @JvmField val cause: Throwable,
     handled: Boolean = false
 ) {
     private val _handled = atomic(handled)

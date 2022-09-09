@@ -448,7 +448,6 @@ public value class ChannelResult<out T>
         override fun toString(): String = "Closed($cause)"
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     @InternalCoroutinesApi
     public companion object {
         private val failed = Failed()
@@ -512,7 +511,6 @@ public inline fun <T> ChannelResult<T>.onFailure(action: (exception: Throwable?)
     contract {
         callsInPlace(action, InvocationKind.AT_MOST_ONCE)
     }
-    @Suppress("UNCHECKED_CAST")
     if (holder is ChannelResult.Failed) action(exceptionOrNull())
     return this
 }
@@ -531,7 +529,6 @@ public inline fun <T> ChannelResult<T>.onClosed(action: (exception: Throwable?) 
     contract {
         callsInPlace(action, InvocationKind.AT_MOST_ONCE)
     }
-    @Suppress("UNCHECKED_CAST")
     if (holder is ChannelResult.Closed) action(exceptionOrNull())
     return this
 }

@@ -18,7 +18,7 @@ internal expect fun <E> subscriberList(): SubscribersList<E>
 
 internal expect class ReentrantLock() {
     fun tryLock(): Boolean
-    fun unlock(): Unit
+    fun unlock()
 }
 
 internal expect inline fun <T> ReentrantLock.withLock(action: () -> T): T
