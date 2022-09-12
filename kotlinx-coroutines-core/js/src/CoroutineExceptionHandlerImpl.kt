@@ -6,7 +6,7 @@ package kotlinx.coroutines
 
 import kotlin.coroutines.*
 
-internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
+internal actual fun propagateExceptionToPlatform(context: CoroutineContext, exception: Throwable) {
     // log exception
     console.error(exception)
 }

@@ -41,7 +41,7 @@ private class DiagnosticCoroutineContextException(@Transient private val context
     }
 }
 
-internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
+internal actual fun propagateExceptionToPlatform(context: CoroutineContext, exception: Throwable) {
     // use additional extension handlers
     for (handler in handlers) {
         try {

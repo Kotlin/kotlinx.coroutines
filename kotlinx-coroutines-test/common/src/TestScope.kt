@@ -220,6 +220,15 @@ internal class TestScopeImpl(context: CoroutineContext) :
                 throw IllegalStateException("Only a single call to `runTest` can be performed during one test.")
             entered = true
             check(!finished)
+            /** the order is important: [reportException] is only guaranteed not to throw if [entered] is `true` but
+             * [finished] is `false`.
+             * However, we also want [uncaughtExceptions] to be queried after the callback is registered,
+             * because the exception collector will be able to report the exceptions that arrived before this test but
+             * after the previous one, and learning about such exceptions as soon is possible is nice. */
+            @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+            run {
+                ExceptionCollector.addOnExceptionCallback(lock, this::reportException)
+            }
             uncaughtExceptions
         }
         if (exceptions.isNotEmpty()) {
@@ -234,6 +243,11 @@ internal class TestScopeImpl(context: CoroutineContext) :
     fun leave(): List<Throwable> {
         val exceptions = synchronized(lock) {
             check(entered && !finished)
+            /** After [finished] becomes `true`, it is no longer valid to have [reportException] as the callback. */
+            @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+            run {
+                ExceptionCollector.removeOnExceptionCallback(lock)
+            }
             finished = true
             uncaughtExceptions
         }

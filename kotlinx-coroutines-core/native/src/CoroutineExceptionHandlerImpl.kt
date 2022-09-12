@@ -8,7 +8,7 @@ import kotlin.coroutines.*
 import kotlin.native.*
 
 @OptIn(ExperimentalStdlibApi::class)
-internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
+internal actual fun propagateExceptionToPlatform(context: CoroutineContext, exception: Throwable) {
     // log exception
     processUnhandledException(exception)
 }
