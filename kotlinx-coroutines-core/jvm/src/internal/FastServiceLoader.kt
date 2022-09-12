@@ -14,7 +14,7 @@ import kotlin.collections.ArrayList
 /**
  * Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
  */
-internal val ANDROID_DETECTED = runCatching { Class.forName("android.os.Build") }.isSuccess
+internal actual val ANDROID_DETECTED = runCatching { Class.forName("android.os.Build") }.isSuccess
 
 /**
  * A simplified version of [ServiceLoader].

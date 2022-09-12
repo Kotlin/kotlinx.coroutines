@@ -227,7 +227,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
              * after the previous one, and learning about such exceptions as soon is possible is nice. */
             @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
             run {
-                ExceptionCollector.addOnExceptionCallback(lock, this::reportException)
+                kotlinx.coroutines.internal.ExceptionCollector.addOnExceptionCallback(lock, this::reportException)
             }
             uncaughtExceptions
         }
@@ -246,7 +246,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
             /** After [finished] becomes `true`, it is no longer valid to have [reportException] as the callback. */
             @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
             run {
-                ExceptionCollector.removeOnExceptionCallback(lock)
+                kotlinx.coroutines.internal.ExceptionCollector.removeOnExceptionCallback(lock)
             }
             finished = true
             uncaughtExceptions
