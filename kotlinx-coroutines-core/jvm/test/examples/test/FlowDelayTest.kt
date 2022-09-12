@@ -57,11 +57,4 @@ class FlowDelayTest {
             "1, 2, 3, -1"
         )
     }
-
-    @Test
-    fun testExampleTimeoutDuration02() {
-        test("ExampleTimeoutDuration02") { kotlinx.coroutines.examples.exampleTimeoutDuration02.main() }.verifyLines(
-            "1, 2, 3, -1"
-        )
-    }
 }

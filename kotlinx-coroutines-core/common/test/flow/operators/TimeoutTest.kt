@@ -7,10 +7,9 @@ package kotlinx.coroutines.flow.operators
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
-import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class TimeoutTest : TestBase() {
-    @ExperimentalTime
     @Test
     fun testBasic() = withVirtualTime {
         expect(1)
@@ -28,12 +27,11 @@ class TimeoutTest : TestBase() {
 
         expect(2)
         val list = mutableListOf<String>()
-        assertFailsWith<FlowTimeoutException>(flow.timeout(300).onEach { list.add(it) })
+        assertFailsWith<FlowTimeoutException>(flow.timeout(300.milliseconds).onEach { list.add(it) })
         assertEquals(listOf("A", "B", "C"), list)
         finish(5)
     }
 
-    @ExperimentalTime
     @Test
     fun testBasicCustomAction() = withVirtualTime {
         expect(1)
@@ -51,12 +49,11 @@ class TimeoutTest : TestBase() {
 
         expect(2)
         val list = mutableListOf<String>()
-        flow.timeout(300) { emit("-1") }.collect { list.add(it) }
+        flow.timeout(300.milliseconds).catch { if (it is FlowTimeoutException) emit("-1") }.collect { list.add(it) }
         assertEquals(listOf("A", "B", "C", "-1"), list)
         finish(5)
     }
 
-    @ExperimentalTime
     @Test
     fun testDelayedFirst() = withVirtualTime {
         expect(1)
@@ -65,45 +62,39 @@ class TimeoutTest : TestBase() {
             delay(100)
             emit(1)
             expect(4)
-        }.timeout(250)
+        }.timeout(250.milliseconds)
         expect(2)
         assertEquals(1, flow.singleOrNull())
         finish(5)
     }
 
-    @ExperimentalTime
     @Test
     fun testEmpty() = runTest {
-        val flow = emptyFlow<Any?>().timeout(1)
+        val flow = emptyFlow<Any?>().timeout(1.milliseconds)
         assertNull(flow.singleOrNull())
     }
 
-    @ExperimentalTime
     @Test
     fun testScalar() = runTest {
-        val flow = flowOf(1, 2, 3).timeout(1)
+        val flow = flowOf(1, 2, 3).timeout(1.milliseconds)
         assertEquals(listOf(1, 2, 3), flow.toList())
     }
 
-    @ExperimentalTime
     @Test
     fun testUpstreamError() = testUpstreamError(TestException())
 
-    @ExperimentalTime
     @Test
     fun testUpstreamErrorTimeoutException() = testUpstreamError(FlowTimeoutException(0))
 
-    @ExperimentalTime
     private inline fun <reified T: Throwable> testUpstreamError(cause: T) = runTest {
         val flow = flow {
             emit(1)
             throw cause
-        }.timeout(1)
+        }.timeout(1.milliseconds)
 
         assertFailsWith<T>(flow)
     }
 
-    @ExperimentalTime
     @Test
     fun testDownstreamError() = runTest {
         val flow = flow {
@@ -111,7 +102,7 @@ class TimeoutTest : TestBase() {
             emit(1)
             hang { expect(3) }
             expectUnreached()
-        }.timeout(100).map {
+        }.timeout(100.milliseconds).map {
             expect(2)
             yield()
             throw TestException()
@@ -121,7 +112,6 @@ class TimeoutTest : TestBase() {
         finish(4)
     }
 
-    @ExperimentalTime
     @Test
     fun testUpstreamTimeoutIsolatedContext() = runTest {
         val flow = flow {
@@ -131,13 +121,12 @@ class TimeoutTest : TestBase() {
             expect(2)
             delay(300)
             expectUnreached()
-        }.flowOn(NamedDispatchers("upstream")).timeout(100)
+        }.flowOn(NamedDispatchers("upstream")).timeout(100.milliseconds)
 
         assertFailsWith<FlowTimeoutException>(flow)
         finish(3)
     }
 
-    @ExperimentalTime
     @Test
     fun testUpstreamTimeoutActionIsolatedContext() = runTest {
         val flow = flow {
@@ -147,7 +136,7 @@ class TimeoutTest : TestBase() {
             expect(2)
             delay(300)
             expectUnreached()
-        }.flowOn(NamedDispatchers("upstream")).timeout(100) {
+        }.flowOn(NamedDispatchers("upstream")).timeout(100.milliseconds).catch {
             expect(3)
             emit(2)
         }
@@ -156,7 +145,6 @@ class TimeoutTest : TestBase() {
         finish(4)
     }
 
-    @ExperimentalTime
     @Test
     fun testUpstreamNoTimeoutIsolatedContext() = runTest {
         val flow = flow {
@@ -165,19 +153,17 @@ class TimeoutTest : TestBase() {
             emit(1)
             expect(2)
             delay(10)
-        }.flowOn(NamedDispatchers("upstream")).timeout(100)
+        }.flowOn(NamedDispatchers("upstream")).timeout(100.milliseconds)
 
         assertEquals(listOf(1), flow.toList())
         finish(3)
     }
 
-    @ExperimentalTime
     @Test
     fun testSharedFlowTimeout() = runTest {
-        assertFailsWith<FlowTimeoutException>(MutableSharedFlow<Int>().asSharedFlow().timeout(100))
+        assertFailsWith<FlowTimeoutException>(MutableSharedFlow<Int>().asSharedFlow().timeout(100.milliseconds))
     }
 
-    @ExperimentalTime
     @Test
     fun testSharedFlowCancelledNoTimeout() = runTest {
         val mutableSharedFlow = MutableSharedFlow<Int>()
@@ -186,7 +172,7 @@ class TimeoutTest : TestBase() {
         expect(1)
         val consumerJob = launch {
             expect(3)
-            mutableSharedFlow.asSharedFlow().timeout(100).collect { list.add(it) }
+            mutableSharedFlow.asSharedFlow().timeout(100.milliseconds).collect { list.add(it) }
             expectUnreached()
         }
         val producerJob = launch {

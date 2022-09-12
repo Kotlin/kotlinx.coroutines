@@ -21,7 +21,6 @@ import kotlin.time.*
 <!--- PREFIX .*-duration-.*
 @file:OptIn(ExperimentalTime::class)
 ----- INCLUDE .*-duration-.*
-import kotlin.time.*
 ----- INCLUDE .*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -352,7 +351,7 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
 
 /**
- * Returns a flow that will timeout if the upstream takes too long to emit.
+ * Returns a flow that will emit a [FlowTimeoutException] if the upstream doesn't emit an item within the given time.
  *
  * Example:
  *
@@ -365,7 +364,7 @@ public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelay
  *     emit(3)
  *     delay(1000)
  *     emit(4)
- * }.timeout(100.milliseconds) {
+ * }.timeout(100.milliseconds).catch {
  *     emit(-1) // Item to emit on timeout
  * }.onEach {
  *     delay(300) // This will not cause a timeout
@@ -383,59 +382,16 @@ public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelay
  * Note that delaying on the downstream doesn't trigger the timeout.
  *
  * @param timeout Timeout period
- * @param action Action to invoke on timeout. Default is to throw [FlowTimeoutException]
  */
 @FlowPreview
 public fun <T> Flow<T>.timeout(
-    timeout: Duration,
-    @BuilderInference action: suspend FlowCollector<T>.() -> Unit = { throw FlowTimeoutException(timeout.toDelayMillis()) }
-): Flow<T> = timeout(timeout.toDelayMillis(), action)
-
-/**
- * Returns a flow that will timeout if the upstream takes too long to emit.
- *
- * Example:
- *
- * ```kotlin
- * flow {
- *     emit(1)
- *     delay(100)
- *     emit(2)
- *     delay(100)
- *     emit(3)
- *     delay(1000)
- *     emit(4)
- * }.timeout(100) {
- *     emit(-1) // Item to emit on timeout
- * }.onEach {
- *     delay(300) // This will not cause a timeout
- * }
- * ```
- * <!--- KNIT example-timeout-duration-02.kt -->
- *
- * produces the following emissions
- *
- * ```text
- * 1, 2, 3, -1
- * ```
- * <!--- TEST -->
- *
- * Note that delaying on the downstream doesn't trigger the timeout.
- *
- * @param timeoutMillis Timeout period in millis
- * @param action Action to invoke on timeout. Default is to throw [FlowTimeoutException]
- */
-@FlowPreview
-public fun <T> Flow<T>.timeout(
-    timeoutMillis: Long,
-    @BuilderInference action: suspend FlowCollector<T>.() -> Unit = { throw FlowTimeoutException(timeoutMillis) }
-): Flow<T> = timeoutInternal(timeoutMillis, action)
+    timeout: Duration
+): Flow<T> = timeoutInternal(timeout.toDelayMillis())
 
 private fun <T> Flow<T>.timeoutInternal(
-    timeoutMillis: Long,
-    action: suspend FlowCollector<T>.() -> Unit
+    timeoutMillis: Long
 ): Flow<T> = scopedFlow { downStream ->
-    require(timeoutMillis >= 0L) { "Timeout should not be negative" }
+    if (timeoutMillis <= 0L) throw FlowTimeoutException("Timed out immediately")
 
     // Produce the values using the default (rendezvous) channel
     // Similar to [debounceInternal]
@@ -468,9 +424,7 @@ private fun <T> Flow<T>.timeoutInternal(
         values.onReceive { value ->
             if (value !== DONE) {
                 if (value === TIMEOUT) {
-                    downStream.action()
-                    values.cancel(ChildCancelledException())
-                    return@onReceive false // Just end the loop here. Nothing more to be done.
+                    throw FlowTimeoutException(timeoutMillis)
                 }
                 downStream.emit(NULL.unbox(value))
                 return@onReceive true
