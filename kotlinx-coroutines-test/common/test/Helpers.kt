@@ -31,9 +31,32 @@ inline fun <T> assertRunsFast(timeout: Duration, block: () -> T): T {
 inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(2.seconds, block)
 
 /**
- * Passes [test] as an argument to [block], but as a function returning not a [TestResult] but [Unit].
+ * Runs [test], and then invokes [block], passing to it the lambda that functionally behaves
+ * the same way [test] does.
 */
-expect fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult): TestResult
+fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult): TestResult = testResultChain(
+    block = test,
+    after = {
+        block { it.getOrThrow() }
+        createTestResult { }
+    }
+)
+
+/**
+ * Chains together [block] and [after], passing the result of [block] to [after].
+ */
+expect fun testResultChain(block: () -> TestResult, after: (Result<Unit>) -> TestResult): TestResult
+
+fun testResultChain(vararg chained: (Result<Unit>) -> TestResult): TestResult =
+    if (chained.isEmpty()) {
+        createTestResult { }
+    } else {
+        testResultChain(block = {
+            chained[0](Result.success(Unit))
+        }) {
+            testResultChain(*chained.drop(1).toTypedArray())
+        }
+    }
 
 class TestException(message: String? = null): Exception(message)
 

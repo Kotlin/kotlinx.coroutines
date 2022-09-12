@@ -491,6 +491,62 @@ class TestScopeTest {
         }
     }
 
+    /*
+     * Tests that the [TestScope] exception reporting mechanism will report the exceptions that happen between
+     * different tests.
+     *
+     * This test must be ran manually, because such exceptions still go through the global exception handler
+     * (as there's no guarantee that another test will happen), and the global exception handler will
+     * log the exceptions or, on Native, crash the test suite.
+     */
+    @Test
+    @Ignore
+    fun testReportingStrayUncaughtExceptionsBetweenTests() {
+        val thrown = TestException("x")
+        testResultChain({
+            // register a handler for uncaught exceptions
+            runTest { }
+        }, {
+            GlobalScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                throw thrown
+            }
+            runTest {
+                fail("unreached")
+            }
+        }, {
+            // this `runTest` will not report the exception
+            runTest {
+                when (val exception = it.exceptionOrNull()) {
+                    is UncaughtExceptionsBeforeTest -> {
+                        assertEquals(1, exception.suppressedExceptions.size)
+                        assertSame(exception.suppressedExceptions[0], thrown)
+                    }
+                    else -> fail("unexpected exception: $exception")
+                }
+            }
+        })
+    }
+
+    /**
+     * Tests that the uncaught exceptions that happen during the test are reported.
+     */
+    @Test
+    fun testReportingStrayUncaughtExceptionsDuringTest(): TestResult {
+        val thrown = TestException("x")
+        return testResultChain({ _ ->
+            runTest {
+                val job = launch(Dispatchers.Default + NonCancellable) {
+                    throw thrown
+                }
+                job.join()
+            }
+        }, {
+            runTest {
+                assertEquals(thrown, it.exceptionOrNull())
+            }
+        })
+    }
+
     companion object {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]
