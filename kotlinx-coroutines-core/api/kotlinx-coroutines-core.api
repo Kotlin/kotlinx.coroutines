@@ -312,13 +312,6 @@ public final class kotlinx/coroutines/EventLoopKt {
 	public static final fun processNextEventInCurrentThread ()J
 }
 
-public final class kotlinx/coroutines/ExceptionCollector {
-	public static final field INSTANCE Lkotlinx/coroutines/ExceptionCollector;
-	public final fun addOnExceptionCallback (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
-	public final fun handleException (Ljava/lang/Throwable;)Z
-	public final fun removeOnExceptionCallback (Ljava/lang/Object;)V
-}
-
 public final class kotlinx/coroutines/ExceptionsKt {
 	public static final fun CancellationException (Ljava/lang/String;Ljava/lang/Throwable;)Ljava/util/concurrent/CancellationException;
 }
