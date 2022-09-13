@@ -9,16 +9,16 @@
 package kotlinx.coroutines
 
 import kotlin.test.*
-import kotlin.time.*
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 @kotlin.time.ExperimentalTime
 class DelayDurationTest : TestBase() {
 
     @Test
     fun testCancellation() = runTest(expected = { it is CancellationException }) {
-        runAndCancel(Duration.seconds(1))
+        runAndCancel(1.seconds)
     }
 
     @Test
@@ -30,7 +30,7 @@ class DelayDurationTest : TestBase() {
     fun testRegularDelay() = runTest {
         val deferred = async {
             expect(2)
-            delay(Duration.seconds(1))
+            delay(1.seconds)
             expect(4)
         }
 
@@ -45,7 +45,7 @@ class DelayDurationTest : TestBase() {
     fun testNanoDelay() = runTest {
         val deferred = async {
             expect(2)
-            delay(Duration.nanoseconds(1))
+            delay(1.nanoseconds)
             expect(4)
         }
 
