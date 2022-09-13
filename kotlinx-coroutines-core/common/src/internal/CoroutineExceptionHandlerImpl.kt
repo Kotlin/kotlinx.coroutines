@@ -18,7 +18,7 @@ internal expect fun propagateExceptionToPlatform(context: CoroutineContext, exce
  *
  * When a callback is registered once, even if it's later removed, the system starts to assume that
  * other callbacks will eventually be registered, and so collects the exceptions.
- * Once a new callback is registered, it tries.
+ * Once a new callback is registered, the collected exceptions are used with it.
  *
  * The callbacks in this object are the last resort before relying on platform-dependent
  * ways to report uncaught exceptions from coroutines.
@@ -85,6 +85,7 @@ internal object ExceptionCollector {
 }
 
 internal fun handleUncaughtCoroutineException(context: CoroutineContext, exception: Throwable) {
+    /** this check is purely for the whole [ExceptionCollector] to be eliminated when an Android app is minified. */
     if (ANDROID_DETECTED) {
         propagateExceptionToPlatform(context, exception)
     } else {
