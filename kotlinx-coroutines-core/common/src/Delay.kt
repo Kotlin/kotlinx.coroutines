@@ -94,6 +94,7 @@ public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
 
 /**
  * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
+ * If the given [timeMillis] is non-positive, this function returns immediately.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
@@ -120,6 +121,7 @@ public suspend fun delay(timeMillis: Long) {
 
 /**
  * Delays coroutine for a given [duration] without blocking a thread and resumes it after the specified time.
+ * If the given [duration] is non-positive, this function returns immediately.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
