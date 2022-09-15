@@ -116,9 +116,7 @@ class HandlerDispatcherTest : TestBase() {
         mainLooper.runOneTask()
         expect(4)
         mainLooper.scheduler.advanceBy(50, TimeUnit.MILLISECONDS)
-        expect(5)
-        mainLooper.scheduler.advanceBy(51, TimeUnit.MILLISECONDS)
-        finish(6)
+        finish(5)
     }
 
     private fun CoroutineScope.doTestAwaitWithDetectedChoreographer() {
