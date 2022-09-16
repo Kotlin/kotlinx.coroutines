@@ -60,6 +60,8 @@ java {
 dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    implementation "org.ow2.asm:asm:$asm_version"
 }
 
 sourceSets {
