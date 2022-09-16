@@ -34,7 +34,7 @@ public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS) {
+        val timeline = schedule(timeMillis) {
             with(continuation) { resumeUndispatched(Unit) }
         }
         continuation.invokeOnCancellation { timeline.stop() }
@@ -42,14 +42,14 @@ public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 
     /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS) {
+        val timeline = schedule(timeMillis) {
             block.run()
         }
         return DisposableHandle { timeline.stop() }
     }
 
-    private fun schedule(time: Long, unit: TimeUnit, handler: EventHandler<ActionEvent>): Timeline =
-        Timeline(KeyFrame(Duration.millis(unit.toMillis(time).toDouble()), handler)).apply { play() }
+    private fun schedule(timeMillis: Long, handler: EventHandler<ActionEvent>): Timeline =
+        Timeline(KeyFrame(Duration.millis(timeMillis.toDouble()), handler)).apply { play() }
 }
 
 internal class JavaFxDispatcherFactory : MainDispatcherFactory {
@@ -97,7 +97,7 @@ public suspend fun awaitPulse(): Long = suspendCancellableCoroutine { cont ->
 }
 
 private class PulseTimer : AnimationTimer() {
-    val next = CopyOnWriteArrayList<CancellableContinuation<Long>>()
+    private val next = CopyOnWriteArrayList<CancellableContinuation<Long>>()
 
     override fun handle(now: Long) {
         val cur = next.toTypedArray()
@@ -116,6 +116,7 @@ internal fun initPlatform(): Boolean = PlatformInitializer.success
 
 // Lazily try to initialize JavaFx platform just once
 private object PlatformInitializer {
+    @JvmField
     val success = run {
         /*
          * Try to instantiate JavaFx platform in a way which works
