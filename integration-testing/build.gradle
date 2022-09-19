@@ -18,6 +18,7 @@ java {
 
 dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+    testImplementation "org.ow2.asm:asm:$asm_version"
 }
 
 sourceSets {
