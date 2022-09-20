@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.*
  * [MaybeSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
  */
 @PublishedApi
-internal fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
+internal fun <T> MaybeSource<T & Any>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
@@ -33,7 +33,7 @@ internal fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
  * [ObservableSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
  */
 @PublishedApi
-internal fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
+internal fun <T> ObservableSource<T & Any>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
@@ -45,7 +45,7 @@ internal fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
  * If [action] throws an exception at some point or if the [MaybeSource] raises an error, the exception is rethrown from
  * [collect].
  */
-public suspend inline fun <T> MaybeSource<T>.collect(action: (T) -> Unit): Unit =
+public suspend inline fun <T> MaybeSource<T & Any>.collect(action: (T) -> Unit): Unit =
     openSubscription().consumeEach(action)
 
 /**
@@ -54,12 +54,11 @@ public suspend inline fun <T> MaybeSource<T>.collect(action: (T) -> Unit): Unit 
  * If [action] throws an exception at some point, the subscription is cancelled, and the exception is rethrown from
  * [collect]. Also, if the [ObservableSource] signals an error, that error is rethrown from [collect].
  */
-public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit): Unit =
-    openSubscription().consumeEach(action)
+public suspend inline fun <T> ObservableSource<T & Any>.collect(action: (T) -> Unit): Unit = openSubscription().consumeEach(action)
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(null), Observer<T>, MaybeObserver<T>
+    LinkedListChannel<T>(null), Observer<T & Any>, MaybeObserver<T & Any>
 {
     private val _subscription = atomic<Disposable?>(null)
 
@@ -73,12 +72,12 @@ private class SubscriptionChannel<T> :
         _subscription.value = sub
     }
 
-    override fun onSuccess(t: T) {
+    override fun onSuccess(t: T & Any) {
         trySend(t)
         close(cause = null)
     }
 
-    override fun onNext(t: T) {
+    override fun onNext(t: T & Any) {
         trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 

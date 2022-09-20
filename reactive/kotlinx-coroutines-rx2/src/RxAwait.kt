@@ -24,9 +24,17 @@ import kotlin.coroutines.*
  */
 public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine { cont ->
     subscribe(object : CompletableObserver {
-        override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
-        override fun onComplete() { cont.resume(Unit) }
-        override fun onError(e: Throwable) { cont.resumeWithException(e) }
+        override fun onSubscribe(d: Disposable) {
+            cont.disposeOnCancellation(d)
+        }
+
+        override fun onComplete() {
+            cont.resume(Unit)
+        }
+
+        override fun onError(e: Throwable) {
+            cont.resumeWithException(e)
+        }
     })
 }
 
@@ -41,13 +49,23 @@ public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this
  * function immediately resumes with [CancellationException] and disposes of its subscription.
  */
-@Suppress("UNCHECKED_CAST")
 public suspend fun <T> MaybeSource<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
     subscribe(object : MaybeObserver<T> {
-        override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
-        override fun onComplete() { cont.resume(null) }
-        override fun onSuccess(t: T) { cont.resume(t) }
-        override fun onError(error: Throwable) { cont.resumeWithException(error) }
+        override fun onSubscribe(d: Disposable) {
+            cont.disposeOnCancellation(d)
+        }
+
+        override fun onComplete() {
+            cont.resume(null)
+        }
+
+        override fun onSuccess(t: T & Any) {
+            cont.resume(t)
+        }
+
+        override fun onError(error: Throwable) {
+            cont.resumeWithException(error)
+        }
     })
 }
 
@@ -119,9 +137,17 @@ public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = awaitSingl
  */
 public suspend fun <T> SingleSource<T>.await(): T = suspendCancellableCoroutine { cont ->
     subscribe(object : SingleObserver<T> {
-        override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
-        override fun onSuccess(t: T) { cont.resume(t) }
-        override fun onError(error: Throwable) { cont.resumeWithException(error) }
+        override fun onSubscribe(d: Disposable) {
+            cont.disposeOnCancellation(d)
+        }
+
+        override fun onSuccess(t: T & Any) {
+            cont.resume(t)
+        }
+
+        override fun onError(error: Throwable) {
+            cont.resumeWithException(error)
+        }
     })
 }
 
@@ -225,7 +251,7 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
             cont.invokeOnCancellation { sub.dispose() }
         }
 
-        override fun onNext(t: T) {
+        override fun onNext(t: T & Any) {
             when (mode) {
                 Mode.FIRST, Mode.FIRST_OR_DEFAULT -> {
                     if (!seenValue) {
