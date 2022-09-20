@@ -31,18 +31,16 @@ public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit): 
     toChannel().consumeEach(action)
 
 @PublishedApi
-@Suppress("UNCHECKED_CAST")
 internal fun <T> MaybeSource<T>.toChannel(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
-    (this as MaybeSource<T & Any>).subscribe(channel)
+    subscribe(channel)
     return channel
 }
 
 @PublishedApi
-@Suppress("UNCHECKED_CAST")
 internal fun <T> ObservableSource<T>.toChannel(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
-    (this as ObservableSource<T & Any>).subscribe(channel)
+    subscribe(channel)
     return channel
 }
 
