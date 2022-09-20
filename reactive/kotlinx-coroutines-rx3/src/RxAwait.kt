@@ -45,7 +45,7 @@ public suspend fun <T> MaybeSource<T & Any>.awaitSingleOrNull(): T? = suspendCan
     subscribe(object : MaybeObserver<T & Any> {
         override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
         override fun onComplete() { cont.resume(null) }
-        override fun onSuccess(t: T) { cont.resume(t) }
+        override fun onSuccess(t: T & Any) { cont.resume(t) }
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
     })
 }
