@@ -77,7 +77,7 @@ private class RxObservableCoroutine<T : Any>(
         processResFunc = RxObservableCoroutine<*>::processResultSelectSend as ProcessResultFunction
     )
 
-    @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
+    @Suppress("UNUSED_PARAMETER")
     private fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
         // Try to acquire the mutex and complete in the registration phase.
         if (mutex.tryLock()) {
@@ -113,7 +113,7 @@ private class RxObservableCoroutine<T : Any>(
             }
         }
 
-    public override suspend fun send(element: T) {
+    override suspend fun send(element: T) {
         mutex.lock()
         doLockedNext(element)?.let { throw it }
     }

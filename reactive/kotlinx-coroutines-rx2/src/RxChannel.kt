@@ -48,7 +48,7 @@ internal fun <T> ObservableSource<T>.toChannel(): ReceiveChannel<T> {
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(null), Observer<T & Any>, MaybeObserver<T & Any>
+    LinkedListChannel<T>(null), Observer<T>, MaybeObserver<T>
 {
     private val _subscription = atomic<Disposable?>(null)
 

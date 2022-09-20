@@ -49,9 +49,8 @@ public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this
  * function immediately resumes with [CancellationException] and disposes of its subscription.
  */
-@Suppress("UNCHECKED_CAST")
 public suspend fun <T> MaybeSource<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
-    subscribe(object : MaybeObserver<T & Any> {
+    subscribe(object : MaybeObserver<T> {
         override fun onSubscribe(d: Disposable) {
             cont.disposeOnCancellation(d)
         }
@@ -67,7 +66,7 @@ public suspend fun <T> MaybeSource<T>.awaitSingleOrNull(): T? = suspendCancellab
         override fun onError(error: Throwable) {
             cont.resumeWithException(error)
         }
-    } as MaybeObserver<T>)
+    })
 }
 
 /**
@@ -136,9 +135,8 @@ public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = awaitSingl
  * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
  * function immediately disposes of its subscription and resumes with [CancellationException].
  */
-@Suppress("UNCHECKED_CAST")
 public suspend fun <T> SingleSource<T>.await(): T = suspendCancellableCoroutine { cont ->
-    subscribe(object : SingleObserver<T & Any> {
+    subscribe(object : SingleObserver<T> {
         override fun onSubscribe(d: Disposable) {
             cont.disposeOnCancellation(d)
         }
@@ -150,7 +148,7 @@ public suspend fun <T> SingleSource<T>.await(): T = suspendCancellableCoroutine 
         override fun onError(error: Throwable) {
             cont.resumeWithException(error)
         }
-    } as SingleObserver<T>)
+    })
 }
 
 // ------------------------ ObservableSource ------------------------
