@@ -23,7 +23,7 @@ def compileTestJsLegacy = tasks.hasProperty("compileTestKotlinJsLegacy")
 // todo: use atomicfu-transformed test files here (not critical)
 task testMochaNode(type: NodeTask, dependsOn: [compileTestJsLegacy, installDependenciesMochaNode]) {
     script = file("${node.nodeProjectDir.getAsFile().get()}/node_modules/mocha/bin/mocha")
-    args = [compileTestJsLegacy.outputFile.path, '--require', 'source-map-support/register']
+    args = [compileTestJsLegacy.outputFileProperty.get().path, '--require', 'source-map-support/register']
     if (project.hasProperty("teamcity")) args.addAll(['--reporter', 'mocha-teamcity-reporter'])
 }
 
@@ -65,8 +65,8 @@ prepareMochaChrome.doLast {
         <script>mocha.setup('bdd');</script>
         <script src="$nodeProjDir/node_modules/kotlin/kotlin.js"></script>
         <script src="$nodeProjDir/node_modules/kotlin-test/kotlin-test.js"></script>
-        <script src="$compileJsLegacy.outputFile"></script>
-        <script src="$compileTestJsLegacy.outputFile"></script>
+        <script src="${compileJsLegacy.outputFileProperty.get().path}"></script>
+        <script src="${compileTestJsLegacy.outputFileProperty.get().path}"></script>
         <script>mocha.run();</script>
         </body>
         </html>
@@ -75,7 +75,7 @@ prepareMochaChrome.doLast {
 
 task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
     script = file("${node.nodeProjectDir.getAsFile().get()}/node_modules/mocha-headless-chrome/bin/start")
-    args = [compileTestJsLegacy.outputFile.path, '--file', mochaChromeTestPage]
+    args = [compileTestJsLegacy.outputFileProperty.get().path, '--file', mochaChromeTestPage]
     if (project.hasProperty("teamcity")) args.addAll(['--reporter', 'mocha-teamcity-reporter'])
 }
 
@@ -96,7 +96,7 @@ task installDependenciesMochaJsdom(type: NpmTask, dependsOn: [npmInstall]) {
 
 task testMochaJsdom(type: NodeTask, dependsOn: [compileTestJsLegacy, installDependenciesMochaJsdom]) {
     script = file("${node.nodeProjectDir.getAsFile().get()}/node_modules/mocha/bin/mocha")
-    args = [compileTestJsLegacy.outputFile.path, '--require', 'source-map-support/register', '--require', 'jsdom-global/register']
+    args = [compileTestJsLegacy.outputFileProperty.get().path, '--require', 'source-map-support/register', '--require', 'jsdom-global/register']
     if (project.hasProperty("teamcity")) args.addAll(['--reporter', 'mocha-teamcity-reporter'])
 }
 
