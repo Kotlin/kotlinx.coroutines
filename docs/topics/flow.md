@@ -1185,7 +1185,7 @@ The output here in this example is a good demonstration of how [flatMapLatest] w
 
 <!--- TEST ARBITRARY_TIME -->
   
-> Note that [flatMapLatest] cancels all the code in its block (`{ requestFlow(it) }` in this example when a new value
+> Note that [flatMapLatest] cancels all the code in its block (`{ requestFlow(it) }` in this example) when a new value
 > is received. 
 > It makes no difference in this particular example, because the call to `requestFlow` itself is fast, not-suspending,
 > and cannot be cancelled. However, a differnce in output would be visible if we were to use suspending functions 
