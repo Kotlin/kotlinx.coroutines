@@ -36,9 +36,9 @@ public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Bo
 public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it is R } as Flow<R>
 
 /**
- * Returns a flow containing only values that are instances of the given [kClass].
+ * Returns a flow containing only values that are instances of the given [klass].
  */
-public fun <R : Any> Flow<*>.filterIsInstance(kClass: KClass<R>): Flow<R> = filter { kClass.isInstance(it) } as Flow<R>
+public fun <R : Any> Flow<*>.filterIsInstance(klass: KClass<R>): Flow<R> = filter { klass.isInstance(it) } as Flow<R>
 
 /**
  * Returns a flow containing only values of the original flow that are not null.
