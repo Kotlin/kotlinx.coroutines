@@ -69,7 +69,7 @@ import kotlin.random.*
  *
  * When a new task arrives in the scheduler (whether it is local or global queue),
  * either an idle worker is being signalled, or a new worker is attempted to be created.
- * Only [corePoolSize] workers can be created for regular CPU tasks)
+ * (Only [corePoolSize] workers can be created for regular CPU tasks)
  *
  * ### Support for blocking tasks
  * The scheduler also supports the notion of [blocking][TASK_PROBABLY_BLOCKING] tasks.
