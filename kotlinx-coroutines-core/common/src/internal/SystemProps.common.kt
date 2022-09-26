@@ -58,6 +58,17 @@ internal fun systemProp(
 
 /**
  * Gets the system property indicated by the specified [property name][propertyName],
+ * or returns [defaultValue] if there is no property with that key.
+ *
+ * **Note: this function should be used in JVM tests only, other platforms use the default value.**
+ */
+internal fun systemProp(
+    propertyName: String,
+    defaultValue: String
+): String = systemProp(propertyName) ?: defaultValue
+
+/**
+ * Gets the system property indicated by the specified [property name][propertyName],
  * or returns `null` if there is no property with that key.
  *
  * **Note: this function should be used in JVM tests only, other platforms use the default value.**

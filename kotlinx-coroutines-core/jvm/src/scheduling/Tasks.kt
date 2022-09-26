@@ -9,8 +9,19 @@ import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 
 
-// Internal debuggability name + thread name prefixes
-internal const val DEFAULT_SCHEDULER_NAME = "DefaultDispatcher"
+/**
+ * Name of the default scheduler.
+ *
+ * Customization provided for when there's no control over used dispatchers/schedulers (i.e when
+ * [Dispatchers.Default] is used within third-party libraries), or when overall default configuration
+ * is acceptable and only the default scheduler name needs to be changed.
+ *
+ * Useful for filtering log messages.
+ */
+@JvmField
+internal val DEFAULT_SCHEDULER_NAME = systemProp(
+    "kotlinx.coroutines.scheduler.default.name", "DefaultDispatcher"
+)
 
 // 100us as default
 @JvmField
