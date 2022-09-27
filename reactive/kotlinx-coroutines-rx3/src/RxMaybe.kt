@@ -43,6 +43,7 @@ private class RxMaybeCoroutine<T>(
 ) : AbstractCoroutine<T>(parentContext, false, true) {
     override fun onCompleted(value: T) {
         try {
+            @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS") // KT-54201
             if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
         } catch (e: Throwable) {
             handleUndeliverableException(e, context)
