@@ -381,7 +381,7 @@ public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelay
  *
  * Note that delaying on the downstream doesn't trigger the timeout.
  *
- * @param timeout Timeout period
+ * @param timeout period. If non-positive, the flow is timed out immediately
  */
 @FlowPreview
 public fun <T> Flow<T>.timeout(
