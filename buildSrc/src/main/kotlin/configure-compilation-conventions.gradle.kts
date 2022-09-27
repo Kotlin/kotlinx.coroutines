@@ -24,6 +24,7 @@ val graduallyIntroducedWarningAsErrorProjects = setOf(
     "kotlinx-coroutines-slf4j",
 
     // Top-level
+    "kotlinx-coroutines-core",
     "kotlinx-coroutines-debug",
 
     )

@@ -26,6 +26,7 @@ internal object AgentPremain {
     }.getOrNull() ?: DebugProbesImpl.enableCreationStackTraces
 
     @JvmStatic
+    @Suppress("UNUSED_PARAMETER")
     fun premain(args: String?, instrumentation: Instrumentation) {
         AgentInstallationType.isInstalledStatically = true
         instrumentation.addTransformer(DebugProbesTransformer)

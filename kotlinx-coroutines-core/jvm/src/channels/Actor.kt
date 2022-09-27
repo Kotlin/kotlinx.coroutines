@@ -162,7 +162,12 @@ private class LazyActorCoroutine<E>(
         return super.send(element)
     }
 
-    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        level = DeprecationLevel.ERROR,
+        message = "Deprecated in the favour of 'trySend' method",
+        replaceWith = ReplaceWith("trySend(element).isSuccess")
+    ) // See super()
     override fun offer(element: E): Boolean {
         start()
         return super.offer(element)
@@ -181,6 +186,7 @@ private class LazyActorCoroutine<E>(
         return closed
     }
 
+    @Suppress("UNCHECKED_CAST")
     override val onSend: SelectClause2<E, SendChannel<E>> get() = SelectClause2Impl(
         clauseObject = this,
         regFunc = LazyActorCoroutine<*>::onSendRegFunction as RegistrationFunction,

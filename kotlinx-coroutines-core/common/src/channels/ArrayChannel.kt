@@ -158,6 +158,7 @@ internal open class ArrayChannel<E>(
                     // Too late, already cancelled, but we removed it from the queue and need to notify on undelivered element.
                     // The only exception is when this "send" operation is an `onSend` clause that has to be re-registered
                     // in the corresponding `select` invocation.
+                    @Suppress("NAME_SHADOWING")
                     val send = send!!
                     if (!(send is SendElementSelectWithUndeliveredHandler<*> && send.trySelectResult == REREGISTER))
                         send.undeliveredElement()

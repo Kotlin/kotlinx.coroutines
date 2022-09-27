@@ -360,6 +360,7 @@ public interface ReceiveChannel<out E> {
      *
      * @suppress **Deprecated**: in favor of onReceiveCatching extension.
      */
+    @Suppress("DEPRECATION_ERROR")
     @Deprecated(
         message = "Deprecated in favor of onReceiveCatching extension",
         level = DeprecationLevel.ERROR,

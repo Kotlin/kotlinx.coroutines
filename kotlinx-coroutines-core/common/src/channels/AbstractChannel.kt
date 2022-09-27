@@ -2,6 +2,8 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
+
 package kotlinx.coroutines.channels
 
 import kotlinx.atomicfu.*
@@ -16,6 +18,7 @@ import kotlin.jvm.*
 /**
  * Abstract send channel. It is a base class for all send channel implementations.
  */
+@Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 internal abstract class AbstractSendChannel<E>(
     @JvmField protected val onUndeliveredElement: OnUndeliveredElement<E>?
 ) : SendChannel<E> {
@@ -122,7 +125,12 @@ internal abstract class AbstractSendChannel<E>(
         return sendSuspend(element)
     }
 
-    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        level = DeprecationLevel.ERROR,
+        message = "Deprecated in the favour of 'trySend' method",
+        replaceWith = ReplaceWith("trySend(element).isSuccess")
+    ) // see super()
     override fun offer(element: E): Boolean {
         // Temporary migration for offer users who rely on onUndeliveredElement
         try {
@@ -705,6 +713,11 @@ internal abstract class AbstractChannel<E>(
             onCancellationConstructor = onUndeliveredElementReceiveCancellationConstructor
         )
 
+    @Deprecated(
+        message = "Deprecated in favor of onReceiveCatching extension",
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith("onReceiveCatching")
+    ) // See super()
     override val onReceiveOrNull: SelectClause1<E?>
         get() = SelectClause1Impl<E?>(
             clauseObject = this,
@@ -726,7 +739,7 @@ internal abstract class AbstractChannel<E>(
         if (selectResult is Closed<*>) throw selectResult.receiveException
         else selectResult as E
 
-    private fun processResultSelectReceiveCatching(ignoredParam: Any?, selectResult: Any?): Any? =
+    private fun processResultSelectReceiveCatching(ignoredParam: Any?, selectResult: Any?): Any =
         if (selectResult is Closed<*>) ChannelResult.closed(selectResult.closeCause)
         else ChannelResult.success(selectResult as E)
 
@@ -735,8 +748,8 @@ internal abstract class AbstractChannel<E>(
         else selectResult as E
 
     private val onUndeliveredElementReceiveCancellationConstructor: OnCancellationConstructor? = onUndeliveredElement?.let {
-        { select: SelectInstance<*>, ignoredParam: Any?, element: Any? ->
-            { cause: Throwable -> if (element !is Closed<*>) onUndeliveredElement.callUndeliveredElement(element as E, select.context) }
+        { select: SelectInstance<*>, _: Any?, element: Any? ->
+            { _: Throwable -> if (element !is Closed<*>) onUndeliveredElement.callUndeliveredElement(element as E, select.context) }
         }
     }
 
