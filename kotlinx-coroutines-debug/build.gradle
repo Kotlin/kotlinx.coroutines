@@ -34,18 +34,6 @@ jar {
     setEnabled(false)
 }
 
-// This is a rough estimation of what shadow plugin has been doing with our default configuration prior to
-// 1.6.2: https://github.com/johnrengelman/shadow/blob/1ff12fc816629ae5bc331fa3889c8ecfcaee7b27/src/main/groovy/com/github/jengelman/gradle/plugins/shadow/ShadowJavaPlugin.groovy#L72-L82
-// We just emulate it here for backwards compatibility
-shadowJar.configure {
-    def classpath = project.objects.fileCollection().from { ->
-        project.configurations.findByName('runtimeClasspath')
-    }
-    doFirst {
-        manifest.attributes 'Class-Path': classpath.collect { "${it.name}" }.findAll { it }.join(' ')
-    }
-}
-
 def shadowJarTask = shadowJar {
     classifier null
     // Shadow only byte buddy, do not package kotlin stdlib
