@@ -36,13 +36,13 @@ internal object AgentPremain {
 
     internal object DebugProbesTransformer : ClassFileTransformer {
         override fun transform(
-            loader: ClassLoader,
+            loader: ClassLoader?,
             className: String,
             classBeingRedefined: Class<*>?,
             protectionDomain: ProtectionDomain,
             classfileBuffer: ByteArray?
         ): ByteArray? {
-            if (className != "kotlin/coroutines/jvm/internal/DebugProbesKt") {
+            if (loader == null || className != "kotlin/coroutines/jvm/internal/DebugProbesKt") {
                return null
             }
             /*
