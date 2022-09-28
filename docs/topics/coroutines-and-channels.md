@@ -118,7 +118,7 @@ This API is used by the `loadContributorsBlocking()` function to fetch the list 
     * When you get the response, the result is logged by calling the specific `logRepos()` and `logUsers()` functions (`#3`).
       If the HTTP response contains an error, this error will be logged here.
     * Finally, get the response's body, which contains the data you need. For this tutorial, you'll use an empty list as a
-      result in case there is an error, and you’ll log the corresponding error (`#4`).
+      result in case there is an error, and you'll log the corresponding error (`#4`).
 
 2. To avoid repeating `.body() ?: emptyList()`, an extension function `bodyList()` is declared:
 
@@ -281,7 +281,7 @@ Make sure to call the logic passed in the callback explicitly. Otherwise, nothin
 
 ### Use the Retrofit callback API
 
-In the previous solution, the whole loading logic is moved to the background thread, but that still isn’t the best use of
+In the previous solution, the whole loading logic is moved to the background thread, but that still isn't the best use of
 resources. All of the loading requests go sequentially and the thread is blocked while waiting for the loading result,
 while it could have been occupied by other tasks. Specifically, the thread could start loading another request to
 receive the entire result earlier.
@@ -367,7 +367,7 @@ However, this code also fails to achieve our objective. Try to find the answer y
 
 #### The second attempted solution for task 3 {initial-collapse-state="collapsed"}
 
-Since the loading requests are started concurrently, there’s no guarantee that the result for the last one comes last. The
+Since the loading requests are started concurrently, there's no guarantee that the result for the last one comes last. The
 results can come in any order.
 
 Thus, if you compare the current index with the `lastIndex` as a condition for completion, you risk losing the results for
@@ -583,7 +583,7 @@ despite all the requests taking place on the main UI thread:
    modify the template for running all of the Kotlin files and enable this option by default.
 
 Now all of the code runs on one coroutine, the "load contributors" coroutine mentioned above, denoted as `@coroutine#1`.
-While waiting for the result, you shouldn’t reuse the thread for sending other requests because the code is
+While waiting for the result, you shouldn't reuse the thread for sending other requests because the code is
 written sequentially. The new request is sent only when the previous result is received.
 
 Suspending functions treat the thread fairly and don't block it for "waiting". However, this doesn't yet bring any concurrency
@@ -725,7 +725,7 @@ create as many as you need.
     ```
 
 2. Run the code and check the log. All of the coroutines still run on the main UI thread because
-   multithreading hasn’t been employed yet, but you can already see the benefits of running coroutines concurrently.
+   multithreading hasn't been employed yet, but you can already see the benefits of running coroutines concurrently.
 3. To change this code to run "contributors" coroutines on different threads from the common thread pool,
    specify `Dispatchers.Default` as the context argument for the `async` function:
 
@@ -1347,7 +1347,7 @@ they make life easier when you need to understand what's going on.
 
 ## Testing coroutines
 
-Let’s now test all solutions to check that the solution with concurrent coroutines is faster than the solution with
+Let's now test all solutions to check that the solution with concurrent coroutines is faster than the solution with
 the `suspend` functions, and check that the solution with channels is faster than the simple "progress" one.
 
 In the following task, you'll compare the total running time of the solutions. You'll mock a GitHub service and make
