@@ -97,7 +97,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             currentTime = event.time
             event
         }
-        event.dispatcher.processEvent(event.time, event.marker)
+        event.dispatcher.processEvent(event.marker)
         return true
     }
 
@@ -132,7 +132,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             val event = synchronized(lock) {
                 events.removeFirstIf { it.time <= timeMark } ?: return
             }
-            event.dispatcher.processEvent(event.time, event.marker)
+            event.dispatcher.processEvent(event.marker)
         }
     }
 
@@ -173,7 +173,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
                     }
                 }
             }
-            event.dispatcher.processEvent(event.time, event.marker)
+            event.dispatcher.processEvent(event.marker)
         }
     }
 

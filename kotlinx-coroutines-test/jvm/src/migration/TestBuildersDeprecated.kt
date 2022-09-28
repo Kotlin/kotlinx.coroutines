@@ -159,7 +159,7 @@ public fun runTestWithLegacyScope(
     context: CoroutineContext = EmptyCoroutineContext,
     dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     testBody: suspend TestCoroutineScope.() -> Unit
-): TestResult {
+) {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
     val testScope = TestBodyCoroutine(createTestCoroutineScope(context + RunningInRunTest))

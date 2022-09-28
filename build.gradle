@@ -168,18 +168,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
 apply plugin: "bom-conventions"
 
 // Configure subprojects with Kotlin sources
-configure(subprojects.findAll { !sourceless.contains(it.name) }) {
-    // Use atomicfu plugin, it also adds all the necessary dependencies
-    apply plugin: 'kotlinx-atomicfu'
-
-    // Configure options for all Kotlin compilation tasks
-    tasks.withType(AbstractKotlinCompile).all {
-        kotlinOptions.freeCompilerArgs += OptInPreset.optInAnnotations.collect { "-Xopt-in=" + it }
-        kotlinOptions.freeCompilerArgs += "-progressive"
-        // Remove null assertions to get smaller bytecode on Android
-        kotlinOptions.freeCompilerArgs += ["-Xno-param-assertions", "-Xno-receiver-assertions", "-Xno-call-assertions"]
-    }
-}
+apply plugin: "configure-compilation-conventions"
 
 if (build_snapshot_train) {
     println "Hacking test tasks, removing stress and flaky tests"

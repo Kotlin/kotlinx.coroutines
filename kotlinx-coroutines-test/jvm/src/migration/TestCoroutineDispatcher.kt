@@ -61,6 +61,10 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
         scheduler.registerEvent(this, 0, block, context) { false }
 
     /** @suppress */
+    @Deprecated(
+        "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
+        level = DeprecationLevel.WARNING
+    )
     override suspend fun pauseDispatcher(block: suspend () -> Unit) {
         val previous = dispatchImmediately
         dispatchImmediately = false
@@ -72,11 +76,19 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
     }
 
     /** @suppress */
+    @Deprecated(
+        "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
+        level = DeprecationLevel.WARNING
+    )
     override fun pauseDispatcher() {
         dispatchImmediately = false
     }
 
     /** @suppress */
+    @Deprecated(
+        "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
+        level = DeprecationLevel.WARNING
+    )
     override fun resumeDispatcher() {
         dispatchImmediately = true
     }

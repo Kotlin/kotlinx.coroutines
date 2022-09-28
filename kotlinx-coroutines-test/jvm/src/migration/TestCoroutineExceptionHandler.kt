@@ -42,6 +42,7 @@ public interface UncaughtExceptionCaptor {
 /**
  * An exception handler that captures uncaught exceptions in tests.
  */
+@Suppress("DEPRECATION")
 @Deprecated(
     "Deprecated for removal without a replacement. " +
         "It may be to define one's own `CoroutineExceptionHandler` if you just need to handle '" +
