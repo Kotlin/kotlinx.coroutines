@@ -23,7 +23,7 @@ public abstract class TestDispatcher internal constructor() : CoroutineDispatche
     public abstract val scheduler: TestCoroutineScheduler
 
     /** Notifies the dispatcher that it should process a single event marked with [marker] happening at time [time]. */
-    internal fun processEvent(time: Long, marker: Any) {
+    internal fun processEvent(marker: Any) {
         check(marker is Runnable)
         marker.run()
     }

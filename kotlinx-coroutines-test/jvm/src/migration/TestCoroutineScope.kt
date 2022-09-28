@@ -86,6 +86,7 @@ private class TestCoroutineScopeImpl(
     /** These jobs existed before the coroutine scope was used, so it's alright if they don't get cancelled. */
     private val initialJobs = coroutineContext.activeJobs()
 
+    @Deprecated("Please call `runTest`, which automatically performs the cleanup, instead of using this function.")
     override fun cleanupTestCoroutines() {
         val delayController = coroutineContext.delayController
         val hasUnfinishedJobs = if (delayController != null) {
