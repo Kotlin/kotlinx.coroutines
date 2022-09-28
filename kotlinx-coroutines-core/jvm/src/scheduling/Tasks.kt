@@ -10,13 +10,7 @@ import java.util.concurrent.*
 
 
 /**
- * Name of the default scheduler.
- *
- * Customization provided for when there's no control over used dispatchers/schedulers (i.e when
- * [Dispatchers.Default] is used within third-party libraries), or when overall default configuration
- * is acceptable and only the default scheduler name needs to be changed.
- *
- * Useful for filtering log messages.
+ * The name of the default scheduler. The names of the worker threads of [Dispatchers.Default] have it as their prefix.
  */
 @JvmField
 internal val DEFAULT_SCHEDULER_NAME = systemProp(
