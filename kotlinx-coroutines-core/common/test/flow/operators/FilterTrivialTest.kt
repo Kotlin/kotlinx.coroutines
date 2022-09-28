@@ -29,6 +29,33 @@ class FilterTrivialTest : TestBase() {
     }
 
     @Test
+    fun testParametrizedFilterIsInstance() = runTest {
+        val flow = flowOf("value", 2.0)
+        assertEquals(2.0, flow.filterIsInstance(Double::class).single())
+        assertEquals("value", flow.filterIsInstance(String::class).single())
+    }
+
+    @Test
+    fun testSubtypesFilterIsInstance() = runTest {
+        open class Super
+        class Sub : Super()
+
+        val flow = flowOf(Super(), Super(), Super(), Sub(), Sub(), Sub())
+        assertEquals(6, flow.filterIsInstance<Super>().count())
+        assertEquals(3, flow.filterIsInstance<Sub>().count())
+    }
+
+    @Test
+    fun testSubtypesParametrizedFilterIsInstance() = runTest {
+        open class Super
+        class Sub : Super()
+
+        val flow = flowOf(Super(), Super(), Super(), Sub(), Sub(), Sub())
+        assertEquals(6, flow.filterIsInstance(Super::class).count())
+        assertEquals(3, flow.filterIsInstance(Sub::class).count())
+    }
+
+    @Test
     fun testFilterIsInstanceNullable() = runTest {
         val flow = flowOf(1, 2, null)
         assertEquals(2, flow.filterIsInstance<Int>().count())
@@ -38,6 +65,12 @@ class FilterTrivialTest : TestBase() {
     @Test
     fun testEmptyFlowIsInstance() = runTest {
         val sum = emptyFlow<Int>().filterIsInstance<Int>().sum()
+        assertEquals(0, sum)
+    }
+
+    @Test
+    fun testEmptyFlowParametrizedIsInstance() = runTest {
+        val sum = emptyFlow<Int>().filterIsInstance(Int::class).sum()
         assertEquals(0, sum)
     }
 }
