@@ -27,9 +27,20 @@ class TimeoutTest : TestBase() {
 
         expect(2)
         val list = mutableListOf<String>()
-        assertFailsWith<FlowTimeoutException>(flow.timeout(300.milliseconds).onEach { list.add(it) })
+        assertFailsWith<TimeoutCancellationException>(flow.timeout(300.milliseconds).onEach { list.add(it) })
         assertEquals(listOf("A", "B", "C"), list)
         finish(5)
+    }
+
+    @Test
+    fun testSingleNull() = withVirtualTime {
+        val flow = flow<Int?> {
+            emit(null)
+            delay(1)
+            expect(1)
+        }.timeout(2.milliseconds)
+        assertNull(flow.single())
+        finish(2)
     }
 
     @Test
@@ -49,7 +60,7 @@ class TimeoutTest : TestBase() {
 
         expect(2)
         val list = mutableListOf<String>()
-        flow.timeout(300.milliseconds).catch { if (it is FlowTimeoutException) emit("-1") }.collect { list.add(it) }
+        flow.timeout(300.milliseconds).catch { if (it is TimeoutCancellationException) emit("-1") }.collect { list.add(it) }
         assertEquals(listOf("A", "B", "C", "-1"), list)
         finish(5)
     }
@@ -84,7 +95,7 @@ class TimeoutTest : TestBase() {
     fun testUpstreamError() = testUpstreamError(TestException())
 
     @Test
-    fun testUpstreamErrorTimeoutException() = testUpstreamError(FlowTimeoutException(0))
+    fun testUpstreamErrorTimeoutException() = testUpstreamError(TimeoutCancellationException(0, Job()))
 
     private inline fun <reified T: Throwable> testUpstreamError(cause: T) = runTest {
         val flow = flow {
@@ -123,7 +134,7 @@ class TimeoutTest : TestBase() {
             expectUnreached()
         }.flowOn(NamedDispatchers("upstream")).timeout(100.milliseconds)
 
-        assertFailsWith<FlowTimeoutException>(flow)
+        assertFailsWith<TimeoutCancellationException>(flow)
         finish(3)
     }
 
@@ -161,7 +172,7 @@ class TimeoutTest : TestBase() {
 
     @Test
     fun testSharedFlowTimeout() = runTest {
-        assertFailsWith<FlowTimeoutException>(MutableSharedFlow<Int>().asSharedFlow().timeout(100.milliseconds))
+        assertFailsWith<TimeoutCancellationException>(MutableSharedFlow<Int>().asSharedFlow().timeout(100.milliseconds))
     }
 
     @Test

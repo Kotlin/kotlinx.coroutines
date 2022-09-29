@@ -10,7 +10,6 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.internal.Symbol
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
@@ -351,7 +350,7 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
 
 /**
- * Returns a flow that will emit a [FlowTimeoutException] if the upstream doesn't emit an item within the given time.
+ * Returns a flow that will emit a [TimeoutCancellationException] if the upstream doesn't emit an item within the given time.
  *
  * Example:
  *
@@ -391,7 +390,7 @@ public fun <T> Flow<T>.timeout(
 private fun <T> Flow<T>.timeoutInternal(
     timeoutMillis: Long
 ): Flow<T> = scopedFlow { downStream ->
-    if (timeoutMillis <= 0L) throw FlowTimeoutException("Timed out immediately")
+    if (timeoutMillis <= 0L) throw TimeoutCancellationException("Timed out immediately")
 
     // Produce the values using the default (rendezvous) channel
     // Similar to [debounceInternal]
@@ -420,34 +419,21 @@ private fun <T> Flow<T>.timeoutInternal(
     }
 
     // Await for values from our producer now
-    whileSelect {
-        values.onReceive { value ->
-            if (value !== DONE) {
-                if (value === TIMEOUT) {
-                    throw FlowTimeoutException(timeoutMillis)
-                }
-                downStream.emit(NULL.unbox(value))
-                return@onReceive true
+    for (value in values) {
+        if (value !== DONE) {
+            if (value === TIMEOUT) {
+                throw TimeoutCancellationException("Timed out waiting for $timeoutMillis ms")
             }
-            return@onReceive false // We got the DONE signal, so exit the while loop
+            if (value != null) {
+                downStream.emit(NULL.unbox(value))
+                continue
+            } else {
+                values.cancel(ChildCancelledException())
+            }
         }
+        return@scopedFlow // We got the DONE signal, so exit the while loop
     }
 }
-
-/**
- * This exception is thrown by [timeout] to indicate an upstream flow timeout.
- *
- * @constructor Creates a timeout exception with the given message. This constructor is needed for exception stack-traces recovery.
- */
-public class FlowTimeoutException internal constructor(message: String) : CancellationException(message), CopyableThrowable<FlowTimeoutException> {
-
-    // message is never null in fact
-    override fun createCopy(): FlowTimeoutException =
-        FlowTimeoutException(message ?: "").also { it.initCause(this) }
-}
-
-@Suppress("FunctionName")
-internal fun FlowTimeoutException(time: Long) : FlowTimeoutException = FlowTimeoutException("Upstream flow timed out waiting for $time ms")
 
 // Special timeout flag
 private val TIMEOUT = Symbol("TIMEOUT")
