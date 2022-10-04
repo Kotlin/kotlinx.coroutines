@@ -79,12 +79,14 @@ class TimeoutTest : TestBase() {
         finish(5)
     }
 
+    // Test may rarely fail due to timeout being reached before test has completed
     @Test
     fun testEmpty() = runTest {
         val flow = emptyFlow<Any?>().timeout(1.milliseconds)
         assertNull(flow.singleOrNull())
     }
 
+    // Test may rarely fail due to timeout being reached before test has completed
     @Test
     fun testScalar() = runTest {
         val flow = flowOf(1, 2, 3).timeout(1.milliseconds)

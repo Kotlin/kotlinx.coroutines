@@ -10,7 +10,6 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.internal.Symbol
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
 import kotlin.time.*
@@ -382,55 +381,26 @@ public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelay
 @FlowPreview
 public fun <T> Flow<T>.timeout(
     timeout: Duration
-): Flow<T> = timeoutInternal(timeout.toDelayMillis())
+): Flow<T> = timeoutInternal(timeout)
 
 private fun <T> Flow<T>.timeoutInternal(
-    timeoutMillis: Long
+    timeout: Duration
 ): Flow<T> = scopedFlow { downStream ->
-    if (timeoutMillis <= 0L) throw TimeoutCancellationException("Timed out immediately")
+    if (timeout <= Duration.ZERO) throw TimeoutCancellationException("Timed out immediately")
 
-    // Produce the values using the default (rendezvous) channel
-    // Similar to [debounceInternal]
-    val values = produce<Any?> {
-        var timeoutJob = launch { // Emits timeout unless cancelled
-            delay(timeoutMillis)
-            send(TIMEOUT)
-        }
-        try {
-            collect {
-                timeoutJob.cancel() // Upstream emitted, so cancel the job
+    val values = buffer(Channel.RENDEZVOUS).produceIn(this)
 
-                send(it ?: NULL)
-
-                // We reset the job here. The reason being is that the `flow.emit()` suspends, which in turn suspends `send()`.
-                // We only want to measure a timeout if the producer took longer than `timeoutMillis`, not producer + consumer
-                timeoutJob = launch {
-                    delay(timeoutMillis)
-                    send(TIMEOUT)
-                }
+    whileSelect {
+        values.onReceiveCatching { value ->
+            value.onSuccess {
+                downStream.emit(it)
+            }.onClosed {
+                return@onReceiveCatching false
             }
-        } finally {
-            timeoutJob.cancel()
-            send(DONE) // Special signal to let flow end
+            return@onReceiveCatching true
         }
-    }
-
-    // Await for values from our producer now
-    for (value in values) {
-        if (value !== DONE) {
-            if (value === TIMEOUT) {
-                throw TimeoutCancellationException("Timed out waiting for $timeoutMillis ms")
-            }
-            if (value != null) {
-                downStream.emit(NULL.unbox(value))
-                continue
-            } else {
-                values.cancel(ChildCancelledException())
-            }
+        onTimeout(timeout) {
+            throw TimeoutCancellationException("Timed out waiting for ${timeout.toString(DurationUnit.MILLISECONDS)}")
         }
-        return@scopedFlow // We got the DONE signal, so exit the while loop
     }
 }
-
-// Special timeout flag
-private val TIMEOUT = Symbol("TIMEOUT")
