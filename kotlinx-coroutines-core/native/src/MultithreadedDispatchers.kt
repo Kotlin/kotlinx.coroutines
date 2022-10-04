@@ -110,7 +110,7 @@ private class MultiWorkerDispatcher(
     override fun close() {
         tasksQueue.close()
         /*
-         * Here we cannot avoid not to wait on `.result`, otherwise it will lead
+         * Here we cannot avoid waiting on `.result`, otherwise it will lead
          * to a native memory leak, including pthread handle.
          */
         val requests = Array(workersCount) {
