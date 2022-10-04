@@ -400,7 +400,7 @@ private fun <T> Flow<T>.timeoutInternal(
             return@onReceiveCatching true
         }
         onTimeout(timeout) {
-            throw TimeoutCancellationException("Timed out waiting for ${timeout.toString(DurationUnit.MILLISECONDS)}")
+            throw TimeoutCancellationException("Timed out waiting for $timeout")
         }
     }
 }
