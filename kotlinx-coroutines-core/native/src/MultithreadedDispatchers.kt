@@ -111,7 +111,7 @@ private class MultiWorkerDispatcher(
         tasksQueue.close()
         /*
          * Here we cannot avoid waiting on `.result`, otherwise it will lead
-         * to a native memory leak, including pthread handle.
+         * to a native memory leak, including a pthread handle.
          */
         val requests = Array(workersCount) {
             workers[it].value?.requestTermination()
