@@ -61,35 +61,6 @@ public fun <T> Flow<T>.catch(action: suspend FlowCollector<T>.(cause: Throwable)
     }
 
 /**
- * @suppress **Deprecated**: Use `(Throwable) -> Boolean` functional type
- */
-@Deprecated(
-    level = DeprecationLevel.ERROR,
-    message = "Use (Throwable) -> Boolean functional type",
-    replaceWith = ReplaceWith("(Throwable) -> Boolean")
-)
-public typealias ExceptionPredicate = (Throwable) -> Boolean
-
-/**
- * Switches to the [fallback] flow if the original flow throws an exception that matches the [predicate].
- * Cancellation exceptions that were caused by the direct [cancel] call are not handled by this operator.
- *
- * @suppress **Deprecated**: Use `catch { e -> if (predicate(e)) emitAll(fallback) else throw e }`
- */
-@Deprecated(
-    level = DeprecationLevel.ERROR,
-    message = "Use catch { e -> if (predicate(e)) emitAll(fallback) else throw e }",
-    replaceWith = ReplaceWith("catch { e -> if (predicate(e)) emitAll(fallback) else throw e }")
-)
-public fun <T> Flow<T>.onErrorCollect(
-    fallback: Flow<T>,
-    predicate: (Throwable) -> Boolean = { true }
-): Flow<T> = catch { e ->
-    if (!predicate(e)) throw e
-    emitAll(fallback)
-}
-
-/**
  * Retries collection of the given flow up to [retries] times when an exception that matches the
  * given [predicate] occurs in the upstream flow. This operator is *transparent* to exceptions that occur
  * in downstream flow and does not retry on exceptions that are thrown to cancel the flow.
@@ -122,16 +93,6 @@ public fun <T> Flow<T>.retry(
 ): Flow<T> {
     require(retries > 0) { "Expected positive amount of retries, but had $retries" }
     return retryWhen { cause, attempt -> attempt < retries && predicate(cause) }
-}
-
-@FlowPreview
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility with retries: Int preview version")
-public fun <T> Flow<T>.retry(
-    retries: Int = Int.MAX_VALUE,
-    predicate: (Throwable) -> Boolean = { true }
-): Flow<T> {
-    require(retries > 0) { "Expected positive amount of retries, but had $retries" }
-    return retryWhen { cause, attempt -> predicate(cause) && attempt < retries }
 }
 
 /**
@@ -186,6 +147,7 @@ public fun <T> Flow<T>.retryWhen(predicate: suspend FlowCollector<T>.(cause: Thr
     }
 
 // Return exception from upstream or null
+@Suppress("NAME_SHADOWING")
 internal suspend fun <T> Flow<T>.catchImpl(
     collector: FlowCollector<T>
 ): Throwable? {
@@ -200,6 +162,8 @@ internal suspend fun <T> Flow<T>.catchImpl(
             }
         }
     } catch (e: Throwable) {
+        // Otherwise, smartcast is impossible
+        val fromDownstream = fromDownstream
         /*
          * First check ensures that we catch an original exception, not one rethrown by an operator.
          * Seconds check ignores cancellation causes, they cannot be caught.
@@ -207,7 +171,41 @@ internal suspend fun <T> Flow<T>.catchImpl(
         if (e.isSameExceptionAs(fromDownstream) || e.isCancellationCause(coroutineContext)) {
             throw e // Rethrow exceptions from downstream and cancellation causes
         } else {
-            return e // not from downstream
+            /*
+             * The exception came from the upstream [semi-] independently.
+             * For pure failures, when the downstream functions normally, we handle the exception as intended.
+             * But if the downstream has failed prior to or concurrently
+             * with the upstream, we forcefully rethrow it, preserving the contextual information and ensuring  that it's not lost.
+             */
+            if (fromDownstream == null) {
+                return e
+            }
+            /*
+             * We consider the upstream exception as the superseding one when both upstream and downstream
+             * fail, suppressing the downstream exception, and operating similarly to `finally` block with
+             * the useful addition of adding the original downstream exception to suppressed ones.
+             *
+             * That's important for the following scenarios:
+             * ```
+             * flow {
+             *     val resource = ...
+             *     try {
+             *         ... emit as well ...
+             *     } finally {
+             *          resource.close() // Throws in the shutdown sequence when 'collect' already has thrown an exception
+             *     }
+             * }.catch { } // or retry
+             * .collect { ... }
+             * ```
+             * when *the downstream* throws.
+             */
+            if (e is CancellationException) {
+                fromDownstream.addSuppressed(e)
+                throw fromDownstream
+            } else {
+                e.addSuppressed(fromDownstream)
+                throw e
+            }
         }
     }
     return null

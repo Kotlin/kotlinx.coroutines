@@ -15,4 +15,4 @@ gradlew :example-frontend-js:run
 ```
 
 Built and deployed application is available at the library documentation site
-[here](https://kotlin.github.io/kotlinx.coroutines/example-frontend-js/index.html).
+[here](https://kotlinlang.org/api/kotlinx.coroutines/example-frontend-js/index.html).

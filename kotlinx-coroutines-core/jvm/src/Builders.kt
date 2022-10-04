@@ -35,7 +35,7 @@ import kotlin.coroutines.*
  * @param block the coroutine code.
  */
 @Throws(InterruptedException::class)
-public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
+public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
@@ -63,7 +63,8 @@ private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val blockedThread: Thread,
     private val eventLoop: EventLoop?
-) : AbstractCoroutine<T>(parentContext, true) {
+) : AbstractCoroutine<T>(parentContext, true, true) {
+
     override val isScopedCoroutine: Boolean get() = true
 
     override fun afterCompletion(state: Any?) {

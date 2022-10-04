@@ -3,8 +3,7 @@
  */
 
 dependencies {
-    compile(project(":kotlinx-coroutines-reactive"))
-    compile("org.reactivestreams:reactive-streams-flow-adapters:${version("reactive_streams")}")
+    implementation(project(":kotlinx-coroutines-reactive"))
 }
 
 tasks {

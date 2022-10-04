@@ -19,15 +19,12 @@ import kotlin.time.*
  */
 @InternalCoroutinesApi
 public interface Delay {
-    /**
-     * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
-     *
-     * This suspending function is cancellable.
-     * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-     * immediately resumes with [CancellationException].
-     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
-     * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
-     */
+
+    /** @suppress **/
+    @Deprecated(
+        message = "Deprecated without replacement as an internal method never intended for public use",
+        level = DeprecationLevel.ERROR
+    ) // Error since 1.6.0
     public suspend fun delay(time: Long) {
         if (time <= 0) return // don't delay
         return suspendCancellableCoroutine { scheduleResumeAfterDelay(time, it) }
@@ -54,8 +51,6 @@ public interface Delay {
      * Schedules invocation of a specified [block] after a specified delay [timeMillis].
      * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] of this invocation
      * request if it is not needed anymore.
-     *
-     * This implementation uses a built-in single-threaded scheduled executor service.
      */
     public fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         DefaultDelay.invokeOnTimeout(timeMillis, block, context)
@@ -99,6 +94,7 @@ public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
 
 /**
  * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
+ * If the given [timeMillis] is non-positive, this function returns immediately.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
@@ -125,6 +121,7 @@ public suspend fun delay(timeMillis: Long) {
 
 /**
  * Delays coroutine for a given [duration] without blocking a thread and resumes it after the specified time.
+ * If the given [duration] is non-positive, this function returns immediately.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
@@ -138,7 +135,6 @@ public suspend fun delay(timeMillis: Long) {
  *
  * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
  */
-@ExperimentalTime
 public suspend fun delay(duration: Duration): Unit = delay(duration.toDelayMillis())
 
 /** Returns [Delay] implementation of the given context */
@@ -148,6 +144,5 @@ internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) 
  * Convert this duration to its millisecond value.
  * Positive durations are coerced at least `1`.
  */
-@ExperimentalTime
 internal fun Duration.toDelayMillis(): Long =
-    if (this > Duration.ZERO) toLongMilliseconds().coerceAtLeast(1) else 0
+    if (this > Duration.ZERO) inWholeMilliseconds.coerceAtLeast(1) else 0

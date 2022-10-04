@@ -12,9 +12,9 @@ class ChannelFlowTest : TestBase() {
     @Test
     fun testRegular() = runTest {
         val flow = channelFlow {
-            assertTrue(offer(1))
-            assertTrue(offer(2))
-            assertTrue(offer(3))
+            assertTrue(trySend(1).isSuccess)
+            assertTrue(trySend(2).isSuccess)
+            assertTrue(trySend(3).isSuccess)
         }
         assertEquals(listOf(1, 2, 3), flow.toList())
     }
@@ -22,9 +22,9 @@ class ChannelFlowTest : TestBase() {
     @Test
     fun testBuffer() = runTest {
         val flow = channelFlow {
-            assertTrue(offer(1))
-            assertTrue(offer(2))
-            assertFalse(offer(3))
+            assertTrue(trySend(1).isSuccess)
+            assertTrue(trySend(2).isSuccess)
+            assertFalse(trySend(3).isSuccess)
         }.buffer(1)
         assertEquals(listOf(1, 2), flow.toList())
     }
@@ -32,10 +32,10 @@ class ChannelFlowTest : TestBase() {
     @Test
     fun testConflated() = runTest {
         val flow = channelFlow {
-            assertTrue(offer(1))
-            assertTrue(offer(2))
-            assertTrue(offer(3))
-            assertTrue(offer(4))
+            assertTrue(trySend(1).isSuccess)
+            assertTrue(trySend(2).isSuccess)
+            assertTrue(trySend(3).isSuccess)
+            assertTrue(trySend(4).isSuccess)
         }.buffer(Channel.CONFLATED)
         assertEquals(listOf(1, 4), flow.toList()) // two elements in the middle got conflated
     }
@@ -43,7 +43,7 @@ class ChannelFlowTest : TestBase() {
     @Test
     fun testFailureCancelsChannel() = runTest {
         val flow = channelFlow {
-            offer(1)
+            trySend(1)
             invokeOnClose {
                 expect(2)
             }

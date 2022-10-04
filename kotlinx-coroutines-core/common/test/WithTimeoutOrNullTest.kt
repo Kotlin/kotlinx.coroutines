@@ -92,7 +92,7 @@ class WithTimeoutOrNullTest : TestBase() {
 
     @Test
     fun testThrowException() = runTest(expected = {it is AssertionError}) {
-        withTimeoutOrNull(Long.MAX_VALUE) {
+        withTimeoutOrNull<Unit>(Long.MAX_VALUE) {
             throw AssertionError()
         }
     }
@@ -107,6 +107,7 @@ class WithTimeoutOrNullTest : TestBase() {
                     yield()
                 }
             }
+            @Suppress("UNREACHABLE_CODE")
             expectUnreached() // will timeout
         }
         expectUnreached() // will timeout
@@ -128,9 +129,9 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testOuterTimeout() = runTest {
         var counter = 0
-        val result = withTimeoutOrNull(250) {
+        val result = withTimeoutOrNull(320) {
             while (true) {
-                val inner = withTimeoutOrNull(100) {
+                val inner = withTimeoutOrNull(150) {
                     while (true) {
                         yield()
                     }

@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import java.io.*
 import java.util.concurrent.*
-import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
 import kotlin.math.*
 import kotlin.random.*
@@ -261,7 +260,7 @@ internal class CoroutineScheduler(
      * works properly
      */
     @JvmField
-    val workers = AtomicReferenceArray<Worker?>(maxPoolSize + 1)
+    val workers = ResizableAtomicArray<Worker>(corePoolSize + 1)
 
     /**
      * Long describing state of workers in this pool.
@@ -480,7 +479,7 @@ internal class CoroutineScheduler(
              * 3) Only then start the worker, otherwise it may miss its own creation
              */
             val worker = Worker(newIndex)
-            workers[newIndex] = worker
+            workers.setSynchronized(newIndex, worker)
             require(newIndex == incrementCreatedWorkers())
             worker.start()
             return cpuWorkers + 1
@@ -525,7 +524,7 @@ internal class CoroutineScheduler(
         var dormant = 0
         var terminated = 0
         val queueSizes = arrayListOf<String>()
-        for (index in 1 until workers.length()) {
+        for (index in 1 until workers.currentLength()) {
             val worker = workers[index] ?: continue
             val queueSize = worker.localQueue.size
             when (worker.state) {
@@ -684,6 +683,7 @@ internal class CoroutineScheduler(
                  * No tasks were found:
                  * 1) Either at least one of the workers has stealable task in its FIFO-buffer with a stealing deadline.
                  *    Then its deadline is stored in [minDelayUntilStealableTask]
+                 * // '2)' can be found below
                  *
                  * Then just park for that duration (ditto re-scanning).
                  * While it could potentially lead to short (up to WORK_STEALING_TIME_RESOLUTION_NS ns) starvations,
@@ -838,7 +838,7 @@ internal class CoroutineScheduler(
                 val lastIndex = decrementCreatedWorkers()
                 if (lastIndex != oldIndex) {
                     val lastWorker = workers[lastIndex]!!
-                    workers[oldIndex] = lastWorker
+                    workers.setSynchronized(oldIndex, lastWorker)
                     lastWorker.indexInArray = oldIndex
                     /*
                      * Now lastWorker is available at both indices in the array, but it can
@@ -852,7 +852,7 @@ internal class CoroutineScheduler(
                 /*
                  * 5) It is safe to clear reference from workers array now.
                  */
-                workers[lastIndex] = null
+                workers.setSynchronized(lastIndex, null)
             }
             state = WorkerState.TERMINATED
         }
@@ -968,7 +968,6 @@ internal class CoroutineScheduler(
  * Checks if the thread is part of a thread pool that supports coroutines.
  * This function is needed for integration with BlockHound.
  */
-@Suppress("UNUSED")
 @JvmName("isSchedulerWorker")
 internal fun isSchedulerWorker(thread: Thread) = thread is CoroutineScheduler.Worker
 
@@ -976,7 +975,6 @@ internal fun isSchedulerWorker(thread: Thread) = thread is CoroutineScheduler.Wo
  * Checks if the thread is running a CPU-bound task.
  * This function is needed for integration with BlockHound.
  */
-@Suppress("UNUSED")
 @JvmName("mayNotBlock")
 internal fun mayNotBlock(thread: Thread) = thread is CoroutineScheduler.Worker &&
     thread.state == CoroutineScheduler.WorkerState.CPU_ACQUIRED

@@ -7,13 +7,11 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.js.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * A concrete implementation of [Job]. It is optionally a child to a parent job.
@@ -25,7 +23,7 @@ import kotlin.native.concurrent.*
  * @suppress **This is unstable API and it is subject to change.**
  */
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
-public open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob, SelectClause0 {
+public open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob {
     final override val key: CoroutineContext.Key<*> get() = Job
 
     /*
@@ -96,7 +94,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          ~ waits for start
          >> start / join / await invoked
        ## ACTIVE: state == EMPTY_ACTIVE | is JobNode | is NodeList
-         + onStartInternal / onStart (lazy coroutine is started)
+         + onStart (lazy coroutine is started)
          ~ active coroutine is working (or scheduled to execution)
          >> childCancelled / cancelImpl invoked
        ## CANCELLING: state is Finishing, state.rootCause != null
@@ -133,13 +131,16 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         get() = _parentHandle.value
         set(value) { _parentHandle.value = value }
 
+    override val parent: Job?
+        get() = parentHandle?.parent
+
     // ------------ initialization ------------
 
     /**
      * Initializes parent job.
      * It shall be invoked at most once after construction after all other initialization.
      */
-    internal fun initParentJobInternal(parent: Job?) {
+    protected fun initParentJob(parent: Job?) {
         assert { parentHandle == null }
         if (parent == null) {
             parentHandle = NonDisposableHandle
@@ -393,12 +394,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             is Empty -> { // EMPTY_X state -- no completion handlers
                 if (state.isActive) return FALSE // already active
                 if (!_state.compareAndSet(state, EMPTY_ACTIVE)) return RETRY
-                onStartInternal()
+                onStart()
                 return TRUE
             }
             is InactiveNodeList -> { // LIST state -- inactive with a list of completion handlers
                 if (!_state.compareAndSet(state, state.list)) return RETRY
-                onStartInternal()
+                onStart()
                 return TRUE
             }
             else -> return FALSE // not a new state
@@ -409,7 +410,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Override to provide the actual [start] action.
      * This function is invoked exactly once when non-active coroutine is [started][start].
      */
-    internal open fun onStartInternal() {}
+    protected open fun onStart() {}
 
     public final override fun getCancellationException(): CancellationException =
         when (val state = this.state) {
@@ -541,7 +542,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     public final override suspend fun join() {
         if (!joinInternal()) { // fast-path no wait
-            coroutineContext.checkCompletion()
+            coroutineContext.ensureActive()
             return // do not suspend
         }
         return joinSuspend() // slow-path wait
@@ -559,26 +560,28 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         cont.disposeOnCancellation(invokeOnCompletion(handler = ResumeOnCompletion(cont).asHandler))
     }
 
+    @Suppress("UNCHECKED_CAST")
     public final override val onJoin: SelectClause0
-        get() = this
+        get() = SelectClause0Impl(
+            clauseObject = this@JobSupport,
+            regFunc = JobSupport::registerSelectForOnJoin as RegistrationFunction
+        )
 
-    // registerSelectJoin
-    public final override fun <R> registerSelectClause0(select: SelectInstance<R>, block: suspend () -> R) {
-        // fast-path -- check state and select/return if needed
-        loopOnState { state ->
-            if (select.isSelected) return
-            if (state !is Incomplete) {
-                // already complete -- select result
-                if (select.trySelect()) {
-                    block.startCoroutineUnintercepted(select.completion)
-                }
-                return
-            }
-            if (startInternal(state) == 0) {
-                // slow-path -- register waiter for completion
-                select.disposeOnSelect(invokeOnCompletion(handler = SelectJoinOnCompletion(select, block).asHandler))
-                return
-            }
+    @Suppress("UNUSED_PARAMETER")
+    private fun registerSelectForOnJoin(select: SelectInstance<*>, ignoredParam: Any?) {
+        if (!joinInternal()) {
+            select.selectInRegistrationPhase(Unit)
+            return
+        }
+        val disposableHandle = invokeOnCompletion(SelectOnJoinCompletionHandler(select).asHandler)
+        select.disposeOnCompletion(disposableHandle)
+    }
+
+    private inner class SelectOnJoinCompletionHandler(
+        private val select: SelectInstance<*>
+    ) : JobNode() {
+        override fun invoke(cause: Throwable?) {
+            select.trySelect(this@JobSupport, Unit)
         }
     }
 
@@ -1204,7 +1207,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal suspend fun awaitInternal(): Any? {
+    protected suspend fun awaitInternal(): Any? {
         // fast-path -- check state (avoid extra object creation)
         while (true) { // lock-free loop on state
             val state = this.state
@@ -1228,50 +1231,48 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * thrown and not a JobCancellationException.
          */
         val cont = AwaitContinuation(uCont.intercepted(), this)
+        // we are mimicking suspendCancellableCoroutine here and call initCancellability, too.
+        cont.initCancellability()
         cont.disposeOnCancellation(invokeOnCompletion(ResumeAwaitOnCompletion(cont).asHandler))
         cont.getResult()
     }
 
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    // registerSelectAwaitInternal
     @Suppress("UNCHECKED_CAST")
-    internal fun <T, R> registerSelectClause1Internal(select: SelectInstance<R>, block: suspend (T) -> R) {
-        // fast-path -- check state and select/return if needed
-        loopOnState { state ->
-            if (select.isSelected) return
+    protected val onAwaitInternal: SelectClause1<*> get() = SelectClause1Impl<Any?>(
+        clauseObject = this@JobSupport,
+        regFunc = JobSupport::onAwaitInternalRegFunc as RegistrationFunction,
+        processResFunc = JobSupport::onAwaitInternalProcessResFunc as ProcessResultFunction
+    )
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun onAwaitInternalRegFunc(select: SelectInstance<*>, ignoredParam: Any?) {
+        while (true) {
+            val state = this.state
             if (state !is Incomplete) {
-                // already complete -- select result
-                if (select.trySelect()) {
-                    if (state is CompletedExceptionally) {
-                        select.resumeSelectWithException(state.cause)
-                    }
-                    else {
-                        block.startCoroutineUnintercepted(state.unboxState() as T, select.completion)
-                    }
-                }
+                val result = if (state is CompletedExceptionally) state else state.unboxState()
+                select.selectInRegistrationPhase(result)
                 return
             }
-            if (startInternal(state) == 0) {
-                // slow-path -- register waiter for completion
-                select.disposeOnSelect(invokeOnCompletion(handler = SelectAwaitOnCompletion(select, block).asHandler))
-                return
-            }
+            if (startInternal(state) >= 0) break // break unless needs to retry
         }
+        val disposableHandle = invokeOnCompletion(SelectOnAwaitCompletionHandler(select).asHandler)
+        select.disposeOnCompletion(disposableHandle)
     }
 
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    @Suppress("UNCHECKED_CAST")
-    internal fun <T, R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (T) -> R) {
-        val state = this.state
-        // Note: await is non-atomic (can be cancelled while dispatched)
-        if (state is CompletedExceptionally)
-            select.resumeSelectWithException(state.cause)
-        else
-            block.startCoroutineCancellable(state.unboxState() as T, select.completion)
+    @Suppress("UNUSED_PARAMETER")
+    private fun onAwaitInternalProcessResFunc(ignoredParam: Any?, result: Any?): Any? {
+        if (result is CompletedExceptionally) throw result.cause
+        return result
+    }
+
+    private inner class SelectOnAwaitCompletionHandler(
+        private val select: SelectInstance<*>
+    ) : JobNode() {
+        override fun invoke(cause: Throwable?) {
+            val state = this@JobSupport.state
+            val result = if (state is CompletedExceptionally) state else state.unboxState()
+            select.trySelect(this@JobSupport, result)
+        }
     }
 }
 
@@ -1284,25 +1285,18 @@ internal fun Any?.unboxState(): Any? = (this as? IncompleteStateBox)?.state ?: t
 
 // --------------- helper classes & constants for job implementation
 
-@SharedImmutable
 private val COMPLETING_ALREADY = Symbol("COMPLETING_ALREADY")
 @JvmField
-@SharedImmutable
 internal val COMPLETING_WAITING_CHILDREN = Symbol("COMPLETING_WAITING_CHILDREN")
-@SharedImmutable
 private val COMPLETING_RETRY = Symbol("COMPLETING_RETRY")
-@SharedImmutable
 private val TOO_LATE_TO_CANCEL = Symbol("TOO_LATE_TO_CANCEL")
 
 private const val RETRY = -1
 private const val FALSE = 0
 private const val TRUE = 1
 
-@SharedImmutable
 private val SEALED = Symbol("SEALED")
-@SharedImmutable
 private val EMPTY_NEW = Empty(false)
-@SharedImmutable
 private val EMPTY_ACTIVE = Empty(true)
 
 private class Empty(override val isActive: Boolean) : Incomplete {
@@ -1310,8 +1304,9 @@ private class Empty(override val isActive: Boolean) : Incomplete {
     override fun toString(): String = "Empty{${if (isActive) "Active" else "New" }}"
 }
 
+@PublishedApi // for a custom job in the test module
 internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
-    init { initParentJobInternal(parent) }
+    init { initParentJob(parent) }
     override val onCancelComplete get() = true
     /*
      * Check whether parent is able to handle exceptions as well.
@@ -1418,26 +1413,6 @@ internal class DisposeOnCompletion(
     override fun invoke(cause: Throwable?) = handle.dispose()
 }
 
-private class SelectJoinOnCompletion<R>(
-    private val select: SelectInstance<R>,
-    private val block: suspend () -> R
-) : JobNode() {
-    override fun invoke(cause: Throwable?) {
-        if (select.trySelect())
-            block.startCoroutineCancellable(select.completion)
-    }
-}
-
-private class SelectAwaitOnCompletion<T, R>(
-    private val select: SelectInstance<R>,
-    private val block: suspend (T) -> R
-) : JobNode() {
-    override fun invoke(cause: Throwable?) {
-        if (select.trySelect())
-            job.selectAwaitCompletion(select, block)
-    }
-}
-
 // -------- invokeOnCancellation nodes
 
 /**
@@ -1459,6 +1434,7 @@ private class InvokeOnCancelling(
 internal class ChildHandleNode(
     @JvmField val childJob: ChildJob
 ) : JobCancellingNode(), ChildHandle {
+    override val parent: Job get() = job
     override fun invoke(cause: Throwable?) = childJob.parentCancelled(job)
     override fun childCancelled(cause: Throwable): Boolean = job.childCancelled(cause)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -68,7 +68,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         try {
             block()
         } finally {
-            if (!done.offer(true))
+            if (!done.trySend(true).isSuccess)
                 error(IllegalStateException("failed to offer to done channel"))
         }
     }
@@ -176,7 +176,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
 
     private suspend fun stopSender() {
         stoppedSender++
-        sender.cancel()
+        sender.cancelAndJoin()
         senderDone.receive()
     }
 
@@ -188,9 +188,9 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                     val receivedData = when (receiveMode) {
                         1 -> channel.receive()
                         2 -> select { channel.onReceive { it } }
-                        3 -> channel.receiveOrNull() ?: error("Should not be closed")
-                        4 -> select { channel.onReceiveOrNull { it ?: error("Should not be closed") } }
-                        5 -> channel.receiveOrClosed().value
+                        3 -> channel.receiveCatching().getOrElse { error("Should not be closed") }
+                        4 -> select { channel.onReceiveCatching { it.getOrElse { error("Should not be closed") } } }
+                        5 -> channel.receiveCatching().getOrThrow()
                         6 -> {
                             val iterator = channel.iterator()
                             check(iterator.hasNext()) { "Should not be closed" }
@@ -198,6 +198,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                         }
                         else -> error("cannot happen")
                     }
+                    receivedData.onReceived()
                     receivedCnt++
                     val received = receivedData.x
                     if (received <= lastReceived)
@@ -220,12 +221,22 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     }
 
     private inner class Data(val x: Long) {
-        private val failedToDeliver = atomic(false)
+        private val firstFailedToDeliverOrReceivedCallTrace = atomic<Exception?>(null)
 
         fun failedToDeliver() {
-            check(failedToDeliver.compareAndSet(false, true)) { "onUndeliveredElement notified twice" }
-            failedToDeliverCnt.incrementAndGet()
-            failedStatus[x] = 1
+            val trace = if (TRACING_ENABLED) Exception("First onUndeliveredElement() call") else DUMMY_TRACE_EXCEPTION
+            if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) {
+                failedToDeliverCnt.incrementAndGet()
+                failedStatus[x] = 1
+                return
+            }
+            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
+        }
+
+        fun onReceived() {
+            val trace = if (TRACING_ENABLED) Exception("First onReceived() call") else DUMMY_TRACE_EXCEPTION
+            if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) return
+            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
         }
     }
 
@@ -253,3 +264,6 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         }
     }
 }
+
+private const val TRACING_ENABLED = false // Change to `true` to enable the tracing
+private val DUMMY_TRACE_EXCEPTION = Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")

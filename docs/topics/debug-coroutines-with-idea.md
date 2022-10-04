@@ -4,24 +4,44 @@ This tutorial demonstrates how to create Kotlin coroutines and debug them using 
 
 The tutorial assumes you have prior knowledge of the [coroutines](coroutines-guide.md) concept.
 
-> Debugging works for `kotlinx-coroutines-core` version 1.3.8 or later.
->
-{type="note"}
-
 ## Create coroutines
 
-1. Open a Kotlin project in IntelliJ IDEA. If you don't have a project, [create one](jvm-get-started.md#create-an-application).
+1. Open a Kotlin project in IntelliJ IDEA. If you don't have a project, [create one](jvm-get-started.md#create-a-project).
+2. To use the `kotlinx.coroutines` library in a Gradle project, add the following dependency to `build.gradle(.kts)`:
 
-2. Open the `main.kt` file in `src/main/kotlin`.
+   <tabs group="build-script">
+   <tab title="Kotlin" group-key="kotlin">
 
-    The `src` directory contains Kotlin source files and resources. The `main.kt` file contains sample code that will print `Hello World!`.
+   ```kotlin
+   dependencies {
+       implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:%coroutinesVersion%")
+   }
+   ``` 
 
-2. Change code in the `main()` function:
+   </tab>
+   <tab title="Groovy" group-key="groovy">
+   
+   ```groovy
+   dependencies {
+       implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:%coroutinesVersion%'
+   }
+   ```
+   
+   </tab>
+   </tabs>
 
-    * Use the [`runBlocking()`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html) block to wrap a coroutine.
-    * Use the [`async()`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html) function to create coroutines that compute deferred values `a` and `b`.
-    * Use the [`await()`](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/await.html) function to await the computation result.
-    * Use the [`println()`](https://kotlinlang.org//api/latest/jvm/stdlib/stdlib/kotlin.io/println.html) function to print computing status and the result of multiplication to the output.
+   For other build systems, see instructions in the [`kotlinx.coroutines` README](https://github.com/Kotlin/kotlinx.coroutines#using-in-your-projects).
+   
+3. Open the `Main.kt` file in `src/main/kotlin`.
+
+    The `src` directory contains Kotlin source files and resources. The `Main.kt` file contains sample code that will print `Hello World!`.
+
+4. Change code in the `main()` function:
+
+    * Use the [`runBlocking()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html) block to wrap a coroutine.
+    * Use the [`async()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html) function to create coroutines that compute deferred values `a` and `b`.
+    * Use the [`await()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/await.html) function to await the computation result.
+    * Use the [`println()`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/println.html) function to print computing status and the result of multiplication to the output.
 
     ```kotlin
     import kotlinx.coroutines.*
@@ -39,7 +59,7 @@ The tutorial assumes you have prior knowledge of the [coroutines](coroutines-gui
     }
     ```
 
-4. Build the code by clicking **Build Project**.
+5. Build the code by clicking **Build Project**.
 
     ![Build an application](flow-build-project.png)
 
@@ -61,7 +81,7 @@ The tutorial assumes you have prior knowledge of the [coroutines](coroutines-gui
 
     ![Debug the coroutine](coroutine-debug-1.png)
 
-3. Resume the debugger session by clicking **Resume program** in the **Debug** tool window:
+3. Resume the debugger session by clicking **Resume Program** in the **Debug** tool window:
 
     ![Debug the coroutine](coroutine-debug-2.png)
     
@@ -70,7 +90,7 @@ The tutorial assumes you have prior knowledge of the [coroutines](coroutines-gui
     * The second coroutine is calculating the `a` value – it has the **RUNNING** status.
     * The third coroutine has the **CREATED** status and isn’t calculating the value of `b`.
 
-4. Resume the debugger session by clicking **Resume program** in the **Debug** tool window:
+4. Resume the debugger session by clicking **Resume Program** in the **Debug** tool window:
 
     ![Build a console application](coroutine-debug-3.png)
 

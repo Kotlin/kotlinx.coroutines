@@ -2,9 +2,7 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.jetbrains.dokka.DokkaConfiguration.ExternalDocumentationLink
-import org.jetbrains.dokka.gradle.DokkaTask
-import java.net.URL
+import kotlinx.kover.api.*
 
 configurations {
     create("r8")
@@ -12,17 +10,25 @@ configurations {
 
 repositories {
     mavenCentral()
-    jcenter() // https://youtrack.jetbrains.com/issue/IDEA-261387
 }
+
+project.configureAar()
+
 dependencies {
+    configureAarUnpacking()
+
     compileOnly("com.google.android:android:${version("android")}")
     compileOnly("androidx.annotation:annotation:${version("androidx_annotation")}")
 
     testImplementation("com.google.android:android:${version("android")}")
     testImplementation("org.robolectric:robolectric:${version("robolectric")}")
-    testImplementation("org.smali:baksmali:${version("baksmali")}")
+    // Required by robolectric
+    testImplementation("androidx.test:core:1.2.0")
+    testImplementation("androidx.test:monitor:1.2.0")
 
-    "r8"("com.android.tools.build:builder:4.0.0-alpha06") // Contains r8-2.0.4-dev
+
+    testImplementation("org.smali:baksmali:${version("baksmali")}")
+    "r8"("com.android.tools.build:builder:7.1.0-alpha01")
 }
 
 val optimizedDexDir = File(buildDir, "dex-optim/")
@@ -64,3 +70,51 @@ tasks.test {
 externalDocumentationLink(
     url = "https://developer.android.com/reference/"
 )
+/*
+ * Task used by our ui/android tests to test minification results and keep track of size of the binary.
+ */
+open class RunR8 : JavaExec() {
+
+    @OutputDirectory
+    lateinit var outputDex: File
+
+    @InputFile
+    lateinit var inputConfig: File
+
+    @InputFile
+    val inputConfigCommon: File = File("testdata/r8-test-common.pro")
+
+    @InputFiles
+    val jarFile: File = project.tasks.named<Zip>("jar").get().archivePath
+
+    init {
+        classpath = project.configurations["r8"]
+        main = "com.android.tools.r8.R8"
+    }
+
+    override fun exec() {
+        // Resolve classpath only during execution
+        val arguments = mutableListOf(
+            "--release",
+            "--no-desugaring",
+            "--min-api", "26",
+            "--output", outputDex.absolutePath,
+            "--pg-conf", inputConfig.absolutePath
+        )
+        arguments.addAll(project.configurations["runtimeClasspath"].files.map { it.absolutePath })
+        arguments.add(jarFile.absolutePath)
+
+        args = arguments
+
+        project.delete(outputDex)
+        outputDex.mkdirs()
+
+        super.exec()
+    }
+}
+
+tasks.withType<Test> {
+    extensions.configure<KoverTaskExtension> {
+        excludes.addAll(listOf("com.android.*", "android.*")) // Exclude robolectric-generated classes
+    }
+}

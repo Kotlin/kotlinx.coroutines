@@ -20,7 +20,7 @@ import kotlin.coroutines.*
 public fun <T> rxMaybe(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T?
-): Maybe<T> {
+): Maybe<T & Any> {
     require(context[Job] === null) { "Maybe context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
     return rxMaybeInternal(GlobalScope, context, block)
@@ -30,7 +30,7 @@ private fun <T> rxMaybeInternal(
     scope: CoroutineScope, // support for legacy rxMaybe in scope
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T?
-): Maybe<T> = Maybe.create { subscriber ->
+): Maybe<T & Any> = Maybe.create { subscriber ->
     val newContext = scope.newCoroutineContext(context)
     val coroutine = RxMaybeCoroutine(newContext, subscriber)
     subscriber.setCancellable(RxCancellable(coroutine))
@@ -39,10 +39,11 @@ private fun <T> rxMaybeInternal(
 
 private class RxMaybeCoroutine<T>(
     parentContext: CoroutineContext,
-    private val subscriber: MaybeEmitter<T>
-) : AbstractCoroutine<T>(parentContext, true) {
+    private val subscriber: MaybeEmitter<T & Any>
+) : AbstractCoroutine<T>(parentContext, false, true) {
     override fun onCompleted(value: T) {
         try {
+            @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS") // KT-54201
             if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
         } catch (e: Throwable) {
             handleUndeliverableException(e, context)
@@ -51,11 +52,12 @@ private class RxMaybeCoroutine<T>(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         try {
-            if (!subscriber.tryOnError(cause)) {
-                handleUndeliverableException(cause, context)
+            if (subscriber.tryOnError(cause)) {
+                return
             }
         } catch (e: Throwable) {
-            handleUndeliverableException(e, context)
+            cause.addSuppressed(e)
         }
+        handleUndeliverableException(cause, context)
     }
 }

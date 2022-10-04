@@ -63,14 +63,14 @@ abstract class ChannelLincheckTestBase(
     }
 
     @Operation
-    fun offer(@Param(name = "value") value: Int): Any = try {
-        c.offer(value)
-    } catch (e: NumberedCancellationException) {
-        e.testResult
-    }
+    fun trySend(@Param(name = "value") value: Int): Any = c.trySend(value)
+            .onSuccess { return true }
+            .onFailure {
+                return if (it is NumberedCancellationException) it.testResult
+                else false
+            }
 
-    // TODO: this operation should be (and can be!) linearizable, but is not
-    // @Operation
+    @Operation(promptCancellation = true)
     suspend fun sendViaSelect(@Param(name = "value") value: Int): Any = try {
         select<Unit> { c.onSend(value) {} }
     } catch (e: NumberedCancellationException) {
@@ -85,14 +85,12 @@ abstract class ChannelLincheckTestBase(
     }
 
     @Operation
-    fun poll(): Any? = try {
-        c.poll()
-    } catch (e: NumberedCancellationException) {
-        e.testResult
-    }
+    fun tryReceive(): Any? =
+        c.tryReceive()
+            .onSuccess { return it }
+            .onFailure { return if (it is NumberedCancellationException) it.testResult else null }
 
-    // TODO: this operation should be (and can be!) linearizable, but is not
-    // @Operation
+    @Operation(promptCancellation = true)
     suspend fun receiveViaSelect(): Any = try {
         select<Int> { c.onReceive { it } }
     } catch (e: NumberedCancellationException) {
@@ -131,7 +129,7 @@ abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierSta
     private val buffer = ArrayList<Int>()
     private var closedMessage: String? = null
 
-    suspend fun send(x: Int): Any = when (val offerRes = offer(x)) {
+    suspend fun send(x: Int): Any = when (val offerRes = trySend(x)) {
         true -> Unit
         false -> suspendCancellableCoroutine { cont ->
             senders.add(cont to x)
@@ -139,7 +137,7 @@ abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierSta
         else -> offerRes
     }
 
-    fun offer(element: Int): Any {
+    fun trySend(element: Int): Any {
         if (closedMessage !== null) return closedMessage!!
         if (capacity == CONFLATED) {
             if (resumeFirstReceiver(element)) return true
@@ -163,11 +161,11 @@ abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierSta
         return false
     }
 
-    suspend fun receive(): Any = poll() ?: suspendCancellableCoroutine { cont ->
+    suspend fun receive(): Any = tryReceive() ?: suspendCancellableCoroutine { cont ->
         receivers.add(cont)
     }
 
-    fun poll(): Any? {
+    fun tryReceive(): Any? {
         if (buffer.isNotEmpty()) {
             val el = buffer.removeAt(0)
             resumeFirstSender().also {

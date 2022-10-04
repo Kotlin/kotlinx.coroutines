@@ -40,17 +40,15 @@ task preparePublishNpm(type: Copy) {
 
 task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
     workingDir = npmDeployDir
-  
-    doFirst {
-        def npmDeployTag = distTag(version)
-        def deployArgs = ['publish',
-                          "--//registry.npmjs.org/:_authToken=$authToken",
-                          "--tag=$npmDeployTag"]
-        if (dryRun == "true") {
-            println("$npmDeployDir \$ npm arguments: $deployArgs")
-            args = ['pack']
-        } else {
-            args = deployArgs
-        }
+
+    def npmDeployTag = distTag(version)
+    def deployArgs = ['publish',
+                      "--//registry.npmjs.org/:_authToken=$authToken",
+                      "--tag=$npmDeployTag"]
+    if (dryRun == "true") {
+        println("$npmDeployDir \$ npm arguments: $deployArgs")
+        args = ['pack']
+    } else {
+        args = deployArgs
     }
 }

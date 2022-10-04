@@ -5,7 +5,9 @@
 package kotlinx.coroutines.rx3
 
 import io.reactivex.rxjava3.core.*
+import io.reactivex.rxjava3.disposables.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -101,7 +103,7 @@ class ObservableSingleTest : TestBase() {
 
     @Test
     fun testAwaitFirstOrNull() {
-        val observable = rxObservable<String> {
+        val observable = rxObservable {
             send(Observable.empty<String>().awaitFirstOrNull() ?: "OK")
         }
 
@@ -153,6 +155,32 @@ class ObservableSingleTest : TestBase() {
             assertEquals("OK", it)
         }
     }
+
+    /** Tests that calls to [awaitFirst] (and, thus, the other methods) throw [CancellationException] and dispose of
+     * the subscription when their [Job] is cancelled. */
+    @Test
+    fun testAwaitCancellation() = runTest {
+        expect(1)
+        val observable = ObservableSource<Int> { s ->
+            s.onSubscribe(object: Disposable {
+                override fun dispose() { expect(4) }
+                override fun isDisposed(): Boolean { expectUnreached(); return false }
+            })
+        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                expect(2)
+                observable.awaitFirst()
+            } catch (e: CancellationException) {
+                expect(5)
+                throw e
+            }
+        }
+        expect(3)
+        job.cancelAndJoin()
+        finish(6)
+    }
+
 
     @Test
     fun testExceptionFromObservable() {

@@ -1,10 +1,11 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.test.*
 
@@ -289,5 +290,25 @@ class OnCompletionTest : TestBase() {
         }.toList()
         val expected = (1..5).toList() + (-1)
         assertEquals(expected, result)
+    }
+
+    @Test
+    fun testCancelledEmitAllFlow() = runTest {
+        // emitAll does not call 'collect' on onCompletion collector
+        // if the target flow is empty
+        flowOf(1, 2, 3)
+            .onCompletion { emitAll(MutableSharedFlow()) }
+            .take(1)
+            .collect()
+    }
+
+    @Test
+    fun testCancelledEmitAllChannel() = runTest {
+        // emitAll does not call 'collect' on onCompletion collector
+        // if the target channel is empty
+        flowOf(1, 2, 3)
+            .onCompletion { emitAll(Channel()) }
+            .take(1)
+            .collect()
     }
 }

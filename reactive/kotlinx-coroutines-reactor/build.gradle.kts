@@ -5,8 +5,8 @@
 val reactorVersion = version("reactor")
 
 dependencies {
-    compile("io.projectreactor:reactor-core:$reactorVersion")
-    compile(project(":kotlinx-coroutines-reactive"))
+    api("io.projectreactor:reactor-core:$reactorVersion")
+    api(project(":kotlinx-coroutines-reactive"))
 }
 
 java {
@@ -27,3 +27,16 @@ tasks {
 externalDocumentationLink(
     url = "https://projectreactor.io/docs/core/$reactorVersion/api/"
 )
+
+val commonKoverExcludes = listOf(
+    "kotlinx.coroutines.reactor.FlowKt", // Deprecated
+    "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
+)
+
+kover {
+    filters {
+        classes {
+            excludes += commonKoverExcludes
+        }
+    }
+}

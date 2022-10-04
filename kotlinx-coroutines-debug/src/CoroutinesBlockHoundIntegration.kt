@@ -10,7 +10,6 @@ import kotlinx.coroutines.scheduling.*
 import reactor.blockhound.*
 import reactor.blockhound.integration.*
 
-@Suppress("UNUSED")
 public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
 
     override fun applyTo(builder: BlockHound.Builder): Unit = with(builder) {
@@ -19,6 +18,9 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowServiceLoaderInvocationsOnInit()
         allowBlockingCallsInReflectionImpl()
         allowBlockingCallsInDebugProbes()
+        allowBlockingCallsInWorkQueue()
+        // Stacktrace recovery cache is guarded by lock
+        allowBlockingCallsInside("kotlinx.coroutines.internal.ExceptionsConstructorKt", "tryCopyException")
         /* The predicates that define that BlockHound should only report blocking calls from threads that are part of
         the coroutine thread pool and currently execute a CPU-bound coroutine computation. */
         addDynamicThreadPredicate { isSchedulerWorker(it) }
@@ -61,15 +63,20 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
     }
 
     /**
+     * Allow blocking calls inside [kotlinx.coroutines.scheduling.WorkQueue]
+     */
+    private fun BlockHound.Builder.allowBlockingCallsInWorkQueue() {
+        /** uses [Thread.yield] in a benign way. */
+        allowBlockingCallsInside("kotlinx.coroutines.scheduling.WorkQueue", "addLast")
+    }
+
+    /**
      * Allows blocking inside [kotlinx.coroutines.internal.ThreadSafeHeap].
      */
     private fun BlockHound.Builder.allowBlockingCallsInThreadSafeHeap() {
         for (method in listOf("clear", "peek", "removeFirstOrNull", "addLast")) {
             allowBlockingCallsInside("kotlinx.coroutines.internal.ThreadSafeHeap", method)
         }
-        // [addLastIf] is only used in [EventLoop.common]. Users of [removeFirstIf]:
-        allowBlockingCallsInside("kotlinx.coroutines.test.TestCoroutineDispatcher", "doActionsUntil")
-        allowBlockingCallsInside("kotlinx.coroutines.test.TestCoroutineContext", "triggerActions")
     }
 
     private fun BlockHound.Builder.allowBlockingCallsInFlow() {
@@ -110,7 +117,7 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
     private fun BlockHound.Builder.allowBlockingCallsInArrayChannel() {
         for (method in listOf(
             "pollInternal", "isEmpty", "isFull", "isClosedForReceive", "offerInternal", "offerSelectInternal",
-            "enqueueSend", "pollInternal", "pollSelectInternal", "enqueueReceiveInternal", "onCancelIdempotent"))
+            "enqueueSend", "pollSelectInternal", "enqueueReceiveInternal", "onCancelIdempotent"))
         {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ArrayChannel", method)
         }
@@ -133,7 +140,7 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
      */
     private fun BlockHound.Builder.allowBlockingCallsInConflatedChannel() {
         for (method in listOf("offerInternal", "offerSelectInternal", "pollInternal", "pollSelectInternal",
-            "onCancelIdempotent"))
+            "onCancelIdempotent", "isEmpty", "enqueueReceiveInternal"))
         {
             allowBlockingCallsInside("kotlinx.coroutines.channels.ConflatedChannel", method)
         }

@@ -5,8 +5,8 @@
 val reactiveStreamsVersion = property("reactive_streams_version")
 
 dependencies {
-    compile("org.reactivestreams:reactive-streams:$reactiveStreamsVersion")
-    testCompile("org.reactivestreams:reactive-streams-tck:$reactiveStreamsVersion")
+    api("org.reactivestreams:reactive-streams:$reactiveStreamsVersion")
+    testImplementation("org.reactivestreams:reactive-streams-tck:$reactiveStreamsVersion")
 }
 
 val testNG by tasks.registering(Test::class) {
@@ -34,3 +34,17 @@ tasks.check {
 externalDocumentationLink(
     url = "https://www.reactive-streams.org/reactive-streams-$reactiveStreamsVersion-javadoc/"
 )
+
+val commonKoverExcludes = listOf(
+    "kotlinx.coroutines.reactive.FlowKt", // Deprecated
+    "kotlinx.coroutines.reactive.FlowKt__MigrationKt", // Deprecated
+    "kotlinx.coroutines.reactive.ConvertKt" // Deprecated
+)
+
+kover {
+    filters {
+        classes {
+            excludes += commonKoverExcludes
+        }
+    }
+}

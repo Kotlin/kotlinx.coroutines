@@ -6,6 +6,8 @@
 
 package kotlinx.coroutines.internal
 
+import kotlinx.coroutines.*
+
 private typealias Node = LinkedListNode
 /** @suppress **This is unstable API and it is subject to change.** */
 @Suppress("NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS") // :TODO: Remove when fixed: https://youtrack.jetbrains.com/issue/KT-23703
@@ -15,7 +17,7 @@ public actual typealias LockFreeLinkedListNode = LinkedListNode
 public actual typealias LockFreeLinkedListHead = LinkedListHead
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public open class LinkedListNode {
+public open class LinkedListNode : DisposableHandle {
     @PublishedApi internal var _next = this
     @PublishedApi internal var _prev = this
     @PublishedApi internal var _removed: Boolean = false
@@ -32,7 +34,22 @@ public open class LinkedListNode {
         this._prev = node
     }
 
+    /*
+     * Remove that is invoked as a virtual function with a
+     * potentially augmented behaviour.
+     * I.g. `LockFreeLinkedListHead` throws, while `SendElementWithUndeliveredHandler`
+     * invokes handler on remove
+     */
     public open fun remove(): Boolean {
+        return removeImpl()
+    }
+
+    override fun dispose() {
+        remove()
+    }
+
+    @PublishedApi
+    internal fun removeImpl(): Boolean {
         if (_removed) return false
         val prev = this._prev
         val next = this._next
@@ -76,7 +93,7 @@ public open class LinkedListNode {
     public fun removeFirstOrNull(): Node? {
         val next = _next
         if (next === this) return null
-        check(next.remove()) { "Should remove" }
+        check(next.removeImpl()) { "Should remove" }
         return next
     }
 
@@ -85,7 +102,7 @@ public open class LinkedListNode {
         if (next === this) return null
         if (next !is T) return null
         if (predicate(next)) return next
-        check(next.remove()) { "Should remove" }
+        check(next.removeImpl()) { "Should remove" }
         return next
     }
 }
@@ -166,5 +183,5 @@ public open class LinkedListHead : LinkedListNode() {
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    public final override fun remove(): Boolean = throw UnsupportedOperationException()
+    public final override fun remove(): Nothing = throw UnsupportedOperationException()
 }

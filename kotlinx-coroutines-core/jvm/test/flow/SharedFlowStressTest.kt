@@ -10,9 +10,8 @@ import org.junit.*
 import org.junit.Test
 import kotlin.collections.ArrayList
 import kotlin.test.*
-import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
 
-@ExperimentalTime
 class SharedFlowStressTest : TestBase() {
     private val nProducers = 5
     private val nConsumers = 3

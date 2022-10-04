@@ -96,12 +96,10 @@ public fun <T> CoroutineScope.async(
 private open class DeferredCoroutine<T>(
     parentContext: CoroutineContext,
     active: Boolean
-) : AbstractCoroutine<T>(parentContext, active), Deferred<T>, SelectClause1<T> {
+) : AbstractCoroutine<T>(parentContext, true, active = active), Deferred<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T> get() = this
-    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectClause1Internal(select, block)
+    override val onAwait: SelectClause1<T> get() = onAwaitInternal as SelectClause1<T>
 }
 
 private class LazyDeferredCoroutine<T>(
@@ -126,12 +124,15 @@ private class LazyDeferredCoroutine<T>(
  * This suspending function is cancellable. It immediately checks for cancellation of
  * the resulting context and throws [CancellationException] if it is not [active][CoroutineContext.isActive].
  *
- * This function uses dispatcher from the new context, shifting execution of the [block] into the
- * different thread if a new dispatcher is specified, and back to the original dispatcher
- * when it completes. Note that the result of `withContext` invocation is
- * dispatched into the original context in a cancellable way with a **prompt cancellation guarantee**,
- * which means that if the original [coroutineContext], in which `withContext` was invoked,
- * is cancelled by the time its dispatcher starts to execute the code,
+ * Calls to [withContext] whose [context] argument provides a [CoroutineDispatcher] that is
+ * different from the current one, by necessity, perform additional dispatches: the [block]
+ * can not be executed immediately and needs to be dispatched for execution on
+ * the passed [CoroutineDispatcher], and then when the [block] completes, the execution
+ * has to shift back to the original dispatcher.
+ *
+ * Note that the result of `withContext` invocation is dispatched into the original context in a cancellable way
+ * with a **prompt cancellation guarantee**, which means that if the original [coroutineContext]
+ * in which `withContext` was invoked is cancelled by the time its dispatcher starts to execute the code,
  * it discards the result of `withContext` and throws [CancellationException].
  *
  * The cancellation behaviour described above is enabled if and only if the dispatcher is being changed.
@@ -148,9 +149,10 @@ public suspend fun <T> withContext(
     return suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
         // compute new context
         val oldContext = uCont.context
-        val newContext = oldContext + context
+        // Copy CopyableThreadContextElement if necessary
+        val newContext = oldContext.newCoroutineContext(context)
         // always check for cancellation of new context
-        newContext.checkCompletion()
+        newContext.ensureActive()
         // FAST PATH #1 -- new context is the same as the old one
         if (newContext === oldContext) {
             val coroutine = ScopeCoroutine(newContext, uCont)
@@ -161,13 +163,12 @@ public suspend fun <T> withContext(
         if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
             val coroutine = UndispatchedCoroutine(newContext, uCont)
             // There are changes in the context, so this thread needs to be updated
-            withCoroutineContext(newContext, null) {
+            withCoroutineContext(coroutine.context, null) {
                 return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
             }
         }
         // SLOW PATH -- use new dispatcher
         val coroutine = DispatchedCoroutine(newContext, uCont)
-        coroutine.initParentJob()
         block.startCoroutineCancellable(coroutine, coroutine)
         coroutine.getResult()
     }
@@ -188,7 +189,7 @@ public suspend inline operator fun <T> CoroutineDispatcher.invoke(
 private open class StandaloneCoroutine(
     parentContext: CoroutineContext,
     active: Boolean
-) : AbstractCoroutine<Unit>(parentContext, active) {
+) : AbstractCoroutine<Unit>(parentContext, initParentJob = true, active = active) {
     override fun handleJobException(exception: Throwable): Boolean {
         handleCoroutineException(context, exception)
         return true

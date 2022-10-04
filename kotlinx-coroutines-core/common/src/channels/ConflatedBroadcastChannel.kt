@@ -14,10 +14,10 @@ import kotlin.jvm.*
 /**
  * Broadcasts the most recently sent element (aka [value]) to all [openSubscription] subscribers.
  *
- * Back-to-send sent elements are _conflated_ -- only the the most recently sent value is received,
+ * Back-to-send sent elements are _conflated_ -- only the most recently sent value is received,
  * while previously sent elements **are lost**.
  * Every subscriber immediately receives the most recently sent element.
- * Sender to this broadcast channel never suspends and [offer] always returns `true`.
+ * Sender to this broadcast channel never suspends and [trySend] always succeeds.
  *
  * A secondary constructor can be used to create an instance of this class that already holds a value.
  * This channel is also created by `BroadcastChannel(Channel.CONFLATED)` factory function invocation.
@@ -26,10 +26,10 @@ import kotlin.jvm.*
  * [opening][openSubscription] and [closing][ReceiveChannel.cancel] subscription takes O(N) time, where N is the
  * number of subscribers.
  *
- * **Note: This API is obsolete.** It will be deprecated and replaced by [StateFlow][kotlinx.coroutines.flow.StateFlow]
- * when it becomes stable.
+ * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
+ * and with error in 1.7.0. It is replaced with [StateFlow][kotlinx.coroutines.flow.StateFlow].
  */
-@ExperimentalCoroutinesApi // not @ObsoleteCoroutinesApi to reduce burden for people who are still using it
+@ObsoleteCoroutinesApi
 public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     /**
      * Creates an instance of this class that already holds a value.
@@ -89,12 +89,11 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      */
     public val valueOrNull: E? get() = when (val state = _state.value) {
         is Closed -> null
-        is State<*> -> UNDEFINED.unbox<E?>(state.value)
+        is State<*> -> UNDEFINED.unbox(state.value)
         else -> error("Invalid state $state")
     }
 
     public override val isClosedForSend: Boolean get() = _state.value is Closed
-    public override val isFull: Boolean get() = false
 
     @Suppress("UNCHECKED_CAST")
     public override fun openSubscription(): ReceiveChannel<E> {
@@ -229,12 +228,12 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     /**
      * Sends the value to all subscribed receives and stores this value as the most recent state for
-     * future subscribers. This implementation always returns `true`.
-     * It throws exception if the channel [isClosedForSend] (see [close] for details).
+     * future subscribers. This implementation always returns either successful result
+     * or closed with an exception.
      */
-    public override fun offer(element: E): Boolean {
-        offerInternal(element)?.let { throw it.sendException }
-        return true
+    public override fun trySend(element: E): ChannelResult<Unit> {
+        offerInternal(element)?.let { return ChannelResult.closed(it.sendException)  }
+        return ChannelResult.success(Unit)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -264,21 +263,23 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     public override val onSend: SelectClause2<E, SendChannel<E>>
-        get() = object : SelectClause2<E, SendChannel<E>> {
-            override fun <R> registerSelectClause2(select: SelectInstance<R>, param: E, block: suspend (SendChannel<E>) -> R) {
-                registerSelectSend(select, param, block)
-            }
-        }
+        get() = SelectClause2Impl(
+            clauseObject = this,
+            regFunc = ConflatedBroadcastChannel<*>::registerSelectForSend as RegistrationFunction,
+            processResFunc = ConflatedBroadcastChannel<*>::processResultSelectSend as ProcessResultFunction
+        )
 
-    private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
-        if (!select.trySelect()) return
-        offerInternal(element)?.let {
-            select.resumeSelectWithException(it.sendException)
-            return
-        }
-        block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
+    @Suppress("UNCHECKED_CAST")
+    private fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
+        select.selectInRegistrationPhase(offerInternal(element as E))
     }
+
+    @Suppress("RedundantNullableReturnType", "UNUSED_PARAMETER")
+    private fun processResultSelectSend(ignoredParam: Any?, selectResult: Any?): Any? =
+        if (selectResult is Closed) throw selectResult.sendException
+        else this
 
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>

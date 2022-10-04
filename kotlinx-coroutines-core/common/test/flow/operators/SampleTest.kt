@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class SampleTest : TestBase() {
     @Test
@@ -250,7 +251,6 @@ class SampleTest : TestBase() {
             expect(2)
             yield()
             throw TestException()
-            it
         }
 
         assertFailsWith<TestException>(flow)
@@ -268,16 +268,14 @@ class SampleTest : TestBase() {
             expect(2)
             yield()
             throw TestException()
-            it
         }
 
         assertFailsWith<TestException>(flow)
         finish(4)
     }
 
-    @ExperimentalTime
     @Test
-    public fun testDurationBasic() = withVirtualTime {
+    fun testDurationBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)

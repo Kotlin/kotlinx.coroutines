@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -15,8 +15,13 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
-    fun testOfferAfterClose() = runTest {
-        TestChannelKind.values().forEach { kind -> testOffer(kind) }
+    fun testTrySendToFullChannel() = runTest {
+        TestChannelKind.values().forEach { kind -> testTrySendToFullChannel(kind) }
+    }
+
+    @Test
+    fun testTrySendAfterClose() = runTest {
+        TestChannelKind.values().forEach { kind -> testTrySend(kind) }
     }
 
     @Test
@@ -25,18 +30,8 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
-    fun testReceiveOrNullAfterClose() = runTest {
-        TestChannelKind.values().forEach { kind -> testReceiveOrNull(kind) }
-    }
-
-    @Test
-    fun testReceiveOrNullAfterCloseWithException() = runTest {
-        TestChannelKind.values().forEach { kind -> testReceiveOrNullException(kind) }
-    }
-
-    @Test
-    fun testReceiveOrClosed() = runTest {
-        TestChannelKind.values().forEach { kind -> testReceiveOrClosed(kind) }
+    fun testReceiveCatching() = runTest {
+        TestChannelKind.values().forEach { kind -> testReceiveCatching(kind) }
     }
 
     @Test
@@ -49,7 +44,7 @@ class BasicOperationsTest : TestBase() {
             }
         }
         expect(1)
-        channel.offer(42)
+        channel.trySend(42)
         expect(2)
         channel.close(AssertionError())
         finish(4)
@@ -90,47 +85,8 @@ class BasicOperationsTest : TestBase() {
         }
     }
 
-    private suspend fun testReceiveOrNull(kind: TestChannelKind) = coroutineScope {
-        val channel = kind.create<Int>()
-        val d = async(NonCancellable) {
-            channel.receive()
-        }
-
-        yield()
-        channel.close()
-        assertTrue(channel.isClosedForReceive)
-
-        assertNull(channel.receiveOrNull())
-        assertNull(channel.poll())
-
-        d.join()
-        assertTrue(d.getCancellationException().cause is ClosedReceiveChannelException)
-    }
-
-    private suspend fun testReceiveOrNullException(kind: TestChannelKind) = coroutineScope {
-        val channel = kind.create<Int>()
-        val d = async(NonCancellable) {
-            channel.receive()
-        }
-
-        yield()
-        channel.close(TestException())
-        assertTrue(channel.isClosedForReceive)
-
-        assertFailsWith<TestException> { channel.poll() }
-        try {
-            channel.receiveOrNull()
-            fail()
-        } catch (e: TestException) {
-            // Expected
-        }
-
-        d.join()
-        assertTrue(d.getCancellationException().cause is TestException)
-    }
-
     @Suppress("ReplaceAssertBooleanWithAssertEquality")
-    private suspend fun testReceiveOrClosed(kind: TestChannelKind) = coroutineScope {
+    private suspend fun testReceiveCatching(kind: TestChannelKind) = coroutineScope {
         reset()
         val channel = kind.create<Int>()
         launch {
@@ -139,42 +95,56 @@ class BasicOperationsTest : TestBase() {
         }
 
         expect(1)
-        val result = channel.receiveOrClosed()
-        assertEquals(1, result.value)
-        assertEquals(1, result.valueOrNull)
-        assertTrue(ValueOrClosed.value(1) == result)
+        val result = channel.receiveCatching()
+        assertEquals(1, result.getOrThrow())
+        assertEquals(1, result.getOrNull())
+        assertTrue(ChannelResult.success(1) == result)
 
         expect(3)
         launch {
             expect(4)
             channel.close()
         }
-        val closed = channel.receiveOrClosed()
+        val closed = channel.receiveCatching()
         expect(5)
-        assertNull(closed.valueOrNull)
+        assertNull(closed.getOrNull())
         assertTrue(closed.isClosed)
-        assertNull(closed.closeCause)
-        assertTrue(ValueOrClosed.closed<Int>(closed.closeCause) == closed)
+        assertNull(closed.exceptionOrNull())
+        assertTrue(ChannelResult.closed<Int>(closed.exceptionOrNull()) == closed)
         finish(6)
     }
 
-    private suspend fun testOffer(kind: TestChannelKind) = coroutineScope {
+    private suspend fun testTrySend(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create<Int>()
         val d = async { channel.send(42) }
         yield()
         channel.close()
 
         assertTrue(channel.isClosedForSend)
-        try {
-            channel.offer(2)
-            fail()
-        } catch (e: ClosedSendChannelException) {
-            if (!kind.isConflated) {
-                assertEquals(42, channel.receive())
+        channel.trySend(2)
+            .onSuccess { expectUnreached() }
+            .onClosed {
+                assertTrue { it is  ClosedSendChannelException}
+                if (!kind.isConflated) {
+                    assertEquals(42, channel.receive())
+                }
             }
-        }
-
         d.await()
+    }
+
+    private suspend fun testTrySendToFullChannel(kind: TestChannelKind) = coroutineScope {
+        if (kind.isConflated || kind.capacity == Int.MAX_VALUE) return@coroutineScope
+        val channel = kind.create<Int>()
+        // Make it full
+        repeat(11) {
+            channel.trySend(42)
+        }
+        channel.trySend(1)
+            .onSuccess { expectUnreached() }
+            .onFailure { assertNull(it) }
+            .onClosed {
+                expectUnreached()
+            }
     }
 
     /**

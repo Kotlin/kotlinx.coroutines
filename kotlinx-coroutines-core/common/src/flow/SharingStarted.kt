@@ -5,7 +5,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.internal.IgnoreJreRequirement
 import kotlin.time.*
 
 /**
@@ -135,12 +135,11 @@ public fun interface SharingStarted {
  * are negative.
  */
 @Suppress("FunctionName")
-@ExperimentalTime
 public fun SharingStarted.Companion.WhileSubscribed(
     stopTimeout: Duration = Duration.ZERO,
     replayExpiration: Duration = Duration.INFINITE
 ): SharingStarted =
-    StartedWhileSubscribed(stopTimeout.toLongMilliseconds(), replayExpiration.toLongMilliseconds())
+    StartedWhileSubscribed(stopTimeout.inWholeMilliseconds, replayExpiration.inWholeMilliseconds)
 
 // -------------------------------- implementation --------------------------------
 
@@ -204,5 +203,6 @@ private class StartedWhileSubscribed(
             stopTimeout == other.stopTimeout &&
             replayExpiration == other.replayExpiration
 
+    @IgnoreJreRequirement // desugared hashcode implementation
     override fun hashCode(): Int = stopTimeout.hashCode() * 31 + replayExpiration.hashCode()
 }

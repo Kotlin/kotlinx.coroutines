@@ -11,10 +11,16 @@ import kotlin.jvm.*
  * A coroutine dispatcher that is not confined to any specific thread.
  */
 internal object Unconfined : CoroutineDispatcher() {
+
+    @ExperimentalCoroutinesApi
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        throw UnsupportedOperationException("limitedParallelism is not supported for Dispatchers.Unconfined")
+    }
+
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        // It can only be called by the "yield" function. See also code of "yield" function.
+        /** It can only be called by the [yield] function. See also code of [yield] function. */
         val yieldContext = context[YieldContext]
         if (yieldContext != null) {
             // report to "yield" that it is an unconfined dispatcher and don't call "block.run()"
@@ -32,6 +38,7 @@ internal object Unconfined : CoroutineDispatcher() {
 /**
  * Used to detect calls to [Unconfined.dispatch] from [yield] function.
  */
+@PublishedApi
 internal class YieldContext : AbstractCoroutineContextElement(Key) {
     companion object Key : CoroutineContext.Key<YieldContext>
 

@@ -7,7 +7,6 @@ package kotlinx.coroutines.swing
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import java.awt.event.*
-import java.util.concurrent.*
 import javax.swing.*
 import kotlin.coroutines.*
 
@@ -29,26 +28,22 @@ public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
+        val timer = schedule(timeMillis) {
             with(continuation) { resumeUndispatched(Unit) }
-        })
+        }
         continuation.invokeOnCancellation { timer.stop() }
     }
 
     /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
+        val timer = schedule(timeMillis) {
             block.run()
-        })
-        return object : DisposableHandle {
-            override fun dispose() {
-                timer.stop()
-            }
         }
+        return DisposableHandle { timer.stop() }
     }
 
-    private fun schedule(time: Long, unit: TimeUnit, action: ActionListener): Timer =
-        Timer(unit.toMillis(time).coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), action).apply {
+    private fun schedule(timeMillis: Long, action: ActionListener): Timer =
+        Timer(timeMillis.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), action).apply {
             isRepeats = false
             start()
         }
@@ -74,6 +69,16 @@ private object ImmediateSwingDispatcher : SwingDispatcher() {
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
 internal object Swing : SwingDispatcher() {
+
+    /* A workaround so that the dispatcher's initialization crashes with an exception if running in a headless
+    environment. This is needed so that this broken dispatcher is not used as the source of delays. */
+    init {
+        Timer(1) { }.apply {
+            isRepeats = false
+            start()
+        }
+    }
+
     override val immediate: MainCoroutineDispatcher
         get() = ImmediateSwingDispatcher
 

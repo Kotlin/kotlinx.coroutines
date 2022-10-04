@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.knit
@@ -10,8 +10,6 @@ import kotlinx.coroutines.scheduling.*
 import kotlinx.knit.test.*
 import java.util.concurrent.*
 import kotlin.test.*
-
-fun wrapTask(block: Runnable) = kotlinx.coroutines.wrapTask(block)
 
 // helper function to dump exception to stdout for ease of debugging failed tests
 private inline fun <T> outputException(name: String, block: () -> T): T =
@@ -28,9 +26,8 @@ private val OUT_ENABLED = systemProp("guide.tests.sout", false)
 fun <R> test(name: String, block: () -> R): List<String> = outputException(name) {
     try {
         captureOutput(name, stdoutEnabled = OUT_ENABLED) { log ->
-            CommonPool.usePrivatePool()
             DefaultScheduler.usePrivateScheduler()
-            DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+            DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
             resetCoroutineId()
             val threadsBefore = currentThreads()
             try {
@@ -41,15 +38,13 @@ fun <R> test(name: String, block: () -> R): List<String> = outputException(name)
             } finally {
                 // the shutdown
                 log.println("--- shutting down")
-                CommonPool.shutdown(SHUTDOWN_TIMEOUT)
                 DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
                 shutdownDispatcherPools(SHUTDOWN_TIMEOUT)
-                DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
+                DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
             }
             checkTestThreads(threadsBefore) // check thread if the main completed successfully
         }
     } finally {
-        CommonPool.restore()
         DefaultScheduler.restore()
     }
 }

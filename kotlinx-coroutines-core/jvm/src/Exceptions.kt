@@ -29,7 +29,7 @@ public actual fun CancellationException(message: String?, cause: Throwable?) : C
 internal actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
-    @JvmField internal actual val job: Job
+    @JvmField @Transient internal actual val job: Job
 ) : CancellationException(message), CopyableThrowable<JobCancellationException> {
 
     init {

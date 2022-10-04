@@ -167,7 +167,6 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
     }
 }
 
-@Suppress("UNCHECKED_CAST")
 internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, undispatched: Boolean) {
     // This resume is never cancellable. The result is always delivered to delegate continuation.
     val state = takeState()

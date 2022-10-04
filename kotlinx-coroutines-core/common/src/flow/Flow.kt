@@ -108,7 +108,7 @@ import kotlin.coroutines.*
  * val myFlow = flow {
  *    // GlobalScope.launch { // is prohibited
  *    // launch(Dispatchers.IO) { // is prohibited
- *    // withContext(CoroutineName("myFlow")) // is prohibited
+ *    // withContext(CoroutineName("myFlow")) { // is prohibited
  *    emit(1) // OK
  *    coroutineScope {
  *        emit(2) // OK -- still the same coroutine
@@ -131,10 +131,12 @@ import kotlin.coroutines.*
  *
  * ### Exception transparency
  *
- * Flow implementations never catch or handle exceptions that occur in downstream flows. From the implementation standpoint
- * it means that calls to [emit][FlowCollector.emit] and [emitAll] shall never be wrapped into
- * `try { ... } catch { ... }` blocks. Exception handling in flows shall be performed with
- * [catch][Flow.catch] operator and it is designed to only catch exceptions coming from upstream flows while passing
+ * When `emit` or `emitAll` throws, the Flow implementations must immediately stop emitting new values and finish with an exception.
+ * For diagnostics or application-specific purposes, the exception may be different from the one thrown by the emit operation,
+ * suppressing the original exception as discussed below.
+ * If there is a need to emit values after the downstream failed, please use the [catch][Flow.catch] operator.
+ *
+ * The [catch][Flow.catch] operator only catches upstream exceptions, but passes
  * all downstream exceptions. Similarly, terminal operators like [collect][Flow.collect]
  * throw any unhandled exceptions that occur in their code or in upstream flows, for example:
  *
@@ -146,6 +148,13 @@ import kotlin.coroutines.*
  *     .collect { process(it) } // throws exceptions from process and computeTwo
  * ```
  * The same reasoning can be applied to the [onCompletion] operator that is a declarative replacement for the `finally` block.
+ *
+ * All exception-handling Flow operators follow the principle of exception suppression:
+ *
+ * If the upstream flow throws an exception during its completion when the downstream exception has been thrown,
+ * the downstream exception becomes superseded and suppressed by the upstream exception, being a semantic
+ * equivalent of throwing from `finally` block. However, this doesn't affect the operation of the exception-handling operators,
+ * which consider the downstream exception to be the root cause and behave as if the upstream didn't throw anything.
  *
  * Failure to adhere to the exception transparency requirement can lead to strange behaviors which make
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
@@ -163,19 +172,29 @@ import kotlin.coroutines.*
  *
  * **The `Flow` interface is not stable for inheritance in 3rd party libraries**, as new methods
  * might be added to this interface in the future, but is stable for use.
- * Use the `flow { ... }` builder function to create an implementation.
+ *
+ * Use the `flow { ... }` builder function to create an implementation, or extend [AbstractFlow].
+ * These implementations ensure that the context preservation property is not violated, and prevent most
+ * of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.
  */
 public interface Flow<out T> {
+
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
-     * This method should never be implemented or used directly.
      *
-     * The only way to implement the `Flow` interface directly is to extend [AbstractFlow].
-     * To collect it into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
-     * should be used. Such limitation ensures that the context preservation property is not violated and prevents most
-     * of the developer mistakes related to concurrency, inconsistent flow dispatchers and cancellation.
+     * This method can be used along with SAM-conversion of [FlowCollector]:
+     * ```
+     * myFlow.collect { value -> println("Collected $value") }
+     * ```
+     *
+     * ### Method inheritance
+     *
+     * To ensure the context preservation property, it is not recommended implementing this method directly.
+     * Instead, [AbstractFlow] can be used as the base type to properly ensure flow's properties.
+     *
+     * All default flow implementations ensure context preservation and exception transparency properties on a best-effort basis
+     * and throw [IllegalStateException] if a violation was detected.
      */
-    @InternalCoroutinesApi
     public suspend fun collect(collector: FlowCollector<T>)
 }
 
@@ -205,7 +224,6 @@ public interface Flow<out T> {
 @FlowPreview
 public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
-    @InternalCoroutinesApi
     public final override suspend fun collect(collector: FlowCollector<T>) {
         val safeCollector = SafeCollector(collector, coroutineContext)
         try {

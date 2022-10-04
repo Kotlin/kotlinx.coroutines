@@ -1,0 +1,11 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+        mavenLocal()
+    }
+}
+
+include 'smokeTest'
+
+rootProject.name = "kotlinx-coroutines-integration-testing"

@@ -109,10 +109,8 @@ public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
  *         emit(progress) // always emit progress
  *         !progress.isDone() // continue while download is not done
  *     }
- * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public fun <T, R> Flow<T>.transformWhile(
     @BuilderInference transform: suspend FlowCollector<R>.(value: T) -> Boolean
 ): Flow<R> =

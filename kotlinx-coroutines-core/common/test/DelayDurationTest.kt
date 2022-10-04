@@ -10,8 +10,9 @@ package kotlinx.coroutines
 
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.nanoseconds
 
-@ExperimentalTime
 class DelayDurationTest : TestBase() {
 
     @Test

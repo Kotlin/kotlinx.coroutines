@@ -7,6 +7,7 @@
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.publish.maven.*
+import org.gradle.kotlin.dsl.*
 import org.gradle.plugins.signing.*
 import java.net.*
 
@@ -40,12 +41,8 @@ fun MavenPom.configureMavenCentralMetadata(project: Project) {
 }
 
 fun mavenRepositoryUri(): URI {
-    // TODO -SNAPSHOT detection can be made here as well
     val repositoryId: String? = System.getenv("libs.repository.id")
     return if (repositoryId == null) {
-        // Using implicitly created staging, for MPP it's likely to be a mistake because
-        // publication on TeamCity will create 3 independent staging repositories
-        System.err.println("Warning: using an implicitly created staging for coroutines")
         URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
     } else {
         URI("https://oss.sonatype.org/service/local/staging/deployByRepositoryId/$repositoryId")
@@ -60,19 +57,10 @@ fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
             password = project.getSensitiveProperty("libs.sonatype.password")
         }
     }
-}
 
-fun configureBintrayPublication(rh: RepositoryHandler, project: Project) {
-    rh.maven {
-        val user = "kotlin"
-        val repo = "kotlinx"
-        val name = "kotlinx.coroutines"
-        url = URI("https://api.bintray.com/maven/$user/$repo/$name/;publish=0;override=0")
-
-        credentials {
-            username = project.findProperty("bintrayUser") as? String ?: System.getenv("BINTRAY_USER")
-            password = project.findProperty("bintrayApiKey") as? String ?: System.getenv("BINTRAY_API_KEY")
-        }
+    // Something that's easy to "clean" for development, not mavenLocal
+    rh.maven("${project.rootProject.buildDir}/repo") {
+        name = "buildRepo"
     }
 }
 

@@ -199,25 +199,6 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
 }
 
 /**
- * @suppress
- */
-@FlowPreview
-@Deprecated(
-    message = "Use channelFlow with awaitClose { } instead of flowViaChannel and invokeOnClose { }.",
-    level = DeprecationLevel.ERROR
-) // To be removed in 1.4.x
-@Suppress("DeprecatedCallableAddReplaceWith")
-public fun <T> flowViaChannel(
-    bufferSize: Int = BUFFERED,
-    @BuilderInference block: CoroutineScope.(channel: SendChannel<T>) -> Unit
-): Flow<T> {
-    return channelFlow<T> {
-        block(channel)
-        awaitClose()
-    }.buffer(bufferSize)
-}
-
-/**
  * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel]
  * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
  * produced by code that is running in a different context or concurrently.
@@ -234,7 +215,7 @@ public fun <T> flowViaChannel(
  * resulting flow to specify a user-defined value and to control what happens when data is produced faster
  * than consumed, i.e. to control the back-pressure behavior.
  *
- * Adjacent applications of [channelFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
+ * Adjacent applications of [channelFlow], [flowOn], [buffer], and [produceIn] are
  * always fused so that only one properly configured channel is used for execution.
  *
  * Examples of usage:
@@ -261,7 +242,6 @@ public fun <T> flowViaChannel(
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
     ChannelFlowBuilder(block)
 
@@ -290,7 +270,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  * resulting flow to specify a user-defined value and to control what happens when data is produced faster
  * than consumed, i.e. to control the back-pressure behavior.
  *
- * Adjacent applications of [callbackFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
+ * Adjacent applications of [callbackFlow], [flowOn], [buffer], and [produceIn] are
  * always fused so that only one properly configured channel is used for execution.
  *
  * Example of usage that converts a multi-shot callback API to a flow.
@@ -302,11 +282,10 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  *         override fun onNextValue(value: T) {
  *             // To avoid blocking you can configure channel capacity using
  *             // either buffer(Channel.CONFLATED) or buffer(Channel.UNLIMITED) to avoid overfill
- *             try {
- *                 sendBlocking(value)
- *             } catch (e: Exception) {
- *                 // Handle exception from the channel: failure in flow or premature closing
- *             }
+ *             trySendBlocking(value)
+ *                 .onFailure { throwable ->
+ *                     // Downstream has been cancelled or failed, can log here
+ *                 }
  *         }
  *         override fun onApiError(cause: Throwable) {
  *             cancel(CancellationException("API Error", cause))
@@ -327,7 +306,6 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  * > `awaitClose` block can be called at any time due to asynchronous nature of cancellation, even
  * > concurrently with the call of the callback.
  */
-@ExperimentalCoroutinesApi
 public fun <T> callbackFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(block)
 
 // ChannelFlow implementation that is the first in the chain of flow operations and introduces (builds) a flow

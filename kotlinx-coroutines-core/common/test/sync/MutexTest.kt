@@ -107,4 +107,35 @@ class MutexTest : TestBase() {
         assertFalse(mutex.holdsLock(firstOwner))
         assertFalse(mutex.holdsLock(secondOwner))
     }
+
+    @Test
+    fun testUnlockWithNullOwner() {
+        val owner = Any()
+        val mutex = Mutex()
+        assertTrue(mutex.tryLock(owner))
+        assertFailsWith<IllegalStateException> { mutex.unlock(Any()) }
+        mutex.unlock(null)
+        assertFalse(mutex.holdsLock(owner))
+        assertFalse(mutex.isLocked)
+    }
+
+    @Test
+    fun testUnlockWithoutOwnerWithLockedQueue() = runTest {
+        val owner = Any()
+        val owner2 = Any()
+        val mutex = Mutex()
+        assertTrue(mutex.tryLock(owner))
+        expect(1)
+        launch {
+            expect(2)
+            mutex.lock(owner2)
+        }
+        yield()
+        expect(3)
+        assertFailsWith<IllegalStateException> { mutex.unlock(owner2) }
+        mutex.unlock()
+        assertFalse(mutex.holdsLock(owner))
+        assertTrue(mutex.holdsLock(owner2))
+        finish(4)
+    }
 }

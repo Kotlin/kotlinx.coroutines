@@ -25,12 +25,11 @@ abstract class ParametrizedDispatcherBase : CoroutineScope {
     private var closeable: Closeable? = null
 
     @Setup
-    @UseExperimental(InternalCoroutinesApi::class)
     open fun setup() {
         coroutineContext = when {
             dispatcher == "fjp" -> ForkJoinPool.commonPool().asCoroutineDispatcher()
             dispatcher == "scheduler" -> {
-                ExperimentalCoroutineDispatcher(CORES_COUNT).also { closeable = it }
+                Dispatchers.Default
             }
             dispatcher.startsWith("ftp") -> {
                 newFixedThreadPoolContext(dispatcher.substring(4).toInt(), dispatcher).also { closeable = it }

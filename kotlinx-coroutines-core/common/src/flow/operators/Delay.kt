@@ -18,11 +18,11 @@ import kotlin.time.*
 /* Scaffolding for Knit code examples
 <!--- TEST_NAME FlowDelayTest -->
 <!--- PREFIX .*-duration-.*
-@file:OptIn(ExperimentalTime::class)
 ----- INCLUDE .*-duration-.*
 ----- INCLUDE .*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlin.time.Duration.Companion.milliseconds
 
 fun main() = runBlocking {
 ----- SUFFIX .*
@@ -149,7 +149,6 @@ public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeout] milliseconds.
  */
-@ExperimentalTime
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
     debounce(timeout.toDelayMillis())
@@ -196,7 +195,6 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
  *
  * @param timeout [T] is the emitted value and the return value is timeout in [Duration].
  */
-@ExperimentalTime
 @FlowPreview
 @JvmName("debounceDuration")
 @OptIn(kotlin.experimental.ExperimentalTypeInference::class)
@@ -209,8 +207,7 @@ public fun <T> Flow<T>.debounce(timeout: (T) -> Duration): Flow<T> =
 private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : Flow<T> =
     scopedFlow { downstream ->
         // Produce the values using the default (rendezvous) channel
-        // Note: the actual type is Any, KT-30796
-        val values = produce<Any?> {
+        val values = produce {
             collect { value -> send(value ?: NULL) }
         }
         // Now consume the values
@@ -237,14 +234,15 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : F
                         lastValue = null // Consume the value
                     }
                 }
-                // Should be receiveOrClosed when boxing issues are fixed
-                values.onReceiveOrNull { value ->
-                    if (value == null) {
-                        if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
-                        lastValue = DONE
-                    } else {
-                        lastValue = value
-                    }
+                values.onReceiveCatching { value ->
+                    value
+                        .onSuccess { lastValue = it }
+                        .onFailure {
+                            it?.let { throw it }
+                            // If closed normally, emit the latest value
+                            if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
+                            lastValue = DONE
+                        }
                 }
             }
         }
@@ -278,21 +276,21 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : F
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
     require(periodMillis > 0) { "Sample period should be positive" }
     return scopedFlow { downstream ->
-        val values = produce<Any?>(capacity = Channel.CONFLATED) {
-            // Actually Any, KT-30796
+        val values = produce(capacity = Channel.CONFLATED) {
             collect { value -> send(value ?: NULL) }
         }
         var lastValue: Any? = null
         val ticker = fixedPeriodTicker(periodMillis)
         while (lastValue !== DONE) {
             select<Unit> {
-                values.onReceiveOrNull {
-                    if (it == null) {
-                        ticker.cancel(ChildCancelledException())
-                        lastValue = DONE
-                    } else {
-                        lastValue = it
-                    }
+                values.onReceiveCatching { result ->
+                    result
+                        .onSuccess { lastValue = it }
+                        .onFailure {
+                            it?.let { throw it }
+                            ticker.cancel(ChildCancelledException())
+                            lastValue = DONE
+                        }
                 }
 
                 // todo: shall be start sampling only when an element arrives or sample aways as here?
@@ -345,7 +343,6 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
  *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
-@ExperimentalTime
 @FlowPreview
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
 

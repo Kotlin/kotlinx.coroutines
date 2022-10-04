@@ -98,6 +98,31 @@ class CompletableTest : TestBase() {
         }
     }
 
+    /** Tests that calls to [await] throw [CancellationException] and dispose of the subscription when their [Job] is
+     * cancelled. */
+    @Test
+    fun testAwaitCancellation() = runTest {
+        expect(1)
+        val completable = CompletableSource { s ->
+            s.onSubscribe(object: Disposable {
+                override fun dispose() { expect(4) }
+                override fun isDisposed(): Boolean { expectUnreached(); return false }
+            })
+        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                expect(2)
+                completable.await()
+            } catch (e: CancellationException) {
+                expect(5)
+                throw e
+            }
+        }
+        expect(3)
+        job.cancelAndJoin()
+        finish(6)
+    }
+
     @Test
     fun testSuppressedException() = runTest {
         val completable = rxCompletable(currentDispatcher()) {
@@ -119,7 +144,7 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testUnhandledException() = runTest() {
+    fun testUnhandledException() = runTest {
         expect(1)
         var disposable: Disposable? = null
         val handler = { e: Throwable ->
@@ -165,8 +190,7 @@ class CompletableTest : TestBase() {
         withExceptionHandler(handler) {
             rxCompletable(Dispatchers.Unconfined) {
                 expect(1)
-                42
-            }.subscribe({ throw LinkageError() })
+            }.subscribe { throw LinkageError() }
             finish(3)
         }
     }

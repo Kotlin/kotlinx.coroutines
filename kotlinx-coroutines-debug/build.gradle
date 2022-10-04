@@ -8,46 +8,59 @@ configurations {
     shadowDeps // shaded dependencies, not included into the resulting .pom file
     compileOnly.extendsFrom(shadowDeps)
     runtimeOnly.extendsFrom(shadowDeps)
-
-    /*
-     * It is possible to extend a particular configuration with shadow,
-     * but in that case it changes dependency type to "runtime" and resolves it
-     * (so it cannot be further modified). Otherwise, shadow just ignores all dependencies.
-     */
-    shadow.extendsFrom(api) // shadow - resulting configuration with shaded jar file
-    configureKotlinJvmPlatform(shadow)
 }
 
 dependencies {
     compileOnly "junit:junit:$junit_version"
+    compileOnly "org.junit.jupiter:junit-jupiter-api:$junit5_version"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
+    testImplementation "org.junit.platform:junit-platform-testkit:1.7.0"
     shadowDeps "net.bytebuddy:byte-buddy:$byte_buddy_version"
     shadowDeps "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
     compileOnly "io.projectreactor.tools:blockhound:$blockhound_version"
     testImplementation "io.projectreactor.tools:blockhound:$blockhound_version"
+    testImplementation "com.google.code.gson:gson:2.8.6"
     api "net.java.dev.jna:jna:$jna_version"
     api "net.java.dev.jna:jna-platform:$jna_version"
 }
 
-// TODO: JVM IR generates different stacktrace so temporary disable stacktrace tests
-if (rootProject.ext.jvm_ir_enabled) {
-    tasks.named('test', Test) {
-        filter {
-//            excludeTest('kotlinx.coroutines.debug.CoroutinesDumpTest', 'testCreationStackTrace')
-            excludeTestsMatching('kotlinx.coroutines.debug.DebugProbesTest')
-        }
-    }
+java {
+    /* This is needed to be able to run JUnit5 tests. Otherwise, Gradle complains that it can't find the
+    JVM1.6-compatible version of the `junit-jupiter-api` artifact. */
+    disableAutoTargetJvm()
 }
 
 jar {
+    setEnabled(false)
+}
+
+def shadowJarTask = shadowJar {
+    classifier null
+    // Shadow only byte buddy, do not package kotlin stdlib
+    configurations = [project.configurations.shadowDeps]
+    relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
+
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Redefine-Classes": "true"
     }
 }
 
-shadowJar {
-    classifier null
-    // Shadow only byte buddy, do not package kotlin stdlib
-    configurations = [project.configurations.shadowDeps]
-    relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
+configurations {
+    artifacts {
+        add("apiElements", shadowJarTask)
+        add("runtimeElements", shadowJarTask)
+    }
+}
+
+def commonKoverExcludes =
+        // Never used, safety mechanism
+        ["kotlinx.coroutines.debug.internal.NoOpProbesKt"]
+
+tasks.koverHtmlReport {
+    excludes = commonKoverExcludes
+}
+
+tasks.koverVerify {
+    excludes = commonKoverExcludes
 }

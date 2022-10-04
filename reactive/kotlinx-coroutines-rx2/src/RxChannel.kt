@@ -9,58 +9,40 @@ import io.reactivex.disposables.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
-
-/**
- * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
- * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this source.
- *
- * This API is deprecated in the favour of [Flow].
- * [MaybeSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
- */
-@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.WARNING) // Will be hidden in 1.4
-public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
-    val channel = SubscriptionChannel<T>()
-    subscribe(channel)
-    return channel
-}
-
-/**
- * Subscribes to this [ObservableSource] and returns a channel to receive elements emitted by it.
- * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this source.
- *
- * This API is deprecated in the favour of [Flow].
- * [ObservableSource] doesn't have a corresponding [Flow] adapter, so it should be transformed to [Observable] first.
- */
-@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.WARNING) // Will be hidden in 1.4
-public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
-    val channel = SubscriptionChannel<T>()
-    subscribe(channel)
-    return channel
-}
-
-// Will be promoted to error in 1.3.0, removed in 1.4.0
-@Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> MaybeSource<T>.consumeEach(action: (T) -> Unit): Unit =
-    openSubscription().consumeEach(action)
-
-// Will be promoted to error in 1.3.0, removed in 1.4.0
-@Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Unit): Unit =
-    openSubscription().consumeEach(action)
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.reactive.*
 
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
- * Cancels subscription if any exception happens during collect.
+ *
+ * If [action] throws an exception at some point or if the [MaybeSource] raises an error, the exception is rethrown from
+ * [collect].
  */
 public suspend inline fun <T> MaybeSource<T>.collect(action: (T) -> Unit): Unit =
-    openSubscription().consumeEach(action)
+    toChannel().consumeEach(action)
 
 /**
  * Subscribes to this [ObservableSource] and performs the specified action for each received element.
- * Cancels subscription if any exception happens during collect.
+ *
+ * If [action] throws an exception at some point, the subscription is cancelled, and the exception is rethrown from
+ * [collect]. Also, if the [ObservableSource] signals an error, that error is rethrown from [collect].
  */
 public suspend inline fun <T> ObservableSource<T>.collect(action: (T) -> Unit): Unit =
-    openSubscription().consumeEach(action)
+    toChannel().consumeEach(action)
+
+@PublishedApi
+internal fun <T> MaybeSource<T>.toChannel(): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>()
+    subscribe(channel)
+    return channel
+}
+
+@PublishedApi
+internal fun <T> ObservableSource<T>.toChannel(): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>()
+    subscribe(channel)
+    return channel
+}
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
@@ -78,12 +60,13 @@ private class SubscriptionChannel<T> :
         _subscription.value = sub
     }
 
-    override fun onSuccess(t: T) {
-        offer(t)
+    override fun onSuccess(t: T & Any) {
+        trySend(t)
+        close(cause = null)
     }
 
-    override fun onNext(t: T) {
-        offer(t)
+    override fun onNext(t: T & Any) {
+        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onComplete() {
@@ -93,4 +76,20 @@ private class SubscriptionChannel<T> :
     override fun onError(e: Throwable) {
         close(cause = e)
     }
+}
+
+/** @suppress */
+@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.HIDDEN) // ERROR in 1.4.0, HIDDEN in 1.6.0
+public fun <T> ObservableSource<T & Any>.openSubscription(): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>()
+    subscribe(channel)
+    return channel
+}
+
+/** @suppress */
+@Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.HIDDEN) // ERROR in 1.4.0, HIDDEN in 1.6.0
+public fun <T> MaybeSource<T & Any>.openSubscription(): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>()
+    subscribe(channel)
+    return channel
 }

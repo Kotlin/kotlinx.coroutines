@@ -23,10 +23,12 @@ fun main() {
     println("Completed in $time ms")
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 fun somethingUsefulOneAsync() = GlobalScope.async {
     doSomethingUsefulOne()
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 fun somethingUsefulTwoAsync() = GlobalScope.async {
     doSomethingUsefulTwo()
 }

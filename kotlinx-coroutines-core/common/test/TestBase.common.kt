@@ -7,13 +7,32 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
 public expect val isStressTest: Boolean
 public expect val stressTestMultiplier: Int
+public expect val stressTestMultiplierSqrt: Int
+
+/**
+ * The result of a multiplatform asynchronous test.
+ * Aliases into Unit on K/JVM and K/N, and into Promise on K/JS.
+ */
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+public expect class TestResult
+
+public expect val isNative: Boolean
 
 public expect open class TestBase constructor() {
+    /*
+     * In common tests we emulate parameterized tests
+     * by iterating over parameters space in the single @Test method.
+     * This kind of tests is too slow for JS and does not fit into
+     * the default Mocha timeout, so we're using this flag to bail-out
+     * and run such tests only on JVM and K/N.
+     */
+    public val isBoundByJsTestTimeout: Boolean
     public fun error(message: Any, cause: Throwable? = null): Nothing
     public fun expect(index: Int)
     public fun expectUnreached()
@@ -25,7 +44,7 @@ public expect open class TestBase constructor() {
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    )
+    ): TestResult
 }
 
 public suspend inline fun hang(onCancellation: () -> Unit) {

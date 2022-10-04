@@ -65,8 +65,8 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     val eventActor = GlobalScope.actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) { // <--- Changed here
         for (event in channel) action(event) // pass event to action
     }
-    // install a listener to offer events to this actor
+    // install a listener to send events to this actor
     onMouseClicked = EventHandler { event ->
-        eventActor.offer(event)
+        eventActor.trySend(event)
     }
 }

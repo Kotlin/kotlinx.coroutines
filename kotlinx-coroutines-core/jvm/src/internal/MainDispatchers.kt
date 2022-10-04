@@ -61,13 +61,18 @@ public fun MainDispatcherFactory.tryCreateDispatcher(factories: List<MainDispatc
 
 /** @suppress */
 @InternalCoroutinesApi
-public fun MainCoroutineDispatcher.isMissing(): Boolean = this is MissingMainCoroutineDispatcher
+public fun MainCoroutineDispatcher.isMissing(): Boolean =
+    // not checking `this`, as it may be wrapped in a `TestMainDispatcher`, whereas `immediate` never is.
+    this.immediate is MissingMainCoroutineDispatcher
 
 // R8 optimization hook, not const on purpose to enable R8 optimizations via "assumenosideeffects"
 @Suppress("MayBeConstant")
 private val SUPPORT_MISSING = true
 
-@Suppress("ConstantConditionIf")
+@Suppress(
+    "ConstantConditionIf",
+    "IMPLICIT_NOTHING_TYPE_ARGUMENT_AGAINST_NOT_NOTHING_EXPECTED_TYPE" // KT-47626
+)
 private fun createMissingDispatcher(cause: Throwable? = null, errorHint: String? = null) =
     if (SUPPORT_MISSING) MissingMainCoroutineDispatcher(cause, errorHint) else
         cause?.let { throw it } ?: throwMissingMainDispatcherException()
@@ -90,7 +95,7 @@ private class MissingMainCoroutineDispatcher(
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
         missing()
 
-    override suspend fun delay(time: Long) =
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher =
         missing()
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =

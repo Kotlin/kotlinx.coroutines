@@ -42,7 +42,6 @@ class OnEachTest : TestBase() {
         }.onEach {
             latch.receive()
             throw TestException()
-            it + 1
         }.catch { emit(42) }
 
         assertEquals(42, flow.single())

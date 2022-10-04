@@ -10,7 +10,6 @@ import javafx.event.*
 import javafx.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.javafx.JavaFx.delay
 import java.lang.UnsupportedOperationException
 import java.lang.reflect.*
 import java.util.concurrent.*
@@ -35,26 +34,22 @@ public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
+        val timeline = schedule(timeMillis) {
             with(continuation) { resumeUndispatched(Unit) }
-        })
+        }
         continuation.invokeOnCancellation { timeline.stop() }
     }
 
     /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
+        val timeline = schedule(timeMillis) {
             block.run()
-        })
-        return object : DisposableHandle {
-            override fun dispose() {
-                timeline.stop()
-            }
         }
+        return DisposableHandle { timeline.stop() }
     }
 
-    private fun schedule(time: Long, unit: TimeUnit, handler: EventHandler<ActionEvent>): Timeline =
-        Timeline(KeyFrame(Duration.millis(unit.toMillis(time).toDouble()), handler)).apply { play() }
+    private fun schedule(timeMillis: Long, handler: EventHandler<ActionEvent>): Timeline =
+        Timeline(KeyFrame(Duration.millis(timeMillis.toDouble()), handler)).apply { play() }
 }
 
 internal class JavaFxDispatcherFactory : MainDispatcherFactory {
@@ -102,7 +97,7 @@ public suspend fun awaitPulse(): Long = suspendCancellableCoroutine { cont ->
 }
 
 private class PulseTimer : AnimationTimer() {
-    val next = CopyOnWriteArrayList<CancellableContinuation<Long>>()
+    private val next = CopyOnWriteArrayList<CancellableContinuation<Long>>()
 
     override fun handle(now: Long) {
         val cur = next.toTypedArray()
@@ -121,6 +116,7 @@ internal fun initPlatform(): Boolean = PlatformInitializer.success
 
 // Lazily try to initialize JavaFx platform just once
 private object PlatformInitializer {
+    @JvmField
     val success = run {
         /*
          * Try to instantiate JavaFx platform in a way which works

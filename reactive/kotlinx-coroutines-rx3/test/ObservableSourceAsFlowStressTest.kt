@@ -27,7 +27,7 @@ class ObservableSourceAsFlowStressTest : TestBase() {
             val latch = Channel<Unit>(1)
             var i = 0
             val observable = Observable.interval(100L, TimeUnit.MICROSECONDS)
-                .doOnNext {  if (++i > 100) latch.offer(Unit) }
+                .doOnNext {  if (++i > 100) latch.trySend(Unit) }
             val job = observable.asFlow().launchIn(CoroutineScope(Dispatchers.Default))
             latch.receive()
             job.cancelAndJoin()

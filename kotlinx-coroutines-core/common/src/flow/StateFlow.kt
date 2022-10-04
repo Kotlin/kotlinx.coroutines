@@ -10,7 +10,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.native.concurrent.*
 
 /**
  * A [SharedFlow] that represents a read-only state with a single updatable data [value] that emits updates
@@ -21,7 +20,7 @@ import kotlin.native.concurrent.*
  * neither does a coroutine started by the [Flow.launchIn] function. An active collector of a state flow is called a _subscriber_.
  *
  * A [mutable state flow][MutableStateFlow] is created using `MutableStateFlow(value)` constructor function with
- * the initial value. The value of mutable state flow can be  updated by setting its [value] property.
+ * the initial value. The value of mutable state flow can be updated by setting its [value] property.
  * Updates to the [value] are always [conflated][Flow.conflate]. So a slow collector skips fast updates,
  * but always collects the most recently emitted value.
  *
@@ -37,7 +36,7 @@ import kotlin.native.concurrent.*
  *     val counter = _counter.asStateFlow() // publicly exposed as read-only state flow
  *
  *     fun inc() {
- *         _counter.value++
+ *         _counter.update { count -> count + 1 } // atomic, safe for concurrent use
  *     }
  * }
  * ```
@@ -88,7 +87,7 @@ import kotlin.native.concurrent.*
  * ### StateFlow vs ConflatedBroadcastChannel
  *
  * Conceptually, state flow is similar to [ConflatedBroadcastChannel]
- * and is designed to completely replace `ConflatedBroadcastChannel` in the future.
+ * and is designed to completely replace it.
  * It has the following important differences:
  *
  * * `StateFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows
@@ -107,7 +106,7 @@ import kotlin.native.concurrent.*
  *
  * To migrate [ConflatedBroadcastChannel] usage to [StateFlow], start by replacing usages of the `ConflatedBroadcastChannel()`
  * constructor with `MutableStateFlow(initialValue)`, using `null` as an initial value if you don't have one.
- * Replace [send][ConflatedBroadcastChannel.send] and [offer][ConflatedBroadcastChannel.offer] calls
+ * Replace [send][ConflatedBroadcastChannel.send] and [trySend][ConflatedBroadcastChannel.trySend] calls
  * with updates to the state flow's [MutableStateFlow.value], and convert subscribers' code to flow operators.
  * You can use the [filterNotNull] operator to mimic behavior of a `ConflatedBroadcastChannel` without initial value.
  *
@@ -186,12 +185,60 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
 @Suppress("FunctionName")
 public fun <T> MutableStateFlow(value: T): MutableStateFlow<T> = StateFlowImpl(value ?: NULL)
 
+// ------------------------------------ Update methods ------------------------------------
+
+/**
+ * Updates the [MutableStateFlow.value] atomically using the specified [function] of its value, and returns the new
+ * value.
+ *
+ * [function] may be evaluated multiple times, if [value] is being concurrently updated.
+ */
+public inline fun <T> MutableStateFlow<T>.updateAndGet(function: (T) -> T): T {
+    while (true) {
+        val prevValue = value
+        val nextValue = function(prevValue)
+        if (compareAndSet(prevValue, nextValue)) {
+            return nextValue
+        }
+    }
+}
+
+/**
+ * Updates the [MutableStateFlow.value] atomically using the specified [function] of its value, and returns its
+ * prior value.
+ *
+ * [function] may be evaluated multiple times, if [value] is being concurrently updated.
+ */
+public inline fun <T> MutableStateFlow<T>.getAndUpdate(function: (T) -> T): T {
+    while (true) {
+        val prevValue = value
+        val nextValue = function(prevValue)
+        if (compareAndSet(prevValue, nextValue)) {
+            return prevValue
+        }
+    }
+}
+
+
+/**
+ * Updates the [MutableStateFlow.value] atomically using the specified [function] of its value.
+ *
+ * [function] may be evaluated multiple times, if [value] is being concurrently updated.
+ */
+public inline fun <T> MutableStateFlow<T>.update(function: (T) -> T) {
+    while (true) {
+        val prevValue = value
+        val nextValue = function(prevValue)
+        if (compareAndSet(prevValue, nextValue)) {
+            return
+        }
+    }
+}
+
 // ------------------------------------ Implementation ------------------------------------
 
-@SharedImmutable
 private val NONE = Symbol("NONE")
 
-@SharedImmutable
 private val PENDING = Symbol("PENDING")
 
 // StateFlow slots are allocated for its collectors
@@ -330,7 +377,7 @@ private class StateFlowImpl<T>(
         throw UnsupportedOperationException("MutableStateFlow.resetReplayCache is not supported")
     }
 
-    override suspend fun collect(collector: FlowCollector<T>) {
+    override suspend fun collect(collector: FlowCollector<T>): Nothing {
         val slot = allocateSlot()
         try {
             if (collector is SubscribedFlowCollector) collector.onSubscription()
@@ -363,13 +410,6 @@ private class StateFlowImpl<T>(
 
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseStateFlow(context, capacity, onBufferOverflow)
-}
-
-internal fun MutableStateFlow<Int>.increment(delta: Int) {
-    while (true) { // CAS loop
-        val current = value
-        if (compareAndSet(current, current + delta)) return
-    }
 }
 
 internal fun <T> StateFlow<T>.fuseStateFlow(

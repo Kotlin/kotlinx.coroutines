@@ -8,7 +8,6 @@ package kotlinx.coroutines.internal
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * The most abstract operation that can be in process. Other threads observing an instance of this
@@ -38,7 +37,6 @@ public abstract class OpDescriptor {
     }
 }
 
-@SharedImmutable
 @JvmField
 internal val NO_DECISION: Any = Symbol("NO_DECISION")
 
@@ -117,5 +115,4 @@ public abstract class AtomicDesc {
  * using [AtomicOp.opSequence] numbers.
  */
 @JvmField
-@SharedImmutable
 internal val RETRY_ATOMIC: Any = Symbol("RETRY_ATOMIC")

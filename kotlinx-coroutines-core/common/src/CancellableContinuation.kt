@@ -81,6 +81,10 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Same as [tryResume] but with [onCancellation] handler that called if and only if the value is not
      * delivered to the caller because of the dispatch in the process, so that atomicity delivery
      * guaranteed can be provided by having a cancellation fallback.
+     *
+     * Implementation note: current implementation always returns RESUME_TOKEN or `null`
+     *
+     * @suppress  **This is unstable API and it is subject to change.**
      */
     @InternalCoroutinesApi
     public fun tryResume(value: T, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any?
@@ -104,8 +108,10 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun completeResume(token: Any)
 
     /**
-     * Legacy function that turned on cancellation behavior in [suspendCancellableCoroutine] before kotlinx.coroutines 1.1.0.
-     * This function does nothing and is left only for binary compatibility with old compiled code.
+     * Internal function that setups cancellation behavior in [suspendCancellableCoroutine].
+     * It's illegal to call this function in any non-`kotlinx.coroutines` code and
+     * such calls lead to undefined behaviour.
+     * Exposed in our ABI since 1.0.0 withing `suspendCancellableCoroutine` body.
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
@@ -332,7 +338,7 @@ internal suspend inline fun <T> suspendCancellableCoroutineReusable(
 internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): CancellableContinuationImpl<T> {
     // If used outside of our dispatcher
     if (delegate !is DispatchedContinuation<T>) {
-        return CancellableContinuationImpl(delegate, MODE_CANCELLABLE_REUSABLE)
+        return CancellableContinuationImpl(delegate, MODE_CANCELLABLE)
     }
     /*
      * Attempt to claim reusable instance.

@@ -37,6 +37,16 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
         _size.value = 0
     }
 
+    public fun find(
+        predicate: (value: T) -> Boolean
+    ): T? = synchronized(this) block@{
+        for (i in 0 until size) {
+            val value = a?.get(i)!!
+            if (predicate(value)) return@block value
+        }
+        null
+    }
+
     public fun peek(): T? = synchronized(this) { firstImpl() }
 
     public fun removeFirstOrNull(): T? = synchronized(this) {
@@ -47,7 +57,6 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
         }
     }
 
-    // @Synchronized // NOTE! NOTE! NOTE! inline fun cannot be @Synchronized
     public inline fun removeFirstIf(predicate: (T) -> Boolean): T? = synchronized(this) {
         val first = firstImpl() ?: return null
         if (predicate(first)) {
@@ -59,7 +68,6 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
 
     public fun addLast(node: T): Unit = synchronized(this) { addImpl(node) }
 
-    // @Synchronized // NOTE! NOTE! NOTE! inline fun cannot be @Synchronized
     // Condition also receives current first node in the heap
     public inline fun addLastIf(node: T, cond: (T?) -> Boolean): Boolean = synchronized(this) {
         if (cond(firstImpl())) {

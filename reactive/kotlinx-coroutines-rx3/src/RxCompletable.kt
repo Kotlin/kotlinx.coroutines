@@ -39,7 +39,7 @@ private fun rxCompletableInternal(
 private class RxCompletableCoroutine(
     parentContext: CoroutineContext,
     private val subscriber: CompletableEmitter
-) : AbstractCoroutine<Unit>(parentContext, true) {
+) : AbstractCoroutine<Unit>(parentContext, false, true) {
     override fun onCompleted(value: Unit) {
         try {
             subscriber.onComplete()
@@ -50,11 +50,12 @@ private class RxCompletableCoroutine(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         try {
-            if (!subscriber.tryOnError(cause)) {
-                handleUndeliverableException(cause, context)
+            if (subscriber.tryOnError(cause)) {
+                return
             }
         } catch (e: Throwable) {
-            handleUndeliverableException(e, context)
+            cause.addSuppressed(e)
         }
+        handleUndeliverableException(cause, context)
     }
 }

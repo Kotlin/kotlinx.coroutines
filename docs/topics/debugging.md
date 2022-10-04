@@ -7,7 +7,6 @@
 * [Stacktrace recovery](#stacktrace-recovery)
   * [Stacktrace recovery machinery](#stacktrace-recovery-machinery)
 * [Debug agent](#debug-agent)
-  * [Debug agent and Android](#debug-agent-and-android)
 * [Android optimization](#android-optimization)
 
 <!--- END -->
@@ -63,7 +62,10 @@ Exception copy logic is straightforward:
   1) If the exception class implements [CopyableThrowable], [CopyableThrowable.createCopy] is used.
      `null` can be returned from `createCopy` to opt-out specific exception from being recovered.
   2) If the exception class has class-specific fields not inherited from Throwable, the exception is not copied.
-  3) Otherwise, one of the public exception's constructor is invoked reflectively with an optional `initCause` call.  
+  3) Otherwise, one of the public exception's constructor is invoked reflectively with an optional `initCause` call. 
+  4) If the reflective copy has a changed message (exception constructor passed a modified `message` parameter to the superclass), 
+     the exception is not copied in order to preserve a human-readable message. [CopyableThrowable] does not have such a limitation
+     and allows the copy to have a `message` different from that of the original.
 
 ## Debug agent
 
@@ -73,12 +75,6 @@ This is a separate module with a JVM agent that keeps track of all alive corouti
 additionally enhancing stacktraces with information where coroutine was created.
 
 The full tutorial of how to use debug agent can be found in the corresponding [readme](../../kotlinx-coroutines-debug/README.md).
-
-### Debug agent and Android
-
-Unfortunately, Android runtime does not support Instrument API necessary for `kotlinx-coroutines-debug` to function, triggering `java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/ManagementFactory;`.
-
-Nevertheless, it will be possible to support debug agent on Android as soon as [GradleAspectJ-Android](https://github.com/Archinamon/android-gradle-aspectj)  will support android-gradle 3.3 
 
 <!---
 Make an exception googlable
@@ -95,18 +91,18 @@ java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/Mana
 ## Android optimization
 
 In optimized (release) builds with R8 version 1.6.0 or later both 
-[Debugging mode](../../docs/debugging.md#debug-mode) and 
-[Stacktrace recovery](../../docs/debugging.md#stacktrace-recovery) 
+[Debugging mode](debugging.md#debug-mode) and 
+[Stacktrace recovery](debugging.md#stacktrace-recovery) 
 are permanently turned off. 
 For more details see ["Optimization" section for Android](../../ui/kotlinx-coroutines-android/README.md#optimization). 
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
 
-[DEBUG_PROPERTY_NAME]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html
-[CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-name/index.html
-[CopyableThrowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-copyable-throwable/index.html
-[CopyableThrowable.createCopy]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-copyable-throwable/create-copy.html
+[DEBUG_PROPERTY_NAME]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html
+[CoroutineName]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-name/index.html
+[CopyableThrowable]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-copyable-throwable/index.html
+[CopyableThrowable.createCopy]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-copyable-throwable/create-copy.html
 
 <!--- MODULE kotlinx-coroutines-debug -->
 <!--- END -->

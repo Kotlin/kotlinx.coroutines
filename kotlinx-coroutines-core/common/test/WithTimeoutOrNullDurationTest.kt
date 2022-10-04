@@ -10,8 +10,9 @@ package kotlinx.coroutines
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-@ExperimentalTime
 class WithTimeoutOrNullDurationTest : TestBase() {
     /**
      * Tests a case of no timeout and no suspension inside.
@@ -94,7 +95,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
 
     @Test
     fun testThrowException() = runTest(expected = {it is AssertionError}) {
-        withTimeoutOrNull(Duration.INFINITE) {
+        withTimeoutOrNull<Unit>(Duration.INFINITE) {
             throw AssertionError()
         }
     }
@@ -109,6 +110,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
                     yield()
                 }
             }
+            @Suppress("UNREACHABLE_CODE")
             expectUnreached() // will timeout
         }
         expectUnreached() // will timeout
@@ -130,9 +132,9 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testOuterTimeout() = runTest {
         var counter = 0
-        val result = withTimeoutOrNull(250.milliseconds) {
+        val result = withTimeoutOrNull(320.milliseconds) {
             while (true) {
-                val inner = withTimeoutOrNull(100.milliseconds) {
+                val inner = withTimeoutOrNull(150.milliseconds) {
                     while (true) {
                         yield()
                     }
@@ -231,7 +233,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
         expect(1)
         try {
             expect(2)
-            withTimeoutOrNull(1000.milliseconds) {
+            withTimeoutOrNull<Unit>(1000.milliseconds) {
                 expect(3)
                 throw TestException()
             }

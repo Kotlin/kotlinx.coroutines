@@ -26,6 +26,7 @@ class InitMainDispatcherBeforeRobolectricTestRunner(testClass: Class<*>) : Robol
 
 @Config(manifest = Config.NONE, sdk = [28])
 @RunWith(InitMainDispatcherBeforeRobolectricTestRunner::class)
+@LooperMode(LooperMode.Mode.LEGACY)
 class CustomizedRobolectricTest : TestBase() {
     @Test
     fun testComponent()  {

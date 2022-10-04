@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.future
@@ -566,5 +566,32 @@ class FutureTest : TestBase() {
         }
         assertFailsWith<CancellationException> { stage.await() }
         finish(4)
+    }
+
+    @Test
+    fun testCancelledParent() = runTest({ it is java.util.concurrent.CancellationException }) {
+        cancel()
+        future { expectUnreached() }
+        future(start = CoroutineStart.ATOMIC) { }
+        future(start = CoroutineStart.UNDISPATCHED) { }
+    }
+
+    @Test
+    fun testStackOverflow() = runTest {
+        val future = CompletableFuture<Int>()
+        val completed = AtomicLong()
+        val count = 10000L
+        val children = ArrayList<Job>()
+        for (i in 0 until count) {
+            children += launch(Dispatchers.Default) {
+                future.asDeferred().await()
+                completed.incrementAndGet()
+            }
+        }
+        future.complete(1)
+        withTimeout(60_000) {
+            children.forEach { it.join() }
+            assertEquals(count, completed.get())
+        }
     }
 }

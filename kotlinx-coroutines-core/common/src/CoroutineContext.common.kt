@@ -7,13 +7,20 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 
 /**
- * Creates a context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher or
- * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on).
+ * Creates a context for a new coroutine. It installs [Dispatchers.Default] when no other dispatcher or
+ * [ContinuationInterceptor] is specified and adds optional support for debugging facilities (when turned on)
+ * and copyable-thread-local facilities on JVM.
  */
 public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
 
-internal expect fun createDefaultDispatcher(): CoroutineDispatcher
+/**
+ * Creates a context for coroutine builder functions that do not launch a new coroutine, e.g. [withContext].
+ * @suppress
+ */
+@InternalCoroutinesApi
+public expect fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext
 
+@PublishedApi
 @Suppress("PropertyName")
 internal expect val DefaultDelay: Delay
 

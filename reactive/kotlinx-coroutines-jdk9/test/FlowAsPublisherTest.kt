@@ -15,7 +15,7 @@ class FlowAsPublisherTest : TestBase() {
     @Test
     fun testErrorOnCancellationIsReported() {
         expect(1)
-        flow<Int> {
+        flow {
             try {
                 emit(2)
             } finally {
@@ -50,13 +50,13 @@ class FlowAsPublisherTest : TestBase() {
     @Test
     fun testCancellationIsNotReported() {
         expect(1)
-        flow<Int>    {
+        flow {
             emit(2)
         }.asPublisher().subscribe(object : JFlow.Subscriber<Int> {
             private lateinit var subscription: JFlow.Subscription
 
             override fun onComplete() {
-                expect(3)
+                expectUnreached()
             }
 
             override fun onSubscribe(s: JFlow.Subscription?) {
@@ -73,6 +73,21 @@ class FlowAsPublisherTest : TestBase() {
                 expectUnreached()
             }
         })
+        finish(3)
+    }
+
+    @Test
+    fun testFlowWithTimeout() = runTest {
+        val publisher = flow<Int> {
+            expect(2)
+            withTimeout(1) { delay(Long.MAX_VALUE) }
+        }.asPublisher()
+        try {
+            expect(1)
+            publisher.awaitFirstOrNull()
+        } catch (e: CancellationException) {
+            expect(3)
+        }
         finish(4)
     }
 }

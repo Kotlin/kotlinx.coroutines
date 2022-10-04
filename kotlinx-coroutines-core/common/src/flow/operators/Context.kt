@@ -79,7 +79,7 @@ import kotlin.jvm.*
  *
  * ### Operator fusion
  *
- * Adjacent applications of [channelFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
+ * Adjacent applications of [channelFlow], [flowOn], [buffer], and [produceIn] are
  * always fused so that only one properly configured channel is used for execution.
  *
  * Explicitly specified buffer capacity takes precedence over `buffer()` or `buffer(Channel.BUFFERED)` calls,
@@ -171,12 +171,12 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> = buffer(capaci
  * ```
  *
  * Note that `conflate` operator is a shortcut for [buffer] with `capacity` of [Channel.CONFLATED][Channel.CONFLATED],
- * with is, in turn, a shortcut to a buffer that only keeps the latest element as
+ * which is, in turn, a shortcut to a buffer that only keeps the latest element as
  * created by `buffer(onBufferOverflow = `[`BufferOverflow.DROP_OLDEST`][BufferOverflow.DROP_OLDEST]`)`.
  *
  * ### Operator fusion
  *
- * Adjacent applications of `conflate`/[buffer], [channelFlow], [flowOn], [produceIn], and [broadcastIn] are
+ * Adjacent applications of `conflate`/[buffer], [channelFlow], [flowOn] and [produceIn] are
  * always fused so that only one properly configured channel is used for execution.
  * **Conflation takes precedence over `buffer()` calls with any other capacity.**
  *
@@ -219,7 +219,7 @@ public fun <T> Flow<T>.conflate(): Flow<T> = buffer(CONFLATED)
  *
  * ### Operator fusion
  *
- * Adjacent applications of [channelFlow], [flowOn], [buffer], [produceIn], and [broadcastIn] are
+ * Adjacent applications of [channelFlow], [flowOn], [buffer], and [produceIn] are
  * always fused so that only one properly configured channel is used for execution.
  *
  * Multiple `flowOn` operators fuse to a single `flowOn` with a combined context. The elements of the context of
@@ -273,62 +273,6 @@ private class CancellableFlowImpl<T>(private val flow: Flow<T>) : CancellableFlo
         flow.collect {
             currentCoroutineContext().ensureActive()
             collector.emit(it)
-        }
-    }
-}
-
-/**
- * The operator that changes the context where all transformations applied to the given flow within a [builder] are executed.
- * This operator is context preserving and does not affect the context of the preceding and subsequent operations.
- *
- * Example:
- *
- * ```
- * flow // not affected
- *     .map { ... } // Not affected
- *     .flowWith(Dispatchers.IO) {
- *         map { ... } // in IO
- *         .filter { ... } // in IO
- *     }
- *     .map { ... } // Not affected
- * ```
- *
- * For more explanation of context preservation please refer to [Flow] documentation.
- *
- * This operator is deprecated without replacement because it was discovered that it doesn't play well with coroutines
- * and flow semantics:
- *
- * 1) It doesn't prevent context elements from the downstream to leak into its body
- *     ```
- *     flowOf(1).flowWith(EmptyCoroutineContext) {
- *         onEach { println(kotlin.coroutines.coroutineContext[CoroutineName]) } // Will print 42
- *     }.flowOn(CoroutineName(42))
- *     ```
- * 2) To avoid such leaks, new primitive should be introduced to `kotlinx.coroutines` -- the subtraction of contexts.
- *    And this will become a new concept to learn, maintain and explain.
- * 3) It defers the execution of declarative [builder] until the moment of [collection][Flow.collect] similarly
- *    to `Observable.defer`. But it is unexpected because nothing in the name `flowWith` reflects this fact.
- * 4) It can be confused with [flowOn] operator, though [flowWith] is much rarer.
- */
-@FlowPreview
-@Deprecated(message = "flowWith is deprecated without replacement, please refer to its KDoc for an explanation", level = DeprecationLevel.ERROR) // Error in beta release, removal in 1.4
-public fun <T, R> Flow<T>.flowWith(
-    flowContext: CoroutineContext,
-    bufferSize: Int = BUFFERED,
-    builder: Flow<T>.() -> Flow<R>
-): Flow<R> {
-    checkFlowContext(flowContext)
-    val source = this
-    return unsafeFlow {
-        /**
-         * Here we should remove a Job instance from the context.
-         * All builders are written using scoping and no global coroutines are launched, so it is safe not to provide explicit Job.
-         * It is also necessary not to mess with cancellation if multiple flowWith are used.
-         */
-        val originalContext = currentCoroutineContext().minusKey(Job)
-        val prepared = source.flowOn(originalContext).buffer(bufferSize)
-        builder(prepared).flowOn(flowContext).buffer(bufferSize).collect { value ->
-            return@collect emit(value)
         }
     }
 }
