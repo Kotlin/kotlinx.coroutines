@@ -387,9 +387,7 @@ private fun <T> Flow<T>.timeoutInternal(
     timeout: Duration
 ): Flow<T> = scopedFlow { downStream ->
     if (timeout <= Duration.ZERO) throw TimeoutCancellationException("Timed out immediately")
-
     val values = buffer(Channel.RENDEZVOUS).produceIn(this)
-
     whileSelect {
         values.onReceiveCatching { value ->
             value.onSuccess {
