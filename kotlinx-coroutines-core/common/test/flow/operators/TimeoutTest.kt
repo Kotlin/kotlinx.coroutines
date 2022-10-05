@@ -100,12 +100,17 @@ class TimeoutTest : TestBase() {
     fun testUpstreamErrorTimeoutException() = testUpstreamError(TimeoutCancellationException(0, Job()))
 
     private inline fun <reified T: Throwable> testUpstreamError(cause: T) = runTest {
-        val flow = flow {
-            emit(1)
-            throw cause
-        }.timeout(1.milliseconds)
-
-        assertFailsWith<T>(flow)
+        try {
+            // Workaround for JS legacy bug
+            flow {
+                emit(1)
+                throw cause
+            }.timeout(1.milliseconds).collect()
+            expectUnreached()
+        } catch (e: Throwable) {
+            assertTrue { e is T }
+            finish(1)
+        }
     }
 
     @Test
@@ -174,7 +179,13 @@ class TimeoutTest : TestBase() {
 
     @Test
     fun testSharedFlowTimeout() = runTest {
-        assertFailsWith<TimeoutCancellationException>(MutableSharedFlow<Int>().asSharedFlow().timeout(100.milliseconds))
+        // Workaround for JS legacy bug
+        try {
+            MutableSharedFlow<Int>().asSharedFlow().timeout(100.milliseconds).collect()
+            expectUnreached()
+        } catch (e: TimeoutCancellationException) {
+            finish(1)
+        }
     }
 
     @Test
