@@ -86,11 +86,11 @@ class TimeoutTest : TestBase() {
         finish(1)
     }
 
-    // Test may rarely fail due to timeout being reached before test has completed
     @Test
-    fun testScalar() = runTest {
+    fun testScalar() = withVirtualTime {
         val flow = flowOf(1, 2, 3).timeout(1.milliseconds)
         assertEquals(listOf(1, 2, 3), flow.toList())
+        finish(1)
     }
 
     @Test
