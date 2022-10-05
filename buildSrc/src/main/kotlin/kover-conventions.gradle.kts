@@ -10,13 +10,11 @@ val notCovered = sourceless + internal + unpublished
 val expectedCoverage = mutableMapOf(
     // These have lower coverage in general, it can be eventually fixed
     "kotlinx-coroutines-swing" to 70, // awaitFrame is not tested
-    "kotlinx-coroutines-javafx" to 39, // JavaFx is not tested on TC because its graphic subsystem cannot be initialized in headless mode
+    "kotlinx-coroutines-javafx" to 35, // JavaFx is not tested on TC because its graphic subsystem cannot be initialized in headless mode
 
     // Reactor has lower coverage in general due to various fatal error handling features
     "kotlinx-coroutines-reactor" to 75
 )
-
-
 
 subprojects {
     val projectName = name
