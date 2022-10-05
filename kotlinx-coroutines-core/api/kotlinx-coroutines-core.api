@@ -1066,11 +1066,6 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun zip (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/flow/Flow;
 }
 
-public final class kotlinx/coroutines/flow/FlowTimeoutException : java/util/concurrent/CancellationException, kotlinx/coroutines/CopyableThrowable {
-	public synthetic fun createCopy ()Ljava/lang/Throwable;
-	public fun createCopy ()Lkotlinx/coroutines/flow/FlowTimeoutException;
-}
-
 public final class kotlinx/coroutines/flow/LintKt {
 	public static final fun cancel (Lkotlinx/coroutines/flow/FlowCollector;Ljava/util/concurrent/CancellationException;)V
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/flow/FlowCollector;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
