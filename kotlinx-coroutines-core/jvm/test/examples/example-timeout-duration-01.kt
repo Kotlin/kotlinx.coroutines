@@ -3,7 +3,7 @@
  */
 
 // This file was automatically generated from Delay.kt by Knit tool. Do not edit.
-package kotlinx.coroutines.examples.exampleDelayDuration02
+package kotlinx.coroutines.examples.exampleTimeoutDuration01
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -13,19 +13,15 @@ fun main() = runBlocking {
 
 flow {
     emit(1)
-    delay(90.milliseconds)
+    delay(100)
     emit(2)
-    delay(90.milliseconds)
+    delay(100)
     emit(3)
-    delay(1010.milliseconds)
+    delay(1000)
     emit(4)
-    delay(1010.milliseconds)
-    emit(5)
-}.debounce {
-    if (it == 1) {
-        0.milliseconds
-    } else {
-        1000.milliseconds
-    }
+}.timeout(100.milliseconds).catch {
+    emit(-1) // Item to emit on timeout
+}.onEach {
+    delay(300) // This will not cause a timeout
 }
 .toList().joinToString().let { println(it) } }
