@@ -15,10 +15,10 @@ import kotlin.random.*
 
 /**
  * Coroutine scheduler (pool of shared threads) which primary target is to distribute dispatched coroutines
- * over worker threads, including both CPU-intensive and blocking tasks, is the most efficient manner.
+ * over worker threads, including both CPU-intensive and blocking tasks, in the most efficient manner.
  *
  * Current scheduler implementation has two optimization targets:
- * * Efficiency in the face of communication patterns (e.g., actors communicating via channel)
+ * * Efficiency in the face of communication patterns (e.g. actors communicating via channel)
  * * Dynamic resizing to support blocking calls without re-dispatching coroutine to separate "blocking" thread pool.
  *
  * ### Structural overview
