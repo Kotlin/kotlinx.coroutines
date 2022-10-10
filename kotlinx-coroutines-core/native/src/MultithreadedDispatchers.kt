@@ -15,7 +15,7 @@ public actual fun newSingleThreadContext(name: String): CloseableCoroutineDispat
 }
 
 public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): CloseableCoroutineDispatcher {
-    require(nThreads >= 1) { "Expected at least one thread, but got: $nThreads"}
+    require(nThreads >= 1) { "Expected at least one thread, but got: $nThreads" }
     return MultiWorkerDispatcher(name, nThreads)
 }
 
@@ -68,15 +68,32 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     }
 }
 
+private const val IS_CLOSED_MASK = 1 shl 31
+
 private class MultiWorkerDispatcher(
     private val name: String,
     private val workersCount: Int
 ) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
     private val workers = atomicArrayOfNulls<Worker>(workersCount)
-    private val activeWorkers = atomic(0)
+
+    // Number of active workers + isClosed flag in the highest bit
+    private val controlState = atomic(0)
+    private val activeWorkers: Int get() = controlState.value and (IS_CLOSED_MASK.inv())
+    private var isClosed: Boolean
+        get() = controlState.value.isClosed()
+        set(value) {
+            assert { value }
+            controlState.value = controlState.value or IS_CLOSED_MASK
+        }
+
+    private inline fun Int.isClosed(): Boolean {
+        return this and IS_CLOSED_MASK != 0
+    }
 
     private fun workerRunLoop() = runBlocking {
+        // NB: we leverage tail-call optimization in this loop, do not replace it with
+        // .receive() without proper evaluation
         for (task in tasksQueue) {
             /**
              * Any unhandled exception here will pass through worker's boundary and will be properly reported.
@@ -86,34 +103,44 @@ private class MultiWorkerDispatcher(
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        if (activeWorkers.value != workersCount) {
-            tryAddWorker()
+        fun throwClosed(block: Runnable) {
+            throw IllegalStateException("Dispatcher $name was closed, attempted to schedule: $block")
+        }
+
+        if (activeWorkers != workersCount) {
+            if (!tryAddWorker()) throwClosed(block) // Do not even try to send to avoid race
         }
 
         tasksQueue.trySend(block).onClosed {
-            throw IllegalStateException("Dispatcher $name was closed, attempted to schedule : $block")
+            throwClosed(block)
         }
     }
 
-    private fun tryAddWorker() {
-        activeWorkers.loop { curWorkers ->
-            if (curWorkers >= workersCount) return
-            if (activeWorkers.compareAndSet(curWorkers, curWorkers + 1)) {
-                val worker = Worker.start(name = "$name-$curWorkers")
+    // Returns 'false' is the dispatcher was closed, 'true' otherwise
+    private fun tryAddWorker(): Boolean {
+        controlState.loop { ctl ->
+            if (ctl.isClosed()) return false
+            if (ctl >= workersCount) return true
+            if (controlState.compareAndSet(ctl, ctl + 1)) {
+                val worker = Worker.start(name = "$name-$ctl")
                 worker.executeAfter { workerRunLoop() }
-                workers[curWorkers].value = worker
-                return
+                workers[ctl].value = worker
+                return true
             }
         }
     }
 
     override fun close() {
+        isClosed = true
         tasksQueue.close()
         /*
          * Here we cannot avoid waiting on `.result`, otherwise it will lead
          * to a native memory leak, including a pthread handle.
          */
-        val requests = Array(workersCount) {
+        val requests = Array(activeWorkers) {
+            while (workers[it].value == null) {
+                // wait until tryAddWorker completes and sets the worker
+            }
             workers[it].value?.requestTermination()
         }
         requests.map { it?.result }
