@@ -80,12 +80,9 @@ private class MultiWorkerDispatcher(
     // Number of active workers + isClosed flag in the highest bit
     private val controlState = atomic(0)
     private val activeWorkers: Int get() = controlState.value and (IS_CLOSED_MASK.inv())
-    private var isClosed: Boolean
-        get() = controlState.value.isClosed()
-        set(value) {
-            assert { value }
-            controlState.value = controlState.value or IS_CLOSED_MASK
-        }
+    private inline fun forbidNewWorkers() {
+        controlState.update { it or IS_CLOSED_MASK }
+    }
 
     private inline fun Int.isClosed(): Boolean {
         return this and IS_CLOSED_MASK != 0
@@ -131,7 +128,7 @@ private class MultiWorkerDispatcher(
     }
 
     override fun close() {
-        isClosed = true
+        forbidNewWorkers()
         tasksQueue.close()
         /*
          * Here we cannot avoid waiting on `.result`, otherwise it will lead
