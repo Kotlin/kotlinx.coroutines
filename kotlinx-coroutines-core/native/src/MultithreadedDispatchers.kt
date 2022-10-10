@@ -4,8 +4,8 @@
 
 package kotlinx.coroutines
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 
@@ -68,24 +68,15 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     }
 }
 
-private const val IS_CLOSED_MASK = 1 shl 31
-
 private class MultiWorkerDispatcher(
     private val name: String,
-    private val workersCount: Int
+    workersCount: Int
 ) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
-    private val workers = atomicArrayOfNulls<Worker>(workersCount)
-
-    // Number of active workers + isClosed flag in the highest bit
-    private val controlState = atomic(0)
-    private val activeWorkers: Int get() = controlState.value and (IS_CLOSED_MASK.inv())
-    private inline fun forbidNewWorkers() {
-        controlState.update { it or IS_CLOSED_MASK }
-    }
-
-    private inline fun Int.isClosed(): Boolean {
-        return this and IS_CLOSED_MASK != 0
+    private val workerPool = OnDemandAllocatingPool(workersCount) {
+        Worker.start(name = "$name-$it").apply {
+            executeAfter { workerRunLoop() }
+        }
     }
 
     private fun workerRunLoop() = runBlocking {
@@ -104,42 +95,21 @@ private class MultiWorkerDispatcher(
             throw IllegalStateException("Dispatcher $name was closed, attempted to schedule: $block")
         }
 
-        if (activeWorkers != workersCount) {
-            if (!tryAddWorker()) throwClosed(block) // Do not even try to send to avoid race
-        }
+        if (!workerPool.allocate()) throwClosed(block) // Do not even try to send to avoid race
 
         tasksQueue.trySend(block).onClosed {
             throwClosed(block)
         }
     }
 
-    // Returns 'false' is the dispatcher was closed, 'true' otherwise
-    private fun tryAddWorker(): Boolean {
-        controlState.loop { ctl ->
-            if (ctl.isClosed()) return false
-            if (ctl >= workersCount) return true
-            if (controlState.compareAndSet(ctl, ctl + 1)) {
-                val worker = Worker.start(name = "$name-$ctl")
-                worker.executeAfter { workerRunLoop() }
-                workers[ctl].value = worker
-                return true
-            }
-        }
-    }
-
     override fun close() {
-        forbidNewWorkers()
+        val workers = workerPool.close()
         tasksQueue.close()
         /*
          * Here we cannot avoid waiting on `.result`, otherwise it will lead
          * to a native memory leak, including a pthread handle.
          */
-        val requests = Array(activeWorkers) {
-            while (workers[it].value == null) {
-                // wait until tryAddWorker completes and sets the worker
-            }
-            workers[it].value?.requestTermination()
-        }
-        requests.map { it?.result }
+        val requests = workers.map { it.requestTermination() }
+        requests.map { it.result }
     }
 }
