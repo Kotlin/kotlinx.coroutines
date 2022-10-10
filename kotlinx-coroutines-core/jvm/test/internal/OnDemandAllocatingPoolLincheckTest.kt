@@ -52,7 +52,7 @@ abstract class OnDemandAllocatingSequentialPool(private val maxCapacity: Int) {
     }.sorted().toString()
 }
 
-class OnDemandAllocatingPoolLincheckTest3 : OnDemandAllocatingPoolLincheckTest(3) {
+class OnDemandAllocatingPool3LincheckTest : OnDemandAllocatingPoolLincheckTest(3) {
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
         this.sequentialSpecification(OnDemandAllocatingSequentialPool3::class.java)
 }

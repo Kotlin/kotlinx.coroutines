@@ -185,7 +185,7 @@ jvmTest {
     }
     // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
     if (!Idea.active && rootProject.properties['stress'] == null) {
-        exclude '**/*LincheckTest.*'
+        exclude '**/*LincheckTest*'
         exclude '**/*StressTest.*'
     }
     if (Idea.active) {
@@ -229,7 +229,7 @@ task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
 task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
-    include '**/*LincheckTest.*'
+    include '**/*LincheckTest*'
     enableAssertions = true
     testLogging.showStandardStreams = true
     configureJvmForLincheck(jvmLincheckTest)

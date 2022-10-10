@@ -41,6 +41,8 @@ internal class OnDemandAllocatingPool<T>(
      * Returns `false` if the pool is closed.
      *
      * Note that it will still return `true` even if an element was not created due to reaching [maxCapacity].
+     *
+     * Rethrows the exceptions thrown from [create]. In this case, this operation has no effect.
      */
     fun allocate(): Boolean {
         controlState.loop { ctl ->
@@ -67,7 +69,7 @@ internal class OnDemandAllocatingPool<T>(
      */
     fun close(): List<T> {
         val elementsExisting = tryForbidNewElements()
-        val result = (0 until elementsExisting).map { i ->
+        return (0 until elementsExisting).map { i ->
             // we wait for the element to be created, because we know that eventually it is going to be there
             loop {
                 val element = elements[i].getAndSet(null)
@@ -76,14 +78,13 @@ internal class OnDemandAllocatingPool<T>(
                 }
             }
         }
-        return result
     }
 
     // for tests
     internal fun stateRepresentation(): String {
         val ctl = controlState.value
         val elementsStr = (0 until (ctl and IS_CLOSED_MASK.inv())).map { elements[it].value }.toString()
-        val closedStr = if (ctl and IS_CLOSED_MASK != 0) "[closed]" else ""
+        val closedStr = if (ctl.isClosed()) "[closed]" else ""
         return elementsStr + closedStr
     }
 
