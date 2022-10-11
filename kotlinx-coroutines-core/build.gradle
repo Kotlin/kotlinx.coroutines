@@ -44,9 +44,9 @@ The overall structure is just a hack to support the scenario we are interested i
 * We would like to have two source-sets "core" and "jdk8"
 * "jdk8" is allowed to use API from Java 8 and from "core"
 * "core" is prohibited to use any API from "jdk8"
-* It is okay to have test in a single test source-set
-* We want to validate source-sets with animal sniffer separately
+* It is okay to have tests in a single test source-set
 * And we want to publish a **single** artifact kotlinx-coroutines-core.jar that contains classes from both source-sets
+* Current limitation: only classes from "core" are checked with animal-sniffer
 
 For that, we have following compilations:
 * jvmMain compilation: [jvmCoreMain, jdk8Main]
@@ -145,7 +145,7 @@ kotlin {
 
         /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
         compilations.create('CoreMain') {
-            /* jvmCore is automatically matched as 'defaultSourceSet' for the compilation */
+            /* jvmCore is automatically matched as 'defaultSourceSet' for the compilation, due to its name */
             tasks.getByName('check').dependsOn(compileKotlinTaskProvider)
         }
     }

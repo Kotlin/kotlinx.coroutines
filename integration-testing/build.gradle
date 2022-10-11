@@ -23,6 +23,7 @@ dependencies {
 
 sourceSets {
     // Test that relies on Guava to reflectively check all Throwable subclasses in coroutines
+    // Also other non-specific tests piggyback on that one
     withGuavaTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
