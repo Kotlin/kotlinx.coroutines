@@ -99,18 +99,41 @@ class TimeoutTest : TestBase() {
     @Test
     fun testUpstreamErrorTimeoutException() = testUpstreamError(TimeoutCancellationException(0, Job()))
 
+    @Test
+    fun testUpstreamErrorCancellationException() = testUpstreamError(CancellationException(""))
+
     private inline fun <reified T: Throwable> testUpstreamError(cause: T) = runTest {
         try {
             // Workaround for JS legacy bug
             flow {
                 emit(1)
                 throw cause
-            }.timeout(1.milliseconds).collect()
+            }.timeout(1000.milliseconds).collect()
             expectUnreached()
         } catch (e: Throwable) {
             assertTrue { e is T }
             finish(1)
         }
+    }
+
+    @Test
+    fun testUpstreamExceptionsTakingPriority() = withVirtualTime {
+        val flow = flow<Unit> {
+            expect(2)
+            withContext(NonCancellable) {
+                delay(2.milliseconds)
+            }
+            assertFalse(currentCoroutineContext().isActive) // cancelled already
+            expect(3)
+            throw TestException()
+        }.timeout(1.milliseconds)
+        expect(1)
+        assertFailsWith<TestException> {
+            flow.collect {
+                expectUnreached()
+            }
+        }
+        finish(4)
     }
 
     @Test
