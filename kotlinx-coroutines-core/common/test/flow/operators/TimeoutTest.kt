@@ -117,6 +117,26 @@ class TimeoutTest : TestBase() {
     }
 
     @Test
+    fun testUpstreamExceptionsTakingPriority() = withVirtualTime {
+        val flow = flow<Unit> {
+            expect(2)
+            withContext(NonCancellable) {
+                delay(2.milliseconds)
+            }
+            assertFalse(currentCoroutineContext().isActive) // cancelled already
+            expect(3)
+            throw TestException()
+        }.timeout(1.milliseconds)
+        expect(1)
+        assertFailsWith<TestException> {
+            flow.collect {
+                expectUnreached()
+            }
+        }
+        finish(4)
+    }
+
+    @Test
     fun testDownstreamError() = runTest {
         val flow = flow {
             expect(1)
