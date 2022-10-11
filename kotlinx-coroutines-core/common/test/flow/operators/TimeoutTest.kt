@@ -111,7 +111,7 @@ class TimeoutTest : TestBase() {
             }.timeout(1000.milliseconds).collect()
             expectUnreached()
         } catch (e: Throwable) {
-            assertIs<T>(e)
+            assertTrue { e is T }
             finish(1)
         }
     }
