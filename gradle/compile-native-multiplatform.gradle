@@ -6,10 +6,12 @@ project.ext.nativeMainSets = []
 project.ext.nativeTestSets = []
 
 kotlin {
-    targets.metaClass.addTarget = { preset ->
-        def target = delegate.fromPreset(preset, preset.name)
-        project.ext.nativeMainSets.add(target.compilations['main'].kotlinSourceSets.first())
-        project.ext.nativeTestSets.add(target.compilations['test'].kotlinSourceSets.first())
+    targets {
+        delegate.metaClass.addTarget = { preset ->
+            def target = delegate.fromPreset(preset, preset.name)
+            project.ext.nativeMainSets.add(target.compilations['main'].kotlinSourceSets.first())
+            project.ext.nativeTestSets.add(target.compilations['test'].kotlinSourceSets.first())
+        }
     }
 
     targets {
