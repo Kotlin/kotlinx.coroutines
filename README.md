@@ -57,7 +57,7 @@ suspend fun main() = coroutineScope {
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
   * Android, JavaFX, and Swing.
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries:
-  Guava [ListenableFuture.await], and Google Play Services [Task.await];
+  * Guava [ListenableFuture.await], and Google Play Services [Task.await];
   * SLF4J MDC integration via [MDCContext].
 
 ## Documentation

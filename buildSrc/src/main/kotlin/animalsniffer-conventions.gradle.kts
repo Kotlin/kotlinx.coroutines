@@ -19,7 +19,7 @@ configure(subprojects) {
         }
 
         if (project.name == coreModule) {
-            // Precise files so nothing from core is accidentally skipepd
+            // Specific files so nothing from core is accidentally skipped
             tasks.withType<AnimalSniffer>().configureEach {
                 exclude("**/future/FutureKt*")
                 exclude("**/future/ContinuationConsumer*")
