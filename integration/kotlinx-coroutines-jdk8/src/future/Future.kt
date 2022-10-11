@@ -40,7 +40,7 @@ public fun <T> CoroutineScope.future(
     val newContext = this.newCoroutineContext(context)
     val future = CompletableFuture<T>()
     val coroutine = CompletableFutureCoroutine(newContext, future)
-    future.whenComplete(coroutine) // Cancel coroutine if future was completed externally
+    future.handle(coroutine) // Cancel coroutine if future was completed externally
     coroutine.start(start, coroutine, block)
     return future
 }
@@ -48,8 +48,8 @@ public fun <T> CoroutineScope.future(
 private class CompletableFutureCoroutine<T>(
     context: CoroutineContext,
     private val future: CompletableFuture<T>
-) : AbstractCoroutine<T>(context, initParentJob = true, active = true), BiConsumer<T?, Throwable?> {
-    override fun accept(value: T?, exception: Throwable?) {
+) : AbstractCoroutine<T>(context, initParentJob = true, active = true), BiFunction<T?, Throwable?, Unit> {
+    override fun apply(value: T?, exception: Throwable?) {
         cancel()
     }
 
@@ -97,7 +97,7 @@ public fun Job.asCompletableFuture(): CompletableFuture<Unit> {
 }
 
 private fun Job.setupCancellation(future: CompletableFuture<*>) {
-    future.whenComplete { _, exception ->
+    future.handle { _, exception ->
         cancel(exception?.let {
             it as? CancellationException ?: CancellationException("CompletableFuture was completed exceptionally", it)
         })
@@ -125,7 +125,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
         }
     }
     val result = CompletableDeferred<T>()
-    whenComplete { value, exception ->
+    handle { value, exception ->
         try {
             if (exception == null) {
                 // the future has completed normally
@@ -168,8 +168,8 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     }
     // slow path -- suspend
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
-        val consumer = ContinuationConsumer(cont)
-        whenComplete(consumer)
+        val consumer = ContinuationHandler(cont)
+        handle(consumer)
         cont.invokeOnCancellation {
             future.cancel(false)
             consumer.cont = null // shall clear reference to continuation to aid GC
@@ -177,11 +177,11 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     }
 }
 
-private class ContinuationConsumer<T>(
+private class ContinuationHandler<T>(
     @Volatile @JvmField var cont: Continuation<T>?
-) : BiConsumer<T?, Throwable?> {
+) : BiFunction<T?, Throwable?, Unit> {
     @Suppress("UNCHECKED_CAST")
-    override fun accept(result: T?, exception: Throwable?) {
+    override fun apply(result: T?, exception: Throwable?) {
         val cont = this.cont ?: return // atomically read current value unless null
         if (exception == null) {
             // the future has completed normally
