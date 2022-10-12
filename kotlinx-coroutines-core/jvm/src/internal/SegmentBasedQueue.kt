@@ -35,6 +35,7 @@ internal class SegmentBasedQueue<T> {
         while (true) {
             val curTail = this.tail.value
             val enqIdx = this.enqIdx.getAndIncrement()
+            @Suppress("INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION") // KT-54411
             val segmentOrClosed = this.tail.findSegmentAndMoveForward(id = enqIdx, startFrom = curTail, createNewSegment = ::createSegment)
             if (segmentOrClosed.isClosed) return null
             val s = segmentOrClosed.segment
@@ -48,6 +49,7 @@ internal class SegmentBasedQueue<T> {
             if (this.deqIdx.value >= this.enqIdx.value) return null
             val curHead = this.head.value
             val deqIdx = this.deqIdx.getAndIncrement()
+            @Suppress("INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION") // KT-54411
             val segmentOrClosed = this.head.findSegmentAndMoveForward(id = deqIdx, startFrom = curHead, createNewSegment = ::createSegment)
             if (segmentOrClosed.isClosed) return null
             val s = segmentOrClosed.segment
