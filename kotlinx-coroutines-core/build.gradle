@@ -148,11 +148,7 @@ kotlin {
             /* jvmCore is automatically matched as 'defaultSourceSet' for the compilation, due to its name */
             tasks.getByName('check').dependsOn(compileKotlinTaskProvider)
         }
-    }
-}
 
-kotlin {
-    jvm {
         // For animal sniffer
         withJava()
     }
