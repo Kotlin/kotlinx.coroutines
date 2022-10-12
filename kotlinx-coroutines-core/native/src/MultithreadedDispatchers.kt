@@ -5,6 +5,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 
@@ -14,7 +15,7 @@ public actual fun newSingleThreadContext(name: String): CloseableCoroutineDispat
 }
 
 public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): CloseableCoroutineDispatcher {
-    require(nThreads >= 1) { "Expected at least one thread, but got: $nThreads"}
+    require(nThreads >= 1) { "Expected at least one thread, but got: $nThreads" }
     return MultiWorkerDispatcher(name, nThreads)
 }
 
@@ -67,28 +68,48 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     }
 }
 
-private class MultiWorkerDispatcher(name: String, workersCount: Int) : CloseableCoroutineDispatcher() {
+private class MultiWorkerDispatcher(
+    private val name: String,
+    workersCount: Int
+) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
-    private val workers = Array(workersCount) { Worker.start(name = "$name-$it") }
-
-    init {
-        workers.forEach { w -> w.executeAfter(0L) { workerRunLoop() } }
+    private val workerPool = OnDemandAllocatingPool(workersCount) {
+        Worker.start(name = "$name-$it").apply {
+            executeAfter { workerRunLoop() }
+        }
     }
 
     private fun workerRunLoop() = runBlocking {
+        // NB: we leverage tail-call optimization in this loop, do not replace it with
+        // .receive() without proper evaluation
         for (task in tasksQueue) {
-            // TODO error handling
+            /**
+             * Any unhandled exception here will pass through worker's boundary and will be properly reported.
+             */
             task.run()
         }
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        // TODO handle rejections
-        tasksQueue.trySend(block)
+        fun throwClosed(block: Runnable) {
+            throw IllegalStateException("Dispatcher $name was closed, attempted to schedule: $block")
+        }
+
+        if (!workerPool.allocate()) throwClosed(block) // Do not even try to send to avoid race
+
+        tasksQueue.trySend(block).onClosed {
+            throwClosed(block)
+        }
     }
 
     override fun close() {
+        val workers = workerPool.close()
         tasksQueue.close()
-        workers.forEach { it.requestTermination().result }
+        /*
+         * Here we cannot avoid waiting on `.result`, otherwise it will lead
+         * to a native memory leak, including a pthread handle.
+         */
+        val requests = workers.map { it.requestTermination() }
+        requests.map { it.result }
     }
 }

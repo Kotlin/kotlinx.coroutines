@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.internal
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
@@ -18,8 +19,9 @@ internal class LimitedDispatcher(
     private val parallelism: Int
 ) : CoroutineDispatcher(), Runnable, Delay by (dispatcher as? Delay ?: DefaultDelay) {
 
-    @Volatile
-    private var runningWorkers = 0
+    // Atomic is necessary here for the sake of K/N memory ordering,
+    // there is no need in atomic operations for this property
+    private val runningWorkers = atomic(0)
 
     private val queue = LockFreeTaskQueue<Runnable>(singleConsumer = false)
 
@@ -54,9 +56,9 @@ internal class LimitedDispatcher(
             }
 
             synchronized(workerAllocationLock) {
-                --runningWorkers
+                runningWorkers.decrementAndGet()
                 if (queue.size == 0) return
-                ++runningWorkers
+                runningWorkers.incrementAndGet()
                 fairnessCounter = 0
             }
         }
@@ -90,15 +92,15 @@ internal class LimitedDispatcher(
 
     private fun tryAllocateWorker(): Boolean {
         synchronized(workerAllocationLock) {
-            if (runningWorkers >= parallelism) return false
-            ++runningWorkers
+            if (runningWorkers.value >= parallelism) return false
+            runningWorkers.incrementAndGet()
             return true
         }
     }
 
     private fun addAndTryDispatching(block: Runnable): Boolean {
         queue.addLast(block)
-        return runningWorkers >= parallelism
+        return runningWorkers.value >= parallelism
     }
 }
 
