@@ -37,6 +37,7 @@ suspend fun main() = coroutineScope {
 * [core/jvm](kotlinx-coroutines-core/jvm/) &mdash; additional core features available on Kotlin/JVM:
   * [Dispatchers.IO] dispatcher for blocking coroutines;
   * [Executor.asCoroutineDispatcher][asCoroutineDispatcher] extension, custom thread pools, and more.
+  * Integrations with `CompletableFuture` and JVM-specific extensions.
 * [core/js](kotlinx-coroutines-core/js/) &mdash; additional core features available on Kotlin/JS:
   * Integration with `Promise` via [Promise.await] and [promise] builder;
   * Integration with `Window` via [Window.asCoroutineDispatcher], etc.
@@ -56,7 +57,7 @@ suspend fun main() = coroutineScope {
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
   * Android, JavaFX, and Swing.
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries:
-  * JDK8 [CompletionStage.await], Guava [ListenableFuture.await], and Google Play Services [Task.await];
+  * Guava [ListenableFuture.await], and Google Play Services [Task.await];
   * SLF4J MDC integration via [MDCContext].
 
 ## Documentation
@@ -259,9 +260,6 @@ See [Contributing Guidelines](CONTRIBUTING.md).
 
 <!--- MODULE kotlinx-coroutines-jdk8 -->
 <!--- INDEX kotlinx.coroutines.future -->
-
-[CompletionStage.await]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.future/await.html
-
 <!--- MODULE kotlinx-coroutines-guava -->
 <!--- INDEX kotlinx.coroutines.guava -->
 

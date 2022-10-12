@@ -1176,6 +1176,15 @@ public final class kotlinx/coroutines/flow/internal/SendingCollector : kotlinx/c
 	public fun emit (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/future/FutureKt {
+	public static final fun asCompletableFuture (Lkotlinx/coroutines/Deferred;)Ljava/util/concurrent/CompletableFuture;
+	public static final fun asCompletableFuture (Lkotlinx/coroutines/Job;)Ljava/util/concurrent/CompletableFuture;
+	public static final fun asDeferred (Ljava/util/concurrent/CompletionStage;)Lkotlinx/coroutines/Deferred;
+	public static final fun await (Ljava/util/concurrent/CompletionStage;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun future (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun future$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+}
+
 public final class kotlinx/coroutines/intrinsics/CancellableKt {
 	public static final fun startCoroutineCancellable (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)V
 }
@@ -1292,6 +1301,10 @@ public final class kotlinx/coroutines/selects/WhileSelectKt {
 	public static final fun whileSelect (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/stream/StreamKt {
+	public static final fun consumeAsFlow (Ljava/util/stream/Stream;)Lkotlinx/coroutines/flow/Flow;
+}
+
 public abstract interface class kotlinx/coroutines/sync/Mutex {
 	public abstract fun getOnLock ()Lkotlinx/coroutines/selects/SelectClause2;
 	public abstract fun holdsLock (Ljava/lang/Object;)Z
@@ -1325,5 +1338,14 @@ public final class kotlinx/coroutines/sync/SemaphoreKt {
 	public static final fun Semaphore (II)Lkotlinx/coroutines/sync/Semaphore;
 	public static synthetic fun Semaphore$default (IIILjava/lang/Object;)Lkotlinx/coroutines/sync/Semaphore;
 	public static final fun withPermit (Lkotlinx/coroutines/sync/Semaphore;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/time/TimeKt {
+	public static final fun debounce (Lkotlinx/coroutines/flow/Flow;Ljava/time/Duration;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun delay (Ljava/time/Duration;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun onTimeout (Lkotlinx/coroutines/selects/SelectBuilder;Ljava/time/Duration;Lkotlin/jvm/functions/Function1;)V
+	public static final fun sample (Lkotlinx/coroutines/flow/Flow;Ljava/time/Duration;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun withTimeout (Ljava/time/Duration;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun withTimeoutOrNull (Ljava/time/Duration;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
