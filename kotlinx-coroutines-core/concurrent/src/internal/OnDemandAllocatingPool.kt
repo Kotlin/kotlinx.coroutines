@@ -11,13 +11,18 @@ import kotlinx.atomicfu.*
  *
  * [maxCapacity] is the maximum amount of elements.
  * [create] is the function that creates a new element.
+ *
+ * This is only used in the Native implementation,
+ * but is part of the `concurrent` source set in order to test it on the JVM.
  */
 internal class OnDemandAllocatingPool<T>(
     private val maxCapacity: Int,
     private val create: (Int) -> T
 ) {
-    /** Number of existing elements + isClosed flag in the highest bit.
-     * Once the flag is set, the value is guaranteed not to change anymore. */
+    /**
+     * Number of existing elements + isClosed flag in the highest bit.
+     * Once the flag is set, the value is guaranteed not to change anymore.
+     */
     private val controlState = atomic(0)
     private val elements = atomicArrayOfNulls<T>(maxCapacity)
 
