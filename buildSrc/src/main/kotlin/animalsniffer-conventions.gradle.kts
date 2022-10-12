@@ -22,7 +22,7 @@ configure(subprojects) {
             // Specific files so nothing from core is accidentally skipped
             tasks.withType<AnimalSniffer>().configureEach {
                 exclude("**/future/FutureKt*")
-                exclude("**/future/ContinuationConsumer*")
+                exclude("**/future/ContinuationHandler*")
                 exclude("**/future/CompletableFutureCoroutine*")
 
                 exclude("**/stream/StreamKt*")
