@@ -8,7 +8,7 @@ import org.junit.Test
 import kotlin.test.*
 
 /*
- * Integration test that ensures both signatures from jdk8 and from core source-sets are used
+ * Integration test that ensures signatures from both the jdk8 and the core source sets of the kotlinx-coroutines-core subproject are used.
  */
 class Jdk8InCoreIntegration {
 
