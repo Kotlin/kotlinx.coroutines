@@ -154,7 +154,7 @@ class TimeoutTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamTimeoutIsolatedContext() = runTest {
+    fun testUpstreamTimeoutIsolatedContext() = withVirtualTime {
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
             expect(1)
@@ -169,7 +169,7 @@ class TimeoutTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamTimeoutActionIsolatedContext() = runTest {
+    fun testUpstreamTimeoutActionIsolatedContext() = withVirtualTime {
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
             expect(1)
@@ -187,21 +187,7 @@ class TimeoutTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamNoTimeoutIsolatedContext() = runTest {
-        val flow = flow {
-            assertEquals("upstream", NamedDispatchers.name())
-            expect(1)
-            emit(1)
-            expect(2)
-            delay(10)
-        }.flowOn(NamedDispatchers("upstream")).timeout(100.milliseconds)
-
-        assertEquals(listOf(1), flow.toList())
-        finish(3)
-    }
-
-    @Test
-    fun testSharedFlowTimeout() = runTest {
+    fun testSharedFlowTimeout() = withVirtualTime {
         // Workaround for JS legacy bug
         try {
             MutableSharedFlow<Int>().asSharedFlow().timeout(100.milliseconds).collect()
