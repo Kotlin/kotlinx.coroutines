@@ -13,6 +13,8 @@ import reactor.core.*
 import reactor.core.publisher.*
 import kotlin.coroutines.*
 import kotlinx.coroutines.internal.*
+import java.util.concurrent.locks.*
+import kotlin.concurrent.*
 
 /**
  * Creates a cold [mono][Mono] that runs a given [block] in a coroutine and emits its result.
@@ -44,12 +46,18 @@ public fun <T> mono(
  * function immediately cancels its [Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
-    injectCoroutineContext(cont.context).subscribe(object : Subscriber<T> {
+    val subscriber = object : Subscriber<T> {
         private var seenValue = false
 
         override fun onSubscribe(s: Subscription) {
-            cont.invokeOnCancellation { s.cancel() }
-            s.request(Long.MAX_VALUE)
+            cont.invokeOnCancellation {
+                withSubscriptionLock {
+                    s.cancel()
+                }
+            }
+            withSubscriptionLock {
+                s.request(Long.MAX_VALUE)
+            }
         }
 
         override fun onComplete() {
@@ -62,7 +70,16 @@ public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCorou
         }
 
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
-    })
+
+        /**
+         * Enforce rule 2.7: [Subscription.request] and [Subscription.cancel] must be executed serially
+         */
+        @Synchronized
+        private fun withSubscriptionLock(block: () -> Unit) {
+            block()
+        }
+    }
+    injectCoroutineContext(cont.context).subscribe(subscriber)
 }
 
 /**
