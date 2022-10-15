@@ -10,6 +10,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * A test result.
@@ -41,9 +43,9 @@ public expect class TestResult
  * @Test
  * fun exampleTest() = runTest {
  *     val deferred = async {
- *         delay(1_000)
+ *         delay(1.seconds)
  *         async {
- *             delay(1_000)
+ *             delay(1.seconds)
  *         }.await()
  *     }
  *
@@ -99,9 +101,9 @@ public expect class TestResult
  * fun exampleTest() = runTest {
  *     val elapsed = TimeSource.Monotonic.measureTime {
  *         val deferred = async {
- *             delay(1_000) // will be skipped
+ *             delay(1.seconds) // will be skipped
  *             withContext(Dispatchers.Default) {
- *                 delay(5_000) // Dispatchers.Default doesn't know about TestCoroutineScheduler
+ *                 delay(5.seconds) // Dispatchers.Default doesn't know about TestCoroutineScheduler
  *             }
  *         }
  *         deferred.await()
@@ -131,7 +133,7 @@ public expect class TestResult
  *
  * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
  * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
- * for [dispatchTimeoutMs] milliseconds (by default, 60 seconds) from the moment when [TestCoroutineScheduler] becomes
+ * for [dispatchTimeout] (by default, 60 seconds) from the moment when [TestCoroutineScheduler] becomes
  * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
  * task during that time, the timer gets reset.
  *
@@ -146,12 +148,41 @@ public expect class TestResult
 @ExperimentalCoroutinesApi
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
-    dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
+    dispatchTimeout: Duration = DEFAULT_DISPATCH_TIMEOUT,
     testBody: suspend TestScope.() -> Unit
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    return TestScope(context + RunningInRunTest).runTest(dispatchTimeoutMs, testBody)
+    return TestScope(context + RunningInRunTest).runTest(dispatchTimeout, testBody)
+}
+
+@ExperimentalCoroutinesApi
+public fun runTest(
+    context: CoroutineContext = EmptyCoroutineContext,
+    dispatchTimeoutMs: Long,
+    testBody: suspend TestScope.() -> Unit
+): TestResult = runTest(
+    context = context,
+    dispatchTimeout = dispatchTimeoutMs.milliseconds,
+    testBody = testBody
+)
+
+/**
+ * Performs [runTest] on an existing [TestScope].
+ */
+@ExperimentalCoroutinesApi
+public fun TestScope.runTest(
+    dispatchTimeout: Duration = DEFAULT_DISPATCH_TIMEOUT,
+    testBody: suspend TestScope.() -> Unit
+): TestResult = asSpecificImplementation().let {
+    it.enter()
+    createTestResult {
+        runTestCoroutine(it, dispatchTimeout, TestScopeImpl::tryGetCompletionCause, testBody) {
+            backgroundScope.cancel()
+            testScheduler.advanceUntilIdleOr { false }
+            it.leave()
+        }
+    }
 }
 
 /**
@@ -159,18 +190,12 @@ public fun runTest(
  */
 @ExperimentalCoroutinesApi
 public fun TestScope.runTest(
-    dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
+    dispatchTimeoutMs: Long,
     testBody: suspend TestScope.() -> Unit
-): TestResult = asSpecificImplementation().let {
-    it.enter()
-    createTestResult {
-        runTestCoroutine(it, dispatchTimeoutMs, TestScopeImpl::tryGetCompletionCause, testBody) {
-            backgroundScope.cancel()
-            testScheduler.advanceUntilIdleOr { false }
-            it.leave()
-        }
-    }
-}
+): TestResult = runTest(
+    dispatchTimeout = dispatchTimeoutMs.milliseconds,
+    testBody = testBody
+)
 
 /**
  * Runs [testProcedure], creating a [TestResult].
@@ -189,10 +214,11 @@ internal object RunningInRunTest : CoroutineContext.Key<RunningInRunTest>, Corou
 /** The default timeout to use when waiting for asynchronous completions of the coroutines managed by
  * a [TestCoroutineScheduler]. */
 internal const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
+internal val DEFAULT_DISPATCH_TIMEOUT = DEFAULT_DISPATCH_TIMEOUT_MS.milliseconds
 
 /**
  * Run the [body][testBody] of the [test coroutine][coroutine], waiting for asynchronous completions for at most
- * [dispatchTimeoutMs] milliseconds, and performing the [cleanup] procedure at the end.
+ * [dispatchTimeout], and performing the [cleanup] procedure at the end.
  *
  * [tryGetCompletionCause] is the [JobSupport.completionCause], which is passed explicitly because it is protected.
  *
@@ -201,7 +227,7 @@ internal const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
  */
 internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutine(
     coroutine: T,
-    dispatchTimeoutMs: Long,
+    dispatchTimeout: Duration,
     tryGetCompletionCause: T.() -> Throwable?,
     testBody: suspend T.() -> Unit,
     cleanup: () -> List<Throwable>,
@@ -258,8 +284,8 @@ internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutin
                 scheduler.onDispatchEvent {
                     // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
                 }
-                onTimeout(dispatchTimeoutMs) {
-                    handleTimeout(coroutine, dispatchTimeoutMs, tryGetCompletionCause, cleanup)
+                onTimeout(dispatchTimeout) {
+                    handleTimeout(coroutine, dispatchTimeout, tryGetCompletionCause, cleanup)
                 }
             }
         } finally {
@@ -284,7 +310,7 @@ internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutin
  */
 private inline fun<T: AbstractCoroutine<Unit>> handleTimeout(
     coroutine: T,
-    dispatchTimeoutMs: Long,
+    dispatchTimeout: Duration,
     tryGetCompletionCause: T.() -> Throwable?,
     cleanup: () -> List<Throwable>,
 ) {
@@ -296,7 +322,7 @@ private inline fun<T: AbstractCoroutine<Unit>> handleTimeout(
     }
     val activeChildren = coroutine.children.filter { it.isActive }.toList()
     val completionCause = if (coroutine.isCancelled) coroutine.tryGetCompletionCause() else null
-    var message = "After waiting for $dispatchTimeoutMs ms"
+    var message = "After waiting for $dispatchTimeout"
     if (completionCause == null)
         message += ", the test coroutine is not completing"
     if (activeChildren.isNotEmpty())

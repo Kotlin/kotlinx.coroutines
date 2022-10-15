@@ -10,6 +10,7 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Executes a [testBody] inside an immediate execution dispatcher.
@@ -164,7 +165,7 @@ public fun runTestWithLegacyScope(
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
     val testScope = TestBodyCoroutine(createTestCoroutineScope(context + RunningInRunTest))
     return createTestResult {
-        runTestCoroutine(testScope, dispatchTimeoutMs, TestBodyCoroutine::tryGetCompletionCause, testBody) {
+        runTestCoroutine(testScope, dispatchTimeoutMs.milliseconds, TestBodyCoroutine::tryGetCompletionCause, testBody) {
             try {
                 testScope.cleanup()
                 emptyList()
