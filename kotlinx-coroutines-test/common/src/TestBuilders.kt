@@ -148,7 +148,7 @@ public expect class TestResult
 @ExperimentalCoroutinesApi
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
-    dispatchTimeout: Duration = DEFAULT_DISPATCH_TIMEOUT,
+    dispatchTimeout: Duration,
     testBody: suspend TestScope.() -> Unit
 ): TestResult {
     if (context[RunningInRunTest] != null)
@@ -285,7 +285,7 @@ public fun runTest(
  */
 @ExperimentalCoroutinesApi
 public fun TestScope.runTest(
-    dispatchTimeout: Duration = DEFAULT_DISPATCH_TIMEOUT,
+    dispatchTimeout: Duration,
     testBody: suspend TestScope.() -> Unit
 ): TestResult = asSpecificImplementation().let {
     it.enter()
@@ -303,7 +303,7 @@ public fun TestScope.runTest(
  */
 @ExperimentalCoroutinesApi
 public fun TestScope.runTest(
-    dispatchTimeoutMs: Long,
+    dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
     testBody: suspend TestScope.() -> Unit
 ): TestResult = runTest(
     dispatchTimeout = dispatchTimeoutMs.milliseconds,
