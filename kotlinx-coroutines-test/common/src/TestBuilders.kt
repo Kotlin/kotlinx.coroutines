@@ -156,6 +156,119 @@ public fun runTest(
     return TestScope(context + RunningInRunTest).runTest(dispatchTimeout, testBody)
 }
 
+/**
+ * Executes [testBody] as a test in a new coroutine, returning [TestResult].
+ *
+ * On JVM and Native, this function behaves similarly to `runBlocking`, with the difference that the code that it runs
+ * will skip delays. This allows to use [delay] in without causing the tests to take more time than necessary.
+ * On JS, this function creates a `Promise` that executes the test body with the delay-skipping behavior.
+ *
+ * ```
+ * @Test
+ * fun exampleTest() = runTest {
+ *     val deferred = async {
+ *         delay(1.seconds)
+ *         async {
+ *             delay(1.seconds)
+ *         }.await()
+ *     }
+ *
+ *     deferred.await() // result available immediately
+ * }
+ * ```
+ *
+ * The platform difference entails that, in order to use this function correctly in common code, one must always
+ * immediately return the produced [TestResult] from the test method, without doing anything else afterwards. See
+ * [TestResult] for details on this.
+ *
+ * The test is run in a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
+ * Because of this, child coroutines are not executed in parallel to the test body.
+ * In order for the spawned-off asynchronous code to actually be executed, one must either [yield] or suspend the
+ * test body some other way, or use commands that control scheduling (see [TestCoroutineScheduler]).
+ *
+ * ```
+ * @Test
+ * fun exampleWaitingForAsyncTasks1() = runTest {
+ *     // 1
+ *     val job = launch {
+ *         // 3
+ *     }
+ *     // 2
+ *     job.join() // the main test coroutine suspends here, so the child is executed
+ *     // 4
+ * }
+ *
+ * @Test
+ * fun exampleWaitingForAsyncTasks2() = runTest {
+ *     // 1
+ *     launch {
+ *         // 3
+ *     }
+ *     // 2
+ *     advanceUntilIdle() // runs the tasks until their queue is empty
+ *     // 4
+ * }
+ * ```
+ *
+ * ### Task scheduling
+ *
+ * Delay-skipping is achieved by using virtual time.
+ * If [Dispatchers.Main] is set to a [TestDispatcher] via [Dispatchers.setMain] before the test,
+ * then its [TestCoroutineScheduler] is used;
+ * otherwise, a new one is automatically created (or taken from [context] in some way) and can be used to control
+ * the virtual time, advancing it, running the tasks scheduled at a specific time etc.
+ * Some convenience methods are available on [TestScope] to control the scheduler.
+ *
+ * Delays in code that runs inside dispatchers that don't use a [TestCoroutineScheduler] don't get skipped:
+ * ```
+ * @Test
+ * fun exampleTest() = runTest {
+ *     val elapsed = TimeSource.Monotonic.measureTime {
+ *         val deferred = async {
+ *             delay(1.seconds) // will be skipped
+ *             withContext(Dispatchers.Default) {
+ *                 delay(5.seconds) // Dispatchers.Default doesn't know about TestCoroutineScheduler
+ *             }
+ *         }
+ *         deferred.await()
+ *     }
+ *     println(elapsed) // about five seconds
+ * }
+ * ```
+ *
+ * ### Failures
+ *
+ * #### Test body failures
+ *
+ * If the created coroutine completes with an exception, then this exception will be thrown at the end of the test.
+ *
+ * #### Reported exceptions
+ *
+ * Unhandled exceptions will be thrown at the end of the test.
+ * If the uncaught exceptions happen after the test finishes, the error is propagated in a platform-specific manner.
+ * If the test coroutine completes with an exception, the unhandled exceptions are suppressed by it.
+ *
+ * #### Uncompleted coroutines
+ *
+ * This method requires that, after the test coroutine has completed, all the other coroutines launched inside
+ * [testBody] also complete, or are cancelled.
+ * Otherwise, the test will be failed (which, on JVM and Native, means that [runTest] itself will throw
+ * [AssertionError], whereas on JS, the `Promise` will fail with it).
+ *
+ * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
+ * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
+ * for [dispatchTimeout] (by default, 60 seconds) from the moment when [TestCoroutineScheduler] becomes
+ * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
+ * task during that time, the timer gets reset.
+ *
+ * ### Configuration
+ *
+ * [context] can be used to affect the environment of the code under test. Beside just being passed to the coroutine
+ * scope created for the test, [context] also can be used to change how the test is executed.
+ * See the [TestScope] constructor function documentation for details.
+ *
+ * @throws IllegalArgumentException if the [context] is invalid. See the [TestScope] constructor docs for details.
+ */
 @ExperimentalCoroutinesApi
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
