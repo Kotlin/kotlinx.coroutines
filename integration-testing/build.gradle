@@ -98,7 +98,7 @@ sourceSets {
         }
     }
 
-    // Checks that kotlinx-coroutines-debug agent can self-attach dynamically to JVM as standalone dependency
+    // Checks that kotlinx-coroutines-debug agent can self-attach dynamically to JVM as a standalone dependency
     debugDynamicAgentTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
