@@ -45,7 +45,6 @@ public fun <T> mono(
  */
 public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
     injectCoroutineContext(cont.context).subscribe(object : Subscriber<T> {
-        private var seenValue = false
         private var value: T? = null
 
         override fun onSubscribe(s: Subscription) {
@@ -54,7 +53,7 @@ public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCorou
         }
 
         override fun onComplete() {
-            cont.resume(if (seenValue) value else null)
+            cont.resume(value)
             value = null
         }
 
@@ -62,7 +61,6 @@ public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCorou
             // We don't return the value immediately because the process that emitted it may not be finished yet.
             // Resuming now could lead to race conditions between emitter and the awaiting code.
             value = t
-            seenValue = true
         }
 
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
