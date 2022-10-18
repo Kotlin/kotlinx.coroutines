@@ -148,8 +148,8 @@ task mavenTest(type: Test) {
 
 task debugAgentTest(type: Test) {
     def sourceSet = sourceSets.debugAgentTest
-    def coroutinesDebugJar = sourceSet.runtimeClasspath.filter {it.name == "kotlinx-coroutines-debug-${coroutines_version}.jar" }.singleFile
-    jvmArgs ('-javaagent:' + coroutinesDebugJar)
+    def coroutinesDebugJar = sourceSet.runtimeClasspath.filter { it.name == "kotlinx-coroutines-debug-${coroutines_version}.jar" }.singleFile
+    jvmArgs('-javaagent:' + coroutinesDebugJar)
     testClassesDirs = sourceSet.output.classesDirs
     classpath = sourceSet.runtimeClasspath
     systemProperties project.properties.subMap(["overwrite.probes"])
@@ -163,8 +163,8 @@ task debugDynamicAgentTest(type: Test) {
 
 task coreAgentTest(type: Test) {
     def sourceSet = sourceSets.coreAgentTest
-    def coroutinesCoreJar = sourceSet.runtimeClasspath.filter {it.name == "kotlinx-coroutines-core-jvm-${coroutines_version}.jar" }.singleFile
-    jvmArgs ('-javaagent:' + coroutinesCoreJar)
+    def coroutinesCoreJar = sourceSet.runtimeClasspath.filter { it.name == "kotlinx-coroutines-core-jvm-${coroutines_version}.jar" }.singleFile
+    jvmArgs('-javaagent:' + coroutinesCoreJar)
     testClassesDirs = sourceSet.output.classesDirs
     classpath = sourceSet.runtimeClasspath
 }
