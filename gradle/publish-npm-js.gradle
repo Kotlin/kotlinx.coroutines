@@ -21,8 +21,8 @@ def authToken = prop("kotlin.npmjs.auth.token", "")
 def dryRun = prop("dryRun", "false")
 
 def jsLegacy = kotlin.targets.hasProperty("jsLegacy")
-        ? kotlin.targets.jsLegacy
-        : kotlin.targets.js
+        ? kotlin.targets.js
+        : kotlin.targets.jsIr
 
 // Note: publish transformed files using dependency on sourceSets.main.output
 task preparePublishNpm(type: Copy) {
