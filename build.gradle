@@ -307,7 +307,7 @@ allprojects {
 
 // --------------- Configure sub-projects that are published ---------------
 
-def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm", true)
+def publishTasks = getTasksByName("publish", true) /* + getTasksByName("publishNpm", true) */
 
 task deploy(dependsOn: publishTasks)
 

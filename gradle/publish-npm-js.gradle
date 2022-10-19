@@ -20,6 +20,7 @@ def npmDeployDir = file("$buildDir/npm")
 def authToken = prop("kotlin.npmjs.auth.token", "")
 def dryRun = prop("dryRun", "false")
 
+/*
 def jsLegacy = kotlin.targets.hasProperty("jsLegacy")
         ? kotlin.targets.js
         : kotlin.targets.jsIr
@@ -52,3 +53,4 @@ task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
         args = deployArgs
     }
 }
+*/
