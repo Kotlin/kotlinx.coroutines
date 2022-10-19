@@ -47,7 +47,7 @@ plugins {
 }
 
 repositories {
-    if (ext.build_snapshot_train) {
+    if (build_snapshot_train) {
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
     }
     mavenLocal()
