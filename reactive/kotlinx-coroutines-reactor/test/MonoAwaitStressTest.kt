@@ -17,14 +17,6 @@ class MonoAwaitStressTest: TestBase() {
 
     private var completed: Boolean = false
 
-    @Synchronized
-    fun setCompleted(value: Boolean) {
-        completed = value
-    }
-
-    @Synchronized
-    fun getCompleted(): Boolean = completed
-
     private var thread: Thread? = null
 
     /**
@@ -40,7 +32,7 @@ class MonoAwaitStressTest: TestBase() {
                         thread = thread {
                             s.onNext(1)
                             Thread.yield()
-                            setCompleted(true)
+                            completed = true
                             s.onComplete()
                         }
                     }
@@ -52,9 +44,9 @@ class MonoAwaitStressTest: TestBase() {
         }
         repeat(N_REPEATS) {
             thread = null
-            setCompleted(false)
+            completed = false
             val value = mono.awaitSingleOrNull()
-            assertTrue(getCompleted(), "iteration $it")
+            assertTrue(completed, "iteration $it")
             assertEquals(1, value)
             thread!!.join()
         }
