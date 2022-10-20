@@ -20,7 +20,7 @@ public abstract class MainCoroutineDispatcher : CoroutineDispatcher() {
      *
      * Immediate dispatcher is safe from stack overflows and in case of nested invocations forms event-loop similar to [Dispatchers.Unconfined].
      * The event loop is an advanced topic and its implications can be found in [Dispatchers.Unconfined] documentation.
-     * The formed event-loop is shared with [Unconfined] and other immediate dispatchers, potentially overlapping tasks between them.
+     * The formed event-loop is shared with [Dispatchers.Unconfined] and other immediate dispatchers, potentially overlapping tasks between them.
      *
      * Example of usage:
      * ```
