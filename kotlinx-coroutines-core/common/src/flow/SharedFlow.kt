@@ -253,6 +253,9 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
  * @param replay the number of values replayed to new subscribers (cannot be negative, defaults to zero).
  * @param extraBufferCapacity the number of values buffered in addition to `replay`.
  *   [emit][MutableSharedFlow.emit] does not suspend while there is a buffer space remaining (optional, cannot be negative, defaults to zero).
+ *   The buffer size (as a whole) impacts emitters. The exact consequence of a full buffer depends on onBufferOverflow, 
+ *   but this buffer size can be used to control backpressure on emitters (slowing them down) or how we drop messages. 
+ *   With a larger buffer, you can allow emitters to have bursts of emissions without slowing them down, like any regular buffer.
  * @param onBufferOverflow configures an [emit][MutableSharedFlow.emit] action on buffer overflow. Optional, defaults to
  *   [suspending][BufferOverflow.SUSPEND] attempts to emit a value.
  *   Values other than [BufferOverflow.SUSPEND] are supported only when `replay > 0` or `extraBufferCapacity > 0`.
@@ -263,7 +266,7 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
 @Suppress("FunctionName", "UNCHECKED_CAST")
 public fun <T> MutableSharedFlow(
     replay: Int = 0,
-    extraBufferCapacity: Int = 0,
+    extraBufferCapacity: Int = 1,
     onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
 ): MutableSharedFlow<T> {
     require(replay >= 0) { "replay cannot be negative, but was $replay" }
