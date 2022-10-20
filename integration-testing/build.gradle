@@ -2,11 +2,54 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+
+buildscript {
+
+    /*
+     * These property group is used to build kotlinx.coroutines against Kotlin compiler snapshot.
+     * How does it work:
+     * When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version,
+     * atomicfu_version is overwritten by TeamCity environment (AFU is built with snapshot and published to mavenLocal
+     * as previous step or the snapshot build).
+     * Additionally, mavenLocal and Sonatype snapshots are added to repository list and stress tests are disabled.
+     * DO NOT change the name of these properties without adapting kotlinx.train build chain.
+     */
+    def prop = rootProject.properties['build_snapshot_train']
+    ext.build_snapshot_train = prop != null && prop != ""
+    if (build_snapshot_train) {
+        ext.kotlin_version = rootProject.properties['kotlin_snapshot_version']
+        if (kotlin_version == null) {
+            throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
+        }
+    }
+    ext.native_targets_enabled = rootProject.properties['disable_native_targets'] == null
+
+    // Determine if any project dependency is using a snapshot version
+    ext.using_snapshot_version = build_snapshot_train
+    rootProject.properties.each { key, value ->
+        if (key.endsWith("_version") && value instanceof String && value.endsWith("-SNAPSHOT")) {
+            println("NOTE: USING SNAPSHOT VERSION: $key=$value")
+            ext.using_snapshot_version = true
+        }
+    }
+
+    if (using_snapshot_version) {
+        repositories {
+            mavenLocal()
+            maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        }
+    }
+
+}
+
 plugins {
     id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
 }
 
 repositories {
+    if (build_snapshot_train) {
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+    }
     mavenLocal()
     mavenCentral()
 }
@@ -19,6 +62,7 @@ java {
 dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     testImplementation "org.ow2.asm:asm:$asm_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 sourceSets {
@@ -56,7 +100,7 @@ sourceSets {
         }
     }
 
-    // Checks that kotlinx-coroutines-debug agent can self-attach dynamically to JVM as standalone dependency
+    // Checks that kotlinx-coroutines-debug agent can self-attach dynamically to JVM as a standalone dependency
     debugDynamicAgentTest {
         kotlin
         compileClasspath += sourceSets.test.runtimeClasspath
@@ -129,4 +173,9 @@ compileTestKotlin {
 
 check {
     dependsOn([jvmCoreTest, debugDynamicAgentTest, mavenTest, debugAgentTest, coreAgentTest, 'smokeTest:build'])
+}
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
