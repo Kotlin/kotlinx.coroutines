@@ -33,25 +33,10 @@ public fun toStackTrace(t: Throwable): String {
 }
 
 public fun String.normalizeStackTrace(): String =
-    applyBackspace()
-    .replace(Regex(":[0-9]+"), "") // remove line numbers
+    replace(Regex(":[0-9]+"), "") // remove line numbers
     .replace("kotlinx_coroutines_core_main", "") // yay source sets
     .replace("kotlinx_coroutines_core", "")
     .replace(Regex("@[0-9a-f]+"), "") // remove hex addresses in debug toStrings
     .lines().joinToString("\n") // normalize line separators
-
-public fun String.applyBackspace(): String {
-    val array = toCharArray()
-    val stack = CharArray(array.size)
-    var stackSize = -1
-    for (c in array) {
-        if (c != '\b') {
-            stack[++stackSize] = c
-        } else {
-            --stackSize
-        }
-    }
-    return String(stack, 0, stackSize)
-}
 
 public fun String.count(substring: String): Int = split(substring).size - 1

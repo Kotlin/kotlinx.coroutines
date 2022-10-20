@@ -7,6 +7,9 @@ package kotlinx.coroutines.debug
 import java.io.*
 import kotlin.test.*
 
+private val coroutineCreationFrameRegex =
+    Regex("\n\tat _COROUTINE._CREATION._[^\n]*\n")
+
 public fun String.trimStackTrace(): String =
     trimIndent()
         .replace(Regex(":[0-9]+"), "")
@@ -14,22 +17,6 @@ public fun String.trimStackTrace(): String =
         .replace(Regex("(?<=\tat )[^\n]*/"), "")
         .replace(Regex("\t"), "")
         .replace("sun.misc.Unsafe.", "jdk.internal.misc.Unsafe.") // JDK8->JDK11
-        .applyBackspace()
-
-public fun String.applyBackspace(): String {
-    val array = toCharArray()
-    val stack = CharArray(array.size)
-    var stackSize = -1
-    for (c in array) {
-        if (c != '\b') {
-            stack[++stackSize] = c
-        } else {
-            --stackSize
-        }
-    }
-
-    return String(stack, 0, stackSize + 1)
-}
 
 public fun verifyStackTrace(e: Throwable, traces: List<String>) {
     val stacktrace = toStackTrace(e)
@@ -74,7 +61,7 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null, f
  *     `$$BlockHound$$_` prepended at the last component.
  */
 private fun cleanBlockHoundTraces(frames: List<String>): List<String> {
-    var result = mutableListOf<String>()
+    val result = mutableListOf<String>()
     val blockHoundSubstr = "\$\$BlockHound\$\$_"
     var i = 0
     while (i < frames.size) {
@@ -98,21 +85,21 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
         assertTrue(filtered[0].startsWith("Coroutines dump"))
         return
     }
-    // Drop "Coroutine dump" line
-    trace.withIndex().drop(1).forEach { (index, value) ->
+    // The first line, "Coroutine dump", is dropped. This is not `zip` because not having enough dumps is an error.
+    trace.drop(1).withIndex().forEach { (index, value) ->
         if (ignoredCoroutine != null && value.contains(ignoredCoroutine)) {
             return@forEach
         }
 
-        val expected = traces[index - 1].applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
-        val actual = value.applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
+        val expected = traces[index].split(coroutineCreationFrameRegex, limit = 2)
+        val actual = value.split(coroutineCreationFrameRegex, limit = 2)
         assertEquals(expected.size, actual.size, "Creation stacktrace should be part of the expected input. Whole dump:\n$wholeDump")
 
-        expected.withIndex().forEach { (index, trace) ->
-            val actualTrace = actual[index].trimStackTrace().sanitizeAddresses()
-            val expectedTrace = trace.trimStackTrace().sanitizeAddresses()
-            val actualLines = cleanBlockHoundTraces(actualTrace.split("\n"))
-            val expectedLines = expectedTrace.split("\n")
+        actual.zip(expected).forEach { (actualTrace, expectedTrace) ->
+            val sanitizedActualTrace = actualTrace.trimStackTrace().sanitizeAddresses()
+            val sanitizedExpectedTrace = expectedTrace.trimStackTrace().sanitizeAddresses()
+            val actualLines = cleanBlockHoundTraces(sanitizedActualTrace.split("\n"))
+            val expectedLines = sanitizedExpectedTrace.split("\n")
             for (i in expectedLines.indices) {
                 assertEquals(expectedLines[i], actualLines[i], "Whole dump:\n$wholeDump")
             }
