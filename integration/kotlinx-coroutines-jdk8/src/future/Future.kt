@@ -155,7 +155,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
  * corresponds to this [CompletionStage] (see [CompletionStage.toCompletableFuture])
  * is cancelled. If cancelling the given stage is undesired, `stage.asDeferred().await()` should be used instead.
  */
-public suspend fun <T> CompletionStage<T>.await(): T {
+public suspend fun <T> CompletionStage<T>.await(mayInterruptIfRunning: Boolean = false): T {
     val future = toCompletableFuture() // retrieve the future
     // fast path when CompletableFuture is already done (does not suspend)
     if (future.isDone) {
@@ -171,7 +171,7 @@ public suspend fun <T> CompletionStage<T>.await(): T {
         val consumer = ContinuationConsumer(cont)
         whenComplete(consumer)
         cont.invokeOnCancellation {
-            future.cancel(false)
+            future.cancel(mayInterruptIfRunning)
             consumer.cont = null // shall clear reference to continuation to aid GC
         }
     }
