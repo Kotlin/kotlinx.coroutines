@@ -23,6 +23,9 @@ public final class kotlinx/coroutines/test/TestBuildersKt {
 	public static synthetic fun runTest$default (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static synthetic fun runTest$default (Lkotlinx/coroutines/test/TestCoroutineScope;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static synthetic fun runTest$default (Lkotlinx/coroutines/test/TestScope;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun runTest-8Mi8wO0 (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;)V
+	public static final fun runTest-8Mi8wO0 (Lkotlinx/coroutines/test/TestScope;JLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun runTest-8Mi8wO0$default (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static final fun runTestWithLegacyScope (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;)V
 	public static synthetic fun runTestWithLegacyScope$default (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
