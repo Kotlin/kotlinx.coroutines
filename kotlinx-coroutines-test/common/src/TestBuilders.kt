@@ -148,7 +148,7 @@ public expect class TestResult
 @ExperimentalCoroutinesApi
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
-    dispatchTimeout: Duration,
+    dispatchTimeout: Duration = DEFAULT_DISPATCH_TIMEOUT,
     testBody: suspend TestScope.() -> Unit
 ): TestResult {
     if (context[RunningInRunTest] != null)
