@@ -257,7 +257,7 @@ public fun runTest(
  *
  * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
  * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
- * for [dispatchTimeout] (by default, 60 seconds) from the moment when [TestCoroutineScheduler] becomes
+ * for [dispatchTimeoutMs] from the moment when [TestCoroutineScheduler] becomes
  * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
  * task during that time, the timer gets reset.
  *
