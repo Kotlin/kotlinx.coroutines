@@ -76,6 +76,9 @@ def configureKotlinJvmPlatform(configuration) {
     configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
 }
 
+// Configure subprojects with Kotlin sources
+apply plugin: "configure-compilation-conventions"
+
 allprojects {
     // the only place where HostManager could be instantiated
     project.ext.hostManager = new HostManager()
@@ -166,9 +169,6 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
 }
 
 apply plugin: "bom-conventions"
-
-// Configure subprojects with Kotlin sources
-apply plugin: "configure-compilation-conventions"
 
 if (build_snapshot_train) {
     println "Hacking test tasks, removing stress and flaky tests"
