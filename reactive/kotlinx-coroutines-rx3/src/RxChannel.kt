@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.*
 internal fun <T> MaybeSource<T & Any>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     @Suppress("UNCHECKED_CAST")
-    subscribe(channel as MaybeObserver<T>)
+    subscribe(channel as MaybeObserver<T & Any>)
     return channel
 }
 
@@ -36,7 +36,7 @@ internal fun <T> MaybeSource<T & Any>.openSubscription(): ReceiveChannel<T> {
 internal fun <T> ObservableSource<T & Any>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     @Suppress("UNCHECKED_CAST")
-    subscribe(channel as Observer<T>)
+    subscribe(channel as Observer<T & Any>)
     return channel
 }
 
