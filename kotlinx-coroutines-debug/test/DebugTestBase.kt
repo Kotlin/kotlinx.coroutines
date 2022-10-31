@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.junit4.*
 import org.junit.*
 
-open class DebugTestBase : TestBase() {
+open class DebugTestBase : TestBase(true) {
 
     @JvmField
     @Rule

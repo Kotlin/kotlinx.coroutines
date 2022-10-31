@@ -454,7 +454,6 @@ internal object DebugProbesImpl {
             val realCaller = info.lastObservedFrame?.realCaller()
             if (realCaller != null) callerInfoCache.remove(realCaller)
         }
-
         info.updateState(state, frame as Continuation<*>)
         // Do not cache it for proxy-classes such as ScopeCoroutines
         val caller = frame.realCaller() ?: return

@@ -80,25 +80,7 @@ class SanitizedProbesTest : DebugTestBase() {
         expect(1)
         yield()
         expect(3)
-        verifyDump("Coroutine \"coroutine#1\":BlockingCoroutine{Active}@35fc6dc4, state: RUNNING\n" +
-                "\tat java.lang.Thread.getStackTrace(Thread.java:1552)\n" + // Skip the rest
-                "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
-                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
 
-            "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@1b68b9a4, state: SUSPENDED\n" +
-                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$launchSelector\$1\$1\$1.invokeSuspend(SanitizedProbesTest.kt)\n" +
-                "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
-                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:25)\n" +
-                "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.launch\$default(Builders.common.kt)\n" +
-                "\tat kotlinx.coroutines.BuildersKt.launch\$default(Unknown Source)\n" +
-                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.launchSelector(SanitizedProbesTest.kt:100)\n" +
-                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.access\$launchSelector(SanitizedProbesTest.kt:16)\n" +
-                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$testSelectBuilder\$1.invokeSuspend(SanitizedProbesTest.kt:89)\n" +
-                "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n" +
-                "\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:233)\n" +
-                "\tat kotlinx.coroutines.TestBase.runTest\$default(TestBase.kt:154)\n" +
-                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.testSelectBuilder(SanitizedProbesTest.kt:88)")
         finish(4)
         selector.cancelAndJoin()
     }

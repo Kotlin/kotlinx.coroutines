@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 /**
  * Yields the thread (or thread pool) of the current coroutine dispatcher
@@ -47,5 +48,9 @@ public suspend fun yield(): Unit = suspendCoroutineUninterceptedOrReturn sc@ { u
         }
         // Otherwise, it was some other dispatcher that successfully dispatched the coroutine
     }
+    repeat(10000) { a = it}
     COROUTINE_SUSPENDED
 }
+
+@Volatile
+private var a = 2

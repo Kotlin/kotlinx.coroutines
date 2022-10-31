@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
 
@@ -18,6 +19,7 @@ class AsyncJvmTest : TestBase() {
 
         @Suppress("UNREACHABLE_CODE")
         val d = async {
+            Channel<Int>().also { ch -> coroutineContext.job.invokeOnCompletion { ch.close() } }
             expect(3)
             try {
                 yield() // to main, will cancel

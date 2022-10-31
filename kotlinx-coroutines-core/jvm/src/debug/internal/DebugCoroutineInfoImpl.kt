@@ -40,19 +40,84 @@ internal class DebugCoroutineInfoImpl(
      * Can be CREATED, RUNNING, SUSPENDED.
      */
     public val state: String get() = _state
+
+    /**
+     * _state field orchestrates overlapping state updates that are coming asynchronously.
+     * In a nutshell, `probeCoroutineSuspended` can arrive **later** than its matching `probeCoroutineResumed`,
+     * e.g. for the following code:
+     * ```
+     * suspend fun foo() = yield()
+     * ```
+     *
+     * we have this sequence:
+     * ```
+     * fun foo(...) {
+     *     uCont.intercepted().dispatchUsingDispatcher() // 1
+     *     // Notify the debugger the coroutine is suspended
+     *     probeCoroutineSuspended() // 2
+     *     return COROUTINE_SUSPENDED // Unroll the stack
+     * }
+     * ```
+     * Nothing prevents coroutine to be dispatched and invoke `probeCoroutineResumed` before '1' and '2'.
+     *
+     * The latter is preferable, but can deadlock the whole process in case of bugs
+     * or improperly implemented AbstractCoroutine class.
+     * See 'updateState' for the precise description.
+     *
+     * See also: https://github.com/Kotlin/kotlinx.coroutines/issues/3193
+     */
+    @Volatile
     private var _state: String = CREATED
 
+    /*
+     * How many consecutive 'updateState(RESUMED)' this object has received.
+     * It can be `> 1` in two cases:
+     *
+     * * The coroutine is finishing and its state is being unrolled in BaseContinuationImpl
+     * * We encountered suspend-resume race explained above
+     */
+    private var runningStateDepth = 0
+
+    @Synchronized
+    internal fun updateState(state: String, frame: Continuation<*>) {
+        // Update running state depth
+        if (state == RUNNING) {
+            ++runningStateDepth
+        } else if (state == SUSPENDED && --runningStateDepth > 0) {
+            // Two options: we either detected a race or a valid 'suspend' after unroll, let's distinguish them
+            // TODO explain ?
+            if (frame != lastObservedFrame) {
+                return
+            }
+        }
+
+        // Propagate only non-duplicating transitions to running, see KT-29997
+        if (_state == state && state == SUSPENDED && lastObservedFrame != null) return
+
+        _state = state
+        lastObservedFrame = frame as? CoroutineStackFrame
+        lastObservedThread = if (state == RUNNING) {
+            Thread.currentThread()
+        } else {
+            null
+        }
+    }
+
     @JvmField
+    @Volatile
     internal var lastObservedThread: Thread? = null
 
     /**
      * We cannot keep a strong reference to the last observed frame of the coroutine, because this will
      * prevent garbage-collection of a coroutine that was lost.
      */
+    @Volatile
     private var _lastObservedFrame: WeakReference<CoroutineStackFrame>? = null
     internal var lastObservedFrame: CoroutineStackFrame?
         get() = _lastObservedFrame?.get()
-        set(value) { _lastObservedFrame = value?.let { WeakReference(it) } }
+        set(value) {
+            _lastObservedFrame = value?.let { WeakReference(it) }
+        }
 
     /**
      * Last observed stacktrace of the coroutine captured on its suspension or resumption point.
@@ -81,18 +146,6 @@ internal class DebugCoroutineInfoImpl(
         val caller = frame.callerFrame
         if (caller != null) {
             yieldFrames(caller)
-        }
-    }
-
-    internal fun updateState(state: String, frame: Continuation<*>) {
-        // Propagate only duplicating transitions to running for KT-29997
-        if (_state == state && state == SUSPENDED && lastObservedFrame != null) return
-        _state = state
-        lastObservedFrame = frame as? CoroutineStackFrame
-        lastObservedThread = if (state == RUNNING) {
-            Thread.currentThread()
-        } else {
-            null
         }
     }
 
