@@ -103,11 +103,11 @@ class JobTest : TestBase() {
         }
         assertTrue(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
-        val tryCancel = Try { job.cancel() }
+        val cancelResult = runCatching { job.cancel() }
         assertTrue(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
-        assertTrue(tryCancel.exception is CompletionHandlerException)
-        assertTrue(tryCancel.exception!!.cause is TestException)
+        assertTrue(cancelResult.exceptionOrNull() is CompletionHandlerException)
+        assertTrue(cancelResult.exceptionOrNull()!!.cause is TestException)
     }
 
     @Test
