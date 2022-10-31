@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.time.*
 import platform.CoreFoundation.*
 import platform.darwin.*
 import kotlin.coroutines.*
@@ -78,7 +79,7 @@ class MainDispatcherTest : TestBase() {
     @Test
     fun testWithTimeoutContextDelayTimeout() = runTestNotOnMainDispatcher {
         expect(1)
-         assertFailsWith<TimeoutCancellationException> {
+         assertFailsWith<TimeoutException> {
              kotlinx.coroutines.time.withTimeout(100) {
                  withContext(Dispatchers.Main) {
                      assertTrue(isMainThread())
@@ -112,7 +113,7 @@ class MainDispatcherTest : TestBase() {
     @Test
     fun testWithContextTimeoutDelayTimeout() = runTestNotOnMainDispatcher {
         expect(1)
-        assertFailsWith<TimeoutCancellationException> {
+        assertFailsWith<TimeoutException> {
             withContext(Dispatchers.Main) {
                 kotlinx.coroutines.time.withTimeout(100) {
                     assertTrue(isMainThread())

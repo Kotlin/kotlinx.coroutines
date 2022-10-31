@@ -6,6 +6,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
@@ -177,7 +178,7 @@ class WithTimeoutDurationTest : TestBase() {
                 expectUnreached()
                 "OK"
             }
-        } catch (e: TimeoutCancellationException) {
+        } catch (e: TimeoutException) {
             assertEquals("Timed out immediately", e.message)
             finish(2)
         }

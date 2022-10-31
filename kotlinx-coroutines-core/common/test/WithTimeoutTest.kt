@@ -7,6 +7,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 
 class WithTimeoutTest : TestBase() {
@@ -169,7 +170,7 @@ class WithTimeoutTest : TestBase() {
                 expectUnreached()
                 "OK"
             }
-        } catch (e: TimeoutCancellationException) {
+        } catch (e: TimeoutException) {
             assertEquals("Timed out immediately", e.message)
             finish(2)
         }

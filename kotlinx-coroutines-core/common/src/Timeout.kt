@@ -48,6 +48,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
+    @Suppress("DEPRECATION")
     if (timeMillis <= 0L) throw TimeoutCancellationException("Timed out immediately")
     return suspendCoroutineUninterceptedOrReturn { uCont ->
         setupTimeout(TimeoutCoroutine(timeMillis, uCont), block)
@@ -113,6 +114,7 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
     if (timeMillis <= 0L) return null
 
     var coroutine: TimeoutCoroutine<T?, T?>? = null
+    @Suppress("DEPRECATION")
     try {
         return suspendCoroutineUninterceptedOrReturn { uCont ->
             val timeoutCoroutine = TimeoutCoroutine(timeMillis, uCont)
@@ -179,6 +181,11 @@ private class TimeoutCoroutine<U, in T: U>(
 /**
  * This exception is thrown by [withTimeout] to indicate timeout.
  */
+@Deprecated("Use TimeoutException from the 'kotlinx-coroutines-time' package instead.",
+    ReplaceWith("kotlinx.coroutines.time.TimeoutException",
+        "kotlinx.coroutines.time"),
+    level = DeprecationLevel.WARNING)
+@Suppress("DEPRECATION")
 public class TimeoutCancellationException internal constructor(
     message: String,
     @JvmField @Transient internal val coroutine: Job?
@@ -195,6 +202,7 @@ public class TimeoutCancellationException internal constructor(
         TimeoutCancellationException(message ?: "", coroutine).also { it.initCause(this) }
 }
 
+@Suppress("DEPRECATION")
 internal fun TimeoutCancellationException(
     time: Long,
     coroutine: Job

@@ -11,6 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.time.*
 import kotlin.jvm.*
 import kotlin.time.*
 
@@ -346,7 +347,7 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
 
 /**
- * Returns a flow that will emit a [TimeoutCancellationException] if the upstream doesn't emit an item within the given time.
+ * Returns a flow that will emit a [TimeoutException] if the upstream doesn't emit an item within the given time.
  *
  * Example:
  *
@@ -386,7 +387,7 @@ public fun <T> Flow<T>.timeout(
 private fun <T> Flow<T>.timeoutInternal(
     timeout: Duration
 ): Flow<T> = scopedFlow { downStream ->
-    if (timeout <= Duration.ZERO) throw TimeoutCancellationException("Timed out immediately")
+    if (timeout <= Duration.ZERO) throw TimeoutException("Timed out immediately")
     val values = buffer(Channel.RENDEZVOUS).produceIn(this)
     whileSelect {
         values.onReceiveCatching { value ->
@@ -398,7 +399,7 @@ private fun <T> Flow<T>.timeoutInternal(
             return@onReceiveCatching true
         }
         onTimeout(timeout) {
-            throw TimeoutCancellationException("Timed out waiting for $timeout")
+            throw TimeoutException("Timed out waiting for $timeout")
         }
     }
 }

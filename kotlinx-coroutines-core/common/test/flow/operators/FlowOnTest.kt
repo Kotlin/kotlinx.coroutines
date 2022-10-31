@@ -6,6 +6,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 
 class FlowOnTest : TestBase() {
@@ -244,7 +245,7 @@ class FlowOnTest : TestBase() {
         }.flowOn(NamedDispatchers("foo")).onEach {
             expect(1)
         }
-        assertFailsWith<TimeoutCancellationException>(flow)
+        assertFailsWith<TimeoutException>(flow)
         finish(2)
     }
 
@@ -257,7 +258,7 @@ class FlowOnTest : TestBase() {
             expect(1)
             kotlinx.coroutines.time.withTimeout(-1) {}
         }
-        assertFailsWith<TimeoutCancellationException>(flow)
+        assertFailsWith<TimeoutException>(flow)
         finish(3)
     }
 

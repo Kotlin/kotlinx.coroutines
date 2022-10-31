@@ -5,6 +5,7 @@
 package kotlinx.coroutines.exceptions
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.time.*
 import org.junit.*
 import org.junit.rules.*
 
@@ -17,7 +18,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     fun testStacktraceIsRecoveredFromSuspensionPoint() = runTest {
         try {
             outerWithTimeout()
-        } catch (e: TimeoutCancellationException) {
+        } catch (e: TimeoutException) {
             verifyStackTrace("timeout/${name.methodName}", e)
         }
     }
@@ -38,7 +39,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     fun testStacktraceIsRecoveredFromLexicalBlockWhenTriggeredByChild() = runTest {
         try {
             outerChildWithTimeout()
-        } catch (e: TimeoutCancellationException) {
+        } catch (e: TimeoutException) {
             verifyStackTrace("timeout/${name.methodName}", e)
         }
     }
@@ -64,7 +65,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     fun testStacktraceIsRecoveredFromSuspensionPointWithChild() = runTest {
         try {
             outerChild()
-        } catch (e: TimeoutCancellationException) {
+        } catch (e: TimeoutException) {
             verifyStackTrace("timeout/${name.methodName}", e)
         }
     }

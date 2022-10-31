@@ -8,6 +8,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 
 class WithTimeoutOrNullTest : TestBase() {
@@ -114,7 +115,7 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testNestedTimeout() = runTest(expected = { it is TimeoutCancellationException }) {
+    fun testNestedTimeout() = runTest(expected = { it is TimeoutException }) {
         withTimeoutOrNull(Long.MAX_VALUE) {
             // Exception from this withTimeout is not suppressed by withTimeoutOrNull
             kotlinx.coroutines.time.withTimeout(10) {

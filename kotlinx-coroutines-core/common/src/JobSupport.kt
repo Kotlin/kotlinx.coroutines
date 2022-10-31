@@ -260,6 +260,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val firstNonCancellation = exceptions.firstOrNull { it !is CancellationException }
         if (firstNonCancellation != null) return firstNonCancellation
         val first = exceptions[0]
+        @Suppress("DEPRECATION")
         if (first is TimeoutCancellationException) {
             val detailedTimeoutException = exceptions.firstOrNull { it !== first && it is TimeoutCancellationException }
             if (detailedTimeoutException != null) return detailedTimeoutException

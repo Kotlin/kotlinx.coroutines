@@ -17,15 +17,15 @@ class Resource {
 fun main() {
     runBlocking {
         repeat(100_000) { // Launch 100K coroutines
-            launch {
+            launch { 
                 var resource: Resource? = null // Not acquired yet
                 try {
-                    kotlinx.coroutines.time.withTimeout(60) { // Timeout of 60 ms
+                    withTimeout(60) { // Timeout of 60 ms
                         delay(50) // Delay for 50 ms
-                        resource = Resource() // Store a resource to the variable if acquired
+                        resource = Resource() // Store a resource to the variable if acquired      
                     }
                     // We can do something else with the resource here
-                } finally {
+                } finally {  
                     resource?.close() // Release the resource if it was acquired
                 }
             }

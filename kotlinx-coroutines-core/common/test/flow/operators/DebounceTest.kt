@@ -6,6 +6,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -96,10 +97,10 @@ class DebounceTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamError()= testUpstreamError(TimeoutCancellationException(""))
+    fun testUpstreamError()= testUpstreamError(TimeoutException(""))
 
     @Test
-    fun testUpstreamErrorCancellation() = testUpstreamError(TimeoutCancellationException(""))
+    fun testUpstreamErrorCancellation() = testUpstreamError(TimeoutException(""))
 
     private inline fun <reified T: Throwable> testUpstreamError(cause: T) = runTest {
         val latch = Channel<Unit>()

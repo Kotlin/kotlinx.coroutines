@@ -7,6 +7,7 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.time.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -239,10 +240,10 @@ class RunTestTest {
         }
     }
 
-    /** Tests that [runTest] reports [TimeoutCancellationException]. */
+    /** Tests that [runTest] reports [TimeoutException]. */
     @Test
     fun testTimeout() = testResultMap({
-        assertFailsWith<TimeoutCancellationException> { it() }
+        assertFailsWith<TimeoutException> { it() }
     }) {
         runTest {
             kotlinx.coroutines.time.withTimeout<Unit>(50) {
