@@ -69,20 +69,6 @@ class RunTestTest {
         deferred.await()
     }
 
-    /** Tests that a dispatch timeout of `0` will fail the test if there are some dispatches outside the scheduler. */
-    @Test
-    fun testRunTestWithZeroTimeoutWithUncontrolledDispatches() = testResultMap({ fn ->
-        assertFailsWith<UncompletedCoroutinesError> { fn() }
-    }) {
-        runTest(dispatchTimeoutMs = 0) {
-            withContext(Dispatchers.Default) {
-                delay(10)
-                3
-            }
-            fail("shouldn't be reached")
-        }
-    }
-
     /** Tests that too low of a dispatch timeout causes crashes. */
     @Test
     fun testRunTestWithSmallTimeout() = testResultMap({ fn ->
