@@ -224,9 +224,8 @@ def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartia
 apply plugin: "org.jetbrains.dokka"
 
 configure(subprojects.findAll { !unpublished.contains(it.name)
-        && it.name != coreModule
-        && it.name != jdk8ObsoleteModule}) {
-    if (it.name != 'kotlinx-coroutines-bom') {
+        && it.name != coreModule }) {
+    if (it.name != 'kotlinx-coroutines-bom' && it.name != jdk8ObsoleteModule) {
         apply from: rootProject.file('gradle/dokka.gradle.kts')
     }
     apply from: rootProject.file('gradle/publish.gradle')
