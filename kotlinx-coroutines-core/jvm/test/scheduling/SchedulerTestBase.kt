@@ -91,7 +91,7 @@ abstract class SchedulerTestBase : TestBase() {
     @After
     fun after() {
         runBlocking {
-            withTimeout(5_000) {
+            kotlinx.coroutines.time.withTimeout(5_000) {
                 _dispatcher?.close()
             }
         }

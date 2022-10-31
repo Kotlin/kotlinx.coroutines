@@ -54,7 +54,7 @@ class ThreadContextElementRestoreTest : TestBase() {
             assertEquals(null, tl.get())
         }
         // Scenario #6: withContext(ThreadLocal) from withTimeout
-        withTimeout(1000) {
+        kotlinx.coroutines.time.withTimeout(1000) {
             withContext(tl.asContextElement("OK")) {
                 block()
                 assertEquals("OK", tl.get())
@@ -171,14 +171,14 @@ class ThreadContextElementRestoreTest : TestBase() {
 
     @Test
     fun testWithTimeoutDelay() = check {
-        withTimeout(1000) {
+        kotlinx.coroutines.time.withTimeout(1000) {
             delay(1)
         }
     }
 
     @Test
     fun testWithTimeoutYield() = check {
-        withTimeout(1000) {
+        kotlinx.coroutines.time.withTimeout(1000) {
             yield()
         }
     }

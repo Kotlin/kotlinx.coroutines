@@ -241,7 +241,7 @@ class TestCoroutineSchedulerTest {
         asSpecificImplementation().enter()
         launch {
             try {
-                withTimeout(timeoutMillis) {
+                kotlinx.coroutines.time.withTimeout(timeoutMillis) {
                     block()
                 }
             } catch (e: TimeoutCancellationException) {

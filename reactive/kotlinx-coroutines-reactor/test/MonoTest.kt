@@ -314,7 +314,7 @@ class MonoTest : TestBase() {
     @Test
     fun testTimeout() {
         val mono = mono {
-            withTimeout(1) { delay(100) }
+            kotlinx.coroutines.time.withTimeout(1) { delay(100) }
         }
         try {
             mono.doOnSubscribe { expect(1) }

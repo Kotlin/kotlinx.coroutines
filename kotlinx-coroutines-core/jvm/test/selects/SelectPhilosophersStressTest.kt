@@ -56,7 +56,7 @@ class SelectPhilosophersStressTest : TestBase() {
             println("Test is failing. Lock states are:")
             forks.withIndex().forEach { (id, mutex) -> println("$id: $mutex") }
         }
-        val eats = withTimeout(5 * TEST_DURATION) { philosophers.map { it.await() } }
+        val eats = kotlinx.coroutines.time.withTimeout(5 * TEST_DURATION) { philosophers.map { it.await() } }
         debugJob.cancel()
         eats.withIndex().forEach { (id, eats) ->
             assertTrue(eats > 0, "$id shall not starve")

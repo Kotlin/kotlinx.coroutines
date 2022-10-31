@@ -61,7 +61,7 @@ class HandlerDispatcherTest : TestBase() {
         mainLooper.pause()
         assertFalse { mainLooper.scheduler.areAnyRunnable() }
         val job = launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
-            withTimeout(1) {
+            kotlinx.coroutines.time.withTimeout(1) {
                 expect(1)
                 hang { expect(3) }
             }

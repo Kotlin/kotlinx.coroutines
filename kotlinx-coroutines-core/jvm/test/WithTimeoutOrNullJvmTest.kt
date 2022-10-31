@@ -24,7 +24,7 @@ class WithTimeoutOrNullJvmTest : TestBase() {
 
     @Test
     fun testIgnoredTimeout() = runTest {
-        val value = withTimeout(1) {
+        val value = kotlinx.coroutines.time.withTimeout(1) {
             Thread.sleep(10)
             42
         }

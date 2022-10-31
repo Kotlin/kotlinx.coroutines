@@ -102,7 +102,7 @@ class WithTimeoutOrNullTest : TestBase() {
         expected = { it is CancellationException }
     ) {
         withTimeoutOrNull(1000) {
-            withTimeout(10) {
+            kotlinx.coroutines.time.withTimeout(10) {
                 while (true) {
                     yield()
                 }
@@ -117,7 +117,7 @@ class WithTimeoutOrNullTest : TestBase() {
     fun testNestedTimeout() = runTest(expected = { it is TimeoutCancellationException }) {
         withTimeoutOrNull(Long.MAX_VALUE) {
             // Exception from this withTimeout is not suppressed by withTimeoutOrNull
-            withTimeout(10) {
+            kotlinx.coroutines.time.withTimeout(10) {
                 delay(Long.MAX_VALUE)
                 1
             }

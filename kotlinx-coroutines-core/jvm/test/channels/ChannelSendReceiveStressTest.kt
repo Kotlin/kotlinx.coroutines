@@ -89,7 +89,7 @@ class ChannelSendReceiveStressTest(
             }
         }
         try {
-            withTimeout(timeLimit) {
+            kotlinx.coroutines.time.withTimeout(timeLimit) {
                 senders.forEach { it.join() }
                 channel.close()
                 receivers.forEach { it.join() }

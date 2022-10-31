@@ -90,7 +90,7 @@ class ParentCancellationTest : TestBase() {
     @Test
     fun testWithTimeoutChild() = runTest {
         testParentCancellation(expectParentActive = true, expectRethrows = true, runsInScopeContext = true) { fail ->
-            withTimeout(1000) { fail() }
+            kotlinx.coroutines.time.withTimeout(1000) { fail() }
         }
     }
 

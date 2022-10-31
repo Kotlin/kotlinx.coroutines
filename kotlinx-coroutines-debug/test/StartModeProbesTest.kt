@@ -59,7 +59,7 @@ class StartModeProbesTest : DebugTestBase() {
     }
 
     private suspend fun withTimeoutHelper() {
-        withTimeout(Long.MAX_VALUE) {
+        kotlinx.coroutines.time.withTimeout(Long.MAX_VALUE) {
             expect(2)
             delay(Long.MAX_VALUE)
         }
@@ -69,7 +69,7 @@ class StartModeProbesTest : DebugTestBase() {
 
     @Test
     fun testWithTimeout() = runTest {
-        withTimeout(Long.MAX_VALUE) {
+        kotlinx.coroutines.time.withTimeout(Long.MAX_VALUE) {
             testActiveDump(
                 false,
                 "StartModeProbesTest\$testWithTimeout\$1.invokeSuspend",
@@ -80,7 +80,7 @@ class StartModeProbesTest : DebugTestBase() {
 
     @Test
     fun testWithTimeoutAfterYield() = runTest {
-        withTimeout(Long.MAX_VALUE) {
+        kotlinx.coroutines.time.withTimeout(Long.MAX_VALUE) {
             testActiveDump(
                 true,
                 "StartModeProbesTest\$testWithTimeoutAfterYield\$1.invokeSuspend",
@@ -127,7 +127,8 @@ class StartModeProbesTest : DebugTestBase() {
         verifyPartialDump(
             2,
             "StartModeProbesTest\$runScope\$2.invokeSuspend",
-            "StartModeProbesTest\$testCoroutineScope\$1\$job\$1.invokeSuspend")
+            "StartModeProbesTest\$testCoroutineScope\$1\$job\$1.invokeSuspend"
+        )
         job.cancelAndJoin()
         finish(4)
     }
@@ -141,13 +142,15 @@ class StartModeProbesTest : DebugTestBase() {
 
     @Test
     fun testLazy() = runTest({ it is CancellationException }) {
-        launch(start = CoroutineStart.LAZY) {  }
-        actor<Int>(start = CoroutineStart.LAZY) {  }
-        broadcast<Int>(start = CoroutineStart.LAZY) {  }
+        launch(start = CoroutineStart.LAZY) { }
+        actor<Int>(start = CoroutineStart.LAZY) { }
+        broadcast<Int>(start = CoroutineStart.LAZY) { }
         async(start = CoroutineStart.LAZY) { 1 }
-        verifyPartialDump(5, "BlockingCoroutine",
+        verifyPartialDump(
+            5, "BlockingCoroutine",
             "LazyStandaloneCoroutine", "LazyActorCoroutine",
-            "LazyBroadcastCoroutine", "LazyDeferredCoroutine")
+            "LazyBroadcastCoroutine", "LazyDeferredCoroutine"
+        )
         cancel()
     }
 }

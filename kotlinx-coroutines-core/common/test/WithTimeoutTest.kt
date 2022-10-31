@@ -16,7 +16,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeout(10_000) {
+        val result = kotlinx.coroutines.time.withTimeout(10_000) {
             expect(2)
             "OK"
         }
@@ -30,7 +30,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testBasicSuspend() = runTest {
         expect(1)
-        val result = withTimeout(10_000) {
+        val result = kotlinx.coroutines.time.withTimeout(10_000) {
             expect(2)
             yield()
             expect(3)
@@ -53,7 +53,7 @@ class WithTimeoutTest : TestBase() {
         }
         expect(2)
         // test that it does not yield to the above job when started
-        val result = withTimeout(1000) {
+        val result = kotlinx.coroutines.time.withTimeout(1000) {
             expect(3)
             yield() // yield only now
             expect(5)
@@ -73,7 +73,7 @@ class WithTimeoutTest : TestBase() {
     fun testYieldBlockingWithTimeout() = runTest(
         expected = { it is CancellationException }
     ) {
-        withTimeout(100) {
+        kotlinx.coroutines.time.withTimeout(100) {
             while (true) {
                 yield()
             }
@@ -86,7 +86,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testWithTimeoutChildWait() = runTest {
         expect(1)
-        withTimeout(100) {
+        kotlinx.coroutines.time.withTimeout(100) {
             expect(2)
             // launch child with timeout
             launch {
@@ -101,7 +101,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeout(100) {
+        val result = kotlinx.coroutines.time.withTimeout(100) {
             bad
         }
         assertSame(bad, result)
@@ -111,7 +111,7 @@ class WithTimeoutTest : TestBase() {
     fun testExceptionOnTimeout() = runTest {
         expect(1)
         try {
-            withTimeout(100) {
+            kotlinx.coroutines.time.withTimeout(100) {
                 expect(2)
                 delay(1000)
                 expectUnreached()
@@ -128,7 +128,7 @@ class WithTimeoutTest : TestBase() {
         expected = { it is CancellationException }
     ) {
         expect(1)
-        withTimeout(100) {
+        kotlinx.coroutines.time.withTimeout(100) {
             expect(2)
             try {
                 delay(1000)
@@ -144,7 +144,7 @@ class WithTimeoutTest : TestBase() {
     fun testSuppressExceptionWithAnotherException() = runTest{
         expect(1)
         try {
-            withTimeout(100) {
+            kotlinx.coroutines.time.withTimeout(100) {
                 expect(2)
                 try {
                     delay(1000)
@@ -165,7 +165,7 @@ class WithTimeoutTest : TestBase() {
     fun testNegativeTimeout() = runTest {
         expect(1)
         try {
-            withTimeout(-1) {
+            kotlinx.coroutines.time.withTimeout(-1) {
                 expectUnreached()
                 "OK"
             }
@@ -180,7 +180,7 @@ class WithTimeoutTest : TestBase() {
         expect(1)
         try {
             expect(2)
-            withTimeout(1000) {
+            kotlinx.coroutines.time.withTimeout(1000) {
                 expect(3)
                 throw TestException()
             }
@@ -193,7 +193,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testIncompleteWithTimeoutState() = runTest {
         lateinit var timeoutJob: Job
-        val handle = withTimeout(Long.MAX_VALUE) {
+        val handle = kotlinx.coroutines.time.withTimeout(Long.MAX_VALUE) {
             timeoutJob = coroutineContext[Job]!!
             timeoutJob.invokeOnCompletion { }
         }

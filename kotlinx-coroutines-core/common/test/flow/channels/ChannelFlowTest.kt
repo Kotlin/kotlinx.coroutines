@@ -126,7 +126,7 @@ class ChannelFlowTest : TestBase() {
             launch {
                 expect(4)
                 collect {
-                    withTimeout(-1) {
+                    kotlinx.coroutines.time.withTimeout(-1) {
                         send(it)
                     }
                     expectUnreached()

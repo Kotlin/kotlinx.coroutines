@@ -214,7 +214,7 @@ class IntegrationTest(
     fun testPublishWithTimeout() = runTest {
         val publisher = publish<Int> {
             expect(2)
-            withTimeout(1) { delay(100) }
+            kotlinx.coroutines.time.withTimeout(1) { delay(100) }
         }
         try {
             expect(1)

@@ -23,14 +23,14 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun outerWithTimeout() {
-        withTimeout(200) {
+        kotlinx.coroutines.time.withTimeout(200) {
             suspendForever()
         }
         expectUnreached()
     }
 
     private suspend fun suspendForever() {
-        hang {  }
+        hang { }
         expectUnreached()
     }
 
@@ -44,7 +44,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun outerChildWithTimeout() {
-        withTimeout(200) {
+        kotlinx.coroutines.time.withTimeout(200) {
             launch {
                 withTimeoutInChild()
             }
@@ -54,8 +54,8 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun withTimeoutInChild() {
-        withTimeout(300) {
-            hang {  }
+        kotlinx.coroutines.time.withTimeout(300) {
+            hang { }
         }
         expectUnreached()
     }
@@ -70,7 +70,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun outerChild() {
-        withTimeout(200) {
+        kotlinx.coroutines.time.withTimeout(200) {
             launch {
                 smallWithTimeout()
             }
@@ -80,7 +80,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun smallWithTimeout() {
-        withTimeout(100) {
+        kotlinx.coroutines.time.withTimeout(100) {
             suspendForever()
         }
         expectUnreached()

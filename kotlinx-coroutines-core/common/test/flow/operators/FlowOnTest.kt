@@ -239,7 +239,7 @@ class FlowOnTest : TestBase() {
         val flow = flow {
             emit(1)
             yield()
-            withTimeout(-1) {}
+            kotlinx.coroutines.time.withTimeout(-1) {}
             emit(42)
         }.flowOn(NamedDispatchers("foo")).onEach {
             expect(1)
@@ -255,7 +255,7 @@ class FlowOnTest : TestBase() {
             hang { expect(2) }
         }.flowOn(NamedDispatchers("foo")).onEach {
             expect(1)
-            withTimeout(-1) {}
+            kotlinx.coroutines.time.withTimeout(-1) {}
         }
         assertFailsWith<TimeoutCancellationException>(flow)
         finish(3)

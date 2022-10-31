@@ -96,7 +96,7 @@ class CancelledParentAttachTest : TestBase() {
         testScope { coroutineScope { } }
         testScope { supervisorScope { } }
         testScope { flowScope { } }
-        testScope { withTimeout(Long.MAX_VALUE) { } }
+        testScope { kotlinx.coroutines.time.withTimeout(Long.MAX_VALUE) { } }
         testScope { withContext(Job()) { } }
         testScope { withContext(CoroutineName("")) { } }
     }

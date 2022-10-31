@@ -81,7 +81,7 @@ class RunBlockingTestOnTestScopeTest {
     fun testTimeout() {
         assertFailsWith<TimeoutCancellationException> {
             runBlockingTestOnTestScope {
-                withTimeout(50) {
+                kotlinx.coroutines.time.withTimeout<Unit>(50) {
                     launch {
                         delay(1000)
                     }
