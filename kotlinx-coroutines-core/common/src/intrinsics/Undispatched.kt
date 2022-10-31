@@ -6,6 +6,7 @@ package kotlinx.coroutines.intrinsics
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.time.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
@@ -97,6 +98,19 @@ internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
     receiver: R, block: suspend R.() -> T
 ): Any? {
     return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === this) }) {
+        block.startCoroutineUninterceptedOrReturn(receiver, this)
+    }
+}
+
+/**
+ * Same as [startUndispatchedOrReturn], but ignores [TimeoutException] on fast-path.
+ */
+internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreNewTimeout(
+    receiver: R, block: suspend R.() -> T
+): Any? {
+    return undispatchedResult({ e ->
+        !(e is TimeoutException && e.coroutine === this)
+    }) {
         block.startCoroutineUninterceptedOrReturn(receiver, this)
     }
 }

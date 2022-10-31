@@ -33,7 +33,7 @@ public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.coerceT
  * "java.time" adapter method for [SelectBuilder.onTimeout].
  */
 public fun <R> SelectBuilder<R>.onTimeout(duration: Duration, block: suspend () -> R): Unit =
-        onTimeout(duration.coerceToMillis(), block)
+    onTimeout(duration.coerceToMillis(), block)
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.withTimeout].
@@ -42,14 +42,14 @@ public suspend fun <T> withTimeout(duration: Duration, block: suspend CoroutineS
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
-    return kotlinx.coroutines.withTimeout(duration.coerceToMillis(), block)
+    return withTimeout(duration.coerceToMillis(), block)
 }
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.withTimeoutOrNull].
  */
 public suspend fun <T> withTimeoutOrNull(duration: Duration, block: suspend CoroutineScope.() -> T): T? =
-        kotlinx.coroutines.withTimeoutOrNull(duration.coerceToMillis(), block)
+    withTimeoutOrNull(duration.coerceToMillis(), block)
 
 /**
  * Coerces the given [Duration] to a millisecond delay.

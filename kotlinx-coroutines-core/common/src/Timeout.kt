@@ -2,9 +2,11 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:OptIn(ExperimentalContracts::class)
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package kotlinx.coroutines
 
+import kotlin.internal.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
@@ -36,6 +38,12 @@ import kotlin.time.*
  *
  * @param timeMillis timeout time in milliseconds.
  */
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@LowPriorityInOverloadResolution
+@Deprecated("Use withTimeout from the 'kotlinx-coroutines-time' package instead.",
+    ReplaceWith("kotlinx.coroutines.time.withTimeout(timeMillis, block)",
+        "kotlinx.coroutines.time"),
+    level = DeprecationLevel.WARNING)
 public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
@@ -66,11 +74,17 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  *
  * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  */
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@LowPriorityInOverloadResolution
+@Deprecated("Use withTimeout from the 'kotlinx-coroutines-time' package instead.",
+    ReplaceWith("kotlinx.coroutines.time.withTimeout(timeout, block)",
+        "kotlinx.coroutines.time"),
+    level = DeprecationLevel.WARNING)
 public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
-    return withTimeout(timeout.toDelayMillis(), block)
+    return kotlinx.coroutines.time.withTimeout(timeout.toDelayMillis(), block)
 }
 
 /**
