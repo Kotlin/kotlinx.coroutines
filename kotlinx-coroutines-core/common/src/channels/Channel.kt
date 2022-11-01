@@ -23,12 +23,15 @@ import kotlin.jvm.*
  */
 public interface SendChannel<in E> {
     /**
-     * Returns `true` if this channel was closed by an invocation of [close]. This means that
-     * calling [send] will result in an exception.
+     * Returns `true` if this channel was closed by an invocation of [close] or its receiving side was [cancelled][ReceiveChannel.cancel].
+     * This means that calling [send] will result in an exception.
      *
-     * **Note: This is an experimental api.** This property may change its semantics and/or name in the future.
+     * Note that if this property returns `false`, it does not guarantee that consecutive call [send] will succeed, as the
+     * channel can be concurrently closed right after the check. For such scenarios, it is recommended to use [trySend] instead.
+     *
+     * @see SendChannel.close
+     * @see ReceiveChannel.cancel
      */
-    @ExperimentalCoroutinesApi
     public val isClosedForSend: Boolean
 
     /**
