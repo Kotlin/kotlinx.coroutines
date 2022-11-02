@@ -187,6 +187,7 @@ public interface ReceiveChannel<out E> {
      * Note that if this property returns `false`, it does not guarantee that consecutive call to [receive] will succeed, as the
      * channel can be concurrently closed right after the check. For such scenarios, it is recommended to use [receiveCatching] instead.
      *
+     * @see ReceiveChannel.receiveCatching
      * @see ReceiveChannel.cancel
      * @see SendChannel.close
      */
