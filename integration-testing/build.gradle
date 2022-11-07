@@ -75,6 +75,9 @@ sourceSets {
         dependencies {
             implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
             implementation 'com.google.guava:guava:31.1-jre'
+            implementation kotlin('test')
+            implementation kotlin('test-junit')
+
         }
     }
     // Checks correctness of Maven publication (JAR resources) and absence of atomicfu symbols
