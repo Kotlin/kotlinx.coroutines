@@ -62,7 +62,7 @@ class StateFlowStressTest : TestBase() {
         for (second in 1..nSeconds) {
             delay(1000)
             val cs = collected.map { it.sum() }
-            println("$second: emitted=${emitted.sum()}, collected=${cs.min()}..${cs.max()}")
+            println("$second: emitted=${emitted.sum()}, collected=${cs.minOrNull()}..${cs.maxOrNull()}")
         }
         emitters.cancelAndJoin()
         collectors.cancelAndJoin()

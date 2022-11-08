@@ -4,9 +4,12 @@
 
 package kotlinx.coroutines.rx3
 
+import io.reactivex.rxjava3.core.*
+import io.reactivex.rxjava3.disposables.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.junit.Test
+import java.util.concurrent.*
 import kotlin.test.*
 
 class FlowAsObservableTest : TestBase() {
@@ -138,5 +141,71 @@ class FlowAsObservableTest : TestBase() {
         }.asObservable()
 
         observable.subscribe({ expect(2) }, { expectUnreached() }, { finish(3) })
+    }
+
+    @Test
+    fun testUnconfinedDefaultContext() {
+        expect(1)
+        val thread = Thread.currentThread()
+        fun checkThread() {
+            assertSame(thread, Thread.currentThread())
+        }
+        flowOf(42).asObservable().subscribe(object : Observer<Int> {
+            override fun onSubscribe(d: Disposable) {
+                expect(2)
+            }
+
+            override fun onNext(t: Int) {
+                checkThread()
+                expect(3)
+                assertEquals(42, t)
+            }
+
+            override fun onComplete() {
+                checkThread()
+                expect(4)
+            }
+
+            override fun onError(t: Throwable) {
+                expectUnreached()
+            }
+        })
+        finish(5)
+    }
+
+    @Test
+    fun testConfinedContext() {
+        expect(1)
+        val threadName = "FlowAsObservableTest.testConfinedContext"
+        fun checkThread() {
+            val currentThread = Thread.currentThread()
+            assertTrue(currentThread.name.startsWith(threadName), "Unexpected thread $currentThread")
+        }
+        val completed = CountDownLatch(1)
+        newSingleThreadContext(threadName).use { dispatcher ->
+            flowOf(42).asObservable(dispatcher).subscribe(object : Observer<Int> {
+                override fun onSubscribe(d: Disposable) {
+                    expect(2)
+                }
+
+                override fun onNext(t: Int) {
+                    checkThread()
+                    expect(3)
+                    assertEquals(42, t)
+                }
+
+                override fun onComplete() {
+                    checkThread()
+                    expect(4)
+                    completed.countDown()
+                }
+
+                override fun onError(e: Throwable) {
+                    expectUnreached()
+                }
+            })
+            completed.await()
+        }
+        finish(5)
     }
 }

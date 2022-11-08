@@ -1,21 +1,15 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
-
-repositories {
-    maven { url "https://dl.bintray.com/devexperts/Maven/" }
-}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 kotlin {
-    targets {
-        fromPreset(presets.jvm, 'jvm')
-    }
+    jvm {}
     sourceSets {
         jvmMain.dependencies {
-            api 'org.jetbrains.kotlin:kotlin-stdlib'
+            compileOnly "org.codehaus.mojo:animal-sniffer-annotations:1.20"
         }
 
         jvmTest.dependencies {

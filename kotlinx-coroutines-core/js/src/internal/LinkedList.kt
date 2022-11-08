@@ -1,10 +1,12 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("unused", "NO_EXPLICIT_RETURN_TYPE_IN_API_MODE", "NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 
 package kotlinx.coroutines.internal
+
+import kotlinx.coroutines.*
 
 private typealias Node = LinkedListNode
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -15,7 +17,7 @@ public actual typealias LockFreeLinkedListNode = LinkedListNode
 public actual typealias LockFreeLinkedListHead = LinkedListHead
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public open class LinkedListNode {
+public open class LinkedListNode : DisposableHandle {
     @PublishedApi internal var _next = this
     @PublishedApi internal var _prev = this
     @PublishedApi internal var _removed: Boolean = false
@@ -32,7 +34,22 @@ public open class LinkedListNode {
         this._prev = node
     }
 
+    /*
+     * Remove that is invoked as a virtual function with a
+     * potentially augmented behaviour.
+     * I.g. `LockFreeLinkedListHead` throws, while `SendElementWithUndeliveredHandler`
+     * invokes handler on remove
+     */
     public open fun remove(): Boolean {
+        return removeImpl()
+    }
+
+    override fun dispose() {
+        remove()
+    }
+
+    @PublishedApi
+    internal fun removeImpl(): Boolean {
         if (_removed) return false
         val prev = this._prev
         val next = this._next
@@ -76,7 +93,7 @@ public open class LinkedListNode {
     public fun removeFirstOrNull(): Node? {
         val next = _next
         if (next === this) return null
-        check(next.remove()) { "Should remove" }
+        check(next.removeImpl()) { "Should remove" }
         return next
     }
 
@@ -85,7 +102,7 @@ public open class LinkedListNode {
         if (next === this) return null
         if (next !is T) return null
         if (predicate(next)) return next
-        check(next.remove()) { "Should remove" }
+        check(next.removeImpl()) { "Should remove" }
         return next
     }
 }
@@ -123,6 +140,8 @@ public actual abstract class AbstractAtomicDesc : AtomicDesc() {
         finishPrepare(prepareOp)
         return null
     }
+
+    actual open fun onRemoved(affected: Node) {}
 
     actual final override fun prepare(op: AtomicOp<*>): Any? {
         val affected = affectedNode
@@ -164,5 +183,5 @@ public open class LinkedListHead : LinkedListNode() {
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    public final override fun remove(): Boolean = throw UnsupportedOperationException()
+    public final override fun remove(): Nothing = throw UnsupportedOperationException()
 }

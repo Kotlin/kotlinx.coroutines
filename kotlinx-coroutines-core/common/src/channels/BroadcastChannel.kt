@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("FunctionName")
@@ -7,9 +7,9 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.channels.Channel.Factory.CHANNEL_DEFAULT_CAPACITY
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 
 /**
@@ -20,9 +20,10 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
  * See `BroadcastChannel()` factory function for the description of available
  * broadcast channel implementations.
  *
- * **Note: This is an experimental api.** It may be changed in the future updates.
+ * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
+ * and with error in 1.7.0. It is replaced with [SharedFlow][kotlinx.coroutines.flow.SharedFlow].
  */
-@ExperimentalCoroutinesApi
+@ObsoleteCoroutinesApi
 public interface BroadcastChannel<E> : SendChannel<E> {
     /**
      * Subscribes to this [BroadcastChannel] and returns a channel to receive elements from it.
@@ -59,9 +60,11 @@ public interface BroadcastChannel<E> : SendChannel<E> {
  * * when `capacity` is [BUFFERED] -- creates `ArrayBroadcastChannel` with a default capacity.
  * * otherwise -- throws [IllegalArgumentException].
  *
- * **Note: This is an experimental api.** It may be changed in the future updates.
+ * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
+ * and with error in 1.7.0. It is replaced with [StateFlow][kotlinx.coroutines.flow.StateFlow]
+ * and [SharedFlow][kotlinx.coroutines.flow.SharedFlow].
  */
-@ExperimentalCoroutinesApi
+@ObsoleteCoroutinesApi
 public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
     when (capacity) {
         0 -> throw IllegalArgumentException("Unsupported 0 capacity for BroadcastChannel")

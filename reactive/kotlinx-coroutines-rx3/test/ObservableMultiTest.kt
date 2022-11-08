@@ -6,6 +6,7 @@ package kotlinx.coroutines.rx3
 
 import io.reactivex.rxjava3.core.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.*
 import org.junit.Test
 import java.io.*
 import kotlin.test.*
@@ -34,9 +35,32 @@ class ObservableMultiTest : TestBase() {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
-                launch {
+                launch(Dispatchers.Default) {
                     val i = it
                     send(i)
+                }
+            }
+            jobs.forEach { it.join() }
+        }
+        checkSingleValue(observable.toList()) { list ->
+            assertEquals(n, list.size)
+            assertEquals((0 until n).toList(), list.sorted())
+        }
+    }
+
+    @Test
+    fun testConcurrentStressOnSend() {
+        val n = 10_000 * stressTestMultiplier
+        val observable = rxObservable<Int> {
+            newCoroutineContext(coroutineContext)
+            // concurrent emitters (many coroutines)
+            val jobs = List(n) {
+                // launch
+                launch(Dispatchers.Default) {
+                    val i = it
+                    select<Unit> {
+                        onSend(i) {}
+                    }
                 }
             }
             jobs.forEach { it.join() }

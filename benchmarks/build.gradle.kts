@@ -1,12 +1,13 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+@file:Suppress("UnstableApiUsage")
 
 import me.champeau.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
-    id("net.ltgt.apt")
     id("com.github.johnrengelman.shadow")
     id("me.champeau.gradle.jmh") apply false
 }
@@ -29,38 +30,10 @@ tasks.named<KotlinCompile>("compileJmhKotlin") {
     }
 }
 
-/*
- * Due to a bug in the inliner it sometimes does not remove inlined symbols (that are later renamed) from unused code paths,
- * and it breaks JMH that tries to post-process these symbols and fails because they are renamed.
- */
-val removeRedundantFiles = tasks.register<Delete>("removeRedundantFiles") {
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$buildHistoOnScore\$1\$\$special\$\$inlined\$filter\$1\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$nBlanks\$1\$\$special\$\$inlined\$map\$1\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$score2\$1\$\$special\$\$inlined\$map\$1\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$bonusForDoubleLetter\$1\$\$special\$\$inlined\$map\$1\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$nBlanks\$1\$\$special\$\$inlined\$map\$1\$2\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$bonusForDoubleLetter\$1\$\$special\$\$inlined\$map\$1\$2\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$score2\$1\$\$special\$\$inlined\$map\$1\$2\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOptKt\$\$special\$\$inlined\$collect\$1\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOptKt\$\$special\$\$inlined\$collect\$2\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleOpt\$play\$histoOfLetters\$1\$\$special\$\$inlined\$fold\$1\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleBase\$play\$buildHistoOnScore\$1\$\$special\$\$inlined\$filter\$1\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/FlowPlaysScrabbleBase\$play\$histoOfLetters\$1\$\$special\$\$inlined\$fold\$1\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/scrabble/SaneFlowPlaysScrabble\$play\$buildHistoOnScore\$1\$\$special\$\$inlined\$filter\$1\$1.class")
-
-    // Primes
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/misc/Numbers\$\$special\$\$inlined\$filter\$1\$2\$1.class")
-    delete("$buildDir/classes/kotlin/jmh/benchmarks/flow/misc/Numbers\$\$special\$\$inlined\$filter\$1\$1.class")
-}
-
-tasks.named("jmhRunBytecodeGenerator") {
-    dependsOn(removeRedundantFiles)
-}
-
 // It is better to use the following to run benchmarks, otherwise you may get unexpected errors:
 // ./gradlew --no-daemon cleanJmhJar jmh -Pjmh="MyBenchmark"
 extensions.configure<JMHPluginExtension>("jmh") {
-    jmhVersion = "1.21"
+    jmhVersion = "1.26"
     duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
     failOnError = true
     resultFormat = "CSV"
@@ -70,21 +43,34 @@ extensions.configure<JMHPluginExtension>("jmh") {
 //    includeTests = false
 }
 
-tasks.named<Jar>("jmhJar") {
-    baseName = "benchmarks"
-    classifier = null
-    version = null
-    destinationDir = file("$rootDir")
+val jmhJarTask = tasks.named<Jar>("jmhJar") {
+    archiveBaseName by "benchmarks"
+    archiveClassifier by null
+    archiveVersion by null
+    destinationDirectory.file("$rootDir")
+}
+
+tasks {
+    // For some reason the DuplicatesStrategy from jmh is not enough
+    // and errors with duplicates appear unless I force it to WARN only:
+    withType<Copy> {
+        duplicatesStrategy = DuplicatesStrategy.WARN
+    }
+
+    build {
+        dependsOn(jmhJarTask)
+    }
 }
 
 dependencies {
-    compile("org.openjdk.jmh:jmh-core:1.21")
-    compile("io.projectreactor:reactor-core:${version("reactor")}")
-    compile("io.reactivex.rxjava2:rxjava:2.1.9")
-    compile("com.github.akarnokd:rxjava2-extensions:0.20.8")
+    implementation("org.openjdk.jmh:jmh-core:1.26")
+    implementation("io.projectreactor:reactor-core:${version("reactor")}")
+    implementation("io.reactivex.rxjava2:rxjava:2.1.9")
+    implementation("com.github.akarnokd:rxjava2-extensions:0.20.8")
 
-    compile("com.typesafe.akka:akka-actor_2.12:2.5.0")
-    compile(project(":kotlinx-coroutines-core"))
+    implementation("com.typesafe.akka:akka-actor_2.12:2.5.0")
+    implementation(project(":kotlinx-coroutines-core"))
+    implementation(project(":kotlinx-coroutines-reactive"))
 
     // add jmh dependency on main
     "jmhImplementation"(sourceSets.main.get().runtimeClasspath)

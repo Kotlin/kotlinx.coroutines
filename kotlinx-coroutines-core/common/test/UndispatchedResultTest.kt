@@ -55,7 +55,7 @@ class UndispatchedResultTest : TestBase() {
         try {
             expect(1)
             // Will cancel its parent
-            async(context) {
+            async<Unit>(context) {
                 expect(2)
                 throw TestException()
             }.await()

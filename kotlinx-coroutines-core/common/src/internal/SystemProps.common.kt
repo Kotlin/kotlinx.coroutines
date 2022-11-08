@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmName("SystemPropsKt")
@@ -55,6 +55,17 @@ internal fun systemProp(
     }
     return parsed
 }
+
+/**
+ * Gets the system property indicated by the specified [property name][propertyName],
+ * or returns [defaultValue] if there is no property with that key.
+ *
+ * **Note: this function should be used in JVM tests only, other platforms use the default value.**
+ */
+internal fun systemProp(
+    propertyName: String,
+    defaultValue: String
+): String = systemProp(propertyName) ?: defaultValue
 
 /**
  * Gets the system property indicated by the specified [property name][propertyName],

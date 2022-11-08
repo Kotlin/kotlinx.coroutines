@@ -15,7 +15,7 @@ import kotlin.coroutines.*
 import kotlin.test.*
 
 class CoroutineSchedulerStressTest : TestBase() {
-    private var dispatcher: ExperimentalCoroutineDispatcher = ExperimentalCoroutineDispatcher()
+    private var dispatcher: SchedulerCoroutineDispatcher = SchedulerCoroutineDispatcher()
     private val observedThreads = ConcurrentHashMap<Thread, Long>()
     private val tasksNum = 500_000 * stressMemoryMultiplier()
 

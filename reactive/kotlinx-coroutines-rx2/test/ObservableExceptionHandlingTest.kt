@@ -8,6 +8,7 @@ import io.reactivex.exceptions.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
+import java.util.concurrent.*
 import kotlin.test.*
 
 class ObservableExceptionHandlingTest : TestBase() {
@@ -18,7 +19,7 @@ class ObservableExceptionHandlingTest : TestBase() {
     }
 
     private inline fun <reified T : Throwable> handler(expect: Int) = { t: Throwable ->
-        assertTrue(t is UndeliverableException && t.cause is T)
+        assertTrue(t is UndeliverableException && t.cause is T, "$t")
         expect(expect)
     }
 
@@ -38,8 +39,8 @@ class ObservableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testFatalException() = withExceptionHandler(handler<LinkageError>(3)) {
-        rxObservable<Int>(Dispatchers.Unconfined) {
+    fun testFatalException() = withExceptionHandler({ expectUnreached() }) {
+        rxObservable<Int>(Dispatchers.Unconfined + cehUnreached()) {
             expect(1)
             throw LinkageError()
         }.subscribe({
@@ -47,7 +48,7 @@ class ObservableExceptionHandlingTest : TestBase() {
         }, {
             expect(2)
         })
-        finish(4)
+        finish(3)
     }
 
     @Test
@@ -66,7 +67,7 @@ class ObservableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testFatalExceptionAsynchronous() = withExceptionHandler(handler<LinkageError>(3)) {
+    fun testFatalExceptionAsynchronous() = withExceptionHandler({ expectUnreached() }) {
         rxObservable<Int>(Dispatchers.Unconfined) {
             expect(1)
             throw LinkageError()
@@ -75,20 +76,28 @@ class ObservableExceptionHandlingTest : TestBase() {
             .subscribe({
                 expectUnreached()
             }, {
-                expect(2) // Fatal exception is not reported in onError
+                expect(2) // Fatal exceptions are not treated in a special manner
             })
-        finish(4)
+        finish(3)
     }
 
     @Test
-    fun testFatalExceptionFromSubscribe() = withExceptionHandler(handler<LinkageError>(4)) {
+    fun testFatalExceptionFromSubscribe() = withExceptionHandler(handler<LinkageError>(3)) {
+        val latch = CountDownLatch(1)
         rxObservable(Dispatchers.Unconfined) {
             expect(1)
-            send(Unit)
+            val result = trySend(Unit)
+            val exception = result.exceptionOrNull()
+            assertTrue(exception is UndeliverableException)
+            assertTrue(exception.cause is LinkageError)
+            assertTrue(isClosedForSend)
+            expect(4)
+            latch.countDown()
         }.subscribe({
             expect(2)
             throw LinkageError()
-        }, { expect(3) }) // Unreached because fatal errors are rethrown
+        }, { expectUnreached() }) // Unreached because RxJava bubbles up fatal exceptions, causing `onNext` to throw.
+        latch.await()
         finish(5)
     }
 
@@ -100,7 +109,7 @@ class ObservableExceptionHandlingTest : TestBase() {
         }.subscribe({
             expect(2)
             throw TestException()
-        }, { expect(3) }) // not reported to onError because came from the subscribe itself
+        }, { expect(3) })
         finish(4)
     }
 
@@ -119,7 +128,7 @@ class ObservableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testAsynchronousFatalExceptionFromSubscribe() = withExceptionHandler(handler<LinkageError>(4)) {
+    fun testAsynchronousFatalExceptionFromSubscribe() = withExceptionHandler(handler<LinkageError>(3)) {
         rxObservable(Dispatchers.Unconfined) {
             expect(1)
             send(Unit)
@@ -128,7 +137,7 @@ class ObservableExceptionHandlingTest : TestBase() {
             .subscribe({
                 expect(2)
                 throw LinkageError()
-            }, { expect(3) })
-        finish(5)
+            }, { expectUnreached() }) // Unreached because RxJava bubbles up fatal exceptions, causing `onNext` to throw.
+        finish(4)
     }
 }

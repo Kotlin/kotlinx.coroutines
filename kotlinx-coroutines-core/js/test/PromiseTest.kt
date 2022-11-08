@@ -16,7 +16,7 @@ class PromiseTest : TestBase() {
         val deferred = promise.asDeferred()
         assertEquals("OK", deferred.await())
     }
-    
+
     @Test
     fun testPromiseRejectedAsDeferred() = GlobalScope.promise {
         lateinit var promiseReject: (Throwable) -> Unit
@@ -73,5 +73,17 @@ class PromiseTest : TestBase() {
         val d2 = promise.asDeferred()
         assertSame(d2, deferred)
         assertEquals("OK", d2.await())
+    }
+
+    @Test
+    fun testLeverageTestResult(): TestResult {
+        // Cannot use expect(..) here
+        var seq = 0
+        val result = runTest {
+            ++seq
+        }
+        return result.then {
+            if (seq != 1) error("Unexpected result: $seq")
+        }
     }
 }

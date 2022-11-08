@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package benchmarks.flow.scrabble
@@ -30,7 +30,7 @@ open class SequencePlaysScrabble : ShakespearePlaysScrabble() {
         val bonusForDoubleLetter: (String) -> Int = { word: String ->
             toBeMaxed(word)
                 .map { letterScores[it - 'a'.toInt()] }
-                .max()!!
+                .maxOrNull()!!
         }
 
         val score3: (String) -> Int = { word: String ->

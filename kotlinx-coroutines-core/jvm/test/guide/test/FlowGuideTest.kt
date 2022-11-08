@@ -5,6 +5,7 @@
 // This file was automatically generated from flow.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
+import kotlinx.coroutines.knit.*
 import org.junit.Test
 
 class FlowGuideTest {
@@ -50,7 +51,7 @@ class FlowGuideTest {
     @Test
     fun testExampleFlow05() {
         test("ExampleFlow05") { kotlinx.coroutines.guide.exampleFlow05.main() }.verifyLines(
-            "Calling foo...",
+            "Calling simple function...",
             "Calling collect...",
             "Flow started",
             "1",
@@ -139,7 +140,7 @@ class FlowGuideTest {
     @Test
     fun testExampleFlow13() {
         test("ExampleFlow13") { kotlinx.coroutines.guide.exampleFlow13.main() }.verifyLinesFlexibleThread(
-            "[main @coroutine#1] Started foo flow",
+            "[main @coroutine#1] Started simple flow",
             "[main @coroutine#1] Collected 1",
             "[main @coroutine#1] Collected 2",
             "[main @coroutine#1] Collected 3"

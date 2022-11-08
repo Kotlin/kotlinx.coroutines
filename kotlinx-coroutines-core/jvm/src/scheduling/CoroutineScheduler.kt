@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.scheduling
@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import java.io.*
 import java.util.concurrent.*
-import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
 import kotlin.math.*
 import kotlin.random.*
@@ -146,7 +145,7 @@ internal class CoroutineScheduler(
      *
      * Note, [newIndex] can be zero for the worker that is being terminated (removed from [workers]).
      */
-    internal fun parkedWorkersStackTopUpdate(worker: Worker, oldIndex: Int, newIndex: Int) {
+    fun parkedWorkersStackTopUpdate(worker: Worker, oldIndex: Int, newIndex: Int) {
         parkedWorkersStack.loop { top ->
             val index = (top and PARKED_INDEX_MASK).toInt()
             val updVersion = (top + PARKED_VERSION_INC) and PARKED_VERSION_MASK
@@ -169,12 +168,12 @@ internal class CoroutineScheduler(
      * It does nothing is this worker is already physically linked to the stack.
      * This method is invoked only from the worker thread itself.
      * This invocation always precedes [LockSupport.parkNanos].
-     * See [Worker.doPark].
+     * See [Worker.tryPark].
      *
      * Returns `true` if worker was added to the stack by this invocation, `false` if it was already
      * registered in the stack.
      */
-    internal fun parkedWorkersStackPush(worker: Worker): Boolean {
+    fun parkedWorkersStackPush(worker: Worker): Boolean {
         if (worker.nextParkedWorker !== NOT_IN_STACK) return false // already in stack, bail out
         /*
          * The below loop can be entered only if this worker was not in the stack and, since no other thread
@@ -261,7 +260,7 @@ internal class CoroutineScheduler(
      * works properly
      */
     @JvmField
-    val workers = AtomicReferenceArray<Worker?>(maxPoolSize + 1)
+    val workers = ResizableAtomicArray<Worker>(corePoolSize + 1)
 
     /**
      * Long describing state of workers in this pool.
@@ -403,7 +402,7 @@ internal class CoroutineScheduler(
         }
     }
 
-    internal fun createTask(block: Runnable, taskContext: TaskContext): Task {
+    fun createTask(block: Runnable, taskContext: TaskContext): Task {
         val nanoTime = schedulerTimeSource.nanoTime()
         if (block is Task) {
             block.submissionTime = nanoTime
@@ -422,7 +421,7 @@ internal class CoroutineScheduler(
         tryUnpark() // Try unpark again in case there was race between permit release and parking
     }
 
-    internal fun signalCpuWork() {
+    fun signalCpuWork() {
         if (tryUnpark()) return
         if (tryCreateWorker()) return
         tryUnpark()
@@ -480,7 +479,7 @@ internal class CoroutineScheduler(
              * 3) Only then start the worker, otherwise it may miss its own creation
              */
             val worker = Worker(newIndex)
-            workers[newIndex] = worker
+            workers.setSynchronized(newIndex, worker)
             require(newIndex == incrementCreatedWorkers())
             worker.start()
             return cpuWorkers + 1
@@ -525,7 +524,7 @@ internal class CoroutineScheduler(
         var dormant = 0
         var terminated = 0
         val queueSizes = arrayListOf<String>()
-        for (index in 1 until workers.length()) {
+        for (index in 1 until workers.currentLength()) {
             val worker = workers[index] ?: continue
             val queueSize = worker.localQueue.size
             when (worker.state) {
@@ -654,7 +653,7 @@ internal class CoroutineScheduler(
          * Releases CPU token if worker has any and changes state to [newState].
          * Returns `true` if CPU permit was returned to the pool
          */
-        internal fun tryReleaseCpu(newState: WorkerState): Boolean {
+      fun tryReleaseCpu(newState: WorkerState): Boolean {
             val previousState = state
             val hadCpu = previousState == WorkerState.CPU_ACQUIRED
             if (hadCpu) releaseCpuPermit()
@@ -684,6 +683,7 @@ internal class CoroutineScheduler(
                  * No tasks were found:
                  * 1) Either at least one of the workers has stealable task in its FIFO-buffer with a stealing deadline.
                  *    Then its deadline is stored in [minDelayUntilStealableTask]
+                 * // '2)' can be found below
                  *
                  * Then just park for that duration (ditto re-scanning).
                  * While it could potentially lead to short (up to WORK_STEALING_TIME_RESOLUTION_NS ns) starvations,
@@ -721,7 +721,19 @@ internal class CoroutineScheduler(
             }
             assert { localQueue.size == 0 }
             workerCtl.value = PARKED // Update value once
-            while (inStack()) { // Prevent spurious wakeups
+            /*
+             * inStack() prevents spurious wakeups, while workerCtl.value == PARKED
+             * prevents the following race:
+             *
+             * - T2 scans the queue, adds itself to the stack, goes to rescan
+             * - T2 suspends in 'workerCtl.value = PARKED' line
+             * - T1 pops T2 from the stack, claims workerCtl, suspends
+             * - T2 fails 'while (inStack())' check, goes to full rescan
+             * - T2 adds itself to the stack, parks
+             * - T1 unparks T2, bails out with success
+             * - T2 unparks and loops in 'while (inStack())'
+             */
+            while (inStack() && workerCtl.value == PARKED) { // Prevent spurious wakeups
                 if (isTerminated || state == WorkerState.TERMINATED) break
                 tryReleaseCpu(WorkerState.PARKING)
                 interrupted() // Cleanup interruptions
@@ -762,7 +774,7 @@ internal class CoroutineScheduler(
          * Marsaglia xorshift RNG with period 2^32-1 for work stealing purposes.
          * ThreadLocalRandom cannot be used to support Android and ThreadLocal<Random> is up to 15% slower on Ktor benchmarks
          */
-        internal fun nextInt(upperBound: Int): Int {
+        fun nextInt(upperBound: Int): Int {
             var r = rngState
             r = r xor (r shl 13)
             r = r xor (r shr 17)
@@ -826,7 +838,7 @@ internal class CoroutineScheduler(
                 val lastIndex = decrementCreatedWorkers()
                 if (lastIndex != oldIndex) {
                     val lastWorker = workers[lastIndex]!!
-                    workers[oldIndex] = lastWorker
+                    workers.setSynchronized(oldIndex, lastWorker)
                     lastWorker.indexInArray = oldIndex
                     /*
                      * Now lastWorker is available at both indices in the array, but it can
@@ -840,7 +852,7 @@ internal class CoroutineScheduler(
                 /*
                  * 5) It is safe to clear reference from workers array now.
                  */
-                workers[lastIndex] = null
+                workers.setSynchronized(lastIndex, null)
             }
             state = WorkerState.TERMINATED
         }
@@ -956,7 +968,6 @@ internal class CoroutineScheduler(
  * Checks if the thread is part of a thread pool that supports coroutines.
  * This function is needed for integration with BlockHound.
  */
-@Suppress("UNUSED")
 @JvmName("isSchedulerWorker")
 internal fun isSchedulerWorker(thread: Thread) = thread is CoroutineScheduler.Worker
 
@@ -964,7 +975,6 @@ internal fun isSchedulerWorker(thread: Thread) = thread is CoroutineScheduler.Wo
  * Checks if the thread is running a CPU-bound task.
  * This function is needed for integration with BlockHound.
  */
-@Suppress("UNUSED")
 @JvmName("mayNotBlock")
 internal fun mayNotBlock(thread: Thread) = thread is CoroutineScheduler.Worker &&
     thread.state == CoroutineScheduler.WorkerState.CPU_ACQUIRED

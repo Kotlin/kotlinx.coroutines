@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("UNCHECKED_CAST")
@@ -7,14 +7,16 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.assert
+import kotlin.jvm.*
 
 /*
  * Inline class that represents a mutable list, but does not allocate an underlying storage
  * for zero and one elements.
  * Cannot be parametrized with `List<*>`.
  */
-internal inline class InlineList<E>(private val holder: Any? = null) {
-    public operator fun plus(element: E): InlineList<E>  {
+@JvmInline
+internal value class InlineList<E>(private val holder: Any? = null) {
+    operator fun plus(element: E): InlineList<E>  {
         assert { element !is List<*> } // Lists are prohibited
         return when (holder) {
             null -> InlineList(element)
@@ -31,7 +33,7 @@ internal inline class InlineList<E>(private val holder: Any? = null) {
         }
     }
 
-    public inline fun forEachReversed(action: (E) -> Unit) {
+    inline fun forEachReversed(action: (E) -> Unit) {
         when (holder) {
             null -> return
             !is ArrayList<*> -> action(holder as E)

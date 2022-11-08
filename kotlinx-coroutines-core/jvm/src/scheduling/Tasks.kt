@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.scheduling
@@ -9,12 +9,13 @@ import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 
 
-// TODO most of these fields will be moved to 'object ExperimentalDispatcher'
-
-// User-visible name
-internal const val DEFAULT_DISPATCHER_NAME = "Dispatchers.Default"
-// Internal debuggability name + thread name prefixes
-internal const val DEFAULT_SCHEDULER_NAME = "DefaultDispatcher"
+/**
+ * The name of the default scheduler. The names of the worker threads of [Dispatchers.Default] have it as their prefix.
+ */
+@JvmField
+internal val DEFAULT_SCHEDULER_NAME = systemProp(
+    "kotlinx.coroutines.scheduler.default.name", "DefaultDispatcher"
+)
 
 // 100us as default
 @JvmField
@@ -22,27 +23,24 @@ internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
     "kotlinx.coroutines.scheduler.resolution.ns", 100000L
 )
 
-@JvmField
-internal val BLOCKING_DEFAULT_PARALLELISM = systemProp(
-    "kotlinx.coroutines.scheduler.blocking.parallelism", 16
-)
-
-// NOTE: we coerce default to at least two threads to give us chances that multi-threading problems
-// get reproduced even on a single-core machine, but support explicit setting of 1 thread scheduler if needed.
+/**
+ * The maximum number of threads allocated for CPU-bound tasks at the default set of dispatchers.
+ *
+ * NOTE: we coerce default to at least two threads to give us chances that multi-threading problems
+ * get reproduced even on a single-core machine, but support explicit setting of 1 thread scheduler if needed
+ */
 @JvmField
 internal val CORE_POOL_SIZE = systemProp(
     "kotlinx.coroutines.scheduler.core.pool.size",
-    AVAILABLE_PROCESSORS.coerceAtLeast(2), // !!! at least two here
+    AVAILABLE_PROCESSORS.coerceAtLeast(2),
     minValue = CoroutineScheduler.MIN_SUPPORTED_POOL_SIZE
 )
 
+/** The maximum number of threads allocated for blocking tasks at the default set of dispatchers. */
 @JvmField
 internal val MAX_POOL_SIZE = systemProp(
     "kotlinx.coroutines.scheduler.max.pool.size",
-    (AVAILABLE_PROCESSORS * 128).coerceIn(
-        CORE_POOL_SIZE,
-        CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE
-    ),
+    CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE,
     maxValue = CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE
 )
 
@@ -52,7 +50,7 @@ internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(
 )
 
 @JvmField
-internal var schedulerTimeSource: TimeSource = NanoTimeSource
+internal var schedulerTimeSource: SchedulerTimeSource = NanoTimeSource
 
 /**
  * Marker indicating that task is CPU-bound and will not block
@@ -69,13 +67,17 @@ internal interface TaskContext {
     fun afterTask()
 }
 
-internal object NonBlockingContext : TaskContext {
-    override val taskMode: Int = TASK_NON_BLOCKING
-
+private class TaskContextImpl(override val taskMode: Int): TaskContext {
     override fun afterTask() {
-       // Nothing for non-blocking context
+        // Nothing for non-blocking context
     }
 }
+
+@JvmField
+internal val NonBlockingContext: TaskContext = TaskContextImpl(TASK_NON_BLOCKING)
+
+@JvmField
+internal val BlockingContext: TaskContext = TaskContextImpl(TASK_PROBABLY_BLOCKING)
 
 internal abstract class Task(
     @JvmField var submissionTime: Long,
@@ -108,10 +110,11 @@ internal class TaskImpl(
 // Open for tests
 internal class GlobalQueue : LockFreeTaskQueue<Task>(singleConsumer = false)
 
-internal abstract class TimeSource {
+// Was previously TimeSource, renamed due to KT-42625 and KT-23727
+internal abstract class SchedulerTimeSource {
     abstract fun nanoTime(): Long
 }
 
-internal object NanoTimeSource : TimeSource() {
+internal object NanoTimeSource : SchedulerTimeSource() {
     override fun nanoTime() = System.nanoTime()
 }

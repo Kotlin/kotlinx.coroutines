@@ -1,12 +1,12 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 
 package kotlinx.coroutines.internal
 
+import kotlinx.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public expect open class LockFreeLinkedListNode() {
@@ -43,7 +43,7 @@ public expect open class LockFreeLinkedListNode() {
 public expect open class LockFreeLinkedListHead() : LockFreeLinkedListNode {
     public val isEmpty: Boolean
     public inline fun <reified T : LockFreeLinkedListNode> forEach(block: (T) -> Unit)
-    public final override fun remove(): Boolean // Actual return type is Nothing, KT-27534
+    public final override fun remove(): Nothing
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -73,6 +73,7 @@ public expect abstract class AbstractAtomicDesc : AtomicDesc {
     protected open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean
     public abstract fun finishPrepare(prepareOp: PrepareOp) // non-null on failure
     public open fun onPrepare(prepareOp: PrepareOp): Any? // non-null on failure
+    public open fun onRemoved(affected: LockFreeLinkedListNode) // non-null on failure
     protected abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }
 
@@ -85,5 +86,4 @@ public expect class PrepareOp: OpDescriptor {
 }
 
 @JvmField
-@SharedImmutable
 internal val REMOVE_PREPARED: Any = Symbol("REMOVE_PREPARED")

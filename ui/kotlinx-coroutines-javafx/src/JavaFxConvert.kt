@@ -1,13 +1,12 @@
 /*
- *  Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.javafx
 
-import javafx.beans.value.ChangeListener
-import javafx.beans.value.ObservableValue
+import javafx.beans.value.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 
 /**
@@ -24,14 +23,14 @@ import kotlinx.coroutines.flow.*
  * Adjacent applications of [flowOn], [buffer], [conflate], and [produceIn] to the result of `asFlow` are fused.
  * [conflate] has no effect, as this flow is already conflated; one can use [buffer] to change that instead.
  */
-@ExperimentalCoroutinesApi
+@ExperimentalCoroutinesApi // Since 1.3.x
 public fun <T> ObservableValue<T>.asFlow(): Flow<T> = callbackFlow<T> {
     val listener = ChangeListener<T> { _, _, newValue ->
-        try {
-            offer(newValue)
-        } catch (e: CancellationException) {
-            // In case the event fires after the channel is closed
-        }
+        /*
+         * Do not propagate the exception to the ObservableValue, it
+         * already should've been handled by the downstream
+         */
+        trySend(newValue)
     }
     addListener(listener)
     send(value)

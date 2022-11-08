@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 import kotlinx.coroutines.*
@@ -8,12 +8,15 @@ import kotlinx.html.div
 import kotlinx.html.dom.*
 import kotlinx.html.js.onClickFunction
 import org.w3c.dom.*
-import kotlin.browser.*
+import kotlinx.browser.*
 import kotlin.coroutines.*
 import kotlin.math.*
 import kotlin.random.Random
 
+external fun require(resource: String)
+
 fun main() {
+    require("style.css")
     println("Starting example application...")
     document.addEventListener("DOMContentLoaded", {
         Application().start()

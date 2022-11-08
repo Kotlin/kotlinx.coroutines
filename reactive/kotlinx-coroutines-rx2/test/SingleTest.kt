@@ -9,6 +9,7 @@ import io.reactivex.disposables.*
 import io.reactivex.exceptions.*
 import io.reactivex.functions.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -96,6 +97,31 @@ class SingleTest : TestBase() {
     @Test
     fun testSingleAwait() = runBlocking {
         assertEquals("OK", Single.just("O").await() + "K")
+    }
+
+    /** Tests that calls to [await] throw [CancellationException] and dispose of the subscription when their
+     * [Job] is cancelled. */
+    @Test
+    fun testSingleAwaitCancellation() = runTest {
+        expect(1)
+        val single = SingleSource<Int> { s ->
+            s.onSubscribe(object: Disposable {
+                override fun dispose() { expect(4) }
+                override fun isDisposed(): Boolean { expectUnreached(); return false }
+            })
+        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                expect(2)
+                single.await()
+            } catch (e: CancellationException) {
+                expect(5)
+                throw e
+            }
+        }
+        expect(3)
+        job.cancelAndJoin()
+        finish(6)
     }
 
     @Test
@@ -221,7 +247,7 @@ class SingleTest : TestBase() {
     fun testFatalExceptionInSingle() = runTest {
         rxSingle(Dispatchers.Unconfined) {
             throw LinkageError()
-        }.subscribe({ _, e ->  assertTrue(e is LinkageError); expect(1) })
+        }.subscribe { _, e -> assertTrue(e is LinkageError); expect(1) }
 
         finish(2)
     }

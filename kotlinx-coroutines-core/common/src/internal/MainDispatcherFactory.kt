@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.internal
@@ -14,6 +14,11 @@ public interface MainDispatcherFactory {
     /**
      * Creates the main dispatcher. [allFactories] parameter contains all factories found by service loader.
      * This method is not guaranteed to be idempotent.
+     *
+     * It is required that this method fails with an exception instead of returning an instance that doesn't work
+     * correctly as a [Delay].
+     * The reason for this is that, on the JVM, [DefaultDelay] will use [Dispatchers.Main] for most delays by default
+     * if this method returns an instance without throwing.
      */
     public fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher
 

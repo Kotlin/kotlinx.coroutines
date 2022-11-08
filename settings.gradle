@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 pluginManagement {
@@ -8,12 +8,16 @@ pluginManagement {
 
         // JMH
         id "net.ltgt.apt" version "0.21"
-        id "me.champeau.gradle.jmh" version "0.5.0"
+        id "me.champeau.gradle.jmh" version "0.5.3"
+    }
+
+    repositories {
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/" }
+        gradlePluginPortal()
     }
 }
 
 rootProject.name = 'kotlinx.coroutines'
-enableFeaturePreview('GRADLE_METADATA')
 
 def module(String path) {
     int i = path.lastIndexOf('/')
@@ -31,7 +35,6 @@ include "kotlinx-coroutines-core"
 
 module('kotlinx-coroutines-test')
 module('kotlinx-coroutines-debug')
-module('stdlib-stubs')
 module('kotlinx-coroutines-bom')
 
 
@@ -52,10 +55,6 @@ if (JavaVersion.current().isJava11Compatible()) {
 }
 module('ui/kotlinx-coroutines-swing')
 
-module('js/js-stub')
 if (!build_snapshot_train) {
     module('js/example-frontend-js')
-    include('site')
 }
-
-module('integration-testing')

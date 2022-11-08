@@ -1,8 +1,11 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
+
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.internal.SuppressSupportingThrowableImpl
 
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
@@ -10,12 +13,7 @@ package kotlinx.coroutines
  * **It is not printed to console/log by default uncaught exception handler**.
  * (see [CoroutineExceptionHandler]).
  */
-public actual open class CancellationException(
-    message: String?,
-    cause: Throwable?
-) : IllegalStateException(message, cause) {
-    public actual constructor(message: String?) : this(message, null)
-}
+public actual typealias CancellationException = kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed
@@ -36,7 +34,9 @@ internal actual class JobCancellationException public actual constructor(
 }
 
 @Suppress("NOTHING_TO_INLINE")
-internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) { /* empty */ }
+internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) {
+    if (this is SuppressSupportingThrowableImpl) addSuppressed(other)
+}
 
 // For use in tests
 internal actual val RECOVER_STACK_TRACES: Boolean = false

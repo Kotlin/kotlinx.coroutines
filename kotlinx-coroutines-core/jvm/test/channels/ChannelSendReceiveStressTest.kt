@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -25,7 +25,10 @@ class ChannelSendReceiveStressTest(
         fun params(): Collection<Array<Any>> =
                 listOf(1, 2, 10).flatMap { nSenders ->
                     listOf(1, 10).flatMap { nReceivers ->
-                        TestChannelKind.values().map { arrayOf(it, nSenders, nReceivers) }
+                        TestChannelKind.values()
+                            // Workaround for bug that won't be fixed unless new channel implementation, see #2443
+                            .filter { it != TestChannelKind.LINKED_LIST }
+                            .map { arrayOf(it, nSenders, nReceivers) }
                     }
                 }
     }
@@ -35,7 +38,7 @@ class ChannelSendReceiveStressTest(
 
     private val maxBuffer = 10_000 // artificial limit for LinkedListChannel
 
-    val channel = kind.create()
+    val channel = kind.create<Int>()
     private val sendersCompleted = AtomicInteger()
     private val receiversCompleted = AtomicInteger()
     private val dupes = AtomicInteger()
@@ -60,10 +63,10 @@ class ChannelSendReceiveStressTest(
             launch(pool + CoroutineName("receiver$receiverIndex")) {
                 when (receiverIndex % 5) {
                     0 -> doReceive(receiverIndex)
-                    1 -> doReceiveOrNull(receiverIndex)
+                    1 -> doReceiveCatching(receiverIndex)
                     2 -> doIterator(receiverIndex)
                     3 -> doReceiveSelect(receiverIndex)
-                    4 -> doReceiveSelectOrNull(receiverIndex)
+                    4 -> doReceiveCatchingSelect(receiverIndex)
                 }
                 receiversCompleted.incrementAndGet()
             }
@@ -152,9 +155,9 @@ class ChannelSendReceiveStressTest(
         }
     }
 
-    private suspend fun doReceiveOrNull(receiverIndex: Int) {
+    private suspend fun doReceiveCatching(receiverIndex: Int) {
         while (true) {
-            doReceived(receiverIndex, channel.receiveOrNull() ?: break)
+            doReceived(receiverIndex, channel.receiveCatching().getOrNull() ?: break)
         }
     }
 
@@ -173,9 +176,9 @@ class ChannelSendReceiveStressTest(
         }
     }
 
-    private suspend fun doReceiveSelectOrNull(receiverIndex: Int) {
+    private suspend fun doReceiveCatchingSelect(receiverIndex: Int) {
         while (true) {
-            val event = select<Int?> { channel.onReceiveOrNull { it } } ?: break
+            val event = select<Int?> { channel.onReceiveCatching { it.getOrNull() } } ?: break
             doReceived(receiverIndex, event)
         }
     }

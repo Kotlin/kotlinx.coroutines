@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -11,14 +11,14 @@ import java.util.concurrent.locks.*
 private const val SHUTDOWN_TIMEOUT = 1000L
 
 internal inline fun withVirtualTimeSource(log: PrintStream? = null, block: () -> Unit) {
-    DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT) // shutdown execution with old time source (in case it was working)
+    DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT) // shutdown execution with old time source (in case it was working)
     val testTimeSource = VirtualTimeSource(log)
     timeSource = testTimeSource
     DefaultExecutor.ensureStarted() // should start with new time source
     try {
         block()
     } finally {
-        DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+        DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
         testTimeSource.shutdown()
         timeSource = null // restore time source
     }
@@ -42,7 +42,7 @@ private const val REAL_PARK_NANOS = 10_000_000L // 10 ms -- park for a little to
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 internal class VirtualTimeSource(
     private val log: PrintStream?
-) : TimeSource {
+) : AbstractTimeSource() {
     private val mainThread: Thread = Thread.currentThread()
     private var checkpointNanos: Long = System.nanoTime()
 
@@ -142,7 +142,7 @@ internal class VirtualTimeSource(
     }
 
     private fun minParkedTill(): Long =
-        threads.values.map { if (it.permit) NOT_PARKED else it.parkedTill }.min() ?: NOT_PARKED
+        threads.values.map { if (it.permit) NOT_PARKED else it.parkedTill }.minOrNull() ?: NOT_PARKED
 
     @Synchronized
     fun shutdown() {

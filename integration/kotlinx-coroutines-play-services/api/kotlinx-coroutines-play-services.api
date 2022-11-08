@@ -1,6 +1,8 @@
 public final class kotlinx/coroutines/tasks/TasksKt {
 	public static final fun asDeferred (Lcom/google/android/gms/tasks/Task;)Lkotlinx/coroutines/Deferred;
+	public static final fun asDeferred (Lcom/google/android/gms/tasks/Task;Lcom/google/android/gms/tasks/CancellationTokenSource;)Lkotlinx/coroutines/Deferred;
 	public static final fun asTask (Lkotlinx/coroutines/Deferred;)Lcom/google/android/gms/tasks/Task;
+	public static final fun await (Lcom/google/android/gms/tasks/Task;Lcom/google/android/gms/tasks/CancellationTokenSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun await (Lcom/google/android/gms/tasks/Task;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

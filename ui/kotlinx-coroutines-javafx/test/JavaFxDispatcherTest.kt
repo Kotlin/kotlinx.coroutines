@@ -7,6 +7,8 @@ package kotlinx.coroutines.javafx
 import javafx.application.*
 import kotlinx.coroutines.*
 import org.junit.*
+import org.junit.Test
+import kotlin.test.*
 
 class JavaFxDispatcherTest : TestBase() {
     @Before
@@ -55,5 +57,11 @@ class JavaFxDispatcherTest : TestBase() {
             yield() // yield back
             finish(5)
         }
+    }
+
+    @Test
+    fun testMainDispatcherToString() {
+        assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
+        assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
     }
 }

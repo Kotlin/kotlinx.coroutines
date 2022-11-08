@@ -76,7 +76,7 @@ class AsyncLazyTest : TestBase() {
         expected = { it is TestException }
     ) {
         expect(1)
-        val d = async(start = CoroutineStart.LAZY) {
+        val d = async<Unit>(start = CoroutineStart.LAZY) {
             finish(3)
             throw TestException()
         }
@@ -90,7 +90,7 @@ class AsyncLazyTest : TestBase() {
         expected = { it is TestException }
     ) {
         expect(1)
-        val d = async(start = CoroutineStart.LAZY) {
+        val d = async<Unit>(start = CoroutineStart.LAZY) {
             expect(3)
             yield() // this has not effect, because parent coroutine is waiting
             finish(4)
@@ -104,7 +104,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testCatchException() = runTest {
         expect(1)
-        val d = async(NonCancellable, start = CoroutineStart.LAZY) {
+        val d = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
             expect(3)
             throw TestException()
         }

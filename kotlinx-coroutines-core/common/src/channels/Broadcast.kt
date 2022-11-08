@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -10,7 +10,6 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
-import kotlin.native.concurrent.*
 
 /**
  * Broadcasts all elements of the channel.
@@ -34,20 +33,25 @@ import kotlin.native.concurrent.*
  *
  * This function has an inappropriate result type of [BroadcastChannel] which provides
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
- * the broadcasting coroutine in hard-to-specify ways. It will be replaced with
- * sharing operators on [Flow][kotlinx.coroutines.flow.Flow] in the future.
+ * the broadcasting coroutine in hard-to-specify ways.
+ *
+ * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
+ * and with error in 1.7.0. It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn]
+ * operator.
  *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
+@ObsoleteCoroutinesApi
 public fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
 ): BroadcastChannel<E> {
     val scope = GlobalScope + Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> }
+    val channel = this
     // We can run this coroutine in the context that ignores all exceptions, because of `onCompletion = consume()`
     // which passes all exceptions upstream to the source ReceiveChannel
-    return scope.broadcast(capacity = capacity, start = start, onCompletion = consumes()) {
-        for (e in this@broadcast) {
+    return scope.broadcast(capacity = capacity, start = start, onCompletion = { cancelConsumed(it) }) {
+        for (e in channel) {
             send(e)
         }
     }
@@ -94,10 +98,12 @@ public fun <E> ReceiveChannel<E>.broadcast(
  *
  * ### Future replacement
  *
+ * This API is obsolete since 1.5.0.
  * This function has an inappropriate result type of [BroadcastChannel] which provides
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
- * the broadcasting coroutine in hard-to-specify ways. It will be replaced with
- * sharing operators on [Flow][kotlinx.coroutines.flow.Flow] in the future.
+ * the broadcasting coroutine in hard-to-specify ways. It will be deprecated with warning in 1.6.0
+ * and with error in 1.7.0. It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn]
+ * operator.
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (1 by default).
@@ -105,6 +111,7 @@ public fun <E> ReceiveChannel<E>.broadcast(
  * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+@ObsoleteCoroutinesApi
 public fun <E> CoroutineScope.broadcast(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,
@@ -126,7 +133,13 @@ private open class BroadcastCoroutine<E>(
     parentContext: CoroutineContext,
     protected val _channel: BroadcastChannel<E>,
     active: Boolean
-) : AbstractCoroutine<Unit>(parentContext, active), ProducerScope<E>, BroadcastChannel<E> by _channel {
+) : AbstractCoroutine<Unit>(parentContext, initParentJob = false, active = active),
+    ProducerScope<E>, BroadcastChannel<E> by _channel {
+
+    init {
+        initParentJob(parentContext[Job])
+    }
+
     override val isActive: Boolean get() = super.isActive
 
     override val channel: SendChannel<E>

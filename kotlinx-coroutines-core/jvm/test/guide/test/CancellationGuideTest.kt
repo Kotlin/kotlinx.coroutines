@@ -5,6 +5,7 @@
 // This file was automatically generated from cancellation-and-timeouts.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
+import kotlinx.coroutines.knit.*
 import org.junit.Test
 
 class CancellationGuideTest {
@@ -33,24 +34,12 @@ class CancellationGuideTest {
     }
 
     @Test
-    fun testExampleCancel03() {
-        test("ExampleCancel03") { kotlinx.coroutines.guide.exampleCancel03.main() }.verifyLines(
-            "job: I'm sleeping 0 ...",
-            "job: I'm sleeping 1 ...",
-            "job: I'm sleeping 2 ...",
-            "main: I'm tired of waiting!",
-            "main: Now I can quit."
-        )
-    }
-
-    @Test
     fun testExampleCancel04() {
         test("ExampleCancel04") { kotlinx.coroutines.guide.exampleCancel04.main() }.verifyLines(
             "job: I'm sleeping 0 ...",
             "job: I'm sleeping 1 ...",
             "job: I'm sleeping 2 ...",
             "main: I'm tired of waiting!",
-            "job: I'm running finally",
             "main: Now I can quit."
         )
     }
@@ -63,14 +52,26 @@ class CancellationGuideTest {
             "job: I'm sleeping 2 ...",
             "main: I'm tired of waiting!",
             "job: I'm running finally",
-            "job: And I've just delayed for 1 sec because I'm non-cancellable",
             "main: Now I can quit."
         )
     }
 
     @Test
     fun testExampleCancel06() {
-        test("ExampleCancel06") { kotlinx.coroutines.guide.exampleCancel06.main() }.verifyLinesStartWith(
+        test("ExampleCancel06") { kotlinx.coroutines.guide.exampleCancel06.main() }.verifyLines(
+            "job: I'm sleeping 0 ...",
+            "job: I'm sleeping 1 ...",
+            "job: I'm sleeping 2 ...",
+            "main: I'm tired of waiting!",
+            "job: I'm running finally",
+            "job: And I've just delayed for 1 sec because I'm non-cancellable",
+            "main: Now I can quit."
+        )
+    }
+
+    @Test
+    fun testExampleCancel07() {
+        test("ExampleCancel07") { kotlinx.coroutines.guide.exampleCancel07.main() }.verifyLinesStartWith(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
@@ -79,12 +80,19 @@ class CancellationGuideTest {
     }
 
     @Test
-    fun testExampleCancel07() {
-        test("ExampleCancel07") { kotlinx.coroutines.guide.exampleCancel07.main() }.verifyLines(
+    fun testExampleCancel08() {
+        test("ExampleCancel08") { kotlinx.coroutines.guide.exampleCancel08.main() }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
             "Result is null"
+        )
+    }
+
+    @Test
+    fun testExampleCancel10() {
+        test("ExampleCancel10") { kotlinx.coroutines.guide.exampleCancel10.main() }.verifyLines(
+            "0"
         )
     }
 }

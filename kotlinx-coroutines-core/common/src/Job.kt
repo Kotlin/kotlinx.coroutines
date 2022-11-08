@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -31,7 +31,7 @@ import kotlin.jvm.*
  *   It is completed by calling [CompletableJob.complete].
  *
  * Conceptually, an execution of a job does not produce a result value. Jobs are launched solely for their
- * side-effects. See [Deferred] interface for a job that produces a result.
+ * side effects. See [Deferred] interface for a job that produces a result.
  *
  * ### Job states
  *
@@ -113,18 +113,25 @@ public interface Job : CoroutineContext.Element {
     /**
      * Key for [Job] instance in the coroutine context.
      */
-    public companion object Key : CoroutineContext.Key<Job> {
-        init {
-            /*
-             * Here we make sure that CoroutineExceptionHandler is always initialized in advance, so
-             * that if a coroutine fails due to StackOverflowError we don't fail to report this error
-             * trying to initialize CoroutineExceptionHandler
-             */
-            CoroutineExceptionHandler
-        }
-    }
+    public companion object Key : CoroutineContext.Key<Job>
 
     // ------------ state query ------------
+
+    /**
+     * Returns the parent of the current job if the parent-child relationship
+     * is established or `null` if the job has no parent or was successfully completed.
+     *
+     * Accesses to this property are not idempotent, the property becomes `null` as soon
+     * as the job is transitioned to its final state, whether it is cancelled or completed,
+     * and all job children are completed.
+     *
+     * For a coroutine, its corresponding job completes as soon as the coroutine itself
+     * and all its children are complete.
+     *
+     * @see [Job] state transitions for additional details.
+     */
+    @ExperimentalCoroutinesApi
+    public val parent: Job?
 
     /**
      * Returns `true` when this job is active -- it was already started and has not completed nor was cancelled yet.
@@ -177,7 +184,7 @@ public interface Job : CoroutineContext.Element {
 
     /**
      * Starts coroutine related to this job (if any) if it was not started yet.
-     * The result `true` if this invocation actually started coroutine or `false`
+     * The result is `true` if this invocation actually started coroutine or `false`
      * if it was already started or completed.
      */
     public fun start(): Boolean
@@ -217,11 +224,10 @@ public interface Job : CoroutineContext.Element {
      *   immediately cancels all its children.
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
      *   complete in _completing_ or _cancelling_ state.
-     * * Uncaught exception in a child, by default, cancels parent. In particular, this applies to
-     *   children created with [launch][CoroutineScope.launch] coroutine builder. Note that
-     *   [async][CoroutineScope.async] and other future-like
-     *   coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
-     *   caught and are encapsulated in their result.
+     * * Uncaught exception in a child, by default, cancels parent. This applies even to
+     *   children created with [async][CoroutineScope.async] and other future-like
+     *   coroutine builders, even though their exceptions are caught and are encapsulated in their result.
+     *   This default behavior can be overridden with [SupervisorJob].
      */
     public val children: Sequence<Job>
 
@@ -262,9 +268,9 @@ public interface Job : CoroutineContext.Element {
      * suspending function is invoked or while it is suspended, this function
      * throws [CancellationException].
      *
-     * In particular, it means that a parent coroutine invoking `join` on a child coroutine that was started using
-     * `launch(coroutineContext) { ... }` builder throws [CancellationException] if the child
-     * had crashed, unless a non-standard [CoroutineExceptionHandler] is installed in the context.
+     * In particular, it means that a parent coroutine invoking `join` on a child coroutine throws
+     * [CancellationException] if the child had failed, since a failure of a child coroutine cancels parent by default,
+     * unless the child was launched from within [supervisorScope].
      *
      * This function can be used in [select] invocation with [onJoin] clause.
      * Use [isCompleted] to check for a completion of this job without waiting.
@@ -397,25 +403,13 @@ public fun Job0(parent: Job? = null): Job = Job(parent)
 /**
  * A handle to an allocated object that can be disposed to make it eligible for garbage collection.
  */
-public interface DisposableHandle {
+public fun interface DisposableHandle {
     /**
      * Disposes the corresponding object, making it eligible for garbage collection.
      * Repeated invocation of this function has no effect.
      */
     public fun dispose()
 }
-
-/**
- * @suppress **This an internal API and should not be used from general code.**
- */
-@Suppress("FunctionName")
-@InternalCoroutinesApi
-public inline fun DisposableHandle(crossinline block: () -> Unit): DisposableHandle =
-    object : DisposableHandle {
-        override fun dispose() {
-            block()
-        }
-    }
 
 // -------------------- Parent-child communication --------------------
 
@@ -467,6 +461,14 @@ public interface ParentJob : Job {
 @InternalCoroutinesApi
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
 public interface ChildHandle : DisposableHandle {
+
+    /**
+     * Returns the parent of the current parent-child relationship.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    @InternalCoroutinesApi
+    public val parent: Job?
+
     /**
      * Child is cancelling its parent by invoking this method.
      * This method is invoked by the child twice. The first time child report its root cause as soon as possible,
@@ -490,7 +492,7 @@ public interface ChildHandle : DisposableHandle {
  * ```
  */
 internal fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
-    invokeOnCompletion(handler = DisposeOnCompletion(this, handle).asHandler)
+    invokeOnCompletion(handler = DisposeOnCompletion(handle).asHandler)
 
 /**
  * Cancels the job and suspends the invoking coroutine until the cancelled job is complete.
@@ -500,9 +502,9 @@ internal fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle
  * suspending function is invoked or while it is suspended, this function
  * throws [CancellationException].
  *
- * In particular, it means that a parent coroutine invoking `cancelAndJoin` on a child coroutine that was started using
- * `launch(coroutineContext) { ... }` builder throws [CancellationException] if the child
- * had crashed, unless a non-standard [CoroutineExceptionHandler] is installed in the context.
+ * In particular, it means that a parent coroutine invoking `cancelAndJoin` on a child coroutine throws
+ * [CancellationException] if the child had failed, since a failure of a child coroutine cancels parent by default,
+ * unless the child was launched from within [supervisorScope].
  *
  * This is a shortcut for the invocation of [cancel][Job.cancel] followed by [join][Job.join].
  */
@@ -635,6 +637,15 @@ public fun CoroutineContext.cancelChildren(cause: CancellationException? = null)
 public fun CoroutineContext.cancelChildren(): Unit = cancelChildren(null)
 
 /**
+ * Retrieves the current [Job] instance from the given [CoroutineContext] or
+ * throws [IllegalStateException] if no job is present in the context.
+ *
+ * This method is a short-cut for `coroutineContext[Job]!!` and should be used only when it is known in advance that
+ * the context does have instance of the job in it.
+ */
+public val CoroutineContext.job: Job get() = get(Job) ?: error("Current context doesn't contain Job in it: $this")
+
+/**
  * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [CoroutineContext.cancelChildren].
  */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
@@ -651,6 +662,9 @@ private fun Throwable?.orCancellation(job: Job): Throwable = this ?: JobCancella
  */
 @InternalCoroutinesApi
 public object NonDisposableHandle : DisposableHandle, ChildHandle {
+
+    override val parent: Job? get() = null
+
     /**
      * Does not do anything.
      * @suppress

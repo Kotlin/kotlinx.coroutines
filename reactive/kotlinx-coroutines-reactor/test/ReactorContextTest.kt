@@ -18,9 +18,9 @@ class ReactorContextTest : TestBase() {
             buildString {
                 (1..7).forEach { append(ctx.getOrDefault(it, "noValue")) }
             }
-        }  .subscriberContext(Context.of(2, "2", 3, "3", 4, "4", 5, "5"))
-           .subscriberContext { ctx -> ctx.put(6, "6") }
-        assertEquals(mono.awaitFirst(), "1234567")
+        }  .contextWrite(Context.of(2, "2", 3, "3", 4, "4", 5, "5"))
+           .contextWrite { ctx -> ctx.put(6, "6") }
+        assertEquals(mono.awaitSingle(), "1234567")
     }
 
     @Test
@@ -29,8 +29,8 @@ class ReactorContextTest : TestBase() {
             val ctx = reactorContext()
             (1..7).forEach { send(ctx.getOrDefault(it, "noValue")) }
         }
-            .subscriberContext(Context.of(2, "2", 3, "3", 4, "4", 5, "5"))
-            .subscriberContext { ctx -> ctx.put(6, "6") }
+            .contextWrite(Context.of(2, "2", 3, "3", 4, "4", 5, "5"))
+            .contextWrite { ctx -> ctx.put(6, "6") }
         val list = flux.collectList().block()!!
         assertEquals((1..7).map { it.toString() }, list)
     }
@@ -42,23 +42,19 @@ class ReactorContextTest : TestBase() {
             buildString {
                 (1..3).forEach { append(ctx.getOrDefault(it, "noValue")) }
             }
-        }  .subscriberContext(Context.of(2, "2"))
-            .awaitFirst()
+        }  .contextWrite(Context.of(2, "2"))
+            .awaitSingle()
         assertEquals(result, "123")
     }
 
     @Test
     fun testMonoAwaitContextPropagation() = runBlocking(Context.of(7, "7").asCoroutineContext()) {
-        assertEquals(createMono().awaitFirst(), "7")
-        assertEquals(createMono().awaitFirstOrDefault("noValue"), "7")
-        assertEquals(createMono().awaitFirstOrNull(), "7")
-        assertEquals(createMono().awaitFirstOrElse { "noValue" }, "7")
-        assertEquals(createMono().awaitLast(), "7")
         assertEquals(createMono().awaitSingle(), "7")
+        assertEquals(createMono().awaitSingleOrNull(), "7")
     }
 
     @Test
-    fun testFluxAwaitContextPropagation() = runBlocking<Unit>(
+    fun testFluxAwaitContextPropagation() = runBlocking(
         Context.of(1, "1", 2, "2", 3, "3").asCoroutineContext()
     ) {
         assertEquals(createFlux().awaitFirst(), "1")

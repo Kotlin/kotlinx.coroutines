@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 def prop(name, defVal) {
@@ -40,17 +40,15 @@ task preparePublishNpm(type: Copy) {
 
 task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
     workingDir = npmDeployDir
-  
-    doFirst {
-        def npmDeployTag = distTag(version)
-        def deployArgs = ['publish',
-                          "--//registry.npmjs.org/:_authToken=$authToken",
-                          "--tag=$npmDeployTag"]
-        if (dryRun == "true") {
-            println("$npmDeployDir \$ npm arguments: $deployArgs")
-            args = ['pack']
-        } else {
-            args = deployArgs
-        }
+
+    def npmDeployTag = distTag(version)
+    def deployArgs = ['publish',
+                      "--//registry.npmjs.org/:_authToken=$authToken",
+                      "--tag=$npmDeployTag"]
+    if (dryRun == "true") {
+        println("$npmDeployDir \$ npm arguments: $deployArgs")
+        args = ['pack']
+    } else {
+        args = deployArgs
     }
 }

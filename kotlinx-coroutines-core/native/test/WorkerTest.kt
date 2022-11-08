@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -19,17 +19,19 @@ class WorkerTest : TestBase() {
                 delay(1)
             }
         }.result
+        worker.requestTermination()
     }
 
     @Test
-    fun testLaunchInWorkerTroughGlobalScope() {
+    fun testLaunchInWorkerThroughGlobalScope() {
         val worker = Worker.start()
         worker.execute(TransferMode.SAFE, { }) {
             runBlocking {
                 CoroutineScope(EmptyCoroutineContext).launch {
-                    delay(1)
+                    delay(10)
                 }.join()
             }
         }.result
+        worker.requestTermination()
     }
 }

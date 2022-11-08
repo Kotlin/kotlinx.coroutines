@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -20,6 +20,9 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * the channel afterwards. If you need to iterate over the channel without consuming it,
  * a regular `for` loop should be used instead.
  *
+ * Note, that emitting values from a channel into a flow is not atomic. A value that was received from the
+ * channel many not reach the flow collector if it was cancelled and will be lost.
+ *
  * This function provides a more efficient shorthand for `channel.consumeEach { value -> emit(value) }`.
  * See [consumeEach][ReceiveChannel.consumeEach].
  */
@@ -27,35 +30,11 @@ public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>): Uni
     emitAllImpl(channel, consume = true)
 
 private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>, consume: Boolean) {
-    // Manually inlined "consumeEach" implementation that does not use iterator but works via "receiveOrClosed".
-    // It has smaller and more efficient spilled state which also allows to implement a manual kludge to
-    // fix retention of the last emitted value.
-    // See https://youtrack.jetbrains.com/issue/KT-16222
-    // See https://github.com/Kotlin/kotlinx.coroutines/issues/1333
+    ensureActive()
     var cause: Throwable? = null
     try {
-        while (true) {
-            // :KLUDGE: This "run" call is resolved to an extension function "run" and forces the size of
-            // spilled state to increase by an additional slot, so there are 4 object local variables spilled here
-            // which makes the size of spill state equal to the 4 slots that are spilled around subsequent "emit"
-            // call, ensuring that the previously emitted value is not retained in the state while receiving
-            // the next one.
-            //     L$0 <- this
-            //     L$1 <- channel
-            //     L$2 <- cause
-            //     L$3 <- this$run (actually equal to this)
-            val result = run { channel.receiveOrClosed() }
-            if (result.isClosed) {
-                result.closeCause?.let { throw it }
-                break // returns normally when result.closeCause == null
-            }
-            // result is spilled here to the coroutine state and retained after the call, even though
-            // it is not actually needed in the next loop iteration.
-            //     L$0 <- this
-            //     L$1 <- channel
-            //     L$2 <- cause
-            //     L$3 <- result
-            emit(result.value)
+        for (element in channel) {
+            emit(element)
         }
     } catch (e: Throwable) {
         cause = e
@@ -116,8 +95,9 @@ private class ChannelAsFlow<T>(
     private val channel: ReceiveChannel<T>,
     private val consume: Boolean,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = Channel.OPTIONAL_CHANNEL
-) : ChannelFlow<T>(context, capacity) {
+    capacity: Int = Channel.OPTIONAL_CHANNEL,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
     private val consumed = atomic(false)
 
     private fun markConsumed() {
@@ -126,16 +106,14 @@ private class ChannelAsFlow<T>(
         }
     }
     
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        ChannelAsFlow(channel, consume, context, capacity)
+    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
+        ChannelAsFlow(channel, consume, context, capacity, onBufferOverflow)
+
+    override fun dropChannelOperators(): Flow<T> =
+        ChannelAsFlow(channel, consume)
 
     override suspend fun collectTo(scope: ProducerScope<T>) =
         SendingCollector(scope).emitAllImpl(channel, consume) // use efficient channel receiving code from emitAll
-
-    override fun broadcastImpl(scope: CoroutineScope, start: CoroutineStart): BroadcastChannel<T> {
-        markConsumed() // fail fast on repeated attempt to collect it
-        return super.broadcastImpl(scope, start)
-    }
 
     override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
         markConsumed() // fail fast on repeated attempt to collect it
@@ -154,7 +132,7 @@ private class ChannelAsFlow<T>(
         }
     }
 
-    override fun additionalToStringProps(): String = "channel=$channel, "
+    override fun additionalToStringProps(): String = "channel=$channel"
 }
 
 /**
@@ -166,34 +144,24 @@ private class ChannelAsFlow<T>(
  * 2) Flow consumer completes normally when the original channel completes (~is closed) normally.
  * 3) If the flow consumer fails with an exception, subscription is cancelled.
  */
-@FlowPreview
+@Deprecated(
+    level = DeprecationLevel.WARNING,
+    message = "'BroadcastChannel' is obsolete and all corresponding operators are deprecated " +
+        "in the favour of StateFlow and SharedFlow"
+) // Since 1.5.0, was @FlowPreview, safe to remove in 1.7.0
 public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
     emitAll(openSubscription())
 }
 
 /**
- * Creates a [broadcast] coroutine that collects the given flow.
- *
- * This transformation is **stateful**, it launches a [broadcast] coroutine
- * that collects the given flow and thus resulting channel should be properly closed or cancelled.
- *
- * A channel with [default][Channel.Factory.BUFFERED] buffer size is created.
- * Use [buffer] operator on the flow before calling `broadcastIn` to specify a value other than
- * default and to control what happens when data is produced faster than it is consumed,
- * that is to control backpressure behavior.
- */
-@FlowPreview
-public fun <T> Flow<T>.broadcastIn(
-    scope: CoroutineScope,
-    start: CoroutineStart = CoroutineStart.LAZY
-): BroadcastChannel<T> =
-    asChannelFlow().broadcastImpl(scope, start)
-
-/**
  * Creates a [produce] coroutine that collects the given flow.
  *
  * This transformation is **stateful**, it launches a [produce] coroutine
- * that collects the given flow and thus resulting channel should be properly closed or cancelled.
+ * that collects the given flow, and has the same behavior:
+ *
+ * * if collecting the flow throws, the channel will be closed with that exception
+ * * if the [ReceiveChannel] is cancelled, the collection of the flow will be cancelled
+ * * if collecting the flow completes normally, the [ReceiveChannel] will be closed normally
  *
  * A channel with [default][Channel.Factory.BUFFERED] buffer size is created.
  * Use [buffer] operator on the flow before calling `produceIn` to specify a value other than

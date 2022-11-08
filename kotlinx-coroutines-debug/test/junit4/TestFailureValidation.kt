@@ -104,6 +104,6 @@ internal class TestFailureValidation(private val testsSpec: Map<String, TestResu
 }
 
 data class TestResultSpec(
-    val testName: String, val expectedOutParts: List<String> = listOf(), val notExpectedOutParts:
-    List<String> = listOf(), val error: Class<out Throwable>? = null
+    val testName: String, val expectedOutParts: List<String> = listOf(),
+    val notExpectedOutParts: List<String> = listOf(), val error: Class<out Throwable>? = null
 )

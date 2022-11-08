@@ -83,7 +83,7 @@ class FlowOnTest : TestBase() {
         }.map {
             expect(2)
             assertEquals("throwing", it)
-            throw TestException(); it
+            throw TestException()
         }.flowOn(NamedDispatchers("throwing"))
 
         assertFailsWith<TestException>(flow)
@@ -339,6 +339,22 @@ class FlowOnTest : TestBase() {
         fun consume(value: Int) {
             contextName = NamedDispatchers.nameOr("main")
             assertEquals(expected, value)
+        }
+    }
+
+    @Test
+    fun testCancelledFlowOn() = runTest {
+        assertFailsWith<CancellationException> {
+            coroutineScope {
+                val scope = this
+                flow {
+                    emit(Unit) // emit to buffer
+                    scope.cancel() // now cancel outer scope
+                }.flowOn(wrapperDispatcher()).collect {
+                    // should not be reached, because cancelled before it runs
+                    expectUnreached()
+                }
+            }
         }
     }
 }

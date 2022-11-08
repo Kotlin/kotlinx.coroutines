@@ -70,7 +70,7 @@ class PublisherAsFlowTest : TestBase() {
                 send(it + 1)
                 expect(it + 1)
             }
-            assertFalse { offer(-1) }
+            assertFalse { trySend(-1).isSuccess }
         }
 
         publisher.asFlow().collect {

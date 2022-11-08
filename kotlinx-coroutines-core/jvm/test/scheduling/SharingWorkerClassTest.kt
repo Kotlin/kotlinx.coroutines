@@ -13,8 +13,8 @@ class SharingWorkerClassTest : SchedulerTestBase() {
 
     @Test
     fun testSharedThread() = runTest {
-        val dispatcher = ExperimentalCoroutineDispatcher(1, schedulerName = "first")
-        val dispatcher2 = ExperimentalCoroutineDispatcher(1, schedulerName = "second")
+        val dispatcher = SchedulerCoroutineDispatcher(1, schedulerName = "first")
+        val dispatcher2 = SchedulerCoroutineDispatcher(1, schedulerName = "second")
 
         try {
             withContext(dispatcher) {
@@ -39,7 +39,7 @@ class SharingWorkerClassTest : SchedulerTestBase() {
         val cores = Runtime.getRuntime().availableProcessors()
         repeat(cores + 1) {
             CoroutineScope(Dispatchers.Default).launch {
-                ExperimentalCoroutineDispatcher(1).close()
+                SchedulerCoroutineDispatcher(1).close()
             }.join()
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactive
@@ -11,44 +11,25 @@ import kotlinx.coroutines.internal.*
 import org.reactivestreams.*
 
 /**
- * Subscribes to this [Publisher] and returns a channel to receive elements emitted by it.
- * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this publisher.
-
- * @param request how many items to request from publisher in advance (optional, one by default).
+ * Subscribes to this [Publisher] and performs the specified action for each received element.
  *
- * This method is deprecated in the favor of [Flow].
- * Instead of iterating over the resulting channel please use [collect][Flow.collect]:
- * ```
- * asFlow().collect { value ->
- *     // process value
- * }
- * ```
+ * If [action] throws an exception at some point, the subscription is cancelled, and the exception is rethrown from
+ * [collect]. Also, if the publisher signals an error, that error is rethrown from [collect].
  */
-@Deprecated(
-    message = "Transforming publisher to channel is deprecated, use asFlow() instead",
-    level = DeprecationLevel.WARNING) // Will be error in 1.4
-public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
+public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit): Unit =
+    toChannel().consumeEach(action)
+
+@PublishedApi
+internal fun <T> Publisher<T>.toChannel(request: Int = 1): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     subscribe(channel)
     return channel
 }
 
-// Will be promoted to error in 1.3.0, removed in 1.4.0
-@Deprecated(message = "Use collect instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("this.collect(action)"))
-public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit): Unit =
-    openSubscription().consumeEach(action)
-
-/**
- * Subscribes to this [Publisher] and performs the specified action for each received element.
- * Cancels subscription if any exception happens during collect.
- */
-public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit): Unit =
-    openSubscription().consumeEach(action)
-
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(), Subscriber<T> {
+) : LinkedListChannel<T>(null), Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }
@@ -59,7 +40,7 @@ private class SubscriptionChannel<T>(
     // can be negative if we have receivers, but no subscription yet
     private val _requested = atomic(0)
 
-    // AbstractChannel overrides
+    // --------------------- AbstractChannel overrides -------------------------------
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveEnqueued() {
         _requested.loop { wasRequested ->
@@ -87,7 +68,7 @@ private class SubscriptionChannel<T>(
         _subscription.getAndSet(null)?.cancel() // cancel exactly once
     }
 
-    // Subscriber overrides
+    // --------------------- Subscriber overrides -------------------------------
     override fun onSubscribe(s: Subscription) {
         _subscription.value = s
         while (true) { // lock-free loop on _requested
@@ -107,7 +88,7 @@ private class SubscriptionChannel<T>(
 
     override fun onNext(t: T) {
         _requested.decrementAndGet()
-        offer(t)
+        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onComplete() {
@@ -119,3 +100,12 @@ private class SubscriptionChannel<T>(
     }
 }
 
+/** @suppress */
+@Deprecated(
+    message = "Transforming publisher to channel is deprecated, use asFlow() instead",
+    level = DeprecationLevel.HIDDEN) // ERROR in 1.4, HIDDEN in 1.6.0
+public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>(request)
+    subscribe(channel)
+    return channel
+}

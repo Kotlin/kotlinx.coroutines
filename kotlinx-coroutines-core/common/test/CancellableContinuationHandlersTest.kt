@@ -23,10 +23,23 @@ class CancellableContinuationHandlersTest : TestBase() {
     fun testDoubleSubscriptionAfterCompletion() = runTest {
         suspendCancellableCoroutine<Unit> { c ->
             c.resume(Unit)
-            // Nothing happened
+            // First invokeOnCancellation is Ok
             c.invokeOnCancellation { expectUnreached() }
-            // Cannot validate after completion
-            c.invokeOnCancellation { expectUnreached() }
+            // Second invokeOnCancellation is not allowed
+            assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
+        }
+    }
+
+    @Test
+    fun testDoubleSubscriptionAfterCompletionWithException() = runTest {
+        assertFailsWith<TestException> {
+            suspendCancellableCoroutine<Unit> { c ->
+                c.resumeWithException(TestException())
+                // First invokeOnCancellation is Ok
+                c.invokeOnCancellation { expectUnreached() }
+                // Second invokeOnCancellation is not allowed
+                assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
+            }
         }
     }
 
@@ -44,6 +57,59 @@ class CancellableContinuationHandlersTest : TestBase() {
         } catch (e: CancellationException) {
             finish(2)
         }
+    }
+
+    @Test
+    fun testSecondSubscriptionAfterCancellation() = runTest {
+        try {
+            suspendCancellableCoroutine<Unit> { c ->
+                // Set IOC first
+                c.invokeOnCancellation {
+                    assertNull(it)
+                    expect(2)
+                }
+                expect(1)
+                // then cancel (it gets called)
+                c.cancel()
+                // then try to install another one
+                assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
+            }
+        } catch (e: CancellationException) {
+            finish(3)
+        }
+    }
+
+    @Test
+    fun testSecondSubscriptionAfterResumeCancelAndDispatch() = runTest {
+        var cont: CancellableContinuation<Unit>? = null
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            // will be cancelled during dispatch
+            assertFailsWith<CancellationException> {
+                suspendCancellableCoroutine<Unit> { c ->
+                    cont = c
+                    // Set IOC first -- not called (completed)
+                    c.invokeOnCancellation {
+                        assertTrue(it is CancellationException)
+                        expect(4)
+                    }
+                    expect(1)
+                }
+            }
+            expect(5)
+        }
+        expect(2)
+        // then resume it
+        cont!!.resume(Unit) // schedule cancelled continuation for dispatch
+        // then cancel the job during dispatch
+        job.cancel()
+        expect(3)
+        yield() // finish dispatching (will call IOC handler here!)
+        expect(6)
+        // then try to install another one after we've done dispatching it
+        assertFailsWith<IllegalStateException> {
+            cont!!.invokeOnCancellation { expectUnreached() }
+        }
+        finish(7)
     }
 
     @Test

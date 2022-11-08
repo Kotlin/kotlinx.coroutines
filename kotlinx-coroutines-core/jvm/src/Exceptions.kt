@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("FunctionName")
@@ -29,7 +29,7 @@ public actual fun CancellationException(message: String?, cause: Throwable?) : C
 internal actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
-    @JvmField internal actual val job: Job
+    @JvmField @Transient internal actual val job: Job
 ) : CancellationException(message), CopyableThrowable<JobCancellationException> {
 
     init {
