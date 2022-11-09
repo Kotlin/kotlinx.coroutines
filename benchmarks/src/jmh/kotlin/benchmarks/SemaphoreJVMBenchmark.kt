@@ -81,7 +81,7 @@ open class SemaphoreCancellationJVMBenchmark {
         val cdl = CountDownLatch(threads)
         repeat(threads) {
             thread {
-                repeat(1024_00000 / threads) {
+                repeat(1024_0000 / threads) {
                     try {
                         s2.acquire2()
                     } catch (e: InterruptedException) {
@@ -101,7 +101,7 @@ open class SemaphoreCancellationJVMBenchmark {
         val cdl = CountDownLatch(threads)
         repeat(threads) {
             thread {
-                repeat(1024_00000 / threads) {
+                repeat(1024_0000 / threads) {
                     try {
                         s.tryAcquire(1L, TimeUnit.NANOSECONDS)
                     } catch (e: InterruptedException) {
