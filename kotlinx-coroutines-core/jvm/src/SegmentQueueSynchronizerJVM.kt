@@ -302,7 +302,7 @@ public abstract class SegmentQueueSynchronizerJVM<T : Any> {
                         segment.markCancelled(i)
                         return Unit as T
                     }
-                    LockSupport.parkNanos(remaining)
+                    if (remaining > 1000L) LockSupport.parkNanos(remaining)
                 } while (segment.get(i) === t)
             }
             val value = segment.get(i) as T
