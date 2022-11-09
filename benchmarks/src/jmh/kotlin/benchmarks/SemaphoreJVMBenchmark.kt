@@ -75,7 +75,7 @@ open class SemaphoreCancellationJVMBenchmark {
 
     @Benchmark
     fun semaphoreCQS2() {
-        repeat(1_000_000) {
+        repeat(10_000_000) {
             try {
                 s2.acquire2()
             } catch (e: InterruptedException) {
@@ -88,7 +88,7 @@ open class SemaphoreCancellationJVMBenchmark {
 
     @Benchmark
     fun semaphoreJava2() {
-        repeat(1_000_000) {
+        repeat(10_000_000) {
             try {
                 s.tryAcquire(1L, TimeUnit.NANOSECONDS)
             } catch (e: InterruptedException) {
