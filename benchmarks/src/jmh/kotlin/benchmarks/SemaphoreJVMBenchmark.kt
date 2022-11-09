@@ -35,6 +35,9 @@ open class SemaphoreCancellationJVMBenchmark {
     private val s = Semaphore(1)
     private val s2 = SemaSQS_Async_Simple(1)
 
+    @Param("1", "32", "128")
+    var threads: Int = 1
+
     init {
         s.acquire()
         s2.acquire()
@@ -75,27 +78,41 @@ open class SemaphoreCancellationJVMBenchmark {
 
     @Benchmark
     fun semaphoreCQS2() {
-        repeat(10_000_000) {
-            try {
-                s2.acquire2()
-            } catch (e: InterruptedException) {
+        val cdl = CountDownLatch(threads)
+        repeat(threads) {
+            thread {
+                repeat(1024_00000 / threads) {
+                    try {
+                        s2.acquire2()
+                    } catch (e: InterruptedException) {
 //                        check(!Thread.currentThread().isInterrupted)
-                // Ignore
+                        // Ignore
+                    }
+                }
+                cdl.countDown()
             }
         }
+        cdl.await()
         println("DONE")
     }
 
     @Benchmark
     fun semaphoreJava2() {
-        repeat(10_000_000) {
-            try {
-                s.tryAcquire(1L, TimeUnit.NANOSECONDS)
-            } catch (e: InterruptedException) {
+        val cdl = CountDownLatch(threads)
+        repeat(threads) {
+            thread {
+                repeat(1024_00000 / threads) {
+                    try {
+                        s.tryAcquire(1L, TimeUnit.NANOSECONDS)
+                    } catch (e: InterruptedException) {
 //                        check(!Thread.currentThread().isInterrupted)
-                // Ignore
+                        // Ignore
+                    }
+                }
+                cdl.countDown()
             }
         }
+        cdl.await()
         println("DONE")
     }
 
