@@ -22,7 +22,7 @@ fun main() {
 }
 
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
-@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Measurement(iterations = 20, time = 500, timeUnit = TimeUnit.MICROSECONDS)
 @Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -35,7 +35,7 @@ open class SemaphoreCancellationJVMBenchmark {
     private val s = Semaphore(1)
     private val s2 = SemaSQS_Async_Simple(1)
 
-    @Param("1", "32", "128")
+    @Param("1", "2", "4", "8", "16", "32", "64", "128")
     var threads: Int = 1
 
     init {
