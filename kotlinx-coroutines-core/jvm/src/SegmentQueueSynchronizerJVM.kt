@@ -249,7 +249,7 @@ public abstract class SegmentQueueSynchronizerJVM<T : Any> {
     // true -> success
     protected fun suspendCurThread(timeout: Long = 0L): T? {
         val t = Thread.currentThread()
-        val deadline = if (timeout == 0L) 0L else System.nanoTime() + timeout
+//        val deadline = if (timeout == 0L) 0L else System.nanoTime() + timeout
         // Increment `enqIdx` and find the segment
         // with the corresponding id. It is guaranteed
         // that this segment is not removed since at
@@ -297,7 +297,7 @@ public abstract class SegmentQueueSynchronizerJVM<T : Any> {
                 } while (segment.get(i) === t)
             } else {
                 do {
-                    val remaining = deadline - System.nanoTime()
+                    val remaining = 0L // deadline - System.nanoTime()
                     if (remaining <= 0) {
                         segment.markCancelled(i)
                         return Unit as T
@@ -705,7 +705,7 @@ private class SQSSegment(id: Long, prev: SQSSegment?, pointers: Int) : Segment<S
  */
 private class WrappedContinuationValue(val cont: Continuation<*>)
 
-private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.sqs.segmentSize", 16)
+private val SEGMENT_SIZE = systemProp("kotlinx.coroutines.sqs.segmentSize", 64)
 private val MAX_SPIN_CYCLES = systemProp("kotlinx.coroutines.sqs.maxSpinCycles", 100)
 private val TAKEN = Symbol("TAKEN")
 private val BROKEN = Symbol("BROKEN")

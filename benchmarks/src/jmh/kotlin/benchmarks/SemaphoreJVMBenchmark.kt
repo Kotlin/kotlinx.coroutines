@@ -28,7 +28,7 @@ fun main() {
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class SemaphoreCancellationJVMBenchmark {
-    @Param("100")
+    @Param("0")
 //    @Param("1", "10", "100", "1000", "10000")
     var queueSize: Int = 0
 
