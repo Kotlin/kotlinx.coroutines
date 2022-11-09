@@ -21,8 +21,8 @@ fun main() {
     SemaphoreCancellationJVMBenchmark().semaphoreCQS2()
 }
 
-@Warmup(iterations = 1, time = 500, timeUnit = TimeUnit.MICROSECONDS)
-@Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MICROSECONDS)
 @Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
