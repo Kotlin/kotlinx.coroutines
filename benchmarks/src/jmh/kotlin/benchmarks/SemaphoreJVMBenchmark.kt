@@ -88,6 +88,7 @@ open class SemaphoreCancellationJVMBenchmark {
 //                        check(!Thread.currentThread().isInterrupted)
                         // Ignore
                     }
+                    doGeomDistrWork(50)
                 }
                 cdl.countDown()
             }
@@ -102,11 +103,12 @@ open class SemaphoreCancellationJVMBenchmark {
             thread {
                 repeat(1024_0000 / threads) {
                     try {
-                        s.tryAcquire(999L, TimeUnit.NANOSECONDS)
+                        s.tryAcquire(1L, TimeUnit.NANOSECONDS)
                     } catch (e: InterruptedException) {
 //                        check(!Thread.currentThread().isInterrupted)
                         // Ignore
                     }
+                    doGeomDistrWork(50)
                 }
                 cdl.countDown()
             }
@@ -226,7 +228,7 @@ class SemaSQS_Async_Simple(permits: Int): SegmentQueueSynchronizerJVM<Unit>(), S
     fun acquire2() {
         val p = _availablePermits.getAndDecrement()
         if (p > 0) return
-        suspendCurThread(999L)
+        suspendCurThread(1L)
     }
 
     override fun release() {
