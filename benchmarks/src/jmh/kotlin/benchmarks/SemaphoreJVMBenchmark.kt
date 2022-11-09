@@ -22,7 +22,7 @@ fun main() {
 }
 
 @Warmup(iterations = 1, time = 500, timeUnit = TimeUnit.MICROSECONDS)
-@Measurement(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MICROSECONDS)
 @Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -93,7 +93,6 @@ open class SemaphoreCancellationJVMBenchmark {
             }
         }
         cdl.await()
-        println("DONE")
     }
 
     @Benchmark
@@ -103,7 +102,7 @@ open class SemaphoreCancellationJVMBenchmark {
             thread {
                 repeat(1024_0000 / threads) {
                     try {
-                        s.tryAcquire(1L, TimeUnit.NANOSECONDS)
+                        s.tryAcquire(999L, TimeUnit.NANOSECONDS)
                     } catch (e: InterruptedException) {
 //                        check(!Thread.currentThread().isInterrupted)
                         // Ignore
@@ -113,7 +112,7 @@ open class SemaphoreCancellationJVMBenchmark {
             }
         }
         cdl.await()
-        println("DONE")
+//        println("DONE")
     }
 
 //    @Benchmark
@@ -142,7 +141,7 @@ open class SemaphoreCancellationJVMBenchmark {
             }
             t.interrupt()
         }
-        println("DONE")
+//        println("DONE")
     }
 }
 
@@ -227,7 +226,7 @@ class SemaSQS_Async_Simple(permits: Int): SegmentQueueSynchronizerJVM<Unit>(), S
     fun acquire2() {
         val p = _availablePermits.getAndDecrement()
         if (p > 0) return
-        suspendCurThread(1L)
+        suspendCurThread(999L)
     }
 
     override fun release() {
