@@ -88,7 +88,7 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     }
 }
 
-private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : SegmentQueueSynchronizer<Unit>(), Semaphore {
+internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : SegmentQueueSynchronizer<Unit>(), Semaphore {
     init {
         require(permits > 0) { "Semaphore should have at least 1 permit, but had $permits" }
         require(acquiredPermits in 0..permits) { "The number of acquired permits should be in 0..$permits" }
@@ -123,7 +123,7 @@ private class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Se
         acquireSlowPath()
     }
 
-    private suspend fun acquireSlowPath() = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
+    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable sc@ { cont ->
         while (true) {
             // Try to suspend.
             if (suspend(cont)) return@sc

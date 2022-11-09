@@ -8,11 +8,126 @@ import benchmarks.common.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
+import org.junit.Before
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.*
+
+fun main() {
+    SemaphoreCancellationJVMBenchmark().semaphoreCQS2()
+}
+
+@Warmup(iterations = 1, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Measurement(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Fork(value = 1)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@State(Scope.Benchmark)
+open class SemaphoreCancellationJVMBenchmark {
+    @Param("100")
+//    @Param("1", "10", "100", "1000", "10000")
+    var queueSize: Int = 0
+
+    private val s = Semaphore(1)
+    private val s2 = SemaSQS_Async_Simple(1)
+
+    init {
+        s.acquire()
+        s2.acquire()
+        repeat(queueSize) {
+            thread { s.acquire() }
+            thread { s2.acquire() }
+        }
+    }
+
+//    @Benchmark
+    fun semaphoreJava() {
+        val phase = AtomicInteger()
+        val ts = (1..1).map {
+            thread {
+                repeat(1_000_000) {
+                    try {
+                        s.acquire()
+                    } catch (e: InterruptedException) {
+//                        check(!Thread.currentThread().isInterrupted)
+                        // Ignore
+                    }
+                    phase.set(phase.get() + 1)
+                }
+            }
+        }
+        repeat(1_000_000) {
+            while (phase.get() < it) {
+                // wait
+            }
+            val t = ts[it % 1]
+            while (t.state !== Thread.State.WAITING) {
+                // wait
+            }
+            t.interrupt()
+        }
+        println("DONE")
+    }
+
+    @Benchmark
+    fun semaphoreCQS2() {
+        repeat(1_000_000) {
+            try {
+                s2.acquire2()
+            } catch (e: InterruptedException) {
+//                        check(!Thread.currentThread().isInterrupted)
+                // Ignore
+            }
+        }
+        println("DONE")
+    }
+
+    @Benchmark
+    fun semaphoreJava2() {
+        repeat(1_000_000) {
+            try {
+                s.tryAcquire(1L, TimeUnit.NANOSECONDS)
+            } catch (e: InterruptedException) {
+//                        check(!Thread.currentThread().isInterrupted)
+                // Ignore
+            }
+        }
+        println("DONE")
+    }
+
+//    @Benchmark
+    fun semaphoreCQS() {
+        val phase = AtomicInteger()
+        val ts = (1..1).map {
+            thread {
+                repeat(1_000_000) {
+                    try {
+                        s2.acquire()
+                    } catch (e: InterruptedException) {
+//                        check(!Thread.currentThread().isInterrupted)
+                        // Ignore
+                    }
+                    phase.set(phase.get() + 1)
+                }
+            }
+        }
+        repeat(1_000_000) {
+            while (phase.get() < it) {
+                // wait
+            }
+            val t = ts[it % 1]
+            while (t.state !== Thread.State.WAITING) {
+                // wait
+            }
+            t.interrupt()
+        }
+        println("DONE")
+    }
+}
 
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
 @Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MICROSECONDS)
@@ -90,6 +205,12 @@ class SemaSQS_Async_Simple(permits: Int): SegmentQueueSynchronizerJVM<Unit>(), S
         val p = _availablePermits.getAndDecrement()
         if (p > 0) return
         suspendCurThread()
+    }
+
+    fun acquire2() {
+        val p = _availablePermits.getAndDecrement()
+        if (p > 0) return
+        suspendCurThread(1L)
     }
 
     override fun release() {

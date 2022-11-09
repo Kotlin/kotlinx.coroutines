@@ -5,9 +5,9 @@
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.SegmentQueueSynchronizerJVM.ResumeMode.ASYNC
-import kotlinx.coroutines.SegmentQueueSynchronizerJVM.ResumeMode.SYNC
+import kotlinx.coroutines.SegmentQueueSynchronizerJVM.*
 import kotlinx.coroutines.SegmentQueueSynchronizerJVM.CancellationMode.*
+import kotlinx.coroutines.SegmentQueueSynchronizerJVM.ResumeMode.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.sync.*
 import java.util.concurrent.*
@@ -242,43 +242,69 @@ public abstract class SegmentQueueSynchronizerJVM<T : Any> {
         return false
     }
 
+    private fun findTail(id: Long, startFrom: SQSSegment) =
+        this.tail.findSegmentAndMoveForward(id = id, startFrom = startFrom, createNewSegment = ::createSegment).segment
+
     // false -> failed
     // true -> success
-    protected fun suspendCurThread(): T? {
+    protected fun suspendCurThread(timeout: Long = 0L): T? {
         val t = Thread.currentThread()
+        val deadline = if (timeout == 0L) 0L else System.nanoTime() + timeout
         // Increment `enqIdx` and find the segment
         // with the corresponding id. It is guaranteed
         // that this segment is not removed since at
         // least the cell for this [suspend] invocation
         // is not in the `CANCELLED` state.
-        val curTail = this.tail.value
+        var segment = this.tail.value
         val enqIdx = enqIdx.getAndIncrement()
-        val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
-            createNewSegment = ::createSegment).segment
-        assert { segment.id == enqIdx / SEGMENT_SIZE }
+        val id = enqIdx / SEGMENT_SIZE
+        if (segment.id != id) {
+            segment = findTail(id, segment)
+        }
+//        assert { segmemt.id == enqIdx / SEGMENT_SIZE }
         // Try to install the continuation in the cell,
         // this is the regular path.
         val i = (enqIdx % SEGMENT_SIZE).toInt()
         // Spin-loop optimization here
-        var x = 1
-        while (x < 100) {
-            val value = segment.get(i)
-            if (value != null) {
-                if (value !== BROKEN && segment.cas(i, value, TAKEN)) {
-                    // The elimination is successfully performed,
-                    // resume the continuation with the value and complete.
-                    return value as T
-                }
-                // The cell is broken, this can happen only in `SYNC` resumption mode.
-                return null
-            }
-            doGeomDistrWork(x*x)
-            x++
-        }
+//        var x = 1
+//        while (x < 100) {
+//            val value = segment.get(i)
+//            if (value != null) {
+//                if (value !== BROKEN && segment.cas(i, value, TAKEN)) {
+//                    // The elimination is successfully performed,
+//                    // resume the continuation with the value and complete.
+//                    return value as T
+//                }
+//                // The cell is broken, this can happen only in `SYNC` resumption mode.
+//                return null
+//            }
+//            doGeomDistrWork(x*x)
+//            x++
+//        }
         if (segment.cas(i, null, t)) {
-            do {
-                LockSupport.park()
-            } while (segment.get(i) === t)
+            if (timeout == 0L) {
+                do {
+                    LockSupport.park()
+                    if (Thread.interrupted()) {
+                        val old = segment.markCancelled(i)
+                        if (old === t) {
+                            throw InterruptedException()
+                        } else {
+                            t.interrupt()
+                            return old as T
+                        }
+                    }
+                } while (segment.get(i) === t)
+            } else {
+                do {
+                    val remaining = deadline - System.nanoTime()
+                    if (remaining <= 0) {
+                        segment.markCancelled(i)
+                        return Unit as T
+                    }
+                    LockSupport.parkNanos(remaining)
+                } while (segment.get(i) === t)
+            }
             val value = segment.get(i) as T
             segment.set(i, RESUMED)
             return value
@@ -338,6 +364,11 @@ public abstract class SegmentQueueSynchronizerJVM<T : Any> {
         }
     }
 
+    private fun findHead(id: Long, startFrom: SQSSegment) =
+        this.head.findSegmentAndMoveForward(
+            id, startFrom = startFrom,
+            createNewSegment = ::createSegment).segment
+
     /**
      * Tries to resume the next waiter, and returns [TRY_RESUME_SUCCESS] on
      * success, [TRY_RESUME_FAIL_CANCELLED] if the next waiter is cancelled,
@@ -360,11 +391,12 @@ public abstract class SegmentQueueSynchronizerJVM<T : Any> {
         // Increment `deqIdx` and find the first segment with
         // the corresponding or higher (if the required segment
         // is physically removed) id.
-        val curHead = this.head.value
+        var segment = this.head.value
         val deqIdx = deqIdx.getAndIncrement()
         val id = deqIdx / SEGMENT_SIZE
-        val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
-            createNewSegment = ::createSegment).segment
+        if (segment.id != id) {
+            segment = findHead(id, segment)
+        }
         // The previous segments can be safely collected
         // by GC, clean the pointer to them.
         segment.cleanPrev()

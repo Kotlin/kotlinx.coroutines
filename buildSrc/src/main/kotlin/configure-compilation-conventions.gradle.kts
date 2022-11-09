@@ -12,7 +12,7 @@ configure(subprojects) {
         val isMainTaskName = name == "compileKotlin" || name == "compileKotlinJvm"
         kotlinOptions {
             if (isMainTaskName) {
-                allWarningsAsErrors = true
+                allWarningsAsErrors = false
             }
             val newOptions =
                 listOf(

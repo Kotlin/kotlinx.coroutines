@@ -35,8 +35,7 @@ internal class SegmentBasedQueue<T> {
         while (true) {
             val curTail = this.tail.value
             val enqIdx = this.enqIdx.getAndIncrement()
-            @Suppress("INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION") // KT-54411
-            val segmentOrClosed = this.tail.findSegmentAndMoveForward(id = enqIdx, startFrom = curTail, createNewSegment = ::createSegment)
+            val segmentOrClosed = this.tail.findSegmentAndMoveForward(id = enqIdx, startFrom = curTail, createNewSegment = ::createOneElementSegment)
             if (segmentOrClosed.isClosed) return null
             val s = segmentOrClosed.segment
             if (s.element.value === BROKEN) continue
@@ -49,8 +48,7 @@ internal class SegmentBasedQueue<T> {
             if (this.deqIdx.value >= this.enqIdx.value) return null
             val curHead = this.head.value
             val deqIdx = this.deqIdx.getAndIncrement()
-            @Suppress("INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION") // KT-54411
-            val segmentOrClosed = this.head.findSegmentAndMoveForward(id = deqIdx, startFrom = curHead, createNewSegment = ::createSegment)
+            val segmentOrClosed = this.head.findSegmentAndMoveForward(id = deqIdx, startFrom = curHead, createNewSegment = ::createOneElementSegment)
             if (segmentOrClosed.isClosed) return null
             val s = segmentOrClosed.segment
             if (s.id > deqIdx) continue
@@ -109,7 +107,7 @@ internal class SegmentBasedQueue<T> {
 
 }
 
-private fun <T> createSegment(id: Long, prev: OneElementSegment<T>?) = OneElementSegment(id, prev, 0)
+private fun <T> createOneElementSegment(id: Long, prev: OneElementSegment<T>?) = OneElementSegment(id, prev, 0)
 
 internal class OneElementSegment<T>(id: Long, prev: OneElementSegment<T>?, pointers: Int) : Segment<OneElementSegment<T>>(id, prev, pointers) {
     val element = atomic<Any?>(null)

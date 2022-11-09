@@ -146,7 +146,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         }
 
     override val isLocked: Boolean get() =
-        availablePermits == 0
+        TODO()
 
     override fun holdsLock(owner: Any): Boolean {
         while (true) {
@@ -167,17 +167,11 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable { cont ->
         val contWithOwner = CancellableContinuationWithOwner(cont, owner)
-        acquire(contWithOwner)
+        TODO()
     }
 
     override fun tryLock(owner: Any?): Boolean =
-        if (tryAcquire()) {
-            assert { this.owner.value === NO_OWNER }
-            this.owner.value = owner
-            true
-        } else {
-            false
-        }
+        TODO()
 
     override fun unlock(owner: Any?) {
         while (true) {
@@ -191,8 +185,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
             // Try to clean the owner first. We need to use CAS here to synchronize with concurrent `unlock(..)`-s.
             if (!this.owner.compareAndSet(curOwner, NO_OWNER)) continue
             // Release the semaphore permit at the end.
-            release()
-            return
+            TODO()
         }
     }
 
@@ -205,7 +198,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     )
 
     protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
-        onAcquireRegFunction(SelectInstanceWithOwner(select, owner), owner)
+        TODO()
     }
 
     protected open fun onLockProcessResult(owner: Any?, result: Any?): Any? {

@@ -127,7 +127,9 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
     /**
      * Cleans the pointer to the previous node.
      */
-    fun cleanPrev() { _prev.lazySet(null) }
+    fun cleanPrev() {
+        if (_prev.value != null) _prev.lazySet(null)
+    }
 
     /**
      * Tries to mark the linked list as closed by forbidding adding new nodes after this one.
