@@ -157,7 +157,7 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
             val prev = leftmostAliveNode
             val next = rightmostAliveNode
             // Link `next` and `prev`.
-            next._prev.value = prev
+            next._prev.update { if (it === null) null else prev }
             if (prev !== null) prev._next.value = next
             // Checks that prev and next are still alive.
             if (next.removed) continue
