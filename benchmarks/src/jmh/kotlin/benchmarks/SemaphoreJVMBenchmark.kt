@@ -158,11 +158,11 @@ open class SemaphoreJVMBenchmark {
     private var algo: SemaAlgo = SemaAlgo.`ASYNC + SIMPLE`
 
 //    @Param("1", "2", "4", "8")
-    @Param("16")
+    @Param("32")
     private var maxPermits: Int = 0
 
 //    @Param("1", "2", "4", "8") // local machine
-    @Param("16") // local machine
+    @Param("32") // local machine
 //    @Param("1", "2", "4", "8", "16", "32", "64", "128") // dasquad
     private var parallelism: Int = 0
 
