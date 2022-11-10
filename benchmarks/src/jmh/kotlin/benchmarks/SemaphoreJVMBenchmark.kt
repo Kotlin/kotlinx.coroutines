@@ -26,7 +26,7 @@ fun main() {
 }
 
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
-@Measurement(iterations = 20, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MICROSECONDS)
 @Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -161,13 +161,12 @@ open class SemaphoreJVMBenchmark {
     @Param
     var algo: SemaAlgo = SemaAlgo.`ASYNC + SIMPLE`
 
-//    @Param("1", "2", "4", "8")
-    @Param("64")
+    @Param("1", "4", "16", "32")
     var maxPermits: Int = 0
 
 //    @Param("1", "2", "4", "8") // local machine
-    @Param("64") // local machine
-//    @Param("1", "2", "4", "8", "16", "32", "64", "128") // dasquad
+//    @Param("64") // local machine
+    @Param("1", "2", "4", "8", "16", "32", "64", "96")
     var parallelism: Int = 0
 
     @Benchmark
@@ -196,7 +195,7 @@ private const val BATCH_SIZE = 10000000
 enum class SemaAlgo(val create: (Int) -> Sema) {
 //    `Java ReentrantLock`({p -> SemaReentrantLock(p)}),
     `Java Semaphore`({p -> SemaJVM(p)}),
-//    `Java Semaphore Unfair`({p -> SemaJVMUnfair(p)}),
+    `Java Semaphore Unfair`({p -> SemaJVMUnfair(p)}),
 //    `SYNC + SIMPLE`({p -> SemaSQS_Sync_Simple(p)}),
     `ASYNC + SIMPLE`({p -> SemaSQS_Async_Simple(p)}),
 //    `SYNC + SMART`({p -> SemaSQS_Sync_Smart(p)}),
