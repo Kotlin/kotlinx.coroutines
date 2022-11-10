@@ -157,10 +157,12 @@ open class SemaphoreJVMBenchmark {
     @Param
     private var algo: SemaAlgo = SemaAlgo.`ASYNC + SIMPLE`
 
-    @Param("1", "2", "4", "8")
+//    @Param("1", "2", "4", "8")
+    @Param("8")
     private var maxPermits: Int = 0
 
-    @Param("1", "2", "4", "8") // local machine
+//    @Param("1", "2", "4", "8") // local machine
+    @Param("1", "16", "64") // local machine
 //    @Param("1", "2", "4", "8", "16", "32", "64", "128") // dasquad
     private var parallelism: Int = 0
 
@@ -188,12 +190,13 @@ private const val WORK_OUTSIDE = 40
 private const val BATCH_SIZE = 1000000
 
 enum class SemaAlgo(val create: (Int) -> Sema) {
-    `Java ReentrantLock`({p -> SemaReentrantLock(p)}),
+//    `Java ReentrantLock`({p -> SemaReentrantLock(p)}),
     `Java Semaphore`({p -> SemaJVM(p)}),
-    `SYNC + SIMPLE`({p -> SemaSQS_Sync_Simple(p)}),
+    `Java Semaphore Unfair`({p -> SemaJVMUnfair(p)}),
+//    `SYNC + SIMPLE`({p -> SemaSQS_Sync_Simple(p)}),
     `ASYNC + SIMPLE`({p -> SemaSQS_Async_Simple(p)}),
-    `SYNC + SMART`({p -> SemaSQS_Sync_Smart(p)}),
-    `ASYNC + SMART`({p -> SemaSQS_Async_Smart(p)})
+//    `SYNC + SMART`({p -> SemaSQS_Sync_Smart(p)}),
+//    `ASYNC + SMART`({p -> SemaSQS_Async_Smart(p)})
 }
 
 interface Sema {
@@ -209,6 +212,12 @@ class SemaReentrantLock(permits: Int) : Sema {
 
 class SemaJVM(permits: Int) : Sema {
     val s = Semaphore(permits, true)
+    override fun acquire() = s.acquire()
+    override fun release() = s.release()
+}
+
+class SemaJVMUnfair(permits: Int) : Sema {
+    val s = Semaphore(permits, false)
     override fun acquire() = s.acquire()
     override fun release() = s.release()
 }
