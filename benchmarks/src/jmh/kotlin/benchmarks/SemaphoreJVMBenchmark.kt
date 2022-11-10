@@ -18,7 +18,10 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.*
 
 fun main() {
-    SemaphoreCancellationJVMBenchmark().semaphoreCQS2()
+    SemaphoreJVMBenchmark().also {
+        it.maxPermits = 64
+        it.algo = SemaAlgo.`Java Semaphore`
+    }.semaphore()
 }
 
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
@@ -155,11 +158,11 @@ open class SemaphoreCancellationJVMBenchmark {
 @State(Scope.Benchmark)
 open class SemaphoreJVMBenchmark {
     @Param
-    private var algo: SemaAlgo = SemaAlgo.`ASYNC + SIMPLE`
+    var algo: SemaAlgo = SemaAlgo.`ASYNC + SIMPLE`
 
 //    @Param("1", "2", "4", "8")
     @Param("64")
-    private var maxPermits: Int = 0
+    var maxPermits: Int = 0
 
 //    @Param("1", "2", "4", "8") // local machine
     @Param("64") // local machine
