@@ -162,7 +162,7 @@ open class SemaphoreJVMBenchmark {
     private var maxPermits: Int = 0
 
 //    @Param("1", "2", "4", "8") // local machine
-    @Param("1", "16", "64") // local machine
+    @Param("8", "128") // local machine
 //    @Param("1", "2", "4", "8", "16", "32", "64", "128") // dasquad
     private var parallelism: Int = 0
 
