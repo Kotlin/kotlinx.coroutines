@@ -20,6 +20,7 @@ import kotlin.concurrent.*
 fun main() {
     SemaphoreJVMBenchmark().also {
         it.maxPermits = 64
+        it.parallelism = 64
         it.algo = SemaAlgo.`Java Semaphore`
     }.semaphore()
 }
@@ -167,7 +168,7 @@ open class SemaphoreJVMBenchmark {
 //    @Param("1", "2", "4", "8") // local machine
     @Param("64") // local machine
 //    @Param("1", "2", "4", "8", "16", "32", "64", "128") // dasquad
-    private var parallelism: Int = 0
+    var parallelism: Int = 0
 
     @Benchmark
     fun semaphore() {
