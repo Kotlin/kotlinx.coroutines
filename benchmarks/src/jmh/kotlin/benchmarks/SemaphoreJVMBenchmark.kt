@@ -185,8 +185,8 @@ open class SemaphoreJVMBenchmark {
     }
 }
 
-private const val WORK_INSIDE = 50
-private const val WORK_OUTSIDE = 50
+private const val WORK_INSIDE = 100
+private const val WORK_OUTSIDE = 100
 private const val BATCH_SIZE = 10000000
 
 enum class SemaAlgo(val create: (Int) -> Sema) {
