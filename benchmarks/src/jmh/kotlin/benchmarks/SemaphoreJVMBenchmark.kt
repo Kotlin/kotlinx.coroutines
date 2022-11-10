@@ -179,9 +179,9 @@ open class SemaphoreJVMBenchmark {
             threads += thread {
                 repeat(n) {
                     semaphore.acquire()
-                    doGeomDistrWork(WORK_INSIDE)
+//                    doGeomDistrWork(WORK_INSIDE)
                     semaphore.release()
-                    doGeomDistrWork(WORK_OUTSIDE)
+//                    doGeomDistrWork(WORK_OUTSIDE)
                 }
             }
         }
