@@ -147,8 +147,8 @@ open class SemaphoreCancellationJVMBenchmark {
     }
 }
 
-@Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
-@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MICROSECONDS)
 @Fork(value = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -187,7 +187,7 @@ open class SemaphoreJVMBenchmark {
 
 private const val WORK_INSIDE = 100
 private const val WORK_OUTSIDE = 100
-private const val BATCH_SIZE = 10000000
+private const val BATCH_SIZE = 100000000
 
 enum class SemaAlgo(val create: (Int) -> Sema) {
 //    `Java ReentrantLock`({p -> SemaReentrantLock(p)}),
