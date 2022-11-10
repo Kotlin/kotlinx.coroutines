@@ -162,7 +162,7 @@ open class SemaphoreJVMBenchmark {
     private var maxPermits: Int = 0
 
 //    @Param("1", "2", "4", "8") // local machine
-    @Param("8", "128") // local machine
+    @Param("128") // local machine
 //    @Param("1", "2", "4", "8", "16", "32", "64", "128") // dasquad
     private var parallelism: Int = 0
 
@@ -192,7 +192,7 @@ private const val BATCH_SIZE = 1000000
 enum class SemaAlgo(val create: (Int) -> Sema) {
 //    `Java ReentrantLock`({p -> SemaReentrantLock(p)}),
     `Java Semaphore`({p -> SemaJVM(p)}),
-    `Java Semaphore Unfair`({p -> SemaJVMUnfair(p)}),
+//    `Java Semaphore Unfair`({p -> SemaJVMUnfair(p)}),
 //    `SYNC + SIMPLE`({p -> SemaSQS_Sync_Simple(p)}),
     `ASYNC + SIMPLE`({p -> SemaSQS_Async_Simple(p)}),
 //    `SYNC + SMART`({p -> SemaSQS_Sync_Smart(p)}),
