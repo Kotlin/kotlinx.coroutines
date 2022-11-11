@@ -18,11 +18,9 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.*
 
 fun main() {
-    SemaphoreJVMBenchmark().also {
-        it.maxPermits = 64
-        it.parallelism = 64
-        it.algo = SemaAlgo.`Java Semaphore`
-    }.semaphore()
+    SemaphoreCancellationJVMBenchmark().also {
+        it.threads = 4
+    }.semaphoreJava2()
 }
 
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
@@ -63,7 +61,6 @@ open class SemaphoreCancellationJVMBenchmark {
 //                        check(!Thread.currentThread().isInterrupted)
                         // Ignore
                     }
-                    phase.set(phase.get() + 1)
                 }
             }
         }
@@ -103,16 +100,19 @@ open class SemaphoreCancellationJVMBenchmark {
     @Benchmark
     fun semaphoreJava2() {
         val cdl = CountDownLatch(threads)
-        repeat(threads) {
+        repeat(threads) { t ->
             thread {
-                repeat(1024_000 / threads) {
-                    try {
-                        s.tryAcquire(1L, TimeUnit.NANOSECONDS)
-                    } catch (e: InterruptedException) {
+                repeat(100) {phase ->
+                    repeat(1024_000 / threads) {
+                        try {
+                            s.tryAcquire(1L, TimeUnit.NANOSECONDS)
+                        } catch (e: InterruptedException) {
 //                        check(!Thread.currentThread().isInterrupted)
-                        // Ignore
+                            // Ignore
+                        }
+                        doGeomDistrWork(50)
                     }
-                    doGeomDistrWork(50)
+                    println("$t: $phase")
                 }
                 cdl.countDown()
             }
