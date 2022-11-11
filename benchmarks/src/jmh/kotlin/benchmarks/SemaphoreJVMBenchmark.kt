@@ -107,6 +107,7 @@ open class SemaphoreCancellationJVMBenchmark {
                         try {
                             s.tryAcquire(1L, TimeUnit.NANOSECONDS)
                         } catch (e: InterruptedException) {
+                            Thread.interrupted()
 //                        check(!Thread.currentThread().isInterrupted)
                             // Ignore
                         }
