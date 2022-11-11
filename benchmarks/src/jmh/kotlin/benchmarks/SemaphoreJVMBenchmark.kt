@@ -18,6 +18,13 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.*
 
 fun main() {
+    thread {
+        Thread.sleep(10000)
+        Thread.getAllStackTraces().values.forEachIndexed { i, s ->
+            println("STACKTRACE #i")
+            s.forEach { println(it) }
+        }
+    }
     SemaphoreCancellationJVMBenchmark().also {
         it.threads = 4
     }.semaphoreJava2()
