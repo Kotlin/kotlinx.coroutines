@@ -100,7 +100,7 @@ open class SemaphoreCancellationJVMBenchmark {
         cdl.await()
     }
 
-    @Benchmark
+//    @Benchmark
     fun semaphoreJava2() {
         val cdl = CountDownLatch(threads)
         repeat(threads) {
