@@ -112,7 +112,7 @@ open class SemaphoreCancellationJVMBenchmark {
 //                        check(!Thread.currentThread().isInterrupted)
                         // Ignore
                     }
-                    doGeomDistrWork(50)
+//                    doGeomDistrWork(50)
                 }
                 cdl.countDown()
             }
