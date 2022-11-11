@@ -39,7 +39,7 @@ open class SemaphoreCancellationJVMBenchmark {
     private val s = Semaphore(1)
     private val s2 = SemaSQS_Async_Simple(1)
 
-    @Param("1", "2")
+    @Param("4")
     var threads: Int = 1
 
     init {
