@@ -39,7 +39,7 @@ open class SemaphoreCancellationJVMBenchmark {
     private val s = Semaphore(1)
     private val s2 = SemaSQS_Async_Simple(1)
 
-    @Param("1", "2", "4", "8", "16", "32", "64", "128")
+    @Param("4", "8", "16", "32", "64", "128")
     var threads: Int = 1
 
     init {
@@ -112,7 +112,7 @@ open class SemaphoreCancellationJVMBenchmark {
 //                        check(!Thread.currentThread().isInterrupted)
                         // Ignore
                     }
-//                    doGeomDistrWork(50)
+                    doGeomDistrWork(50)
                 }
                 cdl.countDown()
             }
