@@ -33,6 +33,7 @@ public interface SendChannel<in E> {
      * @see SendChannel.close
      * @see ReceiveChannel.cancel
      */
+    @DelicateCoroutinesApi
     public val isClosedForSend: Boolean
 
     /**
@@ -191,6 +192,7 @@ public interface ReceiveChannel<out E> {
      * @see ReceiveChannel.cancel
      * @see SendChannel.close
      */
+    @DelicateCoroutinesApi
     public val isClosedForReceive: Boolean
 
     /**
