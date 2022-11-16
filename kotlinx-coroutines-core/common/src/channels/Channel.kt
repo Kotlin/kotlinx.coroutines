@@ -23,12 +23,17 @@ import kotlin.jvm.*
  */
 public interface SendChannel<in E> {
     /**
-     * Returns `true` if this channel was closed by an invocation of [close]. This means that
-     * calling [send] will result in an exception.
+     * Returns `true` if this channel was closed by an invocation of [close] or its receiving side was [cancelled][ReceiveChannel.cancel].
+     * This means that calling [send] will result in an exception.
      *
-     * **Note: This is an experimental api.** This property may change its semantics and/or name in the future.
+     * Note that if this property returns `false`, it does not guarantee that consecutive call to [send] will succeed, as the
+     * channel can be concurrently closed right after the check. For such scenarios, it is recommended to use [trySend] instead.
+     *
+     * @see SendChannel.trySend
+     * @see SendChannel.close
+     * @see ReceiveChannel.cancel
      */
-    @ExperimentalCoroutinesApi
+    @DelicateCoroutinesApi
     public val isClosedForSend: Boolean
 
     /**
@@ -174,14 +179,20 @@ public interface SendChannel<in E> {
 public interface ReceiveChannel<out E> {
     /**
      * Returns `true` if this channel was closed by invocation of [close][SendChannel.close] on the [SendChannel]
-     * side and all previously sent items were already received. This means that calling [receive]
-     * will result in a [ClosedReceiveChannelException]. If the channel was closed because of an exception, it
-     * is considered closed, too, but is called a _failed_ channel. All suspending attempts to receive
-     * an element from a failed channel throw the original [close][SendChannel.close] cause exception.
+     * side and all previously sent items were already received, or if the receiving side was [cancelled][ReceiveChannel.cancel].
      *
-     * **Note: This is an experimental api.** This property may change its semantics and/or name in the future.
+     * This means that calling [receive] will result in a [ClosedReceiveChannelException] or a corresponding cancellation cause.
+     * If the channel was closed because of an exception, it is considered closed, too, but is called a _failed_ channel.
+     * All suspending attempts to receive an element from a failed channel throw the original [close][SendChannel.close] cause exception.
+     *
+     * Note that if this property returns `false`, it does not guarantee that consecutive call to [receive] will succeed, as the
+     * channel can be concurrently closed right after the check. For such scenarios, it is recommended to use [receiveCatching] instead.
+     *
+     * @see ReceiveChannel.receiveCatching
+     * @see ReceiveChannel.cancel
+     * @see SendChannel.close
      */
-    @ExperimentalCoroutinesApi
+    @DelicateCoroutinesApi
     public val isClosedForReceive: Boolean
 
     /**
