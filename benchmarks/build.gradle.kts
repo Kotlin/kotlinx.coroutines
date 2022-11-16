@@ -34,7 +34,8 @@ val jmhJarTask = tasks.named<Jar>("jmhJar") {
     archiveBaseName by "benchmarks"
     archiveClassifier by null
     archiveVersion by null
-    destinationDirectory.file("$rootDir")
+    archiveVersion.convention(null as String?)
+    destinationDirectory.set(file("$rootDir"))
 }
 
 tasks {
