@@ -3,7 +3,7 @@
 <buildprofiles>
     <variables>
         <enable-browser-edits>true</enable-browser-edits>
-        <browser-edits-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/</browser-edits-url>
+        <browser-edits-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/</browser-edits-url>
         <allow-indexable-eaps>true</allow-indexable-eaps>
     </variables>
     <build-profile product="kc"/>
