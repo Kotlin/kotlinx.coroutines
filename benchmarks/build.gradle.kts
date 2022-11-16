@@ -4,12 +4,12 @@
 
 @file:Suppress("UnstableApiUsage")
 
-import me.champeau.gradle.*
+import me.champeau.jmh.*
 import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
     id("com.github.johnrengelman.shadow")
-    id("me.champeau.gradle.jmh") apply false
+    id("me.champeau.jmh") apply false
 }
 
 repositories {
@@ -21,26 +21,13 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-apply(plugin="me.champeau.gradle.jmh")
+apply(plugin = "me.champeau.jmh")
 
 tasks.named<KotlinCompile>("compileJmhKotlin") {
     kotlinOptions {
         jvmTarget = "1.8"
         freeCompilerArgs += "-Xjvm-default=enable"
     }
-}
-
-// It is better to use the following to run benchmarks, otherwise you may get unexpected errors:
-// ./gradlew --no-daemon cleanJmhJar jmh -Pjmh="MyBenchmark"
-extensions.configure<JMHPluginExtension>("jmh") {
-    jmhVersion = "1.26"
-    duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
-    failOnError = true
-    resultFormat = "CSV"
-    project.findProperty("jmh")?.also {
-        include = listOf(".*$it.*")
-    }
-//    includeTests = false
 }
 
 val jmhJarTask = tasks.named<Jar>("jmhJar") {
@@ -63,7 +50,7 @@ tasks {
 }
 
 dependencies {
-    implementation("org.openjdk.jmh:jmh-core:1.26")
+    implementation("org.openjdk.jmh:jmh-core:1.35")
     implementation("io.projectreactor:reactor-core:${version("reactor")}")
     implementation("io.reactivex.rxjava2:rxjava:2.1.9")
     implementation("com.github.akarnokd:rxjava2-extensions:0.20.8")
