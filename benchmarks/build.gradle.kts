@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
     id("com.github.johnrengelman.shadow")
-    id("me.champeau.jmh") apply false
+    id("me.champeau.jmh")
 }
 
 repositories {
@@ -20,8 +20,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
-
-apply(plugin = "me.champeau.jmh")
 
 tasks.named<KotlinCompile>("compileJmhKotlin") {
     kotlinOptions {
