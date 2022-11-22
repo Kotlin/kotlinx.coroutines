@@ -63,10 +63,10 @@ class WorkQueueTest : TestBase() {
 
         val stealer = WorkQueue()
         val ref = ObjectRef<Task?>()
-        assertEquals(TASK_STOLEN, stealer.tryStealFrom(victim, ref))
+        assertEquals(TASK_STOLEN, victim.trySteal(ref))
         assertEquals(arrayListOf(1L), stealer.drain(ref))
 
-        assertEquals(TASK_STOLEN, stealer.tryStealFrom(victim, ref))
+        assertEquals(TASK_STOLEN, victim.trySteal(ref))
         assertEquals(arrayListOf(2L), stealer.drain(ref))
     }
 }

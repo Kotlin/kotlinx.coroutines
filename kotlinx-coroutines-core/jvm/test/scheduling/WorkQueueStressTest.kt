@@ -58,12 +58,12 @@ class WorkQueueStressTest : TestBase() {
                 startLatch.await()
                 while (!producerFinished || producerQueue.size != 0) {
                     stolenTasks[i].addAll(myQueue.drain(ref).map { task(it) })
-                    myQueue.tryStealFrom(victim = producerQueue, ref)
+                    producerQueue.trySteal(ref)
                 }
 
                 // Drain last element which is not counted in buffer
                 stolenTasks[i].addAll(myQueue.drain(ref).map { task(it) })
-                myQueue.tryStealFrom(producerQueue, ref)
+                producerQueue.trySteal(ref)
                 stolenTasks[i].addAll(myQueue.drain(ref).map { task(it) })
             }
         }
@@ -94,7 +94,7 @@ class WorkQueueStressTest : TestBase() {
             val ref = Ref.ObjectRef<Task?>()
             startLatch.await()
             while (stolen.size != offerIterations) {
-                if (myQueue.tryStealFrom(producerQueue, ref) != NOTHING_TO_STEAL) {
+                if (producerQueue.trySteal(ref) != NOTHING_TO_STEAL) {
                     stolen.addAll(myQueue.drain(ref).map { task(it) })
                 }
             }

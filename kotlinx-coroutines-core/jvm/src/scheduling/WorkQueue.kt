@@ -101,40 +101,37 @@ internal class WorkQueue {
     }
 
     /**
-     * Tries stealing from [victim] queue into the [stolenTaskRef] argument.
+     * Tries stealing from this queue into the [stolenTaskRef] argument.
      *
      * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen
      * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
      */
-    fun tryStealFrom(victim: WorkQueue, stolenTaskRef: ObjectRef<Task?>): Long {
-        assert { bufferSize == 0 }
-        val task  = victim.pollBuffer()
+    fun trySteal(stolenTaskRef: ObjectRef<Task?>): Long {
+        val task  = pollBuffer()
         if (task != null) {
             stolenTaskRef.element = task
             return TASK_STOLEN
         }
-        return tryStealLastScheduled(victim, stolenTaskRef, blockingOnly = false)
+        return tryStealLastScheduled(stolenTaskRef, blockingOnly = false)
     }
 
-    fun tryStealBlockingFrom(victim: WorkQueue, stolenTaskRef: ObjectRef<Task?>): Long {
-        assert { bufferSize == 0 }
-        var start = victim.consumerIndex.value
-        val end = victim.producerIndex.value
-        val buffer = victim.buffer
+    fun tryStealBlocking(stolenTaskRef: ObjectRef<Task?>): Long {
+        var start = consumerIndex.value
+        val end = producerIndex.value
 
         while (start != end) {
             val index = start and MASK
-            if (victim.blockingTasksInBuffer.value == 0) break
+            if (blockingTasksInBuffer.value == 0) break
             val value = buffer[index]
             if (value != null && value.isBlocking && buffer.compareAndSet(index, value, null)) {
-                victim.blockingTasksInBuffer.decrementAndGet()
+                blockingTasksInBuffer.decrementAndGet()
                 stolenTaskRef.element = value
                 return TASK_STOLEN
             } else {
                 ++start
             }
         }
-        return tryStealLastScheduled(victim, stolenTaskRef, blockingOnly = true)
+        return tryStealLastScheduled(stolenTaskRef, blockingOnly = true)
     }
 
     fun offloadAllWorkTo(globalQueue: GlobalQueue) {
@@ -145,11 +142,11 @@ internal class WorkQueue {
     }
 
     /**
-     * Contract on return value is the same as for [tryStealFrom]
+     * Contract on return value is the same as for [trySteal]
      */
-    private fun tryStealLastScheduled(victim: WorkQueue, stolenTaskRef: ObjectRef<Task?>, blockingOnly: Boolean): Long {
+    private fun tryStealLastScheduled(stolenTaskRef: ObjectRef<Task?>, blockingOnly: Boolean): Long {
         while (true) {
-            val lastScheduled = victim.lastScheduledTask.value ?: return NOTHING_TO_STEAL
+            val lastScheduled = lastScheduledTask.value ?: return NOTHING_TO_STEAL
             if (blockingOnly && !lastScheduled.isBlocking) return NOTHING_TO_STEAL
 
             // TODO time wraparound ?
@@ -163,7 +160,7 @@ internal class WorkQueue {
              * If CAS has failed, either someone else had stolen this task or the owner executed this task
              * and dispatched another one. In the latter case we should retry to avoid missing task.
              */
-            if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
+            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
                 stolenTaskRef.element = lastScheduled
                 return TASK_STOLEN
             }
