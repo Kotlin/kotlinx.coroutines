@@ -726,7 +726,6 @@ internal class CoroutineScheduler(
                 parkedWorkersStackPush(this)
                 return
             }
-            assert { localQueue.size == 0 }
             workerCtl.value = PARKED // Update value once
             /*
              * inStack() prevents spurious wakeups, while workerCtl.value == PARKED
@@ -873,15 +872,10 @@ internal class CoroutineScheduler(
             }
         }
 
-        fun findTask(scanLocalQueue: Boolean): Task? {
-            if (tryAcquireCpuPermit()) return findAnyTask(scanLocalQueue)
+        fun findTask(mayHaveLocalTasks: Boolean): Task? {
+            if (tryAcquireCpuPermit()) return findAnyTask(mayHaveLocalTasks)
             // If we can't acquire a CPU permit -- attempt to find blocking task
-            val task = if (scanLocalQueue) {
-                localQueue.poll() ?: globalBlockingQueue.removeFirstOrNull()
-            } else {
-                globalBlockingQueue.removeFirstOrNull()
-            }
-            return task ?: trySteal(blockingOnly = true)
+            return globalBlockingQueue.removeFirstOrNull() ?: trySteal(blockingOnly = true)
         }
 
         private fun findAnyTask(scanLocalQueue: Boolean): Task? {
@@ -911,7 +905,6 @@ internal class CoroutineScheduler(
         }
 
         private fun trySteal(blockingOnly: Boolean): Task? {
-            assert { localQueue.size == 0 }
             val created = createdWorkers
             // 0 to await an initialization and 1 to avoid excess stealing on single-core machines
             if (created < 2) {
@@ -925,7 +918,6 @@ internal class CoroutineScheduler(
                 if (currentIndex > created) currentIndex = 1
                 val worker = workers[currentIndex]
                 if (worker !== null && worker !== this) {
-                    assert { localQueue.size == 0 }
                     val stealResult = if (blockingOnly) {
                         worker.localQueue.tryStealBlocking(stolenTask)
                     } else {
