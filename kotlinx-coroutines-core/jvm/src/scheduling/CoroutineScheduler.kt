@@ -10,6 +10,7 @@ import kotlinx.coroutines.internal.*
 import java.io.*
 import java.util.concurrent.*
 import java.util.concurrent.locks.*
+import kotlin.jvm.internal.Ref.ObjectRef
 import kotlin.math.*
 import kotlin.random.*
 
@@ -599,6 +600,12 @@ internal class CoroutineScheduler(
         val localQueue: WorkQueue = WorkQueue()
 
         /**
+         * Slot that is used to steal tasks into to avoid re-adding them
+         * to the local queue. See [trySteal]
+         */
+        private val stolenTask: ObjectRef<Task?> = ObjectRef()
+
+        /**
          * Worker state. **Updated only by this worker thread**.
          * By default, worker is in DORMANT state in the case when it was created, but all CPU tokens or tasks were taken.
          * Is used locally by the worker to maintain its own invariants.
@@ -617,7 +624,7 @@ internal class CoroutineScheduler(
 
         /**
          * It is set to the termination deadline when started doing [park] and it reset
-         * when there is a task. It servers as protection against spurious wakeups of parkNanos.
+         * when there is a task. It serves as protection against spurious wakeups of parkNanos.
          */
         private var terminationDeadline = 0L
 
@@ -920,12 +927,14 @@ internal class CoroutineScheduler(
                 if (worker !== null && worker !== this) {
                     assert { localQueue.size == 0 }
                     val stealResult = if (blockingOnly) {
-                        localQueue.tryStealBlockingFrom(victim = worker.localQueue)
+                        localQueue.tryStealBlockingFrom(victim = worker.localQueue, stolenTask)
                     } else {
-                        localQueue.tryStealFrom(victim = worker.localQueue)
+                        localQueue.tryStealFrom(victim = worker.localQueue, stolenTask)
                     }
                     if (stealResult == TASK_STOLEN) {
-                        return localQueue.poll()
+                        val result = stolenTask.element
+                        stolenTask.element = null
+                        return result
                     } else if (stealResult > 0) {
                         minDelay = min(minDelay, stealResult)
                     }

@@ -7,6 +7,7 @@ package kotlinx.coroutines.scheduling
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
+import kotlin.jvm.internal.Ref.ObjectRef
 import kotlin.test.*
 
 class WorkQueueTest : TestBase() {
@@ -27,7 +28,7 @@ class WorkQueueTest : TestBase() {
     fun testLastScheduledComesFirst() {
         val queue = WorkQueue()
         (1L..4L).forEach { queue.add(task(it)) }
-        assertEquals(listOf(4L, 1L, 2L, 3L), queue.drain())
+        assertEquals(listOf(4L, 1L, 2L, 3L), queue.drain(ObjectRef()))
     }
 
     @Test
@@ -38,9 +39,9 @@ class WorkQueueTest : TestBase() {
         (0 until size).forEach { queue.add(task(it))?.let { t -> offload.addLast(t) } }
 
         val expectedResult = listOf(129L) + (0L..126L).toList()
-        val actualResult = queue.drain()
+        val actualResult = queue.drain(ObjectRef())
         assertEquals(expectedResult, actualResult)
-        assertEquals((0L until size).toSet().minus(expectedResult), offload.drain().toSet())
+        assertEquals((0L until size).toSet().minus(expectedResult.toSet()), offload.drain().toSet())
     }
 
     @Test
@@ -61,22 +62,27 @@ class WorkQueueTest : TestBase() {
         timeSource.step(3)
 
         val stealer = WorkQueue()
-        assertEquals(TASK_STOLEN, stealer.tryStealFrom(victim))
-        assertEquals(arrayListOf(1L), stealer.drain())
+        val ref = ObjectRef<Task?>()
+        assertEquals(TASK_STOLEN, stealer.tryStealFrom(victim, ref))
+        assertEquals(arrayListOf(1L), stealer.drain(ref))
 
-        assertEquals(TASK_STOLEN, stealer.tryStealFrom(victim))
-        assertEquals(arrayListOf(2L), stealer.drain())
+        assertEquals(TASK_STOLEN, stealer.tryStealFrom(victim, ref))
+        assertEquals(arrayListOf(2L), stealer.drain(ref))
     }
 }
 
 internal fun task(n: Long) = TaskImpl(Runnable {}, n, NonBlockingContext)
 
-internal fun WorkQueue.drain(): List<Long> {
+internal fun WorkQueue.drain(ref: ObjectRef<Task?>): List<Long> {
     var task: Task? = poll()
     val result = arrayListOf<Long>()
     while (task != null) {
         result += task.submissionTime
         task = poll()
+    }
+    if (ref.element != null) {
+        result += ref.element!!.submissionTime
+        ref.element = null
     }
     return result
 }
