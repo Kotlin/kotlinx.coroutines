@@ -81,7 +81,7 @@ If `Main` is overridden with a [TestDispatcher], then its [TestCoroutineSchedule
 
 [runTest] is the way to test code that involves coroutines. `suspend` functions can be called inside it.
 
-**IMPORTANT: in order to work with on Kotlin/JS, the result of `runTest` must be immediately `return`-ed from each test.**
+**IMPORTANT: in order to work with on Kotlin/JS, the result of `runTest` must be immediately `returned` from each test.**
 The typical invocation of [runTest] thus looks like this:
 
 ```kotlin
