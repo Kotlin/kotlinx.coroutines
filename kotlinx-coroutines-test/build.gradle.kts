@@ -27,4 +27,19 @@ kotlin {
             }
         }
     }
+
+    wasm {
+        d8 {
+            testTask {
+                filter.apply {
+                    excludeTest("RunTestTest", "testRunTestWithSmallTimeout")
+                    excludeTest("RunTestTest", "testRunTestWithLargeTimeout")
+                    excludeTest("RunTestTest", "testRunTestTimingOutAndThrowing")
+                    excludeTest("RunTestTest", "testCoroutineCompletingWithoutDispatch")
+                    excludeTest("TestDispatchersTest", "testMainMocking")
+                    excludeTest("TestDispatchersTest", "testMockedMainImplementsDelay")
+                }
+            }
+        }
+    }
 }

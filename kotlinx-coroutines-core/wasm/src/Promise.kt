@@ -7,6 +7,21 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 import kotlin.js.*
 
+@JsFun("(promise, deferred) => { promise.deferred = deferred; }")
+internal external fun <T> promiseSetDeferred(promise: Promise<Dynamic?>, deferred: Deferred<T>)
+
+@JsFun("""
+    (promise) => {
+      console.assert(promise instanceof Promise, "promiseGetDeferred must receive a promise, but got ", promise);
+      if (promise.deferred == null)
+        return null;
+      return promise.deferred; 
+     }
+    """
+    )
+internal external fun <T> promiseGetDeferred(promise: Promise<Dynamic?>): Deferred<T>?
+
+
 /**
  * Starts new coroutine and returns its result as an implementation of [Promise].
  *
@@ -26,33 +41,33 @@ public fun <T> CoroutineScope.promise(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
-): Promise<T> =
+): Promise<Dynamic?> =
     async(context, start, block).asPromise()
 
 /**
- * Converts this deferred value to the instance of [Promise].
+ * Converts this deferred value to the instance of [Promise<Dynamic?>].
  */
-public fun <T> Deferred<T>.asPromise(): Promise<T> {
-    val promise = Promise<T> { resolve, reject ->
+@Suppress("UNCHECKED_CAST_TO_EXTERNAL_INTERFACE")
+public fun <T> Deferred<T>.asPromise(): Promise<Dynamic?> {
+    val promise = Promise<Dynamic?> { resolve, reject ->
         invokeOnCompletion {
             val e = getCompletionExceptionOrNull()
             if (e != null) {
-                reject(e)
+                reject(e as Dynamic)
             } else {
-                resolve(getCompleted())
+                resolve(getCompleted() as Dynamic)
             }
         }
     }
-    promise.asDynamic().deferred = this
+    promiseSetDeferred(promise, this)
     return promise
 }
 
 /**
  * Converts this promise value to the instance of [Deferred].
  */
-public fun <T> Promise<T>.asDeferred(): Deferred<T> {
-    val deferred = asDynamic().deferred
-    @Suppress("UnsafeCastFromDynamic")
+public fun <T> Promise<Dynamic?>.asDeferred(): Deferred<T> {
+    val deferred = promiseGetDeferred<T>(this)
     return deferred ?: GlobalScope.async(start = CoroutineStart.UNDISPATCHED) { await() }
 }
 
@@ -65,8 +80,10 @@ public fun <T> Promise<T>.asDeferred(): Deferred<T> {
  * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
  * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  */
-public suspend fun <T> Promise<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
+@Suppress("UNCHECKED_CAST")
+public suspend fun <T> Promise<Dynamic?>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     this@await.then(
-        onFulfilled = { cont.resume(it) },
-        onRejected = { cont.resumeWithException(it) })
+        onFulfilled = { cont.resume(it as T); null },
+        onRejected = { cont.resumeWithException(it.toThrowableOrNull() ?: error("Unexpected non-Kotlin exception $it")); null }
+    )
 }

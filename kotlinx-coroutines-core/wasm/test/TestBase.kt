@@ -11,7 +11,7 @@ public actual val stressTestMultiplier: Int = 1
 public actual val stressTestMultiplierSqrt: Int = 1
 
 @Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
-public actual typealias TestResult = Promise<Unit>
+public actual typealias TestResult = Promise<Dynamic?>
 
 public actual val isNative = false
 
@@ -20,7 +20,7 @@ public actual open class TestBase actual constructor() {
     private var actionIndex = 0
     private var finished = false
     private var error: Throwable? = null
-    private var lastTestPromise: Promise<*>? = null
+    private var lastTestPromise: Promise<Dynamic?>? = null
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
@@ -28,7 +28,7 @@ public actual open class TestBase actual constructor() {
      */
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun error(message: Any, cause: Throwable? = null): Nothing {
-        if (cause != null) console.log(cause)
+        if (cause != null) println(cause)
         val exception = IllegalStateException(
             if (cause == null) message.toString() else "$message; caused by $cause")
         if (error == null) error = exception
@@ -38,7 +38,7 @@ public actual open class TestBase actual constructor() {
     private fun printError(message: String, cause: Throwable) {
         if (error == null) error = cause
         println("$message: $cause")
-        console.log(cause)
+        println(cause)
     }
 
     /**
@@ -117,13 +117,16 @@ public actual open class TestBase actual constructor() {
                 !unhandled[exCount - 1](e) ->
                     printError("Unhandled exception was unexpected: $e", e)
             }
-        }).catch { e ->
+        }).catch { jsE ->
+            val e = jsE.toThrowableOrNull() ?: error("Unexpected non-Kotlin exception $jsE")
             ex = e
             if (expected != null) {
                 if (!expected(e))
                     error("Unexpected exception", e)
             } else
                 throw e
+
+            null
         }.finally {
             if (ex == null && expected != null) error("Exception was expected but none produced")
             if (exCount < unhandled.size)
@@ -136,5 +139,4 @@ public actual open class TestBase actual constructor() {
     }
 }
 
-private fun <T> Promise<T>.finally(block: () -> Unit): Promise<T> =
-    then(onFulfilled = { value -> block(); value }, onRejected = { ex -> block(); throw ex })
+public actual val isJavaAndWindows: Boolean get() = false

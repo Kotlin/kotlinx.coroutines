@@ -10,22 +10,22 @@ import kotlin.test.*
 class PromiseTest : TestBase() {
     @Test
     fun testPromiseResolvedAsDeferred() = GlobalScope.promise {
-        val promise = Promise<String> { resolve, _ ->
-            resolve("OK")
+        val promise = Promise<Dynamic?> { resolve, _ ->
+            resolve("OK" as Dynamic)
         }
-        val deferred = promise.asDeferred()
+        val deferred = promise.asDeferred<String>()
         assertEquals("OK", deferred.await())
     }
 
     @Test
     fun testPromiseRejectedAsDeferred() = GlobalScope.promise {
-        lateinit var promiseReject: (Throwable) -> Unit
-        val promise = Promise<String> { _, reject ->
+        lateinit var promiseReject: (Dynamic) -> Unit
+        val promise = Promise<Dynamic?> { _, reject ->
             promiseReject = reject
         }
-        val deferred = promise.asDeferred()
+        val deferred = promise.asDeferred<String>()
         // reject after converting to deferred to avoid "Unhandled promise rejection" warnings
-        promiseReject(TestException("Rejected"))
+        promiseReject(TestException("Rejected") as Dynamic)
         try {
             deferred.await()
             expectUnreached()
@@ -57,20 +57,20 @@ class PromiseTest : TestBase() {
 
     @Test
     fun testCancellableAwaitPromise() = GlobalScope.promise {
-        lateinit var r: (String) -> Unit
-        val toAwait = Promise<String> { resolve, _ -> r = resolve }
+        lateinit var r: (Dynamic) -> Unit
+        val toAwait = Promise<Dynamic?> { resolve, _ -> r = resolve }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             toAwait.await() // suspends
         }
         job.cancel() // cancel the job
-        r("fail") // too late, the waiting job was already cancelled
+        r("fail" as Dynamic) // too late, the waiting job was already cancelled
     }
 
     @Test
     fun testAsPromiseAsDeferred() = GlobalScope.promise {
         val deferred = async { "OK" }
         val promise = deferred.asPromise()
-        val d2 = promise.asDeferred()
+        val d2 = promise.asDeferred<String>()
         assertSame(d2, deferred)
         assertEquals("OK", d2.await())
     }
@@ -84,6 +84,7 @@ class PromiseTest : TestBase() {
         }
         return result.then {
             if (seq != 1) error("Unexpected result: $seq")
+            null
         }
     }
 }

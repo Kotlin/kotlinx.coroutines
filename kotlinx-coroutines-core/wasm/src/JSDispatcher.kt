@@ -5,9 +5,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import org.w3c.dom.*
 import kotlin.coroutines.*
-import kotlin.js.Promise
 
 private const val MAX_DELAY = Int.MAX_VALUE.toLong()
 
@@ -16,7 +14,7 @@ private fun delayToInt(timeMillis: Long): Int =
 
 internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
     inner class ScheduledMessageQueue : MessageQueue() {
-        internal val processQueue: dynamic = { process() }
+        internal val processQueue: () -> Unit = { process() }
 
         override fun schedule() {
             scheduleQueueProcessing()
@@ -52,19 +50,13 @@ internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
     }
 }
 
-internal object NodeDispatcher : SetTimeoutBasedDispatcher() {
-    override fun scheduleQueueProcessing() {
-        process.nextTick(messageQueue.processQueue)
-    }
-}
-
 internal object SetTimeoutDispatcher : SetTimeoutBasedDispatcher() {
     override fun scheduleQueueProcessing() {
         setTimeout(messageQueue.processQueue, 0)
     }
 }
 
-private class ClearTimeout(private val handle: Int) : CancelHandler(), DisposableHandle {
+private open class ClearTimeout(protected val handle: Int) : CancelHandler(), DisposableHandle {
 
     override fun dispose() {
         clearTimeout(handle)
@@ -75,46 +67,6 @@ private class ClearTimeout(private val handle: Int) : CancelHandler(), Disposabl
     }
 
     override fun toString(): String = "ClearTimeout[$handle]"
-}
-
-internal class WindowDispatcher(private val window: Window) : CoroutineDispatcher(), Delay {
-    private val queue = WindowMessageQueue(window)
-
-    override fun dispatch(context: CoroutineContext, block: Runnable) = queue.enqueue(block)
-
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
-    }
-
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val handle = window.setTimeout({ block.run() }, delayToInt(timeMillis))
-        return object : DisposableHandle {
-            override fun dispose() {
-                window.clearTimeout(handle)
-            }
-        }
-    }
-}
-
-private class WindowMessageQueue(private val window: Window) : MessageQueue() {
-    private val messageName = "dispatchCoroutine"
-
-    init {
-        window.addEventListener("message", { event: dynamic ->
-            if (event.source == window && event.data == messageName) {
-                event.stopPropagation()
-                process()
-            }
-        }, true)
-    }
-
-    override fun schedule() {
-        Promise.resolve(Unit).then({ process() })
-    }
-
-    override fun reschedule() {
-        window.postMessage(messageName, "*")
-    }
 }
 
 /**
@@ -129,7 +81,7 @@ private class WindowMessageQueue(private val window: Window) : MessageQueue() {
  *
  * Yet there could be a long tail of "slow" reschedules, but it should be amortized by the queue size.
  */
-internal abstract class MessageQueue : ArrayQueue<Runnable>() {
+internal abstract class MessageQueue : MutableList<Runnable> by ArrayDeque() {
     val yieldEvery = 16 // yield to JS macrotask event loop after this many processed messages
     private var scheduled = false
 
@@ -138,7 +90,7 @@ internal abstract class MessageQueue : ArrayQueue<Runnable>() {
     abstract fun reschedule()
 
     fun enqueue(element: Runnable) {
-        addLast(element)
+        add(element)
         if (!scheduled) {
             scheduled = true
             schedule()
@@ -153,7 +105,7 @@ internal abstract class MessageQueue : ArrayQueue<Runnable>() {
                 element.run()
             }
         } finally {
-            if (isEmpty) {
+            if (isEmpty()) {
                 scheduled = false
             } else {
                 reschedule()
@@ -164,5 +116,8 @@ internal abstract class MessageQueue : ArrayQueue<Runnable>() {
 
 // We need to reference global setTimeout and clearTimeout so that it works on Node.JS as opposed to
 // using them via "window" (which only works in browser)
-private external fun setTimeout(handler: dynamic, timeout: Int = definedExternally): Int
-private external fun clearTimeout(handle: Int = definedExternally)
+private external fun setTimeout(handler: () -> Unit, timeout: Int): Int
+
+// d8 doesn't have clearTimeout
+@JsFun("typeof clearTimeout === 'undefined' ? (handle) => {} : clearTimeout")
+private external fun clearTimeout(handle: Int)

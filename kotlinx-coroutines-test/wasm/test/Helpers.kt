@@ -5,16 +5,19 @@
 package kotlinx.coroutines.test
 
 import kotlin.test.*
+import kotlin.js.*
 
 actual fun testResultMap(block: (() -> Unit) -> Unit, test: () -> TestResult): TestResult =
     test().then(
         {
             block {
             }
+            null
         }, {
             block {
-                throw it
+                throw it.toThrowableOrNull() ?: error("Unexpected non-Kotlin exception $it")
             }
+            null
         })
 
 actual typealias NoJs = Ignore
