@@ -40,21 +40,12 @@ fun MavenPom.configureMavenCentralMetadata(project: Project) {
     }
 }
 
-fun mavenRepositoryUri(): URI {
-    val repositoryId: String? = System.getenv("libs.repository.id")
-    return if (repositoryId == null) {
-        URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-    } else {
-        URI("https://oss.sonatype.org/service/local/staging/deployByRepositoryId/$repositoryId")
-    }
-}
-
 fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
     rh.maven {
-        url = mavenRepositoryUri()
+        url = URI("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
         credentials {
-            username = project.getSensitiveProperty("libs.sonatype.user")
-            password = project.getSensitiveProperty("libs.sonatype.password")
+            username = project.getSensitiveProperty("kotlin.space.packages.wasm.user")
+            password = project.getSensitiveProperty("kotlin.space.packages.wasm.secret")
         }
     }
 
