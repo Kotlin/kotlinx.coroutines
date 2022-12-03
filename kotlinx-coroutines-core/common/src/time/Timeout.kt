@@ -106,7 +106,7 @@ private class TimeoutCoroutine<U, in T: U>(
 public class TimeoutException internal constructor(
     message: String,
     @JvmField @Transient internal val coroutine: Job?
-) : CancellationException(message), CopyableThrowable<TimeoutException> {
+): IllegalStateException(message), CopyableThrowable<TimeoutException> {
     /**
      * Creates a timeout exception with the given message.
      * This constructor is needed for exception stack-traces recovery.

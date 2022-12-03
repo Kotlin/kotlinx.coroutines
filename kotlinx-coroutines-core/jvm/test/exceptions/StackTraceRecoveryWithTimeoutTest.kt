@@ -19,6 +19,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
         try {
             outerWithTimeout()
         } catch (e: TimeoutException) {
+            println(e.stackTraceToString())
             verifyStackTrace("timeout/${name.methodName}", e)
         }
     }

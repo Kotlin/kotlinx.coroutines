@@ -72,7 +72,7 @@ class WithTimeoutTest : TestBase() {
      */
     @Test
     fun testYieldBlockingWithTimeout() = runTest(
-        expected = { it is CancellationException }
+        expected = { it is TimeoutException }
     ) {
         kotlinx.coroutines.time.withTimeout(100) {
             while (true) {
@@ -118,7 +118,7 @@ class WithTimeoutTest : TestBase() {
                 expectUnreached()
                 "OK"
             }
-        } catch (e: CancellationException) {
+        } catch (e: TimeoutException) {
             assertEquals("Timed out waiting for 100 ms", e.message)
             finish(3)
         }
@@ -126,14 +126,14 @@ class WithTimeoutTest : TestBase() {
 
     @Test
     fun testSuppressExceptionWithResult() = runTest(
-        expected = { it is CancellationException }
+        expected = { it is TimeoutException }
     ) {
         expect(1)
         kotlinx.coroutines.time.withTimeout(100) {
             expect(2)
             try {
                 delay(1000)
-            } catch (e: CancellationException) {
+            } catch (e: TimeoutException) {
                 finish(3)
             }
             "OK"
@@ -149,7 +149,7 @@ class WithTimeoutTest : TestBase() {
                 expect(2)
                 try {
                     delay(1000)
-                } catch (e: CancellationException) {
+                } catch (e: TimeoutException) {
                     expect(3)
                     throw TestException()
                 }

@@ -8,6 +8,7 @@ package kotlinx.coroutines
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.time.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.js.*

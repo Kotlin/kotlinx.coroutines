@@ -61,9 +61,14 @@ class HandlerDispatcherTest : TestBase() {
         mainLooper.pause()
         assertFalse { mainLooper.scheduler.areAnyRunnable() }
         val job = launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
-            kotlinx.coroutines.time.withTimeout(1) {
-                expect(1)
-                hang { expect(3) }
+            try {
+                kotlinx.coroutines.time.withTimeout(1) {
+                    expect(1)
+                    hang { expect(3) }
+                }
+            } catch (e: kotlinx.coroutines.time.TimeoutException) {
+                expect(4)
+                throw CancellationException("successfully timed out", e)
             }
             expectUnreached()
         }
@@ -72,7 +77,7 @@ class HandlerDispatcherTest : TestBase() {
         // Schedule cancellation
         mainLooper.runToEndOfTasks()
         job.join()
-        finish(4)
+        finish(5)
     }
 
     @Test

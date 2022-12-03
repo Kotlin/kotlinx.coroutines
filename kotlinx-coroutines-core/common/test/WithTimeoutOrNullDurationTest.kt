@@ -103,7 +103,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
 
     @Test
     fun testInnerTimeout() = runTest(
-        expected = { it is CancellationException }
+        expected = { it is TimeoutException }
     ) {
         withTimeoutOrNull(1000.milliseconds) {
             kotlinx.coroutines.time.withTimeout(10.milliseconds) {
@@ -184,7 +184,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
             expect(2)
             try {
                 delay(1000.milliseconds)
-            } catch (e: CancellationException) {
+            } catch (e: TimeoutException) {
                 expect(3)
             }
             "OK"
@@ -201,7 +201,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
                 expect(2)
                 try {
                     delay(1000.milliseconds)
-                } catch (e: CancellationException) {
+                } catch (e: TimeoutException) {
                     expect(3)
                     throw TestException()
                 }
