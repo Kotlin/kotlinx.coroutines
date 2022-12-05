@@ -784,7 +784,7 @@ In `src/contributors/Contributors.kt`, check the implementation of the _CONCURRE
       argument, you can call this function in any context: with a `Default` dispatcher, with
       the main UI thread, or with a custom dispatcher.
     * As you'll see later, when calling `loadContributorsConcurrent()` from tests, you can call it in the context
-      with `TestCoroutineDispatcher`, which simplifies testing. That makes this solution much more flexible.
+      with `TestDispatcher`, which simplifies testing. That makes this solution much more flexible.
 
 2. To specify the dispatcher on the caller side, apply the following change to the project while
    letting `loadContributorsConcurrent` start coroutines in the inherited context:
@@ -1390,14 +1390,14 @@ total running time drastically decreases:
 
 ![Comparison for total running time](time-comparison.png){width=700}
 
-To use virtual time, replace the `runBlocking` invocation with a `runBlockingTest`. `runBlockingTest` takes an
-extension lambda to `TestCoroutineScope` as an argument.
+To use virtual time, replace the `runBlocking` invocation with a `runTest`. `runTest` takes an
+extension lambda to `TestScope` as an argument.
 When you call `delay` in a `suspend` function inside this special scope, `delay` will increase the virtual time instead
 of delaying in real time:
 
 ```kotlin
 @Test
-fun testDelayInSuspend() = runBlockingTest {
+fun testDelayInSuspend() = runTest {
     val realStartTime = System.currentTimeMillis() 
     val virtualStartTime = currentTime
         
@@ -1412,18 +1412,18 @@ suspend fun foo() {
 }
 ```
 
-You can check the current virtual time using the `currentTime` property of `TestCoroutineScope`.
+You can check the current virtual time using the `currentTime` property of `TestScope`.
 
 The actual running time in this example is several milliseconds, whereas virtual time equals the delay argument, which
 is 1000 milliseconds.
 
 To get the full effect of "virtual" `delay` in child coroutines,
-start all of the child coroutines with `TestCoroutineDispatcher`. Otherwise, it won't work. This dispatcher is
-automatically inherited from the other `TestCoroutineScope`, unless you provide a different dispatcher:
+start all of the child coroutines with `TestDispatcher`. Otherwise, it won't work. This dispatcher is
+automatically inherited from the other `TestScope`, unless you provide a different dispatcher:
 
 ```kotlin
 @Test
-fun testDelayInLaunch() = runBlockingTest {
+fun testDelayInLaunch() = runTest {
     val realStartTime = System.currentTimeMillis()
     val virtualStartTime = currentTime
 
@@ -1481,11 +1481,11 @@ Compare the total running times before and after applying your refactoring.
 
 #### Tip for task 8 {initial-collapse-state="collapsed"}
 
-1. Replace the `runBlocking` invocation with `runBlockingTest`, and replace `System.currentTimeMillis()` with `currentTime`:
+1. Replace the `runBlocking` invocation with `runTest`, and replace `System.currentTimeMillis()` with `currentTime`:
 
     ```kotlin
     @Test
-    fun test() = runBlockingTest {
+    fun test() = runTest {
         val startTime = currentTime
         // action
         val totalTime = currentTime - startTime
@@ -1501,7 +1501,7 @@ Compare the total running times before and after applying your refactoring.
 Here are the solutions for the concurrent and channels cases:
 
 ```kotlin
-fun testConcurrent() = runBlockingTest {
+fun testConcurrent() = runTest {
     val startTime = currentTime
     val result = loadContributorsConcurrent(MockGithubService, testRequestData)
     Assert.assertEquals("Wrong result for 'loadContributorsConcurrent'", expectedConcurrentResults.users, result)
@@ -1519,7 +1519,7 @@ First, check that the results are available exactly at the expected virtual time
 themselves:
 
 ```kotlin
-fun testChannels() = runBlockingTest {
+fun testChannels() = runTest {
     val startTime = currentTime
     var index = 0
     loadContributorsChannels(MockGithubService, testRequestData) { users, _ ->
