@@ -30,7 +30,6 @@ public fun <T : Any> Publisher<T>.asFlowDeprecated(): Flow<T> = asFlow()
 public fun <T : Any> Flow<T>.asPublisherDeprecated(): Publisher<T> = asPublisher()
 
 /** @suppress */
-@FlowPreview
 @Deprecated(
     message = "batchSize parameter is deprecated, use .buffer() instead to control the backpressure",
     level = DeprecationLevel.HIDDEN,
