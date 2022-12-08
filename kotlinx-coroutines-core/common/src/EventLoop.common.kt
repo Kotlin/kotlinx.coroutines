@@ -410,7 +410,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
          * into heap to avoid overflow and corruption of heap data structure.
          */
         @JvmField var nanoTime: Long
-    ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
+    ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode, SynchronizedObject() {
         @Volatile
         private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
 
@@ -434,7 +434,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 
         fun timeToExecute(now: Long): Boolean = now - nanoTime >= 0L
 
-        fun scheduleTask(now: Long, delayed: DelayedTaskQueue, eventLoop: EventLoopImplBase): Int = synchronized(this) {
+        fun scheduleTask(now: Long, delayed: DelayedTaskQueue, eventLoop: EventLoopImplBase): Int = synchronized<Int>(this) {
             if (_heap === DISPOSED_TASK) return SCHEDULE_DISPOSED // don't add -- was already disposed
             delayed.addLastIf(this) { firstTask ->
                 if (eventLoop.isCompleted) return SCHEDULE_COMPLETED // non-local return from scheduleTask
@@ -476,7 +476,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             return SCHEDULE_OK
         }
 
-        final override fun dispose() = synchronized(this) {
+        final override fun dispose(): Unit = synchronized(this) {
             val heap = _heap
             if (heap === DISPOSED_TASK) return // already disposed
             (heap as? DelayedTaskQueue)?.remove(this) // remove if it is in heap (first)
