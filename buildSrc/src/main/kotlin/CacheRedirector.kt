@@ -13,12 +13,11 @@ import java.net.*
  * including buildSrc within TeamCity CI.
  */
 private val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-
 /**
  *  The list of repositories supported by cache redirector should be synced with the list at https://cache-redirector.jetbrains.com/redirects_generated.html
  *  To add a repository to the list create an issue in ADM project (example issue https://youtrack.jetbrains.com/issue/IJI-149)
  */
-private val mirroredUrls = listOf(
+private val mirroredUrls = listOf( //todo does it required to be updated?
     "https://cdn.azul.com/zulu/bin",
     "https://clojars.org/repo",
     "https://dl.google.com/android/repository",

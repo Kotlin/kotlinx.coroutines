@@ -45,7 +45,7 @@ buildscript {
     repositories {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        CommunityProjectsBuild.addDevRepositoryIfEnabled(delegate, project)
         mavenLocal()
     }
 
@@ -130,7 +130,7 @@ allprojects {
          */
         google()
         mavenCentral()
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        CommunityProjectsBuild.addDevRepositoryIfEnabled(delegate, project)
     }
 }
 
