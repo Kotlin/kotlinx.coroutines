@@ -35,8 +35,8 @@ buildscript {
 
     if (using_snapshot_version) {
         repositories {
+            CommunityProjectsBuild.addDevRepositoryIfEnabled(delegate, project)
             mavenLocal()
-            maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
         }
     }
 
@@ -48,7 +48,7 @@ plugins {
 
 repositories {
     if (build_snapshot_train) {
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        CommunityProjectsBuild.addDevRepositoryIfEnabled(delegate, project)
     }
     mavenLocal()
     mavenCentral()

@@ -6,7 +6,7 @@ repositories {
     // Coroutines from the outer project are published by previous CI buils step
     mavenLocal()
     mavenCentral()
-    maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+    CommunityProjectsBuild.addDevRepositoryIfEnabled(delegate, project)
 }
 
 kotlin {
