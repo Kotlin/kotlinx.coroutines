@@ -37,13 +37,12 @@ private fun <T> rxMaybeInternal(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-private class RxMaybeCoroutine<T>(
+private class RxMaybeCoroutine<T: Any>(
     parentContext: CoroutineContext,
-    private val subscriber: MaybeEmitter<T & Any>
-) : AbstractCoroutine<T>(parentContext, false, true) {
-    override fun onCompleted(value: T) {
+    private val subscriber: MaybeEmitter<T>
+) : AbstractCoroutine<T?>(parentContext, false, true) {
+    override fun onCompleted(value: T?) {
         try {
-            @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS") // KT-54201
             if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
         } catch (e: Throwable) {
             handleUndeliverableException(e, context)
