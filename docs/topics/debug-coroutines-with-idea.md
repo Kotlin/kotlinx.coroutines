@@ -99,4 +99,11 @@ The tutorial assumes you have prior knowledge of the [coroutines](coroutines-gui
     * The second coroutine has computed its value and disappeared.
     * The third coroutine is calculating the value of `b` – it has the **RUNNING** status.
 
+> You can disable a "was optimised out" feature via the `-Xdebug` compiler option.
+> The "was optimised out" feature optimizes variables when you use suspend functions.
+> However, debugging a code with optimized variables is hard because you don't see their values.
+> Be careful: disabling this feature via `-Xdebug` can [cause memory leaks](https://youtrack.jetbrains.com/issue/KT-48678/Coroutine-debugger-disable-was-optimised-out-compiler-feature#focus=Comments-27-6015585.0-0).
+>
+{type="tip"}
+
 Using IntelliJ IDEA debugger, you can dig deeper into each coroutine to debug your code.
