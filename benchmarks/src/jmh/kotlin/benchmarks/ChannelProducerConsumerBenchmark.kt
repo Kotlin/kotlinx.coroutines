@@ -4,15 +4,14 @@
 
 package benchmarks
 
+import benchmarks.common.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.scheduling.*
 import kotlinx.coroutines.selects.select
 import org.openjdk.jmh.annotations.*
-import org.openjdk.jmh.infra.Blackhole
 import java.lang.Integer.max
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.Phaser
-import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
 
@@ -26,17 +25,17 @@ import java.util.concurrent.TimeUnit
  * Please, be patient, this benchmark takes quite a lot of time to complete.
  */
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
-@Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MICROSECONDS)
-@Fork(value = 3)
-@BenchmarkMode(Mode.AverageTime)
+@Measurement(iterations = 20, time = 500, timeUnit = TimeUnit.MICROSECONDS)
+@Fork(value = 1)
+@BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class ChannelProducerConsumerBenchmark {
     @Param
-    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.FORK_JOIN
+    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.DEFAULT
 
     @Param
-    private var _1_channel: ChannelCreator = ChannelCreator.RENDEZVOUS
+    var _1_channel: ChannelCreator = ChannelCreator.RENDEZVOUS
 
     @Param("0", "1000")
     private var _2_coroutines: Int = 0
@@ -44,11 +43,12 @@ open class ChannelProducerConsumerBenchmark {
     @Param("false", "true")
     private var _3_withSelect: Boolean = false
 
-    @Param("1", "2", "4") // local machine
-//    @Param("1", "2", "4", "8", "12") // local machine
-//    @Param("1", "2", "4", "8", "16", "32", "64", "128", "144") // dasquad
-//    @Param("1", "2", "4", "8", "16", "32", "64", "96") // Google Cloud
-    private var _4_parallelism: Int = 0
+    @Param("1", "2", "4", "8", "16") // local machine
+//    @Param("1", "2", "4", "8", "16", "32", "64", "128") // Server
+    var _4_parallelism: Int = 0
+
+    @Param("10")
+    var _5_workSize: Int = 0
 
     private lateinit var dispatcher: CoroutineDispatcher
     private lateinit var channel: Channel<Int>
@@ -61,10 +61,18 @@ open class ChannelProducerConsumerBenchmark {
     }
 
     @Benchmark
-    fun spmc() {
+    fun mcsp() {
         if (_2_coroutines != 0) return
         val producers = max(1, _4_parallelism - 1)
         val consumers = 1
+        run(producers, consumers)
+    }
+
+    @Benchmark
+    fun spmc() {
+        if (_2_coroutines != 0) return
+        val producers = 1
+        val consumers = max(1, _4_parallelism - 1)
         run(producers, consumers)
     }
 
@@ -76,25 +84,19 @@ open class ChannelProducerConsumerBenchmark {
     }
 
     private fun run(producers: Int, consumers: Int) {
-        val n = APPROX_BATCH_SIZE / producers * producers
+        val n = (APPROX_BATCH_SIZE / producers * producers) / consumers * consumers
         val phaser = Phaser(producers + consumers + 1)
         // Run producers
         repeat(producers) {
             GlobalScope.launch(dispatcher) {
-                val dummy = if (_3_withSelect) _1_channel.create() else null
-                repeat(n / producers) {
-                    produce(it, dummy)
-                }
+                produce(n / producers)
                 phaser.arrive()
             }
         }
         // Run consumers
         repeat(consumers) {
             GlobalScope.launch(dispatcher) {
-                val dummy = if (_3_withSelect) _1_channel.create() else null
-                repeat(n / consumers) {
-                    consume(dummy)
-                }
+                consume(n/ consumers)
                 phaser.arrive()
             }
         }
@@ -102,49 +104,36 @@ open class ChannelProducerConsumerBenchmark {
         phaser.arriveAndAwaitAdvance()
     }
 
-    private suspend fun produce(element: Int, dummy: Channel<Int>?) {
-        if (_3_withSelect) {
-            select<Unit> {
-                channel.onSend(element) {}
-                dummy!!.onReceive {}
-            }
-        } else {
-            channel.send(element)
+    private suspend fun produce(n: Int) {
+        repeat(n) {
+            doWork(_5_workSize)
+            channel.send(it)
         }
-        doWork()
     }
 
-    private suspend fun consume(dummy: Channel<Int>?) {
-        if (_3_withSelect) {
-            select<Unit> {
-                channel.onReceive {}
-                dummy!!.onReceive {}
-            }
-        } else {
+    private suspend fun consume(n: Int) {
+        repeat(n) {
+            doWork(_5_workSize)
             channel.receive()
         }
-        doWork()
     }
 }
 
 enum class DispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
-    FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() })
+    //FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() }),
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    DEFAULT({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
 }
 
 enum class ChannelCreator(private val capacity: Int) {
     RENDEZVOUS(Channel.RENDEZVOUS),
-//    BUFFERED_1(1),
-    BUFFERED_2(2),
-//    BUFFERED_4(4),
-    BUFFERED_32(32),
-    BUFFERED_128(128),
+    BUFFERED_16(16),
+    BUFFERED_64(64),
     BUFFERED_UNLIMITED(Channel.UNLIMITED);
 
     fun create(): Channel<Int> = Channel(capacity)
 }
 
-private fun doWork(): Unit = Blackhole.consumeCPU(ThreadLocalRandom.current().nextLong(WORK_MIN, WORK_MAX))
+private fun doWork(workSize: Int): Unit = doGeomDistrWork(workSize)
 
-private const val WORK_MIN = 50L
-private const val WORK_MAX = 100L
-private const val APPROX_BATCH_SIZE = 100000
+private const val APPROX_BATCH_SIZE = 100_000
