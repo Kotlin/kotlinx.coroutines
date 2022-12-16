@@ -4,11 +4,23 @@
 
 package kotlinx.coroutines.internal
 
+import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-internal actual val ANDROID_DETECTED = false
+private val platformExceptionHandlers_ = mutableSetOf<CoroutineExceptionHandler>()
 
-internal actual fun propagateExceptionToPlatform(context: CoroutineContext, exception: Throwable) {
+internal actual val platformExceptionHandlers: Collection<CoroutineExceptionHandler>
+    get() = platformExceptionHandlers_
+
+internal actual fun ensurePlatformExceptionHandlerLoaded(callback: CoroutineExceptionHandler) {
+    platformExceptionHandlers_ += callback
+}
+
+internal actual fun propagateExceptionFinalResort(exception: Throwable) {
     // log exception
     console.error(exception)
 }
+
+internal actual class DiagnosticCoroutineContextException actual constructor(context: CoroutineContext) :
+    RuntimeException(context.toString())
+

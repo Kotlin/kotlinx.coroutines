@@ -226,9 +226,8 @@ internal class TestScopeImpl(context: CoroutineContext) :
              * because the exception collector will be able to report the exceptions that arrived before this test but
              * after the previous one, and learning about such exceptions as soon is possible is nice. */
             @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-            run {
-                kotlinx.coroutines.internal.ExceptionCollector.addOnExceptionCallback(lock, this::reportException)
-            }
+            run { ensurePlatformExceptionHandlerLoaded(ExceptionCollector) }
+            ExceptionCollector.addOnExceptionCallback(lock, this::reportException)
             uncaughtExceptions
         }
         if (exceptions.isNotEmpty()) {
@@ -244,10 +243,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
         val exceptions = synchronized(lock) {
             check(entered && !finished)
             /** After [finished] becomes `true`, it is no longer valid to have [reportException] as the callback. */
-            @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-            run {
-                kotlinx.coroutines.internal.ExceptionCollector.removeOnExceptionCallback(lock)
-            }
+            ExceptionCollector.removeOnExceptionCallback(lock)
             finished = true
             uncaughtExceptions
         }

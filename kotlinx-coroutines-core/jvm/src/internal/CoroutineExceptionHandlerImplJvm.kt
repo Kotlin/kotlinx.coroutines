@@ -5,8 +5,8 @@
 package kotlinx.coroutines.internal
 
 import java.util.*
-import kotlin.coroutines.*
 import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 /**
  * A list of globally installed [CoroutineExceptionHandler] instances.
@@ -18,19 +18,25 @@ import kotlinx.coroutines.*
  * We are explicitly using the `ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
  * form of the ServiceLoader call to enable R8 optimization when compiled on Android.
  */
-private val handlers: List<CoroutineExceptionHandler> = ServiceLoader.load(
-        CoroutineExceptionHandler::class.java,
-        CoroutineExceptionHandler::class.java.classLoader
+internal actual val platformExceptionHandlers: Collection<CoroutineExceptionHandler> = ServiceLoader.load(
+    CoroutineExceptionHandler::class.java,
+    CoroutineExceptionHandler::class.java.classLoader
 ).iterator().asSequence().toList()
 
-/**
- * Private exception without stacktrace that is added to suppressed exceptions of the original exception
- * when it is reported to the last-ditch current thread 'uncaughtExceptionHandler'.
- *
- * The purpose of this exception is to add an otherwise inaccessible diagnostic information and to
- * be able to poke the failing coroutine context in the debugger.
- */
-private class DiagnosticCoroutineContextException(@Transient private val context: CoroutineContext) : RuntimeException() {
+internal actual fun ensurePlatformExceptionHandlerLoaded(callback: CoroutineExceptionHandler) {
+    // we use JVM's mechanism of ServiceLoader, so this should be a no-op on JVM.
+    // The only thing we do is make sure that the ServiceLoader did work correctly.
+    check(callback in platformExceptionHandlers) { "Exception handler was not found via a ServiceLoader" }
+}
+
+internal actual fun propagateExceptionFinalResort(exception: Throwable) {
+    // use the thread's handler
+    val currentThread = Thread.currentThread()
+    currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
+}
+
+// This implementation doesn't store a stacktrace, which is good because a stacktrace doesn't make sense for this.
+internal actual class DiagnosticCoroutineContextException actual constructor(@Transient private val context: CoroutineContext) : RuntimeException() {
     override fun getLocalizedMessage(): String {
         return context.toString()
     }
@@ -40,24 +46,4 @@ private class DiagnosticCoroutineContextException(@Transient private val context
         stackTrace = emptyArray()
         return this
     }
-}
-
-internal actual fun propagateExceptionToPlatform(context: CoroutineContext, exception: Throwable) {
-    // use additional extension handlers
-    for (handler in handlers) {
-        try {
-            handler.handleException(context, exception)
-        } catch (t: Throwable) {
-            // Use thread's handler if custom handler failed to handle exception
-            val currentThread = Thread.currentThread()
-            currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, handlerException(exception, t))
-        }
-    }
-
-    // use thread's handler
-    val currentThread = Thread.currentThread()
-    // addSuppressed is never user-defined and cannot normally throw with the only exception being OOM
-    // we do ignore that just in case to definitely deliver the exception
-    runCatching { exception.addSuppressed(DiagnosticCoroutineContextException(context)) }
-    currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
 }
