@@ -28,7 +28,6 @@ class ListAllCoroutineThrowableSubclassesTest {
         "kotlinx.coroutines.internal.UndeliveredElementException",
         "kotlinx.coroutines.CompletionHandlerException",
         "kotlinx.coroutines.internal.DiagnosticCoroutineContextException",
-        "kotlinx.coroutines.internal.ExceptionSuccessfullyProcessed",
         "kotlinx.coroutines.CoroutinesInternalError",
         "kotlinx.coroutines.channels.ClosedSendChannelException",
         "kotlinx.coroutines.channels.ClosedReceiveChannelException",

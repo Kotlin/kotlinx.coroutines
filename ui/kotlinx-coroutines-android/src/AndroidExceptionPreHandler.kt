@@ -30,7 +30,7 @@ internal class AndroidExceptionPreHandler :
         return declared
     }
 
-    override fun handleException(context: CoroutineContext, exception: Throwable) {
+    override fun tryHandleException(context: CoroutineContext, exception: Throwable): Boolean {
         /*
          * Android Oreo introduced private API for a global pre-handler for uncaught exceptions, to ensure that the
          * exceptions are logged even if the default uncaught exception handler is replaced by the app. The pre-handler
@@ -48,5 +48,6 @@ internal class AndroidExceptionPreHandler :
             (preHandler()?.invoke(null) as? Thread.UncaughtExceptionHandler)
                 ?.uncaughtException(Thread.currentThread(), exception)
         }
+        return false // let the default handler, too, handle the exception
     }
 }

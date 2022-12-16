@@ -21,8 +21,8 @@ public fun handleCoroutineException(context: CoroutineContext, exception: Throwa
     // Invoke an exception handler from the context if present
     try {
         context[CoroutineExceptionHandler]?.let {
-            it.handleException(context, exception)
-            return
+            if (it.tryHandleException(context, exception))
+                return
         }
     } catch (t: Throwable) {
         handleUncaughtCoroutineException(context, handlerException(exception, t))
@@ -46,8 +46,8 @@ internal fun handlerException(originalException: Throwable, thrownException: Thr
 @Suppress("FunctionName")
 public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineContext, Throwable) -> Unit): CoroutineExceptionHandler =
     object : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
-        override fun handleException(context: CoroutineContext, exception: Throwable) =
-            handler.invoke(context, exception)
+        override fun tryHandleException(context: CoroutineContext, exception: Throwable): Boolean =
+            true.also { handler.invoke(context, exception) }
     }
 
 /**
@@ -104,5 +104,23 @@ public interface CoroutineExceptionHandler : CoroutineContext.Element {
      * Handles uncaught [exception] in the given [context]. It is invoked
      * if coroutine has an uncaught exception.
      */
-    public fun handleException(context: CoroutineContext, exception: Throwable)
+    @Deprecated(
+        "Use tryHandleException instead",
+        replaceWith = ReplaceWith("this.tryHandleException(context, exception)"),
+        level = DeprecationLevel.WARNING
+    )
+    public fun handleException(context: CoroutineContext, exception: Throwable) {
+        if (!tryHandleException(context, exception))
+            handleUncaughtCoroutineException(context, exception)
+    }
+
+    /**
+     * Handles uncaught [exception] in the given [context].
+     * Returns `true` if the processing was successful and no other processing is needed.
+     */
+    public fun tryHandleException(context: CoroutineContext, exception: Throwable): Boolean {
+        @Suppress("DEPRECATION")
+        handleException(context, exception)
+        return true
+    }
 }

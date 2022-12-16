@@ -53,7 +53,7 @@ internal object ExceptionCollector: AbstractCoroutineContextElement(CoroutineExc
      *
      * Doesn't throw.
      */
-    fun handleException(exception: Throwable): Boolean = synchronized(lock) {
+    override fun tryHandleException(context: CoroutineContext, exception: Throwable): Boolean = synchronized(lock) {
         if (!enabled) return false
         if (reportException(exception)) return true
         /** we don't return the result of the `add` function because we don't have a guarantee
@@ -77,13 +77,6 @@ internal object ExceptionCollector: AbstractCoroutineContextElement(CoroutineExc
              * to observe the report in the exact callback that is connected to that bad behavior. */
         }
         return executedACallback
-    }
-
-    @Suppress("INVISIBLE_MEMBER")
-    override fun handleException(context: CoroutineContext, exception: Throwable) {
-        if (handleException(exception)) {
-            throw ExceptionSuccessfullyProcessed
-        }
     }
 
     override fun equals(other: Any?): Boolean = other is ExceptionCollector || other is ExceptionCollectorAsService

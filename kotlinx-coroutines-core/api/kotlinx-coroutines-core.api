@@ -182,13 +182,16 @@ public final class kotlinx/coroutines/CoroutineDispatcher$Key : kotlin/coroutine
 public abstract interface class kotlinx/coroutines/CoroutineExceptionHandler : kotlin/coroutines/CoroutineContext$Element {
 	public static final field Key Lkotlinx/coroutines/CoroutineExceptionHandler$Key;
 	public abstract fun handleException (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)V
+	public abstract fun tryHandleException (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)Z
 }
 
 public final class kotlinx/coroutines/CoroutineExceptionHandler$DefaultImpls {
 	public static fun fold (Lkotlinx/coroutines/CoroutineExceptionHandler;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static fun get (Lkotlinx/coroutines/CoroutineExceptionHandler;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun handleException (Lkotlinx/coroutines/CoroutineExceptionHandler;Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)V
 	public static fun minusKey (Lkotlinx/coroutines/CoroutineExceptionHandler;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
 	public static fun plus (Lkotlinx/coroutines/CoroutineExceptionHandler;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+	public static fun tryHandleException (Lkotlinx/coroutines/CoroutineExceptionHandler;Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)Z
 }
 
 public final class kotlinx/coroutines/CoroutineExceptionHandler$Key : kotlin/coroutines/CoroutineContext$Key {

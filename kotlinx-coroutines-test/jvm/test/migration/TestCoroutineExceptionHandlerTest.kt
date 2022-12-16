@@ -12,7 +12,7 @@ class TestCoroutineExceptionHandlerTest {
     fun whenExceptionsCaught_availableViaProperty() {
         val subject = TestCoroutineExceptionHandler()
         val expected = IllegalArgumentException()
-        subject.handleException(subject, expected)
+        assertTrue(subject.tryHandleException(subject, expected))
         assertEquals(listOf(expected), subject.uncaughtExceptions)
     }
 }

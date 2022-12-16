@@ -56,14 +56,13 @@ public class TestCoroutineExceptionHandler :
     private var _coroutinesCleanedUp = false
 
     @Suppress("INVISIBLE_MEMBER")
-    override fun handleException(context: CoroutineContext, exception: Throwable) {
+    override fun tryHandleException(context: CoroutineContext, exception: Throwable): Boolean =
         synchronized(_lock) {
-            if (_coroutinesCleanedUp) {
-                handleUncaughtCoroutineException(context, exception)
+            if (!_coroutinesCleanedUp) {
+                _exceptions += exception
             }
-            _exceptions += exception
+            !_coroutinesCleanedUp
         }
-    }
 
     public override val uncaughtExceptions: List<Throwable>
         get() = synchronized(_lock) { _exceptions.toList() }
