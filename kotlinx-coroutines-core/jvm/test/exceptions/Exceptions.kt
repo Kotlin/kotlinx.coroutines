@@ -39,7 +39,7 @@ class CapturingHandler : AbstractCoroutineContextElement(CoroutineExceptionHandl
 {
     private var unhandled: ArrayList<Throwable>? = ArrayList()
 
-    override fun handleException(context: CoroutineContext, exception: Throwable) = synchronized<Unit>(this) {
+    override fun tryHandleException(context: CoroutineContext, exception: Throwable) = synchronized(this) {
         unhandled!!.add(exception)
     }
 

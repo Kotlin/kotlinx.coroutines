@@ -101,7 +101,12 @@ class RunTestLegacyScopeTest {
         }
     }) {
         runTestWithLegacyScope(dispatchTimeoutMs = 1) {
-            coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, TestException("A"))
+            assertTrue(
+                coroutineContext[CoroutineExceptionHandler]!!.tryHandleException(
+                    coroutineContext,
+                    TestException("A")
+                )
+            )
             withContext(Dispatchers.Default) {
                 delay(10000)
                 3

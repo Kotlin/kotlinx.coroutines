@@ -35,9 +35,8 @@ internal fun handleUncaughtCoroutineException(context: CoroutineContext, excepti
     // use additional extension handlers
     for (handler in platformExceptionHandlers) {
         try {
-            handler.handleException(context, exception)
-        } catch (_: ExceptionSuccessfullyProcessed) {
-            return
+            if (handler.tryHandleException(context, exception))
+                return
         } catch (t: Throwable) {
             propagateExceptionFinalResort(handlerException(exception, t))
         }

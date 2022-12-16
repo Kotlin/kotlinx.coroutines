@@ -187,10 +187,8 @@ public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineCo
     var scope: TestCoroutineScopeImpl? = null
     val ownExceptionHandler =
         object : AbstractCoroutineContextElement(CoroutineExceptionHandler), TestCoroutineScopeExceptionHandler {
-            override fun handleException(context: CoroutineContext, exception: Throwable) {
-                if (!scope!!.reportException(exception))
-                    throw exception // let this exception crash everything
-            }
+            override fun tryHandleException(context: CoroutineContext, exception: Throwable) =
+                scope!!.reportException(exception)
         }
     val exceptionHandler = when (val exceptionHandler = ctxWithDispatcher[CoroutineExceptionHandler]) {
         is UncaughtExceptionCaptor -> exceptionHandler
