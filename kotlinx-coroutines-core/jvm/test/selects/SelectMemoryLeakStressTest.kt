@@ -40,7 +40,7 @@ class SelectMemoryLeakStressTest : TestBase() {
         val data = Channel<Int>(1)
         repeat(nRepeat) { value ->
             val bigValue = bigValue() // new instance
-            select<Unit> {
+            select {
                 leak.onReceive {
                     println("Capture big value into this lambda: $bigValue")
                     expectUnreached()

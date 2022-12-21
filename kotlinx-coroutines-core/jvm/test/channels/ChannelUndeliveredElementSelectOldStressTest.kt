@@ -160,7 +160,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
                     sentStatus[trySendData.x] = 3
                     when {
                         // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
-                        kind == TestChannelKind.LINKED_LIST -> while (sentCnt > lastReceived + 100) yield()
+                        kind == TestChannelKind.UNLIMITED -> while (sentCnt > lastReceived + 100) yield()
                         // yield periodically to check cancellation on conflated channels
                         kind.isConflated -> if (counter++ % 100 == 0) yield()
                     }

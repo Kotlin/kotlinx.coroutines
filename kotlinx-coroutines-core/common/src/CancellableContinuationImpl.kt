@@ -5,6 +5,7 @@
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.channels.Waiter
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -24,7 +25,7 @@ internal val RESUME_TOKEN = Symbol("RESUME_TOKEN")
 internal open class CancellableContinuationImpl<in T>(
     final override val delegate: Continuation<T>,
     resumeMode: Int
-) : DispatchedTask<T>(resumeMode), CancellableContinuation<T>, CoroutineStackFrame {
+) : DispatchedTask<T>(resumeMode), CancellableContinuation<T>, CoroutineStackFrame, Waiter {
     init {
         assert { resumeMode != MODE_UNINITIALIZED } // invalid mode for CancellableContinuationImpl
     }

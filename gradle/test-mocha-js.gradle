@@ -101,4 +101,3 @@ task testMochaJsdom(type: NodeTask, dependsOn: [compileTestJsLegacy, installDepe
 }
 
 jsLegacyTestTask.dependsOn testMochaJsdom
-

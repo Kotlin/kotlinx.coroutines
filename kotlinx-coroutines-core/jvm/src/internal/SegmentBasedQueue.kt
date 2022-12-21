@@ -109,12 +109,12 @@ internal class SegmentBasedQueue<T> {
 
 }
 
-private fun <T> createSegment(id: Long, prev: OneElementSegment<T>?) = OneElementSegment(id, prev, 0)
+private fun <T> createSegment(id: Long, prev: OneElementSegment<T>) = OneElementSegment(id, prev, 0)
 
 internal class OneElementSegment<T>(id: Long, prev: OneElementSegment<T>?, pointers: Int) : Segment<OneElementSegment<T>>(id, prev, pointers) {
     val element = atomic<Any?>(null)
 
-    override val maxSlots get() = 1
+    override val numberOfSlots get() = 1
 
     val logicallyRemoved get() = element.value === BROKEN
 

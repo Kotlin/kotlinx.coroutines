@@ -8,7 +8,6 @@ import io.reactivex.*
 import io.reactivex.disposables.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 
@@ -46,12 +45,12 @@ internal fun <T> ObservableSource<T>.toChannel(): ReceiveChannel<T> {
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(null), Observer<T>, MaybeObserver<T>
+    BufferedChannel<T>(capacity = Channel.UNLIMITED), Observer<T>, MaybeObserver<T>
 {
     private val _subscription = atomic<Disposable?>(null)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
+    override fun onClosedIdempotent() {
         _subscription.getAndSet(null)?.dispose() // dispose exactly once
     }
 
