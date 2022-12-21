@@ -7,12 +7,14 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import org.junit.*
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 
+@Ignore
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
     private val kind: TestChannelKind,
@@ -25,10 +27,7 @@ class ChannelSendReceiveStressTest(
         fun params(): Collection<Array<Any>> =
                 listOf(1, 2, 10).flatMap { nSenders ->
                     listOf(1, 10).flatMap { nReceivers ->
-                        TestChannelKind.values()
-                            // Workaround for bug that won't be fixed unless new channel implementation, see #2443
-                            .filter { it != TestChannelKind.LINKED_LIST }
-                            .map { arrayOf(it, nSenders, nReceivers) }
+                        TestChannelKind.values().map { arrayOf(it, nSenders, nReceivers) }
                     }
                 }
     }
@@ -107,6 +106,7 @@ class ChannelSendReceiveStressTest(
         repeat(nReceivers) { receiveIndex ->
             println("        Received by #$receiveIndex ${receivedBy[receiveIndex]}")
         }
+        (channel as? BufferedChannel<*>)?.checkSegmentStructureInvariants()
         assertEquals(nSenders, sendersCompleted.get())
         assertEquals(nReceivers, receiversCompleted.get())
         assertEquals(0, dupes.get())

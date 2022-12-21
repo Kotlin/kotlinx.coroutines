@@ -1,12 +1,15 @@
-java.util.concurrent.CancellationException: RendezvousChannel was cancelled
-	at kotlinx.coroutines.channels.AbstractChannel.cancel(AbstractChannel.kt:630)
-	at kotlinx.coroutines.channels.ReceiveChannel$DefaultImpls.cancel$default(Channel.kt:311)
-	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testSendToChannel$1$job$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:52)
+java.util.concurrent.CancellationException: Channel was cancelled
 	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
-	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest.channelSend(StackTraceRecoveryChannelsTest.kt:73)
-	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testSendToChannel$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:56)
-Caused by: java.util.concurrent.CancellationException: RendezvousChannel was cancelled
-	at kotlinx.coroutines.channels.AbstractChannel.cancel(AbstractChannel.kt:630)
-	at kotlinx.coroutines.channels.ReceiveChannel$DefaultImpls.cancel$default(Channel.kt:311)
-	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testSendToChannel$1$job$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt:52)
-	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.StackTraceRecoveryKt.recoverStackTrace(StackTraceRecovery.kt)
+	at kotlinx.coroutines.channels.BufferedChannel.onClosedSend(BufferedChannel.kt)
+	at kotlinx.coroutines.channels.BufferedChannel.send$suspendImpl(BufferedChannel.kt)
+	at kotlinx.coroutines.channels.BufferedChannel.send(BufferedChannel.kt)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest.channelSend(StackTraceRecoveryChannelsTest.kt)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest.access$channelSend(StackTraceRecoveryChannelsTest.kt)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$channelSend$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt)
+Caused by: java.util.concurrent.CancellationException: Channel was cancelled
+	at kotlinx.coroutines.channels.BufferedChannel.cancelImpl$(BufferedChannel.kt)
+	at kotlinx.coroutines.channels.BufferedChannel.cancel(BufferedChannel.kt)
+	at kotlinx.coroutines.channels.ReceiveChannel$DefaultImpls.cancel$default(Channel.kt)
+	at kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest$testSendToChannel$1$job$1.invokeSuspend(StackTraceRecoveryChannelsTest.kt)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt)

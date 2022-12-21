@@ -4,8 +4,6 @@
 
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.*
-
 /**
  * A strategy for buffer overflow handling in [channels][Channel] and [flows][kotlinx.coroutines.flow.Flow] that
  * controls what is going to be sacrificed on buffer overflow:

@@ -12,8 +12,6 @@ internal actual typealias ReentrantLock = kotlinx.atomicfu.locks.SynchronizedObj
 
 internal actual inline fun <T> ReentrantLock.withLock(action: () -> T): T = this.withLock2(action)
 
-internal actual fun <E> subscriberList(): MutableList<E> = CopyOnWriteList<E>()
-
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet()
 
 

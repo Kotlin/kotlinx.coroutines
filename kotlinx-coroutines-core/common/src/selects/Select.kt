@@ -238,7 +238,7 @@ public sealed interface SelectInstance<in R> {
      */
     public fun selectInRegistrationPhase(internalResult: Any?)
 }
-internal interface SelectInstanceInternal<R>: SelectInstance<R>
+internal interface SelectInstanceInternal<R>: SelectInstance<R>, Waiter
 
 @PublishedApi
 internal open class SelectImplementation<R> constructor(
@@ -705,7 +705,11 @@ internal open class SelectImplementation<R> constructor(
         // Update the state.
         state.update { cur ->
             // Finish immediately when this `select` is already completed.
-            if (cur is ClauseData<*> || cur == STATE_COMPLETED) return
+            // Notably, this select might be logically completed
+            // (the `state` field stores the selected `ClauseData`),
+            // while the continuation is already cancelled.
+            // We need to invoke the cancellation handler in this case.
+            if (cur === STATE_COMPLETED) return
             STATE_CANCELLED
         }
         // Read the list of clauses. If the `clauses` field is already `null`,
