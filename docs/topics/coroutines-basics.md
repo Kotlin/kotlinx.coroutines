@@ -107,6 +107,11 @@ suspend fun doWorld() {
 
 You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-02.kt).
 
+<!--- TEST
+Hello
+World!
+-->
+
 > If you use `suspend` functions, in the debugger, you might see the "was optimised out" text next to a variable's name:
 > ![Variable "a" was optimised out](variable-optimised-out.png)
 > This text means that the variable's lifetime was decreased, and the variable doesn't exist anymore.
