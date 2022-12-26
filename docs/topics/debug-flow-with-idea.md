@@ -102,13 +102,6 @@ Create a Kotlin [flow](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-cor
 
     ![Debug the coroutine](flow-debug-2.png)
 
-> You can disable a "was optimised out" feature via the `-Xdebug` compiler option.
-> The "was optimised out" feature optimizes variables when you use suspend functions.
-> However, debugging a code with optimized variables is hard because you don't see their values.
-> Be careful: disabling this feature via `-Xdebug` can [cause memory leaks](https://youtrack.jetbrains.com/issue/KT-48678/Coroutine-debugger-disable-was-optimised-out-compiler-feature#focus=Comments-27-6015585.0-0).
->
-{type="tip"}
-
 ## Add a concurrently running coroutine
 
 1. Open the `Main.kt` file in `src/main/kotlin`.
