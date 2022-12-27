@@ -101,7 +101,7 @@ The tutorial assumes you have prior knowledge of the [coroutines](coroutines-gui
 
 Using IntelliJ IDEA debugger, you can dig deeper into each coroutine to debug your code.
 
-### Debug suspend functions
+### Optimised-out variables
 
 If you use `suspend` functions, in the debugger, you might see the "was optimised out" text next to a variable's name:
 
