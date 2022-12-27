@@ -6,6 +6,7 @@ package kotlinx.coroutines.sync
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
@@ -183,13 +184,50 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         acquireSlowPath()
     }
 
-    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
+    internal fun acquireFastPath(): Boolean {
+        // Decrement the number of available permits.
+        val p = decPermits()
+        // Is the permit acquired?
+        if (p > 0) return true // permit acquired
+        // Suspend otherwise.
+        return false
+    }
+
+    internal suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
         // Try to suspend.
         if (addAcquireToQueue(cont)) return@sc
         // The suspension has been failed
         // due to the synchronous resumption mode.
         // Restart the whole `acquire`.
         acquire(cont)
+    }
+
+    internal fun acquireSlowPathSend(send: WaitingSend<*>) {
+        if (addAcquireToQueue(send)) return
+        send as WaitingSend<Any?>
+        acquire(
+            waiter = send,
+            suspend = { s -> addAcquireToQueue(s) },
+            onAcquired = { s ->
+                s.channel.enqueue(s.element)
+                s.channel.deqPermits.release()
+                s.sender.resume(Unit, onCancellation = null)
+            }
+        )
+    }
+
+    internal fun acquireSlowPathReceive(receive: WaitingReceive<*>) {
+        if (addAcquireToQueue(receive)) return
+        receive as WaitingReceive<Any?>
+        acquire(
+            waiter = receive,
+            suspend = { r -> addAcquireToQueue(r) },
+            onAcquired = { r ->
+                val element = r.channel.dequeue()
+                if (!r.channel.isUnlimited) r.channel.enqPermits.release()
+                r.receiver.resume(element, onCancellation = null)
+            }
+        )
     }
 
     @JsName("acquireCont")
@@ -296,6 +334,12 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
                 is SelectInstance<*> -> {
                     waiter.disposeOnCompletion(CancelSemaphoreAcquisitionHandler(segment, i))
                 }
+                is WaitingSend<*> -> {
+                    waiter.sender.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
+                }
+                is WaitingReceive<*> -> {
+                    waiter.receiver.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
+                }
                 else -> error("unexpected: $waiter")
             }
             return true
@@ -311,6 +355,18 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
                 }
                 is SelectInstance<*> -> {
                     waiter.selectInRegistrationPhase(Unit)
+                }
+                is WaitingReceive<*> -> {
+                    waiter as WaitingReceive<Any?>
+                    val element = waiter.channel.dequeue()
+                    if (!waiter.channel.isUnlimited) waiter.channel.enqPermits.release()
+                    waiter.receiver.resume(element, onCancellation = null)
+                }
+                is WaitingSend<*> -> {
+                    waiter as WaitingSend<Any?>
+                    waiter.channel.enqueue(waiter.element)
+                    waiter.channel.deqPermits.release()
+                    waiter.sender.resume(Unit, onCancellation = null)
                 }
                 else -> error("unexpected: $waiter")
             }
@@ -357,6 +413,23 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         }
         is SelectInstance<*> -> {
             trySelect(this@SemaphoreImpl, Unit)
+        }
+        is WaitingSend<*> -> {
+            this as WaitingSend<Any?>
+            val token = sender.tryResume(Unit, null, onCancellationRelease)
+            if (token != null) {
+                channel.enqueue(element)
+                channel.deqPermits.release()
+                sender.completeResume(token)
+                true
+            } else false
+        }
+        is WaitingReceive<*> -> {
+            this as WaitingReceive<Any?>
+            val element = channel.dequeue()
+            if (!channel.isUnlimited) channel.enqPermits.release()
+            receiver.resume(element, null)
+            true
         }
         else -> error("unexpected: $this")
     }

@@ -202,4 +202,22 @@ class ArrayChannelTest : TestBase() {
         (channel as BufferedChannel<*>).checkSegmentStructureInvariants()
         finish(6)
     }
+
+    @Test
+    fun testVerySimple() = runTest {
+        val c = BufferedChannel<Int>(capacity = 2)
+        check(c is BufferedChannel<*>)
+        println("SENDING 1...")
+        c.send(1)
+        println("SENT 1")
+        println("SENDING 2...")
+        c.send(2)
+        println("SENT 2")
+        println("RECEIVING...")
+        check(c.receive() == 1)
+        println("RECEIVED 1")
+        println("RECEIVING...")
+        check(c.receive() == 2)
+        println("RECEIVED 2")
+    }
 }
