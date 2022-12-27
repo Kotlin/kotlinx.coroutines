@@ -20,6 +20,7 @@ class WorkQueueStressTest : TestBase() {
     private val globalQueue = GlobalQueue() // only producer will use it
     private val producerQueue = WorkQueue()
 
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     @Volatile
     private var producerFinished = false
 

@@ -28,6 +28,7 @@ internal object DebugProbesImpl {
     private val capturedCoroutinesMap = ConcurrentWeakMap<CoroutineOwner<*>, Boolean>()
     private val capturedCoroutines: Set<CoroutineOwner<*>> get() = capturedCoroutinesMap.keys
 
+    @OptIn(kotlin.ExperimentalStdlibApi::class)
     @Volatile
     private var installations = 0
 
