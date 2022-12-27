@@ -145,8 +145,9 @@ public interface StateFlow<out T> : SharedFlow<T> {
  * A mutable [StateFlow] that provides a setter for [value].
  * An instance of `MutableStateFlow` with the given initial `value` can be created using
  * `MutableStateFlow(value)` constructor function.
- *
+
  * See the [StateFlow] documentation for details on state flows.
+ * Note that all emission-related operators, such as [value]'s setter, [emit], and [tryEmit], are conflated using [Any.equals].
  *
  * ### Not stable for inheritance
  *
