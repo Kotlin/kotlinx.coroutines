@@ -265,7 +265,7 @@ internal class CoroutineScheduler(
 
     /**
      * Long describing state of workers in this pool.
-     * Currently, includes created, CPU-acquired and blocking workers each occupying [BLOCKING_SHIFT] bits.
+     * Currently includes created, CPU-acquired, and blocking workers, each occupying [BLOCKING_SHIFT] bits.
      */
     private val controlState = atomic(corePoolSize.toLong() shl CPU_PERMITS_SHIFT)
     private val createdWorkers: Int inline get() = (controlState.value and CREATED_MASK).toInt()
