@@ -102,14 +102,14 @@ Create a Kotlin [flow](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-cor
 
     ![Debug the coroutine](flow-debug-2.png)
 
-### Optimised-out variables
+### Optimized-out variables
 
-If you use `suspend` functions, in the debugger, you might see the "was optimised out" text next to a variable's name:
+If you use `suspend` functions, in the debugger, you might see the "was optimized out" text next to a variable's name:
 
-![Variable "a" was optimised out](variable-optimised-out.png)
+![Variable "a" was optimized out](variable-optimised-out.png)
 
 This text means that the variable's lifetime was decreased, and the variable doesn't exist anymore.
-It is difficult to debug code with optimised variables because you don't see their values.
+It is difficult to debug code with optimized variables because you don't see their values.
 You can disable this behavior with the `-Xdebug` compiler option.
 
 > __Never use this flag in production__: `-Xdebug` can [cause memory leaks](https://youtrack.jetbrains.com/issue/KT-48678/Coroutine-debugger-disable-was-optimised-out-compiler-feature#focus=Comments-27-6015585.0-0).
