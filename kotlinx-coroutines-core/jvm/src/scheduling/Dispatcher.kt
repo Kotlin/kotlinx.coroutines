@@ -38,6 +38,13 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         DefaultScheduler.dispatchWithContext(block, BlockingContext, false)
     }
+
+    @ExperimentalCoroutinesApi
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        if (parallelism == Int.MAX_VALUE) return this
+        return super.limitedParallelism(parallelism)
+    }
 }
 
 // Dispatchers.IO
