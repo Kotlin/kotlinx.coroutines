@@ -150,14 +150,21 @@ internal class WorkQueue {
         var end = producerIndex.value
 
         while (start != end) {
-            --end
-            val index = end and MASK
-            if (blockingTasksInBuffer.value == 0) break
-            val value = buffer[index]
-            if (value != null && value.isBlocking && buffer.compareAndSet(index, value, null)) {
-                blockingTasksInBuffer.decrementAndGet()
-                return value
+            val task = tryExtractBlockingTask(--end)
+            if (task != null) {
+                return task
             }
+        }
+        return null
+    }
+
+    private fun tryExtractBlockingTask(index: Int): Task? {
+        if (blockingTasksInBuffer.value == 0) return null
+        val arrayIndex = index and MASK
+        val value = buffer[arrayIndex]
+        if (value != null && value.isBlocking && buffer.compareAndSet(arrayIndex, value, null)) {
+            blockingTasksInBuffer.decrementAndGet()
+            return value
         }
         return null
     }
