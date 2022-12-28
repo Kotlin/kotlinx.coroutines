@@ -41,7 +41,7 @@ class WorkQueueStressTest : TestBase() {
         threads += thread(name = "producer") {
             startLatch.await()
             for (i in 1..offerIterations) {
-                while (producerQueue.bufferSize > BUFFER_CAPACITY / 2) {
+                while (producerQueue.size > BUFFER_CAPACITY / 2) {
                     Thread.yield()
                 }
 
@@ -79,7 +79,7 @@ class WorkQueueStressTest : TestBase() {
         threads += thread(name = "producer") {
             startLatch.await()
             for (i in 1..offerIterations) {
-                while (producerQueue.bufferSize == BUFFER_CAPACITY - 1) {
+                while (producerQueue.size == BUFFER_CAPACITY - 1) {
                     Thread.yield()
                 }
 

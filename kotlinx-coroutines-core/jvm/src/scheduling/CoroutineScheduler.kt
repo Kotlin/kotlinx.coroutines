@@ -874,8 +874,14 @@ internal class CoroutineScheduler(
 
         fun findTask(mayHaveLocalTasks: Boolean): Task? {
             if (tryAcquireCpuPermit()) return findAnyTask(mayHaveLocalTasks)
-            // If we can't acquire a CPU permit -- attempt to find blocking task
-            return globalBlockingQueue.removeFirstOrNull() ?: trySteal(blockingOnly = true)
+            /*
+             * If we can't acquire a CPU permit, attempt to find blocking task:
+             * * Check if our queue has one (maybe mixed in with CPU tasks)
+             * * Poll global and try steal
+             */
+            return localQueue.pollBlocking()
+                ?: globalBlockingQueue.removeFirstOrNull()
+                ?: trySteal(blockingOnly = true)
         }
 
         private fun findAnyTask(scanLocalQueue: Boolean): Task? {

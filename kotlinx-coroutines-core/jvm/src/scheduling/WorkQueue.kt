@@ -47,10 +47,12 @@ internal class WorkQueue {
      * [T2] changeProducerIndex (3)
      * [T3] changeConsumerIndex (4)
      *
-     * Which can lead to resulting size bigger than actual size at any moment of time.
-     * This is in general harmless because steal will be blocked by timer
+     * Which can lead to resulting size being negative or bigger than actual size at any moment of time.
+     * This is in general harmless because steal will be blocked by timer.
+     * Negative sizes can be observed only when non-owner reads the size, which happens only
+     * for diagnostic toString().
      */
-    internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
+    private val bufferSize: Int get() = producerIndex.value - consumerIndex.value
     internal val size: Int get() = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
     private val lastScheduledTask = atomic<Task?>(null)
@@ -132,6 +134,32 @@ internal class WorkQueue {
             }
         }
         return tryStealLastScheduled(stolenTaskRef, blockingOnly = true)
+    }
+
+    // Polls for blocking task, invoked only by the owner
+    fun pollBlocking(): Task? {
+        while (true) { // Poll the slot
+            val lastScheduled = lastScheduledTask.value ?: break
+            if (!lastScheduled.isBlocking) break
+            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                return lastScheduled
+            } // Failed -> someone else stole it
+        }
+
+        val start = consumerIndex.value
+        var end = producerIndex.value
+
+        while (start != end) {
+            --end
+            val index = end and MASK
+            if (blockingTasksInBuffer.value == 0) break
+            val value = buffer[index]
+            if (value != null && value.isBlocking && buffer.compareAndSet(index, value, null)) {
+                blockingTasksInBuffer.decrementAndGet()
+                return value
+            }
+        }
+        return null
     }
 
     fun offloadAllWorkTo(globalQueue: GlobalQueue) {

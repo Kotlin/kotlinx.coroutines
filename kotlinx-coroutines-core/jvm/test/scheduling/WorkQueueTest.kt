@@ -69,9 +69,20 @@ class WorkQueueTest : TestBase() {
         assertEquals(TASK_STOLEN, victim.trySteal(ref))
         assertEquals(arrayListOf(2L), stealer.drain(ref))
     }
+
+    @Test
+    fun testPollBlocking() {
+        val queue = WorkQueue()
+        assertNull(queue.pollBlocking())
+        val blockingTask = blockingTask(1L)
+        queue.add(blockingTask)
+        queue.add(task(1L))
+        assertSame(blockingTask, queue.pollBlocking())
+    }
 }
 
 internal fun task(n: Long) = TaskImpl(Runnable {}, n, NonBlockingContext)
+internal fun blockingTask(n: Long) = TaskImpl(Runnable {}, n, BlockingContext)
 
 internal fun WorkQueue.drain(ref: ObjectRef<Task?>): List<Long> {
     var task: Task? = poll()
