@@ -264,7 +264,7 @@ internal class CoroutineScheduler(
     val workers = ResizableAtomicArray<Worker>(corePoolSize + 1)
 
     /**
-     * Long describing state of workers in this pool.
+     * The `Long` value describing the state of workers in this pool.
      * Currently includes created, CPU-acquired, and blocking workers, each occupying [BLOCKING_SHIFT] bits.
      */
     private val controlState = atomic(corePoolSize.toLong() shl CPU_PERMITS_SHIFT)
