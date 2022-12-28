@@ -10,6 +10,7 @@ plugins {
 
 val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
 val buildSnapshotTrain = properties["build_snapshot_train"]?.toString()?.toBoolean() == true
+val kotlinDevUrl = project.rootProject.properties["kotlin_repo_url"] as? String
 
 repositories {
     mavenCentral()
@@ -18,7 +19,9 @@ repositories {
     } else {
         maven("https://plugins.gradle.org/m2")
     }
-    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+    if (!kotlinDevUrl.isNullOrEmpty()) {
+        maven(kotlinDevUrl)
+    }
     if (buildSnapshotTrain) {
         mavenLocal()
     }
