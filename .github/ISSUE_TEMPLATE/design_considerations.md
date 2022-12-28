@@ -17,7 +17,6 @@ This is a place for issue reports that are not exactly bugs (wrong unintentional
 * Maybe there are good reasons for the existing behavior. Please try searching for existing discussions of the problem.
 * Are you using the right abstraction? Consider asking on [StackOverflow](https://stackoverflow.com/) or the [Kotlin Slack](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up). Maybe your need is better solved by some other abstraction entirely.
 
-**Disagreements**
 -->
 
 **What do we have now?**

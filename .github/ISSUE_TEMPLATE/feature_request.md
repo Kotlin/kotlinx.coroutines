@@ -2,7 +2,7 @@
 name: Feature request
 about: We're missing something?
 title: ''
-labels: ''
+labels: enhancement
 assignees: ''
 
 ---
