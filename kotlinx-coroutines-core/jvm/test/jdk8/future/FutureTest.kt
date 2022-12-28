@@ -589,7 +589,7 @@ class FutureTest : TestBase() {
             }
         }
         future.complete(1)
-        withTimeout(60_000) {
+        kotlinx.coroutines.time.withTimeout(60_000) {
             children.forEach { it.join() }
             assertEquals(count, completed.get())
         }

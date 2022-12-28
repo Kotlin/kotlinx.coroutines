@@ -65,13 +65,13 @@ class BroadcastChannelMultiReceiveStressTest(
             println("Launching $name")
             receivers += launch(pool + CoroutineName(name)) {
                 val channel = broadcast.openSubscription()
-                    when (receiverIndex % 5) {
-                        0 -> doReceive(channel, receiverIndex)
-                        1 -> doReceiveCatching(channel, receiverIndex)
-                        2 -> doIterator(channel, receiverIndex)
-                        3 -> doReceiveSelect(channel, receiverIndex)
-                        4 -> doReceiveCatchingSelect(channel, receiverIndex)
-                    }
+                when (receiverIndex % 5) {
+                    0 -> doReceive(channel, receiverIndex)
+                    1 -> doReceiveCatching(channel, receiverIndex)
+                    2 -> doIterator(channel, receiverIndex)
+                    3 -> doReceiveSelect(channel, receiverIndex)
+                    4 -> doReceiveCatchingSelect(channel, receiverIndex)
+                }
                 channel.cancel()
             }
             printProgress()
@@ -87,7 +87,7 @@ class BroadcastChannelMultiReceiveStressTest(
         println("      Sent $total events, waiting for receivers")
         stopOnReceive.set(total)
         try {
-            withTimeout(5000) {
+            kotlinx.coroutines.time.withTimeout(5000) {
                 receivers.forEachIndexed { index, receiver ->
                     if (lastReceived[index].get() >= total) receiver.cancel()
                     receiver.join()
@@ -96,7 +96,7 @@ class BroadcastChannelMultiReceiveStressTest(
         } catch (e: Exception) {
             println("Failed: $e")
             pool.dumpThreads("Threads in pool")
-            receivers.indices.forEach { index  ->
+            receivers.indices.forEach { index ->
                 println("lastReceived[$index] = ${lastReceived[index].get()}")
             }
             throw e

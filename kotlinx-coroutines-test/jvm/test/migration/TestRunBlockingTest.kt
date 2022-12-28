@@ -57,7 +57,7 @@ class TestRunBlockingTest {
         assertFailsWith<TimeoutCancellationException> {
             runBlockingTest {
                 assertRunsFast {
-                    withTimeout(SLOW) {
+                    kotlinx.coroutines.time.withTimeout(SLOW) {
                         delay(SLOW)
                     }
                 }
@@ -68,7 +68,7 @@ class TestRunBlockingTest {
     @Test
     fun whenUsingTimeout_doesNotTriggerWhenFast() = runBlockingTest {
         assertRunsFast {
-            withTimeout(SLOW) {
+            kotlinx.coroutines.time.withTimeout(SLOW) {
                 delay(0)
             }
         }
@@ -80,7 +80,7 @@ class TestRunBlockingTest {
             runBlockingTest {
                 val uncompleted = CompletableDeferred<Unit>()
                 assertRunsFast {
-                    withTimeout(SLOW) {
+                    kotlinx.coroutines.time.withTimeout(SLOW) {
                         uncompleted.await()
                     }
                 }
@@ -93,7 +93,7 @@ class TestRunBlockingTest {
         val completed = CompletableDeferred<Unit>()
         assertRunsFast {
             completed.complete(Unit)
-            withTimeout(SLOW) {
+            kotlinx.coroutines.time.withTimeout(SLOW) {
                 completed.await()
             }
         }
@@ -115,7 +115,7 @@ class TestRunBlockingTest {
         assertFailsWith<TimeoutCancellationException> {
             runBlockingTest {
                 val deferred = async {
-                    withTimeout(SLOW) {
+                    kotlinx.coroutines.time.withTimeout(SLOW) {
                         delay(SLOW)
                     }
                 }
@@ -130,7 +130,7 @@ class TestRunBlockingTest {
     @Test
     fun whenUsingTimeout_inAsync_doesNotTriggerWhenNotDelayed() = runBlockingTest {
         val deferred = async {
-            withTimeout(SLOW) {
+            kotlinx.coroutines.time.withTimeout(SLOW) {
                 delay(0)
             }
         }
@@ -145,7 +145,7 @@ class TestRunBlockingTest {
         assertFailsWith<TimeoutCancellationException> {
             runBlockingTest {
                 val job = launch {
-                    withTimeout(1) {
+                    kotlinx.coroutines.time.withTimeout(1) {
                         delay(SLOW + 1)
                     }
                 }
@@ -161,7 +161,7 @@ class TestRunBlockingTest {
     @Test
     fun whenUsingTimeout_inLaunch_doesNotTriggerWhenNotDelayed() = runBlockingTest {
         val job = launch {
-            withTimeout(SLOW) {
+            kotlinx.coroutines.time.withTimeout(SLOW) {
                 delay(0)
             }
         }

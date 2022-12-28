@@ -129,7 +129,7 @@ class IntegrationTest(
     fun testObservableWithTimeout() = runTest {
         val observable = rxObservable<Int> {
             expect(2)
-            withTimeout(1) { delay(100) }
+            kotlinx.coroutines.time.withTimeout(1) { delay(100) }
         }
         try {
             expect(1)

@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -63,18 +64,18 @@ class WithTimeoutThreadDispatchTest : TestBase() {
             expect(2)
             assertEquals(thread, Thread.currentThread())
             try {
-                withTimeout(100) {
+                kotlinx.coroutines.time.withTimeout(100) {
                     try {
                         expect(3)
                         delay(1000)
                         expectUnreached()
-                    } catch (e: CancellationException) {
+                    } catch (e: TimeoutException) {
                         expect(4)
                         assertEquals(thread, Thread.currentThread())
                         throw e // rethrow
                     }
                 }
-            } catch (e: CancellationException) {
+            } catch (e: TimeoutException) {
                 expect(5)
                 assertEquals(thread, Thread.currentThread())
             }

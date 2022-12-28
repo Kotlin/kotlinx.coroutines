@@ -8,6 +8,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
@@ -102,10 +103,10 @@ class WithTimeoutOrNullDurationTest : TestBase() {
 
     @Test
     fun testInnerTimeout() = runTest(
-        expected = { it is CancellationException }
+        expected = { it is TimeoutException }
     ) {
         withTimeoutOrNull(1000.milliseconds) {
-            withTimeout(10.milliseconds) {
+            kotlinx.coroutines.time.withTimeout(10.milliseconds) {
                 while (true) {
                     yield()
                 }
@@ -117,10 +118,10 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     }
 
     @Test
-    fun testNestedTimeout() = runTest(expected = { it is TimeoutCancellationException }) {
+    fun testNestedTimeout() = runTest(expected = { it is TimeoutException }) {
         withTimeoutOrNull(Duration.INFINITE) {
             // Exception from this withTimeout is not suppressed by withTimeoutOrNull
-            withTimeout(10.milliseconds) {
+            kotlinx.coroutines.time.withTimeout(10.milliseconds) {
                 delay(Duration.INFINITE)
                 1
             }
@@ -183,7 +184,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
             expect(2)
             try {
                 delay(1000.milliseconds)
-            } catch (e: CancellationException) {
+            } catch (e: TimeoutException) {
                 expect(3)
             }
             "OK"
@@ -200,7 +201,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
                 expect(2)
                 try {
                     delay(1000.milliseconds)
-                } catch (e: CancellationException) {
+                } catch (e: TimeoutException) {
                     expect(3)
                     throw TestException()
                 }

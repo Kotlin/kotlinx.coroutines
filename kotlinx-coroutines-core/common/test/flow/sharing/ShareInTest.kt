@@ -198,8 +198,8 @@ class ShareInTest : TestBase() {
         val started: Boolean get() = _started.value
         fun start() = check(_started.compareAndSet(expect = false, update = true))
         fun stop() = check(_started.compareAndSet(expect = true, update = false))
-        suspend fun awaitStart() = withTimeout(timeLimit) { _started.first { it } }
-        suspend fun awaitStop() = withTimeout(timeLimit) { _started.first { !it } }
+        suspend fun awaitStart() = kotlinx.coroutines.time.withTimeout(timeLimit) { _started.first { it } }
+        suspend fun awaitStop() = kotlinx.coroutines.time.withTimeout(timeLimit) { _started.first { !it } }
     }
 
     private suspend fun FlowState.track(block: suspend () -> Unit) {

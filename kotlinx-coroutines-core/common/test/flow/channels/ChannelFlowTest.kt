@@ -6,6 +6,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 
 class ChannelFlowTest : TestBase() {
@@ -126,7 +127,7 @@ class ChannelFlowTest : TestBase() {
             launch {
                 expect(4)
                 collect {
-                    withTimeout(-1) {
+                    kotlinx.coroutines.time.withTimeout(-1) {
                         send(it)
                     }
                     expectUnreached()
@@ -137,7 +138,7 @@ class ChannelFlowTest : TestBase() {
 
         val flow = flowOf(1, 2, 3).bufferWithTimeout()
         expect(1)
-        assertFailsWith<TimeoutCancellationException>(flow)
+        assertFailsWith<TimeoutException>(flow)
         finish(6)
     }
 

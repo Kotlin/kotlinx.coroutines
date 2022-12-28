@@ -109,7 +109,7 @@ class SharingStressTest : TestBase() {
                     // let them work a bit more & make sure emitter did not hang
                     val fromEmitIndex = emitIndex.get()
                     val waitEmitIndex = fromEmitIndex + 100 // wait until 100 emitted
-                    withTimeout(10000) { // wait for at most 10s for something to be emitted
+                    kotlinx.coroutines.time.withTimeout(10000) { // wait for at most 10s for something to be emitted
                         do {
                             delay(random.nextLong(50L..100L))
                         } while (emitIndex.get() < waitEmitIndex)  // Ok, enough was emitted, wait more if not

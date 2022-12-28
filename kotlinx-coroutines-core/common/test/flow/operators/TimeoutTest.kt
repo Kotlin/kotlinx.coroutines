@@ -6,6 +6,7 @@ package kotlinx.coroutines.flow.operators
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -27,7 +28,7 @@ class TimeoutTest : TestBase() {
 
         expect(2)
         val list = mutableListOf<String>()
-        assertFailsWith<TimeoutCancellationException>(flow.timeout(300.milliseconds).onEach { list.add(it) })
+        assertFailsWith<TimeoutException>(flow.timeout(300.milliseconds).onEach { list.add(it) })
         assertEquals(listOf("A", "B", "C"), list)
         finish(5)
     }
@@ -60,7 +61,7 @@ class TimeoutTest : TestBase() {
 
         expect(2)
         val list = mutableListOf<String>()
-        flow.timeout(300.milliseconds).catch { if (it is TimeoutCancellationException) emit("-1") }.collect { list.add(it) }
+        flow.timeout(300.milliseconds).catch { if (it is TimeoutException) emit("-1") }.collect { list.add(it) }
         assertEquals(listOf("A", "B", "C", "-1"), list)
         finish(5)
     }
@@ -164,7 +165,7 @@ class TimeoutTest : TestBase() {
             expectUnreached()
         }.flowOn(NamedDispatchers("upstream")).timeout(100.milliseconds)
 
-        assertFailsWith<TimeoutCancellationException>(flow)
+        assertFailsWith<TimeoutException>(flow)
         finish(3)
     }
 
@@ -192,7 +193,7 @@ class TimeoutTest : TestBase() {
         try {
             MutableSharedFlow<Int>().asSharedFlow().timeout(100.milliseconds).collect()
             expectUnreached()
-        } catch (e: TimeoutCancellationException) {
+        } catch (e: TimeoutException) {
             finish(1)
         }
     }

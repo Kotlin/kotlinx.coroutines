@@ -5,6 +5,7 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
@@ -241,10 +242,10 @@ class TestCoroutineSchedulerTest {
         asSpecificImplementation().enter()
         launch {
             try {
-                withTimeout(timeoutMillis) {
+                kotlinx.coroutines.time.withTimeout(timeoutMillis) {
                     block()
                 }
-            } catch (e: TimeoutCancellationException) {
+            } catch (e: TimeoutException) {
                 caughtException = true
             }
         }

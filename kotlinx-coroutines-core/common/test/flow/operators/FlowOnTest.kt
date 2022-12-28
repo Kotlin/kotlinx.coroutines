@@ -6,6 +6,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.time.*
 import kotlin.test.*
 
 class FlowOnTest : TestBase() {
@@ -239,12 +240,12 @@ class FlowOnTest : TestBase() {
         val flow = flow {
             emit(1)
             yield()
-            withTimeout(-1) {}
+            kotlinx.coroutines.time.withTimeout(-1) {}
             emit(42)
         }.flowOn(NamedDispatchers("foo")).onEach {
             expect(1)
         }
-        assertFailsWith<TimeoutCancellationException>(flow)
+        assertFailsWith<TimeoutException>(flow)
         finish(2)
     }
 
@@ -255,9 +256,9 @@ class FlowOnTest : TestBase() {
             hang { expect(2) }
         }.flowOn(NamedDispatchers("foo")).onEach {
             expect(1)
-            withTimeout(-1) {}
+            kotlinx.coroutines.time.withTimeout(-1) {}
         }
-        assertFailsWith<TimeoutCancellationException>(flow)
+        assertFailsWith<TimeoutException>(flow)
         finish(3)
     }
 

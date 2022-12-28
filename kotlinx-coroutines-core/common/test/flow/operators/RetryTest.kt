@@ -75,7 +75,7 @@ class RetryTest : TestBase() {
         val flow = flow {
             if (state++ == 0) {
                 expect(1)
-                withTimeout(1) {
+                kotlinx.coroutines.time.withTimeout(1) {
                     hang { expect(2) }
                 }
                 expectUnreached()

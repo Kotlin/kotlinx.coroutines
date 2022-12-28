@@ -119,7 +119,7 @@ class RejectedExecutionTest : TestBase() {
             withContext(executor.asCoroutineDispatcher()) {
                 expect(2)
                 assertExecutorThread()
-                withTimeout(1000) {
+                kotlinx.coroutines.time.withTimeout(1000) {
                     expect(3) // atomic entry into the block (legacy behavior, it seem to be Ok with way)
                     assertEquals(true, coroutineContext[Job]?.isCancelled) // but the job is already cancelled
                 }

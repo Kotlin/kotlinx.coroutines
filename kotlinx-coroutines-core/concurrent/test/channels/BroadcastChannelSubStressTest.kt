@@ -51,7 +51,7 @@ class BroadcastChannelSubStressTest: TestBase() {
                 check(curSent > prevSent) { "Send stalled at $curSent events" }
                 prevSent = curSent
             }
-            withTimeout(5000) {
+            kotlinx.coroutines.time.withTimeout(5000) {
                 sender.cancelAndJoin()
                 receiver.cancelAndJoin()
             }

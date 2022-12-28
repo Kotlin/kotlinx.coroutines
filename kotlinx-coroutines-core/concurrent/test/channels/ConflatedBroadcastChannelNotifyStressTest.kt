@@ -60,7 +60,7 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
             }
         }
         try {
-            withTimeout(timeLimit) {
+            kotlinx.coroutines.time.withTimeout(timeLimit) {
                 senders.forEach { it.join() }
                 broadcast.trySend(nEvents) // last event to signal receivers termination
                 receivers.forEach { it.join() }

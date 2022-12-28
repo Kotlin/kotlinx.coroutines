@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.time.*
 import platform.CoreFoundation.*
 import platform.darwin.*
 import kotlin.coroutines.*
@@ -62,7 +63,7 @@ class MainDispatcherTest : TestBase() {
     @Test
     fun testWithTimeoutContextDelayNoTimeout() = runTestNotOnMainDispatcher {
         expect(1)
-        withTimeout(1000) {
+        kotlinx.coroutines.time.withTimeout(1000) {
             withContext(Dispatchers.Main) {
                 assertTrue(isMainThread())
                 expect(2)
@@ -78,17 +79,17 @@ class MainDispatcherTest : TestBase() {
     @Test
     fun testWithTimeoutContextDelayTimeout() = runTestNotOnMainDispatcher {
         expect(1)
-         assertFailsWith<TimeoutCancellationException> {
-            withTimeout(100) {
-                withContext(Dispatchers.Main) {
-                    assertTrue(isMainThread())
-                    expect(2)
-                    delay(1000)
-                    expectUnreached()
-                }
-            }
-            expectUnreached()
-        }
+         assertFailsWith<TimeoutException> {
+             kotlinx.coroutines.time.withTimeout(100) {
+                 withContext(Dispatchers.Main) {
+                     assertTrue(isMainThread())
+                     expect(2)
+                     delay(1000)
+                     expectUnreached()
+                 }
+             }
+             expectUnreached()
+         }
         assertFalse(isMainThread())
         finish(3)
     }
@@ -97,7 +98,7 @@ class MainDispatcherTest : TestBase() {
     fun testWithContextTimeoutDelayNoTimeout() = runTestNotOnMainDispatcher {
         expect(1)
         withContext(Dispatchers.Main) {
-            withTimeout(1000) {
+            kotlinx.coroutines.time.withTimeout(1000) {
                 assertTrue(isMainThread())
                 expect(2)
                 delay(100)
@@ -112,9 +113,9 @@ class MainDispatcherTest : TestBase() {
     @Test
     fun testWithContextTimeoutDelayTimeout() = runTestNotOnMainDispatcher {
         expect(1)
-        assertFailsWith<TimeoutCancellationException> {
+        assertFailsWith<TimeoutException> {
             withContext(Dispatchers.Main) {
-                withTimeout(100) {
+                kotlinx.coroutines.time.withTimeout(100) {
                     assertTrue(isMainThread())
                     expect(2)
                     delay(1000)

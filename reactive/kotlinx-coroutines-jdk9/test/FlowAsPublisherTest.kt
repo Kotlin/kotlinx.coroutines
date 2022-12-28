@@ -80,7 +80,7 @@ class FlowAsPublisherTest : TestBase() {
     fun testFlowWithTimeout() = runTest {
         val publisher = flow<Int> {
             expect(2)
-            withTimeout(1) { delay(Long.MAX_VALUE) }
+            kotlinx.coroutines.time.withTimeout(1) { delay(Long.MAX_VALUE) }
         }.asPublisher()
         try {
             expect(1)

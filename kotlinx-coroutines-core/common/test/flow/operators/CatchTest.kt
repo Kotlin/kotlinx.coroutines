@@ -61,7 +61,7 @@ class CatchTest : TestBase() {
     @Test
     fun testWithTimeoutCatch() = runTest {
         val flow = flow<Int> {
-            withTimeout(1) {
+            kotlinx.coroutines.time.withTimeout(1) {
                 hang { expect(1) }
             }
             expectUnreached()

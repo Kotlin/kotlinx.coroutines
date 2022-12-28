@@ -29,7 +29,7 @@ class WithContextCancellationStressTest : TestBase() {
         var e1Cnt = 0
         var e2Cnt = 0
 
-        withTimeout(timeoutAfter) {
+        kotlinx.coroutines.time.withTimeout(timeoutAfter) {
             while (eCnt == 0 || e1Cnt == 0 || e2Cnt == 0) {
                 val barrier = CyclicBarrier(4)
                 val ctx = pool + NonCancellable
@@ -64,14 +64,17 @@ class WithContextCancellationStressTest : TestBase() {
                             eCnt++
                             e.checkSuppressed(e1 = e1, e2 = e2)
                         }
+
                         is TestException1 -> {
                             e1Cnt++
                             e.checkSuppressed(ex = true, e2 = e2)
                         }
+
                         is TestException2 -> {
                             e2Cnt++
                             e.checkSuppressed(ex = true, e1 = e1)
                         }
+
                         else -> error("Unexpected exception $e")
                     }
                 }

@@ -6,6 +6,7 @@ package kotlinx.coroutines.intrinsics
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.time.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
@@ -26,7 +27,7 @@ internal fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Conti
  * It does not use [ContinuationInterceptor] and does not update the context of the current thread.
  */
 internal fun <R, T> (suspend (R) -> T).startCoroutineUnintercepted(receiver: R, completion: Continuation<T>) {
-    startDirect(completion) {  actualCompletion ->
+    startDirect(completion) { actualCompletion ->
         startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
     }
 }
@@ -96,7 +97,22 @@ internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(receiver: R, blo
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
     receiver: R, block: suspend R.() -> T
 ): Any? {
-    return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === this) }) {
+    return undispatchedResult({ e ->
+        @Suppress("DEPRECATION") !(e is TimeoutCancellationException && e.coroutine === this)
+    }) {
+        block.startCoroutineUninterceptedOrReturn(receiver, this)
+    }
+}
+
+/**
+ * Same as [startUndispatchedOrReturn], but ignores [TimeoutException] on fast-path.
+ */
+internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreNewTimeout(
+    receiver: R, block: suspend R.() -> T
+): Any? {
+    return undispatchedResult({ e ->
+        !(e is TimeoutException && e.coroutine === this)
+    }) {
         block.startCoroutineUninterceptedOrReturn(receiver, this)
     }
 }

@@ -34,7 +34,7 @@ class BuilderContractsTest : TestBase() {
         consume(wctx)
 
         val wt: Int
-        withTimeout(Long.MAX_VALUE) {
+        kotlinx.coroutines.time.withTimeout(Long.MAX_VALUE) {
             wt = 123
         }
         consume(wt)

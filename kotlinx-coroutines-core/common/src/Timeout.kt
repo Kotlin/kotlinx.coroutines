@@ -2,9 +2,11 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:OptIn(ExperimentalContracts::class)
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package kotlinx.coroutines
 
+import kotlin.internal.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
@@ -36,10 +38,17 @@ import kotlin.time.*
  *
  * @param timeMillis timeout time in milliseconds.
  */
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@LowPriorityInOverloadResolution
+@Deprecated("Use withTimeout from the 'kotlinx-coroutines-time' package instead.",
+    ReplaceWith("kotlinx.coroutines.time.withTimeout(timeMillis, block)",
+        "kotlinx.coroutines.time"),
+    level = DeprecationLevel.WARNING)
 public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
+    @Suppress("DEPRECATION")
     if (timeMillis <= 0L) throw TimeoutCancellationException("Timed out immediately")
     return suspendCoroutineUninterceptedOrReturn { uCont ->
         setupTimeout(TimeoutCoroutine(timeMillis, uCont), block)
@@ -66,11 +75,17 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  *
  * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  */
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@LowPriorityInOverloadResolution
+@Deprecated("Use withTimeout from the 'kotlinx-coroutines-time' package instead.",
+    ReplaceWith("kotlinx.coroutines.time.withTimeout(timeout, block)",
+        "kotlinx.coroutines.time"),
+    level = DeprecationLevel.WARNING)
 public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
-    return withTimeout(timeout.toDelayMillis(), block)
+    return kotlinx.coroutines.time.withTimeout(timeout.toDelayMillis(), block)
 }
 
 /**
@@ -99,6 +114,7 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
     if (timeMillis <= 0L) return null
 
     var coroutine: TimeoutCoroutine<T?, T?>? = null
+    @Suppress("DEPRECATION")
     try {
         return suspendCoroutineUninterceptedOrReturn { uCont ->
             val timeoutCoroutine = TimeoutCoroutine(timeMillis, uCont)
@@ -165,6 +181,11 @@ private class TimeoutCoroutine<U, in T: U>(
 /**
  * This exception is thrown by [withTimeout] to indicate timeout.
  */
+@Deprecated("Use TimeoutException from the 'kotlinx-coroutines-time' package instead.",
+    ReplaceWith("kotlinx.coroutines.time.TimeoutException",
+        "kotlinx.coroutines.time"),
+    level = DeprecationLevel.WARNING)
+@Suppress("DEPRECATION")
 public class TimeoutCancellationException internal constructor(
     message: String,
     @JvmField @Transient internal val coroutine: Job?
@@ -181,6 +202,7 @@ public class TimeoutCancellationException internal constructor(
         TimeoutCancellationException(message ?: "", coroutine).also { it.initCause(this) }
 }
 
+@Suppress("DEPRECATION")
 internal fun TimeoutCancellationException(
     time: Long,
     coroutine: Job

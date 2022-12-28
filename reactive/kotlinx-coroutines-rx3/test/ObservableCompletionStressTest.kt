@@ -22,7 +22,7 @@ class ObservableCompletionStressTest : TestBase() {
         repeat(N_REPEATS) {
             val count = rnd.nextInt(5)
             runBlocking {
-                withTimeout(5000) {
+                kotlinx.coroutines.time.withTimeout(5000) {
                     var received = 0
                     range(Dispatchers.Default, 1, count).collect { x ->
                         received++

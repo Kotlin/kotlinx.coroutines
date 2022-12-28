@@ -61,7 +61,7 @@ class WithTimeoutTest : TestBase() {
                 delay(Duration.ofSeconds(Long.MAX_VALUE))
                 expectUnreached()
             }
-        } catch (e: TimeoutCancellationException) {
+        } catch (e: TimeoutException) {
             finish(3)
         }
     }

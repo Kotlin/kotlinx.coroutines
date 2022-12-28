@@ -21,7 +21,7 @@ class UndispatchedResultTest : TestBase() {
 
     @Test
     fun testWithTimeout() = runTest {
-        invokeTest { block -> withTimeout(Long.MAX_VALUE, block) }
+        invokeTest { block -> kotlinx.coroutines.time.withTimeout(Long.MAX_VALUE, block) }
     }
 
     @Test
