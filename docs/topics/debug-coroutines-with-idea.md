@@ -100,3 +100,17 @@ The tutorial assumes you have prior knowledge of the [coroutines](coroutines-gui
     * The third coroutine is calculating the value of `b` – it has the **RUNNING** status.
 
 Using IntelliJ IDEA debugger, you can dig deeper into each coroutine to debug your code.
+
+### Optimized-out variables
+
+If you use `suspend` functions, in the debugger, you might see the "was optimized out" text next to a variable's name:
+
+![Variable "a" was optimized out](variable-optimised-out.png)
+
+This text means that the variable's lifetime was decreased, and the variable doesn't exist anymore.
+It is difficult to debug code with optimized variables because you don't see their values.
+You can disable this behavior with the `-Xdebug` compiler option.
+
+> __Never use this flag in production__: `-Xdebug` can [cause memory leaks](https://youtrack.jetbrains.com/issue/KT-48678/Coroutine-debugger-disable-was-optimised-out-compiler-feature#focus=Comments-27-6015585.0-0).
+>
+{type="warning"}
