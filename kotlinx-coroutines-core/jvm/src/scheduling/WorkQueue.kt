@@ -122,16 +122,8 @@ internal class WorkQueue {
         val end = producerIndex.value
 
         while (start != end) {
-            val index = start and MASK
-            if (blockingTasksInBuffer.value == 0) break
-            val value = buffer[index]
-            if (value != null && value.isBlocking && buffer.compareAndSet(index, value, null)) {
-                blockingTasksInBuffer.decrementAndGet()
-                stolenTaskRef.element = value
-                return TASK_STOLEN
-            } else {
-                ++start
-            }
+            stolenTaskRef.element = tryExtractBlockingTask(start++) ?: continue
+            return TASK_STOLEN
         }
         return tryStealLastScheduled(stolenTaskRef, blockingOnly = true)
     }
