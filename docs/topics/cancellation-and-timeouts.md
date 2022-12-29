@@ -379,10 +379,11 @@ The timeout event in [withTimeout] is asynchronous with respect to the code runn
 even right before the return from inside of the timeout block. Keep this in mind if you open or acquire some
 resource inside the block that needs closing or release outside of the block. 
 
-For example, here we imitate a closeable resource with the `Resource` class, that simply keeps track of how many times 
-it was created by incrementing the `acquired` counter and decrementing this counter from its `close` function.
-Let us run a lot of coroutines with the small timeout try acquire this resource from inside
-of the `withTimeout` block after a bit of delay and release it from outside.
+For example, here we imitate a closeable resource with the `Resource` class that simply keeps track of how many times 
+it was created by incrementing the `acquired` counter and decrementing the counter in its `close` function.
+Now let us let us create a lot of coroutines, each of which creates a `Resource` at the end of the `withTimeout` block
+and releases the resource outside the block. We add a small delay so that it is more likely that the timeout occurs
+right when the `withTimeout` block is already finished, which will cause a resource leak.
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -420,16 +421,16 @@ fun main() {
 
 <!--- CLEAR -->
 
-If you run the above code you'll see that it does not always print zero, though it may depend on the timings 
-of your machine you may need to tweak timeouts in this example to actually see non-zero values. 
+If you run the above code, you'll see that it does not always print zero, though it may depend on the timings 
+of your machine. You may need to tweak the timeout in this example to actually see non-zero values. 
 
-> Note that incrementing and decrementing `acquired` counter here from 100K coroutines is completely safe,
-> since it always happens from the same main thread. More on that will be explained in the chapter
-> on coroutine context.
+> Note that incrementing and decrementing `acquired` counter here from 100K coroutines is completely thread-safe,
+> since it always happens from the same thread, the one used by `runBlocking`.
+> More on that will be explained in the chapter on coroutine context.
 > 
 {type="note"}
 
-To work around this problem you can store a reference to the resource in the variable as opposed to returning it 
+To work around this problem you can store a reference to the resource in a variable instead of returning it 
 from the `withTimeout` block. 
 
 ```kotlin
