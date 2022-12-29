@@ -50,7 +50,7 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
     @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
         parallelism.checkParallelism()
-        if (parallelism == Int.MAX_VALUE) return this
+        if (parallelism >= MAX_POOL_SIZE) return this
         return super.limitedParallelism(parallelism)
     }
 }
