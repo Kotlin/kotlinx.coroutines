@@ -61,7 +61,7 @@ Create a Kotlin [flow](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-cor
     * Use the [`runBlocking()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html) block to wrap a coroutine.
     * Collect the emitted values using the [`collect()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/collect.html) function.
     * Use the [`delay()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html) function to imitate CPU-consuming code. It suspends the coroutine for 300 ms without blocking the thread.
-    * Print the collected value from the flow using the [`println()`](https://kotlinlang.org/api/latest/jvm/stdlib/stdlib/kotlin.io/println.html) function.
+    * Print the collected value from the flow using the [`println()`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/println.html) function.
 
     ```kotlin
     fun main() = runBlocking {
@@ -101,6 +101,20 @@ Create a Kotlin [flow](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-cor
     Now the flow emits the second value.
 
     ![Debug the coroutine](flow-debug-2.png)
+
+### Optimized-out variables
+
+If you use `suspend` functions, in the debugger, you might see the "was optimized out" text next to a variable's name:
+
+![Variable "a" was optimized out](variable-optimised-out.png)
+
+This text means that the variable's lifetime was decreased, and the variable doesn't exist anymore.
+It is difficult to debug code with optimized variables because you don't see their values.
+You can disable this behavior with the `-Xdebug` compiler option.
+
+> __Never use this flag in production__: `-Xdebug` can [cause memory leaks](https://youtrack.jetbrains.com/issue/KT-48678/Coroutine-debugger-disable-was-optimised-out-compiler-feature#focus=Comments-27-6015585.0-0).
+>
+{type="warning"}
 
 ## Add a concurrently running coroutine
 
