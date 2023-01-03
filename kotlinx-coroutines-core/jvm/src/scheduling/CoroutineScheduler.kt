@@ -720,6 +720,28 @@ internal class CoroutineScheduler(
             tryReleaseCpu(WorkerState.TERMINATED)
         }
 
+        /**
+         * See [runSingleTaskFromCurrentSystemDispatcher] for rationale and details.
+         * This is a fine-tailored method for a specific use-case not expected to be used widely.
+         */
+        fun runSingleTask(): Long {
+            val stateSnapshot = state
+            val isCpuThread  = state == WorkerState.CPU_ACQUIRED
+            val task = if (isCpuThread) {
+                findCpuTask()
+            } else {
+                findBlockingTask()
+            }
+            if (task == null) {
+                if (minDelayUntilStealableTaskNs == 0L) return -1L
+                return minDelayUntilStealableTaskNs
+            }
+            runSafely(task)
+            if (!isCpuThread) decrementBlockingTasks()
+            assert { state == stateSnapshot}
+            return 0L
+        }
+
         // Counterpart to "tryUnpark"
         private fun tryPark() {
             if (!inStack()) {
@@ -879,9 +901,19 @@ internal class CoroutineScheduler(
              * * Check if our queue has one (maybe mixed in with CPU tasks)
              * * Poll global and try steal
              */
+            return findBlockingTask()
+        }
+
+        private fun findBlockingTask(): Task? {
             return localQueue.pollBlocking()
                 ?: globalBlockingQueue.removeFirstOrNull()
-                ?: trySteal(blockingOnly = true)
+                ?: trySteal(STEAL_BLOCKING_ONLY)
+        }
+
+        private fun findCpuTask(): Task? {
+            return localQueue.pollCpu()
+                ?: globalBlockingQueue.removeFirstOrNull()
+                ?: trySteal(STEAL_CPU_ONLY)
         }
 
         private fun findAnyTask(scanLocalQueue: Boolean): Task? {
@@ -897,7 +929,7 @@ internal class CoroutineScheduler(
             } else {
                 pollGlobalQueues()?.let { return it }
             }
-            return trySteal(blockingOnly = false)
+            return trySteal(STEAL_ANY)
         }
 
         private fun pollGlobalQueues(): Task? {
@@ -910,7 +942,7 @@ internal class CoroutineScheduler(
             }
         }
 
-        private fun trySteal(blockingOnly: Boolean): Task? {
+        private fun trySteal(stealingMode: StealingMode): Task? {
             val created = createdWorkers
             // 0 to await an initialization and 1 to avoid excess stealing on single-core machines
             if (created < 2) {
@@ -924,11 +956,7 @@ internal class CoroutineScheduler(
                 if (currentIndex > created) currentIndex = 1
                 val worker = workers[currentIndex]
                 if (worker !== null && worker !== this) {
-                    val stealResult = if (blockingOnly) {
-                        worker.localQueue.tryStealBlocking(stolenTask)
-                    } else {
-                        worker.localQueue.trySteal(stolenTask)
-                    }
+                    val stealResult = worker.localQueue.trySteal(stealingMode, stolenTask)
                     if (stealResult == TASK_STOLEN) {
                         val result = stolenTask.element
                         stolenTask.element = null

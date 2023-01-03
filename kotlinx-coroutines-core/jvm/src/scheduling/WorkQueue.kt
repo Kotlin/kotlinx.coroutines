@@ -16,6 +16,11 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
 internal const val TASK_STOLEN = -1L
 internal const val NOTHING_TO_STEAL = -2L
 
+internal typealias StealingMode = Int
+internal const val STEAL_ANY: StealingMode = -1
+internal const val STEAL_CPU_ONLY: StealingMode = 0
+internal const val STEAL_BLOCKING_ONLY: StealingMode = 1
+
 /**
  * Tightly coupled with [CoroutineScheduler] queue of pending tasks, but extracted to separate file for simplicity.
  * At any moment queue is used only by [CoroutineScheduler.Worker] threads, has only one producer (worker owning this queue)
@@ -108,24 +113,34 @@ internal class WorkQueue {
      * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen
      * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
      */
-    fun trySteal(stolenTaskRef: ObjectRef<Task?>): Long {
-        val task  = pollBuffer()
+    // TODO move it to tests where appropriate
+    fun trySteal(stolenTaskRef: ObjectRef<Task?>): Long = trySteal(STEAL_ANY, stolenTaskRef)
+
+    fun trySteal(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
+        val task = when (stealingMode) {
+            STEAL_ANY -> pollBuffer()
+            else -> stealWithExclusiveMode(stealingMode)
+        }
+
         if (task != null) {
             stolenTaskRef.element = task
             return TASK_STOLEN
         }
-        return tryStealLastScheduled(stolenTaskRef, blockingOnly = false)
+        return tryStealLastScheduled(stealingMode, stolenTaskRef)
     }
 
-    fun tryStealBlocking(stolenTaskRef: ObjectRef<Task?>): Long {
+    // Steal only tasks of a particular kind, potentially invoking full queue scan
+    private fun stealWithExclusiveMode(stealingMode: StealingMode): Task? {
         var start = consumerIndex.value
         val end = producerIndex.value
-
-        while (start != end && blockingTasksInBuffer.value > 0) {
-            stolenTaskRef.element = tryExtractBlockingTask(start++) ?: continue
-            return TASK_STOLEN
+        val onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY
+        // CPU or (BLOCKING & hasBlocking)
+        val shouldProceed = !onlyBlocking || blockingTasksInBuffer.value > 0
+        while (start != end && shouldProceed) {
+            return tryExtractFromTheMiddle(start++, onlyBlocking) ?: continue
         }
-        return tryStealLastScheduled(stolenTaskRef, blockingOnly = true)
+
+        return null
     }
 
     // Polls for blocking task, invoked only by the owner
@@ -138,11 +153,28 @@ internal class WorkQueue {
             } // Failed -> someone else stole it
         }
 
+        return pollWithMode(onlyBlocking = true /* only blocking */)
+    }
+
+    fun pollCpu(): Task? {
+        while (true) { // Poll the slot
+            val lastScheduled = lastScheduledTask.value ?: break
+            if (lastScheduled.isBlocking) break
+            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                return lastScheduled
+            } // Failed -> someone else stole it
+        }
+
+        return pollWithMode(onlyBlocking = false /* only cpu */)
+    }
+
+    private fun pollWithMode(/* Only blocking OR only CPU */onlyBlocking: Boolean): Task? {
         val start = consumerIndex.value
         var end = producerIndex.value
-
-        while (start != end && blockingTasksInBuffer.value > 0) {
-            val task = tryExtractBlockingTask(--end)
+        // CPU or (BLOCKING & hasBlocking)
+        val shouldProceed = !onlyBlocking || blockingTasksInBuffer.value > 0
+        while (start != end && shouldProceed) {
+            val task = tryExtractFromTheMiddle(--end, onlyBlocking)
             if (task != null) {
                 return task
             }
@@ -150,11 +182,12 @@ internal class WorkQueue {
         return null
     }
 
-    private fun tryExtractBlockingTask(index: Int): Task? {
+    private fun tryExtractFromTheMiddle(index: Int, onlyBlocking: Boolean): Task? {
+        if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
         val arrayIndex = index and MASK
         val value = buffer[arrayIndex]
-        if (value != null && value.isBlocking && buffer.compareAndSet(arrayIndex, value, null)) {
-            blockingTasksInBuffer.decrementAndGet()
+        if (value != null && value.isBlocking == onlyBlocking && buffer.compareAndSet(arrayIndex, value, null)) {
+            if (onlyBlocking) blockingTasksInBuffer.decrementAndGet()
             return value
         }
         return null
@@ -170,10 +203,16 @@ internal class WorkQueue {
     /**
      * Contract on return value is the same as for [trySteal]
      */
-    private fun tryStealLastScheduled(stolenTaskRef: ObjectRef<Task?>, blockingOnly: Boolean): Long {
+    private fun tryStealLastScheduled(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
         while (true) {
             val lastScheduled = lastScheduledTask.value ?: return NOTHING_TO_STEAL
-            if (blockingOnly && !lastScheduled.isBlocking) return NOTHING_TO_STEAL
+            if (lastScheduled.isBlocking) {
+                if (stealingMode == STEAL_CPU_ONLY) {
+                    return NOTHING_TO_STEAL
+                }
+            } else if (stealingMode == STEAL_BLOCKING_ONLY) {
+                return NOTHING_TO_STEAL
+            }
 
             // TODO time wraparound ?
             val time = schedulerTimeSource.nanoTime()
