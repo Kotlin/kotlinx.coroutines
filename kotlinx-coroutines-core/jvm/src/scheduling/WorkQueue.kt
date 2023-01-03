@@ -121,7 +121,7 @@ internal class WorkQueue {
         var start = consumerIndex.value
         val end = producerIndex.value
 
-        while (start != end) {
+        while (start != end && blockingTasksInBuffer.value > 0) {
             stolenTaskRef.element = tryExtractBlockingTask(start++) ?: continue
             return TASK_STOLEN
         }
@@ -141,7 +141,7 @@ internal class WorkQueue {
         val start = consumerIndex.value
         var end = producerIndex.value
 
-        while (start != end) {
+        while (start != end && blockingTasksInBuffer.value > 0) {
             val task = tryExtractBlockingTask(--end)
             if (task != null) {
                 return task
@@ -151,7 +151,6 @@ internal class WorkQueue {
     }
 
     private fun tryExtractBlockingTask(index: Int): Task? {
-        if (blockingTasksInBuffer.value == 0) return null
         val arrayIndex = index and MASK
         val value = buffer[arrayIndex]
         if (value != null && value.isBlocking && buffer.compareAndSet(arrayIndex, value, null)) {
