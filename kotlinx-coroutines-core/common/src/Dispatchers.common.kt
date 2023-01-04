@@ -12,7 +12,7 @@ import kotlin.coroutines.*
 public expect object Dispatchers {
     /**
      * The default [CoroutineDispatcher] that is used by all standard builders like
-     * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
+     * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc.
      * if neither a dispatcher nor any other [ContinuationInterceptor] is specified in their context.
      *
      * It is backed by a shared pool of threads on JVM and Native. By default, the maximum number of threads used

@@ -19,6 +19,19 @@ public actual object Dispatchers {
     internal fun injectMain(dispatcher: MainCoroutineDispatcher) {
         injectedMainDispatcher = dispatcher
     }
+
+    internal val IO: CoroutineDispatcher = newFixedThreadPoolContext(64, "Dispatchers.IO")
 }
+
+/**
+ * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
+ * Additional threads in this pool are created on demand.
+ *
+ * On Native platforms it is backed by a standalone [newFixedThreadPoolContext] with `64` worker threads in it.
+ * **NB**: this dispatcher **does not** share the same elasticity behaviour for [CoroutineDispatcher.limitedParallelism]
+ * as `Dispatchers.IO` on JVM.
+ */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+public actual val Dispatchers.IO: CoroutineDispatcher get() = IO
 
 internal expect fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher
