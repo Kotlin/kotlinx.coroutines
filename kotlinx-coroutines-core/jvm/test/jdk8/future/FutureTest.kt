@@ -392,11 +392,7 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testUnhandledExceptionOnExternalCompletion() = runTest(
-        unhandled = listOf(
-            { it -> it is TestException } // exception is unhandled because there is no parent
-        )
-    ) {
+    fun testUnhandledExceptionOnExternalCompletionIsNotReported() = runTest {
         expect(1)
         // No parent here (NonCancellable), so nowhere to propagate exception
         val result = future(NonCancellable + Dispatchers.Unconfined) {

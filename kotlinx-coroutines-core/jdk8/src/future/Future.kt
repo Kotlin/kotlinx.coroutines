@@ -58,10 +58,12 @@ private class CompletableFutureCoroutine<T>(
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
-        if (!future.completeExceptionally(cause) && !handled) {
-            // prevents loss of exception that was not handled by parent & could not be set to CompletableFuture
-            handleCoroutineException(context, cause)
-        }
+        /*
+         * Here we can potentially lose the cause if the failure is racing with future's
+         * external cancellation. We are consistent with other future implementations
+         * (LF, FT, CF) and give up on such exception.
+         */
+        future.completeExceptionally(cause)
     }
 }
 
