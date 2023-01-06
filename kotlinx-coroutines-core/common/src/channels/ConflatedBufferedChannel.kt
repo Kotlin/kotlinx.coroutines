@@ -27,7 +27,9 @@ internal open class ConflatedBufferedChannel<E>(
     private val onBufferOverflow: BufferOverflow,
     onUndeliveredElement: OnUndeliveredElement<E>? = null
 ) : BufferedChannel<E>(capacity = capacity, onUndeliveredElement = onUndeliveredElement) {
-    private val lock = reentrantLock() // guards all channel operations
+    // This implementation uses coarse-grained synchronization;
+    // all channel operations are protected by this lock.
+    private val lock = reentrantLock()
 
     init {
         require(onBufferOverflow !== SUSPEND) {
@@ -43,7 +45,7 @@ internal open class ConflatedBufferedChannel<E>(
         // Once the synchronization is completed (either the first
         // element is retrieved, the operation suspends, or this
         // channel is discovered in the closed state without element),
-        // `onReceiveSynchronizationCompletion` must be called by the
+        // `onReceiveSynchronizationCompleted` must be called by the
         // underneath buffered channel implementation.
         lock.lock()
         return super.receive()
@@ -119,7 +121,7 @@ internal open class ConflatedBufferedChannel<E>(
             onUndeliveredElement?.invoke(element)
         } else { // DROP_OLDEST
             // Receive the oldest element. The call below
-            // does not invoke `onReceiveSynchronizationCompletion`.
+            // does not invoke `onReceiveSynchronizationCompleted`.
             val oldestElement = tryReceiveInternal().getOrThrow()
             // Now, it is possible to send the element -- do it!
             super.trySend(element).also {

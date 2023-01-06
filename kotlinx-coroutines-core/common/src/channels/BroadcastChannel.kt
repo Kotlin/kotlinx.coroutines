@@ -95,11 +95,10 @@ public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
  * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.7.0
  * and with error in 1.8.0. It is replaced with [StateFlow][kotlinx.coroutines.flow.StateFlow].
  */
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 @ObsoleteCoroutinesApi
-public class ConflatedBroadcastChannel<E> private constructor(private val broadcast: BroadcastChannelImpl<E>)
-    : BroadcastChannel<E> by broadcast
-{
+public class ConflatedBroadcastChannel<E> private constructor(
+    private val broadcast: BroadcastChannelImpl<E>
+) : BroadcastChannel<E> by broadcast {
     public constructor(): this(BroadcastChannelImpl<E>(capacity = CONFLATED))
     /**
      * Creates an instance of this class that already holds a value.
@@ -135,14 +134,16 @@ public class ConflatedBroadcastChannel<E> private constructor(private val broadc
  *
  * This channel is created by `BroadcastChannel(capacity)` factory function invocation.
  */
-internal open class BroadcastChannelImpl<E>(
+internal class BroadcastChannelImpl<E>(
     /**
      * Buffer capacity; [Channel.CONFLATED] when this broadcast is conflated.
      */
     val capacity: Int
 ) : BufferedChannel<E>(capacity = Channel.RENDEZVOUS, onUndeliveredElement = null), BroadcastChannel<E> {
     init {
-        require(capacity >= 1 || capacity == CONFLATED) { "ArrayBroadcastChannel capacity must be at least 1, but $capacity was specified" }
+        require(capacity >= 1 || capacity == CONFLATED) {
+            "BroadcastChannel capacity must be positive or Channel.CONFLATED, but $capacity was specified"
+        }
     }
 
     // All operations are protected by this lock.

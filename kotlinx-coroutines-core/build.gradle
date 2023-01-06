@@ -281,6 +281,9 @@ task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
     configureJvmForLincheck(jvmLincheckTest)
 }
 
+// Additional Lincheck tests with `segmentSize = 2`.
+// Some bugs cannot be revealed when storing one request per segment,
+// and some are hard to detect when storing multiple requests.
 task jvmLincheckTestAdditional(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
