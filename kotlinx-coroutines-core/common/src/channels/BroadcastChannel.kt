@@ -289,8 +289,12 @@ internal class BroadcastChannelImpl<E>(
                 // The element has been successfully sent!
                 true
             } catch (t: Throwable) {
-                // This broadcast is closed :(
-                false
+                // This broadcast must be closed. However, it is possible that
+                // an unrelated exception, such as `OutOfMemoryError` has been thrown.
+                // This implementation checks that the channel is actually closed,
+                // re-throwing the caught exception otherwise.
+                if (isClosedForSend) false
+                else throw t
             }
             // Mark this `onSend` clause as selected and
             // try to complete the `select` operation.
