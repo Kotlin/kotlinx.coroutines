@@ -108,3 +108,19 @@ public fun runSingleTaskFromCurrentSystemDispatcher(): Long {
     if (thread !is CoroutineScheduler.Worker) throw IllegalStateException("Expected CoroutineScheduler.Worker, but got $thread")
     return thread.runSingleTask()
 }
+
+/**
+ * Checks whether the given thread belongs to Dispatchers.IO.
+ * Note that feature "is part of the Dispatchers.IO" is *dynamic*, meaning that the thread
+ * may change this status when switching between tasks.
+ *
+ * This function is inteded to be used on the result of `Thread.currentThread()` for diagnostic
+ * purposes, and is declared as an extension only to avoid top-level scope pollution.
+ */
+@InternalCoroutinesApi
+@DelicateCoroutinesApi
+public fun Thread.isIoDispatcherThread(): Boolean {
+    if (this !is CoroutineScheduler.Worker) return false
+    return isIo()
+}
+

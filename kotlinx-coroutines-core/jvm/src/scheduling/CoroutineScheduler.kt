@@ -742,6 +742,8 @@ internal class CoroutineScheduler(
             return 0L
         }
 
+        fun isIo() = state == WorkerState.BLOCKING
+
         // Counterpart to "tryUnpark"
         private fun tryPark() {
             if (!inStack()) {
