@@ -271,7 +271,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     private fun decPermits(): Int {
         while (true) {
             // Decrement the number of available permits.
-            val p = _availablePermits.getAndDecrement()
+            val p = _availablePermits.getAndUpdate { it - 1 }
             // Is the number of available permits greater
             // than the maximal one due to an incorrect
             // `release()` call without a preceding `acquire()`?
@@ -284,7 +284,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     override fun release() {
         while (true) {
             // Increment the number of available permits.
-            val p = _availablePermits.getAndIncrement()
+            val p = _availablePermits.getAndUpdate { it + 1 }
             // Is this `release` call correct and does not
             // exceed the maximal number of permits?
             if (p >= permits) {
@@ -321,7 +321,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
      */
     private fun addAcquireToQueue(waiter: Any): Boolean {
         val curTail = this.tail.value
-        val enqIdx = enqIdx.getAndIncrement()
+        val enqIdx = enqIdx.getAndUpdate { it + 1 }
         val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
             createNewSegment = ::createSegment).segment // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
@@ -379,7 +379,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     @Suppress("UNCHECKED_CAST")
     private fun tryResumeNextFromQueue(): Boolean {
         val curHead = this.head.value
-        val deqIdx = deqIdx.getAndIncrement()
+        val deqIdx = deqIdx.getAndUpdate { it + 1 }
         val id = deqIdx / SEGMENT_SIZE
         val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
             createNewSegment = ::createSegment).segment // cannot be closed
