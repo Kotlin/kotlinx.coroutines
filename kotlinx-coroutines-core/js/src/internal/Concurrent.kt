@@ -15,3 +15,13 @@ internal class NoOpLock {
 
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet(expectedSize)
 
+internal actual class ConcurrentMSQueue<E> {
+    public actual fun enqueue(e: E) {
+    }
+
+    public actual fun dequeue(): E {
+        TODO("Not yet implemented")
+    }
+
+}
+

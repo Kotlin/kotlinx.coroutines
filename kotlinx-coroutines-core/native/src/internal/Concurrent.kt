@@ -29,3 +29,12 @@ internal open class SuppressSupportingThrowableImpl : Throwable() {
     }
 }
 
+internal actual class ConcurrentMSQueue<E> {
+    public actual fun enqueue(e: E) {
+    }
+
+    public actual fun dequeue(): E {
+        TODO("Not yet implemented")
+    }
+
+}

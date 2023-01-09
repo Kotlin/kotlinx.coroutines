@@ -75,6 +75,8 @@ internal open class BufferedChannel<E>(
     // ## The send operations ##
     // #########################
 
+    private val q = ConcurrentMSQueue<E>()
+
     override suspend fun send(element: E) {
         if (isUnlimited || enqPermits.acquireFastPath()) {
             enqueue(element)
@@ -89,16 +91,7 @@ internal open class BufferedChannel<E>(
     }
 
     internal fun enqueue(element: E) {
-        var segment = enqSegment.value
-        while (true) {
-            val globalIndex = enqIdx.getAndIncrement()
-            val segmentId = globalIndex / SEGMENT_SIZE
-            val index = (globalIndex % SEGMENT_SIZE).toInt()
-            if (segment.id < segmentId) {
-                segment = findSegmentEnq(segmentId, segment)
-            }
-            if (segment.cas(index, null, element)) return
-        }
+        q.enqueue(element)
     }
 
     override suspend fun receive(): E {
@@ -115,26 +108,7 @@ internal open class BufferedChannel<E>(
         deqPermits.acquireSlowPathReceive(WaitingReceive(this, cont))
     }
 
-    internal fun dequeue(): E {
-        var segment = deqSegment.value
-        while (true) {
-            val globalIndex = deqIdx.getAndIncrement()
-            val segmentId = globalIndex / SEGMENT_SIZE
-            val index = (globalIndex % SEGMENT_SIZE).toInt()
-            if (segment.id < segmentId) {
-                segment = findSegmentDeq(segmentId, segment)
-            }
-            var element = segment.get(index)
-            if (element == null) {
-                element = segment.getAndSet(index, POISONED)
-            }
-            if (element != null) {
-                segment.lazySet(index, DONE)
-                @Suppress("UNCHECKED_CAST")
-                return element as E
-            }
-        }
-    }
+    internal fun dequeue(): E = q.dequeue()
 
     override fun trySend(element: E): ChannelResult<Unit> = TODO()
     internal open suspend fun sendBroadcast(element: E): Boolean = TODO()

@@ -34,3 +34,15 @@ internal fun removeFutureOnCancel(executor: Executor): Boolean {
         return false // failed to setRemoveOnCancelPolicy, assume it does not removes future on cancel
     }
 }
+
+internal actual class ConcurrentMSQueue<E> {
+    private val q = ConcurrentLinkedQueue<E>()
+
+    public actual fun enqueue(e: E) {
+        q.add(e)
+    }
+
+    public actual fun dequeue(): E {
+        return q.poll()
+    }
+}

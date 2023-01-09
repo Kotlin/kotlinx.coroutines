@@ -12,3 +12,8 @@ internal expect class ReentrantLock() {
 internal expect inline fun <T> ReentrantLock.withLock(action: () -> T): T
 
 internal expect fun <E> identitySet(expectedSize: Int): MutableSet<E>
+
+internal expect class ConcurrentMSQueue<E>() {
+    fun enqueue(e: E)
+    fun dequeue(): E
+}

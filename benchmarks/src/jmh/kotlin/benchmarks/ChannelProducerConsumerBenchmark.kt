@@ -131,7 +131,8 @@ enum class ChannelCreator(private val capacity: Int) {
     BUFFERED_64(64),
     BUFFERED_UNLIMITED(Channel.UNLIMITED);
 
-    fun create(): Channel<Int> = Channel(capacity)
+    @Suppress("INVISIBLE_MEMBER")
+    fun create(): Channel<Int> = Channel(capacity = capacity)
 }
 
 private fun doWork(workSize: Int): Unit = doGeomDistrWork(workSize)
