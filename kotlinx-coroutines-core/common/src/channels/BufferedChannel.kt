@@ -2030,7 +2030,7 @@ internal open class BufferedChannel<E>(
                         // The cell stores a buffered element.
                         state === BUFFERED -> {
                             // Is the cell already covered by a receiver?
-                            if (globalIndex < receiversCounter) return
+                            if (globalIndex < receiversCounter) break@traverse
                             // Update the cell state to `CHANNEL_CLOSED`.
                             if (segment.casState(index, state, CHANNEL_CLOSED)) {
                                 // If `onUndeliveredElement` lambda is non-null, call it.
@@ -2057,7 +2057,7 @@ internal open class BufferedChannel<E>(
                         // The cell stores a suspended waiter.
                         state is Waiter || state is WaiterEB -> {
                             // Is the cell already covered by a receiver?
-                            if (globalIndex < receiversCounter) return
+                            if (globalIndex < receiversCounter) break@traverse
                             // Obtain the sender.
                             val sender: Waiter = if (state is WaiterEB) state.waiter
                                                  else state as Waiter
@@ -2908,8 +2908,7 @@ private val RESUMING_BY_EB = Symbol("RESUMING_BY_EB")
 private val POISONED = Symbol("POISONED")
 // When the element is successfully transferred
 // to a receiver, the cell changes to `DONE_RCV`.
-@JvmField
-internal val DONE_RCV = Symbol("DONE_RCV")
+private val DONE_RCV = Symbol("DONE_RCV")
 // Cancelled sender.
 private val INTERRUPTED_SEND = Symbol("INTERRUPTED_SEND")
 // Cancelled receiver.
