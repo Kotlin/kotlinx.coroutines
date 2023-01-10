@@ -10,7 +10,7 @@ import org.junit.runner.*
 import org.junit.runners.*
 
 @RunWith(Parameterized::class)
-class ArrayChannelStressTest(private val capacity: Int) : TestBase() {
+class BufferedChannelStressTest(private val capacity: Int) : TestBase() {
 
     companion object {
         @Parameterized.Parameters(name = "{0}, nSenders={1}, nReceivers={2}")

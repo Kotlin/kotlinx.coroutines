@@ -146,10 +146,13 @@ internal class BroadcastChannelImpl<E>(
         }
     }
 
+    // This implementation uses coarse-grained synchronization,
+    // as, reputedly, it is the simplest synchronization scheme.
     // All operations are protected by this lock.
     private val lock = ReentrantLock()
     // The list of subscribers; all accesses should be protected by lock.
-    private val subscribers: MutableList<BufferedChannel<E>> = mutableListOf()
+    // Each change must create a new list instance to avoid `ConcurrentModificationException`.
+    private var subscribers: List<BufferedChannel<E>> = emptyList()
     // When this broadcast is conflated, this field stores the last sent element.
     // If this channel is empty or not conflated, it stores a special `NO_ELEMENT` marker.
     private var lastConflatedElement: Any? = NO_ELEMENT // NO_ELEMENT or E
@@ -181,7 +184,7 @@ internal class BroadcastChannelImpl<E>(
     }
 
     private fun removeSubscriber(s: ReceiveChannel<E>) = lock.withLock { // protected by lock
-        subscribers.remove(s)
+        subscribers = subscribers.filter { it !== s }
     }
 
     // #############################
@@ -210,10 +213,8 @@ internal class BroadcastChannelImpl<E>(
             if (isClosedForSend) throw sendException
             // Update the last sent element if this broadcast is conflated.
             if (capacity == CONFLATED) lastConflatedElement = element
-            // Get a copy of subscriber list. Unfortunately,
-            // it is impossible to send the element to the subscribers
-            // under the lock due to possible suspensions.
-            ArrayList(subscribers)
+            // Get a reference to the list of subscribers under the lock.
+            subscribers
         }
         // The lock has been released. Send the element to the
         // subscribers one-by-one, and finish immediately
@@ -238,14 +239,14 @@ internal class BroadcastChannelImpl<E>(
         // should suspend and fail in this case.
         val shouldSuspend = subscribers.any { it.shouldSendSuspend() }
         if (shouldSuspend) return ChannelResult.failure()
+        // Update the last sent element if this broadcast is conflated.
+        if (capacity == CONFLATED) lastConflatedElement = element
         // Send the element to all subscribers.
         // It is guaranteed that the attempt cannot fail,
         // as both the broadcast closing and subscription
         // cancellation are guarded by lock, which is held
         // by the current operation.
         subscribers.forEach { it.trySend(element) }
-        // Update the last sent element if this broadcast is conflated.
-        if (capacity == CONFLATED) lastConflatedElement = element
         // Finish with success.
         return ChannelResult.success(Unit)
     }
@@ -332,7 +333,7 @@ internal class BroadcastChannelImpl<E>(
         // buffered elements or waiting send-s to avoid
         // memory leaks. We must keep other subscriptions
         // in case `broadcast.cancel(..)` is called.
-        subscribers.removeAll { !it.hasElements() }
+        subscribers = subscribers.filter { it.hasElements() }
         // Delegate to the parent implementation.
         super.close(cause)
     }
@@ -340,7 +341,7 @@ internal class BroadcastChannelImpl<E>(
     override fun cancelImpl(cause: Throwable?): Boolean = lock.withLock { // protected by lock
         // Cancel all subscriptions. As part of cancellation procedure,
         // subscriptions automatically remove themselves from this broadcast.
-        ArrayList(subscribers).forEach { it.cancelImpl(cause) }
+        subscribers.forEach { it.cancelImpl(cause) }
         // For the conflated implementation, clear the last sent element.
         lastConflatedElement = NO_ELEMENT
         // Finally, delegate to the parent implementation.

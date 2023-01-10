@@ -6,10 +6,9 @@ package kotlinx.coroutines.selects
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.intrinsics.*
 import kotlin.test.*
 
-class SelectArrayChannelTest : TestBase() {
+class SelectBufferedChannelTest : TestBase() {
 
     @Test
     fun testSelectSendSuccess() = runTest {

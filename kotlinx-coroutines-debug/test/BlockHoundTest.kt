@@ -58,7 +58,7 @@ class BlockHoundTest : TestBase() {
     @Test
     fun testBroadcastChannelNotBeingConsideredBlocking() = runTest {
         withContext(Dispatchers.Default) {
-            // Copy of kotlinx.coroutines.channels.ArrayChannelTest.testSimple
+            // Copy of kotlinx.coroutines.channels.BufferedChannelTest.testSimple
             val q = BroadcastChannel<Int>(1)
             val s = q.openSubscription()
             check(!q.isClosedForSend)

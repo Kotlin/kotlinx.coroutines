@@ -21,11 +21,9 @@ class ChannelsTest: TestBase() {
 
     @Test
     fun testCloseWithMultipleWaiters() = runTest {
-        // 1. Coroutine #1 suspends on `receive()`
-        // 2. Coroutine #2 suspends on `receive()`
-        // 3. The channel closes
-        // 4. Coroutine #2 fails with exception (last suspends => first fails)
-        // 5. Coroutine #1 fails with exception
+        // Once the channel is closed, the waiting
+        // requests should be cancelled in the order
+        // they were suspended in the channel.
         val channel = Channel<Int>()
         launch {
             try {
@@ -33,7 +31,7 @@ class ChannelsTest: TestBase() {
                 channel.receive()
                 expectUnreached()
             } catch (e: ClosedReceiveChannelException) {
-                expect(6)
+                expect(5)
             }
         }
 
@@ -43,7 +41,7 @@ class ChannelsTest: TestBase() {
                 channel.receive()
                 expectUnreached()
             } catch (e: ClosedReceiveChannelException) {
-                expect(5)
+                expect(6)
             }
         }
 

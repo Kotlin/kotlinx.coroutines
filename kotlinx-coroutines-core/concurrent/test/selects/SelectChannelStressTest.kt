@@ -6,7 +6,6 @@ package kotlinx.coroutines.selects
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.intrinsics.*
 import kotlin.test.*
 
 class SelectChannelStressTest: TestBase() {
@@ -15,7 +14,7 @@ class SelectChannelStressTest: TestBase() {
     private val iterations = (if (isNative) 1_000 else 1_000_000) * stressTestMultiplier
 
     @Test
-    fun testSelectSendResourceCleanupArrayChannel() = runTest {
+    fun testSelectSendResourceCleanupBufferedChannel() = runTest {
         val channel = Channel<Int>(1)
         expect(1)
         channel.send(-1) // fill the buffer, so all subsequent sends cannot proceed
@@ -29,7 +28,7 @@ class SelectChannelStressTest: TestBase() {
     }
 
     @Test
-    fun testSelectReceiveResourceCleanupArrayChannel() = runTest {
+    fun testSelectReceiveResourceCleanupBufferedChannel() = runTest {
         val channel = Channel<Int>(1)
         expect(1)
         repeat(iterations) { i ->

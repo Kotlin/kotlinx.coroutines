@@ -7,7 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class ArrayChannelTest : TestBase() {
+class BufferedChannelTest : TestBase() {
     @Test
     fun testSimple() = runTest {
         val q = Channel<Int>(1)

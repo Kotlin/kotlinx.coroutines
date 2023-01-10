@@ -16,7 +16,7 @@ class ChannelFactoryTest : TestBase() {
     }
 
     @Test
-    fun testLinkedListChannel() {
+    fun testUnlimitedChannel() {
         assertTrue(Channel<Int>(Channel.UNLIMITED) is BufferedChannel)
         assertTrue(Channel<Int>(Channel.UNLIMITED, BufferOverflow.DROP_OLDEST) is BufferedChannel)
         assertTrue(Channel<Int>(Channel.UNLIMITED, BufferOverflow.DROP_LATEST) is BufferedChannel)
@@ -29,7 +29,7 @@ class ChannelFactoryTest : TestBase() {
     }
 
     @Test
-    fun testArrayChannel() {
+    fun testBufferedChannel() {
         assertTrue(Channel<Int>(1) is BufferedChannel)
         assertTrue(Channel<Int>(1, BufferOverflow.DROP_LATEST) is ConflatedBufferedChannel)
         assertTrue(Channel<Int>(10) is BufferedChannel)

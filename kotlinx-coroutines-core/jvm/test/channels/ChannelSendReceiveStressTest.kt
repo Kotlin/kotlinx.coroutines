@@ -35,7 +35,7 @@ class ChannelSendReceiveStressTest(
     private val timeLimit = 30_000L * stressTestMultiplier // 30 sec
     private val nEvents = 200_000 * stressTestMultiplier
 
-    private val maxBuffer = 10_000 // artificial limit for LinkedListChannel
+    private val maxBuffer = 10_000 // artificial limit for unlimited channel
 
     val channel = kind.create<Int>()
     private val sendersCompleted = AtomicInteger()
@@ -121,7 +121,7 @@ class ChannelSendReceiveStressTest(
         sentTotal.incrementAndGet()
         if (!kind.isConflated) {
             while (sentTotal.get() > receivedTotal.get() + maxBuffer)
-                yield() // throttle fast senders to prevent OOM with LinkedListChannel
+                yield() // throttle fast senders to prevent OOM with an unlimited channel
         }
     }
 

@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
-class SelectLinkedListChannelTest : TestBase() {
+class SelectUnlimitedChannelTest : TestBase() {
     @Test
     fun testSelectSendWhenClosed() = runTest {
         expect(1)

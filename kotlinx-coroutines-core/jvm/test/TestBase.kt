@@ -18,7 +18,7 @@ private val VERBOSE = systemProp("test.verbose", false)
 /**
  * Is `true` when running in a nightly stress test mode.
  */
-public actual val isStressTest = System.getProperty("stressTest")?.toBoolean() ?: false
+public actual val isStressTest = true // System.getProperty("stressTest")?.toBoolean() ?: false
 
 public actual val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
 

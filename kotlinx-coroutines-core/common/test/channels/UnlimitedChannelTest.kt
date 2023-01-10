@@ -7,7 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class LinkedListChannelTest : TestBase() {
+class UnlimitedChannelTest : TestBase() {
     @Test
     fun testBasic() = runTest {
         val c = Channel<Int>(Channel.UNLIMITED)
