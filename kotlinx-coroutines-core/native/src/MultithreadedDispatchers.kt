@@ -79,14 +79,23 @@ private class MultiWorkerDispatcher(
         }
     }
 
-    private fun workerRunLoop() = runBlocking {
-        // NB: we leverage tail-call optimization in this loop, do not replace it with
-        // .receive() without proper evaluation
-        for (task in tasksQueue) {
-            /**
-             * Any unhandled exception here will pass through worker's boundary and will be properly reported.
-             */
-            task.run()
+    private fun workerRunLoop() {
+        try {
+            runBlocking {
+                // NB: we leverage tail-call optimization in this loop, do not replace it with
+                // .receive() without proper evaluation
+                for (task in tasksQueue) {
+                    /**
+                     * Any unhandled exception here will pass through worker's boundary and will be properly reported.
+                     */
+                    task.run()
+                }
+            }
+        } catch (e: IllegalStateException) {
+            // We deliberately ignore ISE here as they are expected
+            // due to peculiarities of Workers API.
+            // Unfortunately, race-free termination is unachievable by its current state,
+            // see https://github.com/Kotlin/kotlinx.coroutines/issues/3578
         }
     }
 

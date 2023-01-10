@@ -13,7 +13,14 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
     private val current = Worker.current
 
     protected actual fun unpark() {
-        current.executeAfter(0L, {})// send an empty task to unpark the waiting event loop
+        try {
+            current.executeAfter(0L, {}) // send an empty task to unpark the waiting event loop
+        } catch (e: IllegalStateException) {
+            // We deliberately ignore ISE here as they are expected
+            // due to peculiarities of Workers API.
+            // Unfortunately, race-free termination of workers is unachievable by its current state,
+            // see https://github.com/Kotlin/kotlinx.coroutines/issues/3578
+        }
     }
 
     protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
