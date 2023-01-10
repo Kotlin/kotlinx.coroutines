@@ -56,7 +56,7 @@ public actual typealias TestResult = Unit
  */
 public actual open class TestBase(private var disableOutCheck: Boolean)  {
 
-    actual constructor(): this(false)
+    actual constructor(): this(true)
 
     public actual val isBoundByJsTestTimeout = false
     private var actionIndex = AtomicInteger()
