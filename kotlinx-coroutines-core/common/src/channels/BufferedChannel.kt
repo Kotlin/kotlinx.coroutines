@@ -2008,7 +2008,13 @@ internal open class BufferedChannel<E>(
         // one is stored in the variable, while the others are suppressed.
         val onUndeliveredElement = onUndeliveredElement
         var undeliveredElementException: UndeliveredElementException? = null // first cancel exception, others suppressed
-        // Process the cells in the reverse order, from right to left.
+        // To perform synchronization correctly, it is critical to
+        // process the cells in reverse order, from right to left.
+        // However, according to the API, suspended senders should
+        // be cancelled in the order of their suspension. Therefore,
+        // we need to collect all of them and cancel in the reverse
+        // order after that.
+        var suspendedSenders = InlineList<Waiter>()
         var segment = lastSegment
         traverse@ while (true) {
             for (index in SEGMENT_SIZE - 1 downTo 0) {
@@ -2062,8 +2068,8 @@ internal open class BufferedChannel<E>(
                                     val element = segment.getElement(index)
                                     undeliveredElementException = onUndeliveredElement.callUndeliveredElementCatchingException(element, undeliveredElementException)
                                 }
-                                // Resume the sender.
-                                sender.resumeSenderOnCancelledChannel()
+                                // Save the sender for further cancellation.
+                                suspendedSenders += sender
                                 // Clean the element field and inform the segment
                                 // that the slot is cleaned to avoid memory leaks.
                                 segment.cleanElement(index)
@@ -2084,6 +2090,8 @@ internal open class BufferedChannel<E>(
             // Process the previous segment.
             segment = segment.prev ?: break
         }
+        // Cancel suspended senders in their order of addition to this channel.
+        suspendedSenders.forEachReversed { it.resumeSenderOnCancelledChannel() }
         // Throw `UndeliveredElementException` at the end if there was one.
         undeliveredElementException?.let { throw it }
     }
@@ -2118,14 +2126,14 @@ internal open class BufferedChannel<E>(
                         }
                         state is WaiterEB -> {
                             if (segment.casState(index, state, CHANNEL_CLOSED)) {
-                                suspendedReceivers += state.waiter
+                                suspendedReceivers += state.waiter // save for cancellation.
                                 segment.onCancelledRequest(index = index, receiver = true)
                                 break@cell_update
                             }
                         }
                         state is Waiter -> {
                             if (segment.casState(index, state, CHANNEL_CLOSED)) {
-                                suspendedReceivers += state
+                                suspendedReceivers += state // save for cancellation.
                                 segment.onCancelledRequest(index = index, receiver = true)
                                 break@cell_update
                             }
