@@ -1392,9 +1392,9 @@ internal open class BufferedChannel<E>(
     /**
      * Waits in a spin-loop until the [expandBuffer] call that
      * should process the [globalIndex]-th cell is completed.
-     * Essentially, it waits until the counters of started ([bufferEnd])
-     * and completed ([completedExpandBuffersAndPauseFlag]) [expandBuffer] attempts
-     * coincide and become equal or greater than [globalIndex].
+     * Essentially, it waits until the numbers of started ([bufferEnd])
+     * and completed ([completedExpandBuffersAndPauseFlag]) [expandBuffer]
+     * attempts coincide and become equal or greater than [globalIndex].
      * To avoid starvation, this function may set a flag
      * that pauses further progress.
      */
@@ -1770,7 +1770,7 @@ internal open class BufferedChannel<E>(
      */
     private val _closeCause = atomic<Any?>(NO_CLOSE_CAUSE)
     // Should be called only if this channel is closed or cancelled.
-    internal val closeCause get() = _closeCause.value as Throwable?
+    protected val closeCause get() = _closeCause.value as Throwable?
 
     /** Returns the closing cause if it is non-null, or [ClosedSendChannelException] otherwise. */
     protected val sendException get() = closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)
@@ -1957,7 +1957,7 @@ internal open class BufferedChannel<E>(
     /**
      * Completes the channel closing procedure.
      */
-    protected open fun completeClose(sendersCur: Long): ChannelSegment<E> {
+    private fun completeClose(sendersCur: Long): ChannelSegment<E> {
         // Close the linked list for further segment addition,
         // obtaining the last segment in the data structure.
         val lastSegment = closeLinkedList()
@@ -2040,7 +2040,7 @@ internal open class BufferedChannel<E>(
         // order after that.
         var suspendedSenders = InlineList<Waiter>()
         var segment = lastSegment
-        traverse@ while (true) {
+        process_segments@ while (true) {
             for (index in SEGMENT_SIZE - 1 downTo 0) {
                 // Process the cell `segment[index]`.
                 val globalIndex = segment.id * SEGMENT_SIZE + index
@@ -2050,11 +2050,11 @@ internal open class BufferedChannel<E>(
                     val state = segment.getState(index)
                     when {
                         // The cell is already processed by a receiver.
-                        state === DONE_RCV -> break@traverse
+                        state === DONE_RCV -> break@process_segments
                         // The cell stores a buffered element.
                         state === BUFFERED -> {
                             // Is the cell already covered by a receiver?
-                            if (globalIndex < receiversCounter) break@traverse
+                            if (globalIndex < receiversCounter) break@process_segments
                             // Update the cell state to `CHANNEL_CLOSED`.
                             if (segment.casState(index, state, CHANNEL_CLOSED)) {
                                 // If `onUndeliveredElement` lambda is non-null, call it.
@@ -2081,7 +2081,7 @@ internal open class BufferedChannel<E>(
                         // The cell stores a suspended waiter.
                         state is Waiter || state is WaiterEB -> {
                             // Is the cell already covered by a receiver?
-                            if (globalIndex < receiversCounter) break@traverse
+                            if (globalIndex < receiversCounter) break@process_segments
                             // Obtain the sender.
                             val sender: Waiter = if (state is WaiterEB) state.waiter
                                                  else state as Waiter
@@ -2103,7 +2103,7 @@ internal open class BufferedChannel<E>(
                         }
                         // A concurrent receiver is resuming a suspended sender.
                         // As the cell is covered by a receiver, finish immediately.
-                        state === RESUMING_BY_EB || state === RESUMING_BY_RCV -> break@traverse
+                        state === RESUMING_BY_EB || state === RESUMING_BY_RCV -> break@process_segments
                         // A concurrent `expandBuffer()` is resuming a suspended sender.
                         // Wait in a spin-loop until the cell state changes.
                         state === RESUMING_BY_EB -> continue@update_cell
@@ -2284,18 +2284,14 @@ internal open class BufferedChannel<E>(
             // obtained segment (in the beginning of this function) has lower id.
             val id = r / SEGMENT_SIZE
             if (segment.id != id) {
-                // Check that the channel is not closed yet
-                // and the required segment may be found.
-                // Otherwise, the `r`-th cell will not be physically
-                // created, and this function returns `false` immediately.
-                // We could perform this check only if `findSegmentReceive`
-                // below returns `null`, but it would make the code less clean.
-                segment.nextOrIfClosed {
-                    segment.cleanPrev()
-                    return false
-                }
-                // Find the required segment, restarting the operation if it has not been found.
-                segment = findSegmentReceive(id, segment) ?: continue
+                // Try to find the required segment.
+                segment = findSegmentReceive(id, segment) ?:
+                    // The required segment has not been found. Either it has already
+                    // been removed, or the underlying linked list is already closed
+                    // for segment additions. In the latter case, the channel is closed
+                    // and does not contain elements, so this operation returns `false`.
+                    // Otherwise, if the required segment is removed, the operation restarts.
+                    if (receiveSegment.value.id < id) return false else continue
             }
             segment.cleanPrev() // all the previous segments are no longer needed.
             // Does the `r`-th cell contain waiting sender or buffered element?
