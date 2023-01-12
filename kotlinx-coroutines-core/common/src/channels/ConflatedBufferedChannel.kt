@@ -37,6 +37,9 @@ internal open class ConflatedBufferedChannel<E>(
         }
     }
 
+    override val isConflatedDropOldest: Boolean
+        get() = onBufferOverflow == DROP_OLDEST
+
     override suspend fun send(element: E) {
         // Should never suspend, implement via `trySend(..)`.
         trySend(element).onClosed { // fails only when this channel is closed.
@@ -69,17 +72,7 @@ internal open class ConflatedBufferedChannel<E>(
         return success(Unit)
     }
 
-    private val closeStarted = atomic(false)
-    private val trySendStarted = atomic(1L)
-    private val trySendCompleted = atomic(1L)
-
-    private fun trySendDropOldest(element: E): ChannelResult<Unit> = try {
-        trySendStarted.incrementAndGet()
-        if (closeStarted.value) {
-            trySendCompleted.incrementAndGet()
-            while (!isClosedForSend) {}
-            trySendStarted.incrementAndGet()
-        }
+    private fun trySendDropOldest(element: E): ChannelResult<Unit> =
         sendImpl( // <-- this is an inline function
             element = element,
             // Put the element into the logical buffer in any case,
@@ -94,15 +87,12 @@ internal open class ConflatedBufferedChannel<E>(
             // overflowed, the first (oldest) element has to be extracted.
             // After that, the operation finishes.
             onSuspend = { segm, i ->
-                dropFirstElementsIfNeeded(segm.id * SEGMENT_SIZE + i)
+                dropFirstElementIfNeeded(segm.id * SEGMENT_SIZE + i)
                 success(Unit)
             },
             // If the channel is closed, return the corresponding result.
             onClosed = { closed(sendException) }
         )
-    } finally {
-        trySendCompleted.incrementAndGet()
-    }
 
     @Suppress("UNCHECKED_CAST")
     override fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
@@ -122,26 +112,4 @@ internal open class ConflatedBufferedChannel<E>(
     }
 
     override fun shouldSendSuspend() = false // never suspends
-
-    override fun closeOrCancelImpl(cause: Throwable?, cancel: Boolean): Boolean {
-        // Inform `trySend(..)` the the channel closing procedure has been started.
-        // All `trySend(..)`s that start after setting  this flag, should wait
-        // until the channel is properly closed. Otherwise, a non-linearizable
-        // behaviour can be observed.
-        closeStarted.value = true
-        // It is critical to wait until all the started `trySend(..)`s
-        // complete their operation.
-        waitUntilStartedTrySendsComplete()
-        // Finally, close/cancel this channel.
-        return super.closeOrCancelImpl(cause, cancel)
-    }
-
-    private fun waitUntilStartedTrySendsComplete() {
-        while (true) {
-            val started = trySendStarted.value
-            val completed = trySendCompleted.value
-            if (started != trySendStarted.value) continue
-            if (started == completed) break
-        }
-    }
 }

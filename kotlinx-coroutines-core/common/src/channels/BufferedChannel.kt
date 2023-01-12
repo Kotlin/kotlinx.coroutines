@@ -68,7 +68,7 @@ internal open class BufferedChannel<E>(
 
     internal val sendersCounter: Long get() = sendersAndCloseStatus.value.sendersCounter
     internal val receiversCounter: Long get() = receivers.value
-    internal val bufferEndCounter: Long get() = bufferEnd.value
+    private val bufferEndCounter: Long get() = bufferEnd.value
 
     /*
       Additionally to the counters above, we need an extra one that
@@ -813,17 +813,11 @@ internal open class BufferedChannel<E>(
     }
 
     // TODO: method name, documentation, implementation.
-    protected fun dropFirstElementsIfNeeded(s: Long) {
+    protected fun dropFirstElementIfNeeded(s: Long) {
         // Read the segment reference before the counter increment;
         // it is crucial to be able to find the required segment later.
         var segment = receiveSegment.value
         while (true) {
-            // Similar to the `send(e)` operation, `receive()` first checks
-            // whether the channel is already closed for receiving.
-            if (isClosedForReceiveImpl) {
-                if (receiversCounter < sendersCounter) segment.cleanPrev()
-                return
-            }
             // Atomically increments the `receivers` counter
             // and obtain the value right before the increment.
             val r = this.receivers.value
@@ -1534,7 +1528,8 @@ internal open class BufferedChannel<E>(
             onCancellationConstructor = onUndeliveredElementReceiveCancellationConstructor
         )
 
-    protected open fun registerSelectForReceive(select: SelectInstance<*>, ignoredParam: Any?) =
+    @Suppress("UNUSED_PARAMETER")
+    private fun registerSelectForReceive(select: SelectInstance<*>, ignoredParam: Any?) =
         receiveImpl( // <-- this is an inline function
             waiter = select,
             onElementRetrieved = { elem -> select.selectInRegistrationPhase(elem) },
@@ -1606,7 +1601,7 @@ internal open class BufferedChannel<E>(
      * and [SelectInstance.trySelect]. When the channel becomes closed,
      * [tryResumeHasNextOnClosedChannel] should be used instead.
      */
-    protected open inner class BufferedChannelIterator : ChannelIterator<E>, BeforeResumeCancelHandler(), Waiter {
+    private inner class BufferedChannelIterator : ChannelIterator<E>, BeforeResumeCancelHandler(), Waiter {
         /**
          * Stores the element retrieved by [hasNext] or
          * a special [CHANNEL_CLOSED] token if this channel is closed.
@@ -1775,7 +1770,7 @@ internal open class BufferedChannel<E>(
      */
     private val _closeCause = atomic<Any?>(NO_CLOSE_CAUSE)
     // Should be called only if this channel is closed or cancelled.
-    protected val closeCause get() = _closeCause.value as Throwable?
+    internal val closeCause get() = _closeCause.value as Throwable?
 
     /** Returns the closing cause if it is non-null, or [ClosedSendChannelException] otherwise. */
     protected val sendException get() = closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)
@@ -1953,23 +1948,52 @@ internal open class BufferedChannel<E>(
     /**
      * Completes the started [close] or [cancel] procedure.
      */
-    protected open fun completeCloseOrCancel() {
+    private fun completeCloseOrCancel() {
         isClosedForSendImpl // must finish the started close/cancel if one is detected.
     }
+
+    protected open val isConflatedDropOldest get() = false
 
     /**
      * Completes the channel closing procedure.
      */
-    private fun completeClose(sendersCur: Long): ChannelSegment<E> {
+    protected open fun completeClose(sendersCur: Long): ChannelSegment<E> {
         // Close the linked list for further segment addition,
         // obtaining the last segment in the data structure.
         val lastSegment = closeLinkedList()
+        // TODO
+        if (isConflatedDropOldest) xxx(lastSegment)
         // Resume waiting `receive()` requests,
         // informing them that the channel is closed.
         cancelSuspendedReceiveRequests(lastSegment, sendersCur)
         // Return the last segment in the linked list as a result
         // of this function; we need it in `completeCancel(..)`.
         return lastSegment
+    }
+
+    private fun xxx(lastSegment: ChannelSegment<E>) {
+        var segment = lastSegment
+        traverse@while (true) {
+            for (index in SEGMENT_SIZE - 1 downTo 0) {
+                cell_update@while (true) {
+                    val state = segment.getState(index)
+                    when {
+                        state === null || state === IN_BUFFER -> {
+                            if (segment.casState(index, state, CHANNEL_CLOSED)) {
+                                segment.onSlotCleaned()
+                                break@cell_update
+                            }
+                        }
+                        state === BUFFERED -> {
+                            dropFirstElementIfNeeded(segment.id * SEGMENT_SIZE + index)
+                            break@traverse
+                        }
+                        else -> break@cell_update
+                    }
+                }
+            }
+            segment = segment.prev ?: break
+        }
     }
 
     /**
