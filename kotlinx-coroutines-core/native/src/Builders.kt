@@ -52,6 +52,7 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
         newContext = GlobalScope.newCoroutineContext(context)
     }
     val coroutine = BlockingCoroutine<T>(newContext, eventLoop)
+    coroutine.keepAlive()
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
     return coroutine.joinBlocking()
 }
@@ -61,6 +62,18 @@ private class BlockingCoroutine<T>(
     private val eventLoop: EventLoop?
 ) : AbstractCoroutine<T>(parentContext, true, true) {
     private val joinWorker = Worker.current
+
+    /**
+     * Send a ping to the worker to prevent it from terminating while this coroutine is running,
+     * ensuring that continuations don't get dropped and forgotten.
+     */
+    fun keepAlive() {
+        Worker.current.executeAfter(afterMicroseconds = 100_000) {
+            if (!isCompleted) {
+                keepAlive()
+            }
+        }
+    }
 
     override val isScopedCoroutine: Boolean get() = true
 
