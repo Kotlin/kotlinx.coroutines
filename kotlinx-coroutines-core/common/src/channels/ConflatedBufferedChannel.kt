@@ -15,14 +15,11 @@ import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 
 /**
- * Channel with array buffer of a fixed capacity.
- * Sender suspends only when buffer is full and receiver suspends only when buffer is empty.
- *
- * This channel is created by `Channel(capacity)` factory function invocation.
- *
- * This implementation is blocking and uses coarse-grained locking to protect all channel operations.
- * However, removing a cancelled sender or receiver from a list of waiters is lock-free.
- **/
+ * This is a special [BufferedChannel] extension that supports [DROP_OLDEST] and [DROP_LATEST]
+ * strategies for buffer overflowing. This implementation ensures that `send(e)` never suspends,
+ * either extracting the first element ([DROP_OLDEST]) or dropping the sending one ([DROP_LATEST])
+ * when the channel capacity exceeds.
+ */
 internal open class ConflatedBufferedChannel<E>(
     private val capacity: Int,
     private val onBufferOverflow: BufferOverflow,
@@ -66,8 +63,7 @@ internal open class ConflatedBufferedChannel<E>(
         // Complete on success or if this channel is closed.
         if (result.isSuccess || result.isClosed) return result
         // This channel is full. Drop the sending element.
-        // Call the `onUndeliveredElement` lambda if required
-        // and successfully finish.
+        // Call the `onUndeliveredElement` lambda (if required) and finish.
         onUndeliveredElement?.invoke(element)
         return success(Unit)
     }
@@ -75,19 +71,18 @@ internal open class ConflatedBufferedChannel<E>(
     private fun trySendDropOldest(element: E): ChannelResult<Unit> =
         sendImpl( // <-- this is an inline function
             element = element,
-            // Put the element into the logical buffer in any case,
-            // but if this channel is already full, the `onSuspend`
+            // Put the element into the logical buffer even
+            // if this channel is already full, the `onSuspend`
             // callback below extract the first (oldest) element.
             waiter = BUFFERED,
-            // Finish successfully when a rendezvous happens
+            // Finish successfully when a rendezvous has happened
             // or the element has been buffered.
             onRendezvousOrBuffered = { success(Unit) },
             // In case the algorithm decided to suspend, the element
             // was added to the buffer. However, as the buffer is now
             // overflowed, the first (oldest) element has to be extracted.
-            // After that, the operation finishes.
             onSuspend = { segm, i ->
-                dropFirstElementIfNeeded(segm.id * SEGMENT_SIZE + i)
+                dropFirstElementUntilTheSpecifiedCellIsInTheBuffer(segm.id * SEGMENT_SIZE + i)
                 success(Unit)
             },
             // If the channel is closed, return the corresponding result.
@@ -111,5 +106,5 @@ internal open class ConflatedBufferedChannel<E>(
         error("unreachable")
     }
 
-    override fun shouldSendSuspend() = false // never suspends
+    override fun shouldSendSuspend() = false // never suspends.
 }

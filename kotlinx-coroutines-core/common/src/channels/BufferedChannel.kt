@@ -812,16 +812,24 @@ internal open class BufferedChannel<E>(
         )
     }
 
-    // TODO: method name, documentation, implementation.
-    protected fun dropFirstElementIfNeeded(s: Long) {
+    /**
+     * Extracts the first element from this channel until the cell with the specified
+     * index is moved to the logical buffer. This is a key procedure for the _conflated_
+     * channel implementation, see [ConflatedBufferedChannel] with the [BufferOverflow.DROP_OLDEST]
+     * strategy on buffer overflowing.
+     */
+    protected fun dropFirstElementUntilTheSpecifiedCellIsInTheBuffer(globalCellIndex: Long) {
+        assert { isConflatedDropOldest }
         // Read the segment reference before the counter increment;
         // it is crucial to be able to find the required segment later.
         var segment = receiveSegment.value
         while (true) {
-            // Atomically increments the `receivers` counter
-            // and obtain the value right before the increment.
+            // Read the receivers counter to check whether the specified cell is already in the buffer
+            // or should be moved to the buffer in a short time, due to the already started `receive()`.
             val r = this.receivers.value
-            if (s < max(r + capacity, bufferEndCounter)) return
+            if (globalCellIndex < max(r + capacity, bufferEndCounter)) return
+            // The cell is outside the buffer. Try to extract the first element
+            // if the `receivers` counter has not been changed.
             if (!this.receivers.compareAndSet(r, r + 1)) continue
             // Count the required segment id and the cell index in it.
             val id = r / SEGMENT_SIZE
@@ -831,25 +839,26 @@ internal open class BufferedChannel<E>(
             if (segment.id != id) {
                 // Find the required segment, restarting the operation if it has not been found.
                 segment = findSegmentReceive(id, segment) ?:
-                    // The required segment is not found. It is possible that the channel is already
+                    // The required segment has not been found. It is possible that the channel is already
                     // closed for receiving, so the linked list of segments is closed as well.
-                    // In the latter case, the operation fails with the corresponding check at the beginning.
+                    // In the latter case, the operation will finish eventually after incrementing
+                    // the `receivers` counter sufficient times. Note that it is impossible to check
+                    // whether this channel is closed for receiving (we do this in `receive`),
+                    // as it may call this function when helping to complete closing the channel.
                     continue
             }
             // Update the cell according to the cell life-cycle.
             val updCellResult = updateCellReceive(segment, i, r, null)
             when {
                 updCellResult === FAILED -> {
-                    // The cell is poisoned.
-                    // Restart from the beginning in this case.
+                    // The cell is poisoned; restart from the beginning.
                     // To avoid memory leaks, we also need to reset
-                    // the `prev` pointer of the working segment.
+                    // the `prev` pointer of t he working segment.
                     if (r < sendersCounter) segment.cleanPrev()
                 }
                 else -> { // element
-                    // Either a buffered element was retrieved from the cell
-                    // or a rendezvous with a waiting sender has happened.
-                    // Clean the reference to the previous segment before finishing.
+                    // A buffered element was retrieved from the cell.
+                    // Clean the reference to the previous segment.
                     segment.cleanPrev()
                     @Suppress("UNCHECKED_CAST")
                     onUndeliveredElement?.invoke(updCellResult as E)
@@ -1961,8 +1970,20 @@ internal open class BufferedChannel<E>(
         // Close the linked list for further segment addition,
         // obtaining the last segment in the data structure.
         val lastSegment = closeLinkedList()
-        // TODO
-        if (isConflatedDropOldest) xxx(lastSegment)
+        // In the conflated channel implementation (with the DROP_OLDEST
+        // elements conflation strategy), it is critical to mark all empty
+        // cells as closed to prevent in-progress `send(e)`-s, which have not
+        // put their elements yet, completions after this channel is closed.
+        // Otherwise, it is possible for a `send(e)` to put an element when
+        // the buffer is already full, while a concurrent receiver may extract
+        // the oldest element. When the channel is not closed, we can linearize
+        // this `receive()` before the `send(e)`, but after the channel is closed,
+        // `send(e)` must fails. Marking all unprocessed cells as `CLOSED` solves the issue.
+        if (isConflatedDropOldest) {
+            val lastBufferedCellGlobalIndex = markAllEmptyCellsAsClosed(lastSegment)
+            if (lastBufferedCellGlobalIndex != -1L)
+                dropFirstElementUntilTheSpecifiedCellIsInTheBuffer(lastBufferedCellGlobalIndex)
+        }
         // Resume waiting `receive()` requests,
         // informing them that the channel is closed.
         cancelSuspendedReceiveRequests(lastSegment, sendersCur)
@@ -1971,10 +1992,20 @@ internal open class BufferedChannel<E>(
         return lastSegment
     }
 
-    private fun xxx(lastSegment: ChannelSegment<E>) {
+    /**
+     * This function marks all empty cells, in the `null` and [IN_BUFFER] state,
+     * as closed. Notably, it processes the cells from right to left, and finishes
+     * immediately when the processing cell is already covered by `receive()` or
+     * contains a buffered elements ([BUFFERED] state).
+     *
+     * This function returns the global index of the last buffered element,
+     * or `-1` if this channel does not contain buffered elements.
+     */
+    private fun markAllEmptyCellsAsClosed(lastSegment: ChannelSegment<E>): Long {
         var segment = lastSegment
-        traverse@while (true) {
+        while (true) {
             for (index in SEGMENT_SIZE - 1 downTo 0) {
+                if (segment.id * SEGMENT_SIZE + index < receiversCounter) return -1
                 cell_update@while (true) {
                     val state = segment.getState(index)
                     when {
@@ -1984,15 +2015,12 @@ internal open class BufferedChannel<E>(
                                 break@cell_update
                             }
                         }
-                        state === BUFFERED -> {
-                            dropFirstElementIfNeeded(segment.id * SEGMENT_SIZE + index)
-                            break@traverse
-                        }
+                        state === BUFFERED -> return segment.id * SEGMENT_SIZE + index
                         else -> break@cell_update
                     }
                 }
             }
-            segment = segment.prev ?: break
+            segment = segment.prev ?: return -1
         }
     }
 
