@@ -1993,6 +1993,29 @@ internal open class BufferedChannel<E>(
     }
 
     /**
+     * Completes the channel cancellation procedure.
+     */
+    private fun completeCancel(sendersCur: Long) {
+        // First, ensure that this channel is closed,
+        // obtaining the last segment in the linked list.
+        val lastSegment = completeClose(sendersCur)
+        // Cancel suspended `send(e)` requests and
+        // remove buffered elements in the reverse order.
+        removeUnprocessedElements(lastSegment)
+    }
+
+    /**
+     * Closes the underlying linked list of segments for further segment addition.
+     */
+    private fun closeLinkedList(): ChannelSegment<E> {
+        // Choose the last segment.
+        val lastSegment = listOf(bufferEndSegment.value, sendSegment.value, receiveSegment.value).maxBy { it.id }
+        // Close the linked list of segment for new segment addition
+        // and return the last segment in the linked list.
+        return lastSegment.close()
+    }
+
+    /**
      * This function marks all empty cells, in the `null` and [IN_BUFFER] state,
      * as closed. Notably, it processes the cells from right to left, and finishes
      * immediately when the processing cell is already covered by `receive()` or
@@ -2031,29 +2054,6 @@ internal open class BufferedChannel<E>(
             // Process the next segment, finishing if the linked list ends.
             segment = segment.prev ?: return -1
         }
-    }
-
-    /**
-     * Completes the channel cancellation procedure.
-     */
-    private fun completeCancel(sendersCur: Long) {
-        // First, ensure that this channel is closed,
-        // obtaining the last segment in the linked list.
-        val lastSegment = completeClose(sendersCur)
-        // Cancel suspended `send(e)` requests and
-        // remove buffered elements in the reverse order.
-        removeUnprocessedElements(lastSegment)
-    }
-
-    /**
-     * Closes the underlying linked list of segments for further segment addition.
-     */
-    private fun closeLinkedList(): ChannelSegment<E> {
-        // Choose the last segment.
-        val lastSegment = listOf(bufferEndSegment.value, sendSegment.value, receiveSegment.value).maxBy { it.id }
-        // Close the linked list of segment for new segment addition
-        // and return the last segment in the linked list.
-        return lastSegment.close()
     }
 
     /**
