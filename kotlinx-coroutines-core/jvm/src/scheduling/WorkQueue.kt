@@ -83,8 +83,8 @@ internal class WorkQueue {
      * `null` if task was added, task that wasn't added otherwise.
      */
     private fun addLast(task: Task): Task? {
-        if (task.isBlocking) blockingTasksInBuffer.incrementAndGet()
         if (bufferSize == BUFFER_CAPACITY - 1) return task
+        if (task.isBlocking) blockingTasksInBuffer.incrementAndGet()
         val nextIndex = producerIndex.value and MASK
         /*
          * If current element is not null then we're racing with a really slow consumer that committed the consumer index,
