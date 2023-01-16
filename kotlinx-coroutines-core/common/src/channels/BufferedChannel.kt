@@ -2002,24 +2002,33 @@ internal open class BufferedChannel<E>(
      * or `-1` if this channel does not contain buffered elements.
      */
     private fun markAllEmptyCellsAsClosed(lastSegment: ChannelSegment<E>): Long {
+        // Process the cells in reverse order, from right to left.
         var segment = lastSegment
         while (true) {
             for (index in SEGMENT_SIZE - 1 downTo 0) {
-                if (segment.id * SEGMENT_SIZE + index < receiversCounter) return -1
+                // Is this cell already covered by `receive()`?
+                val globalIndex = segment.id * SEGMENT_SIZE + index
+                if (globalIndex < receiversCounter) return -1
+                // Process the cell `segment[index]`.
                 cell_update@while (true) {
                     val state = segment.getState(index)
                     when {
+                        // The cell is empty.
                         state === null || state === IN_BUFFER -> {
+                            // Inform a possibly upcoming sender that this channel is already closed.
                             if (segment.casState(index, state, CHANNEL_CLOSED)) {
                                 segment.onSlotCleaned()
                                 break@cell_update
                             }
                         }
-                        state === BUFFERED -> return segment.id * SEGMENT_SIZE + index
+                        // The cell stores a buffered element.
+                        state === BUFFERED -> return globalIndex
+                        // Skip this cell if it is not empty and does not store a buffered element.
                         else -> break@cell_update
                     }
                 }
             }
+            // Process the next segment, finishing if the linked list ends.
             segment = segment.prev ?: return -1
         }
     }
