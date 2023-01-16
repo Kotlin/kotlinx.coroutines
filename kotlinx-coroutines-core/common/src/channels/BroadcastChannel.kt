@@ -294,7 +294,7 @@ internal class BroadcastChannelImpl<E>(
                 // an unrelated exception, such as `OutOfMemoryError` has been thrown.
                 // This implementation checks that the channel is actually closed,
                 // re-throwing the caught exception otherwise.
-                if (isClosedForSend) false
+                if (isClosedForSend && (t is ClosedSendChannelException || sendException === t)) false
                 else throw t
             }
             // Mark this `onSend` clause as selected and
