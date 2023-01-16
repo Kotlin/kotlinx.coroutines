@@ -7,6 +7,7 @@ package kotlinx.coroutines.scheduling
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.*
+import kotlin.jvm.internal.Ref.ObjectRef
 
 internal const val BUFFER_CAPACITY_BASE = 7
 internal const val BUFFER_CAPACITY = 1 shl BUFFER_CAPACITY_BASE
@@ -31,7 +32,7 @@ internal const val NOTHING_TO_STEAL = -2L
  * (scheduler workers without a CPU permit steal blocking tasks via this mechanism). Such property enforces us to use CAS in
  * order to properly claim value from the buffer.
  * Moreover, [Task] objects are reusable, so it may seem that this queue is prone to ABA problem.
- * Indeed it formally has ABA-problem, but the whole processing logic is written in the way that such ABA is harmless.
+ * Indeed, it formally has ABA-problem, but the whole processing logic is written in the way that such ABA is harmless.
  * I have discovered a truly marvelous proof of this, which this KDoc is too narrow to contain.
  */
 internal class WorkQueue {
@@ -46,10 +47,12 @@ internal class WorkQueue {
      * [T2] changeProducerIndex (3)
      * [T3] changeConsumerIndex (4)
      *
-     * Which can lead to resulting size bigger than actual size at any moment of time.
-     * This is in general harmless because steal will be blocked by timer
+     * Which can lead to resulting size being negative or bigger than actual size at any moment of time.
+     * This is in general harmless because steal will be blocked by timer.
+     * Negative sizes can be observed only when non-owner reads the size, which happens only
+     * for diagnostic toString().
      */
-    internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
+    private val bufferSize: Int get() = producerIndex.value - consumerIndex.value
     internal val size: Int get() = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
     private val lastScheduledTask = atomic<Task?>(null)
@@ -100,41 +103,61 @@ internal class WorkQueue {
     }
 
     /**
-     * Tries stealing from [victim] queue into this queue.
+     * Tries stealing from this queue into the [stolenTaskRef] argument.
      *
      * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen
      * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
      */
-    fun tryStealFrom(victim: WorkQueue): Long {
-        assert { bufferSize == 0 }
-        val task  = victim.pollBuffer()
+    fun trySteal(stolenTaskRef: ObjectRef<Task?>): Long {
+        val task  = pollBuffer()
         if (task != null) {
-            val notAdded = add(task)
-            assert { notAdded == null }
+            stolenTaskRef.element = task
             return TASK_STOLEN
         }
-        return tryStealLastScheduled(victim, blockingOnly = false)
+        return tryStealLastScheduled(stolenTaskRef, blockingOnly = false)
     }
 
-    fun tryStealBlockingFrom(victim: WorkQueue): Long {
-        assert { bufferSize == 0 }
-        var start = victim.consumerIndex.value
-        val end = victim.producerIndex.value
-        val buffer = victim.buffer
+    fun tryStealBlocking(stolenTaskRef: ObjectRef<Task?>): Long {
+        var start = consumerIndex.value
+        val end = producerIndex.value
 
-        while (start != end) {
-            val index = start and MASK
-            if (victim.blockingTasksInBuffer.value == 0) break
-            val value = buffer[index]
-            if (value != null && value.isBlocking && buffer.compareAndSet(index, value, null)) {
-                victim.blockingTasksInBuffer.decrementAndGet()
-                add(value)
-                return TASK_STOLEN
-            } else {
-                ++start
+        while (start != end && blockingTasksInBuffer.value > 0) {
+            stolenTaskRef.element = tryExtractBlockingTask(start++) ?: continue
+            return TASK_STOLEN
+        }
+        return tryStealLastScheduled(stolenTaskRef, blockingOnly = true)
+    }
+
+    // Polls for blocking task, invoked only by the owner
+    fun pollBlocking(): Task? {
+        while (true) { // Poll the slot
+            val lastScheduled = lastScheduledTask.value ?: break
+            if (!lastScheduled.isBlocking) break
+            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                return lastScheduled
+            } // Failed -> someone else stole it
+        }
+
+        val start = consumerIndex.value
+        var end = producerIndex.value
+
+        while (start != end && blockingTasksInBuffer.value > 0) {
+            val task = tryExtractBlockingTask(--end)
+            if (task != null) {
+                return task
             }
         }
-        return tryStealLastScheduled(victim, blockingOnly = true)
+        return null
+    }
+
+    private fun tryExtractBlockingTask(index: Int): Task? {
+        val arrayIndex = index and MASK
+        val value = buffer[arrayIndex]
+        if (value != null && value.isBlocking && buffer.compareAndSet(arrayIndex, value, null)) {
+            blockingTasksInBuffer.decrementAndGet()
+            return value
+        }
+        return null
     }
 
     fun offloadAllWorkTo(globalQueue: GlobalQueue) {
@@ -145,11 +168,11 @@ internal class WorkQueue {
     }
 
     /**
-     * Contract on return value is the same as for [tryStealFrom]
+     * Contract on return value is the same as for [trySteal]
      */
-    private fun tryStealLastScheduled(victim: WorkQueue, blockingOnly: Boolean): Long {
+    private fun tryStealLastScheduled(stolenTaskRef: ObjectRef<Task?>, blockingOnly: Boolean): Long {
         while (true) {
-            val lastScheduled = victim.lastScheduledTask.value ?: return NOTHING_TO_STEAL
+            val lastScheduled = lastScheduledTask.value ?: return NOTHING_TO_STEAL
             if (blockingOnly && !lastScheduled.isBlocking) return NOTHING_TO_STEAL
 
             // TODO time wraparound ?
@@ -163,8 +186,8 @@ internal class WorkQueue {
              * If CAS has failed, either someone else had stolen this task or the owner executed this task
              * and dispatched another one. In the latter case we should retry to avoid missing task.
              */
-            if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                add(lastScheduled)
+            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                stolenTaskRef.element = lastScheduled
                 return TASK_STOLEN
             }
             continue
