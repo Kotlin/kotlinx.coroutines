@@ -902,7 +902,7 @@ internal open class BufferedChannel<E>(
         while (true) {
             // Similar to the `send(e)` operation, `receive()` first checks
             // whether the channel is already closed for receiving.
-            if (isClosedForReceiveImpl) {
+            if (isClosedForReceive) {
                 if (receiversCounter < sendersCounter) segment.cleanPrev()
                 return onClosed()
             }
@@ -1958,7 +1958,7 @@ internal open class BufferedChannel<E>(
      * Completes the started [close] or [cancel] procedure.
      */
     private fun completeCloseOrCancel() {
-        isClosedForSendImpl // must finish the started close/cancel if one is detected.
+        isClosedForSend // must finish the started close/cancel if one is detected.
     }
 
     protected open val isConflatedDropOldest get() = false
@@ -2009,7 +2009,9 @@ internal open class BufferedChannel<E>(
      */
     private fun closeLinkedList(): ChannelSegment<E> {
         // Choose the last segment.
-        val lastSegment = listOf(bufferEndSegment.value, sendSegment.value, receiveSegment.value).maxBy { it.id }
+        var lastSegment = bufferEndSegment.value
+        sendSegment.value.let { if (it.id > lastSegment.id) lastSegment = it }
+        receiveSegment.value.let { if (it.id > lastSegment.id) lastSegment = it }
         // Close the linked list of segment for new segment addition
         // and return the last segment in the linked list.
         return lastSegment.close()
@@ -2235,27 +2237,20 @@ internal open class BufferedChannel<E>(
 
     @ExperimentalCoroutinesApi
     override val isClosedForSend: Boolean
-        get() = isClosedForSendImpl
-
-    private val isClosedForSendImpl: Boolean
         get() = sendersAndCloseStatus.value.isClosedForSend0
 
     private val Long.isClosedForSend0 get() =
-        isClosed(this, sendersCur = this.sendersCounter, isClosedForReceive = false)
+        isClosed(this, isClosedForReceive = false)
 
     @ExperimentalCoroutinesApi
     override val isClosedForReceive: Boolean
-        get() = isClosedForReceiveImpl
-
-    private val isClosedForReceiveImpl: Boolean
         get() = sendersAndCloseStatus.value.isClosedForReceive0
 
     private val Long.isClosedForReceive0 get() =
-        isClosed(this, sendersCur = this.sendersCounter, isClosedForReceive = true)
+        isClosed(this, isClosedForReceive = true)
 
     private fun isClosed(
         sendersAndCloseStatusCur: Long,
-        sendersCur: Long,
         isClosedForReceive: Boolean
     ) = when (sendersAndCloseStatusCur.sendersCloseStatus) {
         // This channel is active and has not been closed.
@@ -2270,7 +2265,7 @@ internal open class BufferedChannel<E>(
         // for senders or the flag whether there still
         // exist elements to retrieve for receivers.
         CLOSE_STATUS_CLOSED -> {
-            completeClose(sendersCur)
+            completeClose(sendersAndCloseStatusCur.sendersCounter)
             // When `isClosedForReceive` is `false`, always return `true`.
             // Otherwise, it is possible that the channel is closed but
             // still has elements to retrieve.
@@ -2280,7 +2275,7 @@ internal open class BufferedChannel<E>(
         // Help to complete the cancellation procedure to
         // guarantee linearizability and return `true`.
         CLOSE_STATUS_CANCELLED -> {
-            completeCancel(sendersCur)
+            completeCancel(sendersAndCloseStatusCur.sendersCounter)
             true
         }
         else -> error("unexpected close status: ${sendersAndCloseStatusCur.sendersCloseStatus}")
@@ -2290,12 +2285,12 @@ internal open class BufferedChannel<E>(
     override val isEmpty: Boolean get() {
         // This function should return `false` if
         // this channel is closed for `receive`.
-        if (isClosedForReceiveImpl) return false
+        if (isClosedForReceive) return false
         // Does this channel has elements to retrieve?
         if (hasElements()) return false
         // This channel does not have elements to retrieve;
         // Check that it is still not closed for `receive`.
-        return !isClosedForReceiveImpl
+        return !isClosedForReceive
     }
 
     /**
@@ -2796,15 +2791,10 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
         // Perform the cancellation; `onCancellationImpl(..)` return `true` if the
         // cancelled operation had not been resumed. In this case, the `onUndeliveredElement`
         // lambda should be called.
-        if (onCancellationImpl(index)) {
+        if (onCancellation(index)) {
             channel.onUndeliveredElement!!.callUndeliveredElement(element, context)
         }
     }
-
-    fun onCancellation(index: Int) {
-        onCancellationImpl(index)
-    }
-
 
     /**
      *  Returns `true` if the request is successfully cancelled,
@@ -2812,7 +2802,7 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
      *  to keep [BufferedChannel.onUndeliveredElement] correct.
      */
     @Suppress("ConvertTwoComparisonsToRangeCheck")
-    private fun onCancellationImpl(index: Int): Boolean {
+    fun onCancellation(index: Int): Boolean {
         // Count the global index of this cell and read
         // the current counters of send and receive operations.
         val globalIndex = id * SEGMENT_SIZE + index
