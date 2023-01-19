@@ -179,7 +179,21 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
      *     // and it also calls saveThreadContext and clearThreadContext
      * }
      */
-    private var threadStateToRecover = ThreadLocal<Pair<CoroutineContext, Any?>>()
+    private val threadStateToRecover = ThreadLocal<Pair<CoroutineContext, Any?>>()
+
+    /*
+     * Indicates that a coroutine has a thread local elements associated with it
+     * and that 'threadStateToRecover'.
+     * Better than nullable thread-local for easier debugging.
+     *
+     * It is used as a performance optimization to avoid 'threadStateToRecover' and
+     * is prone to false-positives as it is never reset: otherwise
+     * it may lead to logical data races between suspensions point where
+     * coroutine is yet being suspended in one thread while already being resumed
+     * in another.
+     */
+    @Volatile
+    private var threadLocalIsSet = false
 
     init {
         /*
@@ -213,11 +227,12 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
     }
 
     fun saveThreadContext(context: CoroutineContext, oldValue: Any?) {
+        threadLocalIsSet = true // Specify that thread-local is touched at all
         threadStateToRecover.set(context to oldValue)
     }
 
     fun clearThreadContext(): Boolean {
-        if (threadStateToRecover.get() == null) {
+        if (threadLocalIsSet && threadStateToRecover.get() == null) {
             threadStateToRecover.remove()
             return false
         }
@@ -226,10 +241,12 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
     }
 
     override fun afterResume(state: Any?) {
-        threadStateToRecover.get()?.let { (ctx, value) ->
-            restoreThreadContext(ctx, value)
+        if (threadLocalIsSet) {
+            threadStateToRecover.get()?.let { (ctx, value) ->
+                restoreThreadContext(ctx, value)
+            }
+            threadStateToRecover.remove()
         }
-        threadStateToRecover.remove()
         // resume undispatched -- update context but stay on the same dispatcher
         val result = recoverResult(state, uCont)
         withContinuationContext(uCont, null) {
