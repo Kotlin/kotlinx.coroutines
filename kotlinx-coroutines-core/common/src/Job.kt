@@ -382,7 +382,6 @@ public interface Job : CoroutineContext.Element {
  *
  * If [parent] job is specified, then this job becomes a child job of its parent and
  * is cancelled when its parent fails or is cancelled. All this job's children are cancelled in this case, too.
- * The invocation of [cancel][Job.cancel] with exception (other than [CancellationException]) on this job also cancels parent.
  *
  * Conceptually, the resulting job works in the same way as the job created by the `launch { body }` invocation
  * (see [launch]), but without any code in the body. It is active until cancelled or completed. Invocation of
