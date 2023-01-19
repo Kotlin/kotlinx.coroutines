@@ -217,16 +217,19 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
     }
 
     fun clearThreadContext(): Boolean {
-        if (threadStateToRecover.get() == null) return false
-        threadStateToRecover.set(null)
+        if (threadStateToRecover.get() == null) {
+            threadStateToRecover.remove()
+            return false
+        }
+        threadStateToRecover.remove()
         return true
     }
 
     override fun afterResume(state: Any?) {
         threadStateToRecover.get()?.let { (ctx, value) ->
             restoreThreadContext(ctx, value)
-            threadStateToRecover.set(null)
         }
+        threadStateToRecover.remove()
         // resume undispatched -- update context but stay on the same dispatcher
         val result = recoverResult(state, uCont)
         withContinuationContext(uCont, null) {
