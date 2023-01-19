@@ -165,7 +165,7 @@ private class TimeoutCoroutine<U, in T: U>(
 /**
  * This exception is thrown by [withTimeout] to indicate timeout.
  */
-public class TimeoutCancellationException internal constructor(
+public class TimeoutCancellationException @PublishedApi internal constructor(
     message: String,
     @JvmField @Transient internal val coroutine: Job?
 ) : CancellationException(message), CopyableThrowable<TimeoutCancellationException> {

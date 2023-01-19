@@ -6,7 +6,9 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.test.internal.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.time.*
 
@@ -296,3 +298,93 @@ internal class UncaughtExceptionsBeforeTest : IllegalStateException(
  */
 @ExperimentalCoroutinesApi
 internal class UncompletedCoroutinesError(message: String) : AssertionError(message)
+
+/**
+ * This is an override of [kotlinx.coroutines.withTimeout] for [TestScope] that appends a note to
+ * [TimeoutCancellationException] saying that the timeout was affected by the virtual time.
+ * Below is the documentation for the original function.
+ *
+ * Runs a given suspending [block] of code inside a coroutine with a specified [timeout][timeMillis] and throws
+ * a [TimeoutCancellationException] if the timeout was exceeded.
+ * If the given [timeMillis] is non-positive, [TimeoutCancellationException] is thrown immediately.
+ *
+ * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
+ * the cancellable suspending function inside the block throws a [TimeoutCancellationException].
+ *
+ * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
+ * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
+ * even right before the return from inside the timeout [block]. Keep this in mind if you open or acquire some
+ * resource inside the [block] that needs closing or release outside the block.
+ * See the
+ * [Asynchronous timeout and resources][https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources]
+ * section of the coroutines guide for details.
+ *
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ *
+ * @param timeMillis timeout time in milliseconds.
+ */
+@OptIn(ExperimentalStdlibApi::class, ExperimentalContracts::class)
+public suspend fun <T> TestScope.withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    try {
+        return kotlinx.coroutines.withTimeout(timeMillis, block)
+    } catch (e: TimeoutCancellationException) {
+        // TODO: check that the virtual time is not disabled, when such an option is introduced
+        if (currentCoroutineContext()[CoroutineDispatcher] is TestDispatcher) {
+            // TODO: explain the proper solution when we have the option to disable time controls.
+            val message = "Timed out after $timeMillis ms of _virtual_ (kotlinx.coroutines.test) time. " +
+                "To use the real time, wrap 'withTimeout' in 'withContext(Dispatchers.Default.limitedParallelism(1))'"
+            @Suppress("INVISIBLE_MEMBER")
+            throw TimeoutCancellationException(message, null).also { it.addSuppressed(e) }
+        }
+        throw e
+    }
+}
+
+/**
+ * This is an override of [kotlinx.coroutines.withTimeout] for [TestScope] that appends a note to
+ * [TimeoutCancellationException] saying that the timeout was affected by the virtual time.
+ * Below is the documentation for the original function.
+ *
+ * Runs a given suspending [block] of code inside a coroutine with the specified [timeout] and throws
+ * a [TimeoutCancellationException] if the timeout was exceeded.
+ * If the given [timeout] is non-positive, [TimeoutCancellationException] is thrown immediately.
+ *
+ * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
+ * the cancellable suspending function inside the block throws a [TimeoutCancellationException].
+ *
+ * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
+ * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
+ * even right before the return from inside the timeout [block]. Keep this in mind if you open or acquire some
+ * resource inside the [block] that needs closing or release outside the block.
+ * See the
+ * [Asynchronous timeout and resources][https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources]
+ * section of the coroutines guide for details.
+ *
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ */
+@OptIn(ExperimentalStdlibApi::class, ExperimentalContracts::class)
+public suspend fun <T> TestScope.withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    try {
+        return kotlinx.coroutines.withTimeout(timeout, block)
+    } catch (e: TimeoutCancellationException) {
+        // TODO: check that the virtual time is not disabled, when such an option is introduced
+        if (currentCoroutineContext()[CoroutineDispatcher] is TestDispatcher) {
+            // TODO: explain the proper solution when we have the option to disable time controls.
+            val message = "Timed out after $timeout of _virtual_ (kotlinx.coroutines.test) time. " +
+                "To use the real time, wrap 'withTimeout' in 'withContext(Dispatchers.Default.limitedParallelism(1))'"
+            @Suppress("INVISIBLE_MEMBER")
+            throw TimeoutCancellationException(message, null).also { it.addSuppressed(e) }
+        }
+        throw e
+    }
+}

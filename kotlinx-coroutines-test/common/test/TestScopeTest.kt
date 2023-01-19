@@ -476,6 +476,20 @@ class TestScopeTest {
         }
     }
 
+    /**
+     * Tests that [TestScope.withTimeout] notifies the programmer about using the virtual time.
+     */
+    @Test
+    fun testTimingOutWithVirtualTimeMessage() = runTest {
+        try {
+            withTimeout(1_000_000) {
+                Channel<Unit>().receive()
+            }
+        } catch (e: TimeoutCancellationException) {
+            assertContains(e.message!!, "virtual")
+        }
+    }
+
     companion object {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]

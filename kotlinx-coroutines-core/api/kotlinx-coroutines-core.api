@@ -561,6 +561,7 @@ public final class kotlinx/coroutines/ThreadPoolDispatcherKt {
 }
 
 public final class kotlinx/coroutines/TimeoutCancellationException : java/util/concurrent/CancellationException, kotlinx/coroutines/CopyableThrowable {
+	public fun <init> (Ljava/lang/String;Lkotlinx/coroutines/Job;)V
 	public synthetic fun createCopy ()Ljava/lang/Throwable;
 	public fun createCopy ()Lkotlinx/coroutines/TimeoutCancellationException;
 }

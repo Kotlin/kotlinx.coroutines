@@ -120,6 +120,8 @@ public final class kotlinx/coroutines/test/TestScopeKt {
 	public static final fun getCurrentTime (Lkotlinx/coroutines/test/TestScope;)J
 	public static final fun getTestTimeSource (Lkotlinx/coroutines/test/TestScope;)Lkotlin/time/TimeSource;
 	public static final fun runCurrent (Lkotlinx/coroutines/test/TestScope;)V
+	public static final fun withTimeout (Lkotlinx/coroutines/test/TestScope;JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun withTimeout-dWUq8MI (Lkotlinx/coroutines/test/TestScope;JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/test/UncaughtExceptionCaptor {
