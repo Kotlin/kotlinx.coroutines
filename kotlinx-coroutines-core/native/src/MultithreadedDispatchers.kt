@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
@@ -73,38 +74,75 @@ private class MultiWorkerDispatcher(
     workersCount: Int
 ) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
+    private val availableWorkers = Channel<Channel<Runnable>>(Channel.UNLIMITED)
     private val workerPool = OnDemandAllocatingPool(workersCount) {
         Worker.start(name = "$name-$it").apply {
             executeAfter { workerRunLoop() }
         }
     }
 
+    /**
+     * (number of tasks - number of workers) * 2 + (1 if closed)
+     */
+    private val tasksAndWorkersCounter = atomic(0L)
+
+    private inline fun Long.isClosed() = this and 1L == 1L
+    private inline fun Long.hasTasks() = this >= 2
+    private inline fun Long.hasWorkers() = this < 0
+
     private fun workerRunLoop() = runBlocking {
-        // NB: we leverage tail-call optimization in this loop, do not replace it with
-        // .receive() without proper evaluation
-        for (task in tasksQueue) {
-            /**
-             * Any unhandled exception here will pass through worker's boundary and will be properly reported.
-             */
-            task.run()
+        val privateChannel = Channel<Runnable>(1)
+        while (true) {
+            val state = tasksAndWorkersCounter.getAndUpdate {
+                if (it.isClosed() && !it.hasTasks()) return@runBlocking
+                it - 2
+            }
+            if (state.hasTasks()) {
+                // we promised to process a task, and there are some
+                tasksQueue.receive().run()
+            } else {
+                availableWorkers.send(privateChannel)
+                privateChannel.receiveCatching().getOrNull()?.run()
+            }
+        }
+    }
+
+    private fun obtainWorker(): Channel<Runnable> {
+        // spin loop until a worker that promised to be here actually arrives.
+        while (true) {
+            val result = availableWorkers.tryReceive()
+            return result.getOrNull() ?: continue
         }
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        fun throwClosed(block: Runnable) {
-            throw IllegalStateException("Dispatcher $name was closed, attempted to schedule: $block")
+        val state = tasksAndWorkersCounter.getAndUpdate {
+            if (it.isClosed())
+                throw IllegalStateException("Dispatcher $name was closed, attempted to schedule: $block")
+            it + 2
         }
-
-        if (!workerPool.allocate()) throwClosed(block) // Do not even try to send to avoid race
-
-        tasksQueue.trySend(block).onClosed {
-            throwClosed(block)
+        if (state.hasWorkers()) {
+            // there are workers that have nothing to do, let's grab one of them
+            obtainWorker().trySend(block)
+        } else {
+            workerPool.allocate()
+            // no workers are available, we must queue the task
+            tasksQueue.trySend(block)
         }
     }
 
     override fun close() {
-        val workers = workerPool.close()
-        tasksQueue.close()
+        tasksAndWorkersCounter.getAndUpdate { if (it.isClosed()) it else it or 1L }
+        val workers = workerPool.close() // no new workers will be created
+        while (true) {
+            // check if there are workers that await tasks in their personal channels, we need to wake them up
+            val state = tasksAndWorkersCounter.getAndUpdate {
+                if (it.hasWorkers()) it + 2 else it
+            }
+            if (!state.hasWorkers())
+                break
+            obtainWorker().close()
+        }
         /*
          * Here we cannot avoid waiting on `.result`, otherwise it will lead
          * to a native memory leak, including a pthread handle.
