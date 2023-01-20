@@ -19,8 +19,8 @@ public expect abstract class CloseableCoroutineDispatcher() : CoroutineDispatche
 
     /**
      * Initiate the closing sequence of the coroutine dispatcher.
-     * After a successful call to [close], no new tasks will
-     * be accepted to be [dispatched][dispatch], but the previously dispatched tasks will be run.
+     * After a successful call to [close], no new tasks will be accepted to be [dispatched][dispatch].
+     * The previously dispatched tasks may be lost as well, so the caller must ensure all the work is finished.
      *
      * Invocations of `close` are idempotent and thread-safe.
      */
