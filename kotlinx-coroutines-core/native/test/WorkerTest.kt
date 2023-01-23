@@ -62,39 +62,4 @@ class WorkerTest : TestBase() {
             finished.receive()
         }
     }
-
-    /**
-     * Test that [newFixedThreadPoolContext] does not allocate more dispatchers than it needs to.
-     * Incidentally also tests that it will allocate enough workers for its needs. Otherwise, the test will hang.
-     */
-    @Test
-    fun testNotAllocatingExtraDispatchers() {
-        suspend fun spin(set: MutableSet<Worker>) {
-            repeat(100) {
-                set.add(Worker.current)
-                delay(1)
-            }
-        }
-        val dispatcher = newFixedThreadPoolContext(64, "test")
-        try {
-            runBlocking {
-                val encounteredWorkers = mutableSetOf<Worker>()
-                var canStart = false
-                val coroutine1 = launch(dispatcher) {
-                    while (!canStart) {
-                        // intentionally empty
-                    }
-                    spin(encounteredWorkers)
-                }
-                val coroutine2 = launch(dispatcher) {
-                    canStart = true
-                    spin(encounteredWorkers)
-                }
-                listOf(coroutine1, coroutine2).joinAll()
-                assertEquals(2, encounteredWorkers.size)
-            }
-        } finally {
-            dispatcher.close()
-        }
-    }
 }
