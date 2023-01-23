@@ -74,7 +74,7 @@ private class MultiWorkerDispatcher(
     workersCount: Int
 ) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
-    private val availableWorkers = Channel<Channel<Runnable>>(Channel.UNLIMITED)
+    private val availableWorkers = Channel<CancellableContinuation<Runnable>>(Channel.UNLIMITED)
     private val workerPool = OnDemandAllocatingPool(workersCount) {
         Worker.start(name = "$name-$it").apply {
             executeAfter { workerRunLoop() }
@@ -91,7 +91,6 @@ private class MultiWorkerDispatcher(
     private inline fun Long.hasWorkers() = this < 0
 
     private fun workerRunLoop() = runBlocking {
-        val privateChannel = Channel<Runnable>(1)
         while (true) {
             val state = tasksAndWorkersCounter.getAndUpdate {
                 if (it.isClosed() && !it.hasTasks()) return@runBlocking
@@ -101,13 +100,19 @@ private class MultiWorkerDispatcher(
                 // we promised to process a task, and there are some
                 tasksQueue.receive().run()
             } else {
-                availableWorkers.send(privateChannel)
-                privateChannel.receiveCatching().getOrNull()?.run()
+                try {
+                    suspendCancellableCoroutine {
+                        availableWorkers.trySend(it)
+                    }.run()
+                } catch (e: CancellationException) {
+                    /** we are cancelled from [close] and thus will never get back to this branch of code,
+                    but there may still be pending work, so we can't just exit here. */
+                }
             }
         }
     }
 
-    private fun obtainWorker(): Channel<Runnable> {
+    private fun obtainWorker(): CancellableContinuation<Runnable> {
         // spin loop until a worker that promised to be here actually arrives.
         while (true) {
             val result = availableWorkers.tryReceive()
@@ -123,7 +128,7 @@ private class MultiWorkerDispatcher(
         }
         if (state.hasWorkers()) {
             // there are workers that have nothing to do, let's grab one of them
-            obtainWorker().trySend(block)
+            obtainWorker().resume(block)
         } else {
             workerPool.allocate()
             // no workers are available, we must queue the task
@@ -141,7 +146,7 @@ private class MultiWorkerDispatcher(
             }
             if (!state.hasWorkers())
                 break
-            obtainWorker().close()
+            obtainWorker().cancel()
         }
         /*
          * Here we cannot avoid waiting on `.result`, otherwise it will lead

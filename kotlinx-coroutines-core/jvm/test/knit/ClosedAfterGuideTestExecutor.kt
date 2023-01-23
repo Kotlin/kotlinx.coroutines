@@ -44,10 +44,7 @@ private class ClosedAfterGuideTestDispatcher(
     }
 
     override fun close() {
-        (executor as ExecutorService).apply {
-            shutdown()
-            awaitTermination(1, TimeUnit.MINUTES)
-        }
+        (executor as ExecutorService).shutdown()
     }
 
     override fun toString(): String = "ThreadPoolDispatcher[$nThreads, $name]"

@@ -26,8 +26,10 @@ class MultithreadedDispatcherStressTest {
                 })
             }
             dispatcher.close()
-            val m = shared.value
-            assertEquals(1_000, m, "$nThreads threads")
+            while (shared.value < 1_000) {
+                // spin.
+                // the test will hang here if the dispatcher drops tasks.
+            }
         }
     }
 }
