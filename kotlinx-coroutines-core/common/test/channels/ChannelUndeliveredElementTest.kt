@@ -138,4 +138,24 @@ class ChannelUndeliveredElementTest : TestBase() {
         channel.send(Unit)
         finish(3)
     }
+
+    @Test
+    fun testChannelBufferOverflow() = runTest {
+        testBufferOverflowStrategy(3, BufferOverflow.DROP_LATEST)
+        testBufferOverflowStrategy(1, BufferOverflow.DROP_OLDEST)
+    }
+
+    private suspend fun testBufferOverflowStrategy(expectedDroppedElement: Int, strategy: BufferOverflow) {
+        val list = ArrayList<Int>()
+        val channel = Channel<Int>(
+            capacity = 2,
+            onBufferOverflow = strategy,
+            onUndeliveredElement = { value -> list.add(value) }
+        )
+
+        (1..3).forEach { value ->
+            channel.send(value)
+        }
+        assertEquals(expectedDroppedElement, list.single())
+    }
 }
