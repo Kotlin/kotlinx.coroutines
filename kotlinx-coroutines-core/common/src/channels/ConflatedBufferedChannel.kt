@@ -5,11 +5,10 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.atomicfu.*
-import kotlinx.atomicfu.locks.*
 import kotlinx.coroutines.channels.BufferOverflow.*
 import kotlinx.coroutines.channels.ChannelResult.Companion.closed
 import kotlinx.coroutines.channels.ChannelResult.Companion.success
-import kotlinx.coroutines.internal.callUndeliveredElement
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.internal.OnUndeliveredElement
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
@@ -39,32 +38,41 @@ internal open class ConflatedBufferedChannel<E>(
 
     override suspend fun send(element: E) {
         // Should never suspend, implement via `trySend(..)`.
-        trySend(element).onClosed { // fails only when this channel is closed.
-            onUndeliveredElement?.callUndeliveredElement(element, coroutineContext)
+        trySendImpl(element, true).onClosed { // fails only when this channel is closed.
+            onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
+                it.addSuppressed(sendException)
+                throw it
+            }
             throw sendException
         }
     }
 
     override suspend fun sendBroadcast(element: E): Boolean {
         // Should never suspend, implement via `trySend(..)`.
-        trySend(element) // fails only when this channel is closed.
+        trySendImpl(element, true) // fails only when this channel is closed.
             .onSuccess { return true }
-            .onClosed { return false }
-        error("unreachable")
+        return false
     }
 
-    override fun trySend(element: E): ChannelResult<Unit> =
-        if (onBufferOverflow === DROP_LATEST) trySendDropLatest(element)
+    override fun trySend(element: E): ChannelResult<Unit> = trySendImpl(element, false)
+
+    private fun trySendImpl(element: E, isSendOp: Boolean) =
+        if (onBufferOverflow === DROP_LATEST) trySendDropLatest(element, isSendOp)
         else trySendDropOldest(element)
 
-    private fun trySendDropLatest(element: E): ChannelResult<Unit> {
+    private fun trySendDropLatest(element: E, isSendOp: Boolean): ChannelResult<Unit> {
         // Try to send the element without suspension.
         val result = super.trySend(element)
         // Complete on success or if this channel is closed.
         if (result.isSuccess || result.isClosed) return result
         // This channel is full. Drop the sending element.
-        // Call the `onUndeliveredElement` lambda (if required) and finish.
-        onUndeliveredElement?.invoke(element)
+        // Call the `onUndeliveredElement` lambda ONLY for 'send()' invocations,
+        // for 'trySend()' it is responsibility of the caller
+        if (isSendOp) {
+            onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
+                throw it
+            }
+        }
         return success(Unit)
     }
 

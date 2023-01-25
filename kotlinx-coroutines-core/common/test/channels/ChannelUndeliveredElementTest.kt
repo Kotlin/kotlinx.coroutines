@@ -141,11 +141,11 @@ class ChannelUndeliveredElementTest : TestBase() {
 
     @Test
     fun testChannelBufferOverflow() = runTest {
-        testBufferOverflowStrategy(3, BufferOverflow.DROP_LATEST)
-        testBufferOverflowStrategy(1, BufferOverflow.DROP_OLDEST)
+        testBufferOverflowStrategy(listOf(1, 2), BufferOverflow.DROP_OLDEST)
+        testBufferOverflowStrategy(listOf(3), BufferOverflow.DROP_LATEST)
     }
 
-    private suspend fun testBufferOverflowStrategy(expectedDroppedElement: Int, strategy: BufferOverflow) {
+    private suspend fun testBufferOverflowStrategy(expectedDroppedElements: List<Int>, strategy: BufferOverflow) {
         val list = ArrayList<Int>()
         val channel = Channel<Int>(
             capacity = 2,
@@ -153,9 +153,48 @@ class ChannelUndeliveredElementTest : TestBase() {
             onUndeliveredElement = { value -> list.add(value) }
         )
 
-        (1..3).forEach { value ->
-            channel.send(value)
+        channel.send(1)
+        channel.send(2)
+
+        channel.send(3)
+        channel.trySend(4).onFailure { expectUnreached() }
+        assertEquals(expectedDroppedElements, list)
+    }
+
+
+    @Test
+    fun testTrySendDoesNotInvokeHandlerOnClosedConflatedChannel() = runTest {
+        val conflated = Channel<Int>(Channel.CONFLATED, onUndeliveredElement = {
+            expectUnreached()
+        })
+        conflated.close(IndexOutOfBoundsException())
+        conflated.trySend(3)
+    }
+
+    @Test
+    fun testTrySendDoesNotInvokeHandlerOnClosedChannel() = runTest {
+        val conflated = Channel<Int>(3, onUndeliveredElement = {
+            expectUnreached()
+        })
+        conflated.close(IndexOutOfBoundsException())
+        repeat(10) {
+            conflated.trySend(3)
         }
-        assertEquals(expectedDroppedElement, list.single())
+    }
+
+    @Test
+    fun testTrySendDoesNotInvokeHandler() {
+        for (capacity in 0..2) {
+            testTrySendDoesNotInvokeHandler(capacity)
+        }
+    }
+
+    private fun testTrySendDoesNotInvokeHandler(capacity: Int) {
+        val channel = Channel<Int>(capacity, BufferOverflow.DROP_LATEST, onUndeliveredElement = {
+            expectUnreached()
+        })
+        repeat(10) {
+            channel.trySend(3)
+        }
     }
 }

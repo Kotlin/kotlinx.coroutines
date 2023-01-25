@@ -108,6 +108,7 @@ internal open class BufferedChannel<E>(
     // ## The send operations ##
     // #########################
 
+    // TODO onClosed misses stacktrace recovery mechanism even though it shouldn't
     override suspend fun send(element: E): Unit =
         sendImpl( // <-- this is an inline function
             element = element,
@@ -122,15 +123,19 @@ internal open class BufferedChannel<E>(
             // According to the `send(e)` contract, we need to call
             // `onUndeliveredElement(..)` handler and throw an exception
             // if the channel is already closed.
-            onClosed = { onClosedSend(element, coroutineContext) },
+            onClosed = { onClosedSend(element) },
             // When `send(e)` decides to suspend, the corresponding
             // `onNoWaiterSuspend` function that creates a continuation
             // is called. The tail-call optimization is applied here.
             onNoWaiterSuspend = { segm, i, elem, s -> sendOnNoWaiterSuspend(segm, i, elem, s) }
         )
 
-    private fun onClosedSend(element: E, coroutineContext: CoroutineContext) {
-        onUndeliveredElement?.callUndeliveredElement(element, coroutineContext)
+    private fun onClosedSend(element: E) {
+        onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
+            // If it crashes, add send exception as suppressed for better diagnostics
+            it.addSuppressed(sendException)
+            throw recoverStackTrace(it)
+        }
         throw recoverStackTrace(sendException)
     }
 
@@ -318,7 +323,7 @@ internal open class BufferedChannel<E>(
             // Update the cell according to the algorithm. Importantly, when
             // the channel is already closed, storing a waiter is illegal, so
             // the algorithm stores the `INTERRUPTED_SEND` token in this case.
-            when(updateCellSend(segment, i, element, s, waiter, closed)) {
+            when (updateCellSend(segment, i, element, s, waiter, closed)) {
                 RESULT_RENDEZVOUS -> {
                     // A rendezvous with a receiver has happened.
                     // The previous segments are no longer needed
@@ -853,7 +858,7 @@ internal open class BufferedChannel<E>(
                 updCellResult === FAILED -> {
                     // The cell is poisoned; restart from the beginning.
                     // To avoid memory leaks, we also need to reset
-                    // the `prev` pointer of t he working segment.
+                    // the `prev` pointer of the working segment.
                     if (r < sendersCounter) segment.cleanPrev()
                 }
                 else -> { // element
@@ -861,7 +866,7 @@ internal open class BufferedChannel<E>(
                     // Clean the reference to the previous segment.
                     segment.cleanPrev()
                     @Suppress("UNCHECKED_CAST")
-                    onUndeliveredElement?.invoke(updCellResult as E)
+                    onUndeliveredElement?.callUndeliveredElementCatchingException(updCellResult as E)?.let { throw it }
                 }
             }
         }
