@@ -884,6 +884,26 @@ public final class kotlinx/coroutines/debug/internal/DebugCoroutineInfo {
 	public final fun lastObservedStackTrace ()Ljava/util/List;
 }
 
+public final class kotlinx/coroutines/debug/internal/DebugProbesImpl {
+	public static final field INSTANCE Lkotlinx/coroutines/debug/internal/DebugProbesImpl;
+	public static final field installations$kotlinx$VolatileWrapper Lkotlinx/coroutines/debug/internal/DebugProbesImpl$Installations$kotlinx$VolatileWrapper;
+	public static final field sequenceNumber$kotlinx$VolatileWrapper Lkotlinx/coroutines/debug/internal/DebugProbesImpl$SequenceNumber$kotlinx$VolatileWrapper;
+	public final fun dumpCoroutinesInfo ()Ljava/util/List;
+	public final fun dumpCoroutinesInfoAsJsonAndReferences ()[Ljava/lang/Object;
+	public final fun dumpDebuggerInfo ()Ljava/util/List;
+	public final fun enhanceStackTraceWithThreadDump (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;Ljava/util/List;)Ljava/util/List;
+	public final fun enhanceStackTraceWithThreadDumpAsJson (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;)Ljava/lang/String;
+	public final fun isInstalled ()Z
+}
+
+public final class kotlinx/coroutines/debug/internal/DebugProbesImpl$Installations$kotlinx$VolatileWrapper {
+	public fun <init> ()V
+}
+
+public final class kotlinx/coroutines/debug/internal/DebugProbesImpl$SequenceNumber$kotlinx$VolatileWrapper {
+	public fun <init> ()V
+}
+
 public final class kotlinx/coroutines/debug/internal/DebuggerInfo : java/io/Serializable {
 	public fun <init> (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfoImpl;Lkotlin/coroutines/CoroutineContext;)V
 	public final fun getCoroutineId ()Ljava/lang/Long;
