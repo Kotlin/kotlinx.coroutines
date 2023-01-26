@@ -157,7 +157,7 @@ abstract class ChannelLincheckTestBase(
     open fun isEmpty() = c.isEmpty
 
     @StateRepresentation
-    fun state() = c.toString()
+    fun state() = (c as? BufferedChannel<*>)?.toStringDebug() ?: c.toString()
 
     @Validate
     fun validate() {

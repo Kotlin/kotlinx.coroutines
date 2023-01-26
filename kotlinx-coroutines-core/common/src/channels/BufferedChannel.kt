@@ -2623,9 +2623,70 @@ internal open class BufferedChannel<E>(
     // # Debug Functions #
     // ###################
 
+    @Suppress("ConvertTwoComparisonsToRangeCheck")
+    override fun toString(): String {
+        val sb = StringBuilder()
+        // Append the close status
+        when (sendersAndCloseStatus.value.sendersCloseStatus) {
+            CLOSE_STATUS_CLOSED -> sb.append("closed,")
+            CLOSE_STATUS_CANCELLED -> sb.append("cancelled,")
+        }
+        // Append the buffer capacity
+        sb.append("capacity=$capacity,")
+        // Append the data
+        sb.append("data=[")
+        val firstSegment = listOf(receiveSegment.value, sendSegment.value, bufferEndSegment.value)
+            .filter { it !== NULL_SEGMENT }
+            .minBy { it.id }
+        val r = receiversCounter
+        val s = sendersCounter
+        var segment = firstSegment
+        append_elements@ while (true) {
+            process_cell@ for (i in 0 until SEGMENT_SIZE) {
+                val globalCellIndex = segment.id * SEGMENT_SIZE + i
+                if (globalCellIndex >=s && globalCellIndex >= r) break@append_elements
+                val cellState = segment.getState(i)
+                val element = segment.getElement(i)
+                val cellStateString = when (cellState) {
+                    is CancellableContinuation<*> -> {
+                        when {
+                            globalCellIndex < r && globalCellIndex >= s -> "receive"
+                            globalCellIndex < s && globalCellIndex >= r -> "send"
+                            else -> "cont"
+                        }
+                    }
+                    is SelectInstance<*> -> {
+                        when {
+                            globalCellIndex < r && globalCellIndex >= s -> "onReceive"
+                            globalCellIndex < s && globalCellIndex >= r -> "onSend"
+                            else -> "select"
+                        }
+                    }
+                    is ReceiveCatching<*> -> "receiveCatching"
+                    is SendBroadcast -> "sendBroadcast"
+                    is WaiterEB -> "EB($cellState)"
+                    RESUMING_BY_RCV, RESUMING_BY_EB -> "resuming_sender"
+                    null, IN_BUFFER, DONE_RCV, POISONED, INTERRUPTED_RCV, INTERRUPTED_SEND, CHANNEL_CLOSED -> continue@process_cell
+                    else -> cellState.toString() // leave it just in case something is missed.
+                }
+                if (element != null) {
+                    sb.append("($cellStateString,$element),")
+                } else {
+                    sb.append("$cellStateString,")
+                }
+            }
+            // Process the next segment if exists.
+            segment = segment.next ?: break
+        }
+        if (sb.last() == ',') sb.deleteAt(sb.length - 1)
+        sb.append("]")
+        // The string representation is constructed.
+        return sb.toString()
+    }
+
     // Returns a debug representation of this channel,
     // which is actively used in Lincheck tests.
-    override fun toString(): String {
+    internal fun toStringDebug(): String {
         val sb = StringBuilder()
         // Append the counter values and the close status
         sb.append("S=${sendersCounter},R=${receiversCounter},B=${bufferEndCounter},B'=${completedExpandBuffersAndPauseFlag.value},C=${sendersAndCloseStatus.value.sendersCloseStatus},")
