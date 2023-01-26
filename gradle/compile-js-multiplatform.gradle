@@ -7,16 +7,9 @@ apply from: rootProject.file('gradle/node-js.gradle')
 kotlin {
     js {
         moduleName = project.name
-
-        // In 1.4.x it has in `both` and `legacy` mode and js() is of type `KotlinJsTarget`
-        // `irTarget` is non-null in `both` mode
-        // and contains appropriate `irTarget` with type `KotlinJsIrTarget`
-        // `irTarget` is null in `legacy` mode
-        if (it.irTarget != null) {
-            irTarget.nodejs()
-            irTarget.compilations['main']?.dependencies {
-                api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
-            }
+        nodejs()
+        compilations['main']?.dependencies {
+            api "org.jetbrains.kotlinx:atomicfu-js:$atomicfu_version"
         }
     }
 
@@ -26,9 +19,6 @@ kotlin {
         }
     }
 }
-
-// When source sets are configured
-apply from: rootProject.file('gradle/test-mocha-js.gradle')
 
 def compileJsLegacy = tasks.hasProperty("compileKotlinJsLegacy")
         ? compileKotlinJsLegacy
