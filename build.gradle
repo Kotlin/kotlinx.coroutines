@@ -66,8 +66,8 @@ buildscript {
         classpath "com.github.node-gradle:gradle-node-plugin:$gradle_node_version"
         classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
         classpath "ru.vyarus:gradle-animalsniffer-plugin:1.5.4" // Android API check
-        classpath "org.jetbrains.kotlinx:kover:$kover_version"
         classpath "org.jetbrains.kotlin:atomicfu:$kotlin_version"
+        classpath "org.jetbrains.kotlinx:kover-gradle-plugin:$kover_version"
 
         // JMH plugins
         classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
