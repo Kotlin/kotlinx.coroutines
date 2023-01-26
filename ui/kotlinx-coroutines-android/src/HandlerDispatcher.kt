@@ -128,6 +128,7 @@ internal class HandlerContext private constructor(
     ) : this(handler, name, false)
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var _immediate: HandlerContext? = if (invokeImmediately) this else null
 
     override val immediate: HandlerContext = _immediate ?:
@@ -176,6 +177,7 @@ internal class HandlerContext private constructor(
     override fun hashCode(): Int = System.identityHashCode(handler)
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 @Volatile
 private var choreographer: Choreographer? = null
 

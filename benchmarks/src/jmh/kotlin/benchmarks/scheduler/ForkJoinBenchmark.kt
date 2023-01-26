@@ -110,8 +110,13 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
         }
     }
 
-    class RecursiveAction(val coefficients: LongArray, val start: Int, val end: Int, @Volatile var result: Double = 0.0,
-                          parent: RecursiveAction? = null) : CountedCompleter<Double>(parent) {
+    class RecursiveAction(
+        val coefficients: LongArray,
+        val start: Int,
+        val end: Int,
+        @Volatile @OptIn(ExperimentalStdlibApi::class) var result: Double = 0.0,
+        parent: RecursiveAction? = null
+    ) : CountedCompleter<Double>(parent) {
 
         private var first: ForkJoinTask<Double>? = null
         private var second: ForkJoinTask<Double>? = null

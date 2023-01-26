@@ -14,13 +14,17 @@ class JobDisposeStressTest: TestBase() {
     private val TEST_DURATION = 3 * stressTestMultiplier // seconds
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var done = false
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var job: TestJob? = null
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var handle: DisposableHandle? = null
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var exception: Throwable? = null
 
     private fun testThread(name: String, block: () -> Unit): Thread =

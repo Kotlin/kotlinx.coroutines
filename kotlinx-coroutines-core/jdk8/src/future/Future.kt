@@ -180,7 +180,7 @@ public suspend fun <T> CompletionStage<T>.await(): T {
 }
 
 private class ContinuationHandler<T>(
-    @Volatile @JvmField var cont: Continuation<T>?
+    @Volatile @OptIn(ExperimentalStdlibApi::class) @JvmField var cont: Continuation<T>?
 ) : BiFunction<T?, Throwable?, Unit> {
     @Suppress("UNCHECKED_CAST")
     override fun apply(result: T?, exception: Throwable?) {

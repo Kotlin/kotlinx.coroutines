@@ -74,6 +74,7 @@ public class PublisherCoroutine<in T>(
     private val _nRequested = atomic(0L) // < 0 when closed (CLOSED or SIGNALLED)
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var cancelled = false // true after Subscription.cancel() is invoked
 
     override val isClosedForSend: Boolean get() = !isActive

@@ -17,6 +17,7 @@ actual fun randomWait() {
 
 private object BlackHole {
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     var sink = 1
 }
 
