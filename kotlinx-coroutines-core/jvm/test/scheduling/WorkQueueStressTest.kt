@@ -22,6 +22,7 @@ class WorkQueueStressTest : TestBase() {
     private val producerQueue = WorkQueue()
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var producerFinished = false
 
     @Before

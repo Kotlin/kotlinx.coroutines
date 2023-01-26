@@ -197,6 +197,7 @@ public class FlowSubscription<T>(
     private val requested = atomic(0L)
     private val producer = atomic<Continuation<Unit>?>(createInitialContinuation())
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var cancellationRequested = false
 
     // This code wraps startCoroutineCancellable into continuation

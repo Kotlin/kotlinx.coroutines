@@ -57,6 +57,7 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
     override var dispatcher: String = "fjp"
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var state: Array<LongArray>? = null
 
     @Setup

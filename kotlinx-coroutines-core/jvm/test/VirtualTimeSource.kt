@@ -27,9 +27,11 @@ internal inline fun withVirtualTimeSource(log: PrintStream? = null, block: () ->
 private const val NOT_PARKED = -1L
 
 private class ThreadStatus {
-    @Volatile @JvmField
+    @Volatile
+    @OptIn(ExperimentalStdlibApi::class) @JvmField
     var parkedTill = NOT_PARKED
-    @Volatile @JvmField
+    @Volatile
+    @OptIn(ExperimentalStdlibApi::class) @JvmField
     var permit = false
     var registered = 0
     override fun toString(): String = "parkedTill = ${TimeUnit.NANOSECONDS.toMillis(parkedTill)} ms, permit = $permit"
@@ -47,9 +49,11 @@ internal class VirtualTimeSource(
     private var checkpointNanos: Long = System.nanoTime()
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var isShutdown = false
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var time: Long = 0
 
     private var trackedTasks = 0

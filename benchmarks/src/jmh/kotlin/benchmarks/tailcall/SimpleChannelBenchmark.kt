@@ -19,6 +19,7 @@ open class SimpleChannelBenchmark {
     private val iterations = 10_000
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var sink: Int = 0
 
     @Benchmark

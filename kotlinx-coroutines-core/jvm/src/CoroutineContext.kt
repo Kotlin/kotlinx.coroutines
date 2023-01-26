@@ -213,6 +213,7 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
      * in another.
      */
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var threadLocalIsSet = false
 
     init {

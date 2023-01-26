@@ -24,9 +24,11 @@ class JobHandlersUpgradeStressTest : TestBase() {
     private val sink = atomic(0)
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var done = false
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var job: Job? = null
 
     internal class State {
