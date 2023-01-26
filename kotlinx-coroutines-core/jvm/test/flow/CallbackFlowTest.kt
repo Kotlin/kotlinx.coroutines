@@ -15,6 +15,7 @@ class CallbackFlowTest : TestBase() {
     private class CallbackApi(val block: (SendChannel<Int>) -> Unit) {
         var started = false
         @Volatile
+        @OptIn(ExperimentalStdlibApi::class)
         var stopped = false
         lateinit var thread: Thread
 

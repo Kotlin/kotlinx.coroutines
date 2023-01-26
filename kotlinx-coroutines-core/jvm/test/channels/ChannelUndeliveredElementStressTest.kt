@@ -40,6 +40,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     private val receiverDone = Channel<Boolean>(1)
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var lastReceived = -1L
 
     private var stoppedSender = 0L

@@ -23,7 +23,8 @@ suspend fun massiveRun(action: suspend () -> Unit) {
     println("Completed ${n * k} actions in $time ms")    
 }
 
-@Volatile // in Kotlin `volatile` is an annotation 
+@OptIn(ExperimentalStdlibApi::class)
+@Volatile // in Kotlin `volatile` is an annotation
 var counter = 0
 
 fun main() = runBlocking {
