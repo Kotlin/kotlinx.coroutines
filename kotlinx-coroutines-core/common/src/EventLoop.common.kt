@@ -412,6 +412,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         @JvmField var nanoTime: Long
     ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode, SynchronizedObject() {
         @Volatile
+        @OptIn(ExperimentalStdlibApi::class)
         private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
 
         override var heap: ThreadSafeHeap<*>?
