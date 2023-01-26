@@ -5,6 +5,7 @@
 // Platform-specific configuration to compile JS modules
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
+import org.jetbrains.kotlin.gradle.targets.js.*
 
 plugins {
     kotlin("js")
@@ -15,7 +16,7 @@ dependencies {
 }
 
 kotlin {
-    js(LEGACY) {
+    js(IR) {
         moduleName = project.name.removeSuffix("-js")
     }
 
