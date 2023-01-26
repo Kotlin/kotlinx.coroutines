@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.*
  */
 internal class ResizableAtomicArray<T>(initialLength: Int) {
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var array = AtomicReferenceArray<T>(initialLength)
 
     // for debug output

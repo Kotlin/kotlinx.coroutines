@@ -29,6 +29,7 @@ internal object DebugProbesImpl {
     private val capturedCoroutines: Set<CoroutineOwner<*>> get() = capturedCoroutinesMap.keys
 
     @Volatile
+    @OptIn(ExperimentalStdlibApi::class)
     private var installations = 0
 
     /**

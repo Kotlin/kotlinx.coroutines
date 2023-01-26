@@ -583,7 +583,8 @@ internal class CoroutineScheduler(
         }
 
         // guarded by scheduler lock, index in workers array, 0 when not in array (terminated)
-        @Volatile // volatile for push/pop operation into parkedWorkersStack
+        @Volatile
+        @OptIn(ExperimentalStdlibApi::class) // volatile for push/pop operation into parkedWorkersStack
         var indexInArray = 0
             set(index) {
                 name = "$schedulerName-worker-${if (index == 0) "TERMINATED" else index.toString()}"
@@ -634,6 +635,7 @@ internal class CoroutineScheduler(
          * This reference is set to [NOT_IN_STACK] when worker is physically not in stack.
          */
         @Volatile
+        @OptIn(ExperimentalStdlibApi::class)
         var nextParkedWorker: Any? = NOT_IN_STACK
 
         /*
