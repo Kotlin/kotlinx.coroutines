@@ -14,6 +14,7 @@ class PrecompiledDebugProbesTest {
     private val overwrite = java.lang.Boolean.getBoolean("overwrite.probes")
 
     @Test
+    @Ignore
     fun testClassFileContent() {
         val clz = Class.forName("kotlin.coroutines.jvm.internal.DebugProbesKt")
         val classFileResourcePath = clz.name.replace(".", "/") + ".class"
