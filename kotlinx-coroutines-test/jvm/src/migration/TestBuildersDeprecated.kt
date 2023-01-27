@@ -165,7 +165,7 @@ public fun runTestWithLegacyScope(
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
     val testScope = TestBodyCoroutine(createTestCoroutineScope(context + RunningInRunTest))
     return createTestResult {
-        runTestCoroutine(testScope, dispatchTimeoutMs.milliseconds, TestBodyCoroutine::tryGetCompletionCause, testBody) {
+        runTestCoroutine(testScope, dispatchTimeoutMs.milliseconds, null, TestBodyCoroutine::tryGetCompletionCause, testBody) {
             try {
                 testScope.cleanup()
                 emptyList()

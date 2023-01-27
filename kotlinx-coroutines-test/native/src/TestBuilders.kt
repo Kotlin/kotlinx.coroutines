@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.test
 import kotlinx.coroutines.*
+import kotlin.native.concurrent.*
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit
@@ -12,4 +13,13 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
     runBlocking {
         testProcedure()
     }
+}
+
+internal actual fun getLastKnownPosition(): Any? = null
+
+@OptIn(ExperimentalStdlibApi::class)
+internal actual fun dumpCoroutinesAndThrow(exception: Throwable, lastKnownPosition: Any?) {
+    // log exception
+    processUnhandledException(exception)
+    throw exception
 }

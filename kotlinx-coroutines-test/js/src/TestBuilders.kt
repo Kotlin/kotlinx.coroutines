@@ -13,3 +13,10 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
     GlobalScope.promise {
         testProcedure()
     }
+
+internal actual fun getLastKnownPosition(): Any? = null
+
+internal actual fun dumpCoroutinesAndThrow(exception: Throwable, lastKnownPosition: Any?) {
+    console.error(exception)
+    throw exception
+}

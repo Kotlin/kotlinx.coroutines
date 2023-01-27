@@ -7,11 +7,13 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * A test result.
@@ -29,7 +31,6 @@ import kotlin.time.Duration.Companion.milliseconds
  * * Don't nest functions returning a [TestResult].
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-@ExperimentalCoroutinesApi
 public expect class TestResult
 
 /**
@@ -118,6 +119,12 @@ public expect class TestResult
  *
  * If the created coroutine completes with an exception, then this exception will be thrown at the end of the test.
  *
+ * #### Timing out
+ *
+ * There's a built-in timeout of 10 seconds for the test body. If the test body doesn't complete within this time,
+ * then the test fails with an [UncompletedCoroutinesError]. The timeout can be changed by setting the [timeout]
+ * parameter.
+ *
  * #### Reported exceptions
  *
  * Unhandled exceptions will be thrown at the end of the test.
@@ -131,12 +138,6 @@ public expect class TestResult
  * Otherwise, the test will be failed (which, on JVM and Native, means that [runTest] itself will throw
  * [AssertionError], whereas on JS, the `Promise` will fail with it).
  *
- * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
- * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
- * for [dispatchTimeout] (by default, 60 seconds) from the moment when [TestCoroutineScheduler] becomes
- * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
- * task during that time, the timer gets reset.
- *
  * ### Configuration
  *
  * [context] can be used to affect the environment of the code under test. Beside just being passed to the coroutine
@@ -148,12 +149,12 @@ public expect class TestResult
 @ExperimentalCoroutinesApi
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
-    dispatchTimeout: Duration = DEFAULT_DISPATCH_TIMEOUT,
+    timeout: Duration? = null,
     testBody: suspend TestScope.() -> Unit
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    return TestScope(context + RunningInRunTest).runTest(dispatchTimeout, testBody)
+    return TestScope(context + RunningInRunTest).runTest(timeout, testBody)
 }
 
 /**
@@ -270,27 +271,33 @@ public fun runTest(
  * @throws IllegalArgumentException if the [context] is invalid. See the [TestScope] constructor docs for details.
  */
 @ExperimentalCoroutinesApi
+@Deprecated(
+    "Define a total timeout for the whole test instead of using dispatchTimeoutMs. " +
+        "Warning: the proposed replacement is not identical as it uses 'dispatchTimeoutMs' as the timeout for the whole test!",
+    ReplaceWith("runTest(context, timeout = with(kotlin.time.Duration.Companion) { dispatchTimeoutMs.milliseconds }, testBody)"),
+    DeprecationLevel.WARNING
+)
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
     dispatchTimeoutMs: Long,
     testBody: suspend TestScope.() -> Unit
-): TestResult = runTest(
-    context = context,
-    dispatchTimeout = dispatchTimeoutMs.milliseconds,
-    testBody = testBody
-)
+): TestResult {
+    if (context[RunningInRunTest] != null)
+        throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
+    @Suppress("DEPRECATION")
+    return TestScope(context + RunningInRunTest).runTest(dispatchTimeoutMs = dispatchTimeoutMs, testBody)
+}
 
 /**
  * Performs [runTest] on an existing [TestScope].
  */
-@ExperimentalCoroutinesApi
 public fun TestScope.runTest(
-    dispatchTimeout: Duration,
+    timeout: Duration? = null,
     testBody: suspend TestScope.() -> Unit
 ): TestResult = asSpecificImplementation().let {
     it.enter()
     createTestResult {
-        runTestCoroutine(it, dispatchTimeout, TestScopeImpl::tryGetCompletionCause, testBody) {
+        runTestCoroutine(it, null, timeout, TestScopeImpl::tryGetCompletionCause, testBody) {
             backgroundScope.cancel()
             testScheduler.advanceUntilIdleOr { false }
             it.leave()
@@ -300,15 +307,33 @@ public fun TestScope.runTest(
 
 /**
  * Performs [runTest] on an existing [TestScope].
+ *
+ * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
+ * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
+ * for [dispatchTimeoutMs] from the moment when [TestCoroutineScheduler] becomes
+ * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
+ * task during that time, the timer gets reset.
  */
 @ExperimentalCoroutinesApi
-public fun TestScope.runTest(
-    dispatchTimeoutMs: Long = DEFAULT_DISPATCH_TIMEOUT_MS,
-    testBody: suspend TestScope.() -> Unit
-): TestResult = runTest(
-    dispatchTimeout = dispatchTimeoutMs.milliseconds,
-    testBody = testBody
+@Deprecated(
+    "Define a total timeout for the whole test instead of using dispatchTimeoutMs. " +
+        "Warning: the proposed replacement is not identical as it uses 'dispatchTimeoutMs' as the timeout for the whole test!",
+    ReplaceWith("this.runTest(timeout = with(kotlin.time.Duration.Companion) { dispatchTimeoutMs.milliseconds }, testBody)"),
+    DeprecationLevel.WARNING
 )
+public fun TestScope.runTest(
+    dispatchTimeoutMs: Long,
+    testBody: suspend TestScope.() -> Unit
+): TestResult = asSpecificImplementation().let {
+    it.enter()
+    createTestResult {
+        runTestCoroutine(it, dispatchTimeoutMs.milliseconds, null, TestScopeImpl::tryGetCompletionCause, testBody) {
+            backgroundScope.cancel()
+            testScheduler.advanceUntilIdleOr { false }
+            it.leave()
+        }
+    }
+}
 
 /**
  * Runs [testProcedure], creating a [TestResult].
@@ -327,20 +352,26 @@ internal object RunningInRunTest : CoroutineContext.Key<RunningInRunTest>, Corou
 /** The default timeout to use when waiting for asynchronous completions of the coroutines managed by
  * a [TestCoroutineScheduler]. */
 internal const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
-internal val DEFAULT_DISPATCH_TIMEOUT = DEFAULT_DISPATCH_TIMEOUT_MS.milliseconds
+
+/**
+ * The default timeout to use when running a test.
+ */
+internal val DEFAULT_TIMEOUT = 10.seconds
 
 /**
  * Run the [body][testBody] of the [test coroutine][coroutine], waiting for asynchronous completions for at most
- * [dispatchTimeout], and performing the [cleanup] procedure at the end.
+ * [dispatchTimeout], allowing the total runtime of a test of at most [testTimeout],
+ * and performing the [cleanup] procedure at the end.
  *
  * [tryGetCompletionCause] is the [JobSupport.completionCause], which is passed explicitly because it is protected.
  *
  * The [cleanup] procedure may either throw [UncompletedCoroutinesError] to denote that child coroutines were leaked, or
  * return a list of uncaught exceptions that should be reported at the end of the test.
  */
-internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutine(
+internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutine(
     coroutine: T,
-    dispatchTimeout: Duration,
+    dispatchTimeout: Duration?,
+    testTimeout: Duration?,
     tryGetCompletionCause: T.() -> Throwable?,
     testBody: suspend T.() -> Unit,
     cleanup: () -> List<Throwable>,
@@ -350,59 +381,104 @@ internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutin
     coroutine.start(CoroutineStart.UNDISPATCHED, coroutine) {
         testBody()
     }
-    /**
-     * The general procedure here is as follows:
-     * 1. Try running the work that the scheduler knows about, both background and foreground.
-     *
-     * 2. Wait until we run out of foreground work to do. This could mean one of the following:
-     *    * The main coroutine is already completed. This is checked separately; then we leave the procedure.
-     *    * It's switched to another dispatcher that doesn't know about the [TestCoroutineScheduler].
-     *    * Generally, it's waiting for something external (like a network request, or just an arbitrary callback).
-     *    * The test simply hanged.
-     *    * The main coroutine is waiting for some background work.
-     *
-     * 3. We await progress from things that are not the code under test:
-     *    the background work that the scheduler knows about, the external callbacks,
-     *    the work on dispatchers not linked to the scheduler, etc.
-     *
-     *    When we observe that the code under test can proceed, we go to step 1 again.
-     *    If there is no activity for [dispatchTimeoutMs] milliseconds, we consider the test to have hanged.
-     *
-     *    The background work is not running on a dedicated thread.
-     *    Instead, the test thread itself is used, by spawning a separate coroutine.
-     */
-    var completed = false
-    while (!completed) {
-        scheduler.advanceUntilIdle()
-        if (coroutine.isCompleted) {
-            /* don't even enter `withTimeout`; this allows to use a timeout of zero to check that there are no
+    if (dispatchTimeout != null) {
+        require(testTimeout == null) { "Only one of dispatchTimeout and testTimeout can be specified" }
+        /**
+         * This is the legacy behavior, kept for now for compatibility only.
+         *
+         * The general procedure here is as follows:
+         * 1. Try running the work that the scheduler knows about, both background and foreground.
+         *
+         * 2. Wait until we run out of foreground work to do. This could mean one of the following:
+         *    * The main coroutine is already completed. This is checked separately; then we leave the procedure.
+         *    * It's switched to another dispatcher that doesn't know about the [TestCoroutineScheduler].
+         *    * Generally, it's waiting for something external (like a network request, or just an arbitrary callback).
+         *    * The test simply hanged.
+         *    * The main coroutine is waiting for some background work.
+         *
+         * 3. We await progress from things that are not the code under test:
+         *    the background work that the scheduler knows about, the external callbacks,
+         *    the work on dispatchers not linked to the scheduler, etc.
+         *
+         *    When we observe that the code under test can proceed, we go to step 1 again.
+         *    If there is no activity for [dispatchTimeoutMs] milliseconds, we consider the test to have hanged.
+         *
+         *    The background work is not running on a dedicated thread.
+         *    Instead, the test thread itself is used, by spawning a separate coroutine.
+         */
+        var completed = false
+        while (!completed) {
+            scheduler.advanceUntilIdle()
+            if (coroutine.isCompleted) {
+                /* don't even enter `withTimeout`; this allows to use a timeout of zero to check that there are no
                non-trivial dispatches. */
-            completed = true
-            continue
-        }
-        // in case progress depends on some background work, we need to keep spinning it.
-        val backgroundWorkRunner = launch(CoroutineName("background work runner")) {
-            while (true) {
-                scheduler.tryRunNextTaskUnless { !isActive }
-                // yield so that the `select` below has a chance to check if its conditions are fulfilled
-                yield()
+                completed = true
+                continue
+            }
+            // in case progress depends on some background work, we need to keep spinning it.
+            val backgroundWorkRunner = launch(CoroutineName("background work runner")) {
+                while (true) {
+                    val executedSomething = scheduler.tryRunNextTaskUnless { !isActive }
+                    if (executedSomething) {
+                        // yield so that the `select` below has a chance to finish successfully or time out
+                        yield()
+                    } else {
+                        // no more tasks, we should suspend until there are some more.
+                        // this doesn't interfere with the `select` below, because different channels are used.
+                        scheduler.receiveDispatchEvent()
+                    }
+                }
+            }
+            try {
+                select<Unit> {
+                    coroutine.onJoin {
+                        // observe that someone completed the test coroutine and leave without waiting for the timeout
+                        completed = true
+                    }
+                    scheduler.onDispatchEventForeground {
+                        // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
+                    }
+                    onTimeout(dispatchTimeout) {
+                        handleTimeout(coroutine, dispatchTimeout, tryGetCompletionCause, cleanup)?.let { throw it }
+                    }
+                }
+            } finally {
+                backgroundWorkRunner.cancelAndJoin()
             }
         }
+    } else {
+        val lastKnownPosition = MutableStateFlow<Any?>(null)
+        /**
+         * We run the tasks in the test coroutine using [Dispatchers.Default]. On JS, this does nothing particularly,
+         * but on the JVM and Native, this means that the timeout can be processed even while the test runner is busy
+         * doing some synchronous work.
+         */
+        val workRunner = launch(Dispatchers.Default + CoroutineName("kotlinx.coroutines.test runner")) {
+            while (true) {
+                lastKnownPosition.value = getLastKnownPosition()
+                val executedSomething = scheduler.tryRunNextTaskUnless { !isActive }
+                if (executedSomething) {
+                    // yield to check for cancellation
+                    yield()
+                } else {
+                    // no more tasks, we should suspend until there are some more
+                    scheduler.receiveDispatchEvent()
+                }
+            }
+        }
+        val timeout = testTimeout ?: DEFAULT_TIMEOUT
         try {
-            select<Unit> {
-                coroutine.onJoin {
-                    // observe that someone completed the test coroutine and leave without waiting for the timeout
-                    completed = true
-                }
-                scheduler.onDispatchEvent {
-                    // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
-                }
-                onTimeout(dispatchTimeout) {
-                    handleTimeout(coroutine, dispatchTimeout, tryGetCompletionCause, cleanup)
-                }
+            withTimeout(timeout) {
+                coroutine.join()
+            }
+        } catch (_: TimeoutCancellationException) {
+            val exception = handleTimeout(coroutine, timeout, tryGetCompletionCause, cleanup)
+            exception?.let {
+                dumpCoroutinesAndThrow(it, lastKnownPosition.value)
             }
         } finally {
-            backgroundWorkRunner.cancelAndJoin()
+            coroutine.cancelAndJoin()
+            workRunner.cancelAndJoin()
         }
     }
     coroutine.getCompletionExceptionOrNull()?.let { exception ->
@@ -421,12 +497,12 @@ internal suspend fun <T: AbstractCoroutine<Unit>> CoroutineScope.runTestCoroutin
  * Invoked on timeout in [runTest]. Almost always just builds a nice [UncompletedCoroutinesError] and throws it.
  * However, sometimes it detects that the coroutine completed, in which case it returns normally.
  */
-private inline fun<T: AbstractCoroutine<Unit>> handleTimeout(
+private inline fun <T : AbstractCoroutine<Unit>> handleTimeout(
     coroutine: T,
     dispatchTimeout: Duration,
     tryGetCompletionCause: T.() -> Throwable?,
     cleanup: () -> List<Throwable>,
-) {
+): AssertionError? {
     val uncaughtExceptions = try {
         cleanup()
     } catch (e: UncompletedCoroutinesError) {
@@ -442,14 +518,14 @@ private inline fun<T: AbstractCoroutine<Unit>> handleTimeout(
         message += ", there were active child jobs: $activeChildren"
     if (completionCause != null && activeChildren.isEmpty()) {
         if (coroutine.isCompleted)
-            return
+            return null
         // TODO: can this really ever happen?
         message += ", the test coroutine was not completed"
     }
     val error = UncompletedCoroutinesError(message)
     completionCause?.let { cause -> error.addSuppressed(cause) }
     uncaughtExceptions.forEach { error.addSuppressed(it) }
-    throw error
+    return error
 }
 
 internal fun List<Throwable>.throwAll() {
@@ -458,3 +534,8 @@ internal fun List<Throwable>.throwAll() {
         throw this
     }
 }
+
+internal expect fun getLastKnownPosition(): Any?
+
+
+internal expect fun dumpCoroutinesAndThrow(exception: Throwable, lastKnownPosition: Any?)

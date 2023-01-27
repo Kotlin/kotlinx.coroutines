@@ -72,7 +72,12 @@ class RunTestTest {
     /** Tests that too low of a dispatch timeout causes crashes. */
     @Test
     fun testRunTestWithSmallTimeout() = testResultMap({ fn ->
-        assertFailsWith<UncompletedCoroutinesError> { fn() }
+        try {
+            fn()
+            fail("shouldn't be reached")
+        } catch (e: Throwable) {
+            assertIs<UncompletedCoroutinesError>(e)
+        }
     }) {
         runTest(dispatchTimeoutMs = 100) {
             withContext(Dispatchers.Default) {

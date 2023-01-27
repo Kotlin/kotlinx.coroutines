@@ -26,7 +26,6 @@ import kotlin.time.*
  * virtual time as needed (via [advanceUntilIdle]), or run the tasks that are scheduled to run as soon as possible but
  * haven't yet been dispatched (via [runCurrent]).
  */
-@ExperimentalCoroutinesApi
 public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCoroutineScheduler),
     CoroutineContext.Element {
 
@@ -48,6 +47,9 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     public var currentTime: Long = 0
         get() = synchronized(lock) { field }
         private set
+
+    /** A channel for notifying about the fact that a foreground work dispatch recently happened. */
+    private val dispatchEventsForeground: Channel<Unit> = Channel(CONFLATED)
 
     /** A channel for notifying about the fact that a dispatch recently happened. */
     private val dispatchEvents: Channel<Unit> = Channel(CONFLATED)
@@ -73,8 +75,8 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             val time = addClamping(currentTime, timeDeltaMillis)
             val event = TestDispatchEvent(dispatcher, count, time, marker as Any, isForeground) { isCancelled(marker) }
             events.addLast(event)
-            /** can't be moved above: otherwise, [onDispatchEvent] could consume the token sent here before there's
-             * actually anything in the event queue. */
+            /** can't be moved above: otherwise, [onDispatchEventForeground] or [receiveDispatchEvent] could consume the
+             * token sent here before there's actually anything in the event queue. */
             sendDispatchEvent(context)
             DisposableHandle {
                 synchronized(lock) {
@@ -109,7 +111,6 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * milliseconds by which the execution of this method has advanced the virtual time. If you want to recreate that
      * functionality, query [currentTime] before and after the execution to achieve the same result.
      */
-    @ExperimentalCoroutinesApi
     public fun advanceUntilIdle(): Unit = advanceUntilIdleOr { events.none(TestDispatchEvent<*>::isForeground) }
 
     /**
@@ -125,7 +126,6 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /**
      * Runs the tasks that are scheduled to execute at this moment of virtual time.
      */
-    @ExperimentalCoroutinesApi
     public fun runCurrent() {
         val timeMark = synchronized(lock) { currentTime }
         while (true) {
@@ -178,6 +178,14 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     }
 
     /**
+     * Moves the virtual clock of this dispatcher forward by [the specified amount][delayTime], running the
+     * scheduled tasks in the meantime.
+     *
+     * @throws IllegalStateException if passed a negative [delay][delayTime].
+     */
+    public fun advanceTimeBy(delayTime: Duration): Unit = advanceTimeBy(delayTime.inWholeMicroseconds)
+
+    /**
      * Checks that the only tasks remaining in the scheduler are cancelled.
      */
     internal fun isIdle(strict: Boolean = true): Boolean =
@@ -191,19 +199,24 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * [context] is the context in which the task will be dispatched.
      */
     internal fun sendDispatchEvent(context: CoroutineContext) {
+        dispatchEvents.trySend(Unit)
         if (context[BackgroundWork] !== BackgroundWork)
-            dispatchEvents.trySend(Unit)
+            dispatchEventsForeground.trySend(Unit)
     }
 
     /**
-     * Consumes the knowledge that a dispatch event happened recently.
+     * Waits for a notification about a dispatch event.
      */
-    internal val onDispatchEvent: SelectClause1<Unit> get() = dispatchEvents.onReceive
+    internal suspend fun receiveDispatchEvent() = dispatchEvents.receive()
+
+    /**
+     * Consumes the knowledge that a foreground work dispatch event happened recently.
+     */
+    internal val onDispatchEventForeground: SelectClause1<Unit> get() = dispatchEventsForeground.onReceive
 
     /**
      * Returns the [TimeSource] representation of the virtual time of this scheduler.
      */
-    @ExperimentalCoroutinesApi
     @ExperimentalTime
     public val timeSource: TimeSource = object : AbstractLongTimeSource(DurationUnit.MILLISECONDS) {
         override fun read(): Long = currentTime
