@@ -165,4 +165,30 @@ class FlowAsPublisherTest : TestBase() {
         }
         finish(4)
     }
+
+    @Test
+    fun testSingleElementPublisher() = runTest {
+        val publisher = flowOf(1).asPublisher()
+        expect(1)
+        publisher.subscribe(object : Subscriber<Int> {
+            override fun onSubscribe(s: Subscription) {
+                expect(2)
+                s.request(1)
+            }
+
+            override fun onNext(t: Int) {
+                expect(3)
+                assertEquals(1, t)
+            }
+
+            override fun onComplete() {
+                expect(4)
+            }
+
+            override fun onError(t: Throwable?) {
+                expectUnreached()
+            }
+        })
+        finish(5)
+    }
 }

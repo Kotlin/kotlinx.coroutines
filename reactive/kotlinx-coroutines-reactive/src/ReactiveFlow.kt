@@ -234,17 +234,16 @@ public class FlowSubscription<T>(
      */
     private suspend fun consumeFlow() {
         flow.collect { value ->
-            // Emit the value
-            subscriber.onNext(value)
-            // Suspend if needed before requesting the next value
-            if (requested.decrementAndGet() <= 0) {
+            // Suspend if needed before emitting the next value
+            if (requested.getAndDecrement() <= 0) {
                 suspendCancellableCoroutine<Unit> {
                     producer.value = it
                 }
-            } else {
-                // check for cancellation if we don't suspend
-                coroutineContext.ensureActive()
             }
+            // Emit the value
+            subscriber.onNext(value)
+            // check for cancellation if we don't suspend
+            coroutineContext.ensureActive()
         }
     }
 
