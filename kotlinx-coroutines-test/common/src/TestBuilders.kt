@@ -125,6 +125,9 @@ public expect class TestResult
  * then the test fails with an [UncompletedCoroutinesError]. The timeout can be changed by setting the [timeout]
  * parameter.
  *
+ * On the JVM, if `DebugProbes` from the `kotlinx-coroutines-debug` module are installed, the current dump of the
+ * coroutines' stack is printed to the console on timeout.
+ *
  * #### Reported exceptions
  *
  * Unhandled exceptions will be thrown at the end of the test.
@@ -146,7 +149,6 @@ public expect class TestResult
  *
  * @throws IllegalArgumentException if the [context] is invalid. See the [TestScope] constructor docs for details.
  */
-@ExperimentalCoroutinesApi
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
     timeout: Duration? = null,
@@ -270,7 +272,6 @@ public fun runTest(
  *
  * @throws IllegalArgumentException if the [context] is invalid. See the [TestScope] constructor docs for details.
  */
-@ExperimentalCoroutinesApi
 @Deprecated(
     "Define a total timeout for the whole test instead of using dispatchTimeoutMs. " +
         "Warning: the proposed replacement is not identical as it uses 'dispatchTimeoutMs' as the timeout for the whole test!",
@@ -314,7 +315,6 @@ public fun TestScope.runTest(
  * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
  * task during that time, the timer gets reset.
  */
-@ExperimentalCoroutinesApi
 @Deprecated(
     "Define a total timeout for the whole test instead of using dispatchTimeoutMs. " +
         "Warning: the proposed replacement is not identical as it uses 'dispatchTimeoutMs' as the timeout for the whole test!",
