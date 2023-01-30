@@ -22,6 +22,8 @@ repositories {
     if (!kotlinDevUrl.isNullOrEmpty()) {
         maven(kotlinDevUrl)
     }
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
     if (buildSnapshotTrain) {
         mavenLocal()
     }
