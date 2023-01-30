@@ -56,7 +56,7 @@ public expect object Dispatchers {
      * ```
      * withContext(Dispatchers.Unconfined) {
      *    println(1)
-     *    withContext(Dispatchers.Unconfined) { // Nested unconfined
+     *    launch(Dispatchers.Unconfined) { // Nested unconfined
      *        println(2)
      *    }
      *    println(3)
