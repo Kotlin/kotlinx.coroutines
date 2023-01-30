@@ -167,7 +167,7 @@ class FlowAsPublisherTest : TestBase() {
     }
 
     @Test
-    fun testSingleElementPublisher() = runTest {
+    fun testSingleRequestOnSingleElementPublisherCompletes() = runTest {
         val publisher = flowOf(1).asPublisher()
         expect(1)
         publisher.subscribe(object : Subscriber<Int> {
