@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class TestScopeTest {
     /** Tests failing to create a [TestScope] with incorrect contexts. */
@@ -249,7 +250,7 @@ class TestScopeTest {
             assertEquals(1, j)
         }
         job.join()
-        advanceTimeBy(199) // should work the same for the background tasks
+        advanceTimeBy(199.milliseconds) // should work the same for the background tasks
         assertEquals(2, i)
         assertEquals(4, j)
         advanceUntilIdle() // once again, should do nothing
@@ -377,7 +378,7 @@ class TestScopeTest {
 
         }
     }) {
-        runTest(dispatchTimeoutMs = 100) {
+        runTest(timeout = 100.milliseconds) {
             backgroundScope.launch {
                 while (true) {
                     yield()
@@ -407,7 +408,7 @@ class TestScopeTest {
 
         }
     }) {
-        runTest(UnconfinedTestDispatcher(), dispatchTimeoutMs = 100) {
+        runTest(UnconfinedTestDispatcher(), timeout = 100.milliseconds) {
             /**
              * Having a coroutine like this will still cause the test to hang:
                  backgroundScope.launch {

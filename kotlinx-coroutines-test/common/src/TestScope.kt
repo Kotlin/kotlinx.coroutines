@@ -121,6 +121,16 @@ public fun TestScope.runCurrent(): Unit = testScheduler.runCurrent()
 public fun TestScope.advanceTimeBy(delayTimeMillis: Long): Unit = testScheduler.advanceTimeBy(delayTimeMillis)
 
 /**
+ * Moves the virtual clock of this dispatcher forward by [the specified amount][delayTime], running the
+ * scheduled tasks in the meantime.
+ *
+ * @throws IllegalStateException if passed a negative [delay][delayTime].
+ * @see TestCoroutineScheduler.advanceTimeBy
+ */
+@ExperimentalCoroutinesApi
+public fun TestScope.advanceTimeBy(delayTime: Duration): Unit = testScheduler.advanceTimeBy(delayTime)
+
+/**
  * The [test scheduler][TestScope.testScheduler] as a [TimeSource].
  * @see TestCoroutineScheduler.timeSource
  */
