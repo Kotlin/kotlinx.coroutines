@@ -50,9 +50,9 @@ public sealed interface TestScope : CoroutineScope {
      * A scope for background work.
      *
      * This scope is automatically cancelled when the test finishes.
-     * Additionally, while the coroutines in this scope are run as usual when
-     * using [advanceTimeBy] and [runCurrent], [advanceUntilIdle] will stop advancing the virtual time
-     * once only the coroutines in this scope are left unprocessed.
+     * The coroutines in this scope are run as usual when using [advanceTimeBy] and [runCurrent].
+     * [advanceUntilIdle], on the other hand, will stop advancing the virtual time once only the coroutines in this
+     * scope are left unprocessed.
      *
      * Failures in coroutines in this scope do not terminate the test.
      * Instead, they are reported at the end of the test.

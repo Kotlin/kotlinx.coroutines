@@ -9,7 +9,10 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalTime::class)
 class RunTestTest {
 
     /** Tests that [withContext] that sends work to other threads works in [runTest]. */
@@ -52,7 +55,7 @@ class RunTestTest {
 
     /** Tests that even the dispatch timeout of `0` is fine if all the dispatches go through the same scheduler. */
     @Test
-    fun testRunTestWithZeroTimeoutWithControlledDispatches() = runTest(dispatchTimeoutMs = 0) {
+    fun testRunTestWithZeroDispatchTimeoutWithControlledDispatches() = runTest(dispatchTimeoutMs = 0) {
         // below is some arbitrary concurrent code where all dispatches go through the same scheduler.
         launch {
             delay(2000)
@@ -71,7 +74,7 @@ class RunTestTest {
 
     /** Tests that too low of a dispatch timeout causes crashes. */
     @Test
-    fun testRunTestWithSmallTimeout() = testResultMap({ fn ->
+    fun testRunTestWithSmallDispatchTimeout() = testResultMap({ fn ->
         try {
             fn()
             fail("shouldn't be reached")
@@ -85,6 +88,48 @@ class RunTestTest {
                 3
             }
             fail("shouldn't be reached")
+        }
+    }
+
+    /**
+     * Tests that [runTest] times out after the specified time.
+     */
+    @Test
+    fun testRunTestWithSmallTimeout() = testResultMap({ fn ->
+        try {
+            fn()
+            fail("shouldn't be reached")
+        } catch (e: Throwable) {
+            assertIs<UncompletedCoroutinesError>(e)
+        }
+    }) {
+        runTest(timeout = 100.milliseconds) {
+            withContext(Dispatchers.Default) {
+                delay(10000)
+                3
+            }
+            fail("shouldn't be reached")
+        }
+    }
+
+    /** Tests that [runTest] times out after the specified time, even if the test framework always knows the test is
+     * still doing something. */
+    @Test
+    fun testRunTestWithSmallTimeoutAndManyDispatches() = testResultMap({ fn ->
+        try {
+            fn()
+            fail("shouldn't be reached")
+        } catch (e: Throwable) {
+            assertIs<UncompletedCoroutinesError>(e)
+        }
+    }) {
+        runTest(timeout = 100.milliseconds) {
+            while (true) {
+                withContext(Dispatchers.Default) {
+                    delay(10)
+                    3
+                }
+            }
         }
     }
 
@@ -130,20 +175,27 @@ class RunTestTest {
             }
         }
     }) {
-        runTest(dispatchTimeoutMs = 10) {
-            launch {
-                withContext(NonCancellable) {
-                    awaitCancellation()
+        runTest(timeout = 10.milliseconds) {
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                withContext(NonCancellable + Dispatchers.Default) {
+                    delay(100.milliseconds)
                 }
             }
-            yield()
             throw TestException("A")
         }
     }
 
     /** Tests that real delays can be accounted for with a large enough dispatch timeout. */
     @Test
-    fun testRunTestWithLargeTimeout() = runTest(dispatchTimeoutMs = 5000) {
+    fun testRunTestWithLargeDispatchTimeout() = runTest(dispatchTimeoutMs = 5000) {
+        withContext(Dispatchers.Default) {
+            delay(50)
+        }
+    }
+
+    /** Tests that delays can be accounted for with a large enough timeout. */
+    @Test
+    fun testRunTestWithLargeTimeout() = runTest(timeout = 5000.milliseconds) {
         withContext(Dispatchers.Default) {
             delay(50)
         }
@@ -164,7 +216,7 @@ class RunTestTest {
             }
         }
     }) {
-        runTest(dispatchTimeoutMs = 1) {
+        runTest(timeout = 1.milliseconds) {
             coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, TestException("A"))
             withContext(Dispatchers.Default) {
                 delay(10000)
@@ -329,7 +381,7 @@ class RunTestTest {
         }
     }
 
-    /** Tests that [TestCoroutineScope.runTest] does not inherit the exception handler and works. */
+    /** Tests that [TestScope.runTest] does not inherit the exception handler and works. */
     @Test
     fun testScopeRunTestExceptionHandler(): TestResult {
         val scope = TestScope()
@@ -354,7 +406,7 @@ class RunTestTest {
      * The test will hang if this is not the case.
      */
     @Test
-    fun testCoroutineCompletingWithoutDispatch() = runTest(dispatchTimeoutMs = Long.MAX_VALUE) {
+    fun testCoroutineCompletingWithoutDispatch() = runTest(timeout = Duration.INFINITE) {
         launch(Dispatchers.Default) { delay(100) }
     }
 }

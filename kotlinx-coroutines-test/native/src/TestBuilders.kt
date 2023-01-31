@@ -17,9 +17,6 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
 
 internal actual fun getLastKnownPosition(): Any? = null
 
-@OptIn(ExperimentalStdlibApi::class)
-internal actual fun dumpCoroutinesAndThrow(exception: Throwable, lastKnownPosition: Any?) {
-    // log exception
-    processUnhandledException(exception)
-    throw exception
-}
+internal actual fun dumpCoroutines() { }
+
+internal actual fun updateStacktrace(exception: Throwable, lastKnownPosition: Any?): Throwable = exception

@@ -125,6 +125,10 @@ public expect class TestResult
  * then the test fails with an [UncompletedCoroutinesError]. The timeout can be changed by setting the [timeout]
  * parameter.
  *
+ * The test finishes by the timeout procedure cancelling the test body. If the code inside the test body does not
+ * respond to cancellation, we will not be able to make the test execution stop, in which case, the test will hang
+ * despite our best efforts to terminate it.
+ *
  * On the JVM, if `DebugProbes` from the `kotlinx-coroutines-debug` module are installed, the current dump of the
  * coroutines' stack is printed to the console on timeout.
  *
@@ -151,7 +155,7 @@ public expect class TestResult
  */
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
-    timeout: Duration? = null,
+    timeout: Duration = DEFAULT_TIMEOUT,
     testBody: suspend TestScope.() -> Unit
 ): TestResult {
     if (context[RunningInRunTest] != null)
@@ -293,7 +297,7 @@ public fun runTest(
  * Performs [runTest] on an existing [TestScope].
  */
 public fun TestScope.runTest(
-    timeout: Duration? = null,
+    timeout: Duration = DEFAULT_TIMEOUT,
     testBody: suspend TestScope.() -> Unit
 ): TestResult = asSpecificImplementation().let {
     it.enter()
@@ -382,7 +386,7 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
         testBody()
     }
     if (dispatchTimeout != null) {
-        require(testTimeout == null) { "Only one of dispatchTimeout and testTimeout can be specified" }
+        check(testTimeout == null) { "Only one of dispatchTimeout and testTimeout can be specified" }
         /**
          * This is the legacy behavior, kept for now for compatibility only.
          *
@@ -439,7 +443,7 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
                         // we received knowledge that `scheduler` observed a dispatch event, so we reset the timeout
                     }
                     onTimeout(dispatchTimeout) {
-                        handleTimeout(coroutine, dispatchTimeout, tryGetCompletionCause, cleanup)?.let { throw it }
+                        throw handleTimeout(coroutine, dispatchTimeout, tryGetCompletionCause, cleanup)
                     }
                 }
             } finally {
@@ -447,6 +451,10 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
             }
         }
     } else {
+        check(testTimeout != null) { "Either dispatchTimeout or testTimeout must be specified" }
+        /**
+         * The thread in which the task was last seen executing.
+         */
         val lastKnownPosition = MutableStateFlow<Any?>(null)
         /**
          * We run the tasks in the test coroutine using [Dispatchers.Default]. On JS, this does nothing particularly,
@@ -466,19 +474,26 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
                 }
             }
         }
-        val timeout = testTimeout ?: DEFAULT_TIMEOUT
         try {
-            withTimeout(timeout) {
+            withTimeout(testTimeout) {
                 coroutine.join()
+                workRunner.cancelAndJoin()
             }
         } catch (_: TimeoutCancellationException) {
-            val exception = handleTimeout(coroutine, timeout, tryGetCompletionCause, cleanup)
-            exception?.let {
-                dumpCoroutinesAndThrow(it, lastKnownPosition.value)
-            }
-        } finally {
-            coroutine.cancelAndJoin()
+            val exception = handleTimeout(coroutine, testTimeout, tryGetCompletionCause, cleanup)
+            dumpCoroutines()
+            /**
+             * There's a race that may lead to the misleading results here, but it's better than nothing.
+             * The race: `lastKnownPosition` is read, then the task executed in `workRunner` completes,
+             * then `updateStacktrace` does its thing, but the thread is already busy doing something else.
+             */
+            updateStacktrace(exception, lastKnownPosition.value)
+            // we can't abandon the work we're doing, so if it hanged, we'll still hang, despite the timeout.
+            (coroutine as CoroutineScope).cancel("The test timed out", exception)
+            coroutine.join()
             workRunner.cancelAndJoin()
+            scheduler.advanceUntilIdleOr { false }
+            throw exception
         }
     }
     coroutine.getCompletionExceptionOrNull()?.let { exception ->
@@ -494,15 +509,14 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
 }
 
 /**
- * Invoked on timeout in [runTest]. Almost always just builds a nice [UncompletedCoroutinesError] and throws it.
- * However, sometimes it detects that the coroutine completed, in which case it returns normally.
+ * Invoked on timeout in [runTest]. Just builds a nice [UncompletedCoroutinesError] and returns it.
  */
 private inline fun <T : AbstractCoroutine<Unit>> handleTimeout(
     coroutine: T,
     dispatchTimeout: Duration,
     tryGetCompletionCause: T.() -> Throwable?,
     cleanup: () -> List<Throwable>,
-): AssertionError? {
+): AssertionError {
     val uncaughtExceptions = try {
         cleanup()
     } catch (e: UncompletedCoroutinesError) {
@@ -517,10 +531,10 @@ private inline fun <T : AbstractCoroutine<Unit>> handleTimeout(
     if (activeChildren.isNotEmpty())
         message += ", there were active child jobs: $activeChildren"
     if (completionCause != null && activeChildren.isEmpty()) {
-        if (coroutine.isCompleted)
-            return null
-        // TODO: can this really ever happen?
-        message += ", the test coroutine was not completed"
+        message += if (coroutine.isCompleted)
+            ", the test coroutine completed"
+        else
+            ", the test coroutine was not completed"
     }
     val error = UncompletedCoroutinesError(message)
     completionCause?.let { cause -> error.addSuppressed(cause) }
@@ -537,5 +551,6 @@ internal fun List<Throwable>.throwAll() {
 
 internal expect fun getLastKnownPosition(): Any?
 
+internal expect fun dumpCoroutines()
 
-internal expect fun dumpCoroutinesAndThrow(exception: Throwable, lastKnownPosition: Any?)
+internal expect fun updateStacktrace(exception: Throwable, lastKnownPosition: Any?): Throwable
