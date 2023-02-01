@@ -20,13 +20,20 @@ import kotlin.coroutines.*
  * asynchronous stack-traces and coroutine dumps (similar to [ThreadMXBean.dumpAllThreads] and `jstack` via [DebugProbes.dumpCoroutines].
  * All introspecting methods throw [IllegalStateException] if debug probes were not installed.
  *
- * Installed hooks:
+ * ### Consistency guarantees
  *
+ * All snapshotting operations (e.g. [dumpCoroutines]) are *weakly-consistent*, meaning that they happen
+ * concurrently with coroutines progressing their own state. These operations are guaranteed to observe
+ * each coroutine's state exactly once, but the state is not guaranteed to be the most recent before the operation.
+ * In practice, it means that for snapshotting operations in progress, for each concurrent coroutine either
+ * the state prior to the operation or the state that was reached during the current operation is observed.
+ *
+ * ### Installed hooks
  * * `probeCoroutineResumed` is invoked on every [Continuation.resume].
  * * `probeCoroutineSuspended` is invoked on every continuation suspension.
- * * `probeCoroutineCreated` is invoked on every coroutine creation using stdlib intrinsics.
+ * * `probeCoroutineCreated` is invoked on every coroutine creation.
  *
- * Overhead:
+ * ### Overhead
  *  * Every created coroutine is stored in a concurrent hash map and hash map is looked up and
  *    updated on each suspension and resumption.
  *  * If [DebugProbes.enableCreationStackTraces] is enabled, stack trace of the current thread is captured on
@@ -118,7 +125,7 @@ public object DebugProbes {
        printJob(scope.coroutineContext[Job] ?: error("Job is not present in the scope"), out)
 
     /**
-     * Returns all existing coroutines info.
+     * Returns all existing coroutines' info.
      * The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.
      */
     public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo().map { CoroutineInfo(it) }

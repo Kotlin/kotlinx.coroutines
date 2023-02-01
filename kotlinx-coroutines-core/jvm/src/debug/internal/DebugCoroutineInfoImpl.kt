@@ -14,6 +14,7 @@ internal const val SUSPENDED = "SUSPENDED"
 
 /**
  * Internal implementation class where debugger tracks details it knows about each coroutine.
+ * Its mutable fields can be updated concurrently, thus marked with `@Volatile`
  */
 internal class DebugCoroutineInfoImpl(
     context: CoroutineContext?,
@@ -40,15 +41,18 @@ internal class DebugCoroutineInfoImpl(
      * Can be CREATED, RUNNING, SUSPENDED.
      */
     public val state: String get() = _state
+    @Volatile
     private var _state: String = CREATED
 
     @JvmField
+    @Volatile
     internal var lastObservedThread: Thread? = null
 
     /**
      * We cannot keep a strong reference to the last observed frame of the coroutine, because this will
      * prevent garbage-collection of a coroutine that was lost.
      */
+    @Volatile
     private var _lastObservedFrame: WeakReference<CoroutineStackFrame>? = null
     internal var lastObservedFrame: CoroutineStackFrame?
         get() = _lastObservedFrame?.get()

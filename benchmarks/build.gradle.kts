@@ -56,6 +56,7 @@ dependencies {
 
     implementation("com.typesafe.akka:akka-actor_2.12:2.5.0")
     implementation(project(":kotlinx-coroutines-core"))
+    implementation(project(":kotlinx-coroutines-debug"))
     implementation(project(":kotlinx-coroutines-reactive"))
 
     // add jmh dependency on main
