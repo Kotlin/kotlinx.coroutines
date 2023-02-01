@@ -25,7 +25,7 @@ import kotlin.coroutines.*
  * All snapshotting operations (e.g. [dumpCoroutines]) are *weakly-consistent*, meaning that they happen
  * concurrently with coroutines progressing their own state. These operations are guaranteed to observe
  * each coroutine's state exactly once, but the state is not guaranteed to be the most recent before the operation.
- * In practice, it means that for snapshotting operation being in progress, for each concurrent coroutine either
+ * In practice, it means that for snapshotting operations in progress, for each concurrent coroutine either
  * the state prior to the operation or the state that was reached during the current operation is observed.
  *
  * ### Installed hooks
