@@ -436,16 +436,18 @@ internal object DebugProbesImpl {
         // Lookup coroutine info in cache or by traversing stack frame
         val info: DebugCoroutineInfoImpl
         val cached = callerInfoCache.remove(frame)
+        val shouldBeMatchedWithProbeSuspended: Boolean
         if (cached != null) {
             info = cached
+            shouldBeMatchedWithProbeSuspended = false
         } else {
             info = frame.owner()?.info ?: return
+            shouldBeMatchedWithProbeSuspended = true
             // Guard against improper implementations of CoroutineStackFrame and bugs in the compiler
             val realCaller = info.lastObservedFrame?.realCaller()
             if (realCaller != null) callerInfoCache.remove(realCaller)
         }
-
-        info.updateState(state, frame as Continuation<*>)
+        info.updateState(state, frame as Continuation<*>, shouldBeMatchedWithProbeSuspended)
         // Do not cache it for proxy-classes such as ScopeCoroutines
         val caller = frame.realCaller() ?: return
         callerInfoCache[caller] = info
@@ -458,7 +460,7 @@ internal object DebugProbesImpl {
 
     private fun updateState(owner: CoroutineOwner<*>, frame: Continuation<*>, state: String) {
         if (!isInstalled) return
-        owner.info.updateState(state, frame)
+        owner.info.updateState(state, frame, true)
     }
 
     private fun Continuation<*>.owner(): CoroutineOwner<*>? = (this as? CoroutineStackFrame)?.owner()
