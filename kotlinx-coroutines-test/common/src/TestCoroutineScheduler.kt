@@ -205,7 +205,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      */
     @ExperimentalCoroutinesApi
     @ExperimentalTime
-    public val timeSource: TimeSource = object : AbstractLongTimeSource(DurationUnit.MILLISECONDS) {
+    public val timeSource: TimeSource.WithComparableMarks = object : AbstractLongTimeSource(DurationUnit.MILLISECONDS) {
         override fun read(): Long = currentTime
     }
 }
