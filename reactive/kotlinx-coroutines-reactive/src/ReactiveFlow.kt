@@ -254,7 +254,11 @@ public class FlowSubscription<T>(
     }
 
     override fun request(n: Long) {
-        if (n <= 0) return
+        if (n <= 0) {
+            // Specification requires to call onError with IAE for n <= 0
+            subscriber.onError(IllegalArgumentException("non-positive subscription request $n"))
+            return
+        }
         val old = requested.getAndUpdate { value ->
             val newValue = value + n
             if (newValue <= 0L) Long.MAX_VALUE else newValue
