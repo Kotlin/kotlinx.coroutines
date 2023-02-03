@@ -38,12 +38,36 @@ class FlowAsPublisherTckTest : TestBase() {
             }.asPublisher(dispatcher.dispatcher)
 
         @Test
-        public override fun optional_spec105_emptyStreamMustTerminateBySignallingOnComplete() {
+        public override fun optional_spec104_mustSignalOnErrorWhenFails() {
             throw SkipException("Skipped")
         }
 
         @Test
-        public override fun optional_spec104_mustSignalOnErrorWhenFails() {
+        public override fun optional_spec105_emptyStreamMustTerminateBySignallingOnComplete() {
+            throw SkipException("Skipped")
+        }
+
+
+        /**
+         * Three required tests are skipped below. See discussion here:
+         * https://github.com/Kotlin/kotlinx.coroutines/issues/3608#issuecomment-1415686018
+         *
+         * The short explanation is they don't make a lot of sense for a flow adapter
+         * and no one would realistically rely on these behaviors.
+         */
+
+        @Test
+        public override fun required_spec109_mayRejectCallsToSubscribeIfPublisherIsUnableOrUnwillingToServeThemRejectionMustTriggerOnErrorAfterOnSubscribe() {
+            throw SkipException("Skipped")
+        }
+
+        @Test
+        public override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {
+            throw SkipException("Skipped")
+        }
+
+        @Test
+        public override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {
             throw SkipException("Skipped")
         }
 
