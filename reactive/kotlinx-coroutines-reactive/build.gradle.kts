@@ -12,7 +12,7 @@ dependencies {
 val testNG by tasks.registering(Test::class) {
     useTestNG()
     reports.html.destination = file("$buildDir/reports/testng")
-    include("**/*ReactiveStreamTckTest.*")
+    include("**/*TckTest.*")
     // Skip testNG when tests are filtered with --tests, otherwise it simply fails
     onlyIf {
         filter.includePatterns.isEmpty()
