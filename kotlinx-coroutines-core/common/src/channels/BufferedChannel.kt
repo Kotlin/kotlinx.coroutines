@@ -108,7 +108,6 @@ internal open class BufferedChannel<E>(
     // ## The send operations ##
     // #########################
 
-    // TODO onClosed misses stacktrace recovery mechanism even though it shouldn't
     override suspend fun send(element: E): Unit =
         sendImpl( // <-- this is an inline function
             element = element,
@@ -130,13 +129,14 @@ internal open class BufferedChannel<E>(
             onNoWaiterSuspend = { segm, i, elem, s -> sendOnNoWaiterSuspend(segm, i, elem, s) }
         )
 
-    private fun onClosedSend(element: E) {
+    private suspend fun onClosedSend(element: E): Nothing = suspendCancellableCoroutine { continuation ->
         onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
             // If it crashes, add send exception as suppressed for better diagnostics
             it.addSuppressed(sendException)
-            throw recoverStackTrace(it)
+            continuation.resumeWithStackTrace(it)
+            return@suspendCancellableCoroutine
         }
-        throw recoverStackTrace(sendException)
+        continuation.resumeWithStackTrace(sendException)
     }
 
     private suspend fun sendOnNoWaiterSuspend(
@@ -188,6 +188,7 @@ internal open class BufferedChannel<E>(
         override fun dispose() {
             segment.onCancellation(index)
         }
+
         override fun invoke(cause: Throwable?) = dispose()
     }
 
@@ -199,6 +200,7 @@ internal open class BufferedChannel<E>(
         override fun dispose() {
             segment.onSenderCancellationWithOnUndeliveredElement(index, context)
         }
+
         override fun invoke(cause: Throwable?) = dispose()
     }
 
@@ -741,7 +743,7 @@ internal open class BufferedChannel<E>(
         invokeOnCancellation(SenderOrReceiverCancellationHandler(segment, index).asHandler)
     }
 
-    private fun onClosedReceiveOnNoWaiterSuspend(cont : CancellableContinuation<E>) {
+    private fun onClosedReceiveOnNoWaiterSuspend(cont: CancellableContinuation<E>) {
         cont.resumeWithException(receiveException)
     }
 
@@ -2040,7 +2042,7 @@ internal open class BufferedChannel<E>(
                 val globalIndex = segment.id * SEGMENT_SIZE + index
                 if (globalIndex < receiversCounter) return -1
                 // Process the cell `segment[index]`.
-                cell_update@while (true) {
+                cell_update@ while (true) {
                     val state = segment.getState(index)
                     when {
                         // The cell is empty.
@@ -2644,7 +2646,7 @@ internal open class BufferedChannel<E>(
         append_elements@ while (true) {
             process_cell@ for (i in 0 until SEGMENT_SIZE) {
                 val globalCellIndex = segment.id * SEGMENT_SIZE + i
-                if (globalCellIndex >=s && globalCellIndex >= r) break@append_elements
+                if (globalCellIndex >= s && globalCellIndex >= r) break@append_elements
                 val cellState = segment.getState(i)
                 val element = segment.getElement(i)
                 val cellStateString = when (cellState) {
