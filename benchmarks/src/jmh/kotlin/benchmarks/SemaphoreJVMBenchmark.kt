@@ -37,54 +37,20 @@ fun main() {
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class SemaphoreCancellationJVMBenchmark {
-    @Param("0")
-//    @Param("1", "10", "100", "1000", "10000")
-    var queueSize: Int = 0
+    private var s = Semaphore(1)
+    private var s2 = SemaSQS_Async_Simple(1)
 
-    private val s = Semaphore(1)
-    private val s2 = SemaSQS_Async_Simple(1)
-
-    @Param("8")
+    @Param("1", "8", "32")
     var threads: Int = 1
 
-    init {
+    fun before() {
+        s = Semaphore(1)
         s.acquire()
+        s2 = SemaSQS_Async_Simple(1)
         s2.acquire()
-        repeat(queueSize) {
-            thread { s.acquire() }
-            thread { s2.acquire() }
-        }
     }
 
-//    @Benchmark
-    fun semaphoreJava() {
-        val phase = AtomicInteger()
-        val ts = (1..1).map {
-            thread {
-                repeat(1_000_000) {
-                    try {
-                        s.acquire()
-                    } catch (e: InterruptedException) {
-//                        check(!Thread.currentThread().isInterrupted)
-                        // Ignore
-                    }
-                }
-            }
-        }
-        repeat(1_000_000) {
-            while (phase.get() < it) {
-                // wait
-            }
-            val t = ts[it % 1]
-            while (t.state !== Thread.State.WAITING) {
-                // wait
-            }
-            t.interrupt()
-        }
-        println("DONE")
-    }
-
-//    @Benchmark
+    @Benchmark
     fun semaphoreCQS2() {
         val cdl = CountDownLatch(threads)
         repeat(threads) {
@@ -92,10 +58,7 @@ open class SemaphoreCancellationJVMBenchmark {
                 repeat(1024_000 / threads) {
                     try {
                         s2.acquire2()
-                    } catch (e: InterruptedException) {
-//                        check(!Thread.currentThread().isInterrupted)
-                        // Ignore
-                    }
+                    } catch (e: InterruptedException) { }
                     doGeomDistrWork(50)
                 }
                 cdl.countDown()
@@ -109,53 +72,16 @@ open class SemaphoreCancellationJVMBenchmark {
         val cdl = CountDownLatch(threads)
         repeat(threads) { t ->
             thread {
-                repeat(100) {phase ->
-                    repeat(1024_000 / threads) {
-                        try {
-                            s.tryAcquire(1L, TimeUnit.NANOSECONDS)
-                        } catch (e: InterruptedException) {
-                            Thread.interrupted()
-//                        check(!Thread.currentThread().isInterrupted)
-                            // Ignore
-                        }
-                        doGeomDistrWork(50)
-                    }
-                    println("$t: $phase")
+                repeat(1024_000 / threads) {
+                    try {
+                        s.tryAcquire(1L, TimeUnit.NANOSECONDS)
+                    } catch (e: InterruptedException) { }
+                    doGeomDistrWork(50)
                 }
                 cdl.countDown()
             }
         }
         cdl.await()
-//        println("DONE")
-    }
-
-//    @Benchmark
-    fun semaphoreCQS() {
-        val phase = AtomicInteger()
-        val ts = (1..1).map {
-            thread {
-                repeat(1_000_000) {
-                    try {
-                        s2.acquire()
-                    } catch (e: InterruptedException) {
-//                        check(!Thread.currentThread().isInterrupted)
-                        // Ignore
-                    }
-                    phase.set(phase.get() + 1)
-                }
-            }
-        }
-        repeat(1_000_000) {
-            while (phase.get() < it) {
-                // wait
-            }
-            val t = ts[it % 1]
-            while (t.state !== Thread.State.WAITING) {
-                // wait
-            }
-            t.interrupt()
-        }
-//        println("DONE")
     }
 }
 
