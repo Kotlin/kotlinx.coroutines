@@ -799,11 +799,16 @@ internal open class BufferedChannel<E>(
         // Do not try to receive an element if the plain `receive()` operation would suspend.
         val s = sendersAndCloseStatusCur.sendersCounter
         if (r >= s) return failure()
-        // Let's try to retrieve an element!
-        // The logic is similar to the plain `receive()` operation, with
-        // the only difference that we store `INTERRUPTED_RCV` in case
-        // the operation decides to suspend. This way, we can leverage
-        // the unconditional `Fetch-and-Add` instruction.
+        /* Let's try to retrieve an element!
+         * The logic is similar to the plain `receive()` operation, with
+         * the only difference that we store `INTERRUPTED_RCV` in case
+         * the operation decides to suspend. This way, we can leverage
+         * the unconditional `Fetch-and-Add` instruction.
+         * In short, tryReceive is a mechanical equivalent of receive
+         * with the only difference that on "suspend" path (aka "no elements to receive")
+         * it puts poison marker ("receiver that was immediately cancelled") instead of
+         * waiter.
+         */
         return receiveImpl( // <-- this is an inline function
             // Store an already interrupted receiver in case of suspension.
             waiter = INTERRUPTED_RCV,
@@ -812,6 +817,8 @@ internal open class BufferedChannel<E>(
             // On suspension, the `INTERRUPTED_RCV` token has been
             // installed, and this `tryReceive()` fails.
             onSuspend = { segm, _, globalIndex ->
+                // Emulate "cancelled" receive, thus invoking 'waitExpandBufferCompletion' manually,
+                // because effectively there were no cancellation
                 waitExpandBufferCompletion(globalIndex)
                 segm.onSlotCleaned()
                 failure()
@@ -1436,6 +1443,8 @@ internal open class BufferedChannel<E>(
             // Do the numbers of started and completed calls coincide?
             // Note that we need to re-read the number of started `expandBuffer()`
             // calls to obtain a correct snapshot.
+            // Here we wait to a precise match in order to ensure that **our matching expandBuffer()**
+            // completed. The only way to ensure that is to check that number of started expands == number of finished expands
             if (b == ebCompleted && b == bufferEndCounter) return
         }
         // To avoid starvation, pause further `expandBuffer()` calls.
