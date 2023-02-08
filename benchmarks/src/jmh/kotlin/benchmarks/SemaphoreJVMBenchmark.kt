@@ -8,12 +8,9 @@ import benchmarks.common.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
-import org.junit.Before
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 import java.util.concurrent.Semaphore
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.*
 
@@ -27,7 +24,7 @@ fun main() {
     }
     SemaphoreCancellationJVMBenchmark().also {
         it.threads = 4
-    }.semaphoreJava2()
+    }.semaphoreJava()
 }
 
 @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MICROSECONDS)
@@ -37,21 +34,21 @@ fun main() {
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class SemaphoreCancellationJVMBenchmark {
-    private var s = Semaphore(1)
+    private var semaphore = Semaphore(1)
     private var s2 = SemaSQS_Async_Simple(1)
 
     @Param("1", "8", "32")
     var threads: Int = 1
 
     fun before() {
-        s = Semaphore(1)
-        s.acquire()
+        semaphore = Semaphore(1)
+        semaphore.acquire()
         s2 = SemaSQS_Async_Simple(1)
         s2.acquire()
     }
 
     @Benchmark
-    fun semaphoreCQS2() {
+    fun semaphoreCQS() {
         val cdl = CountDownLatch(threads)
         repeat(threads) {
             thread {
@@ -68,20 +65,29 @@ open class SemaphoreCancellationJVMBenchmark {
     }
 
     @Benchmark
-    fun semaphoreJava2() {
+    fun semaphoreJava() {
         val cdl = CountDownLatch(threads)
         repeat(threads) { t ->
             thread {
                 repeat(1024_000 / threads) {
                     try {
-                        s.tryAcquire(1L, TimeUnit.NANOSECONDS)
+                        // Add this thread to the queue of waiters and cancel immediately,
+                        // removing the corresponding node in Java's AQS.
+                        semaphore.tryAcquire(1L, TimeUnit.NANOSECONDS)
                     } catch (e: InterruptedException) { }
                     doGeomDistrWork(50)
                 }
                 cdl.countDown()
             }
         }
-        cdl.await()
+        cdl.await(10, TimeUnit.SECONDS)
+        if (cdl.count > 0) {
+            Thread.getAllStackTraces().values.forEach {
+                println()
+                it.forEach { println(it) }
+                println()
+            }
+        }
     }
 }
 
