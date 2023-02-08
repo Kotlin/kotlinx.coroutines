@@ -215,7 +215,7 @@ is to use _callbacks_.
 Instead of calling the code that should be invoked right after the operation is completed, you can extract it
 into a separate callback, often a lambda, and pass that lambda to the caller in order for it to be called later.
 
-To make the UI responsive, you can either move the whole computation to a separate thread or switch to the Retrofit API,
+To make the UI responsive, you can either move the whole computation to a separate thread or switch to the Retrofit API
 which uses callbacks instead of blocking calls.
 
 ### Use a background thread
