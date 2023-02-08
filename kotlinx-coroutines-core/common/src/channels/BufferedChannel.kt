@@ -48,6 +48,8 @@ internal open class BufferedChannel<E>(
         // This implementation has second `init`.
     }
 
+    // Maintenance note: Buffered1ChannelLincheckTest is the best stress test to check various hypotheses
+
     /*
       The counters indicate the total numbers of send, receive, and buffer expansion calls
       ever performed. The counters are incremented in the beginning of the corresponding
