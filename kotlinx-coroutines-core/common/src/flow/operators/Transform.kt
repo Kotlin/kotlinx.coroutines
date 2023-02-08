@@ -57,9 +57,10 @@ public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -
 /**
  * Returns a flow that contains only non-null results of applying the given [transform] function to each value of the original flow.
  */
-public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend (value: T) -> R?): Flow<R> = transform { value ->
-    val transformed = transform(value) ?: return@transform
-    return@transform emit(transformed)
+public inline fun <T, R : Any> Flow<T>.mapNotNull(crossinline transform: suspend (value: T) -> R?): Flow<R> = transform { value ->
+    val transformed = transform(value)
+    if (transformed != null) { emit(transformed) }
+    return@transform
 }
 
 /**
