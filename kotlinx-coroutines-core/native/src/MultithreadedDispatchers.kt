@@ -102,7 +102,8 @@ private class MultiWorkerDispatcher(
             } else {
                 try {
                     suspendCancellableCoroutine {
-                        availableWorkers.trySend(it)
+                        val result = availableWorkers.trySend(it)
+                        checkChannelResult(result)
                     }.run()
                 } catch (e: CancellationException) {
                     /** we are cancelled from [close] and thus will never get back to this branch of code,
@@ -112,13 +113,9 @@ private class MultiWorkerDispatcher(
         }
     }
 
-    private fun obtainWorker(): CancellableContinuation<Runnable> {
-        // spin loop until a worker that promised to be here actually arrives.
-        while (true) {
-            val result = availableWorkers.tryReceive()
-            return result.getOrNull() ?: continue
-        }
-    }
+    // a worker that promised to be here and should actually arrive, so we wait for it in a blocking manner.
+    private fun obtainWorker(): CancellableContinuation<Runnable> =
+        availableWorkers.tryReceive().getOrNull() ?: runBlocking { availableWorkers.receive() }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         val state = tasksAndWorkersCounter.getAndUpdate {
@@ -132,7 +129,8 @@ private class MultiWorkerDispatcher(
         } else {
             workerPool.allocate()
             // no workers are available, we must queue the task
-            tasksQueue.trySend(block)
+            val result = tasksQueue.trySend(block)
+            checkChannelResult(result)
         }
     }
 
@@ -154,5 +152,13 @@ private class MultiWorkerDispatcher(
          */
         val requests = workers.map { it.requestTermination() }
         requests.map { it.result }
+    }
+
+    private fun checkChannelResult(result: ChannelResult<*>) {
+        if (!result.isSuccess)
+            throw IllegalStateException(
+                "Internal invariants of $this were violated, please file a bug to kotlinx.coroutines",
+                result.exceptionOrNull()
+            )
     }
 }
