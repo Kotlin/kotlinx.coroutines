@@ -30,7 +30,6 @@ in the cell or makes a rendezvous with the opposite request. Each cell can be pr
 one [receive]. As for buffered channels, [send]-s can also add elements without suspension if the logical buffer
 contains the cell, while the [receive] operation updates the end of the buffer when its synchronization finishes.
 
-
 Please see the ["Fast and Scalable Channels in Kotlin Coroutines"](https://arxiv.org/abs/2211.04986)
 paper by Nikita Koval, Roman Elizarov, and Dan Alistarh for the detailed algorithm description.
  */
@@ -48,7 +47,7 @@ internal open class BufferedChannel<E>(
         // This implementation has second `init`.
     }
 
-    // Maintenance note: Buffered1ChannelLincheckTest is the best stress test to check various hypotheses
+    // Maintenance note: use `Buffered1ChannelLincheckTest` to check hypotheses.
 
     /*
       The counters indicate the total numbers of send, receive, and buffer expansion calls
@@ -322,7 +321,9 @@ internal open class BufferedChannel<E>(
                     // physically to avoid memory leaks.
                     if (closed) {
                         return onClosed()
-                    } else continue
+                    } else {
+                        continue
+                    }
             }
             // Update the cell according to the algorithm. Importantly, when
             // the channel is already closed, storing a waiter is illegal, so
@@ -799,16 +800,14 @@ internal open class BufferedChannel<E>(
         // Do not try to receive an element if the plain `receive()` operation would suspend.
         val s = sendersAndCloseStatusCur.sendersCounter
         if (r >= s) return failure()
-        /* Let's try to retrieve an element!
-         * The logic is similar to the plain `receive()` operation, with
-         * the only difference that we store `INTERRUPTED_RCV` in case
-         * the operation decides to suspend. This way, we can leverage
-         * the unconditional `Fetch-and-Add` instruction.
-         * In short, tryReceive is a mechanical equivalent of receive
-         * with the only difference that on "suspend" path (aka "no elements to receive")
-         * it puts poison marker ("receiver that was immediately cancelled") instead of
-         * waiter.
-         */
+        // Let's try to retrieve an element!
+        // The logic is similar to the plain `receive()` operation, with
+        // the only difference that we store `INTERRUPTED_RCV` in case
+        // the operation decides to suspend. This way, we can leverage
+        // the unconditional `Fetch-and-Add` instruction.
+        // One may consider storing `INTERRUPTED_RCV` instead of an actual waiter
+        // on suspension (a.k.a. "no elements to retrieve") as a short-cut of
+        // "suspending and cancelling immediately".
         return receiveImpl( // <-- this is an inline function
             // Store an already interrupted receiver in case of suspension.
             waiter = INTERRUPTED_RCV,
@@ -918,10 +917,7 @@ internal open class BufferedChannel<E>(
         while (true) {
             // Similar to the `send(e)` operation, `receive()` first checks
             // whether the channel is already closed for receiving.
-            if (isClosedForReceive) {
-                if (receiversCounter < sendersCounter) segment.cleanPrev()
-                return onClosed()
-            }
+            if (isClosedForReceive) return onClosed()
             // Atomically increments the `receivers` counter
             // and obtain the value right before the increment.
             val r = this.receivers.getAndIncrement()

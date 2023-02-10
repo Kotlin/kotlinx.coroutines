@@ -38,7 +38,7 @@ internal open class ConflatedBufferedChannel<E>(
 
     override suspend fun send(element: E) {
         // Should never suspend, implement via `trySend(..)`.
-        trySendImpl(element, true).onClosed { // fails only when this channel is closed.
+        trySendImpl(element, isSendOp = true).onClosed { // fails only when this channel is closed.
             onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
                 it.addSuppressed(sendException)
                 throw it
@@ -49,12 +49,12 @@ internal open class ConflatedBufferedChannel<E>(
 
     override suspend fun sendBroadcast(element: E): Boolean {
         // Should never suspend, implement via `trySend(..)`.
-        trySendImpl(element, true) // fails only when this channel is closed.
+        trySendImpl(element, isSendOp = true) // fails only when this channel is closed.
             .onSuccess { return true }
         return false
     }
 
-    override fun trySend(element: E): ChannelResult<Unit> = trySendImpl(element, false)
+    override fun trySend(element: E): ChannelResult<Unit> = trySendImpl(element, isSendOp = false)
 
     private fun trySendImpl(element: E, isSendOp: Boolean) =
         if (onBufferOverflow === DROP_LATEST) trySendDropLatest(element, isSendOp)
