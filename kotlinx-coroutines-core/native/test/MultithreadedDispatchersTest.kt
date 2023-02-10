@@ -4,8 +4,30 @@
 
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.*
 import kotlin.native.concurrent.*
 import kotlin.test.*
+
+private class BlockingBarrier(val n: Int) {
+    val counter = atomic(0)
+    val wakeUp = Channel<Unit>(n - 1)
+    fun await() {
+        val count = counter.addAndGet(1)
+        if (count == n) {
+            repeat(n - 1) {
+                runBlocking {
+                    wakeUp.send(Unit)
+                }
+            }
+        } else if (count < n) {
+            runBlocking {
+                wakeUp.receive()
+            }
+        }
+    }
+}
 
 class MultithreadedDispatchersTest {
     /**
@@ -14,9 +36,11 @@ class MultithreadedDispatchersTest {
      */
     @Test
     fun testNotAllocatingExtraDispatchers() {
+        val barrier = BlockingBarrier(2)
+        val lock = SynchronizedObject()
         suspend fun spin(set: MutableSet<Worker>) {
             repeat(100) {
-                set.add(Worker.current)
+                synchronized(lock) { set.add(Worker.current) }
                 delay(1)
             }
         }
@@ -24,20 +48,12 @@ class MultithreadedDispatchersTest {
         try {
             runBlocking {
                 val encounteredWorkers = mutableSetOf<Worker>()
-                var canStart1 = false
-                var canStart2 = false
                 val coroutine1 = launch(dispatcher) {
-                    while (!canStart1) {
-                        // intentionally empty
-                    }
-                    canStart2 = true
+                    barrier.await()
                     spin(encounteredWorkers)
                 }
                 val coroutine2 = launch(dispatcher) {
-                    canStart1 = true
-                    while (!canStart2) {
-                        // intentionally empty
-                    }
+                    barrier.await()
                     spin(encounteredWorkers)
                 }
                 listOf(coroutine1, coroutine2).joinAll()
