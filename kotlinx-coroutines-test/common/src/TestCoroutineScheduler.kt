@@ -151,7 +151,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * * Overflowing the target time used to lead to nothing being done, but will now run the tasks scheduled at up to
      *   (but not including) [Long.MAX_VALUE].
      *
-     * @throws IllegalStateException if passed a negative [delay][delayTimeMillis].
+     * @throws IllegalArgumentException if passed a negative [delay][delayTimeMillis].
      */
     @ExperimentalCoroutinesApi
     public fun advanceTimeBy(delayTimeMillis: Long): Unit = advanceTimeBy(delayTimeMillis.milliseconds)
@@ -160,7 +160,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * Moves the virtual clock of this dispatcher forward by [the specified amount][delayTime], running the
      * scheduled tasks in the meantime.
      *
-     * @throws IllegalStateException if passed a negative [delay][delayTime].
+     * @throws IllegalArgumentException if passed a negative [delay][delayTime].
      */
     public fun advanceTimeBy(delayTime: Duration) {
         require(!delayTime.isNegative()) { "Can not advance time by a negative delay: $delayTime" }

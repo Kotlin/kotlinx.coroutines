@@ -122,8 +122,7 @@ public expect class TestResult
  * #### Timing out
  *
  * There's a built-in timeout of 10 seconds for the test body. If the test body doesn't complete within this time,
- * then the test fails with an [UncompletedCoroutinesError]. The timeout can be changed by setting the [timeout]
- * parameter.
+ * then the test fails with an [AssertionError]. The timeout can be changed by setting the [timeout] parameter.
  *
  * The test finishes by the timeout procedure cancelling the test body. If the code inside the test body does not
  * respond to cancellation, we will not be able to make the test execution stop, in which case, the test will hang
@@ -294,7 +293,7 @@ public fun runTest(
 }
 
 /**
- * Performs [runTest] on an existing [TestScope].
+ * Performs [runTest] on an existing [TestScope]. See the documentation for [runTest] for details.
  */
 public fun TestScope.runTest(
     timeout: Duration = DEFAULT_TIMEOUT,
@@ -466,7 +465,8 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
                 lastKnownPosition.value = getLastKnownPosition()
                 val executedSomething = scheduler.tryRunNextTaskUnless { !isActive }
                 if (executedSomething) {
-                    // yield to check for cancellation
+                    /** Yield to check for cancellation. On JS, we can't use [ensureActive] here, as the cancellation
+                     * procedure needs a chance to run concurrently. */
                     yield()
                 } else {
                     // no more tasks, we should suspend until there are some more
