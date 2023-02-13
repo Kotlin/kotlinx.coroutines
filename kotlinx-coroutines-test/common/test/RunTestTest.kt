@@ -100,6 +100,7 @@ class RunTestTest {
             fn()
             fail("shouldn't be reached")
         } catch (e: Throwable) {
+            e.printStackTrace()
             assertIs<UncompletedCoroutinesError>(e)
         }
     }) {
@@ -169,7 +170,7 @@ class RunTestTest {
         } catch (e: UncompletedCoroutinesError) {
             @Suppress("INVISIBLE_MEMBER")
             val suppressed = unwrap(e).suppressedExceptions
-            assertEquals(1, suppressed.size)
+            assertEquals(1, suppressed.size, "$suppressed")
             assertIs<TestException>(suppressed[0]).also {
                 assertEquals("A", it.message)
             }
@@ -210,7 +211,7 @@ class RunTestTest {
         } catch (e: UncompletedCoroutinesError) {
             @Suppress("INVISIBLE_MEMBER")
             val suppressed = unwrap(e).suppressedExceptions
-            assertEquals(1, suppressed.size)
+            assertEquals(1, suppressed.size, "$suppressed")
             assertIs<TestException>(suppressed[0]).also {
                 assertEquals("A", it.message)
             }

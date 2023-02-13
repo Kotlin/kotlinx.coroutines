@@ -250,7 +250,7 @@ class TestCoroutineSchedulerTest {
             }
         }
         advanceUntilIdle()
-        asSpecificImplementation().leave().throwAll()
+        throwAll(null, asSpecificImplementation().legacyLeave())
         if (timesOut)
             assertTrue(caughtException)
         else

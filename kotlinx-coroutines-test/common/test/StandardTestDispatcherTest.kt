@@ -20,7 +20,7 @@ class StandardTestDispatcherTest: OrderedExecutionTestBase() {
     @AfterTest
     fun cleanup() {
         scope.runCurrent()
-        assertEquals(listOf(), scope.asSpecificImplementation().leave())
+        assertEquals(listOf(), scope.asSpecificImplementation().legacyLeave())
     }
 
     /** Tests that the [StandardTestDispatcher] follows an execution order similar to `runBlocking`. */

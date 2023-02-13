@@ -236,8 +236,15 @@ internal class TestScopeImpl(context: CoroutineContext) :
         }
     }
 
+    /** Called at the end of the test. May only be called once. Returns the list of caught unhandled exceptions. */
+    fun leave(): List<Throwable> = synchronized(lock) {
+        check(entered && !finished)
+        finished = true
+        uncaughtExceptions
+    }
+
     /** Called at the end of the test. May only be called once. */
-    fun leave(): List<Throwable> {
+    fun legacyLeave(): List<Throwable> {
         val exceptions = synchronized(lock) {
             check(entered && !finished)
             finished = true
