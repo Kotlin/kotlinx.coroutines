@@ -7,7 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class ArrayChannelTest : TestBase() {
+class BufferedChannelTest : TestBase() {
     @Test
     fun testSimple() = runTest {
         val q = Channel<Int>(1)
@@ -34,6 +34,7 @@ class ArrayChannelTest : TestBase() {
         sender.join()
         receiver.join()
         check(q.isEmpty)
+        (q as BufferedChannel<*>).checkSegmentStructureInvariants()
         finish(10)
     }
 
@@ -59,6 +60,7 @@ class ArrayChannelTest : TestBase() {
         check(!q.isEmpty && q.isClosedForSend && !q.isClosedForReceive)
         yield()
         check(!q.isEmpty && q.isClosedForSend && q.isClosedForReceive)
+        (q as BufferedChannel<*>).checkSegmentStructureInvariants()
         finish(8)
     }
 
@@ -81,6 +83,7 @@ class ArrayChannelTest : TestBase() {
         expect(6)
         try { q.send(42) }
         catch (e: ClosedSendChannelException) {
+            (q as BufferedChannel<*>).checkSegmentStructureInvariants()
             finish(7)
         }
     }
@@ -112,6 +115,7 @@ class ArrayChannelTest : TestBase() {
         expect(8)
         assertFalse(q.trySend(4).isSuccess)
         yield()
+        (q as BufferedChannel<*>).checkSegmentStructureInvariants()
         finish(12)
     }
 
@@ -135,6 +139,7 @@ class ArrayChannelTest : TestBase() {
         check(q.isClosedForSend)
         check(q.isClosedForReceive)
         assertFailsWith<CancellationException> { q.receiveCatching().getOrThrow() }
+        (q as BufferedChannel<*>).checkSegmentStructureInvariants()
         finish(12)
     }
 
@@ -165,6 +170,11 @@ class ArrayChannelTest : TestBase() {
         checkBufferChannel(channel, capacity)
     }
 
+    @Test
+    fun testBufferIsNotPreallocated() {
+        (0..100_000).map { Channel<Int>(Int.MAX_VALUE / 2) }
+    }
+
     private suspend fun CoroutineScope.checkBufferChannel(
         channel: Channel<Int>,
         capacity: Int
@@ -189,6 +199,7 @@ class ArrayChannelTest : TestBase() {
             result.add(it)
         }
         assertEquals((0..capacity).toList(), result)
+        (channel as BufferedChannel<*>).checkSegmentStructureInvariants()
         finish(6)
     }
 }

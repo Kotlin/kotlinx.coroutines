@@ -359,13 +359,6 @@ internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): 
 }
 
 /**
- * Removes the specified [node] on cancellation. This function assumes that this node is already
- * removed on successful resume and does not try to remove it if the continuation is cancelled during dispatch.
- */
-internal fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode) =
-    invokeOnCancellation(handler = RemoveOnCancel(node).asHandler)
-
-/**
  * Disposes the specified [handle] when this continuation is cancelled.
  *
  * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created):
@@ -378,13 +371,6 @@ internal fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinke
 @InternalCoroutinesApi
 public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle): Unit =
     invokeOnCancellation(handler = DisposeOnCancel(handle).asHandler)
-
-// --------------- implementation details ---------------
-
-private class RemoveOnCancel(private val node: LockFreeLinkedListNode) : BeforeResumeCancelHandler() {
-    override fun invoke(cause: Throwable?) { node.remove() }
-    override fun toString() = "RemoveOnCancel[$node]"
-}
 
 private class DisposeOnCancel(private val handle: DisposableHandle) : CancelHandler() {
     override fun invoke(cause: Throwable?) = handle.dispose()

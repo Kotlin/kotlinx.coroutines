@@ -5,7 +5,6 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
 import kotlin.test.*
 
 class SendReceiveStressTest : TestBase() {
@@ -13,12 +12,12 @@ class SendReceiveStressTest : TestBase() {
     // Emulate parametrized by hand :(
 
     @Test
-    fun testArrayChannel() = runTest {
+    fun testBufferedChannel() = runTest {
         testStress(Channel(2))
     }
 
     @Test
-    fun testLinkedListChannel() = runTest {
+    fun testUnlimitedChannel() = runTest {
         testStress(Channel(Channel.UNLIMITED))
     }
 

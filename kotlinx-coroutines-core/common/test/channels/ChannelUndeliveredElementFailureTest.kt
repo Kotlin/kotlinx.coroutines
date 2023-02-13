@@ -107,11 +107,71 @@ class ChannelUndeliveredElementFailureTest : TestBase() {
     }
 
     @Test
-    fun testChannelCancelledFail() = runTest(expected = { it.isElementCancelException()}) {
+    fun testChannelCancelledFail() = runTest(expected = { it.isElementCancelException() }) {
         val channel = Channel(1, onUndeliveredElement = onCancelFail)
         channel.send(item)
         channel.cancel()
         expectUnreached()
     }
 
+    @Test
+    fun testFailedHandlerInClosedConflatedChannel() = runTest(expected = { it is UndeliveredElementException }) {
+        val conflated = Channel<Int>(Channel.CONFLATED, onUndeliveredElement = {
+            finish(2)
+            throw TestException()
+        })
+        expect(1)
+        conflated.close(IndexOutOfBoundsException())
+        conflated.send(3)
+    }
+
+    @Test
+    fun testFailedHandlerInClosedBufferedChannel() = runTest(expected = { it is UndeliveredElementException }) {
+        val conflated = Channel<Int>(3, onUndeliveredElement = {
+            finish(2)
+            throw TestException()
+        })
+        expect(1)
+        conflated.close(IndexOutOfBoundsException())
+        conflated.send(3)
+    }
+
+    @Test
+    fun testSendDropOldestInvokeHandlerBuffered() = runTest(expected = { it is UndeliveredElementException }) {
+        val channel = Channel<Int>(1, BufferOverflow.DROP_OLDEST, onUndeliveredElement = {
+            finish(2)
+            throw TestException()
+        })
+
+        channel.send(42)
+        expect(1)
+        channel.send(12)
+    }
+
+    @Test
+    fun testSendDropLatestInvokeHandlerBuffered() = runTest(expected = { it is UndeliveredElementException }) {
+        val channel = Channel<Int>(2, BufferOverflow.DROP_LATEST, onUndeliveredElement = {
+            finish(2)
+            throw TestException()
+        })
+
+        channel.send(42)
+        channel.send(12)
+        expect(1)
+        channel.send(12)
+        expectUnreached()
+    }
+
+    @Test
+    fun testSendDropOldestInvokeHandlerConflated() = runTest(expected = { it is UndeliveredElementException }) {
+        val channel = Channel<Int>(Channel.CONFLATED, onUndeliveredElement = {
+            finish(2)
+            println(TestException().stackTraceToString())
+            throw TestException()
+        })
+        channel.send(42)
+        expect(1)
+        channel.send(42)
+        expectUnreached()
+    }
 }

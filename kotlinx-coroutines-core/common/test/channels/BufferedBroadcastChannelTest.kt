@@ -7,7 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class ArrayBroadcastChannelTest : TestBase() {
+class BufferedBroadcastChannelTest : TestBase() {
 
     @Test
     fun testConcurrentModification() = runTest {

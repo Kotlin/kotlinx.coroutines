@@ -7,11 +7,11 @@ package kotlinx.coroutines.channels
 enum class TestBroadcastChannelKind {
     ARRAY_1 {
         override fun <T> create(): BroadcastChannel<T> = BroadcastChannel(1)
-        override fun toString(): String = "ArrayBroadcastChannel(1)"
+        override fun toString(): String = "BufferedBroadcastChannel(1)"
     },
     ARRAY_10 {
         override fun <T> create(): BroadcastChannel<T> = BroadcastChannel(10)
-        override fun toString(): String = "ArrayBroadcastChannel(10)"
+        override fun toString(): String = "BufferedBroadcastChannel(10)"
     },
     CONFLATED {
         override fun <T> create(): BroadcastChannel<T> = ConflatedBroadcastChannel()

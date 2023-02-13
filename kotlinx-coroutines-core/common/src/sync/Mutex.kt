@@ -247,9 +247,8 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     ) : SelectInstanceInternal<Q> by select as SelectInstanceInternal<Q> {
         override fun trySelect(clauseObject: Any, result: Any?): Boolean {
             assert { this@MutexImpl.owner.value === NO_OWNER }
-            this@MutexImpl.owner.value = owner
             return select.trySelect(clauseObject, result).also { success ->
-                if (!success) this@MutexImpl.owner.value = NO_OWNER
+                if (success) this@MutexImpl.owner.value = owner
             }
         }
 
