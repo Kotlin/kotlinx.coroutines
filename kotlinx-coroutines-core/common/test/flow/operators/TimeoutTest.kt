@@ -97,7 +97,8 @@ class TimeoutTest : TestBase() {
     fun testUpstreamError() = testUpstreamError(TestException())
 
     @Test
-    fun testUpstreamErrorTimeoutException() = testUpstreamError(TimeoutCancellationException(0, Job()))
+    fun testUpstreamErrorTimeoutException() =
+        testUpstreamError(TimeoutCancellationException("Timed out waiting for ${0} ms", Job()))
 
     @Test
     fun testUpstreamErrorCancellationException() = testUpstreamError(CancellationException(""))

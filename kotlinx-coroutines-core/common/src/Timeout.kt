@@ -13,6 +13,7 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified [timeout][timeMillis] and throws
@@ -135,9 +136,9 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
  * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  */
 public suspend fun <T> withTimeoutOrNull(timeout: Duration, block: suspend CoroutineScope.() -> T): T? =
-        withTimeoutOrNull(timeout.toDelayMillis(), block)
+    withTimeoutOrNull(timeout.toDelayMillis(), block)
 
-private fun <U, T: U> setupTimeout(
+private fun <U, T : U> setupTimeout(
     coroutine: TimeoutCoroutine<U, T>,
     block: suspend CoroutineScope.() -> T
 ): Any? {
@@ -150,12 +151,12 @@ private fun <U, T: U> setupTimeout(
     return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block)
 }
 
-private class TimeoutCoroutine<U, in T: U>(
+private class TimeoutCoroutine<U, in T : U>(
     @JvmField val time: Long,
     uCont: Continuation<U> // unintercepted continuation
 ) : ScopeCoroutine<T>(uCont.context, uCont), Runnable {
     override fun run() {
-        cancelCoroutine(TimeoutCancellationException(time, this))
+        cancelCoroutine(TimeoutCancellationException(time, context.delay, this))
     }
 
     override fun nameString(): String =
@@ -173,7 +174,6 @@ public class TimeoutCancellationException internal constructor(
      * Creates a timeout exception with the given message.
      * This constructor is needed for exception stack-traces recovery.
      */
-    @Suppress("UNUSED")
     internal constructor(message: String) : this(message, null)
 
     // message is never null in fact
@@ -183,5 +183,10 @@ public class TimeoutCancellationException internal constructor(
 
 internal fun TimeoutCancellationException(
     time: Long,
+    delay: Delay,
     coroutine: Job
-) : TimeoutCancellationException = TimeoutCancellationException("Timed out waiting for $time ms", coroutine)
+) : TimeoutCancellationException {
+    val message = (delay as? DelayWithTimeoutDiagnostics)?.timeoutMessage(time.milliseconds)
+        ?: "Timed out waiting for $time ms"
+    return TimeoutCancellationException(message, coroutine)
+}
