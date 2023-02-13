@@ -29,12 +29,6 @@ public abstract class OpDescriptor {
     abstract val atomicOp: AtomicOp<*>?
 
     override fun toString(): String = "$classSimpleName@$hexAddress" // debug
-
-    fun isEarlierThan(that: OpDescriptor): Boolean {
-        val thisOp = atomicOp ?: return false
-        val thatOp = that.atomicOp ?: return false
-        return thisOp.opSequence < thatOp.opSequence
-    }
 }
 
 @JvmField
@@ -55,25 +49,9 @@ internal val NO_DECISION: Any = Symbol("NO_DECISION")
 public abstract class AtomicOp<in T> : OpDescriptor() {
     private val _consensus = atomic<Any?>(NO_DECISION)
 
-    // Returns NO_DECISION when there is not decision yet
-    val consensus: Any? get() = _consensus.value
-
-    val isDecided: Boolean get() = _consensus.value !== NO_DECISION
-
-    /**
-     * Sequence number of this multi-word operation for deadlock resolution.
-     * An operation with lower number aborts itself with (using [RETRY_ATOMIC] error symbol) if it encounters
-     * the need to help the operation with higher sequence number and then restarts
-     * (using higher `opSequence` to ensure progress).
-     * Simple operations that cannot get into the deadlock always return zero here.
-     *
-     * See https://github.com/Kotlin/kotlinx.coroutines/issues/504
-     */
-    open val opSequence: Long get() = 0L
-
     override val atomicOp: AtomicOp<*> get() = this
 
-    fun decide(decision: Any?): Any? {
+    private fun decide(decision: Any?): Any? {
         assert { decision !== NO_DECISION }
         val current = _consensus.value
         if (current !== NO_DECISION) return current
@@ -98,21 +76,3 @@ public abstract class AtomicOp<in T> : OpDescriptor() {
         return decision
     }
 }
-
-/**
- * A part of multi-step atomic operation [AtomicOp].
- *
- * @suppress **This is unstable API and it is subject to change.**
- */
-public abstract class AtomicDesc {
-    lateinit var atomicOp: AtomicOp<*> // the reference to parent atomicOp, init when AtomicOp is created
-    abstract fun prepare(op: AtomicOp<*>): Any? // returns `null` if prepared successfully
-    abstract fun complete(op: AtomicOp<*>, failure: Any?) // decision == null if success
-}
-
-/**
- * It is returned as an error by [AtomicOp] implementations when they detect potential deadlock
- * using [AtomicOp.opSequence] numbers.
- */
-@JvmField
-internal val RETRY_ATOMIC: Any = Symbol("RETRY_ATOMIC")
