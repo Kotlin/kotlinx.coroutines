@@ -185,7 +185,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
 
     private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
         // Try to suspend.
-        if (addAcquireToQueue(cont)) return@sc
+        if (addAcquireToQueue(cont as Waiter)) return@sc
         // The suspension has been failed
         // due to the synchronous resumption mode.
         // Restart the whole `acquire`.
@@ -195,7 +195,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     @JsName("acquireCont")
     protected fun acquire(waiter: CancellableContinuation<Unit>) = acquire(
         waiter = waiter,
-        suspend = { cont -> addAcquireToQueue(cont) },
+        suspend = { cont -> addAcquireToQueue(cont as Waiter) },
         onAcquired = { cont -> cont.resume(Unit, onCancellationRelease) }
     )
 
@@ -219,7 +219,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     protected fun onAcquireRegFunction(select: SelectInstance<*>, ignoredParam: Any?) =
         acquire(
             waiter = select,
-            suspend = { s -> addAcquireToQueue(s) },
+            suspend = { s -> addAcquireToQueue(s as Waiter) },
             onAcquired = { s -> s.selectInRegistrationPhase(Unit) }
         )
 
@@ -281,7 +281,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     /**
      * Returns `false` if the received permit cannot be used and the calling operation should restart.
      */
-    private fun addAcquireToQueue(waiter: Any): Boolean {
+    private fun addAcquireToQueue(waiter: Waiter): Boolean {
         val curTail = this.tail.value
         val enqIdx = enqIdx.getAndIncrement()
         val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
@@ -289,15 +289,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         val i = (enqIdx % SEGMENT_SIZE).toInt()
         // the regular (fast) path -- if the cell is empty, try to install continuation
         if (segment.cas(i, null, waiter)) { // installed continuation successfully
-            when (waiter) {
-                is CancellableContinuation<*> -> {
-                    waiter.invokeOnCancellation(CancelSemaphoreAcquisitionHandler(segment, i).asHandler)
-                }
-                is SelectInstance<*> -> {
-                    waiter.disposeOnCompletion(CancelSemaphoreAcquisitionHandler(segment, i))
-                }
-                else -> error("unexpected: $waiter")
-            }
+            waiter.invokeOnCancellation(segment, i)
             return true
         }
         // On CAS failure -- the cell must be either PERMIT or BROKEN
@@ -362,20 +354,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     }
 }
 
-private class CancelSemaphoreAcquisitionHandler(
-    private val segment: SemaphoreSegment,
-    private val index: Int
-) : CancelHandler(), DisposableHandle {
-    override fun invoke(cause: Throwable?) = dispose()
-
-    override fun dispose() {
-        segment.cancel(index)
-    }
-
-    override fun toString() = "CancelSemaphoreAcquisitionHandler[$segment, $index]"
-}
-
-private fun createSegment(id: Long, prev: SemaphoreSegment) = SemaphoreSegment(id, prev, 0)
+private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev, 0)
 
 private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int) : Segment<SemaphoreSegment>(id, prev, pointers) {
     val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
@@ -397,7 +376,7 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int)
 
     // Cleans the acquirer slot located by the specified index
     // and removes this segment physically if all slots are cleaned.
-    fun cancel(index: Int) {
+    override fun onCancellation(index: Int, cause: Throwable?) {
         // Clean the slot
         set(index, CANCELLED)
         // Remove this segment if needed
