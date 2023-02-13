@@ -140,6 +140,7 @@ class MutexTest : TestBase() {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun testIllegalStateInvariant() = runTest {
         val mutex = Mutex()
         val owner = Any()

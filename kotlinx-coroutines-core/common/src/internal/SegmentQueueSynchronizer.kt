@@ -209,6 +209,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
         returnValue(value)
     }
 
+    @Suppress("INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION")
     internal fun suspendCancelled(): T? {
         // Increment `suspendIdx` and find the segment
         // with the corresponding id. It is guaranteed
@@ -238,6 +239,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
         if (value !== BROKEN && segment.cas(i, value, TAKEN)) {
             // The elimination is performed successfully,
             // complete with the value stored in the cell.
+            @Suppress("UNCHECKED_CAST")
             return value as T
         }
         // The cell is broken, this can happen only in the `SYNC` resumption mode.
@@ -245,7 +247,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
         return null
     }
 
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST", "INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION")
     internal fun suspend(waiter: Waiter): Boolean {
         // Increment `suspendIdx` and find the segment
         // with the corresponding id. It is guaranteed
@@ -335,7 +337,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
      * moves [resumeIdx] to the first possibly non-cancelled cell, i.e.,
      * to the first segment id multiplied by [SEGMENT_SIZE].
      */
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST", "INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION")
     private fun tryResumeImpl(value: T, adjustResumeIdx: Boolean): Int {
         // Check that `adjustResumeIdx` is `false` in the simple cancellation mode.
         assertNot { cancellationMode == SIMPLE && adjustResumeIdx }
@@ -561,12 +563,14 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
                 // provided by a concurrent `resume(..)`.
                 // The value could be put only in the asynchronous mode,
                 // so the `resume(..)` call above must not fail.
+                @Suppress("UNCHECKED_CAST")
                 resume(value as T)
             } else {
                 // The `resume(..)` that will come to this cell should be refused.
                 // Mark the cell correspondingly and help a concurrent
                 // `resume(..)` to process its value if needed.
                 val value = markRefuse(index) ?: return
+                @Suppress("UNCHECKED_CAST")
                 returnRefusedValue(value as T)
             }
         }

@@ -232,6 +232,7 @@ internal open class MutexImpl(locked: Boolean) : SegmentQueueSynchronizer<Unit>(
                 assert { this.owner.value === NO_OWNER }
                 when (waiter) {
                     is CancellableContinuation<*> -> {
+                        @Suppress("UNCHECKED_CAST")
                         waiter as CancellableContinuation<Unit>
                         waiter.resume(Unit, null)
                     }

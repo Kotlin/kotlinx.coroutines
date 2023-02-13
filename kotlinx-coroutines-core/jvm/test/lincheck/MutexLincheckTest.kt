@@ -25,6 +25,7 @@ class MutexLincheckTest : AbstractLincheckTest() {
 
     // TODO: `onLock` with non-null owner is non-linearizable
     // onLock may suspend in case of clause re-registration.
+    @Suppress("DEPRECATION")
     @Operation(allowExtraSuspension = true, promptCancellation = true)
     suspend fun onLock() = select<Unit> { mutex.onLock(null) {} }
 

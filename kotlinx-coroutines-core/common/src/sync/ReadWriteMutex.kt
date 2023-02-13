@@ -217,6 +217,7 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
         if (owner != null) error("ReadWriteMutex.write does not support owners")
         writeLock()
     }
+    @Suppress("OVERRIDE_DEPRECATION")
     override val onLock: SelectClause2<Any?, Mutex> get() = error("ReadWriteMutex.write does not support `onLock`")
     override fun holdsLock(owner: Any) = error("ReadWriteMutex.write does not support owners")
     override fun unlock(owner: Any?) {
