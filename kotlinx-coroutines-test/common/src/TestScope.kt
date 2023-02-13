@@ -40,12 +40,10 @@ import kotlin.time.*
  *   paused by default, like [StandardTestDispatcher].
  * * No access to the list of unhandled exceptions.
  */
-@ExperimentalCoroutinesApi
 public sealed interface TestScope : CoroutineScope {
     /**
      * The delay-skipping scheduler used by the test dispatchers running the code in this scope.
      */
-    @ExperimentalCoroutinesApi
     public val testScheduler: TestCoroutineScheduler
 
     /**
@@ -82,7 +80,6 @@ public sealed interface TestScope : CoroutineScope {
      * }
      * ```
      */
-    @ExperimentalCoroutinesApi
     public val backgroundScope: CoroutineScope
 }
 
@@ -166,7 +163,6 @@ public val TestScope.testTimeSource: TimeSource get() = testScheduler.timeSource
  * @throws IllegalArgumentException if [context] has an [CoroutineExceptionHandler] that is not an
  * [UncaughtExceptionCaptor].
  */
-@ExperimentalCoroutinesApi
 @Suppress("FunctionName")
 public fun TestScope(context: CoroutineContext = EmptyCoroutineContext): TestScope {
     val ctxWithDispatcher = context.withDelaySkipping()

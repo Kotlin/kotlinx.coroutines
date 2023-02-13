@@ -17,11 +17,9 @@ import kotlin.time.*
  * * [UnconfinedTestDispatcher] is a dispatcher that behaves like [Dispatchers.Unconfined] while allowing to control
  *   the virtual time.
  */
-@ExperimentalCoroutinesApi
 @Suppress("INVISIBLE_REFERENCE")
 public abstract class TestDispatcher internal constructor() : CoroutineDispatcher(), Delay, DelayWithTimeoutDiagnostics {
     /** The scheduler that this dispatcher is linked to. */
-    @ExperimentalCoroutinesApi
     public abstract val scheduler: TestCoroutineScheduler
 
     /** Notifies the dispatcher that it should process a single event marked with [marker] happening at time [time]. */
