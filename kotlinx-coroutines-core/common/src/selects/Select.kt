@@ -376,11 +376,24 @@ internal open class SelectImplementation<R> constructor(
     private var clauses: MutableList<ClauseData<R>>? = ArrayList(2)
 
     /**
-     * Stores the completion action provided through [disposeOnCompletion] during clause registration.
-     * After that, if the clause is successfully registered (so, it has not completed immediately),
-     * this [DisposableHandle] is stored into the corresponding [ClauseData] instance.
+     * Stores the completion action provided through [disposeOnCompletion] or [invokeOnCancellation]
+     * during clause registration. After that, if the clause is successfully registered
+     * (so, it has not completed immediately), this handler is stored into
+     * the corresponding [ClauseData] instance.
+     *
+     * Note that either [DisposableHandle] is provided, or a [Segment] instance with
+     * the index in it, which specify the location of storing this `select`.
+     * In the latter case, [Segment.onCancellation] should be called on completion/cancellation.
      */
-    private var disposableHandle: DisposableHandle? = null
+    private var disposableHandleOrSegment: Any? = null
+
+    /**
+     * In case the disposable handle is specified via [Segment]
+     * and index in it, implying calling [Segment.onCancellation],
+     * the corresponding index is stored in this field.
+     * The segment is stored in [disposableHandleOrSegment].
+     */
+    private var indexInSegment: Int = -1
 
     /**
      * Stores the result passed via [selectInRegistrationPhase] during clause registration
@@ -469,8 +482,10 @@ internal open class SelectImplementation<R> constructor(
             // This also guarantees that the list of clauses cannot be cleared
             // in the registration phase, so it is safe to read it with "!!".
             if (!reregister) clauses!! += this
-            disposableHandle = this@SelectImplementation.disposableHandle
-            this@SelectImplementation.disposableHandle = null
+            disposableHandleOrSegment = this@SelectImplementation.disposableHandleOrSegment
+            indexInSegment = this@SelectImplementation.indexInSegment
+            this@SelectImplementation.disposableHandleOrSegment = null
+            this@SelectImplementation.indexInSegment = -1
         } else {
             // This clause has been selected!
             // Update the state correspondingly.
@@ -493,7 +508,23 @@ internal open class SelectImplementation<R> constructor(
     }
 
     override fun disposeOnCompletion(disposableHandle: DisposableHandle) {
-        this.disposableHandle = disposableHandle
+        this.disposableHandleOrSegment = disposableHandle
+    }
+
+    /**
+     * An optimized version for the code below that does not allocate
+     * a cancellation handler object and efficiently stores the specified
+     * [segment] and [index].
+     *
+     * ```
+     * disposeOnCompletion {
+     *   segment.onCancellation(index, null)
+     * }
+     * ```
+     */
+    override fun invokeOnCancellation(segment: Segment<*>, index: Int) {
+        this.disposableHandleOrSegment = segment
+        this.indexInSegment = index
     }
 
     override fun selectInRegistrationPhase(internalResult: Any?) {
@@ -556,7 +587,8 @@ internal open class SelectImplementation<R> constructor(
      */
     private fun reregisterClause(clauseObject: Any) {
         val clause = findClause(clauseObject)!! // it is guaranteed that the corresponding clause is presented
-        clause.disposableHandle = null
+        clause.disposableHandleOrSegment = null
+        clause.indexInSegment = -1
         clause.register(reregister = true)
     }
 
@@ -692,7 +724,7 @@ internal open class SelectImplementation<R> constructor(
         // Invoke all cancellation handlers except for the
         // one related to the selected clause, if specified.
         clauses.forEach { clause ->
-            if (clause !== selectedClause) clause.disposableHandle?.dispose()
+            if (clause !== selectedClause) clause.dispose()
         }
         // We do need to clean all the data to avoid memory leaks.
         this.state.value = STATE_COMPLETED
@@ -716,7 +748,7 @@ internal open class SelectImplementation<R> constructor(
         // a concurrent clean-up procedure has already completed, and it is safe to finish.
         val clauses = this.clauses ?: return
         // Remove this `select` instance from all the clause object (channels, mutexes, etc.).
-        clauses.forEach { it.disposableHandle?.dispose() }
+        clauses.forEach { it.dispose() }
         // We do need to clean all the data to avoid memory leaks.
         this.internalResult = NO_RESULT
         this.clauses = null
@@ -731,9 +763,11 @@ internal open class SelectImplementation<R> constructor(
         private val processResFunc: ProcessResultFunction,
         private val param: Any?, // the user-specified param
         private val block: Any, // the user-specified block, which should be called if this clause becomes selected
-        @JvmField val onCancellationConstructor: OnCancellationConstructor?,
-        @JvmField var disposableHandle: DisposableHandle? = null
+        @JvmField val onCancellationConstructor: OnCancellationConstructor?
     ) {
+        @JvmField var disposableHandleOrSegment: Any? = null
+        @JvmField var indexInSegment: Int = -1
+
         /**
          * Tries to register the specified [select] instance in [clauseObject] and check
          * whether the registration succeeded or a rendezvous has happened during the registration.
@@ -785,6 +819,16 @@ internal open class SelectImplementation<R> constructor(
             } else {
                 block as suspend (Any?) -> R
                 block(argument)
+            }
+        }
+
+        fun dispose() {
+            with(disposableHandleOrSegment) {
+                if (this is Segment<*>) {
+                    this.onCancellation(indexInSegment, null)
+                } else {
+                    (this as? DisposableHandle)?.dispose()
+                }
             }
         }
 

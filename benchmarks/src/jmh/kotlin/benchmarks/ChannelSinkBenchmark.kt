@@ -24,6 +24,11 @@ open class ChannelSinkBenchmark {
     private val unconfinedOneElement = Dispatchers.Unconfined + tl.asContextElement()
     private val unconfinedTwoElements = Dispatchers.Unconfined + tl.asContextElement() + tl2.asContextElement()
 
+    private val elements = (0 until N).toList()
+
+    @Param("0", "1", "8", "32")
+    var channelCapacity = 0
+
     @Benchmark
     fun channelPipeline(): Int = runBlocking {
         run(unconfined)
@@ -41,14 +46,14 @@ open class ChannelSinkBenchmark {
 
     private suspend inline fun run(context: CoroutineContext): Int {
         return Channel
-            .range(1, 10_000, context)
-            .filter(context) { it % 4 == 0 }
-            .fold(0) { a, b -> a + b }
+            .range(context) // should not allocate `Int`s!
+            .filter(context) { it % 4 == 0 } // should not allocate `Int`s!
+            .fold(0) { a, b -> if (a % 8 == 0) a else b } // should not allocate `Int`s!
     }
 
-    private fun Channel.Factory.range(start: Int, count: Int, context: CoroutineContext) = GlobalScope.produce(context) {
-        for (i in start until (start + count))
-            send(i)
+    private fun Channel.Factory.range(context: CoroutineContext) = GlobalScope.produce(context, capacity = channelCapacity) {
+        for (i in 0 until N)
+            send(elements[i]) // should not allocate `Int`s!
     }
 
     // Migrated from deprecated operators, are good only for stressing channels
@@ -69,3 +74,4 @@ open class ChannelSinkBenchmark {
     }
 }
 
+private const val N = 10_000

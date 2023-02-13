@@ -51,7 +51,7 @@ public final class kotlinx/coroutines/CancellableContinuation$DefaultImpls {
 	public static synthetic fun tryResume$default (Lkotlinx/coroutines/CancellableContinuation;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
-public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/CancellableContinuation, kotlinx/coroutines/channels/Waiter {
+public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/CancellableContinuation, kotlinx/coroutines/Waiter {
 	public fun <init> (Lkotlin/coroutines/Continuation;I)V
 	public final fun callCancelHandler (Lkotlinx/coroutines/CancelHandler;Ljava/lang/Throwable;)V
 	public final fun callOnCancellation (Lkotlin/jvm/functions/Function1;Ljava/lang/Throwable;)V
@@ -64,6 +64,7 @@ public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/
 	public fun getStackTraceElement ()Ljava/lang/StackTraceElement;
 	public fun initCancellability ()V
 	public fun invokeOnCancellation (Lkotlin/jvm/functions/Function1;)V
+	public fun invokeOnCancellation (Lkotlinx/coroutines/internal/Segment;I)V
 	public fun isActive ()Z
 	public fun isCancelled ()Z
 	public fun isCompleted ()Z
@@ -1257,6 +1258,7 @@ public class kotlinx/coroutines/selects/SelectImplementation : kotlinx/coroutine
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
+	public fun invokeOnCancellation (Lkotlinx/coroutines/internal/Segment;I)V
 	public fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 	public fun selectInRegistrationPhase (Ljava/lang/Object;)V
 	public fun trySelect (Ljava/lang/Object;Ljava/lang/Object;)Z
@@ -1325,6 +1327,18 @@ public final class kotlinx/coroutines/sync/MutexKt {
 	public static synthetic fun Mutex$default (ZILjava/lang/Object;)Lkotlinx/coroutines/sync/Mutex;
 	public static final fun withLock (Lkotlinx/coroutines/sync/Mutex;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun withLock$default (Lkotlinx/coroutines/sync/Mutex;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class kotlinx/coroutines/sync/ReadWriteMutex {
+	public abstract fun getWrite ()Lkotlinx/coroutines/sync/Mutex;
+	public abstract fun readLock (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun readUnlock ()V
+}
+
+public final class kotlinx/coroutines/sync/ReadWriteMutexKt {
+	public static final fun ReadWriteMutex ()Lkotlinx/coroutines/sync/ReadWriteMutex;
+	public static final fun read (Lkotlinx/coroutines/sync/ReadWriteMutex;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun write (Lkotlinx/coroutines/sync/ReadWriteMutex;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class kotlinx/coroutines/sync/Semaphore {

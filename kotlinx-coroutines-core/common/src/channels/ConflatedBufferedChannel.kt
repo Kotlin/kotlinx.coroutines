@@ -85,16 +85,16 @@ internal open class ConflatedBufferedChannel<E>(
             waiter = BUFFERED,
             // Finish successfully when a rendezvous has happened
             // or the element has been buffered.
-            onRendezvousOrBuffered = { success(Unit) },
+            onRendezvousOrBuffered = { return success(Unit) },
             // In case the algorithm decided to suspend, the element
             // was added to the buffer. However, as the buffer is now
             // overflowed, the first (oldest) element has to be extracted.
             onSuspend = { segm, i ->
                 dropFirstElementUntilTheSpecifiedCellIsInTheBuffer(segm.id * SEGMENT_SIZE + i)
-                success(Unit)
+                return success(Unit)
             },
             // If the channel is closed, return the corresponding result.
-            onClosed = { closed(sendException) }
+            onClosed = { return closed(sendException) }
         )
 
     @Suppress("UNCHECKED_CAST")

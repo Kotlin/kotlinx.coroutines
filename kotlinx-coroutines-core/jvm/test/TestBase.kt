@@ -255,6 +255,14 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
     protected suspend fun currentDispatcher() = coroutineContext[ContinuationInterceptor]!!
 }
 
+fun <T> CancellableContinuation<T>.tryResume0(value: T, onCancellation: (Throwable?) -> Unit): Boolean {
+    tryResume(value, null, onCancellation).let {
+        if (it == null) return false
+        completeResume(it)
+        return true
+    }
+}
+
 /*
  * We ignore tests that test **real** non-virtualized tests with time on Windows, because
  * our CI Windows is virtualized itself (oh, the irony) and its clock resolution is dozens of ms,
