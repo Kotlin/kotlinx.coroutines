@@ -6,6 +6,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.SegmentQueueSynchronizer.*
 import kotlinx.coroutines.internal.SegmentQueueSynchronizer.CancellationMode.*
 import kotlinx.coroutines.internal.SegmentQueueSynchronizer.ResumeMode.*
@@ -208,6 +209,42 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
         returnValue(value)
     }
 
+    internal fun suspendCancelled(): T? {
+        // Increment `suspendIdx` and find the segment
+        // with the corresponding id. It is guaranteed
+        // that this segment is not removed since at
+        // least the cell for this `suspend` invocation
+        // is not in the `CANCELLED` state.
+        val curSuspendSegm = this.suspendSegment.value
+        val suspendIdx = suspendIdx.getAndIncrement()
+        val segment = this.suspendSegment.findSegmentAndMoveForward(id = suspendIdx / SEGMENT_SIZE, startFrom = curSuspendSegm,
+            createNewSegment = ::createSegment).segment
+        assert { segment.id == suspendIdx / SEGMENT_SIZE }
+        // Try to install the waiter into the cell - this is the regular path.
+        val i = (suspendIdx % SEGMENT_SIZE).toInt()
+        if (segment.cas(i, null, CANCELLED)) {
+            // The continuation is successfully installed, and
+            // `resume` cannot break the cell now, so this
+            // suspension is successful.
+            // Add a cancellation handler if required and finish.
+            return null
+        }
+        // The continuation installation has failed. This happened because a concurrent
+        // `resume` came earlier to this cell and put its value into it. Remember that
+        // in the `SYNC` resumption mode this concurrent `resume` can mark the cell as broken.
+        //
+        // Try to grab the value if the cell is not in the `BROKEN` state.
+        val value = segment.get(i)
+        if (value !== BROKEN && segment.cas(i, value, TAKEN)) {
+            // The elimination is performed successfully,
+            // complete with the value stored in the cell.
+            return value as T
+        }
+        // The cell is broken, this can happen only in the `SYNC` resumption mode.
+        assert { resumeMode == SYNC && segment.get(i) === BROKEN }
+        return null
+    }
+
     @Suppress("UNCHECKED_CAST")
     internal fun suspend(waiter: Waiter): Boolean {
         // Increment `suspendIdx` and find the segment
@@ -359,17 +396,30 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
                     return TRY_RESUME_SUCCESS
                 }
                 // Does the cell store a cancellable continuation?
-                cellState is CancellableContinuation<*> -> {
+                cellState is Waiter -> {
                     // Change the cell state to `RESUMED`, so
                     // the cancellation handler cannot be invoked
                     // even if the continuation becomes cancelled.
                     if (!segment.cas(i, cellState, RESUMED)) continue@modify_cell
                     // Try to resume the continuation.
-                    val token = (cellState as CancellableContinuation<T>).tryResume(value, null, { returnValue(value) })
-                    if (token != null) {
-                        // Hooray, the continuation is successfully resumed!
-                        cellState.completeResume(token)
-                    } else {
+                    val resumed = when(cellState) {
+                        is CancellableContinuation<*> -> {
+                            (cellState as CancellableContinuation<T>)
+                            val token = cellState.tryResume(value, null, { returnValue(value) })
+                            if (token != null) {
+                                // Hooray, the continuation is successfully resumed!
+                                cellState.completeResume(token)
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        is SelectInstance<*> -> {
+                            cellState.trySelect(this@SegmentQueueSynchronizer, value)
+                        }
+                        else -> error("unexpected")
+                    }
+                    if (!resumed) {
                         // Unfortunately, the continuation resumption has failed.
                         // Fail the current `resume` if the simple cancellation mode is used.
                         if (cancellationMode === SIMPLE)
@@ -552,7 +602,7 @@ internal abstract class SegmentQueueSynchronizer<T : Any> {
                 val cellState = get(index)
                 when {
                     cellState === RESUMED -> return false
-                    cellState is CancellableContinuation<*> -> {
+                    cellState is Waiter -> {
                         if (cas(index, cellState, CANCELLING)) return true
                     }
                     else -> {

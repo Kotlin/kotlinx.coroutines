@@ -51,7 +51,7 @@ internal class AsyncSemaphore(permits: Int) : SegmentQueueSynchronizer<Unit>(), 
         if (p > 0) return
         // Suspend otherwise.
         suspendCancellableCoroutine<Unit> { cont ->
-            check(suspend(cont)) { "Should not fail in ASYNC mode" }
+            check(suspend(cont as Waiter)) { "Should not fail in ASYNC mode" }
         }
     }
 
@@ -97,7 +97,7 @@ internal class AsyncSemaphoreSmart(permits: Int) : SegmentQueueSynchronizer<Unit
         if (p > 0) return
         // Suspend otherwise.
         suspendCancellableCoroutine<Unit> { cont ->
-            check(suspend(cont)) { "Should not fail in ASYNC mode" }
+            check(suspend(cont as Waiter)) { "Should not fail in ASYNC mode" }
         }
     }
 
@@ -153,7 +153,7 @@ internal class SyncSemaphoreSmart(permits: Int) : SegmentQueueSynchronizer<Boole
             if (p > 0) return
             // Try to suspend otherwise.
             val acquired = suspendCancellableCoroutine<Boolean> { cont ->
-                if (!suspend(cont)) cont.resume(false)
+                if (!suspend(cont as Waiter)) cont.resume(false)
             }
             if (acquired) return
         }
@@ -293,7 +293,7 @@ internal open class CountDownLatch(count: Int) : SegmentQueueSynchronizer<Unit>(
         if (w and DONE_MARK != 0) return
         // The number of waiters is
         // successfully incremented, suspend.
-        suspendCancellableCoroutine<Unit> { suspend(it) }
+        suspendCancellableCoroutine<Unit> { suspend(it as Waiter) }
     }
 
     /**
@@ -427,7 +427,7 @@ internal class Barrier(private val parties: Int) : SegmentQueueSynchronizer<Unit
         return when {
             // Should we suspend?
             a < parties -> {
-                suspendCoroutine<Unit> { cont -> suspend(cont) }
+                suspendCancellableCoroutineReusable<Unit> { cont -> suspend(cont as Waiter) }
                 true
             }
             // Are we the last party?
@@ -458,7 +458,7 @@ internal class Barrier(private val parties: Int) : SegmentQueueSynchronizer<Unit
 abstract class BarrierLincheckTestBase(parties: Int, val seqSpec: KClass<*>) : AbstractLincheckTest() {
     private val b = Barrier(parties)
 
-    @Operation(promptCancellation = false)
+    @Operation(cancellableOnSuspension = false)
     suspend fun arrive() = b.arrive()
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean) =
@@ -608,7 +608,7 @@ internal class BlockingQueuePool<T: Any> : SegmentQueueSynchronizer<T>(), Blocki
             } else {
                 // The pool is empty, suspend.
                 return suspendCancellableCoroutine { cont ->
-                    suspend(cont)
+                    suspend(cont as Waiter)
                 }
             }
         }
@@ -716,7 +716,7 @@ internal class BlockingStackPool<T: Any> : SegmentQueueSynchronizer<T>(), Blocki
             } else {
                 // The pool is empty, suspend.
                 return suspendCancellableCoroutine { cont ->
-                    suspend(cont)
+                    suspend(cont as Waiter)
                 }
             }
         }
@@ -859,7 +859,7 @@ internal class BlockingQueueSmart<E : Any> : SegmentQueueSynchronizer<Unit>() {
     suspend fun receive(): E {
         val s = size.getAndDecrement() // decrement the number of available elements.
         if (s <= 0) { // should this `receive()` suspend?
-            suspendCancellableCoroutine<Unit> { suspend(it) }
+            suspendCancellableCoroutine<Unit> { suspend(it as Waiter) }
         }
         return elements.remove() // retrieve the first element.
     }
@@ -887,8 +887,7 @@ class BlockingQueueSmartLincheckTest : AbstractLincheckTest() {
     suspend fun receive() = c.receive()
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
-        logLevel(LoggingLevel.INFO)
-        .sequentialSpecification(BlockingQueueSequential::class.java)
+        sequentialSpecification(BlockingQueueSequential::class.java)
 
     override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
         checkObstructionFreedom()

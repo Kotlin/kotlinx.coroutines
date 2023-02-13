@@ -266,7 +266,7 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
                 // The number of waiting readers was incremented
                 // correctly, wait for a reader lock in `sqsReaders`.
                 suspendCancellableCoroutineReusable<Unit> { cont ->
-                    sqsReaders.suspend(cont)
+                    sqsReaders.suspend(cont as Waiter)
                 }
                 return
             } else {
@@ -286,7 +286,7 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
                     // when this concurrent `write.unlock()` completes.
                     if (wr == 0) {
                         suspendCancellableCoroutineReusable<Unit> { cont ->
-                            sqsReaders.suspend(cont)
+                            sqsReaders.suspend(cont as Waiter)
                         }
                         return
                     }
@@ -399,7 +399,7 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
                 // Try to increment the number of waiting writers and suspend in `sqsWriters`.
                 if (state.compareAndSet(s, state(s.ar, s.wla, s.ww + 1, s.rwr))) {
                     suspendCancellableCoroutineReusable<Unit> { cont ->
-                        sqsWriters.suspend(cont)
+                        sqsWriters.suspend(cont as Waiter)
                     }
                     return
                 }

@@ -156,10 +156,10 @@ internal open class SemaphoreImpl(
         }
     }
 
-    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
+    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable sc@{ cont ->
         while (true) {
             // Try to suspend.
-            if (suspend(cont)) return@sc
+            if (suspend(cont as Waiter)) return@sc
             // The suspension has been failed
             // due to the synchronous resumption mode.
             // Restart the whole `acquire`, and decrement
@@ -167,7 +167,7 @@ internal open class SemaphoreImpl(
             val p = decPermits()
             // Is the permit acquired?
             if (p > 0) {
-                cont.resume(Unit)
+                cont.resume(Unit) { release() }
                 return@sc
             }
             // Permit has not been acquired, go to

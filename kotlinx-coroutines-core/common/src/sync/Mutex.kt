@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
+import kotlin.coroutines.*
 import kotlin.jvm.*
 
 /**
@@ -131,7 +132,7 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
 }
 
 
-internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 0), Mutex {
+internal open class MutexImpl(locked: Boolean) : SegmentQueueSynchronizer<Unit>(), Mutex {
     /**
      * After the lock is acquired, the corresponding owner is stored in this field.
      * The [unlock] operation checks the owner and either re-sets it to [NO_OWNER],
@@ -140,13 +141,15 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
      */
     private val owner = atomic<Any?>(if (locked) null else NO_OWNER)
 
+    private val availablePermits = atomic(if (locked) 0 else 1)
+
     private val onSelectCancellationUnlockConstructor: OnCancellationConstructor =
         { _: SelectInstance<*>, owner: Any?, _: Any? ->
             { unlock(owner) }
         }
 
     override val isLocked: Boolean get() =
-        availablePermits == 0
+        availablePermits.value <= 0
 
     override fun holdsLock(owner: Any): Boolean {
         while (true) {
@@ -161,13 +164,84 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     }
 
     override suspend fun lock(owner: Any?) {
-        if (tryLock(owner)) return
+//        if (tryLock(owner)) return
         lockSuspend(owner)
     }
 
-    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable { cont ->
+    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable<Unit> { cont ->
+        cont as CancellableContinuationImpl<Unit>
         val contWithOwner = CancellableContinuationWithOwner(cont, owner)
-        acquire(contWithOwner)
+        lockImpl(contWithOwner, owner)
+    }
+
+    private fun lockImpl(waiter: Waiter, owner: Any?) {
+        xxx@ while (true) {
+            // Get the current number of available permits.
+            val p = availablePermits.getAndDecrement()
+            // Try to decrement the number of available
+            // permits if it is greater than zero.
+            if (p <= 0) {
+                // The semaphore permit acquisition has failed.
+                // However, we need to check that this mutex is not
+                // locked by our owner.
+                if (owner != null) {
+                    // Is this mutex locked by our owner?
+                    var curOwner = this.owner.value
+
+                    if (curOwner === owner) {
+                        if (suspendCancelled() != null) release()
+                        when (waiter) {
+                            is CancellableContinuation<*> -> {
+                                waiter.resumeWithException(IllegalStateException("ERROR"))
+                            }
+                            is SelectInstance<*> -> {
+                                waiter.selectInRegistrationPhase(ON_LOCK_ALREADY_LOCKED_BY_OWNER)
+                            }
+                        }
+                        return
+                    }
+
+                    while (curOwner === NO_OWNER) {
+                        curOwner = this.owner.value
+                        if (!isLocked) {
+                            if (suspendCancelled() != null) release()
+                            continue@xxx
+                        }
+                    }
+                    if (curOwner === owner) {
+                        if (suspendCancelled() != null) release()
+                        when (waiter) {
+                            is CancellableContinuation<*> -> {
+                                waiter.resumeWithException(IllegalStateException("ERROR"))
+                            }
+                            is SelectInstance<*> -> {
+                                waiter.selectInRegistrationPhase(ON_LOCK_ALREADY_LOCKED_BY_OWNER)
+                            }
+                        }
+                        return
+                    }
+                    // This mutex is either locked by another owner or unlocked.
+                    // In the latter case, it is possible that it WAS locked by
+                    // our owner when the semaphore permit acquisition has failed.
+                    // To preserve linearizability, the operation restarts in this case.
+//                    if (!isLocked) continuex
+                }
+                if (suspend(waiter)) return
+            } else {
+                assert { p == 1 }
+                assert { this.owner.value === NO_OWNER }
+                when (waiter) {
+                    is CancellableContinuation<*> -> {
+                        waiter as CancellableContinuation<Unit>
+                        waiter.resume(Unit, null)
+                    }
+                    is SelectInstance<*> -> {
+                        waiter.selectInRegistrationPhase(Unit)
+                    }
+                }
+                return
+            }
+        }
     }
 
     override fun tryLock(owner: Any?): Boolean = when (tryLockImpl(owner)) {
@@ -179,24 +253,26 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     private fun tryLockImpl(owner: Any?): Int {
         while (true) {
-            if (tryAcquire()) {
-                assert { this.owner.value === NO_OWNER }
-                this.owner.value = owner
-                return TRY_LOCK_SUCCESS
-            } else {
+            // Get the current number of available permits.
+            val p = availablePermits.value
+            // Try to decrement the number of available
+            // permits if it is greater than zero.
+            if (p <= 0) {
                 // The semaphore permit acquisition has failed.
                 // However, we need to check that this mutex is not
                 // locked by our owner.
                 if (owner != null) {
                     // Is this mutex locked by our owner?
-                    if (holdsLock(owner)) return TRY_LOCK_ALREADY_LOCKED_BY_OWNER
-                    // This mutex is either locked by another owner or unlocked.
-                    // In the latter case, it is possible that it WAS locked by
-                    // our owner when the semaphore permit acquisition has failed.
-                    // To preserve linearizability, the operation restarts in this case.
-                    if (!isLocked) continue
+                    val curOwner = this.owner.value
+                    if (curOwner === NO_OWNER) continue
+                    if (curOwner === owner) return TRY_LOCK_ALREADY_LOCKED_BY_OWNER
                 }
                 return TRY_LOCK_FAILED
+            }
+            if (availablePermits.compareAndSet(p, p - 1)) {
+                assert { this.owner.value === NO_OWNER }
+                this.owner.value = owner
+                return TRY_LOCK_SUCCESS
             }
         }
     }
@@ -218,6 +294,27 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         }
     }
 
+    fun release() {
+        while (true) {
+            // Increment the number of available permits.
+            val p = availablePermits.value
+            // Is this `release` call correct and does not
+            // exceed the maximal number of permits?
+            if (p >= 1) {
+                error("This mutex is not locked")
+            }
+            if (availablePermits.compareAndSet(p, p + 1)) {
+                // Is there a waiter that should be resumed?
+                if (p == 0) return
+                // Try to resume the first waiter, and
+                // restart the operation if either this
+                // first waiter is cancelled or
+                // due to `SYNC` resumption mode.
+                if (resume(Unit)) return
+            }
+        }
+    }
+
     @Suppress("UNCHECKED_CAST", "OverridingDeprecatedMember", "OVERRIDE_DEPRECATION")
     override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
         clauseObject = this,
@@ -227,11 +324,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     )
 
     protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
-        if (owner != null && holdsLock(owner)) {
-            select.selectInRegistrationPhase(ON_LOCK_ALREADY_LOCKED_BY_OWNER)
-        } else {
-            onAcquireRegFunction(SelectInstanceWithOwner(select, owner), owner)
-        }
+        lockImpl(SelectInstanceWithOwner(select as SelectInstanceInternal<*>, owner), owner)
     }
 
     protected open fun onLockProcessResult(owner: Any?, result: Any?): Any? {
@@ -243,10 +336,10 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     private inner class CancellableContinuationWithOwner(
         @JvmField
-        val cont: CancellableContinuation<Unit>,
+        val cont: CancellableContinuationImpl<Unit>,
         @JvmField
         val owner: Any?
-    ) : CancellableContinuation<Unit> by cont {
+    ) : CancellableContinuation<Unit> by cont, Waiter by cont {
         override fun tryResume(value: Unit, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any? {
             assert { this@MutexImpl.owner.value === NO_OWNER }
             val token = cont.tryResume(value, idempotent) {
@@ -270,10 +363,10 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     private inner class SelectInstanceWithOwner<Q>(
         @JvmField
-        val select: SelectInstance<Q>,
+        val select: SelectInstanceInternal<Q>,
         @JvmField
         val owner: Any?
-    ) : SelectInstanceInternal<Q> by select as SelectInstanceInternal<Q> {
+    ) : SelectInstanceInternal<Q> by select {
         override fun trySelect(clauseObject: Any, result: Any?): Boolean {
             assert { this@MutexImpl.owner.value === NO_OWNER }
             return select.trySelect(clauseObject, result).also { success ->
@@ -282,11 +375,15 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         }
 
         override fun selectInRegistrationPhase(internalResult: Any?) {
-            assert { this@MutexImpl.owner.value === NO_OWNER }
-            this@MutexImpl.owner.value = owner
+            if (internalResult !== ON_LOCK_ALREADY_LOCKED_BY_OWNER) {
+                assert { this@MutexImpl.owner.value === NO_OWNER }
+                this@MutexImpl.owner.value = owner
+            }
             select.selectInRegistrationPhase(internalResult)
         }
     }
+
+    internal val debugStateRepresentation: String get() = "p=${availablePermits.value},owner=${owner.value},SQS=${super.toString()}"
 
     override fun toString() = "Mutex@${hexAddress}[isLocked=$isLocked,owner=${owner.value}]"
 }
