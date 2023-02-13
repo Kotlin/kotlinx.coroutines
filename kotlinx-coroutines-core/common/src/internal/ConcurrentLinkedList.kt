@@ -12,7 +12,7 @@ import kotlin.jvm.*
  * Returns the first segment `s` with `s.id >= id` or `CLOSED`
  * if all the segments in this linked list have lower `id`, and the list is closed for further segment additions.
  */
-private inline fun <S : Segment<S>> S.findSegmentInternal(
+internal fun <S : Segment<S>> S.findSegmentInternal(
     id: Long,
     createNewSegment: (id: Long, prev: S) -> S
 ): SegmentOrClosed<S> {
@@ -62,10 +62,11 @@ internal inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = 
  * Returns the segment `s` with `s.id >= id` or `CLOSED` if all the segments in this linked list have lower `id`,
  * and the list is closed.
  */
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun <S : Segment<S>> AtomicRef<S>.findSegmentAndMoveForward(
     id: Long,
     startFrom: S,
-    createNewSegment: (id: Long, prev: S) -> S
+    noinline createNewSegment: (id: Long, prev: S) -> S
 ): SegmentOrClosed<S> {
     while (true) {
         val s = startFrom.findSegmentInternal(id, createNewSegment)
