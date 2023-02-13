@@ -27,6 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * virtual time as needed (via [advanceUntilIdle]), or run the tasks that are scheduled to run as soon as possible but
  * haven't yet been dispatched (via [runCurrent]).
  */
+@ExperimentalCoroutinesApi
 public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCoroutineScheduler),
     CoroutineContext.Element {
 
@@ -112,6 +113,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * milliseconds by which the execution of this method has advanced the virtual time. If you want to recreate that
      * functionality, query [currentTime] before and after the execution to achieve the same result.
      */
+    @ExperimentalCoroutinesApi
     public fun advanceUntilIdle(): Unit = advanceUntilIdleOr { events.none(TestDispatchEvent<*>::isForeground) }
 
     /**
@@ -127,6 +129,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /**
      * Runs the tasks that are scheduled to execute at this moment of virtual time.
      */
+    @ExperimentalCoroutinesApi
     public fun runCurrent() {
         val timeMark = synchronized(lock) { currentTime }
         while (true) {
@@ -162,6 +165,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      *
      * @throws IllegalArgumentException if passed a negative [delay][delayTime].
      */
+    @ExperimentalCoroutinesApi
     public fun advanceTimeBy(delayTime: Duration) {
         require(!delayTime.isNegative()) { "Can not advance time by a negative delay: $delayTime" }
         val startingTime = currentTime
@@ -218,6 +222,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /**
      * Returns the [TimeSource] representation of the virtual time of this scheduler.
      */
+    @ExperimentalCoroutinesApi
     @ExperimentalTime
     public val timeSource: TimeSource = object : AbstractLongTimeSource(DurationUnit.MILLISECONDS) {
         override fun read(): Long = currentTime

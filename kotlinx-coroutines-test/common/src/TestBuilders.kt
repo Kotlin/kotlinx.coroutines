@@ -31,6 +31,7 @@ import kotlin.time.Duration.Companion.seconds
  * * Don't nest functions returning a [TestResult].
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
+@ExperimentalCoroutinesApi
 public expect class TestResult
 
 /**
@@ -152,6 +153,7 @@ public expect class TestResult
  *
  * @throws IllegalArgumentException if the [context] is invalid. See the [TestScope] constructor docs for details.
  */
+@ExperimentalCoroutinesApi
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
     timeout: Duration = DEFAULT_TIMEOUT,
@@ -296,6 +298,7 @@ public fun runTest(
 /**
  * Performs [runTest] on an existing [TestScope]. See the documentation for [runTest] for details.
  */
+@ExperimentalCoroutinesApi
 public fun TestScope.runTest(
     timeout: Duration = DEFAULT_TIMEOUT,
     testBody: suspend TestScope.() -> Unit
