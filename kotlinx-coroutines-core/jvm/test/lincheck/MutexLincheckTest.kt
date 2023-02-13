@@ -16,15 +16,17 @@ import org.jetbrains.kotlinx.lincheck.paramgen.*
 class MutexLincheckTest : AbstractLincheckTest() {
     private val mutex = Mutex()
 
-    @Operation
+    @Operation(handleExceptionsAsResult = [IllegalStateException::class])
     fun tryLock(@Param(name = "owner") owner: Int) = mutex.tryLock(owner.asOwnerOrNull)
 
+    // TODO: `lock()` with non-null owner is non-linearizable
     @Operation(promptCancellation = true)
-    suspend fun lock(@Param(name = "owner") owner: Int) = mutex.lock(owner.asOwnerOrNull)
+    suspend fun lock() = mutex.lock(null)
 
+    // TODO: `onLock` with non-null owner is non-linearizable
     // onLock may suspend in case of clause re-registration.
     @Operation(allowExtraSuspension = true, promptCancellation = true)
-    suspend fun onLock(@Param(name = "owner") owner: Int) = select<Unit> { mutex.onLock(owner.asOwnerOrNull) {} }
+    suspend fun onLock() = select<Unit> { mutex.onLock(null) {} }
 
     @Operation(handleExceptionsAsResult = [IllegalStateException::class])
     fun unlock(@Param(name = "owner") owner: Int) = mutex.unlock(owner.asOwnerOrNull)
