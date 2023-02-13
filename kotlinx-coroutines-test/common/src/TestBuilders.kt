@@ -278,7 +278,8 @@ public fun runTest(
 @Deprecated(
     "Define a total timeout for the whole test instead of using dispatchTimeoutMs. " +
         "Warning: the proposed replacement is not identical as it uses 'dispatchTimeoutMs' as the timeout for the whole test!",
-    ReplaceWith("runTest(context, timeout = with(kotlin.time.Duration.Companion) { dispatchTimeoutMs.milliseconds }, testBody)"),
+    ReplaceWith("runTest(context, timeout = dispatchTimeoutMs.milliseconds, testBody)",
+        "kotlin.time.Duration.Companion.milliseconds"),
     DeprecationLevel.WARNING
 )
 public fun runTest(
@@ -387,7 +388,8 @@ public fun TestScope.runTest(
 @Deprecated(
     "Define a total timeout for the whole test instead of using dispatchTimeoutMs. " +
         "Warning: the proposed replacement is not identical as it uses 'dispatchTimeoutMs' as the timeout for the whole test!",
-    ReplaceWith("this.runTest(timeout = with(kotlin.time.Duration.Companion) { dispatchTimeoutMs.milliseconds }, testBody)"),
+    ReplaceWith("this.runTest(timeout = dispatchTimeoutMs.milliseconds, testBody)",
+        "kotlin.time.Duration.Companion.milliseconds"),
     DeprecationLevel.WARNING
 )
 public fun TestScope.runTest(

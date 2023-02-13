@@ -12,7 +12,6 @@ import kotlin.test.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 
-@OptIn(ExperimentalTime::class)
 class RunTestTest {
 
     /** Tests that [withContext] that sends work to other threads works in [runTest]. */
