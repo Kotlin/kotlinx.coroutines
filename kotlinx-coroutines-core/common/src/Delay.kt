@@ -57,6 +57,19 @@ public interface Delay {
 }
 
 /**
+ * Enhanced [Delay] interface that provides additional diagnostics for [withTimeout].
+ * Is going to be removed once there is proper JVM-default support.
+ * Then we'll be able put this function into [Delay] without breaking binary compatibility.
+ */
+@InternalCoroutinesApi
+internal interface DelayWithTimeoutDiagnostics : Delay {
+    /**
+     * Returns a string that explains that the timeout has occurred, and explains what can be done about it.
+     */
+    fun timeoutMessage(timeout: Duration): String
+}
+
+/**
  * Suspends until cancellation, in which case it will throw a [CancellationException].
  *
  * This function returns [Nothing], so it can be used in any coroutine,

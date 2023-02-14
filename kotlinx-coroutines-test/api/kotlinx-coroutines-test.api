@@ -95,11 +95,12 @@ public final class kotlinx/coroutines/test/TestCoroutineScopeKt {
 	public static final fun runCurrent (Lkotlinx/coroutines/test/TestCoroutineScope;)V
 }
 
-public abstract class kotlinx/coroutines/test/TestDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
+public abstract class kotlinx/coroutines/test/TestDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay, kotlinx/coroutines/DelayWithTimeoutDiagnostics {
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
 	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
+	public synthetic fun timeoutMessage-LRDsOJo (J)Ljava/lang/String;
 }
 
 public final class kotlinx/coroutines/test/TestDispatchers {
