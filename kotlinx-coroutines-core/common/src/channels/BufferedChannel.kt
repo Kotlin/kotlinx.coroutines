@@ -130,7 +130,8 @@ internal open class BufferedChannel<E>(
             onNoWaiterSuspend = { segm, i, elem, s -> sendOnNoWaiterSuspend(segm, i, elem, s) }
         )
 
-    private suspend fun onClosedSend(element: E): Nothing = suspendCancellableCoroutine { continuation ->
+    // NB: return type could've been Nothing, but it breaks TCO
+    private suspend fun onClosedSend(element: E): Unit = suspendCancellableCoroutine { continuation ->
         onUndeliveredElement?.callUndeliveredElementCatchingException(element)?.let {
             // If it crashes, add send exception as suppressed for better diagnostics
             it.addSuppressed(sendException)
