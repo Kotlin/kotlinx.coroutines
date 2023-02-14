@@ -2431,7 +2431,7 @@ internal open class BufferedChannel<E>(
      * segments, updating the counter value in [sendersAndCloseStatus] correspondingly.
      */
     private fun findSegmentSend(id: Long, startFrom: ChannelSegment<E>): ChannelSegment<E>? {
-        return sendSegment.findSegmentAndMoveForward(id, startFrom, ::createSegment).let {
+        return sendSegment.findSegmentAndMoveForward(id, startFrom, createSegmentFunction()).let {
             if (it.isClosed) {
                 // The required segment has not been found and new segments
                 // cannot be added, as the linked listed in already added.
@@ -2486,7 +2486,7 @@ internal open class BufferedChannel<E>(
      * segments, updating the [receivers] counter correspondingly.
      */
     private fun findSegmentReceive(id: Long, startFrom: ChannelSegment<E>): ChannelSegment<E>? =
-        receiveSegment.findSegmentAndMoveForward(id, startFrom, ::createSegment).let {
+        receiveSegment.findSegmentAndMoveForward(id, startFrom, createSegmentFunction()).let {
             if (it.isClosed) {
                 // The required segment has not been found and new segments
                 // cannot be added, as the linked listed in already added.
@@ -2535,7 +2535,7 @@ internal open class BufferedChannel<E>(
      * it always updates the number of completed `expandBuffer()` attempts.
      */
     private fun findSegmentBufferEnd(id: Long, startFrom: ChannelSegment<E>, currentBufferEndCounter: Long): ChannelSegment<E>? =
-        bufferEndSegment.findSegmentAndMoveForward(id, startFrom, ::createSegment).let {
+        bufferEndSegment.findSegmentAndMoveForward(id, startFrom, createSegmentFunction()).let {
             if (it.isClosed) {
                 // The required segment has not been found and new segments
                 // cannot be added, as the linked listed in already added.
@@ -2953,6 +2953,10 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
         onSlotCleaned()
     }
 }
+
+// WA for atomicfu + JVM_IR compiler bug that lead to SMAP-related compiler crashes: KT-55983
+internal fun <E> createSegmentFunction(): KFunction2<Long, ChannelSegment<E>, ChannelSegment<E>> = ::createSegment
+
 private fun <E> createSegment(id: Long, prev: ChannelSegment<E>) = ChannelSegment(
     id = id,
     prev = prev,
