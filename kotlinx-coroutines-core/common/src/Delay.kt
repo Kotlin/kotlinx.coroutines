@@ -62,7 +62,7 @@ public interface Delay {
  * Then we'll be able put this function into [Delay] without breaking binary compatibility.
  */
 @InternalCoroutinesApi
-internal interface DelayWithTimeoutDiagnostics: Delay {
+internal interface DelayWithTimeoutDiagnostics : Delay {
     /**
      * Returns a string that explains that the timeout has occurred, and explains what can be done about it.
      */
