@@ -166,7 +166,6 @@ class ChannelUndeliveredElementFailureTest : TestBase() {
     fun testSendDropOldestInvokeHandlerConflated() = runTest(expected = { it is UndeliveredElementException }) {
         val channel = Channel<Int>(Channel.CONFLATED, onUndeliveredElement = {
             finish(2)
-            println(TestException().stackTraceToString())
             throw TestException()
         })
         channel.send(42)
