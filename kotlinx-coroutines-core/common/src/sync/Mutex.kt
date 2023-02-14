@@ -170,14 +170,36 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         acquire(contWithOwner)
     }
 
-    override fun tryLock(owner: Any?): Boolean =
-        if (tryAcquire()) {
-            assert { this.owner.value === NO_OWNER }
-            this.owner.value = owner
-            true
-        } else {
-            false
+    override fun tryLock(owner: Any?): Boolean = when (tryLockImpl(owner)) {
+        TRY_LOCK_SUCCESS -> true
+        TRY_LOCK_FAILED -> false
+        TRY_LOCK_ALREADY_LOCKED_BY_OWNER -> error("This mutex is already locked by the specified owner: $owner")
+        else -> error("unexpected")
+    }
+
+    private fun tryLockImpl(owner: Any?): Int {
+        while (true) {
+            if (tryAcquire()) {
+                assert { this.owner.value === NO_OWNER }
+                this.owner.value = owner
+                return TRY_LOCK_SUCCESS
+            } else {
+                // The semaphore permit acquisition has failed.
+                // However, we need to check that this mutex is not
+                // locked by our owner.
+                if (owner != null) {
+                    // Is this mutex locked by our owner?
+                    if (holdsLock(owner)) return TRY_LOCK_ALREADY_LOCKED_BY_OWNER
+                    // This mutex is either locked by another owner or unlocked.
+                    // In the latter case, it is possible that it WAS locked by
+                    // our owner when the semaphore permit acquisition has failed.
+                    // To preserve linearizability, the operation restarts in this case.
+                    if (!isLocked) continue
+                }
+                return TRY_LOCK_FAILED
+            }
         }
+    }
 
     override fun unlock(owner: Any?) {
         while (true) {
@@ -205,10 +227,17 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     )
 
     protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
-        onAcquireRegFunction(SelectInstanceWithOwner(select, owner), owner)
+        if (owner != null && holdsLock(owner)) {
+            select.selectInRegistrationPhase(ON_LOCK_ALREADY_LOCKED_BY_OWNER)
+        } else {
+            onAcquireRegFunction(SelectInstanceWithOwner(select, owner), owner)
+        }
     }
 
     protected open fun onLockProcessResult(owner: Any?, result: Any?): Any? {
+        if (result == ON_LOCK_ALREADY_LOCKED_BY_OWNER) {
+            error("This mutex is already locked by the specified owner: $owner")
+        }
         return this
     }
 
@@ -263,3 +292,8 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 }
 
 private val NO_OWNER = Symbol("NO_OWNER")
+private val ON_LOCK_ALREADY_LOCKED_BY_OWNER = Symbol("ALREADY_LOCKED_BY_OWNER")
+
+private const val TRY_LOCK_SUCCESS = 0
+private const val TRY_LOCK_FAILED = 1
+private const val TRY_LOCK_ALREADY_LOCKED_BY_OWNER = 2
