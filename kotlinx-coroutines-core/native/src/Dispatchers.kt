@@ -4,6 +4,9 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
+import kotlin.coroutines.*
+
 
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
@@ -20,17 +23,33 @@ public actual object Dispatchers {
         injectedMainDispatcher = dispatcher
     }
 
-    internal val IO: CoroutineDispatcher = newFixedThreadPoolContext(64, "Dispatchers.IO")
+    internal val IO: CoroutineDispatcher = DefaultIoScheduler
 }
 
-/**
- * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
- * Additional threads in this pool are created on demand.
- *
- * On Native platforms it is backed by a standalone [newFixedThreadPoolContext] with `64` worker threads in it.
- * **NB**: this dispatcher **does not** share the same elasticity behaviour for [CoroutineDispatcher.limitedParallelism]
- * as `Dispatchers.IO` on JVM.
- */
+internal object DefaultIoScheduler : CoroutineDispatcher() {
+    // 2048 is an arbitrary KMP-friendly constant
+    private val unlimitedPool = newFixedThreadPoolContext(2048, "Dispatchers.IO")
+    private val io = unlimitedPool.limitedParallelism(64) // Default JVM size
+
+    @ExperimentalCoroutinesApi
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        // See documentation to Dispatchers.IO for the rationale
+        return unlimitedPool.limitedParallelism(parallelism)
+    }
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        io.dispatch(context, block)
+    }
+
+    @InternalCoroutinesApi
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+        io.dispatchYield(context, block)
+    }
+
+    override fun toString(): String = "Dispatchers.IO"
+}
+
+
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public actual val Dispatchers.IO: CoroutineDispatcher get() = IO
 
