@@ -7,6 +7,8 @@ package kotlinx.coroutines
 /**
  * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
  * Additional threads in this pool are created on demand.
+ * Default IO pool size is `64`; on JVM it can be configured using JVM-specific mechanisms,
+ * please refer to `Dispatchers.IO` documentation on JVM platform.
  *
  * ### Elasticity for limited parallelism
  *
