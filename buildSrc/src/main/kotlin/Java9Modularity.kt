@@ -4,11 +4,16 @@
 
 import org.gradle.api.*
 import org.gradle.api.attributes.*
+import org.gradle.api.file.*
+import org.gradle.api.provider.*
+import org.gradle.api.specs.*
 import org.gradle.api.tasks.bundling.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.jvm.toolchain.*
 import org.gradle.kotlin.dsl.*
+import org.gradle.api.logging.Logger
 import org.jetbrains.kotlin.gradle.dsl.*
+import java.io.*
 
 /**
  * This object configures the Java compilation of a JPMS (aka Jigsaw) module descriptor.
@@ -22,9 +27,37 @@ import org.jetbrains.kotlin.gradle.dsl.*
  */
 object Java9Modularity {
 
+    private class ModuleInfoFilter(
+        private val compileKotlinTaskPath: String,
+        private val javaVersionProvider: Provider<JavaVersion>,
+        private val moduleInfoFile: File,
+        private val logger: Logger
+    ) : Spec<FileTreeElement> {
+        private val isJava9Compatible
+            get() = javaVersionProvider.orNull?.isJava9Compatible == true
+        private var logged = false
+
+        private fun logStatusOnce() {
+            if (logged) return
+            if (isJava9Compatible) {
+                logger.info("Module-info checking is enabled; $compileKotlinTaskPath is compiled using Java ${javaVersionProvider.get()}")
+            } else {
+                logger.info("Module-info checking is disabled")
+            }
+            logged = true
+        }
+
+        override fun isSatisfiedBy(element: FileTreeElement): Boolean {
+            logStatusOnce()
+            if (isJava9Compatible) return false
+            return element.file == moduleInfoFile
+        }
+    }
+
     @JvmStatic
     fun configure(project: Project) = with(project) {
-        val javaToolchains = extensions.getByName("javaToolchains") as JavaToolchainService
+        val javaToolchains = extensions.findByType(JavaToolchainService::class.java)
+            ?: error("Gradle JavaToolchainService is not available")
         val target = when (val kotlin = extensions.getByName("kotlin")) {
             is KotlinJvmProjectExtension -> kotlin.target
             is KotlinMultiplatformExtension -> kotlin.targets.getByName("jvm")
@@ -47,7 +80,9 @@ object Java9Modularity {
             if (!sourceFile.exists()) {
                 throw IllegalStateException("$sourceFile not found in $project")
             }
-            val compileKotlinTask = compilation.compileKotlinTask as org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+            val compileKotlinTask =
+                compilation.compileTaskProvider.get() as? org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+                    ?: error("Cannot access Kotlin compile task ${compilation.compileKotlinTaskName}")
             val targetDir = compileKotlinTask.destinationDirectory.dir("../java9")
 
             // Use a Java 11 compiler for the module-info.
@@ -69,15 +104,8 @@ object Java9Modularity {
             // but it currently won't compile to a module-info.class file.
             // Note that module checking only works on JDK 9+,
             // because the JDK built-in base modules are not available in earlier versions.
-            val javaVersion = compileKotlinTask.kotlinJavaToolchain.javaVersion.orNull
-            if (javaVersion?.isJava9Compatible == true) {
-                logger.info("Module-info checking is enabled; $compileKotlinTask is compiled using Java $javaVersion")
-            } else {
-                logger.info("Module-info checking is disabled")
-                // Exclude the module-info.java source file from the Kotlin compile task,
-                // to prevent compile errors when resolving the module graph.
-                compileKotlinTask.exclude { it.file == sourceFile }
-            }
+            val javaVersionProvider = compileKotlinTask.kotlinJavaToolchain.javaVersion
+            compileKotlinTask.exclude(ModuleInfoFilter(compileKotlinTask.path, javaVersionProvider, sourceFile, logger))
 
             // Set the task outputs and destination directory
             outputs.dir(targetDir)
@@ -95,8 +123,11 @@ object Java9Modularity {
             options.compilerArgs.add("-Xlint:-requires-transitive-automatic")
 
             // Patch the compileKotlinJvm output classes into the compilation so exporting packages works correctly.
-            val kotlinCompileDestinationDir = compileKotlinTask.destinationDirectory.asFile.get()
-            options.compilerArgs.addAll(listOf("--patch-module", "$moduleName=$kotlinCompileDestinationDir"))
+            val destinationDirProperty = compileKotlinTask.destinationDirectory.asFile
+            options.compilerArgumentProviders.add {
+                val kotlinCompileDestinationDir = destinationDirProperty.get()
+                listOf("--patch-module", "$moduleName=$kotlinCompileDestinationDir")
+            }
 
             // Use the classpath of the compileKotlinJvm task.
             // Also ensure that the module path is used instead of classpath.
@@ -104,7 +135,7 @@ object Java9Modularity {
             modularity.inferModulePath.set(true)
         }
 
-        tasks.getByName<Jar>(target.artifactsTaskName) {
+        tasks.named<Jar>(target.artifactsTaskName) {
             manifest {
                 attributes("Multi-Release" to true)
             }
