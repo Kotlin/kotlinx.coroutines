@@ -15,8 +15,6 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
     }
 }
 
-internal actual fun getLastKnownPosition(): Any? = Thread.currentThread()
-
 internal actual fun dumpCoroutines() {
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     if (DebugProbesImpl.isInstalled) {
@@ -28,10 +26,4 @@ internal actual fun dumpCoroutines() {
             DebugProbesImpl.uninstall()
         }
     }
-}
-
-internal actual fun updateStacktrace(exception: Throwable, lastKnownPosition: Any?): Throwable {
-    val thread = lastKnownPosition as? Thread
-    thread?.stackTrace?.let { exception.stackTrace = it }
-    return exception
 }

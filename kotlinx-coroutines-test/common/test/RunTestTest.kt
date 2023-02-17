@@ -99,7 +99,6 @@ class RunTestTest {
             fn()
             fail("shouldn't be reached")
         } catch (e: Throwable) {
-            e.printStackTrace()
             assertIs<UncompletedCoroutinesError>(e)
         }
     }) {

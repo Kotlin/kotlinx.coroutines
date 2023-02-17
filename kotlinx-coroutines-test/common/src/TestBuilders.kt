@@ -14,6 +14,7 @@ import kotlin.jvm.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.internal.*
 
 /**
  * A test result.
@@ -310,18 +311,12 @@ public fun TestScope.runTest(
             testBody()
         }
         /**
-         * The thread in which the task was last seen executing.
-         */
-        val lastKnownPosition = MutableStateFlow<Any?>(null)
-
-        /**
          * We run the tasks in the test coroutine using [Dispatchers.Default]. On JS, this does nothing particularly,
          * but on the JVM and Native, this means that the timeout can be processed even while the test runner is busy
          * doing some synchronous work.
          */
         val workRunner = launch(Dispatchers.Default + CoroutineName("kotlinx.coroutines.test runner")) {
             while (true) {
-                lastKnownPosition.value = getLastKnownPosition()
                 val executedSomething = testScheduler.tryRunNextTaskUnless { !isActive }
                 if (executedSomething) {
                     /** yield to check for cancellation. On JS, we can't use [ensureActive] here, as the cancellation
@@ -355,19 +350,13 @@ public fun TestScope.runTest(
             }
             timeoutError = UncompletedCoroutinesError(message)
             dumpCoroutines()
-            /**
-             * There's a race that may lead to the misleading results here, but it's better than nothing.
-             * The race: `lastKnownPosition` is read, then the task executed in `workRunner` completes,
-             * then `updateStacktrace` does its thing, but the thread is already busy doing something else.
-             */
-            updateStacktrace(timeoutError, lastKnownPosition.value)
-            val cancellationException = CancellationException("The test timed out", timeoutError)
+            val cancellationException = CancellationException("The test timed out")
             (it as Job).cancel(cancellationException)
             // we can't abandon the work we're doing, so if it hanged, we'll still hang, despite the timeout.
             it.join()
-            it.getCompletionExceptionOrNull()?.let { exception ->
-                if (exception !== cancellationException)
-                    timeoutError.addSuppressed(exception)
+            val completion = it.getCompletionExceptionOrNull()
+            if (completion != null && completion !== cancellationException) {
+                timeoutError.addSuppressed(completion)
             }
             workRunner.cancelAndJoin()
         } finally {
@@ -578,8 +567,4 @@ internal fun throwAll(head: Throwable?, other: List<Throwable>) {
     }
 }
 
-internal expect fun getLastKnownPosition(): Any?
-
 internal expect fun dumpCoroutines()
-
-internal expect fun updateStacktrace(exception: Throwable, lastKnownPosition: Any?): Throwable

@@ -14,8 +14,4 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
         testProcedure()
     }
 
-internal actual fun getLastKnownPosition(): Any? = null
-
 internal actual fun dumpCoroutines() { }
-
-internal actual fun updateStacktrace(exception: Throwable, lastKnownPosition: Any?): Throwable = exception
