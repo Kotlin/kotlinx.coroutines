@@ -41,7 +41,7 @@ object Java9Modularity {
             )
         }
 
-        val compileJavaModuleInfo = tasks.register("compileJavaModuleInfo", JavaCompile::class.java) {
+        val compileJavaModuleInfo = tasks.register("compileModuleInfoJava", JavaCompile::class.java) {
             val moduleName = project.name.replace('-', '.') // this module's name
             val sourceFile = file("${target.name.ifEmpty { "." }}/src/module-info.java")
             if (!sourceFile.exists()) {

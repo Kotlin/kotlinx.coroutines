@@ -28,3 +28,21 @@ javafx {
     modules = listOf("javafx.controls")
     configuration = "javafx"
 }
+
+// Fixup moduleplugin in order to properly run with classpath
+tasks {
+    test {
+        extensions.configure(org.javamodularity.moduleplugin.extensions.TestModuleOptions::class) {
+            addReads["kotlinx.coroutines.core"] = "junit"
+            addReads["kotlinx.coroutines.javafx"] = "kotlin.test"
+        }
+        jvmArgs = listOf(
+            "--patch-module",
+            "kotlinx.coroutines.core=${
+                project(":kotlinx-coroutines-core").tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>(
+                    "compileTestKotlinJvm"
+                ).get().destinationDirectory.get()
+            }"
+        )
+    }
+}
