@@ -77,7 +77,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             val time = addClamping(currentTime, timeDeltaMillis)
             val event = TestDispatchEvent(dispatcher, count, time, marker as Any, isForeground) { isCancelled(marker) }
             events.addLast(event)
-            /** can't be moved above: otherwise, [onDispatchEventForeground] or [receiveDispatchEvent] could consume the
+            /** can't be moved above: otherwise, [onDispatchEventForeground] or [onDispatchEvent] could consume the
              * token sent here before there's actually anything in the event queue. */
             sendDispatchEvent(context)
             DisposableHandle {
@@ -213,6 +213,11 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * Waits for a notification about a dispatch event.
      */
     internal suspend fun receiveDispatchEvent() = dispatchEvents.receive()
+
+    /**
+     * Consumes the knowledge that a dispatch event happened recently.
+     */
+    internal val onDispatchEvent: SelectClause1<Unit> get() = dispatchEvents.onReceive
 
     /**
      * Consumes the knowledge that a foreground work dispatch event happened recently.

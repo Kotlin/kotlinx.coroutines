@@ -303,19 +303,19 @@ public fun runTest(
 public fun TestScope.runTest(
     timeout: Duration = DEFAULT_TIMEOUT,
     testBody: suspend TestScope.() -> Unit
-): TestResult = asSpecificImplementation().let {
-    it.enter()
+): TestResult = asSpecificImplementation().let { scope ->
+    scope.enter()
     createTestResult {
         /** TODO: moving this [AbstractCoroutine.start] call outside [createTestResult] fails on JS. */
-        it.start(CoroutineStart.UNDISPATCHED, it) {
+        scope.start(CoroutineStart.UNDISPATCHED, scope) {
+            /* we're using `UNDISPATCHED` to avoid the event loop, but we do want to set up the timeout machinery
+            before any code executes, so we have to park here. */
+            yield()
             testBody()
         }
-        /**
-         * We run the tasks in the test coroutine using [Dispatchers.Default]. On JS, this does nothing particularly,
-         * but on the JVM and Native, this means that the timeout can be processed even while the test runner is busy
-         * doing some synchronous work.
-         */
-        val workRunner = launch(Dispatchers.Default + CoroutineName("kotlinx.coroutines.test runner")) {
+        var timeoutError: Throwable? = null
+        var cancellationException: CancellationException? = null
+        val workRunner = launch(CoroutineName("kotlinx.coroutines.test runner")) {
             while (true) {
                 val executedSomething = testScheduler.tryRunNextTaskUnless { !isActive }
                 if (executedSomething) {
@@ -323,47 +323,49 @@ public fun TestScope.runTest(
                      * procedure needs a chance to run concurrently. */
                     yield()
                 } else {
-                    // no more tasks, we should suspend until there are some more
+                    // waiting for the next task to be scheduled, or for the test runner to be cancelled
                     testScheduler.receiveDispatchEvent()
                 }
             }
         }
-        var timeoutError: Throwable? = null
         try {
             withTimeout(timeout) {
-                it.join()
+                coroutineContext.job.invokeOnCompletion(onCancelling = true) { exception ->
+                    if (exception is TimeoutCancellationException) {
+                        dumpCoroutines()
+                        val activeChildren = scope.children.filter(Job::isActive).toList()
+                        val completionCause = if (scope.isCancelled) scope.tryGetCompletionCause() else null
+                        var message = "After waiting for $timeout"
+                        if (completionCause == null)
+                            message += ", the test coroutine is not completing"
+                        if (activeChildren.isNotEmpty())
+                            message += ", there were active child jobs: $activeChildren"
+                        if (completionCause != null && activeChildren.isEmpty()) {
+                            message += if (scope.isCompleted)
+                                ", the test coroutine completed"
+                            else
+                                ", the test coroutine was not completed"
+                        }
+                        timeoutError = UncompletedCoroutinesError(message)
+                        cancellationException = CancellationException("The test timed out")
+                        (scope as Job).cancel(cancellationException!!)
+                    }
+                }
+                scope.join()
                 workRunner.cancelAndJoin()
             }
         } catch (_: TimeoutCancellationException) {
-            val activeChildren = it.children.filter(Job::isActive).toList()
-            val completionCause = if (it.isCancelled) it.tryGetCompletionCause() else null
-            var message = "After waiting for $timeout"
-            if (completionCause == null)
-                message += ", the test coroutine is not completing"
-            if (activeChildren.isNotEmpty())
-                message += ", there were active child jobs: $activeChildren"
-            if (completionCause != null && activeChildren.isEmpty()) {
-                message += if (it.isCompleted)
-                    ", the test coroutine completed"
-                else
-                    ", the test coroutine was not completed"
-            }
-            timeoutError = UncompletedCoroutinesError(message)
-            dumpCoroutines()
-            val cancellationException = CancellationException("The test timed out")
-            (it as Job).cancel(cancellationException)
-            // we can't abandon the work we're doing, so if it hanged, we'll still hang, despite the timeout.
-            it.join()
-            val completion = it.getCompletionExceptionOrNull()
+            scope.join()
+            val completion = scope.getCompletionExceptionOrNull()
             if (completion != null && completion !== cancellationException) {
-                timeoutError.addSuppressed(completion)
+                timeoutError!!.addSuppressed(completion)
             }
             workRunner.cancelAndJoin()
         } finally {
             backgroundScope.cancel()
             testScheduler.advanceUntilIdleOr { false }
-            val uncaughtExceptions = it.leave()
-            throwAll(timeoutError ?: it.getCompletionExceptionOrNull(), uncaughtExceptions)
+            val uncaughtExceptions = scope.leave()
+            throwAll(timeoutError ?: scope.getCompletionExceptionOrNull(), uncaughtExceptions)
         }
     }
 }
