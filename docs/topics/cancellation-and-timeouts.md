@@ -381,7 +381,7 @@ resource inside the block that needs closing or release outside of the block.
 
 For example, here we imitate a closeable resource with the `Resource` class that simply keeps track of how many times 
 it was created by incrementing the `acquired` counter and decrementing the counter in its `close` function.
-Now let us let us create a lot of coroutines, each of which creates a `Resource` at the end of the `withTimeout` block
+Now let us create a lot of coroutines, each of which creates a `Resource` at the end of the `withTimeout` block
 and releases the resource outside the block. We add a small delay so that it is more likely that the timeout occurs
 right when the `withTimeout` block is already finished, which will cause a resource leak.
 
@@ -398,7 +398,7 @@ class Resource {
 
 fun main() {
     runBlocking {
-        repeat(100_000) { // Launch 100K coroutines
+        repeat(10_000) { // Launch 10K coroutines
             launch { 
                 val resource = withTimeout(60) { // Timeout of 60 ms
                     delay(50) // Delay for 50 ms
@@ -446,7 +446,7 @@ class Resource {
 fun main() {
 //sampleStart
     runBlocking {
-        repeat(100_000) { // Launch 100K coroutines
+        repeat(10_000) { // Launch 10K coroutines
             launch { 
                 var resource: Resource? = null // Not acquired yet
                 try {
