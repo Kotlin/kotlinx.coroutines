@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlin.test.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 class TestCoroutineSchedulerTest {
     /** Tests that `TestCoroutineScheduler` attempts to detect if there are several instances of it. */
@@ -28,7 +29,7 @@ class TestCoroutineSchedulerTest {
             delay(15)
             entered = true
         }
-        testScheduler.advanceTimeBy(15)
+        testScheduler.advanceTimeBy(15.milliseconds)
         assertFalse(entered)
         testScheduler.runCurrent()
         assertTrue(entered)
@@ -39,7 +40,7 @@ class TestCoroutineSchedulerTest {
     fun testAdvanceTimeByWithNegativeDelay() {
         val scheduler = TestCoroutineScheduler()
         assertFailsWith<IllegalArgumentException> {
-            scheduler.advanceTimeBy(-1)
+            scheduler.advanceTimeBy((-1).milliseconds)
         }
     }
 
@@ -65,7 +66,7 @@ class TestCoroutineSchedulerTest {
                         assertEquals(Long.MAX_VALUE - 1, currentTime)
                         enteredNearInfinity = true
                     }
-                    testScheduler.advanceTimeBy(Long.MAX_VALUE)
+                    testScheduler.advanceTimeBy(Duration.INFINITE)
                     assertFalse(enteredInfinity)
                     assertTrue(enteredNearInfinity)
                     assertEquals(Long.MAX_VALUE, currentTime)
@@ -95,10 +96,10 @@ class TestCoroutineSchedulerTest {
             }
             assertEquals(1, stage)
             assertEquals(0, currentTime)
-            advanceTimeBy(2_000)
+            advanceTimeBy(2.seconds)
             assertEquals(3, stage)
             assertEquals(2_000, currentTime)
-            advanceTimeBy(2)
+            advanceTimeBy(2.milliseconds)
             assertEquals(4, stage)
             assertEquals(2_002, currentTime)
         }
@@ -120,11 +121,11 @@ class TestCoroutineSchedulerTest {
             delay(1)
             stage += 10
         }
-        testScheduler.advanceTimeBy(1)
+        testScheduler.advanceTimeBy(1.milliseconds)
         assertEquals(0, stage)
         runCurrent()
         assertEquals(2, stage)
-        testScheduler.advanceTimeBy(1)
+        testScheduler.advanceTimeBy(1.milliseconds)
         assertEquals(2, stage)
         runCurrent()
         assertEquals(22, stage)
@@ -143,10 +144,10 @@ class TestCoroutineSchedulerTest {
                     delay(SLOW)
                     stage = 3
                 }
-                scheduler.advanceTimeBy(SLOW)
+                scheduler.advanceTimeBy(SLOW.milliseconds)
                 stage = 2
             }
-            scheduler.advanceTimeBy(SLOW)
+            scheduler.advanceTimeBy(SLOW.milliseconds)
             assertEquals(1, stage)
             scheduler.runCurrent()
             assertEquals(2, stage)
@@ -249,7 +250,7 @@ class TestCoroutineSchedulerTest {
             }
         }
         advanceUntilIdle()
-        asSpecificImplementation().leave().throwAll()
+        throwAll(null, asSpecificImplementation().legacyLeave())
         if (timesOut)
             assertTrue(caughtException)
         else

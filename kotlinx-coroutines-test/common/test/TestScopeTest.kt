@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class TestScopeTest {
     /** Tests failing to create a [TestScope] with incorrect contexts. */
@@ -95,7 +96,7 @@ class TestScopeTest {
         }
         assertFalse(result)
         scope.asSpecificImplementation().enter()
-        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().leave() }
+        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().legacyLeave() }
         assertFalse(result)
     }
 
@@ -111,7 +112,7 @@ class TestScopeTest {
         }
         assertFalse(result)
         scope.asSpecificImplementation().enter()
-        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().leave() }
+        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().legacyLeave() }
         assertFalse(result)
     }
 
@@ -128,7 +129,7 @@ class TestScopeTest {
         job.cancel()
         assertFalse(result)
         scope.asSpecificImplementation().enter()
-        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().leave() }
+        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().legacyLeave() }
         assertFalse(result)
     }
 
@@ -162,7 +163,7 @@ class TestScopeTest {
             launch(SupervisorJob()) { throw TestException("y") }
             launch(SupervisorJob()) { throw TestException("z") }
             runCurrent()
-            val e = asSpecificImplementation().leave()
+            val e = asSpecificImplementation().legacyLeave()
             assertEquals(3, e.size)
             assertEquals("x", e[0].message)
             assertEquals("y", e[1].message)
@@ -249,7 +250,7 @@ class TestScopeTest {
             assertEquals(1, j)
         }
         job.join()
-        advanceTimeBy(199) // should work the same for the background tasks
+        advanceTimeBy(199.milliseconds) // should work the same for the background tasks
         assertEquals(2, i)
         assertEquals(4, j)
         advanceUntilIdle() // once again, should do nothing
@@ -377,7 +378,7 @@ class TestScopeTest {
 
         }
     }) {
-        runTest(dispatchTimeoutMs = 100) {
+        runTest(timeout = 100.milliseconds) {
             backgroundScope.launch {
                 while (true) {
                     yield()
@@ -407,7 +408,7 @@ class TestScopeTest {
 
         }
     }) {
-        runTest(UnconfinedTestDispatcher(), dispatchTimeoutMs = 100) {
+        runTest(UnconfinedTestDispatcher(), timeout = 100.milliseconds) {
             /**
              * Having a coroutine like this will still cause the test to hang:
                  backgroundScope.launch {

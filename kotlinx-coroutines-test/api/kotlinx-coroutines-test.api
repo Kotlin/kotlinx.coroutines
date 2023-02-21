@@ -22,10 +22,10 @@ public final class kotlinx/coroutines/test/TestBuildersKt {
 	public static final fun runTest (Lkotlinx/coroutines/test/TestScope;JLkotlin/jvm/functions/Function2;)V
 	public static synthetic fun runTest$default (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static synthetic fun runTest$default (Lkotlinx/coroutines/test/TestCoroutineScope;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-	public static synthetic fun runTest$default (Lkotlinx/coroutines/test/TestScope;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static final fun runTest-8Mi8wO0 (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;)V
 	public static final fun runTest-8Mi8wO0 (Lkotlinx/coroutines/test/TestScope;JLkotlin/jvm/functions/Function2;)V
 	public static synthetic fun runTest-8Mi8wO0$default (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun runTest-8Mi8wO0$default (Lkotlinx/coroutines/test/TestScope;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static final fun runTestWithLegacyScope (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;)V
 	public static synthetic fun runTestWithLegacyScope$default (Lkotlin/coroutines/CoroutineContext;JLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
@@ -66,6 +66,7 @@ public final class kotlinx/coroutines/test/TestCoroutineScheduler : kotlin/corou
 	public static final field Key Lkotlinx/coroutines/test/TestCoroutineScheduler$Key;
 	public fun <init> ()V
 	public final fun advanceTimeBy (J)V
+	public final fun advanceTimeBy-LRDsOJo (J)V
 	public final fun advanceUntilIdle ()V
 	public final fun getCurrentTime ()J
 	public final fun getTimeSource ()Lkotlin/time/TimeSource;
@@ -117,6 +118,7 @@ public final class kotlinx/coroutines/test/TestScopeKt {
 	public static final fun TestScope (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/test/TestScope;
 	public static synthetic fun TestScope$default (Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/test/TestScope;
 	public static final fun advanceTimeBy (Lkotlinx/coroutines/test/TestScope;J)V
+	public static final fun advanceTimeBy-HG0u8IE (Lkotlinx/coroutines/test/TestScope;J)V
 	public static final fun advanceUntilIdle (Lkotlinx/coroutines/test/TestScope;)V
 	public static final fun getCurrentTime (Lkotlinx/coroutines/test/TestScope;)J
 	public static final fun getTestTimeSource (Lkotlinx/coroutines/test/TestScope;)Lkotlin/time/TimeSource;

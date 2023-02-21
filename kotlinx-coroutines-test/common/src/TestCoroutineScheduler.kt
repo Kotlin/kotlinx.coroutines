@@ -13,6 +13,7 @@ import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * This is a scheduler for coroutines used in tests, providing the delay-skipping behavior.
@@ -49,6 +50,9 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
         get() = synchronized(lock) { field }
         private set
 
+    /** A channel for notifying about the fact that a foreground work dispatch recently happened. */
+    private val dispatchEventsForeground: Channel<Unit> = Channel(CONFLATED)
+
     /** A channel for notifying about the fact that a dispatch recently happened. */
     private val dispatchEvents: Channel<Unit> = Channel(CONFLATED)
 
@@ -73,8 +77,8 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             val time = addClamping(currentTime, timeDeltaMillis)
             val event = TestDispatchEvent(dispatcher, count, time, marker as Any, isForeground) { isCancelled(marker) }
             events.addLast(event)
-            /** can't be moved above: otherwise, [onDispatchEvent] could consume the token sent here before there's
-             * actually anything in the event queue. */
+            /** can't be moved above: otherwise, [onDispatchEventForeground] or [onDispatchEvent] could consume the
+             * token sent here before there's actually anything in the event queue. */
             sendDispatchEvent(context)
             DisposableHandle {
                 synchronized(lock) {
@@ -150,13 +154,22 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * * Overflowing the target time used to lead to nothing being done, but will now run the tasks scheduled at up to
      *   (but not including) [Long.MAX_VALUE].
      *
-     * @throws IllegalStateException if passed a negative [delay][delayTimeMillis].
+     * @throws IllegalArgumentException if passed a negative [delay][delayTimeMillis].
      */
     @ExperimentalCoroutinesApi
-    public fun advanceTimeBy(delayTimeMillis: Long) {
-        require(delayTimeMillis >= 0) { "Can not advance time by a negative delay: $delayTimeMillis" }
+    public fun advanceTimeBy(delayTimeMillis: Long): Unit = advanceTimeBy(delayTimeMillis.milliseconds)
+
+    /**
+     * Moves the virtual clock of this dispatcher forward by [the specified amount][delayTime], running the
+     * scheduled tasks in the meantime.
+     *
+     * @throws IllegalArgumentException if passed a negative [delay][delayTime].
+     */
+    @ExperimentalCoroutinesApi
+    public fun advanceTimeBy(delayTime: Duration) {
+        require(!delayTime.isNegative()) { "Can not advance time by a negative delay: $delayTime" }
         val startingTime = currentTime
-        val targetTime = addClamping(startingTime, delayTimeMillis)
+        val targetTime = addClamping(startingTime, delayTime.inWholeMilliseconds)
         while (true) {
             val event = synchronized(lock) {
                 val timeMark = currentTime
@@ -191,14 +204,25 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * [context] is the context in which the task will be dispatched.
      */
     internal fun sendDispatchEvent(context: CoroutineContext) {
+        dispatchEvents.trySend(Unit)
         if (context[BackgroundWork] !== BackgroundWork)
-            dispatchEvents.trySend(Unit)
+            dispatchEventsForeground.trySend(Unit)
     }
+
+    /**
+     * Waits for a notification about a dispatch event.
+     */
+    internal suspend fun receiveDispatchEvent() = dispatchEvents.receive()
 
     /**
      * Consumes the knowledge that a dispatch event happened recently.
      */
     internal val onDispatchEvent: SelectClause1<Unit> get() = dispatchEvents.onReceive
+
+    /**
+     * Consumes the knowledge that a foreground work dispatch event happened recently.
+     */
+    internal val onDispatchEventForeground: SelectClause1<Unit> get() = dispatchEventsForeground.onReceive
 
     /**
      * Returns the [TimeSource] representation of the virtual time of this scheduler.

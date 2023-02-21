@@ -99,14 +99,24 @@ class MultithreadingTest {
         }
     }
 
-    /** Tests that [StandardTestDispatcher] is confined to the thread that interacts with the scheduler. */
+    /** Tests that [StandardTestDispatcher] is not executed in-place but confined to the thread in which the
+     * virtual time control happens. */
     @Test
-    fun testStandardTestDispatcherIsConfined() = runTest {
+    fun testStandardTestDispatcherIsConfined(): Unit = runBlocking {
+        val scheduler = TestCoroutineScheduler()
         val initialThread = Thread.currentThread()
-        withContext(Dispatchers.IO) {
-            val ioThread = Thread.currentThread()
-            assertNotSame(initialThread, ioThread)
+        val job = launch(StandardTestDispatcher(scheduler)) {
+            assertEquals(initialThread, Thread.currentThread())
+            withContext(Dispatchers.IO) {
+                val ioThread = Thread.currentThread()
+                assertNotSame(initialThread, ioThread)
+            }
+            assertEquals(initialThread, Thread.currentThread())
         }
-        assertEquals(initialThread, Thread.currentThread())
+        scheduler.advanceUntilIdle()
+        while (job.isActive) {
+            scheduler.receiveDispatchEvent()
+            scheduler.advanceUntilIdle()
+        }
     }
 }
