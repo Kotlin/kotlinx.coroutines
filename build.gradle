@@ -181,6 +181,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
 }
 
 apply plugin: "bom-conventions"
+apply plugin: "java-modularity-conventions"
 
 if (build_snapshot_train) {
     println "Hacking test tasks, removing stress and flaky tests"
