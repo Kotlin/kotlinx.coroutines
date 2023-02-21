@@ -337,8 +337,8 @@ internal open class CancellableContinuationImpl<in T>(
      * Tries to release reusable continuation. It can fail is there was an asynchronous cancellation,
      * in which case it detaches from the parent and cancels this continuation.
      */
-    fun releaseClaimedReusableContinuation() {
-        // Cannot be casted if e.g. invoked from `installParentHandleReusable` for context without dispatchers, but with Job in it
+    internal fun releaseClaimedReusableContinuation() {
+        // Cannot be cast if e.g. invoked from `installParentHandleReusable` for context without dispatchers, but with Job in it
         val cancellationCause = (delegate as? DispatchedContinuation<*>)?.tryReleaseClaimedContinuation(this) ?: return
         detachChild()
         cancel(cancellationCause)
