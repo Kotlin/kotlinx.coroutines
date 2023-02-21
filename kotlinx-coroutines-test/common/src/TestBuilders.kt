@@ -39,7 +39,7 @@ public expect class TestResult
  * Executes [testBody] as a test in a new coroutine, returning [TestResult].
  *
  * On JVM and Native, this function behaves similarly to `runBlocking`, with the difference that the code that it runs
- * will skip delays. This allows to use [delay] in without causing the tests to take more time than necessary.
+ * will skip delays. This allows to use [delay] in tests without causing them to take more time than necessary.
  * On JS, this function creates a `Promise` that executes the test body with the delay-skipping behavior.
  *
  * ```
@@ -60,7 +60,7 @@ public expect class TestResult
  * immediately return the produced [TestResult] from the test method, without doing anything else afterwards. See
  * [TestResult] for details on this.
  *
- * The test is run in a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
+ * The test is run on a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
  * Because of this, child coroutines are not executed in parallel to the test body.
  * In order for the spawned-off asynchronous code to actually be executed, one must either [yield] or suspend the
  * test body some other way, or use commands that control scheduling (see [TestCoroutineScheduler]).
@@ -84,19 +84,19 @@ public expect class TestResult
  *         // 3
  *     }
  *     // 2
- *     advanceUntilIdle() // runs the tasks until their queue is empty
+ *     testScheduler.advanceUntilIdle() // runs the tasks until their queue is empty
  *     // 4
  * }
  * ```
  *
  * ### Task scheduling
  *
- * Delay-skipping is achieved by using virtual time.
+ * Delay skipping is achieved by using virtual time.
  * If [Dispatchers.Main] is set to a [TestDispatcher] via [Dispatchers.setMain] before the test,
  * then its [TestCoroutineScheduler] is used;
  * otherwise, a new one is automatically created (or taken from [context] in some way) and can be used to control
  * the virtual time, advancing it, running the tasks scheduled at a specific time etc.
- * Some convenience methods are available on [TestScope] to control the scheduler.
+ * The scheduler can be accessed via [TestScope.testScheduler].
  *
  * Delays in code that runs inside dispatchers that don't use a [TestCoroutineScheduler] don't get skipped:
  * ```
@@ -126,25 +126,27 @@ public expect class TestResult
  * There's a built-in timeout of 10 seconds for the test body. If the test body doesn't complete within this time,
  * then the test fails with an [AssertionError]. The timeout can be changed by setting the [timeout] parameter.
  *
- * The test finishes by the timeout procedure cancelling the test body. If the code inside the test body does not
- * respond to cancellation, we will not be able to make the test execution stop, in which case, the test will hang
- * despite our best efforts to terminate it.
+ * On timeout, the test body is cancelled so that the test finishes. If the code inside the test body does not
+ * respond to cancellation, the timeout will not be able to make the test execution stop.
+ * In that case, the test will hang despite the attempt to terminate it.
  *
  * On the JVM, if `DebugProbes` from the `kotlinx-coroutines-debug` module are installed, the current dump of the
- * coroutines' stack is printed to the console on timeout.
+ * coroutines' stack is printed to the console on timeout before the test body is cancelled.
  *
  * #### Reported exceptions
  *
  * Unhandled exceptions will be thrown at the end of the test.
- * If the uncaught exceptions happen after the test finishes, the error is propagated in a platform-specific manner.
+ * If uncaught exceptions happen after the test finishes, they are propagated in a platform-specific manner:
+ * see [handleCoroutineException] for details.
  * If the test coroutine completes with an exception, the unhandled exceptions are suppressed by it.
  *
  * #### Uncompleted coroutines
  *
- * This method requires that, after the test coroutine has completed, all the other coroutines launched inside
- * [testBody] also complete, or are cancelled.
- * Otherwise, the test will be failed (which, on JVM and Native, means that [runTest] itself will throw
- * [AssertionError], whereas on JS, the `Promise` will fail with it).
+ * Otherwise, the test will hang until all the coroutines launched inside [testBody] complete.
+ * This may be an issue when there are some coroutines that are not supposed to complete, like infinite loops that
+ * perform some background work and are supposed to outlive the test.
+ * In that case, [TestScope.backgroundScope] can be used to launch such coroutines.
+ * They will be cancelled automatically when the test finishes.
  *
  * ### Configuration
  *
