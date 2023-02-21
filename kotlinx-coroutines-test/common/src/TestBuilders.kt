@@ -160,8 +160,9 @@ public fun runTest(
     timeout: Duration = DEFAULT_TIMEOUT,
     testBody: suspend TestScope.() -> Unit
 ): TestResult {
-    if (context[RunningInRunTest] != null)
-        throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
+    check(context[RunningInRunTest] == null) {
+        "Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details."
+    }
     return TestScope(context + RunningInRunTest).runTest(timeout, testBody)
 }
 
