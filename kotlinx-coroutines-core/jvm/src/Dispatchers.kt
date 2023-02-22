@@ -1,8 +1,6 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-@file:Suppress("unused")
 
 package kotlinx.coroutines
 
@@ -97,3 +95,13 @@ public actual object Dispatchers {
         DefaultScheduler.shutdown()
     }
 }
+
+/**
+ * `actual` counterpart of the corresponding `expect` declaration.
+ * Should never be used directly from JVM sources, all accesses
+ * to `Dispatchers.IO` should be resolved to the corresponding member of [Dispatchers] object.
+ * @suppress
+ */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Deprecated(message = "Should not be used directly", level = DeprecationLevel.HIDDEN)
+public actual val Dispatchers.IO: CoroutineDispatcher get() = Dispatchers.IO

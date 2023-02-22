@@ -302,6 +302,7 @@ public final class kotlinx/coroutines/Dispatchers {
 
 public final class kotlinx/coroutines/DispatchersKt {
 	public static final field IO_PARALLELISM_PROPERTY_NAME Ljava/lang/String;
+	public static final synthetic fun getIO (Lkotlinx/coroutines/Dispatchers;)Lkotlinx/coroutines/CoroutineDispatcher;
 }
 
 public abstract interface class kotlinx/coroutines/DisposableHandle {
