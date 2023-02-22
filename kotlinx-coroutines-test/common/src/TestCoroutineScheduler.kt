@@ -108,7 +108,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * Runs the enqueued tasks in the specified order, advancing the virtual time as needed until there are no more
      * tasks associated with the dispatchers linked to this scheduler.
      *
-     * A breaking change from [TestCoroutineDispatcher.advanceTimeBy] is that it no longer returns the total number of
+     * A breaking change from `TestCoroutineDispatcher.advanceTimeBy` is that it no longer returns the total number of
      * milliseconds by which the execution of this method has advanced the virtual time. If you want to recreate that
      * functionality, query [currentTime] before and after the execution to achieve the same result.
      */
