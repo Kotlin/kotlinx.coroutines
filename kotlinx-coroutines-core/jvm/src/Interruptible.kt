@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -8,7 +8,8 @@ import kotlinx.atomicfu.*
 import kotlin.coroutines.*
 
 /**
- * Calls the specified [block] with a given coroutine context in an interruptible manner.
+ * Calls the specified [block] with a given coroutine context in
+ * [an interruptible manner](https://docs.oracle.com/javase/tutorial/essential/concurrency/interrupt.html).
  * The blocking code block will be interrupted and this function will throw [CancellationException]
  * if the coroutine is cancelled.
  *
