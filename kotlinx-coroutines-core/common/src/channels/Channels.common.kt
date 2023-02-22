@@ -52,10 +52,11 @@ public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.()
 @Deprecated(
     "Deprecated in the favour of 'receiveCatching'",
     ReplaceWith("receiveCatching().getOrNull()"),
-    DeprecationLevel.ERROR
+    DeprecationLevel.HIDDEN
 ) // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER", "DEPRECATION_ERROR")
 public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     return (this as ReceiveChannel<E?>).receiveOrNull()
 }
 
@@ -64,7 +65,7 @@ public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
  */
 @Deprecated(
     "Deprecated in the favour of 'onReceiveCatching'",
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.HIDDEN
 )  // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 @Suppress("DEPRECATION_ERROR")
 public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {

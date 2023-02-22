@@ -285,7 +285,7 @@ public fun runTest(
     ReplaceWith("runTest(context, timeout = dispatchTimeoutMs.milliseconds, testBody)",
         "kotlin.time.Duration.Companion.milliseconds"),
     DeprecationLevel.WARNING
-)
+) // Warning since 1.7.0, was experimental in 1.6.x
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
     dispatchTimeoutMs: Long,
@@ -385,7 +385,7 @@ public fun TestScope.runTest(
     ReplaceWith("this.runTest(timeout = dispatchTimeoutMs.milliseconds, testBody)",
         "kotlin.time.Duration.Companion.milliseconds"),
     DeprecationLevel.WARNING
-)
+) // Warning since 1.7.0, was experimental in 1.6.x
 public fun TestScope.runTest(
     dispatchTimeoutMs: Long,
     testBody: suspend TestScope.() -> Unit

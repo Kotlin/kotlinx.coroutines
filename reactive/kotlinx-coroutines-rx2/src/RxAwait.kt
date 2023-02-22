@@ -98,7 +98,7 @@ public suspend fun <T> MaybeSource<T>.awaitSingle(): T = awaitSingleOrNull() ?: 
  */
 @Deprecated(
     message = "Deprecated in favor of awaitSingleOrNull()",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("this.awaitSingleOrNull()")
 ) // Warning since 1.5, error in 1.6, hidden in 1.7
 public suspend fun <T> MaybeSource<T>.await(): T? = awaitSingleOrNull()
@@ -120,7 +120,7 @@ public suspend fun <T> MaybeSource<T>.await(): T? = awaitSingleOrNull()
  */
 @Deprecated(
     message = "Deprecated in favor of awaitSingleOrNull()",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("this.awaitSingleOrNull() ?: default")
 ) // Warning since 1.5, error in 1.6, hidden in 1.7
 public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = awaitSingleOrNull() ?: default
