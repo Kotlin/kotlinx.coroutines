@@ -539,7 +539,7 @@ public fun Job.cancelChildren(cause: Throwable? = null) {
 
 /**
  * Returns `true` when the [Job] of the coroutine in this context is still active
- * (has not completed and was not cancelled yet).
+ * (has not completed and was not cancelled yet) or the context does not have a [Job] in it.
  *
  * Check this property in long-running computation loops to support cancellation
  * when [CoroutineScope.isActive] is not available:
@@ -550,11 +550,11 @@ public fun Job.cancelChildren(cause: Throwable? = null) {
  * }
  * ```
  *
- * The `coroutineContext.isActive` expression is a shortcut for `coroutineContext[Job]?.isActive == true`.
+ * The `coroutineContext.isActive` expression is a shortcut for `get(Job)?.isActive ?: true`.
  * See [Job.isActive].
  */
 public val CoroutineContext.isActive: Boolean
-    get() = this[Job]?.isActive == true
+    get() = get(Job)?.isActive ?: true
 
 /**
  * Cancels [Job] of this context with an optional cancellation cause.
