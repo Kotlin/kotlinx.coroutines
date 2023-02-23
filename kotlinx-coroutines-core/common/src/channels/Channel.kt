@@ -377,7 +377,7 @@ public interface ReceiveChannel<out E> {
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("onReceiveCatching")
     ) // Warning since 1.3.0, error in 1.5.0, will be hidden or removed in 1.7.0
-    public val onReceiveOrNull: SelectClause1<E?> get() = (this as AbstractChannel<E>).onReceiveOrNull
+    public val onReceiveOrNull: SelectClause1<E?> get() = (this as BufferedChannel<E>).onReceiveOrNull
 }
 
 /**
@@ -771,26 +771,24 @@ public fun <E> Channel(
     when (capacity) {
         RENDEZVOUS -> {
             if (onBufferOverflow == BufferOverflow.SUSPEND)
-                RendezvousChannel(onUndeliveredElement) // an efficient implementation of rendezvous channel
+                BufferedChannel(RENDEZVOUS, onUndeliveredElement) // an efficient implementation of rendezvous channel
             else
-                ArrayChannel(1, onBufferOverflow, onUndeliveredElement) // support buffer overflow with buffered channel
+                ConflatedBufferedChannel(1, onBufferOverflow, onUndeliveredElement) // support buffer overflow with buffered channel
         }
         CONFLATED -> {
             require(onBufferOverflow == BufferOverflow.SUSPEND) {
                 "CONFLATED capacity cannot be used with non-default onBufferOverflow"
             }
-            ConflatedChannel(onUndeliveredElement)
+            ConflatedBufferedChannel(1, BufferOverflow.DROP_OLDEST, onUndeliveredElement)
         }
-        UNLIMITED -> LinkedListChannel(onUndeliveredElement) // ignores onBufferOverflow: it has buffer, but it never overflows
-        BUFFERED -> ArrayChannel( // uses default capacity with SUSPEND
-            if (onBufferOverflow == BufferOverflow.SUSPEND) CHANNEL_DEFAULT_CAPACITY else 1,
-            onBufferOverflow, onUndeliveredElement
-        )
+        UNLIMITED -> BufferedChannel(UNLIMITED, onUndeliveredElement) // ignores onBufferOverflow: it has buffer, but it never overflows
+        BUFFERED -> { // uses default capacity with SUSPEND
+            if (onBufferOverflow == BufferOverflow.SUSPEND) BufferedChannel(CHANNEL_DEFAULT_CAPACITY, onUndeliveredElement)
+            else ConflatedBufferedChannel(1, onBufferOverflow, onUndeliveredElement)
+        }
         else -> {
-            if (capacity == 1 && onBufferOverflow == BufferOverflow.DROP_OLDEST)
-                ConflatedChannel(onUndeliveredElement) // conflated implementation is more efficient but appears to work in the same way
-            else
-                ArrayChannel(capacity, onBufferOverflow, onUndeliveredElement)
+            if (onBufferOverflow === BufferOverflow.SUSPEND) BufferedChannel(capacity, onUndeliveredElement)
+            else ConflatedBufferedChannel(capacity, onBufferOverflow, onUndeliveredElement)
         }
     }
 

@@ -50,7 +50,7 @@ class SharingReferenceTest : TestBase() {
 
     @Test
     fun testStateInSuspendingReference() = runTest {
-        val flow = weakEmitter.stateIn(GlobalScope)
+        val flow = weakEmitter.stateIn(ContextScope(executor))
         linearize()
         FieldWalker.assertReachableCount(1, flow) { it === token }
     }

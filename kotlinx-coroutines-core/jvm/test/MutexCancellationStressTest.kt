@@ -48,7 +48,7 @@ class MutexCancellationStressTest : TestBase() {
         val checkProgressJob = launch(dispatcher + CoroutineName("checkProgressJob")) {
             var lastCounterLocalSnapshot = (0 until mutexJobNumber).map { 0 }
             while (completed.value == 0) {
-                delay(500)
+                delay(1000)
                 val c = counterLocal.map { it.value }
                 for (i in 0 until mutexJobNumber) {
                     assert(c[i] > lastCounterLocalSnapshot[i]) { "No progress in MutexJob-$i" }

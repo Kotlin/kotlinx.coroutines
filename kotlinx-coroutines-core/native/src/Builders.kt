@@ -52,8 +52,45 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
         newContext = GlobalScope.newCoroutineContext(context)
     }
     val coroutine = BlockingCoroutine<T>(newContext, eventLoop)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    return coroutine.joinBlocking()
+    var completed = false
+    ThreadLocalKeepAlive.addCheck { !completed }
+    try {
+        coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+        return coroutine.joinBlocking()
+    } finally {
+        completed = true
+    }
+}
+
+@ThreadLocal
+private object ThreadLocalKeepAlive {
+    /** If any of these checks passes, this means this [Worker] is still used. */
+    private var checks = mutableListOf<() -> Boolean>()
+
+    /** Whether the worker currently tries to keep itself alive. */
+    private var keepAliveLoopActive = false
+
+    /** Adds another stopgap that must be passed before the [Worker] can be terminated. */
+    fun addCheck(terminationForbidden: () -> Boolean) {
+        checks.add(terminationForbidden)
+        if (!keepAliveLoopActive) keepAlive()
+    }
+
+    /**
+     * Send a ping to the worker to prevent it from terminating while this coroutine is running,
+     * ensuring that continuations don't get dropped and forgotten.
+     */
+    private fun keepAlive() {
+        // only keep the checks that still forbid the termination
+        checks = checks.filter { it() }.toMutableList()
+        // if there are no checks left, we no longer keep the worker alive, it can be terminated
+        keepAliveLoopActive = checks.isNotEmpty()
+        if (keepAliveLoopActive) {
+            Worker.current.executeAfter(afterMicroseconds = 100_000) {
+                keepAlive()
+            }
+        }
+    }
 }
 
 private class BlockingCoroutine<T>(

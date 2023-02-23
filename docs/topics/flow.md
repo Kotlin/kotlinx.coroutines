@@ -102,7 +102,7 @@ This code prints the numbers after waiting for a second.
 ### Flows
 
 Using the `List<Int>` result type, means we can only return all the values at once. To represent
-the stream of values that are being asynchronously computed, we can use a [`Flow<Int>`][Flow] type just like we would use the `Sequence<Int>` type for synchronously computed values:
+the stream of values that are being computed asynchronously, we can use a [`Flow<Int>`][Flow] type just like we would use a `Sequence<Int>` type for synchronously computed values:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -151,11 +151,11 @@ I'm not blocked 3
 
 Notice the following differences in the code with the [Flow] from the earlier examples:
 
-* A builder function for [Flow] type is called [flow][_flow].
-* Code inside the `flow { ... }` builder block can suspend.
-* The `simple` function  is no longer marked with `suspend` modifier.   
-* Values are _emitted_ from the flow using [emit][FlowCollector.emit] function.
-* Values are _collected_ from the flow using [collect][collect] function.  
+* A builder function of [Flow] type is called [flow][_flow].
+* Code inside a `flow { ... }` builder block can suspend.
+* The `simple` function is no longer marked with a `suspend` modifier.   
+* Values are _emitted_ from the flow using an [emit][FlowCollector.emit] function.
+* Values are _collected_ from the flow using a [collect][collect] function.  
 
 > We can replace [delay] with `Thread.sleep` in the body of `simple`'s `flow { ... }` and see that the main
 > thread is blocked in this case. 
@@ -215,12 +215,12 @@ Flow started
 <!--- TEST -->
  
 This is a key reason the `simple` function (which returns a flow) is not marked with `suspend` modifier.
-By itself, `simple()` call returns quickly and does not wait for anything. The flow starts every time it is collected,
-that is why we see "Flow started" when we call `collect` again.
+The `simple()` call itself returns quickly and does not wait for anything. The flow starts afresh every time it is 
+collected and that is why we see "Flow started" every time we call `collect` again.
 
 ## Flow cancellation basics
 
-Flow adheres to the general cooperative cancellation of coroutines. As usual, flow collection can be 
+Flows adhere to the general cooperative cancellation of coroutines. As usual, flow collection can be 
 cancelled when the flow is suspended in a cancellable suspending function (like [delay]).
 The following example shows how the flow gets cancelled on a timeout when running in a [withTimeoutOrNull] block 
 and stops executing its code:
@@ -268,13 +268,13 @@ See [Flow cancellation checks](#flow-cancellation-checks) section for more detai
 
 ## Flow builders
 
-The `flow { ... }` builder from the previous examples is the most basic one. There are other builders for
-easier declaration of flows:
+The `flow { ... }` builder from the previous examples is the most basic one. There are other builders 
+that allow flows to be declared:
 
-* [flowOf] builder that defines a flow emitting a fixed set of values.
-* Various collections and sequences can be converted to flows using `.asFlow()` extension functions.
+* The [flowOf] builder defines a flow that emits a fixed set of values.
+* Various collections and sequences can be converted to flows using the `.asFlow()` extension function.
 
-So, the example that prints the numbers from 1 to 3 from a flow can be written as:
+For example, the snippet that prints the numbers 1 to 3 from a flow can be rewritten as follows:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -301,17 +301,18 @@ fun main() = runBlocking<Unit> {
 
 ## Intermediate flow operators
 
-Flows can be transformed with operators, just as you would with collections and sequences. 
+Flows can be transformed using operators, in the same way as you would transform collections and 
+sequences. 
 Intermediate operators are applied to an upstream flow and return a downstream flow. 
 These operators are cold, just like flows are. A call to such an operator is not
 a suspending function itself. It works quickly, returning the definition of a new transformed flow. 
 
 The basic operators have familiar names like [map] and [filter]. 
-The important difference to sequences is that blocks of 
+An important difference of these operators from sequences is that blocks of 
 code inside these operators can call suspending functions. 
 
 For example, a flow of incoming requests can be
-mapped to the results with the [map] operator, even when performing a request is a long-running
+mapped to its results with a [map] operator, even when performing a request is a long-running
 operation that is implemented by a suspending function:   
 
 ```kotlin
@@ -337,7 +338,7 @@ fun main() = runBlocking<Unit> {
 >
 {type="note"}
 
-It produces the following three lines, each line appearing after each second:
+It produces the following three lines, each appearing one second after the previous:
 
 ```text                                                                    
 response 1
@@ -593,7 +594,7 @@ Since `simple().collect` is called from the main thread, the body of `simple`'s 
 This is the perfect default for fast-running or asynchronous code that does not care about the execution context and
 does not block the caller. 
 
-### Wrong emission withContext
+### A common pitfall when using withContext
 
 However, the long-running CPU-consuming code might need to be executed in the context of [Dispatchers.Default] and UI-updating
 code might need to be executed in the context of [Dispatchers.Main]. Usually, [withContext] is used
@@ -1012,8 +1013,8 @@ We get quite a different output, where a line is printed at each emission from e
 
 ## Flattening flows
 
-Flows represent asynchronously received sequences of values, so it is quite easy to get in a situation where 
-each value triggers a request for another sequence of values. For example, we can have the following
+Flows represent asynchronously received sequences of values, and so it is quite easy to get into a situation 
+where each value triggers a request for another sequence of values. For example, we can have the following
 function that returns a flow of two strings 500 ms apart:
 
 ```kotlin
@@ -1026,7 +1027,7 @@ fun requestFlow(i: Int): Flow<String> = flow {
 
 <!--- CLEAR -->
 
-Now if we have a flow of three integers and call `requestFlow` for each of them like this:
+Now if we have a flow of three integers and call `requestFlow` on each of them like this:
 
 ```kotlin
 (1..3).asFlow().map { requestFlow(it) }
@@ -1034,15 +1035,15 @@ Now if we have a flow of three integers and call `requestFlow` for each of them 
 
 <!--- CLEAR -->
 
-Then we end up with a flow of flows (`Flow<Flow<String>>`) that needs to be _flattened_ into a single flow for 
+Then we will end up with a flow of flows (`Flow<Flow<String>>`) that needs to be _flattened_ into a single flow for 
 further processing. Collections and sequences have [flatten][Sequence.flatten] and [flatMap][Sequence.flatMap]
 operators for this. However, due to the asynchronous nature of flows they call for different _modes_ of flattening, 
-as such, there is a family of flattening operators on flows.
+and hence, a family of flattening operators on flows exists.
 
 ### flatMapConcat
 
-Concatenating mode is implemented by [flatMapConcat] and [flattenConcat] operators. They are the most direct
-analogues of the corresponding sequence operators. They wait for the inner flow to complete before
+Concatenation of flows of flows is provided by the [flatMapConcat] and [flattenConcat] operators. They are the 
+most direct analogues of the corresponding sequence operators. They wait for the inner flow to complete before
 starting to collect the next one as the following example shows:
 
 ```kotlin
@@ -1058,7 +1059,7 @@ fun requestFlow(i: Int): Flow<String> = flow {
 fun main() = runBlocking<Unit> { 
 //sampleStart
     val startTime = System.currentTimeMillis() // remember the start time 
-    (1..3).asFlow().onEach { delay(100) } // a number every 100 ms 
+    (1..3).asFlow().onEach { delay(100) } // emit a number every 100 ms 
         .flatMapConcat { requestFlow(it) }                                                                           
         .collect { value -> // collect and print 
             println("$value at ${System.currentTimeMillis() - startTime} ms from start") 
@@ -1087,7 +1088,7 @@ The sequential nature of [flatMapConcat] is clearly seen in the output:
 
 ### flatMapMerge
 
-Another flattening mode is to concurrently collect all the incoming flows and merge their values into
+Another flattening operation is to concurrently collect all the incoming flows and merge their values into
 a single flow so that values are emitted as soon as possible.
 It is implemented by [flatMapMerge] and [flattenMerge] operators. They both accept an optional 
 `concurrency` parameter that limits the number of concurrent flows that are collected at the same time
@@ -1141,9 +1142,9 @@ The concurrent nature of [flatMapMerge] is obvious:
 
 ### flatMapLatest   
 
-In a similar way to the [collectLatest] operator, that was shown in 
-["Processing the latest value"](#processing-the-latest-value) section, there is the corresponding "Latest" 
-flattening mode where a collection of the previous flow is cancelled as soon as new flow is emitted. 
+In a similar way to the [collectLatest] operator, that was described in the section
+["Processing the latest value"](#processing-the-latest-value), there is the corresponding "Latest" 
+flattening mode where the collection of the previous flow is cancelled as soon as new flow is emitted. 
 It is implemented by the [flatMapLatest] operator.
 
 ```kotlin
@@ -1184,9 +1185,11 @@ The output here in this example is a good demonstration of how [flatMapLatest] w
 
 <!--- TEST ARBITRARY_TIME -->
   
-> Note that [flatMapLatest] cancels all the code in its block (`{ requestFlow(it) }` in this example) on a new value. 
+> Note that [flatMapLatest] cancels all the code in its block (`{ requestFlow(it) }` in this example) when a new value
+> is received. 
 > It makes no difference in this particular example, because the call to `requestFlow` itself is fast, not-suspending,
-> and cannot be cancelled. However, it would show up if we were to use suspending functions like `delay` in there.
+> and cannot be cancelled. However, a differnce in output would be visible if we were to use suspending functions 
+> like `delay` in `requestFlow`.
 >
 {type="note"}
 

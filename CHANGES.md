@@ -223,7 +223,7 @@ Note that this is a full changelog relative to 1.4.3 version. Changelog relative
 * `Flow.runningFold` operator (#2641).
 * `CoroutinesTimeout` rule for JUnit5 (#2197).
 * Internals of `Job` and `AbstractCoroutine` was reworked, resulting in smaller code size, less memory footprint, and better performance (#2513, #2512).
-* `CancellationException` from Kotlin standard library is used for cancellation on Koltin/JS and Kotlin/Native (#2638).
+* `CancellationException` from Kotlin standard library is used for cancellation on Kotlin/JS and Kotlin/Native (#2638).
 * Introduced new `DelicateCoroutinesApi` annotation that warns users about potential target API pitfalls and suggests studying API's documentation first. The only delicate API right now is `GlobalScope` (#2637).
 * Fixed bug introduced in `1.4.3` when `kotlinx-coroutines-core.jar` triggered IDEA debugger failure (#2619).
 * Fixed memory leak of `ChildHandlerNode` with reusable continuations (#2564).
@@ -264,7 +264,7 @@ Note that this is a full changelog relative to 1.4.3 version. Changelog relative
 * `Flow.runningFold` operator (#2641).
 * `CoroutinesTimeout` rule for JUnit5 (#2197).
 * Internals of `Job` and `AbstractCoroutine` was reworked, resulting in smaller code size, less memory footprint, and better performance (#2513, #2512).
-* `CancellationException` from Kotlin standard library is used for cancellation on Koltin/JS and Kotlin/Native (#2638).
+* `CancellationException` from Kotlin standard library is used for cancellation on Kotlin/JS and Kotlin/Native (#2638).
 * Introduced new `DelicateCoroutineApi` annotation that warns users about potential target API pitfalls and suggests studying API's documentation first. The only delicate API right now is `GlobalScope` (#2637).
 * Fixed bug introduced in `1.4.3` when `kotlinx-coroutines-core.jar` triggered IDEA debugger failure (#2619).
 * Fixed memory leak of `ChildHandlerNode` with reusable continuations (#2564).

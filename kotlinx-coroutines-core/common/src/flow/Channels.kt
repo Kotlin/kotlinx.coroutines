@@ -168,7 +168,6 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  * default and to control what happens when data is produced faster than it is consumed,
  * that is to control backpressure behavior.
  */
-@FlowPreview
 public fun <T> Flow<T>.produceIn(
     scope: CoroutineScope
 ): ReceiveChannel<T> =

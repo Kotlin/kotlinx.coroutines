@@ -265,8 +265,11 @@ task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     enableAssertions = true
     testLogging.showStandardStreams = true
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
-    systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
+    systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '1'
     systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '10'
+    systemProperty 'kotlinx.coroutines.bufferedChannel.segmentSize', '2'
+    systemProperty 'kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations', '1'
 }
 
 task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
@@ -278,17 +281,35 @@ task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
     configureJvmForLincheck(jvmLincheckTest)
 }
 
-static void configureJvmForLincheck(task) {
+// Additional Lincheck tests with `segmentSize = 2`.
+// Some bugs cannot be revealed when storing one request per segment,
+// and some are hard to detect when storing multiple requests.
+task jvmLincheckTestAdditional(type: Test, dependsOn: compileTestKotlinJvm) {
+    classpath = files { jvmTest.classpath }
+    testClassesDirs = files { jvmTest.testClassesDirs }
+    include '**/RendezvousChannelLincheckTest*'
+    include '**/Buffered1ChannelLincheckTest*'
+    include '**/Semaphore*LincheckTest*'
+    enableAssertions = true
+    testLogging.showStandardStreams = true
+    configureJvmForLincheck(jvmLincheckTestAdditional, true)
+}
+
+static void configureJvmForLincheck(task, additional = false) {
     task.minHeapSize = '1g'
     task.maxHeapSize = '4g' // we may need more space for building an interleaving tree in the model checking mode
     task.jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
                     '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
-    task.systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
+    var segmentSize = additional ? '2' : '1'
+    task.systemProperty 'kotlinx.coroutines.semaphore.segmentSize', segmentSize
     task.systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '1' // better for the model checking mode
+    task.systemProperty 'kotlinx.coroutines.bufferedChannel.segmentSize', segmentSize
+    task.systemProperty 'kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations', '1'
 }
 
 // Always check additional test sets
-task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest])
+task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest, jvmLincheckTestAdditional])
 check.dependsOn moreTest
 
 tasks.jvmLincheckTest {

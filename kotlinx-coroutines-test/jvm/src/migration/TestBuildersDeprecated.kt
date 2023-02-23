@@ -50,10 +50,12 @@ import kotlin.time.Duration.Companion.milliseconds
  *        then they must implement [DelayController] and [TestCoroutineExceptionHandler] respectively.
  * @param testBody The code of the unit-test.
  */
-@Deprecated("Use `runTest` instead to support completing from other dispatchers. " +
-    "Please see the migration guide for details: " +
-    "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
-    level = DeprecationLevel.WARNING)
+@Deprecated(
+    "Use `runTest` instead to support completing from other dispatchers. " +
+        "Please see the migration guide for details: " +
+        "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
+    level = DeprecationLevel.WARNING
+)
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun runBlockingTest(
     context: CoroutineContext = EmptyCoroutineContext,
@@ -91,20 +93,20 @@ public fun runBlockingTestOnTestScope(
     val throwable = try {
         scope.getCompletionExceptionOrNull()
     } catch (e: IllegalStateException) {
-        null // the deferred was not completed yet; `scope.leave()` should complain then about unfinished jobs
+        null // the deferred was not completed yet; `scope.legacyLeave()` should complain then about unfinished jobs
     }
     scope.backgroundScope.cancel()
     scope.testScheduler.advanceUntilIdleOr { false }
     throwable?.let {
         val exceptions = try {
-            scope.leave()
+            scope.legacyLeave()
         } catch (e: UncompletedCoroutinesError) {
             listOf()
         }
-        (listOf(it) + exceptions).throwAll()
+        throwAll(it, exceptions)
         return
     }
-    scope.leave().throwAll()
+    throwAll(null, scope.legacyLeave())
     val jobs = completeContext.activeJobs() - startJobs
     if (jobs.isNotEmpty())
         throw UncompletedCoroutinesError("Some jobs were not completed at the end of the test: $jobs")
@@ -118,10 +120,12 @@ public fun runBlockingTestOnTestScope(
  * [migration guide](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md)
  * for an instruction on how to update the code for the new API.
  */
-@Deprecated("Use `runTest` instead to support completing from other dispatchers. " +
-    "Please see the migration guide for details: " +
-    "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
-    level = DeprecationLevel.WARNING)
+@Deprecated(
+    "Use `runTest` instead to support completing from other dispatchers. " +
+        "Please see the migration guide for details: " +
+        "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
+    level = DeprecationLevel.WARNING
+)
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(coroutineContext, block)
@@ -142,10 +146,12 @@ public fun TestScope.runBlockingTest(block: suspend TestScope.() -> Unit): Unit 
  * [migration guide](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md)
  * for an instruction on how to update the code for the new API.
  */
-@Deprecated("Use `runTest` instead to support completing from other dispatchers. " +
-    "Please see the migration guide for details: " +
-    "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
-    level = DeprecationLevel.WARNING)
+@Deprecated(
+    "Use `runTest` instead to support completing from other dispatchers. " +
+        "Please see the migration guide for details: " +
+        "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
+    level = DeprecationLevel.WARNING
+)
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit): Unit =
     runBlockingTest(this, block)
@@ -165,7 +171,12 @@ public fun runTestWithLegacyScope(
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
     val testScope = TestBodyCoroutine(createTestCoroutineScope(context + RunningInRunTest))
     return createTestResult {
-        runTestCoroutine(testScope, dispatchTimeoutMs.milliseconds, TestBodyCoroutine::tryGetCompletionCause, testBody) {
+        runTestCoroutineLegacy(
+            testScope,
+            dispatchTimeoutMs.milliseconds,
+            TestBodyCoroutine::tryGetCompletionCause,
+            testBody
+        ) {
             try {
                 testScope.cleanup()
                 emptyList()

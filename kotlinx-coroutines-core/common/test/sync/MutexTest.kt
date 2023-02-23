@@ -4,8 +4,8 @@
 
 package kotlinx.coroutines.sync
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 class MutexTest : TestBase() {
@@ -137,5 +137,15 @@ class MutexTest : TestBase() {
         assertFalse(mutex.holdsLock(owner))
         assertTrue(mutex.holdsLock(owner2))
         finish(4)
+    }
+
+    @Test
+    fun testIllegalStateInvariant() = runTest {
+        val mutex = Mutex()
+        val owner = Any()
+        assertTrue(mutex.tryLock(owner))
+        assertFailsWith<IllegalStateException> { mutex.tryLock(owner) }
+        assertFailsWith<IllegalStateException> { mutex.lock(owner) }
+        assertFailsWith<IllegalStateException> { select { mutex.onLock(owner) {} } }
     }
 }

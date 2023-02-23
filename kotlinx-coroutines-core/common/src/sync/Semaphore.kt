@@ -284,8 +284,9 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     private fun addAcquireToQueue(waiter: Any): Boolean {
         val curTail = this.tail.value
         val enqIdx = enqIdx.getAndIncrement()
+        val createNewSegment = ::createSegment
         val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
-            createNewSegment = ::createSegment).segment // cannot be closed
+            createNewSegment = createNewSegment).segment // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
         // the regular (fast) path -- if the cell is empty, try to install continuation
         if (segment.cas(i, null, waiter)) { // installed continuation successfully
@@ -325,8 +326,9 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         val curHead = this.head.value
         val deqIdx = deqIdx.getAndIncrement()
         val id = deqIdx / SEGMENT_SIZE
+        val createNewSegment = ::createSegment
         val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
-            createNewSegment = ::createSegment).segment // cannot be closed
+            createNewSegment = createNewSegment).segment // cannot be closed
         segment.cleanPrev()
         if (segment.id > id) return false
         val i = (deqIdx % SEGMENT_SIZE).toInt()
@@ -375,11 +377,11 @@ private class CancelSemaphoreAcquisitionHandler(
     override fun toString() = "CancelSemaphoreAcquisitionHandler[$segment, $index]"
 }
 
-private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev, 0)
+private fun createSegment(id: Long, prev: SemaphoreSegment) = SemaphoreSegment(id, prev, 0)
 
 private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int) : Segment<SemaphoreSegment>(id, prev, pointers) {
     val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
-    override val maxSlots: Int get() = SEGMENT_SIZE
+    override val numberOfSlots: Int get() = SEGMENT_SIZE
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun get(index: Int): Any? = acquirers[index].value

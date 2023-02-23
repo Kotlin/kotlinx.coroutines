@@ -87,7 +87,7 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform 
  * ```
  * flowOf(1, 2, 3).scan(emptyList<Int>()) { acc, value -> acc + value }.toList()
  * ```
- * will produce `[], [1], [1, 2], [1, 2, 3]`.
+ * will produce `[[], [1], [1, 2], [1, 2, 3]]`.
  *
  * This function is an alias to [runningFold] operator.
  */
@@ -100,7 +100,7 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  * ```
  * flowOf(1, 2, 3).runningFold(emptyList<Int>()) { acc, value -> acc + value }.toList()
  * ```
- * will produce `[], [1], [1, 2], [1, 2, 3]`.
+ * will produce `[[], [1], [1, 2], [1, 2, 3]]`.
  */
 public fun <T, R> Flow<T>.runningFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
     var accumulator: R = initial
