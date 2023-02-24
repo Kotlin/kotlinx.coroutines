@@ -59,7 +59,7 @@ public class TestCoroutineExceptionHandler :
     override fun handleException(context: CoroutineContext, exception: Throwable) {
         synchronized(_lock) {
             if (_coroutinesCleanedUp) {
-                handleCoroutineExceptionImpl(context, exception)
+                handleUncaughtCoroutineException(context, exception)
             }
             _exceptions += exception
         }

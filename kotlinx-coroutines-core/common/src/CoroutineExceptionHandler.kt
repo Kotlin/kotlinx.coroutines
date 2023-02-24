@@ -4,9 +4,8 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-
-internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable)
 
 /**
  * Helper function for coroutine builder implementations to handle uncaught and unexpected exceptions in coroutines,
@@ -26,11 +25,11 @@ public fun handleCoroutineException(context: CoroutineContext, exception: Throwa
             return
         }
     } catch (t: Throwable) {
-        handleCoroutineExceptionImpl(context, handlerException(exception, t))
+        handleUncaughtCoroutineException(context, handlerException(exception, t))
         return
     }
     // If a handler is not present in the context or an exception was thrown, fallback to the global handler
-    handleCoroutineExceptionImpl(context, exception)
+    handleUncaughtCoroutineException(context, exception)
 }
 
 internal fun handlerException(originalException: Throwable, thrownException: Throwable): Throwable {
