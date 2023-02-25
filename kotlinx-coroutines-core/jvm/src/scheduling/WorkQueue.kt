@@ -112,10 +112,12 @@ internal class WorkQueue {
      *
      * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen
      * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
+     *
+     * [StealingMode] controls what tasks to steal:
+     * * [STEAL_ANY] is default mode for scheduler, task from the head (in FIFO order) is stolen
+     * * [STEAL_BLOCKING_ONLY] is mode for stealing *an arbitrary* blocking task which is used by scheduler when helping in Dispatchers.IO mode
+     * * [STEAL_CPU_ONLY] is a kludge for `runSingleTaskFromCurrentSystemDispatcher`
      */
-    // TODO move it to tests where appropriate
-    fun trySteal(stolenTaskRef: ObjectRef<Task?>): Long = trySteal(STEAL_ANY, stolenTaskRef)
-
     fun trySteal(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
         val task = when (stealingMode) {
             STEAL_ANY -> pollBuffer()
@@ -168,7 +170,7 @@ internal class WorkQueue {
         return pollWithMode(onlyBlocking = false /* only cpu */)
     }
 
-    private fun pollWithMode(/* Only blocking OR only CPU */onlyBlocking: Boolean): Task? {
+    private fun pollWithMode(/* Only blocking OR only CPU */ onlyBlocking: Boolean): Task? {
         val start = consumerIndex.value
         var end = producerIndex.value
         // CPU or (BLOCKING & hasBlocking)

@@ -906,12 +906,14 @@ internal class CoroutineScheduler(
             return findBlockingTask()
         }
 
+        // NB: ONLY for runSingleTask method
         private fun findBlockingTask(): Task? {
             return localQueue.pollBlocking()
                 ?: globalBlockingQueue.removeFirstOrNull()
                 ?: trySteal(STEAL_BLOCKING_ONLY)
         }
 
+        // NB: ONLY for runSingleTask method
         private fun findCpuTask(): Task? {
             return localQueue.pollCpu()
                 ?: globalBlockingQueue.removeFirstOrNull()

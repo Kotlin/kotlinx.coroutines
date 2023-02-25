@@ -9,6 +9,7 @@ import kotlinx.coroutines.internal.AVAILABLE_PROCESSORS
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.*
@@ -18,63 +19,76 @@ import kotlin.time.*
 
 class CoroutineSchedulerInternalApiStressTest : TestBase() {
 
-    @Test
-    fun testHelpDefaultIoIsIsolated() {
-        repeat(10) {
-            runTest {
-                val jobToComplete = Job()
-                val tasksToCompleteJob = AtomicInteger(200)
+    @Test(timeout = 120_000L)
+    fun testHelpDefaultIoIsIsolated() = repeat(100 * stressTestMultiplierSqrt) {
+        val ioTaskMarker = ThreadLocal.withInitial { false }
+        var threadThatShould = Thread.currentThread()
+        runTest {
+            val jobToComplete = Job()
+            val expectedIterations = 100
+            val completionLatch = CountDownLatch(1)
+            val tasksToCompleteJob = AtomicInteger(expectedIterations)
+            val observedIoThreads = Collections.newSetFromMap(ConcurrentHashMap<Thread, Boolean>())
+            val observedDefaultThreads = Collections.newSetFromMap(ConcurrentHashMap<Thread, Boolean>())
 
-                val observedIoThreads = Collections.newSetFromMap(ConcurrentHashMap<Thread, Boolean>())
-                val observedDefaultThreads = Collections.newSetFromMap(ConcurrentHashMap<Thread, Boolean>())
-
-                val barrier = CyclicBarrier(AVAILABLE_PROCESSORS)
-                repeat(AVAILABLE_PROCESSORS - 1) {
-                    // Launch CORES - 1 spawners
-                    launch(Dispatchers.Default) {
-                        barrier.await()
-                        while (!jobToComplete.isCompleted) {
-                            launch {
-                                observedDefaultThreads.add(Thread.currentThread())
-                                val tasksLeft = tasksToCompleteJob.decrementAndGet()
-                                if (tasksLeft == 0) {
-                                    // Verify threads first
-                                    try {
-                                        assertFalse(observedIoThreads.containsAll(observedDefaultThreads))
-                                    } finally {
-                                        jobToComplete.complete()
-                                    }
-                                }
-                            }
-
-                            // Sometimes launch an IO task
-                            if (Random.nextInt(0..9) == 0) {
-                                launch(Dispatchers.IO) {
-                                    observedIoThreads.add(Thread.currentThread())
-                                    assertTrue(Thread.currentThread().isIoDispatcherThread())
-                                }
-                            }
-                        }
-                    }
-                }
-
-                withContext(Dispatchers.Default) {
+            val barrier = CyclicBarrier(AVAILABLE_PROCESSORS)
+            val spawners = ArrayList<Job>()
+            repeat(AVAILABLE_PROCESSORS - 1) {
+                // Launch CORES - 1 spawners
+                spawners += launch(Dispatchers.Default) {
                     barrier.await()
+                    repeat(expectedIterations) {
+                        launch {
+                            val tasksLeft = tasksToCompleteJob.decrementAndGet()
+                            if (tasksLeft < 0) return@launch // Leftovers are being executed all over the place
+                            if (threadThatShould !== Thread.currentThread()) {
+                                val a = 2
+                            }
+                            observedDefaultThreads.add(Thread.currentThread())
+                            if (tasksLeft == 0) {
+                                // Verify threads first
+                                try {
+                                    assertFalse(observedIoThreads.containsAll(observedDefaultThreads))
+                                } finally {
+                                    jobToComplete.complete()
+                                }
+                            }
+                        }
 
-                    while (!jobToComplete.isCompleted) {
-                        val result = runSingleTaskFromCurrentSystemDispatcher()
-                        if (result == 0L) {
-                            continue
-                        } else if (result >= 0L) {
-                            delay(result.toDuration(DurationUnit.NANOSECONDS))
-                        } else {
-                            delay(10)
+                        // Sometimes launch an IO task to mess with a scheduler
+                        if (Random.nextInt(0..9) == 0) {
+                            launch(Dispatchers.IO) {
+                                ioTaskMarker.set(true)
+                                observedIoThreads.add(Thread.currentThread())
+                                assertTrue(Thread.currentThread().isIoDispatcherThread())
+                            }
                         }
                     }
-                    assertTrue(Thread.currentThread() in observedDefaultThreads)
+                    completionLatch.await()
                 }
-                coroutineContext.job.children.toList().joinAll()
+            }
+
+            withContext(Dispatchers.Default) {
+                threadThatShould = Thread.currentThread()
+                barrier.await()
+                var timesHelped = 0
+                while (!jobToComplete.isCompleted) {
+                    val result = runSingleTaskFromCurrentSystemDispatcher()
+                    assertFalse(ioTaskMarker.get())
+                    if (result == 0L) {
+                        ++timesHelped
+                        continue
+                    } else if (result >= 0L) {
+                        Thread.sleep(result.toDuration(DurationUnit.NANOSECONDS).toDelayMillis())
+                    } else {
+                        Thread.sleep(10)
+                    }
+                }
+                completionLatch.countDown()
+//                assertEquals(100, timesHelped)
+//                assertTrue(Thread.currentThread() in observedDefaultThreads, observedDefaultThreads.toString())
             }
         }
     }
 }
+

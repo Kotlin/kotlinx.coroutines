@@ -103,7 +103,8 @@ internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit
  */
 @InternalCoroutinesApi
 @DelicateCoroutinesApi
-public fun runSingleTaskFromCurrentSystemDispatcher(): Long {
+@PublishedApi
+internal fun runSingleTaskFromCurrentSystemDispatcher(): Long {
     val thread = Thread.currentThread()
     if (thread !is CoroutineScheduler.Worker) throw IllegalStateException("Expected CoroutineScheduler.Worker, but got $thread")
     return thread.runSingleTask()
@@ -119,7 +120,8 @@ public fun runSingleTaskFromCurrentSystemDispatcher(): Long {
  */
 @InternalCoroutinesApi
 @DelicateCoroutinesApi
-public fun Thread.isIoDispatcherThread(): Boolean {
+@PublishedApi
+internal fun Thread.isIoDispatcherThread(): Boolean {
     if (this !is CoroutineScheduler.Worker) return false
     return isIo()
 }
