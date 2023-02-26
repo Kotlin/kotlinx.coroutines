@@ -22,7 +22,7 @@ import kotlinx.coroutines.selects.*
  * Usually, a deferred value is created in _active_ state (it is created and started).
  * However, the [async][CoroutineScope.async] coroutine builder has an optional `start` parameter that creates a deferred value in _new_ state
  * when this parameter is set to [CoroutineStart.LAZY].
- * Such a deferred can be be made _active_ by invoking [start], [join], or [await].
+ * Such a deferred can be made _active_ by invoking [start], [join], or [await].
  *
  * A deferred value is a [Job]. A job in the
  * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
