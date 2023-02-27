@@ -905,7 +905,7 @@ the parent coroutine.
         req: RequestData
     ): List<User> = coroutineScope {
         // ...
-        GlobalScope.async {
+        async {
             log("starting loading for ${repo.name}")
             delay(3000)
             // load repo contributors
