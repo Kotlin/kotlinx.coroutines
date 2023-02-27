@@ -185,7 +185,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
 
     private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
         // Try to suspend.
-        if (addAcquireToQueue(cont as Waiter)) return@sc
+        if (addAcquireToQueue(cont)) return@sc
         // The suspension has been failed
         // due to the synchronous resumption mode.
         // Restart the whole `acquire`.

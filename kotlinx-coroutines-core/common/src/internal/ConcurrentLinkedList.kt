@@ -188,9 +188,13 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
  * Each segment in the list has a unique id and is created by the provided to [findSegmentAndMoveForward] method.
  * Essentially, this is a node in the Michael-Scott queue algorithm,
  * but with maintaining [prev] pointer for efficient [remove] implementation.
+ *
+ * NB: this class cannot be public or leak into user's code as public type as [CancellableContinuationImpl]
+ * instance-check it and uses a separate code-path for that.
  */
-internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers: Int) :
-    ConcurrentLinkedListNode<S>(prev),
+internal abstract class Segment<S : Segment<S>>(
+    @JvmField val id: Long, prev: S?, pointers: Int
+) : ConcurrentLinkedListNode<S>(prev),
     // Segments typically store waiting continuations. Thus, on cancellation, the corresponding
     // slot should be cleaned and the segment should be removed if it becomes full of cancelled cells.
     // To install such a handler efficiently, without creating an extra object, we allow storing

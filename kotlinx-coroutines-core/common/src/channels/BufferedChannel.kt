@@ -154,7 +154,7 @@ internal open class BufferedChannel<E>(
         sendImplOnNoWaiter( // <-- this is an inline function
             segment = segment, index = index, element = element, s = s,
             // Store the created continuation as a waiter.
-            waiter = cont as Waiter,
+            waiter = cont,
             // If a rendezvous happens or the element has been buffered,
             // resume the continuation and finish. In case of prompt
             // cancellation, it is guaranteed that the element
@@ -260,8 +260,9 @@ internal open class BufferedChannel<E>(
     /**
      * Specifies waiting [sendBroadcast] operation.
      */
-    private class SendBroadcast(val cont: CancellableContinuation<Boolean>) :
-        Waiter by cont as CancellableContinuationImpl<Boolean>
+    private class SendBroadcast(
+        val cont: CancellableContinuation<Boolean>
+    ) : Waiter by cont as CancellableContinuationImpl<Boolean>
 
     /**
      * Abstract send implementation.
@@ -721,7 +722,7 @@ internal open class BufferedChannel<E>(
         receiveImplOnNoWaiter( // <-- this is an inline function
             segment = segment, index = index, r = r,
             // Store the created continuation as a waiter.
-            waiter = cont as Waiter,
+            waiter = cont,
             // In case of successful element retrieval, resume
             // the continuation with the element and inform the
             // `BufferedChannel` extensions that the synchronization

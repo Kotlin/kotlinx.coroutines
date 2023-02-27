@@ -166,7 +166,6 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     }
 
     private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable<Unit> { cont ->
-        cont as CancellableContinuationImpl<Unit>
         val contWithOwner = CancellableContinuationWithOwner(cont, owner)
         acquire(contWithOwner)
     }

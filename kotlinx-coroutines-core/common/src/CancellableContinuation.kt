@@ -328,7 +328,7 @@ public suspend inline fun <T> suspendCancellableCoroutine(
  * [CancellableContinuationImpl] is reused.
  */
 internal suspend inline fun <T> suspendCancellableCoroutineReusable(
-    crossinline block: (CancellableContinuation<T>) -> Unit
+    crossinline block: (CancellableContinuationImpl<T>) -> Unit
 ): T = suspendCoroutineUninterceptedOrReturn { uCont ->
     val cancellable = getOrCreateCancellableContinuation(uCont.intercepted())
     block(cancellable)
