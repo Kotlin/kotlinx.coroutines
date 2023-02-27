@@ -144,11 +144,12 @@ private class ChannelAsFlow<T>(
  * 2) Flow consumer completes normally when the original channel completes (~is closed) normally.
  * 3) If the flow consumer fails with an exception, subscription is cancelled.
  */
+@Suppress("DEPRECATION")
 @Deprecated(
     level = DeprecationLevel.WARNING,
     message = "'BroadcastChannel' is obsolete and all corresponding operators are deprecated " +
         "in the favour of StateFlow and SharedFlow"
-) // Since 1.5.0, was @FlowPreview, safe to remove in 1.7.0
+) // Since 1.5.0, was @FlowPreview, safe to remove in 1.8.0
 public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
     emitAll(openSubscription())
 }
