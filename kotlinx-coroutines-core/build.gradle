@@ -84,7 +84,7 @@ void defineSourceSet(newName, dependsOn, includedInPred) {
 
 static boolean isNativeDarwin(String name) { return ["ios", "macos", "tvos", "watchos"].any { name.startsWith(it) } }
 
-static boolean isNativeOther(String name) { return ["linux", "mingw"].any { name.startsWith(it) } }
+static boolean isNativeOther(String name) { return ["linux", "mingw", "androidNative"].any { name.startsWith(it) } }
 
 defineSourceSet("concurrent", ["common"]) { it in ["jvm", "native"] }
 
