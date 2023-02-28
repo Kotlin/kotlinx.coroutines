@@ -165,7 +165,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         lockSuspend(owner)
     }
 
-    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable { cont ->
+    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable<Unit> { cont ->
         val contWithOwner = CancellableContinuationWithOwner(cont, owner)
         acquire(contWithOwner)
     }
@@ -230,7 +230,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         if (owner != null && holdsLock(owner)) {
             select.selectInRegistrationPhase(ON_LOCK_ALREADY_LOCKED_BY_OWNER)
         } else {
-            onAcquireRegFunction(SelectInstanceWithOwner(select, owner), owner)
+            onAcquireRegFunction(SelectInstanceWithOwner(select as SelectInstanceInternal<*>, owner), owner)
         }
     }
 
@@ -243,10 +243,10 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     private inner class CancellableContinuationWithOwner(
         @JvmField
-        val cont: CancellableContinuation<Unit>,
+        val cont: CancellableContinuationImpl<Unit>,
         @JvmField
         val owner: Any?
-    ) : CancellableContinuation<Unit> by cont {
+    ) : CancellableContinuation<Unit> by cont, Waiter by cont {
         override fun tryResume(value: Unit, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any? {
             assert { this@MutexImpl.owner.value === NO_OWNER }
             val token = cont.tryResume(value, idempotent) {
@@ -270,10 +270,10 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     private inner class SelectInstanceWithOwner<Q>(
         @JvmField
-        val select: SelectInstance<Q>,
+        val select: SelectInstanceInternal<Q>,
         @JvmField
         val owner: Any?
-    ) : SelectInstanceInternal<Q> by select as SelectInstanceInternal<Q> {
+    ) : SelectInstanceInternal<Q> by select {
         override fun trySelect(clauseObject: Any, result: Any?): Boolean {
             assert { this@MutexImpl.owner.value === NO_OWNER }
             return select.trySelect(clauseObject, result).also { success ->

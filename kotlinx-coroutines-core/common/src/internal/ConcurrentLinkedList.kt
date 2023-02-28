@@ -188,8 +188,21 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
  * Each segment in the list has a unique id and is created by the provided to [findSegmentAndMoveForward] method.
  * Essentially, this is a node in the Michael-Scott queue algorithm,
  * but with maintaining [prev] pointer for efficient [remove] implementation.
+ *
+ * NB: this class cannot be public or leak into user's code as public type as [CancellableContinuationImpl]
+ * instance-check it and uses a separate code-path for that.
  */
-internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers: Int): ConcurrentLinkedListNode<S>(prev) {
+internal abstract class Segment<S : Segment<S>>(
+    @JvmField val id: Long, prev: S?, pointers: Int
+) : ConcurrentLinkedListNode<S>(prev),
+    // Segments typically store waiting continuations. Thus, on cancellation, the corresponding
+    // slot should be cleaned and the segment should be removed if it becomes full of cancelled cells.
+    // To install such a handler efficiently, without creating an extra object, we allow storing
+    // segments as cancellation handlers in [CancellableContinuationImpl] state, putting the slot
+    // index in another field. The details are here: https://github.com/Kotlin/kotlinx.coroutines/pull/3084.
+    // For that, we need segments to implement this internal marker interface.
+    NotCompleted
+{
     /**
      * This property should return the number of slots in this segment,
      * it is used to define whether the segment is logically removed.
@@ -212,6 +225,13 @@ internal abstract class Segment<S : Segment<S>>(val id: Long, prev: S?, pointers
 
     // returns `true` if this segment is logically removed after the decrement.
     internal fun decPointers() = cleanedAndPointers.addAndGet(-(1 shl POINTERS_SHIFT)) == numberOfSlots && !isTail
+
+    /**
+     * This function is invoked on continuation cancellation when this segment
+     * with the specified [index] are installed as cancellation handler via
+     * `SegmentDisposable.disposeOnCancellation(Segment, Int)`.
+     */
+    abstract fun onCancellation(index: Int, cause: Throwable?)
 
     /**
      * Invoked on each slot clean-up; should not be invoked twice for the same slot.
