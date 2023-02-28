@@ -250,7 +250,7 @@ Done
 Coroutines are less resource-intensive than JVM threads. Code that exhausts the
 JVM's available memory when using threads can be expressed using coroutines
 without hitting resource limits. For example, the following code launches
-100000 distinct coroutines that each wait 5 seconds and then print a period
+100,000 distinct coroutines that each wait 5 seconds and then print a period
 ('.') while consuming very little memory:
 
 ```kotlin
@@ -269,6 +269,8 @@ fun main() = runBlocking {
 example will exhaust the playground's heap memory; don't make it runnable. -->
 
 > You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
+> 
+> Unfortunately, it's currently impossible to run this snippet in the [Kotlin Playground](https://play.kotlinlang.org/) due to technical limitations.
 >
 {type="note"}
 
