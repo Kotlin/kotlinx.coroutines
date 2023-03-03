@@ -3,7 +3,6 @@ import kotlinx.coroutines.internal.MainDispatcherFactory;
 
 module kotlinx.coroutines.core {
     requires transitive kotlin.stdlib;
-    requires kotlinx.atomicfu;
 
     // these are used by kotlinx.coroutines.debug.AgentPremain
     requires static java.instrument; // contains java.lang.instrument.*
