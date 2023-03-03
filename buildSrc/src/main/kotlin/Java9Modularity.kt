@@ -5,15 +5,13 @@
 import org.gradle.api.*
 import org.gradle.api.attributes.*
 import org.gradle.api.file.*
-import org.gradle.api.provider.*
-import org.gradle.api.specs.*
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.jvm.toolchain.*
 import org.gradle.kotlin.dsl.*
-import org.gradle.api.logging.Logger
+import org.gradle.work.*
 import org.jetbrains.kotlin.gradle.dsl.*
-import java.io.*
 
 /**
  * This object configures the Java compilation of a JPMS (aka Jigsaw) module descriptor.
@@ -27,30 +25,40 @@ import java.io.*
  */
 object Java9Modularity {
 
-    private class ModuleInfoFilter(
-        private val compileKotlinTaskPath: String,
-        private val javaVersionProvider: Provider<JavaVersion>,
-        private val moduleInfoFile: File,
-        private val logger: Logger
-    ) : Spec<FileTreeElement> {
-        private val isJava9Compatible
-            get() = javaVersionProvider.orNull?.isJava9Compatible == true
-        private var logged = false
+    /**
+     * Task that patches `module-info.java` and removes `requires kotlinx.atomicfu` directive.
+     *
+     * To have JPMS properly supported, Kotlin compiler **must** be supplied with the correct `module-info.java`.
+     * The correct module info has to contain `atomicfu` requirement because atomicfu plugin kicks-in **after**
+     * the compilation process. But `atomicfu` is compile-only dependency that shouldn't be present in the final
+     * `module-info.java` and that's exactly what this task ensures.
+     */
+    abstract class ProcessModuleInfoFile : DefaultTask() {
+        @get:InputFile
+        @get:NormalizeLineEndings
+        abstract val moduleInfoFile: RegularFileProperty
 
-        private fun logStatusOnce() {
-            if (logged) return
-            if (isJava9Compatible) {
-                logger.info("Module-info checking is enabled; $compileKotlinTaskPath is compiled using Java ${javaVersionProvider.get()}")
-            } else {
-                logger.info("Module-info checking is disabled")
+        @get:OutputFile
+        abstract val processedModuleInfoFile: RegularFileProperty
+
+        private val projectPath = project.path
+
+        @TaskAction
+        fun process() {
+            val sourceFile = moduleInfoFile.get().asFile
+            if (!sourceFile.exists()) {
+                throw IllegalStateException("$sourceFile not found in $projectPath")
             }
-            logged = true
-        }
-
-        override fun isSatisfiedBy(element: FileTreeElement): Boolean {
-            logStatusOnce()
-            if (isJava9Compatible) return false
-            return element.file == moduleInfoFile
+            val outputFile = processedModuleInfoFile.get().asFile
+            sourceFile.useLines { lines ->
+                outputFile.outputStream().bufferedWriter().use { writer ->
+                    for (line in lines) {
+                        if ("kotlinx.atomicfu" in line) continue
+                        writer.write(line)
+                        writer.newLine()
+                    }
+                }
+            }
         }
     }
 
@@ -74,12 +82,13 @@ object Java9Modularity {
             )
         }
 
+        val processModuleInfoFile by tasks.registering(ProcessModuleInfoFile::class) {
+            moduleInfoFile.set(file("${target.name.ifEmpty { "." }}/src/module-info.java"))
+            processedModuleInfoFile.set(project.layout.buildDirectory.file("generated-sources/module-info-processor/module-info.java"))
+        }
+
         val compileJavaModuleInfo = tasks.register("compileModuleInfoJava", JavaCompile::class.java) {
             val moduleName = project.name.replace('-', '.') // this module's name
-            val sourceFile = file("${target.name.ifEmpty { "." }}/src/module-info.java")
-            if (!sourceFile.exists()) {
-                throw IllegalStateException("$sourceFile not found in $project")
-            }
             val compileKotlinTask =
                 compilation.compileTaskProvider.get() as? org.jetbrains.kotlin.gradle.tasks.KotlinCompile
                     ?: error("Cannot access Kotlin compile task ${compilation.compileKotlinTaskName}")
@@ -97,15 +106,9 @@ object Java9Modularity {
             // Note that we use the parent dir and an include filter,
             // this is needed for Gradle's module detection to work in
             // org.gradle.api.tasks.compile.JavaCompile.createSpec
-            source(sourceFile.parentFile)
-            include { it.file == sourceFile }
-
-            // The Kotlin compiler will parse and check module dependencies,
-            // but it currently won't compile to a module-info.class file.
-            // Note that module checking only works on JDK 9+,
-            // because the JDK built-in base modules are not available in earlier versions.
-            val javaVersionProvider = compileKotlinTask.kotlinJavaToolchain.javaVersion
-            compileKotlinTask.exclude(ModuleInfoFilter(compileKotlinTask.path, javaVersionProvider, sourceFile, logger))
+            source(processModuleInfoFile.map { it.processedModuleInfoFile.asFile.get().parentFile })
+            val generatedModuleInfoFile = processModuleInfoFile.flatMap { it.processedModuleInfoFile.asFile }
+            include { it.file == generatedModuleInfoFile.get() }
 
             // Set the task outputs and destination directory
             outputs.dir(targetDir)
