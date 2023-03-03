@@ -140,8 +140,8 @@ internal class WorkQueue {
         val end = producerIndex.value
         val onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY
         // Bail out if there is no blocking work for us
-        if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
         while (start != end) {
+            if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
             return tryExtractFromTheMiddle(start++, onlyBlocking) ?: continue
         }
 
