@@ -91,7 +91,7 @@ internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit
  * ### Limitations and caveats
  *
  * - Executes tasks in-place, thus potentially leaking irrelevant thread-locals from the current thread
- * - Is not 100% effective, because the caller should somehow "wait" (or do other work) during [Long] returned nanoseconds
+ * - Is not 100% effective, because the caller should somehow "wait" (or do other work) for [Long] returned nanoseconds
  *   even when work arrives immediately after returning from this method.
  * - When there is no more work, it's up to the caller to decide what to do. It's important to remember that
  *   work to current dispatcher may arrive **later** from external sources [1]
