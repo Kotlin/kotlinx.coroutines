@@ -8,7 +8,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION", "DEPRECATION_ERROR")
 class TestCoroutineDispatcherOrderTest: OrderedExecutionTestBase() {
 
     @Test
