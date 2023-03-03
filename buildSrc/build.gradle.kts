@@ -38,7 +38,7 @@ fun version(target: String): String {
         val snapshotVersion = properties["kotlin_snapshot_version"]
         if (snapshotVersion != null) return snapshotVersion.toString()
     }
-    return props.getProperty("${target}_version")
+    return properties["${target}_version"]?.let{"$it"} ?: props.getProperty("${target}_version")
 }
 
 dependencies {
