@@ -17,8 +17,8 @@ internal const val TASK_STOLEN = -1L
 internal const val NOTHING_TO_STEAL = -2L
 
 internal typealias StealingMode = Int
-internal const val STEAL_ANY: StealingMode = -1
-internal const val STEAL_CPU_ONLY: StealingMode = 0
+internal const val STEAL_ANY: StealingMode = 3
+internal const val STEAL_CPU_ONLY: StealingMode = 2
 internal const val STEAL_BLOCKING_ONLY: StealingMode = 1
 
 /**
