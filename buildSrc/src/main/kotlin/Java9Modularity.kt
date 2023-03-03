@@ -5,14 +5,12 @@
 import org.gradle.api.*
 import org.gradle.api.attributes.*
 import org.gradle.api.file.*
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.jvm.toolchain.*
 import org.gradle.kotlin.dsl.*
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
-import org.gradle.work.NormalizeLineEndings
+import org.gradle.work.*
 import org.jetbrains.kotlin.gradle.dsl.*
 
 /**
@@ -100,7 +98,8 @@ object Java9Modularity {
             // this is needed for Gradle's module detection to work in
             // org.gradle.api.tasks.compile.JavaCompile.createSpec
             source(processModuleInfoFile.map { it.processedModuleInfoFile.asFile.get().parentFile })
-            include { it.file == processModuleInfoFile.get().processedModuleInfoFile.asFile.get() }
+            val generatedModuleInfoFile = processModuleInfoFile.flatMap { it.processedModuleInfoFile.asFile }
+            include { it.file == generatedModuleInfoFile.get() }
 
             // Set the task outputs and destination directory
             outputs.dir(targetDir)
