@@ -24,6 +24,15 @@ import org.jetbrains.kotlin.gradle.dsl.*
  * which is used to compile the module descriptor.
  */
 object Java9Modularity {
+
+    /**
+     * Task that patches `module-info.java` and removes `requires kotlinx.atomicfu` directive.
+     *
+     * To have JPMS properly supported, Kotlin compiler **must** be supplied with the correct `module-info.java`.
+     * The correct module info has to contain `atomicfu` requirement because atomicfu plugin kicks-in **after**
+     * the compilation process. But `atomicfu` is compile-only dependency that shouldn't be present in the final
+     * `module-info.java` and that's exactly what this task ensures.
+     */
     abstract class ProcessModuleInfoFile : DefaultTask() {
         @get:InputFile
         @get:NormalizeLineEndings
