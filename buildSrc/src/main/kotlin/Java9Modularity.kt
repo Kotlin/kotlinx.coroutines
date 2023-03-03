@@ -5,19 +5,15 @@
 import org.gradle.api.*
 import org.gradle.api.attributes.*
 import org.gradle.api.file.*
-import org.gradle.api.provider.*
-import org.gradle.api.specs.*
 import org.gradle.api.tasks.bundling.*
 import org.gradle.api.tasks.compile.*
 import org.gradle.jvm.toolchain.*
 import org.gradle.kotlin.dsl.*
-import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.dsl.*
-import java.io.*
 
 /**
  * This object configures the Java compilation of a JPMS (aka Jigsaw) module descriptor.
