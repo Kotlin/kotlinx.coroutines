@@ -169,8 +169,8 @@ internal class WorkQueue {
         val start = consumerIndex.value
         var end = producerIndex.value
         // Bail out if there is no blocking work for us
-        if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
         while (start != end) {
+            if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
             val task = tryExtractFromTheMiddle(--end, onlyBlocking)
             if (task != null) {
                 return task
