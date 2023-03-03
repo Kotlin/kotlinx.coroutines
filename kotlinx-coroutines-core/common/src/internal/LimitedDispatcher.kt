@@ -21,7 +21,7 @@ import kotlin.jvm.*
  * dispatches at most [parallelism] "worker-loop" tasks that poll the underlying queue and cooperatively preempt
  * in order to avoid starvation of the underlying dispatcher.
  *
- * Such invariant is crucial in order to be compatible with any underlying dispatcher implementation without
+ * Such behavior is crucial to be compatible with any underlying dispatcher implementation without
  * direct cooperation.
  */
 internal class LimitedDispatcher(
