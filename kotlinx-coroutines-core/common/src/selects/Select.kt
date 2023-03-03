@@ -110,7 +110,7 @@ public sealed interface SelectBuilder<in R> {
     @Deprecated(
         message = "Replaced with the same extension function",
         level = DeprecationLevel.ERROR, replaceWith = ReplaceWith(expression = "onTimeout", imports = ["kotlinx.coroutines.selects.onTimeout"])
-    )
+    ) // Since 1.7.0, was experimental
     public fun onTimeout(timeMillis: Long, block: suspend () -> R): Unit = onTimeout(timeMillis, block)
 }
 

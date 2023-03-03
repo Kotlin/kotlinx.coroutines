@@ -165,7 +165,7 @@ public interface SendChannel<in E> {
         level = DeprecationLevel.ERROR,
         message = "Deprecated in the favour of 'trySend' method",
         replaceWith = ReplaceWith("trySend(element).isSuccess")
-    ) // Warning since 1.5.0, error since 1.6.0
+    ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
     public fun offer(element: E): Boolean {
         val result = trySend(element)
         if (result.isSuccess) return true
@@ -329,7 +329,7 @@ public interface ReceiveChannel<out E> {
             "Please note that the provided replacement does not rethrow channel's close cause as 'poll' did, " +
             "for the precise replacement please refer to the 'poll' documentation",
         replaceWith = ReplaceWith("tryReceive().getOrNull()")
-    ) // Warning since 1.5.0, error since 1.6.0
+    ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
     public fun poll(): E? {
         val result = tryReceive()
         if (result.isSuccess) return result.getOrThrow()
@@ -361,7 +361,7 @@ public interface ReceiveChannel<out E> {
             "for the detailed replacement please refer to the 'receiveOrNull' documentation",
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("receiveCatching().getOrNull()")
-    ) // Warning since 1.3.0, error in 1.5.0, will be hidden in 1.6.0
+    ) // Warning since 1.3.0, error in 1.5.0, cannot be hidden due to deprecated extensions
     public suspend fun receiveOrNull(): E? = receiveCatching().getOrNull()
 
     /**

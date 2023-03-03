@@ -159,7 +159,7 @@ public fun <T> CoroutineScope.mono(
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
         "Please use awaitSingle() instead.",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("this.awaitSingle()")
 ) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitFirst(): T = awaitSingle()
@@ -183,7 +183,7 @@ public suspend fun <T> Mono<T>.awaitFirst(): T = awaitSingle()
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
         "Please use awaitSingleOrNull() instead.",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("this.awaitSingleOrNull() ?: default")
 ) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitFirstOrDefault(default: T): T = awaitSingleOrNull() ?: default
@@ -207,7 +207,7 @@ public suspend fun <T> Mono<T>.awaitFirstOrDefault(default: T): T = awaitSingleO
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
         "Please use awaitSingleOrNull() instead.",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("this.awaitSingleOrNull()")
 ) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitFirstOrNull(): T? = awaitSingleOrNull()
@@ -231,7 +231,7 @@ public suspend fun <T> Mono<T>.awaitFirstOrNull(): T? = awaitSingleOrNull()
 @Deprecated(
     message = "Mono produces at most one value, so the semantics of dropping the remaining elements are not useful. " +
         "Please use awaitSingleOrNull() instead.",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("this.awaitSingleOrNull() ?: defaultValue()")
 ) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitFirstOrElse(defaultValue: () -> T): T = awaitSingleOrNull() ?: defaultValue()
@@ -255,7 +255,7 @@ public suspend fun <T> Mono<T>.awaitFirstOrElse(defaultValue: () -> T): T = awai
 @Deprecated(
     message = "Mono produces at most one value, so the last element is the same as the first. " +
         "Please use awaitSingle() instead.",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("this.awaitSingle()")
 ) // Warning since 1.5, error in 1.6
 public suspend fun <T> Mono<T>.awaitLast(): T = awaitSingle()
