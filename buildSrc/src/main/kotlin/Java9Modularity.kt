@@ -12,6 +12,10 @@ import org.gradle.api.tasks.compile.*
 import org.gradle.jvm.toolchain.*
 import org.gradle.kotlin.dsl.*
 import org.gradle.api.logging.Logger
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
+import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.dsl.*
 import java.io.*
 
@@ -54,6 +58,35 @@ object Java9Modularity {
         }
     }
 
+    abstract class ProcessModuleInfoFile : DefaultTask() {
+        @get:InputFile
+        @get:NormalizeLineEndings
+        abstract val moduleInfoFile: RegularFileProperty
+
+        @get:OutputFile
+        abstract val processedModuleInfoFile: RegularFileProperty
+
+        private val projectPath = project.path
+
+        @TaskAction
+        fun process() {
+            val sourceFile = moduleInfoFile.get().asFile
+            if (!sourceFile.exists()) {
+                throw IllegalStateException("$sourceFile not found in $projectPath")
+            }
+            val outputFile = processedModuleInfoFile.get().asFile
+            sourceFile.useLines { lines ->
+                outputFile.outputStream().bufferedWriter().use { writer ->
+                    for (line in lines) {
+                        if ("kotlinx.atomicfu" in line) continue
+                        writer.write(line)
+                        writer.newLine()
+                    }
+                }
+            }
+        }
+    }
+
     @JvmStatic
     fun configure(project: Project) = with(project) {
         val javaToolchains = extensions.findByType(JavaToolchainService::class.java)
@@ -74,12 +107,14 @@ object Java9Modularity {
             )
         }
 
+        val processModuleInfoFile by tasks.registering(ProcessModuleInfoFile::class) {
+            moduleInfoFile.set(file("${target.name.ifEmpty { "." }}/src/module-info.java"))
+            processedModuleInfoFile.set(project.layout.buildDirectory.file("generated-sources/module-info-processor/module-info.java"))
+        }
+
         val compileJavaModuleInfo = tasks.register("compileModuleInfoJava", JavaCompile::class.java) {
             val moduleName = project.name.replace('-', '.') // this module's name
             val sourceFile = file("${target.name.ifEmpty { "." }}/src/module-info.java")
-            if (!sourceFile.exists()) {
-                throw IllegalStateException("$sourceFile not found in $project")
-            }
             val compileKotlinTask =
                 compilation.compileTaskProvider.get() as? org.jetbrains.kotlin.gradle.tasks.KotlinCompile
                     ?: error("Cannot access Kotlin compile task ${compilation.compileKotlinTaskName}")
@@ -97,8 +132,8 @@ object Java9Modularity {
             // Note that we use the parent dir and an include filter,
             // this is needed for Gradle's module detection to work in
             // org.gradle.api.tasks.compile.JavaCompile.createSpec
-            source(sourceFile.parentFile)
-            include { it.file == sourceFile }
+            source(processModuleInfoFile.map { it.processedModuleInfoFile.asFile.get().parentFile })
+            include { it.file == processModuleInfoFile.get().processedModuleInfoFile.asFile.get() }
 
             // The Kotlin compiler will parse and check module dependencies,
             // but it currently won't compile to a module-info.class file.
