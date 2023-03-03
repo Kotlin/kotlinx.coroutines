@@ -6,7 +6,7 @@ package kotlinx.coroutines.test
 
 import kotlin.test.*
 
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION_ERROR")
 class TestCoroutineExceptionHandlerTest {
     @Test
     fun whenExceptionsCaught_availableViaProperty() {

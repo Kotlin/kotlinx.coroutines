@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION_ERROR", "DEPRECATION")
 
 package kotlinx.coroutines.test
 
@@ -22,7 +22,7 @@ import kotlin.coroutines.*
     "Please see the migration guide for details: " +
     "https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-test/MIGRATION.md",
     level = DeprecationLevel.WARNING)
-// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
+// Since 1.6.0, kept as warning in 1.7.0, ERROR in 1.8.0 and removed as experimental in 1.9.0
 public interface TestCoroutineScope : CoroutineScope {
     /**
      * Called after the test completes.
@@ -45,7 +45,7 @@ public interface TestCoroutineScope : CoroutineScope {
      */
     @ExperimentalCoroutinesApi
     @Deprecated("Please call `runTest`, which automatically performs the cleanup, instead of using this function.")
-    // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
+    // Since 1.6.0, kept as warning in 1.7.0, ERROR in 1.8.0 and removed as experimental in 1.9.0
     public fun cleanupTestCoroutines()
 
     /**
@@ -139,7 +139,7 @@ internal fun CoroutineContext.activeJobs(): Set<Job> {
     ),
     level = DeprecationLevel.WARNING
 )
-// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
+// Since 1.6.0, kept as warning in 1.7.0, ERROR in 1.8.0 and removed as experimental in 1.9.0
 public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
     val scheduler = context[TestCoroutineScheduler] ?: TestCoroutineScheduler()
     return createTestCoroutineScope(TestCoroutineDispatcher(scheduler) + TestCoroutineExceptionHandler() + context)
@@ -181,7 +181,7 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
         "Please use TestScope() construction instead, or just runTest(), without creating a scope.",
     level = DeprecationLevel.WARNING
 )
-// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
+// Since 1.6.0, kept as warning in 1.7.0, ERROR in 1.8.0 and removed as experimental in 1.9.0
 public fun createTestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext): TestCoroutineScope {
     val ctxWithDispatcher = context.withDelaySkipping()
     var scope: TestCoroutineScopeImpl? = null
@@ -239,7 +239,7 @@ public val TestCoroutineScope.currentTime: Long
     "The name of this function is misleading: it not only advances the time, but also runs the tasks " +
         "scheduled *at* the ending moment.",
     ReplaceWith("this.testScheduler.apply { advanceTimeBy(delayTimeMillis); runCurrent() }"),
-    DeprecationLevel.WARNING
+    DeprecationLevel.ERROR
 )
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.advanceTimeBy(delayTimeMillis: Long): Unit =
@@ -283,7 +283,7 @@ public fun TestCoroutineScope.runCurrent() {
         "(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher(block)",
         "kotlin.coroutines.ContinuationInterceptor"
     ),
-    DeprecationLevel.WARNING
+    DeprecationLevel.ERROR
 )
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public suspend fun TestCoroutineScope.pauseDispatcher(block: suspend () -> Unit) {
@@ -299,7 +299,7 @@ public suspend fun TestCoroutineScope.pauseDispatcher(block: suspend () -> Unit)
         "(this.coroutineContext[ContinuationInterceptor]!! as DelayController).pauseDispatcher()",
         "kotlin.coroutines.ContinuationInterceptor"
     ),
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.ERROR
 )
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.pauseDispatcher() {
@@ -315,7 +315,7 @@ public fun TestCoroutineScope.pauseDispatcher() {
         "(this.coroutineContext[ContinuationInterceptor]!! as DelayController).resumeDispatcher()",
         "kotlin.coroutines.ContinuationInterceptor"
     ),
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.ERROR
 )
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public fun TestCoroutineScope.resumeDispatcher() {
@@ -335,8 +335,9 @@ public fun TestCoroutineScope.resumeDispatcher() {
         "easily misused. It is only present for backward compatibility and will be removed in the subsequent " +
         "releases. If you need to check the list of exceptions, please consider creating your own " +
         "`CoroutineExceptionHandler`.",
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.ERROR
 )
+// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public val TestCoroutineScope.uncaughtExceptions: List<Throwable>
     get() = (coroutineContext[CoroutineExceptionHandler] as? UncaughtExceptionCaptor)?.uncaughtExceptions
         ?: emptyList()

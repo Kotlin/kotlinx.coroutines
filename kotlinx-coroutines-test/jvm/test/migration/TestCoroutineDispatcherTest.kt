@@ -7,7 +7,7 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION", "DEPRECATION_ERROR")
 class TestCoroutineDispatcherTest {
     @Test
     fun whenDispatcherPaused_doesNotAutoProgressCurrent() {

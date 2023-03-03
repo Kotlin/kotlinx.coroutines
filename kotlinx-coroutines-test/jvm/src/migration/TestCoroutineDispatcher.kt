@@ -24,7 +24,7 @@ import kotlin.coroutines.*
 @Deprecated("The execution order of `TestCoroutineDispatcher` can be confusing, and the mechanism of " +
     "pausing is typically misunderstood. Please use `StandardTestDispatcher` or `UnconfinedTestDispatcher` instead.",
     level = DeprecationLevel.WARNING)
-// Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
+// Since 1.6.0, kept as warning in 1.7.0, ERROR in 1.8.0 and removed as experimental in 1.9.0
 public class TestCoroutineDispatcher(public override val scheduler: TestCoroutineScheduler = TestCoroutineScheduler()):
     TestDispatcher(), Delay, SchedulerAsDelayController
 {
@@ -63,7 +63,7 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
     /** @suppress */
     @Deprecated(
         "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     override suspend fun pauseDispatcher(block: suspend () -> Unit) {
         val previous = dispatchImmediately
@@ -78,7 +78,7 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
     /** @suppress */
     @Deprecated(
         "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     override fun pauseDispatcher() {
         dispatchImmediately = false
@@ -87,7 +87,7 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
     /** @suppress */
     @Deprecated(
         "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     override fun resumeDispatcher() {
         dispatchImmediately = true
