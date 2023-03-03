@@ -3,7 +3,6 @@
  */
 @file:JvmMultifileClass
 @file:JvmName("ChannelsKt")
-@file:Suppress("DEPRECATION_ERROR", "DEPRECATION")
 @file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines.channels
@@ -28,6 +27,7 @@ internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
  * Safe to remove in 1.9.0 as was inline before.
  */
 @ObsoleteCoroutinesApi
+@Suppress("DEPRECATION")
 @Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
     val channel = openSubscription()
@@ -54,7 +54,7 @@ public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.()
     ReplaceWith("receiveCatching().getOrNull()"),
     DeprecationLevel.ERROR
 ) // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "DEPRECATION_ERROR")
 public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
     return (this as ReceiveChannel<E?>).receiveOrNull()
 }
@@ -66,6 +66,7 @@ public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
     "Deprecated in the favour of 'onReceiveCatching'",
     level = DeprecationLevel.ERROR
 )  // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
+@Suppress("DEPRECATION_ERROR")
 public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
     return (this as ReceiveChannel<E?>).onReceiveOrNull
 }
@@ -122,6 +123,7 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
  * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
  */
 @Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
+@Suppress("DEPRECATION")
 public suspend inline fun <E> BroadcastChannel<E>.consumeEach(action: (E) -> Unit): Unit =
     consume {
         for (element in this) action(element)
