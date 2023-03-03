@@ -2,7 +2,7 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("FunctionName")
+@file:Suppress("FunctionName", "DEPRECATION")
 
 package kotlinx.coroutines.channels
 
@@ -24,10 +24,11 @@ import kotlin.native.concurrent.*
  * See `BroadcastChannel()` factory function for the description of available
  * broadcast channel implementations.
  *
- * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
- * and with error in 1.7.0. It is replaced with [SharedFlow][kotlinx.coroutines.flow.SharedFlow].
+ * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
+ * It is replaced with [SharedFlow][kotlinx.coroutines.flow.SharedFlow].
  */
 @ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public interface BroadcastChannel<E> : SendChannel<E> {
     /**
      * Subscribes to this [BroadcastChannel] and returns a channel to receive elements from it.
@@ -64,11 +65,11 @@ public interface BroadcastChannel<E> : SendChannel<E> {
  * * when `capacity` is [BUFFERED] -- creates `ArrayBroadcastChannel` with a default capacity.
  * * otherwise -- throws [IllegalArgumentException].
  *
- * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
- * and with error in 1.7.0. It is replaced with [StateFlow][kotlinx.coroutines.flow.StateFlow]
- * and [SharedFlow][kotlinx.coroutines.flow.SharedFlow].
+ * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
+ * It is replaced with [SharedFlow][kotlinx.coroutines.flow.SharedFlow] and [StateFlow][kotlinx.coroutines.flow.StateFlow].
  */
 @ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and StateFlow, and is no longer supported")
 public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
     when (capacity) {
         0 -> throw IllegalArgumentException("Unsupported 0 capacity for BroadcastChannel")
@@ -92,10 +93,11 @@ public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
  * In this implementation, [opening][openSubscription] and [closing][ReceiveChannel.cancel] subscription
  * takes linear time in the number of subscribers.
  *
- * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.7.0
- * and with error in 1.8.0. It is replaced with [StateFlow][kotlinx.coroutines.flow.StateFlow].
+ * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
+ * It is replaced with [SharedFlow][kotlinx.coroutines.flow.StateFlow].
  */
 @ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "ConflatedBroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public class ConflatedBroadcastChannel<E> private constructor(
     private val broadcast: BroadcastChannelImpl<E>
 ) : BroadcastChannel<E> by broadcast {
@@ -408,5 +410,4 @@ internal class BroadcastChannelImpl<E>(
             "SUBSCRIBERS=${subscribers.joinToString(separator = ";", prefix = "<", postfix = ">")}"
 }
 
-@SharedImmutable
 private val NO_ELEMENT = Symbol("NO_ELEMENT")

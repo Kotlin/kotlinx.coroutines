@@ -2,6 +2,8 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("DEPRECATION")
+
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
@@ -35,13 +37,13 @@ import kotlin.coroutines.intrinsics.*
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
  * the broadcasting coroutine in hard-to-specify ways.
  *
- * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
- * and with error in 1.7.0. It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn]
- * operator.
+ * **Note: This API is obsolete since 1.5.0.** It is deprecated with warning in 1.7.0.
+ * It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn] operator.
  *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
 @ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
@@ -98,12 +100,11 @@ public fun <E> ReceiveChannel<E>.broadcast(
  *
  * ### Future replacement
  *
- * This API is obsolete since 1.5.0.
+ * This API is obsolete since 1.5.0 and deprecated with warning since 1.7.0.
  * This function has an inappropriate result type of [BroadcastChannel] which provides
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
- * the broadcasting coroutine in hard-to-specify ways. It will be deprecated with warning in 1.6.0
- * and with error in 1.7.0. It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn]
- * operator.
+ * the broadcasting coroutine in hard-to-specify ways.
+ * It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn] operator.
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (1 by default).
@@ -112,6 +113,7 @@ public fun <E> ReceiveChannel<E>.broadcast(
  * @param block the coroutine code.
  */
 @ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public fun <E> CoroutineScope.broadcast(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,
