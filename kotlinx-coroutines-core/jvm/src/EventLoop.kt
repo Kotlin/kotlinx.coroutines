@@ -83,7 +83,7 @@ internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit
  * ```
  * The key observation here is that 'runDecomposedTaskAndJoinIt' can be invoked from `Dispatchers.Default` itself,
  * thus blocking at least one thread. To avoid deadlocks and starvation during large hierarchical decompositions,
- * 'runDecomposedTaskAndJoinIt' should not only block, but also **help** executing the task or other tasks
+ * 'runDecomposedTaskAndJoinIt' should not just block but also **help** execute the task or other tasks
  * until an arbitrary condition is satisfied.
  *
  * See #3439 for additional details.
@@ -93,7 +93,7 @@ internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit
  * - Executes tasks in-place, thus potentially leaking irrelevant thread-locals from the current thread
  * - Is not 100% effective, because the caller should somehow "wait" (or do other work) during [Long] returned nanoseconds
  *   even when work arrives immediately after returning from this method.
- * - When there is no more work, it's up to the caller to decide what to do. It's important to account that
+ * - When there is no more work, it's up to the caller to decide what to do. It's important to remember that
  *   work to current dispatcher may arrive **later** from external sources [1]
  *
  * [1] -- this is also a technicality that can be solved in kotlinx.coroutines itself, but unfortunately requires

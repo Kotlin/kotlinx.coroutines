@@ -115,7 +115,7 @@ internal class WorkQueue {
      *
      * [StealingMode] controls what tasks to steal:
      * * [STEAL_ANY] is default mode for scheduler, task from the head (in FIFO order) is stolen
-     * * [STEAL_BLOCKING_ONLY] is mode for stealing *an arbitrary* blocking task which is used by scheduler when helping in Dispatchers.IO mode
+     * * [STEAL_BLOCKING_ONLY] is mode for stealing *an arbitrary* blocking task, which is used by the scheduler when helping in Dispatchers.IO mode
      * * [STEAL_CPU_ONLY] is a kludge for `runSingleTaskFromCurrentSystemDispatcher`
      */
     fun trySteal(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
