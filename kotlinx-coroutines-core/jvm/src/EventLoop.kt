@@ -77,7 +77,7 @@ internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit
  * The following API is provided by IDEA core:
  * ```
  * runDecomposedTaskAndJoinIt { // <- non-suspending call
- *     // spawn as many task as needed
+ *     // spawn as many tasks as needed
  *     // these tasks can also invoke 'runDecomposedTaskAndJoinIt'
  * }
  * ```
