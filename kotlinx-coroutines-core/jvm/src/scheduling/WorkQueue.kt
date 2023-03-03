@@ -21,6 +21,9 @@ internal const val STEAL_ANY: StealingMode = 3
 internal const val STEAL_CPU_ONLY: StealingMode = 2
 internal const val STEAL_BLOCKING_ONLY: StealingMode = 1
 
+internal inline val Task.maskForStealingMode: Int
+    get() = if (isBlocking) STEAL_BLOCKING_ONLY else STEAL_CPU_ONLY
+
 /**
  * Tightly coupled with [CoroutineScheduler] queue of pending tasks, but extracted to separate file for simplicity.
  * At any moment queue is used only by [CoroutineScheduler.Worker] threads, has only one producer (worker owning this queue)
@@ -136,9 +139,9 @@ internal class WorkQueue {
         var start = consumerIndex.value
         val end = producerIndex.value
         val onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY
-        // CPU or (BLOCKING & hasBlocking)
-        val shouldProceed = !onlyBlocking || blockingTasksInBuffer.value > 0
-        while (start != end && shouldProceed) {
+        // Bail out if there is no blocking work for us
+        if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
+        while (start != end) {
             return tryExtractFromTheMiddle(start++, onlyBlocking) ?: continue
         }
 
@@ -146,36 +149,28 @@ internal class WorkQueue {
     }
 
     // Polls for blocking task, invoked only by the owner
-    fun pollBlocking(): Task? {
+    // NB: ONLY for runSingleTask method
+    fun pollBlocking(): Task? = pollWithExclusiveMode(onlyBlocking = true /* only blocking */)
+
+    // Polls for CPU task, invoked only by the owner
+    // NB: ONLY for runSingleTask method
+    fun pollCpu(): Task? = pollWithExclusiveMode(onlyBlocking = false /* only cpu */)
+
+    private fun pollWithExclusiveMode(/* Only blocking OR only CPU */ onlyBlocking: Boolean): Task? {
         while (true) { // Poll the slot
             val lastScheduled = lastScheduledTask.value ?: break
-            if (!lastScheduled.isBlocking) break
+            if (lastScheduled.isBlocking != onlyBlocking) break
             if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
                 return lastScheduled
             } // Failed -> someone else stole it
         }
 
-        return pollWithMode(onlyBlocking = true /* only blocking */)
-    }
-
-    fun pollCpu(): Task? {
-        while (true) { // Poll the slot
-            val lastScheduled = lastScheduledTask.value ?: break
-            if (lastScheduled.isBlocking) break
-            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                return lastScheduled
-            } // Failed -> someone else stole it
-        }
-
-        return pollWithMode(onlyBlocking = false /* only cpu */)
-    }
-
-    private fun pollWithMode(/* Only blocking OR only CPU */ onlyBlocking: Boolean): Task? {
+        // Failed to poll the slot, scan the queue
         val start = consumerIndex.value
         var end = producerIndex.value
-        // CPU or (BLOCKING & hasBlocking)
-        val shouldProceed = !onlyBlocking || blockingTasksInBuffer.value > 0
-        while (start != end && shouldProceed) {
+        // Bail out if there is no blocking work for us
+        if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
+        while (start != end) {
             val task = tryExtractFromTheMiddle(--end, onlyBlocking)
             if (task != null) {
                 return task
@@ -185,7 +180,6 @@ internal class WorkQueue {
     }
 
     private fun tryExtractFromTheMiddle(index: Int, onlyBlocking: Boolean): Task? {
-        if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
         val arrayIndex = index and MASK
         val value = buffer[arrayIndex]
         if (value != null && value.isBlocking == onlyBlocking && buffer.compareAndSet(arrayIndex, value, null)) {
@@ -208,11 +202,7 @@ internal class WorkQueue {
     private fun tryStealLastScheduled(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
         while (true) {
             val lastScheduled = lastScheduledTask.value ?: return NOTHING_TO_STEAL
-            if (lastScheduled.isBlocking) {
-                if (stealingMode == STEAL_CPU_ONLY) {
-                    return NOTHING_TO_STEAL
-                }
-            } else if (stealingMode == STEAL_BLOCKING_ONLY) {
+            if ((lastScheduled.maskForStealingMode and stealingMode) == 0) {
                 return NOTHING_TO_STEAL
             }
 
