@@ -107,3 +107,5 @@ internal fun GlobalQueue.drain(): List<Long> {
     }
     return result
 }
+
+internal fun WorkQueue.trySteal(stolenTaskRef: ObjectRef<Task?>): Long = trySteal(STEAL_ANY, stolenTaskRef)

@@ -311,7 +311,9 @@ public abstract interface class kotlinx/coroutines/DisposableHandle {
 }
 
 public final class kotlinx/coroutines/EventLoopKt {
+	public static final fun isIoDispatcherThread (Ljava/lang/Thread;)Z
 	public static final fun processNextEventInCurrentThread ()J
+	public static final fun runSingleTaskFromCurrentSystemDispatcher ()J
 }
 
 public final class kotlinx/coroutines/ExceptionsKt {

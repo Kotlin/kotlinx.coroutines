@@ -13,6 +13,16 @@ import kotlin.jvm.*
  * The result of .limitedParallelism(x) call, a dispatcher
  * that wraps the given dispatcher, but limits the parallelism level, while
  * trying to emulate fairness.
+ *
+ * ### Implementation details
+ *
+ * By design, 'LimitedDispatcher' never [dispatches][CoroutineDispatcher.dispatch] originally sent tasks
+ * to the underlying dispatcher. Instead, it maintains its own queue of tasks sent to this dispatcher and
+ * dispatches at most [parallelism] "worker-loop" tasks that poll the underlying queue and cooperatively preempt
+ * in order to avoid starvation of the underlying dispatcher.
+ *
+ * Such behavior is crucial to be compatible with any underlying dispatcher implementation without
+ * direct cooperation.
  */
 internal class LimitedDispatcher(
     private val dispatcher: CoroutineDispatcher,
