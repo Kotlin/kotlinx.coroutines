@@ -30,34 +30,6 @@ import java.io.*
  * which is used to compile the module descriptor.
  */
 object Java9Modularity {
-
-    private class ModuleInfoFilter(
-        private val compileKotlinTaskPath: String,
-        private val javaVersionProvider: Provider<JavaVersion>,
-        private val moduleInfoFile: File,
-        private val logger: Logger
-    ) : Spec<FileTreeElement> {
-        private val isJava9Compatible
-            get() = javaVersionProvider.orNull?.isJava9Compatible == true
-        private var logged = false
-
-        private fun logStatusOnce() {
-            if (logged) return
-            if (isJava9Compatible) {
-                logger.info("Module-info checking is enabled; $compileKotlinTaskPath is compiled using Java ${javaVersionProvider.get()}")
-            } else {
-                logger.info("Module-info checking is disabled")
-            }
-            logged = true
-        }
-
-        override fun isSatisfiedBy(element: FileTreeElement): Boolean {
-            logStatusOnce()
-            if (isJava9Compatible) return false
-            return element.file == moduleInfoFile
-        }
-    }
-
     abstract class ProcessModuleInfoFile : DefaultTask() {
         @get:InputFile
         @get:NormalizeLineEndings
@@ -114,7 +86,6 @@ object Java9Modularity {
 
         val compileJavaModuleInfo = tasks.register("compileModuleInfoJava", JavaCompile::class.java) {
             val moduleName = project.name.replace('-', '.') // this module's name
-            val sourceFile = file("${target.name.ifEmpty { "." }}/src/module-info.java")
             val compileKotlinTask =
                 compilation.compileTaskProvider.get() as? org.jetbrains.kotlin.gradle.tasks.KotlinCompile
                     ?: error("Cannot access Kotlin compile task ${compilation.compileKotlinTaskName}")
@@ -134,13 +105,6 @@ object Java9Modularity {
             // org.gradle.api.tasks.compile.JavaCompile.createSpec
             source(processModuleInfoFile.map { it.processedModuleInfoFile.asFile.get().parentFile })
             include { it.file == processModuleInfoFile.get().processedModuleInfoFile.asFile.get() }
-
-            // The Kotlin compiler will parse and check module dependencies,
-            // but it currently won't compile to a module-info.class file.
-            // Note that module checking only works on JDK 9+,
-            // because the JDK built-in base modules are not available in earlier versions.
-            val javaVersionProvider = compileKotlinTask.kotlinJavaToolchain.javaVersion
-            compileKotlinTask.exclude(ModuleInfoFilter(compileKotlinTask.path, javaVersionProvider, sourceFile, logger))
 
             // Set the task outputs and destination directory
             outputs.dir(targetDir)
