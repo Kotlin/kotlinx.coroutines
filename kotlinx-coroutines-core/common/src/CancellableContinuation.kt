@@ -331,12 +331,19 @@ internal suspend inline fun <T> suspendCancellableCoroutineReusable(
     crossinline block: (CancellableContinuationImpl<T>) -> Unit
 ): T = suspendCoroutineUninterceptedOrReturn { uCont ->
     val cancellable = getOrCreateCancellableContinuation(uCont.intercepted())
-    block(cancellable)
+    try {
+        block(cancellable)
+    } catch (e: Throwable) {
+        // Here we catch any unexpected exception from user-supplied block (e.g. invariant violation)
+        // and release claimed continuation in order to leave it in a reasonable state (see #3613)
+        cancellable.releaseClaimedReusableContinuation()
+        throw e
+    }
     cancellable.getResult()
 }
 
 internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): CancellableContinuationImpl<T> {
-    // If used outside of our dispatcher
+    // If used outside our dispatcher
     if (delegate !is DispatchedContinuation<T>) {
         return CancellableContinuationImpl(delegate, MODE_CANCELLABLE)
     }

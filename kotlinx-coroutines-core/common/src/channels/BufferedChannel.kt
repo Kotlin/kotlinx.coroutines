@@ -241,10 +241,8 @@ internal open class BufferedChannel<E>(
      * In case of coroutine cancellation, the element may be undelivered --
      * the [onUndeliveredElement] feature is unsupported in this implementation.
      *
-     * Note that this implementation always invokes [suspendCancellableCoroutineReusable],
-     * as we do not care about broadcasts performance -- they are already deprecated.
      */
-    internal open suspend fun sendBroadcast(element: E): Boolean = suspendCancellableCoroutineReusable { cont ->
+    internal open suspend fun sendBroadcast(element: E): Boolean = suspendCancellableCoroutine { cont ->
         check(onUndeliveredElement == null) {
             "the `onUndeliveredElement` feature is unsupported for `sendBroadcast(e)`"
         }
