@@ -31,8 +31,7 @@ while another references the next cell for [resume]. The intuition is that [susp
 its counter via `Fetch-and-Add` and stores the waiter in the corresponding cell. Likewise, [resume] increments
 its counter, visits the corresponding cell, and resumes the stored waiter with the specified value.
 
-####
-## Synchronous and Asynchronous Resumption Modes
+_Synchronous and Asynchronous Resumption Modes_
 
 Notably, [resume] may come to the cell before [suspend] and find the cell in the empty state.
 To solve this race, we introduce two [resumption modes][ResumeMode]: [synchronous][SYNC] and [asynchronous][ASYNC].
@@ -45,8 +44,7 @@ and [release()][Semaphore.release] in [Semaphore], so these operations simply re
 This way, we can achieve wait-freedom with the [asynchronous][ASYNC] mode, and obstruction-freedom
 with the [synchronous][SYNC] mode.
 
-####
-## Cancellation Support
+_Cancellation Support_
 
 We support two cancellation policies in [CancellableQueueSynchronizer]. In the [simple cancellation mode][SIMPLE],
 [resume] fails and returns `false` if it finds the cell in the `CANCELLED` state or if the waiter resumption
@@ -80,8 +78,7 @@ To support prompt cancellation, [CancellableQueueSynchronizer] returns the value
 [returnValue] if the continuation is cancelled while dispatching. Typically, [returnValue] delegates to the operation
 that calls [resume], such as [release][Semaphore.release] in [Semaphore].
 
-####
-## Algorithm Details
+_Algorithm Details_
 
 Please see the ["CQS: A Formally-Verified Framework for Fair and Abortable Synchronization"](TODO)
 paper by Nikita Koval, Dmitry Kaplansky, and Dan Alistarh for the detailed algorithm description.
