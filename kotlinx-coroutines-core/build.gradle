@@ -266,8 +266,8 @@ task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     testLogging.showStandardStreams = true
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
-    systemProperty 'kotlinx.coroutines.sqs.segmentSize', '1'
-    systemProperty 'kotlinx.coroutines.sqs.maxSpinCycles', '10'
+    systemProperty 'kotlinx.coroutines.cqs.segmentSize', '1'
+    systemProperty 'kotlinx.coroutines.cqs.maxSpinCycles', '10'
     systemProperty 'kotlinx.coroutines.bufferedChannel.segmentSize', '2'
     systemProperty 'kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations', '1'
 }
@@ -302,8 +302,8 @@ static void configureJvmForLincheck(task, additional = false) {
                     '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
     var segmentSize = additional ? '2' : '1'
-    task.systemProperty 'kotlinx.coroutines.sqs.segmentSize', segmentSize
-    task.systemProperty 'kotlinx.coroutines.sqs.maxSpinCycles', '1' // better for the model checking mode
+    task.systemProperty 'kotlinx.coroutines.cqs.segmentSize', segmentSize
+    task.systemProperty 'kotlinx.coroutines.cqs.maxSpinCycles', '1' // better for the model checking mode
     task.systemProperty 'kotlinx.coroutines.bufferedChannel.segmentSize', segmentSize
     task.systemProperty 'kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations', '1'
 }

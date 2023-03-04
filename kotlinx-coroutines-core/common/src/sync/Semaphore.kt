@@ -8,7 +8,6 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlin.contracts.*
-import kotlin.coroutines.*
 import kotlin.math.*
 
 /**
@@ -107,7 +106,7 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
 internal open class SemaphoreImpl(
     private val permits: Int,
     acquiredPermits: Int
-) : SegmentQueueSynchronizer<Unit>(), Semaphore {
+) : CancellableQueueSynchronizer<Unit>(), Semaphore {
     init {
         require(permits > 0) { "Semaphore must have at least 1 permit, but is initialized with $permits" }
         require(acquiredPermits in 0..permits) { "The number of acquired permits should be in range [0..$permits]" }

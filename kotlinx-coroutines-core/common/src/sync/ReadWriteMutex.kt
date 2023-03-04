@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.sync
@@ -7,8 +7,8 @@ package kotlinx.coroutines.sync
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.internal.SegmentQueueSynchronizer.CancellationMode.*
-import kotlinx.coroutines.internal.SegmentQueueSynchronizer.ResumeMode.*
+import kotlinx.coroutines.internal.CancellableQueueSynchronizer.CancellationMode.*
+import kotlinx.coroutines.internal.CancellableQueueSynchronizer.ResumeMode.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.ReadWriteMutexImpl.WriteUnlockPolicy.*
 import kotlin.contracts.*
@@ -158,7 +158,7 @@ public suspend inline fun <T> ReadWriteMutex.write(action: () -> T): T =
  * for the lock. This tuple represents the current state of the readers-writer mutex and
  * is split into [waitingReaders] and [state] fields -- it is impossible to store everything
  * in a single register since its maximal capacity is 64 bit, and this is not sufficient
- * for three counters and several flags. Additionally, separate [SegmentQueueSynchronizer]-s
+ * for three counters and several flags. Additionally, separate [CancellableQueueSynchronizer]-s
  * are used for waiting readers and writers.
  *
  * To acquire a reader lock, the algorithm checks whether the writer lock is held or there is a writer
@@ -190,7 +190,7 @@ public suspend inline fun <T> ReadWriteMutex.write(action: () -> T): T =
  * comments and appear almost everywhere.
  */
 internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
-    // The number of coroutines waiting for a reader lock in `sqsReaders`.
+    // The number of coroutines waiting for a reader lock in `cqsReaders`.
     private val waitingReaders = atomic(0)
     // This state field contains several counters and is always updated atomically by `CAS`:
     // - `AR` (active readers) is a 30-bit counter which represents the number
@@ -198,13 +198,13 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
     // - `WLA` (writer lock acquired) is a flag which is `true` when
     //                                the writer lock is acquired;
     // - `WW` (waiting writers) is a 30-bit counter which represents the number
-    //                          of coroutines waiting for the writer lock in `sqsWriters`;
+    //                          of coroutines waiting for the writer lock in `cqsWriters`;
     // - `RWR` (resuming waiting readers) is a flag which is `true` when waiting readers
     //                                    resumption is in progress.
     private val state = atomic(0L)
 
-    private val sqsReaders = ReadersSQS() // the place where readers should suspend and be resumed
-    private val sqsWriters = WritersSQS() // the place where writers should suspend and be resumed
+    private val cqsReaders = ReadersCQS() // the place where readers should suspend and be resumed
+    private val cqsWriters = WritersCQS() // the place where writers should suspend and be resumed
 
     private var curUnlockPolicy = false // false -- prioritize readers on the writer lock release
                                         // true  -- prioritize writers on the writer lock release
@@ -265,9 +265,9 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
             // Is there a writer holding the lock or waiting for it?
             if (s.wla || s.ww > 0) {
                 // The number of waiting readers was incremented
-                // correctly, wait for a reader lock in `sqsReaders`.
+                // correctly, wait for a reader lock in `cqsReaders`.
                 suspendCancellableCoroutineReusable<Unit> { cont ->
-                    sqsReaders.suspend(cont as Waiter)
+                    cqsReaders.suspend(cont as Waiter)
                 }
                 return
             } else {
@@ -276,18 +276,18 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
                 // it could already become zero due to a concurrent `write.unlock()`
                 // which reads the number of waiting readers, replaces it with `0`,
                 // and resumes all these readers. In this case, it is guaranteed
-                // that a reader lock will be provided via `sqsReaders`.
+                // that a reader lock will be provided via `cqsReaders`.
                 while (true) {
                     // Read the current number of waiting readers.
                     val wr = waitingReaders.value
                     // Is our invocation already handled by a concurrent
                     // `write.unlock()` and a reader lock is going to be
-                    // passed via `sqsReaders`? Suspend in this case --
+                    // passed via `cqsReaders`? Suspend in this case --
                     // it is guaranteed that the lock will be provided
                     // when this concurrent `write.unlock()` completes.
                     if (wr == 0) {
                         suspendCancellableCoroutineReusable<Unit> { cont ->
-                            sqsReaders.suspend(cont as Waiter)
+                            cqsReaders.suspend(cont as Waiter)
                         }
                         return
                     }
@@ -320,7 +320,7 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
                     // Try to decrement the number of waiting writers and set the `WLA` flag.
                     // Resume the first waiting writer on success.
                     if (state.compareAndSet(s, state(0, true, s.ww - 1, false))) {
-                        sqsWriters.resume(Unit)
+                        cqsWriters.resume(Unit)
                         return
                     }
                 } else {
@@ -342,12 +342,12 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
     }
 
     /**
-     * This customization of [SegmentQueueSynchronizer] for waiting readers
+     * This customization of [CancellableQueueSynchronizer] for waiting readers
      * use the asynchronous resumption mode and smart cancellation mode,
      * so neither [suspend] nor [resume] fail. However, to support
      * `tryReadLock()` the synchronous resumption mode should be used.
      */
-    private inner class ReadersSQS : SegmentQueueSynchronizer<Unit>() {
+    private inner class ReadersCQS : CancellableQueueSynchronizer<Unit>() {
         override val resumeMode get() = ASYNC
         override val cancellationMode get() = SMART
 
@@ -384,7 +384,7 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
         // tries to change the state by atomically setting the `WLA` flag.
         // Otherwise, if the writer lock cannot be acquired immediatelly,
         // it increments the number of waiting writers and suspends in
-        // `sqsWriters` waiting for the lock.
+        // `cqsWriters` waiting for the lock.
         while (true) {
             // Read the current state.
             val s = state.value
@@ -397,10 +397,10 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
                     return
             } else {
                 // The lock cannot be acquired immediately, and this operation has to suspend.
-                // Try to increment the number of waiting writers and suspend in `sqsWriters`.
+                // Try to increment the number of waiting writers and suspend in `cqsWriters`.
                 if (state.compareAndSet(s, state(s.ar, s.wla, s.ww + 1, s.rwr))) {
                     suspendCancellableCoroutineReusable<Unit> { cont ->
-                        sqsWriters.suspend(cont as Waiter)
+                        cqsWriters.suspend(cont as Waiter)
                     }
                     return
                 }
@@ -428,7 +428,7 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
         // but has a lot of corner cases that should be properly managed.
         // If the next writer should be resumed (see `PRIORITIZE_WRITERS` policy),
         // the algorithm tries to atomically decrement the number of waiting writers
-        // and keep the `WLA` flag, resuming the first writer in `sqsWriters` after that.
+        // and keep the `WLA` flag, resuming the first writer in `cqsWriters` after that.
         // Otherwise, if the `PRIORITIZE_READERS` policy is used or there is no waiting writer,
         // the algorithm sets the `RWR` (resuming waiting readers) flag and invokes a special
         // `completeWaitingReadersResumption()` to resume all the waiting readers.
@@ -443,9 +443,9 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
             val resumeWriter = (s.ww > 0) && (policy == PRIORITIZE_WRITERS || policy == ROUND_ROBIN && curUnlockPolicy)
             if (resumeWriter) {
                 // Resume the next writer - try to decrement the number of waiting
-                // writers and resume the first one in `sqsWriters` on success.
+                // writers and resume the first one in `cqsWriters` on success.
                 if (state.compareAndSet(s, state(0, true, s.ww - 1, false))) {
-                    sqsWriters.resume(Unit)
+                    cqsWriters.resume(Unit)
                     return
                 }
             } else {
@@ -483,9 +483,9 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
                 state(s.ar + wr, false, s.ww, true)
             }
         }
-        // After the readers are resumed logically, they should be resumed physically in `sqsReaders`.
+        // After the readers are resumed logically, they should be resumed physically in `cqsReaders`.
         repeat(wr) {
-            sqsReaders.resume(Unit)
+            cqsReaders.resume(Unit)
         }
         // Once all the waiting readers are resumed, the `RWR` flag should be reset.
         // It is possible that all the resumed readers have already completed their
@@ -502,7 +502,7 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
         }
         if (resumeWriter) {
             // Resume the next writer physically and finish
-            sqsWriters.resume(Unit)
+            cqsWriters.resume(Unit)
             return
         }
         // Meanwhile, it could be possible for a writer to come and suspend due to the `RWR` flag.
@@ -524,25 +524,25 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
     }
 
     /**
-     * This customization of [SegmentQueueSynchronizer] for waiting writers
+     * This customization of [CancellableQueueSynchronizer] for waiting writers
      * uses the asynchronous resumption mode and smart cancellation mode,
      * so neither [suspend] nor [resume] fail. However, in order to support
      * `tryWriteLock()` the synchronous resumption mode should be used instead.
      */
-    private inner class WritersSQS : SegmentQueueSynchronizer<Unit>() {
+    private inner class WritersCQS : CancellableQueueSynchronizer<Unit>() {
         override val resumeMode get() = ASYNC
         override val cancellationMode get() = SMART
 
         override fun onCancellation(): Boolean {
             // In general, on cancellation, the algorithm tries to decrement the number of waiting writers.
             // Similarly to the cancellation logic for readers, if the number of waiting writers has already reached 0,
-            // the current canceling writer will be resumed in `sqsWriters`. In this case, the function returns
+            // the current canceling writer will be resumed in `cqsWriters`. In this case, the function returns
             // `false`, and the permit will be returned via `returnValue()`. Otherwise, if the number of waiting
             // writers >= 1, the decrement is sufficient. However, if this canceling writer is the last waiting one,
             // the algorithm sets the `RWR` flag and resumes waiting readers. This logic is similar to `writeUnlock(..)`.
             while (true) {
                 val s = state.value // Read the current state.
-                if (s.ww == 0) return false // Is this writer going to be resumed in `sqsWriters`?
+                if (s.ww == 0) return false // Is this writer going to be resumed in `cqsWriters`?
                 // Is this writer the last one and is the readers resumption valid?
                 if (s.ww == 1 && !s.wla && !s.rwr) {
                     // Set the `RWR` flag and resume the waiting readers.
@@ -579,7 +579,7 @@ internal class ReadWriteMutexImpl : ReadWriteMutex, Mutex {
         "<wr=${waitingReaders.value},ar=${state.value.ar}" +
         ",wla=${state.value.wla},ww=${state.value.ww}" +
         ",rwr=${state.value.rwr}" +
-        ",sqs_r={$sqsReaders},sqs_w={$sqsWriters}>"
+        ",cqs_r={$cqsReaders},cqs_w={$cqsWriters}>"
 
     internal enum class WriteUnlockPolicy { PRIORITIZE_READERS, PRIORITIZE_WRITERS, ROUND_ROBIN }
 }

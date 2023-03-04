@@ -132,7 +132,7 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
 }
 
 
-internal open class MutexImpl(locked: Boolean) : SegmentQueueSynchronizer<Unit>(), Mutex {
+internal open class MutexImpl(locked: Boolean) : CancellableQueueSynchronizer<Unit>(), Mutex {
     /**
      * After the lock is acquired, the corresponding owner is stored in this field.
      * The [unlock] operation checks the owner and either re-sets it to [NO_OWNER],
@@ -148,8 +148,15 @@ internal open class MutexImpl(locked: Boolean) : SegmentQueueSynchronizer<Unit>(
             { unlock(owner) }
         }
 
-    override val isLocked: Boolean get() =
-        availablePermits.value <= 0
+    override val isLocked: Boolean get() {
+        while (true) {
+            val p = availablePermits.value
+            if (p == 1) return false
+            assert { p <= 0 }
+            if (owner.value === NO_OWNER) continue
+            return true
+        }
+    }
 
     override fun holdsLock(owner: Any): Boolean {
         while (true) {
@@ -186,10 +193,21 @@ internal open class MutexImpl(locked: Boolean) : SegmentQueueSynchronizer<Unit>(
                 // locked by our owner.
                 if (owner != null) {
                     // Is this mutex locked by our owner?
-                    var curOwner = this.owner.value
-
+                    val curOwner = this.owner.value
                     if (curOwner === owner) {
-                        if (suspendCancelled() != null) release()
+                        if (suspendCancelled() != null) {
+                            when (waiter) {
+                                is CancellableContinuation<*> -> {
+                                    @Suppress("UNCHECKED_CAST")
+                                    waiter as CancellableContinuation<Unit>
+                                    waiter.resume(Unit, null)
+                                }
+                                is SelectInstance<*> -> {
+                                    waiter.selectInRegistrationPhase(Unit)
+                                }
+                            }
+                            return
+                        }
                         when (waiter) {
                             is CancellableContinuation<*> -> {
                                 waiter.resumeWithException(IllegalStateException("ERROR"))
@@ -199,32 +217,26 @@ internal open class MutexImpl(locked: Boolean) : SegmentQueueSynchronizer<Unit>(
                             }
                         }
                         return
-                    }
-
-                    while (curOwner === NO_OWNER) {
-                        curOwner = this.owner.value
-                        if (!isLocked) {
-                            if (suspendCancelled() != null) release()
-                            continue@xxx
-                        }
-                    }
-                    if (curOwner === owner) {
-                        if (suspendCancelled() != null) release()
+                    } else if (curOwner === NO_OWNER) {
+                        if (suspendCancelled() == null) continue@xxx
                         when (waiter) {
                             is CancellableContinuation<*> -> {
-                                waiter.resumeWithException(IllegalStateException("ERROR"))
+                                @Suppress("UNCHECKED_CAST")
+                                waiter as CancellableContinuation<Unit>
+                                waiter.resume(Unit, null)
                             }
                             is SelectInstance<*> -> {
-                                waiter.selectInRegistrationPhase(ON_LOCK_ALREADY_LOCKED_BY_OWNER)
+                                waiter.selectInRegistrationPhase(Unit)
                             }
                         }
                         return
                     }
+
                     // This mutex is either locked by another owner or unlocked.
                     // In the latter case, it is possible that it WAS locked by
                     // our owner when the semaphore permit acquisition has failed.
                     // To preserve linearizability, the operation restarts in this case.
-//                    if (!isLocked) continuex
+//                    if (!isLocked) continue
                 }
                 if (suspend(waiter)) return
             } else {

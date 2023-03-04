@@ -1,22 +1,22 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package kotlinx.coroutines.lincheck
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.internal.SegmentQueueSynchronizer.CancellationMode.*
-import kotlinx.coroutines.internal.SegmentQueueSynchronizer.ResumeMode.*
+import kotlinx.coroutines.internal.CancellableQueueSynchronizer.CancellationMode.*
+import kotlinx.coroutines.internal.CancellableQueueSynchronizer.ResumeMode.*
 import kotlinx.coroutines.sync.Semaphore
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
 import org.jetbrains.kotlinx.lincheck.verifier.*
-import java.util.concurrent.*
 import kotlin.collections.ArrayList
 import kotlin.coroutines.*
 import kotlin.reflect.*
@@ -36,7 +36,7 @@ import kotlin.reflect.*
  * but uses the [asynchronous][ASYNC] resumption mode. However, it is non-trivial
  * to make [tryAcquire] linearizable in this case, so it is not supported here.
  */
-internal class AsyncSemaphore(permits: Int) : SegmentQueueSynchronizer<Unit>(), Semaphore {
+internal class AsyncSemaphore(permits: Int) : CancellableQueueSynchronizer<Unit>(), Semaphore {
     override val resumeMode get() = ASYNC
 
     private val _availablePermits = atomic(permits)
@@ -81,7 +81,7 @@ internal class AsyncSemaphore(permits: Int) : SegmentQueueSynchronizer<Unit>(), 
  * to make this implementation correct under the prompt cancellation model
  * even with unexpected [release]-s.
  */
-internal class AsyncSemaphoreSmart(permits: Int) : SegmentQueueSynchronizer<Unit>(), Semaphore {
+internal class AsyncSemaphoreSmart(permits: Int) : CancellableQueueSynchronizer<Unit>(), Semaphore {
     override val resumeMode get() = ASYNC
     override val cancellationMode get() = SMART
 
@@ -135,10 +135,10 @@ internal class AsyncSemaphoreSmart(permits: Int) : SegmentQueueSynchronizer<Unit
  * The only notable difference happens when a permit to be released is refused,
  * and the following [resume] attempt in the cancellation handler fails due to
  * the synchronization on resumption, so the permit is going to be returned
- * back to the semaphore in [returnValue] function. It is worth noting, that it
+ * to the semaphore in [returnValue] function. It is worth noting, that it
  * is possible to make this implementation correct with prompt cancellation.
  */
-internal class SyncSemaphoreSmart(permits: Int) : SegmentQueueSynchronizer<Boolean>(), Semaphore {
+internal class SyncSemaphoreSmart(permits: Int) : CancellableQueueSynchronizer<Boolean>(), Semaphore {
     override val resumeMode get() = SYNC
     override val cancellationMode get() = SMART
 
@@ -152,7 +152,7 @@ internal class SyncSemaphoreSmart(permits: Int) : SegmentQueueSynchronizer<Boole
             // Is the permit acquired?
             if (p > 0) return
             // Try to suspend otherwise.
-            val acquired = suspendCancellableCoroutine<Boolean> { cont ->
+            val acquired = suspendCancellableCoroutine { cont ->
                 if (!suspend(cont as Waiter)) cont.resume(false)
             }
             if (acquired) return
@@ -242,16 +242,16 @@ class SyncSemaphoreSmart2LincheckTest : SemaphoreLincheckTestBase(SyncSemaphoreS
  * same time, [await] suspends until this count reaches zero.
  *
  * This implementation uses simple cancellation, so the [countDown] invocation
- * that reaches the counter zero works in a linear of the number of [await]
+ * that reaches the counter zero works in linear of the number of [await]
  * invocations, including the ones that are already cancelled.
  */
-internal open class CountDownLatch(count: Int) : SegmentQueueSynchronizer<Unit>() {
+internal open class CountDownLatch(count: Int) : CancellableQueueSynchronizer<Unit>() {
     override val resumeMode get() = ASYNC
 
     private val count = atomic(count)
     // The number of suspended `await` invocations.
     // `DONE_MARK` should be set when the count reaches zero,
-    // so the following suspension attempts detect this change by
+    // so the following suspension attempts will detect this change by
     // checking the mark and complete immediately in this case.
     private val waiters = atomic(0)
 
@@ -361,14 +361,14 @@ open class CountDownLatchSequential(initialCount: Int) : VerifierState() {
 
     fun countDown() {
         if (--count == 0) {
-            waiters.forEach { it.tryResume0(Unit, {}) }
+            waiters.forEach { it.tryResume0(Unit) {} }
             waiters.clear()
         }
     }
 
     suspend fun await() {
         if (count <= 0) return
-        suspendCancellableCoroutine<Unit> { cont ->
+        suspendCancellableCoroutine { cont ->
             waiters.add(cont)
         }
     }
@@ -399,7 +399,7 @@ open class CountDownLatchSequential(initialCount: Int) : VerifierState() {
  * no way to resume a set of coroutines atomically. However,
  * this implementation is correct with prompt cancellation.
  */
-internal class Barrier(private val parties: Int) : SegmentQueueSynchronizer<Unit>() {
+internal class Barrier(private val parties: Int) : CancellableQueueSynchronizer<Unit>() {
     override val resumeMode get() = ASYNC
     override val cancellationMode get() = SMART
 
@@ -486,7 +486,7 @@ open class BarrierSequential(parties: Int) : VerifierState() {
         val r = --remaining
         return when {
             r > 0 -> {
-                suspendCancellableCoroutine<Unit> { cont ->
+                suspendCancellableCoroutine { cont ->
                     waiters.add(cont)
                     cont.invokeOnCancellation {
                         remaining++
@@ -549,7 +549,7 @@ interface BlockingPool<T: Any> {
 /**
  * This pool uses queue under the hood and is implemented with simple cancellation.
  */
-internal class BlockingQueuePool<T: Any> : SegmentQueueSynchronizer<T>(), BlockingPool<T> {
+internal class BlockingQueuePool<T: Any> : CancellableQueueSynchronizer<T>(), BlockingPool<T> {
     override val resumeMode get() = ASYNC
 
     // > 0 -- number of elements;
@@ -639,7 +639,7 @@ internal class BlockingQueuePool<T: Any> : SegmentQueueSynchronizer<T>(), Blocki
             "insertIdx=${insertIdx.value}," +
             "retrieveIdx=${retrieveIdx.value}," +
             "elements=$elementsBetweenIndices," +
-            "sqs=<${super.toString()}>"
+            "cqs=<${super.toString()}>"
     }
 
     companion object {
@@ -652,7 +652,7 @@ internal class BlockingQueuePool<T: Any> : SegmentQueueSynchronizer<T>(), Blocki
  * This pool uses stack under the hood and shows how to use
  * smart cancellation for data structures that store resources.
  */
-internal class BlockingStackPool<T: Any> : SegmentQueueSynchronizer<T>(), BlockingPool<T> {
+internal class BlockingStackPool<T: Any> : CancellableQueueSynchronizer<T>(), BlockingPool<T> {
     override val resumeMode get() = ASYNC
     override val cancellationMode get() = SMART
 
@@ -709,7 +709,7 @@ internal class BlockingStackPool<T: Any> : SegmentQueueSynchronizer<T>(), Blocki
             // Is there an element in the pool?
             if (b > 0) {
                 // Try to retrieve the top element,
-                // can fail if the stack if empty
+                // can fail if the stack is empty
                 // due to a race.
                 val x = tryRetrieve()
                 if (x != null) return x
@@ -762,7 +762,7 @@ internal class BlockingStackPool<T: Any> : SegmentQueueSynchronizer<T>(), Blocki
             elements += curNode.element
             curNode = curNode.next
         }
-        return "availableElements=${availableElements.value},elements=$elements,sqs=<${super.toString()}>"
+        return "availableElements=${availableElements.value},elements=$elements,cqs=<${super.toString()}>"
     }
 
     class StackNode<T>(val element: T?, val next: StackNode<T>?)
@@ -772,7 +772,6 @@ abstract class BlockingPoolLincheckTestBase(val p: BlockingPool<Unit>) : Abstrac
     @Operation
     fun put() = p.put(Unit)
 
-    @Suppress("NullChecksToSafeCall")
     @Operation(allowExtraSuspension = true, promptCancellation = false)
     suspend fun retrieve() = p.retrieve()
 
@@ -800,7 +799,8 @@ class BlockingPoolUnitSequential : VerifierState() {
         while (true) {
             if (waiters.isNotEmpty()) {
                 val w = waiters.removeAt(0)
-                if (w.tryResume0(Unit, { put() })) return
+                @Suppress("PackageDirectoryMismatch")
+                if (w.tryResume0(Unit) { put() }) return
             } else {
                 elements ++
                 return
@@ -816,110 +816,6 @@ class BlockingPoolUnitSequential : VerifierState() {
                 waiters.add(cont)
             }
         }
-    }
-
-    override fun extractState() = elements
-}
-
-
-// ##################
-// # BLOCKING QUEUE #
-// ##################
-
-/**
- * This algorithm maintains a separate queue for elements so blocked [receive] operations
- * retrieve elements _after_ resumption from this queue. Similar to other data structures,
- * an atomic [size] counter is maintained to decide whether the queue is empty for [receive]
- * and whether there is a waiting receiver for [send].
- *
- * Comparing to the blocking pools above, this implementation is fully linearizable but requires
- * the waiters to retrieve elements from separate storage after the resumption. However, we find
- * this implementation more flexible since any container (not only the FIFO queue) can be used
- * under the hood. It is also safe in case of prompt cancellation since the elements cannot be lost.
- */
-internal class BlockingQueueSmart<E : Any> : SegmentQueueSynchronizer<Unit>() {
-    private val size = atomic(0) // #send - #receive
-    private val elements = ConcurrentLinkedQueue<E>() // any queue can be here, even not FIFO.
-
-    override val resumeMode get() = ASYNC
-    override val cancellationMode get() = SMART
-
-    /**
-     * Puts the specified [element] into the queue
-     * or transfers it to the first waiting receiver.
-     */
-    fun send(element: E) {
-        elements.add(element) // store the element into queue at first.
-        val s = size.getAndIncrement() // increment the number of elements.
-        if (s < 0) { // is there a waiting receiver?
-            resume(Unit) // resume the first waiter.
-        }
-    }
-
-    suspend fun receive(): E {
-        val s = size.getAndDecrement() // decrement the number of available elements.
-        if (s <= 0) { // should this `receive()` suspend?
-            suspendCancellableCoroutine<Unit> { suspend(it as Waiter) }
-        }
-        return elements.remove() // retrieve the first element.
-    }
-
-    override fun onCancellation(): Boolean {
-        val s = size.getAndIncrement() // decrement the number of waiting `receive()`-s.
-        return s < 0 // succeed if this `receive()` is not already resumed.
-    }
-
-    // For prompt cancellation; no need to return elements since
-    // they are not transferred via SQS but stored separately.
-    override fun returnValue(value: Unit) {
-        val b = size.getAndIncrement()
-        if (b < 0) resume(Unit)
-    }
-}
-
-class BlockingQueueSmartLincheckTest : AbstractLincheckTest() {
-    private val c = BlockingQueueSmart<Int>()
-
-    @Operation
-    fun send(element: Int) = c.send(element)
-
-    @Operation(allowExtraSuspension=true, promptCancellation = false)
-    suspend fun receive() = c.receive()
-
-    override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
-        sequentialSpecification(BlockingQueueSequential::class.java)
-
-    override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
-        checkObstructionFreedom()
-}
-
-class BlockingQueueSequential : VerifierState() {
-    private val receivers = ArrayList<CancellableContinuation<Unit>>()
-    private val elements = ArrayList<Int>()
-
-    fun send(element: Int) {
-        if (receivers.isNotEmpty()) {
-            val r = receivers.removeAt(0)
-            elements += element
-            r.resume(Unit)
-        } else {
-            elements += element
-        }
-    }
-
-    suspend fun receive(): Int =
-        if (elements.isNotEmpty()) {
-            retrieveFirstElement()
-        } else {
-            suspendCancellableCoroutine<Unit> { cont ->
-                receivers += cont
-                cont.invokeOnCancellation { receivers.remove(cont) }
-            }
-            retrieveFirstElement()
-        }
-
-    private fun retrieveFirstElement(): Int {
-        return elements.removeAt(0)
     }
 
     override fun extractState() = elements

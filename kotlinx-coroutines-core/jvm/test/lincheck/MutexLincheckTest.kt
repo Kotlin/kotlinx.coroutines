@@ -11,23 +11,24 @@ import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
+import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
 
 @Param(name = "owner", gen = IntGen::class, conf = "0:2")
 class MutexLincheckTest : AbstractLincheckTest() {
     private val mutex = Mutex()
 
-    @Operation(handleExceptionsAsResult = [IllegalStateException::class])
+//    @Operation(handleExceptionsAsResult = [IllegalStateException::class])
     fun tryLock(@Param(name = "owner") owner: Int) = mutex.tryLock(owner.asOwnerOrNull)
 
     // TODO: `lock()` with non-null owner is non-linearizable
-    @Operation(promptCancellation = true)
-    suspend fun lock() = mutex.lock(null)
+    @Operation(promptCancellation = true, handleExceptionsAsResult = [IllegalStateException::class])
+    suspend fun lock(@Param(name = "owner") owner: Int) = mutex.lock(owner.asOwnerOrNull)
 
     // TODO: `onLock` with non-null owner is non-linearizable
     // onLock may suspend in case of clause re-registration.
     @Suppress("DEPRECATION")
-    @Operation(allowExtraSuspension = true, promptCancellation = true)
-    suspend fun onLock() = select<Unit> { mutex.onLock(null) {} }
+    @Operation(allowExtraSuspension = true, promptCancellation = true, handleExceptionsAsResult = [IllegalStateException::class])
+    suspend fun onLock(@Param(name = "owner") owner: Int) = select<Unit> { mutex.onLock(owner.asOwnerOrNull) {} }
 
     @Operation(handleExceptionsAsResult = [IllegalStateException::class])
     fun unlock(@Param(name = "owner") owner: Int) = mutex.unlock(owner.asOwnerOrNull)
@@ -40,6 +41,9 @@ class MutexLincheckTest : AbstractLincheckTest() {
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
         actorsBefore(0)
+
+    override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
+        verboseTrace()
 
     // state[i] == true <=> mutex.holdsLock(i) with the only exception for 0 that specifies `null`.
     override fun extractState() = (1..2).map { mutex.holdsLock(it) } + mutex.isLocked
