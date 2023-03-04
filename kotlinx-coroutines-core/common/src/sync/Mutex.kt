@@ -7,6 +7,7 @@ package kotlinx.coroutines.sync
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.internal.CancellableQueueSynchronizer.ResumeMode.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
@@ -133,6 +134,8 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
 
 
 internal open class MutexImpl(locked: Boolean) : CancellableQueueSynchronizer<Unit>(), Mutex {
+    override val resumeMode get() = SYNC_BLOCKING
+
     /**
      * After the lock is acquired, the corresponding owner is stored in this field.
      * The [unlock] operation checks the owner and either re-sets it to [NO_OWNER],

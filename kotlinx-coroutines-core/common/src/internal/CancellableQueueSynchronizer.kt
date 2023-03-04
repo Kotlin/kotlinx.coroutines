@@ -321,12 +321,15 @@ internal abstract class CancellableQueueSynchronizer<T : Any> {
                     if (resumeMode == ASYNC) return TRY_RESUME_SUCCESS
                     // Wait for a concurrent `suspend` (which should mark
                     // the cell as taken) for a bounded time in a spin-loop.
-                    while (true) { // TODO: introduce SYNC_BLOCKING mode
+                    var iteration = 0
+                    while (true) {
                         if (segment.get(i) === TAKEN) return TRY_RESUME_SUCCESS
+                        iteration++
+                        if (resumeMode == SYNC && iteration > MAX_SPIN_CYCLES) break
                     }
                     // The value is still not taken, try to atomically mark the cell as broken.
                     // A CAS failure indicates that the value is successfully taken.
-//                    return if (segment.cas(i, value, BROKEN)) TRY_RESUME_FAIL_BROKEN else TRY_RESUME_SUCCESS
+                    return if (segment.cas(i, value, BROKEN)) TRY_RESUME_FAIL_BROKEN else TRY_RESUME_SUCCESS
                 }
                 // Is the waiter cancelled?
                 cellState === CANCELLED -> {
@@ -453,7 +456,7 @@ internal abstract class CancellableQueueSynchronizer<T : Any> {
      * [broken][BROKEN] and fails, so the corresponding [suspend] invocation finds the cell
      * [broken][BROKEN] and fails as well.
      */
-    internal enum class ResumeMode { SYNC, ASYNC }
+    internal enum class ResumeMode { SYNC, SYNC_BLOCKING, ASYNC }
 
     /**
      * These modes define the strategy that should be used when a waiter becomes cancelled.
