@@ -7,6 +7,7 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.time.*
 
 /**
  * A test dispatcher that can interface with a [TestCoroutineScheduler].
@@ -16,14 +17,13 @@ import kotlin.jvm.*
  * * [UnconfinedTestDispatcher] is a dispatcher that behaves like [Dispatchers.Unconfined] while allowing to control
  *   the virtual time.
  */
-@ExperimentalCoroutinesApi
-public abstract class TestDispatcher internal constructor() : CoroutineDispatcher(), Delay {
+@Suppress("INVISIBLE_REFERENCE")
+public abstract class TestDispatcher internal constructor() : CoroutineDispatcher(), Delay, DelayWithTimeoutDiagnostics {
     /** The scheduler that this dispatcher is linked to. */
-    @ExperimentalCoroutinesApi
     public abstract val scheduler: TestCoroutineScheduler
 
     /** Notifies the dispatcher that it should process a single event marked with [marker] happening at time [time]. */
-    internal fun processEvent(time: Long, marker: Any) {
+    internal fun processEvent(marker: Any) {
         check(marker is Runnable)
         marker.run()
     }
@@ -31,12 +31,26 @@ public abstract class TestDispatcher internal constructor() : CoroutineDispatche
     /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val timedRunnable = CancellableContinuationRunnable(continuation, this)
-        scheduler.registerEvent(this, timeMillis, timedRunnable, continuation.context, ::cancellableRunnableIsCancelled)
+        val handle = scheduler.registerEvent(
+            this,
+            timeMillis,
+            timedRunnable,
+            continuation.context,
+            ::cancellableRunnableIsCancelled
+        )
+        continuation.disposeOnCancellation(handle)
     }
 
     /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         scheduler.registerEvent(this, timeMillis, block, context) { false }
+
+    /** @suppress */
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+    @Deprecated("Is only needed internally", level = DeprecationLevel.HIDDEN)
+    public override fun timeoutMessage(timeout: Duration): String =
+        "Timed out after $timeout of _virtual_ (kotlinx.coroutines.test) time. " +
+            "To use the real time, wrap 'withTimeout' in 'withContext(Dispatchers.Default.limitedParallelism(1))'"
 }
 
 /**

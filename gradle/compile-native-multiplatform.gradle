@@ -6,29 +6,45 @@ project.ext.nativeMainSets = []
 project.ext.nativeTestSets = []
 
 kotlin {
-    targets.metaClass.addTarget = { preset ->
-        def target = delegate.fromPreset(preset, preset.name)
-        project.ext.nativeMainSets.add(target.compilations['main'].kotlinSourceSets.first())
-        project.ext.nativeTestSets.add(target.compilations['test'].kotlinSourceSets.first())
+    targets {
+        delegate.metaClass.addTarget = { preset ->
+            def target = delegate.fromPreset(preset, preset.name)
+            project.ext.nativeMainSets.add(target.compilations['main'].kotlinSourceSets.first())
+            project.ext.nativeTestSets.add(target.compilations['test'].kotlinSourceSets.first())
+        }
     }
 
     targets {
+        // According to https://kotlinlang.org/docs/native-target-support.html
+        // Tier 1
         addTarget(presets.linuxX64)
-        addTarget(presets.iosArm64)
-        addTarget(presets.iosArm32)
-        addTarget(presets.iosX64)
         addTarget(presets.macosX64)
-        addTarget(presets.mingwX64)
-        addTarget(presets.tvosArm64)
-        addTarget(presets.tvosX64)
+        addTarget(presets.macosArm64)
+        addTarget(presets.iosSimulatorArm64)
+        addTarget(presets.iosX64)
+
+        // Tier 2
+        addTarget(presets.linuxArm64)
+        addTarget(presets.watchosSimulatorArm64)
+        addTarget(presets.watchosX64)
         addTarget(presets.watchosArm32)
         addTarget(presets.watchosArm64)
-        addTarget(presets.watchosX86)
-        addTarget(presets.watchosX64)
-        addTarget(presets.iosSimulatorArm64)
-        addTarget(presets.watchosSimulatorArm64)
         addTarget(presets.tvosSimulatorArm64)
-        addTarget(presets.macosArm64)
+        addTarget(presets.tvosX64)
+        addTarget(presets.tvosArm64)
+        addTarget(presets.iosArm64)
+
+        // Tier 3
+        addTarget(presets.androidNativeArm32)
+        addTarget(presets.androidNativeArm64)
+        addTarget(presets.androidNativeX86)
+        addTarget(presets.androidNativeX64)
+        addTarget(presets.mingwX64)
+        addTarget(presets.watchosDeviceArm64)
+
+        // Deprecated, but were provided by coroutine; can be removed only when K/N drops the target
+        addTarget(presets.iosArm32)
+        addTarget(presets.watchosX86)
     }
 
     sourceSets {

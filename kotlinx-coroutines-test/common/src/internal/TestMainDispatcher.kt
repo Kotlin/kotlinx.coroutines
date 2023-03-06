@@ -61,29 +61,32 @@ internal class TestMainDispatcher(delegate: CoroutineDispatcher):
      * next modification.
      */
     private class NonConcurrentlyModifiable<T>(initialValue: T, private val name: String) {
+        private val reader: AtomicRef<Throwable?> = atomic(null) // last reader to attempt access
         private val readers = atomic(0) // number of concurrent readers
-        private val isWriting = atomic(false) // a modification is happening currently
+        private val writer: AtomicRef<Throwable?> = atomic(null) // writer currently performing value modification
         private val exceptionWhenReading: AtomicRef<Throwable?> = atomic(null) // exception from reading
         private val _value = atomic(initialValue) // the backing field for the value
 
-        private fun concurrentWW() = IllegalStateException("$name is modified concurrently")
-        private fun concurrentRW() = IllegalStateException("$name is used concurrently with setting it")
+        private fun concurrentWW(location: Throwable) = IllegalStateException("$name is modified concurrently", location)
+        private fun concurrentRW(location: Throwable) = IllegalStateException("$name is used concurrently with setting it", location)
 
         var value: T
             get() {
+                reader.value = Throwable("reader location")
                 readers.incrementAndGet()
-                if (isWriting.value) exceptionWhenReading.value = concurrentRW()
+                writer.value?.let { exceptionWhenReading.value = concurrentRW(it) }
                 val result = _value.value
                 readers.decrementAndGet()
                 return result
             }
             set(value) {
                 exceptionWhenReading.getAndSet(null)?.let { throw it }
-                if (readers.value != 0) throw concurrentRW()
-                if (!isWriting.compareAndSet(expect = false, update = true)) throw concurrentWW()
+                if (readers.value != 0) reader.value?.let { throw concurrentRW(it) }
+                val writerLocation = Throwable("other writer location")
+                writer.getAndSet(writerLocation)?.let { throw concurrentWW(it) }
                 _value.value = value
-                isWriting.value = false
-                if (readers.value != 0) throw concurrentRW()
+                writer.compareAndSet(writerLocation, null)
+                if (readers.value != 0) reader.value?.let { throw concurrentRW(it) }
             }
     }
 }

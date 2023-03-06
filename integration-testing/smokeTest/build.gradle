@@ -6,6 +6,7 @@ repositories {
     // Coroutines from the outer project are published by previous CI buils step
     mavenLocal()
     mavenCentral()
+    maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
 }
 
 kotlin {
@@ -40,4 +41,12 @@ kotlin {
             }
         }
     }
+    targets {
+        configure([]) {
+            tasks.getByName(compilations.main.compileKotlinTaskName).kotlinOptions {
+                jvmTarget = "1.8"
+            }
+        }
+    }
 }
+

@@ -10,7 +10,6 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
@@ -58,11 +57,8 @@ private const val SIGNALLED = -2  // already signalled subscriber onCompleted/on
 private class RxObservableCoroutine<T : Any>(
     parentContext: CoroutineContext,
     private val subscriber: ObservableEmitter<T>
-) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T> {
     override val channel: SendChannel<T> get() = this
-
-    // Mutex is locked while subscriber.onXXX is being invoked
-    private val mutex = Mutex()
 
     private val _signal = atomic(OPEN)
 
@@ -70,6 +66,42 @@ private class RxObservableCoroutine<T : Any>(
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("RxObservableCoroutine doesn't support invokeOnClose")
+
+    // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
+    private val mutex: Mutex = Mutex()
+
+    @Suppress("UNCHECKED_CAST", "INVISIBLE_MEMBER")
+    override val onSend: SelectClause2<T, SendChannel<T>> get() = SelectClause2Impl(
+        clauseObject = this,
+        regFunc = RxObservableCoroutine<*>::registerSelectForSend as RegistrationFunction,
+        processResFunc = RxObservableCoroutine<*>::processResultSelectSend as ProcessResultFunction
+    )
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
+        // Try to acquire the mutex and complete in the registration phase.
+        if (mutex.tryLock()) {
+            select.selectInRegistrationPhase(Unit)
+            return
+        }
+        // Start a new coroutine that waits for the mutex, invoking `trySelect(..)` after that.
+        // Please note that at the point of the `trySelect(..)` invocation the corresponding
+        // `select` can still be in the registration phase, making this `trySelect(..)` bound to fail.
+        // In this case, the `onSend` clause will be re-registered, which alongside with the mutex
+        // manipulation makes the resulting solution obstruction-free.
+        launch {
+            mutex.lock()
+            if (!select.trySelect(this@RxObservableCoroutine, Unit)) {
+                mutex.unlock()
+            }
+        }
+    }
+
+    @Suppress("RedundantNullableReturnType", "UNUSED_PARAMETER", "UNCHECKED_CAST")
+    private fun processResultSelectSend(element: Any?, selectResult: Any?): Any? {
+        doLockedNext(element as T)?.let { throw it }
+        return this@RxObservableCoroutine
+    }
 
     override fun trySend(element: T): ChannelResult<Unit> =
         if (!mutex.tryLock()) {
@@ -81,37 +113,9 @@ private class RxObservableCoroutine<T : Any>(
             }
         }
 
-    public override suspend fun send(element: T) {
+    override suspend fun send(element: T) {
         mutex.lock()
         doLockedNext(element)?.let { throw it }
-    }
-
-    override val onSend: SelectClause2<T, SendChannel<T>>
-        get() = this
-
-    // registerSelectSend
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-    override fun <R> registerSelectClause2(
-        select: SelectInstance<R>,
-        element: T,
-        block: suspend (SendChannel<T>) -> R
-    ) {
-        val clause =  suspend {
-            doLockedNext(element)?.let { throw it }
-            block(this)
-        }
-
-        // This is the default replacement proposed in onLock replacement
-        launch(start = CoroutineStart.UNDISPATCHED) {
-            mutex.lock()
-            // Already selected -- bail out
-            if (!select.trySelect()) {
-                mutex.unlock()
-                return@launch
-            }
-
-            clause.startCoroutineCancellable(select.completion)
-        }
     }
 
     // assert: mutex.isLocked()

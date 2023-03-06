@@ -23,7 +23,7 @@ class LimitedParallelismConcurrentTest : TestBase() {
     }
 
     @Test
-    fun testLimitedExecutor() = runMtTest {
+    fun testLimitedExecutor() = runTest {
         val executor = newFixedThreadPoolContext(targetParallelism, "test")
         val view = executor.limitedParallelism(targetParallelism)
         doStress {
@@ -45,7 +45,7 @@ class LimitedParallelismConcurrentTest : TestBase() {
     }
 
     @Test
-    fun testTaskFairness() = runMtTest {
+    fun testTaskFairness() = runTest {
         val executor = newSingleThreadContext("test")
         val view = executor.limitedParallelism(1)
         val view2 = executor.limitedParallelism(1)

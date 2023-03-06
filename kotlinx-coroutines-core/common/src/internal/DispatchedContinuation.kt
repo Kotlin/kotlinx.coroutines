@@ -8,11 +8,8 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
-@SharedImmutable
 private val UNDEFINED = Symbol("UNDEFINED")
-@SharedImmutable
 @JvmField
 internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
 
@@ -238,6 +235,7 @@ internal class DispatchedContinuation<in T>(
         }
     }
 
+    // inline here is to save us an entry on the stack for the sake of better stacktraces
     @Suppress("NOTHING_TO_INLINE")
     inline fun resumeCancelled(state: Any?): Boolean {
         val job = context[Job]
@@ -250,7 +248,7 @@ internal class DispatchedContinuation<in T>(
         return false
     }
 
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
+    @Suppress("NOTHING_TO_INLINE")
     inline fun resumeUndispatchedWith(result: Result<T>) {
         withContinuationContext(continuation, countOrElement) {
             continuation.resumeWith(result)

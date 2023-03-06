@@ -7,6 +7,7 @@ package kotlinx.coroutines.scheduling
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.*
+import kotlin.jvm.internal.Ref.ObjectRef
 
 internal const val BUFFER_CAPACITY_BASE = 7
 internal const val BUFFER_CAPACITY = 1 shl BUFFER_CAPACITY_BASE
@@ -14,6 +15,14 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
 
 internal const val TASK_STOLEN = -1L
 internal const val NOTHING_TO_STEAL = -2L
+
+internal typealias StealingMode = Int
+internal const val STEAL_ANY: StealingMode = 3
+internal const val STEAL_CPU_ONLY: StealingMode = 2
+internal const val STEAL_BLOCKING_ONLY: StealingMode = 1
+
+internal inline val Task.maskForStealingMode: Int
+    get() = if (isBlocking) STEAL_BLOCKING_ONLY else STEAL_CPU_ONLY
 
 /**
  * Tightly coupled with [CoroutineScheduler] queue of pending tasks, but extracted to separate file for simplicity.
@@ -31,7 +40,7 @@ internal const val NOTHING_TO_STEAL = -2L
  * (scheduler workers without a CPU permit steal blocking tasks via this mechanism). Such property enforces us to use CAS in
  * order to properly claim value from the buffer.
  * Moreover, [Task] objects are reusable, so it may seem that this queue is prone to ABA problem.
- * Indeed it formally has ABA-problem, but the whole processing logic is written in the way that such ABA is harmless.
+ * Indeed, it formally has ABA-problem, but the whole processing logic is written in the way that such ABA is harmless.
  * I have discovered a truly marvelous proof of this, which this KDoc is too narrow to contain.
  */
 internal class WorkQueue {
@@ -46,10 +55,12 @@ internal class WorkQueue {
      * [T2] changeProducerIndex (3)
      * [T3] changeConsumerIndex (4)
      *
-     * Which can lead to resulting size bigger than actual size at any moment of time.
-     * This is in general harmless because steal will be blocked by timer
+     * Which can lead to resulting size being negative or bigger than actual size at any moment of time.
+     * This is in general harmless because steal will be blocked by timer.
+     * Negative sizes can be observed only when non-owner reads the size, which happens only
+     * for diagnostic toString().
      */
-    internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
+    private val bufferSize: Int get() = producerIndex.value - consumerIndex.value
     internal val size: Int get() = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
     private val lastScheduledTask = atomic<Task?>(null)
@@ -80,8 +91,8 @@ internal class WorkQueue {
      * `null` if task was added, task that wasn't added otherwise.
      */
     private fun addLast(task: Task): Task? {
-        if (task.isBlocking) blockingTasksInBuffer.incrementAndGet()
         if (bufferSize == BUFFER_CAPACITY - 1) return task
+        if (task.isBlocking) blockingTasksInBuffer.incrementAndGet()
         val nextIndex = producerIndex.value and MASK
         /*
          * If current element is not null then we're racing with a really slow consumer that committed the consumer index,
@@ -100,41 +111,82 @@ internal class WorkQueue {
     }
 
     /**
-     * Tries stealing from [victim] queue into this queue.
+     * Tries stealing from this queue into the [stolenTaskRef] argument.
      *
      * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen
      * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
+     *
+     * [StealingMode] controls what tasks to steal:
+     * * [STEAL_ANY] is default mode for scheduler, task from the head (in FIFO order) is stolen
+     * * [STEAL_BLOCKING_ONLY] is mode for stealing *an arbitrary* blocking task, which is used by the scheduler when helping in Dispatchers.IO mode
+     * * [STEAL_CPU_ONLY] is a kludge for `runSingleTaskFromCurrentSystemDispatcher`
      */
-    fun tryStealFrom(victim: WorkQueue): Long {
-        assert { bufferSize == 0 }
-        val task  = victim.pollBuffer()
+    fun trySteal(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
+        val task = when (stealingMode) {
+            STEAL_ANY -> pollBuffer()
+            else -> stealWithExclusiveMode(stealingMode)
+        }
+
         if (task != null) {
-            val notAdded = add(task)
-            assert { notAdded == null }
+            stolenTaskRef.element = task
             return TASK_STOLEN
         }
-        return tryStealLastScheduled(victim, blockingOnly = false)
+        return tryStealLastScheduled(stealingMode, stolenTaskRef)
     }
 
-    fun tryStealBlockingFrom(victim: WorkQueue): Long {
-        assert { bufferSize == 0 }
-        var start = victim.consumerIndex.value
-        val end = victim.producerIndex.value
-        val buffer = victim.buffer
-
+    // Steal only tasks of a particular kind, potentially invoking full queue scan
+    private fun stealWithExclusiveMode(stealingMode: StealingMode): Task? {
+        var start = consumerIndex.value
+        val end = producerIndex.value
+        val onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY
+        // Bail out if there is no blocking work for us
         while (start != end) {
-            val index = start and MASK
-            if (victim.blockingTasksInBuffer.value == 0) break
-            val value = buffer[index]
-            if (value != null && value.isBlocking && buffer.compareAndSet(index, value, null)) {
-                victim.blockingTasksInBuffer.decrementAndGet()
-                add(value)
-                return TASK_STOLEN
-            } else {
-                ++start
+            if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
+            return tryExtractFromTheMiddle(start++, onlyBlocking) ?: continue
+        }
+
+        return null
+    }
+
+    // Polls for blocking task, invoked only by the owner
+    // NB: ONLY for runSingleTask method
+    fun pollBlocking(): Task? = pollWithExclusiveMode(onlyBlocking = true /* only blocking */)
+
+    // Polls for CPU task, invoked only by the owner
+    // NB: ONLY for runSingleTask method
+    fun pollCpu(): Task? = pollWithExclusiveMode(onlyBlocking = false /* only cpu */)
+
+    private fun pollWithExclusiveMode(/* Only blocking OR only CPU */ onlyBlocking: Boolean): Task? {
+        while (true) { // Poll the slot
+            val lastScheduled = lastScheduledTask.value ?: break
+            if (lastScheduled.isBlocking != onlyBlocking) break
+            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                return lastScheduled
+            } // Failed -> someone else stole it
+        }
+
+        // Failed to poll the slot, scan the queue
+        val start = consumerIndex.value
+        var end = producerIndex.value
+        // Bail out if there is no blocking work for us
+        while (start != end) {
+            if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
+            val task = tryExtractFromTheMiddle(--end, onlyBlocking)
+            if (task != null) {
+                return task
             }
         }
-        return tryStealLastScheduled(victim, blockingOnly = true)
+        return null
+    }
+
+    private fun tryExtractFromTheMiddle(index: Int, onlyBlocking: Boolean): Task? {
+        val arrayIndex = index and MASK
+        val value = buffer[arrayIndex]
+        if (value != null && value.isBlocking == onlyBlocking && buffer.compareAndSet(arrayIndex, value, null)) {
+            if (onlyBlocking) blockingTasksInBuffer.decrementAndGet()
+            return value
+        }
+        return null
     }
 
     fun offloadAllWorkTo(globalQueue: GlobalQueue) {
@@ -145,12 +197,14 @@ internal class WorkQueue {
     }
 
     /**
-     * Contract on return value is the same as for [tryStealFrom]
+     * Contract on return value is the same as for [trySteal]
      */
-    private fun tryStealLastScheduled(victim: WorkQueue, blockingOnly: Boolean): Long {
+    private fun tryStealLastScheduled(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
         while (true) {
-            val lastScheduled = victim.lastScheduledTask.value ?: return NOTHING_TO_STEAL
-            if (blockingOnly && !lastScheduled.isBlocking) return NOTHING_TO_STEAL
+            val lastScheduled = lastScheduledTask.value ?: return NOTHING_TO_STEAL
+            if ((lastScheduled.maskForStealingMode and stealingMode) == 0) {
+                return NOTHING_TO_STEAL
+            }
 
             // TODO time wraparound ?
             val time = schedulerTimeSource.nanoTime()
@@ -163,8 +217,8 @@ internal class WorkQueue {
              * If CAS has failed, either someone else had stolen this task or the owner executed this task
              * and dispatched another one. In the latter case we should retry to avoid missing task.
              */
-            if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                add(lastScheduled)
+            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                stolenTaskRef.element = lastScheduled
                 return TASK_STOLEN
             }
             continue

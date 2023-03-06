@@ -23,12 +23,17 @@ import kotlin.jvm.*
  */
 public interface SendChannel<in E> {
     /**
-     * Returns `true` if this channel was closed by an invocation of [close]. This means that
-     * calling [send] will result in an exception.
+     * Returns `true` if this channel was closed by an invocation of [close] or its receiving side was [cancelled][ReceiveChannel.cancel].
+     * This means that calling [send] will result in an exception.
      *
-     * **Note: This is an experimental api.** This property may change its semantics and/or name in the future.
+     * Note that if this property returns `false`, it does not guarantee that consecutive call to [send] will succeed, as the
+     * channel can be concurrently closed right after the check. For such scenarios, it is recommended to use [trySend] instead.
+     *
+     * @see SendChannel.trySend
+     * @see SendChannel.close
+     * @see ReceiveChannel.cancel
      */
-    @ExperimentalCoroutinesApi
+    @DelicateCoroutinesApi
     public val isClosedForSend: Boolean
 
     /**
@@ -160,7 +165,7 @@ public interface SendChannel<in E> {
         level = DeprecationLevel.ERROR,
         message = "Deprecated in the favour of 'trySend' method",
         replaceWith = ReplaceWith("trySend(element).isSuccess")
-    ) // Warning since 1.5.0, error since 1.6.0
+    ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
     public fun offer(element: E): Boolean {
         val result = trySend(element)
         if (result.isSuccess) return true
@@ -174,14 +179,20 @@ public interface SendChannel<in E> {
 public interface ReceiveChannel<out E> {
     /**
      * Returns `true` if this channel was closed by invocation of [close][SendChannel.close] on the [SendChannel]
-     * side and all previously sent items were already received. This means that calling [receive]
-     * will result in a [ClosedReceiveChannelException]. If the channel was closed because of an exception, it
-     * is considered closed, too, but is called a _failed_ channel. All suspending attempts to receive
-     * an element from a failed channel throw the original [close][SendChannel.close] cause exception.
+     * side and all previously sent items were already received, or if the receiving side was [cancelled][ReceiveChannel.cancel].
      *
-     * **Note: This is an experimental api.** This property may change its semantics and/or name in the future.
+     * This means that calling [receive] will result in a [ClosedReceiveChannelException] or a corresponding cancellation cause.
+     * If the channel was closed because of an exception, it is considered closed, too, but is called a _failed_ channel.
+     * All suspending attempts to receive an element from a failed channel throw the original [close][SendChannel.close] cause exception.
+     *
+     * Note that if this property returns `false`, it does not guarantee that consecutive call to [receive] will succeed, as the
+     * channel can be concurrently closed right after the check. For such scenarios, it is recommended to use [receiveCatching] instead.
+     *
+     * @see ReceiveChannel.receiveCatching
+     * @see ReceiveChannel.cancel
+     * @see SendChannel.close
      */
-    @ExperimentalCoroutinesApi
+    @DelicateCoroutinesApi
     public val isClosedForReceive: Boolean
 
     /**
@@ -318,7 +329,7 @@ public interface ReceiveChannel<out E> {
             "Please note that the provided replacement does not rethrow channel's close cause as 'poll' did, " +
             "for the precise replacement please refer to the 'poll' documentation",
         replaceWith = ReplaceWith("tryReceive().getOrNull()")
-    ) // Warning since 1.5.0, error since 1.6.0
+    ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
     public fun poll(): E? {
         val result = tryReceive()
         if (result.isSuccess) return result.getOrThrow()
@@ -350,7 +361,7 @@ public interface ReceiveChannel<out E> {
             "for the detailed replacement please refer to the 'receiveOrNull' documentation",
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("receiveCatching().getOrNull()")
-    ) // Warning since 1.3.0, error in 1.5.0, will be hidden in 1.6.0
+    ) // Warning since 1.3.0, error in 1.5.0, cannot be hidden due to deprecated extensions
     public suspend fun receiveOrNull(): E? = receiveCatching().getOrNull()
 
     /**
@@ -360,23 +371,13 @@ public interface ReceiveChannel<out E> {
      *
      * @suppress **Deprecated**: in favor of onReceiveCatching extension.
      */
+    @Suppress("DEPRECATION_ERROR")
     @Deprecated(
         message = "Deprecated in favor of onReceiveCatching extension",
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("onReceiveCatching")
     ) // Warning since 1.3.0, error in 1.5.0, will be hidden or removed in 1.7.0
-    public val onReceiveOrNull: SelectClause1<E?>
-        get() {
-            return object : SelectClause1<E?> {
-                @InternalCoroutinesApi
-                override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (E?) -> R) {
-                    onReceiveCatching.registerSelectClause1(select) {
-                        it.exceptionOrNull()?.let { throw it }
-                        block(it.getOrNull())
-                    }
-                }
-            }
-        }
+    public val onReceiveOrNull: SelectClause1<E?> get() = (this as BufferedChannel<E>).onReceiveOrNull
 }
 
 /**
@@ -459,7 +460,6 @@ public value class ChannelResult<out T>
         override fun toString(): String = "Closed($cause)"
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     @InternalCoroutinesApi
     public companion object {
         private val failed = Failed()
@@ -523,7 +523,6 @@ public inline fun <T> ChannelResult<T>.onFailure(action: (exception: Throwable?)
     contract {
         callsInPlace(action, InvocationKind.AT_MOST_ONCE)
     }
-    @Suppress("UNCHECKED_CAST")
     if (holder is ChannelResult.Failed) action(exceptionOrNull())
     return this
 }
@@ -542,7 +541,6 @@ public inline fun <T> ChannelResult<T>.onClosed(action: (exception: Throwable?) 
     contract {
         callsInPlace(action, InvocationKind.AT_MOST_ONCE)
     }
-    @Suppress("UNCHECKED_CAST")
     if (holder is ChannelResult.Closed) action(exceptionOrNull())
     return this
 }
@@ -773,26 +771,24 @@ public fun <E> Channel(
     when (capacity) {
         RENDEZVOUS -> {
             if (onBufferOverflow == BufferOverflow.SUSPEND)
-                RendezvousChannel(onUndeliveredElement) // an efficient implementation of rendezvous channel
+                BufferedChannel(RENDEZVOUS, onUndeliveredElement) // an efficient implementation of rendezvous channel
             else
-                ArrayChannel(1, onBufferOverflow, onUndeliveredElement) // support buffer overflow with buffered channel
+                ConflatedBufferedChannel(1, onBufferOverflow, onUndeliveredElement) // support buffer overflow with buffered channel
         }
         CONFLATED -> {
             require(onBufferOverflow == BufferOverflow.SUSPEND) {
                 "CONFLATED capacity cannot be used with non-default onBufferOverflow"
             }
-            ConflatedChannel(onUndeliveredElement)
+            ConflatedBufferedChannel(1, BufferOverflow.DROP_OLDEST, onUndeliveredElement)
         }
-        UNLIMITED -> LinkedListChannel(onUndeliveredElement) // ignores onBufferOverflow: it has buffer, but it never overflows
-        BUFFERED -> ArrayChannel( // uses default capacity with SUSPEND
-            if (onBufferOverflow == BufferOverflow.SUSPEND) CHANNEL_DEFAULT_CAPACITY else 1,
-            onBufferOverflow, onUndeliveredElement
-        )
+        UNLIMITED -> BufferedChannel(UNLIMITED, onUndeliveredElement) // ignores onBufferOverflow: it has buffer, but it never overflows
+        BUFFERED -> { // uses default capacity with SUSPEND
+            if (onBufferOverflow == BufferOverflow.SUSPEND) BufferedChannel(CHANNEL_DEFAULT_CAPACITY, onUndeliveredElement)
+            else ConflatedBufferedChannel(1, onBufferOverflow, onUndeliveredElement)
+        }
         else -> {
-            if (capacity == 1 && onBufferOverflow == BufferOverflow.DROP_OLDEST)
-                ConflatedChannel(onUndeliveredElement) // conflated implementation is more efficient but appears to work in the same way
-            else
-                ArrayChannel(capacity, onBufferOverflow, onUndeliveredElement)
+            if (onBufferOverflow === BufferOverflow.SUSPEND) BufferedChannel(capacity, onUndeliveredElement)
+            else ConflatedBufferedChannel(capacity, onBufferOverflow, onUndeliveredElement)
         }
     }
 

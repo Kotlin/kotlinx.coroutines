@@ -79,14 +79,12 @@ public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = Completab
 @Suppress("UNCHECKED_CAST")
 private class CompletableDeferredImpl<T>(
     parent: Job?
-) : JobSupport(true), CompletableDeferred<T>, SelectClause1<T> {
+) : JobSupport(true), CompletableDeferred<T> {
     init { initParentJob(parent) }
     override val onCancelComplete get() = true
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T> get() = this
-    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectClause1Internal(select, block)
+    override val onAwait: SelectClause1<T> get() = onAwaitInternal as SelectClause1<T>
 
     override fun complete(value: T): Boolean =
         makeCompleting(value)

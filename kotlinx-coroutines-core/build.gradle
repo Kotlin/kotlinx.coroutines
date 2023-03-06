@@ -19,23 +19,50 @@ apply from: rootProject.file('gradle/publish.gradle')
 /* ==========================================================================
   Configure source sets structure for kotlinx-coroutines-core:
 
-  TARGETS                            SOURCE SETS
-  -------         ----------------------------------------------
+     TARGETS                            SOURCE SETS
+     -------         ----------------------------------------------
 
      js -----------------------------------------------------+
                                                              |
                                                              V
-     jvm -------------------------------> concurrent ---> common
-                                              ^
-     ios     \                                |
-     macos   | ---> nativeDarwin ---> native --+
+     jvmCore\ --------> jvm ---------> concurrent -------> common
+     jdk8   /                           ^
+                                        |
+     ios     \                          |
+     macos   | ---> nativeDarwin ---> native ---+
      tvos    |                         ^
      watchos /                         |
                                        |
      linux  \  ---> nativeOther -------+
      mingw  /
 
-   ========================================================================== */
+
+Explanation of JVM source sets structure:
+
+The overall structure is just a hack to support the scenario we are interested in:
+
+* We would like to have two source-sets "core" and "jdk8"
+* "jdk8" is allowed to use API from Java 8 and from "core"
+* "core" is prohibited to use any API from "jdk8"
+* It is okay to have tests in a single test source-set
+* And we want to publish a **single** artifact kotlinx-coroutines-core.jar that contains classes from both source-sets
+* Current limitation: only classes from "core" are checked with animal-sniffer
+
+For that, we have following compilations:
+* jvmMain compilation: [jvmCoreMain, jdk8Main]
+* jvmCore compilation:  [commonMain]
+* jdk8    compilation: [commonMain, jvmCoreMain]
+
+Theoretically, "jvmCore" could've been "jvmMain", it is not for technical reasons,
+here is the explanation from Seb:
+
+"""
+The jvmCore is theoretically not necessary. All code for jdk6 compatibility can be in jvmMain and jdk8 dependent code can be in jdk8Main.
+Effectively there is no reason for ever putting code into jvmCoreMain.
+However, when creating a new compilation, we have to take care of creating a defaultSourceSet. Without creating the jvmCoreMain source set,
+ the creation of the compilation fails. That is the only reason for this source set.
+"""
+ ========================================================================== */
 
 project.ext.sourceSetSuffixes = ["Main", "Test"]
 
@@ -56,7 +83,8 @@ void defineSourceSet(newName, dependsOn, includedInPred) {
 }
 
 static boolean isNativeDarwin(String name) { return ["ios", "macos", "tvos", "watchos"].any { name.startsWith(it) } }
-static boolean isNativeOther(String name) { return ["linux", "mingw"].any { name.startsWith(it) } }
+
+static boolean isNativeOther(String name) { return ["linux", "mingw", "androidNative"].any { name.startsWith(it) } }
 
 defineSourceSet("concurrent", ["common"]) { it in ["jvm", "native"] }
 
@@ -67,49 +95,25 @@ if (rootProject.ext.native_targets_enabled) {
 
 /* ========================================================================== */
 
+
 /*
  * All platform plugins and configuration magic happens here instead of build.gradle
  * because JMV-only projects depend on core, thus core should always be initialized before configuration.
  */
 kotlin {
-    sourceSets.forEach {
-        SourceSetsKt.configureMultiplatform(it)
-    }
-
     /*
-     * Configure four test runs:
-     * 1) Old memory model, Main thread
-     * 2) New memory model, Main thread
-     * 3) Old memory model, BG thread
-     * 4) New memory model, BG thread (required for Dispatchers.Main tests on Darwin)
+     * Configure two test runs:
+     * 1) New memory model, Main thread
+     * 2) New memory model, BG thread (required for Dispatchers.Main tests on Darwin)
      *
      * All new MM targets are build with optimize = true to have stress tests properly run.
      */
     targets.withType(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests.class).configureEach {
-        binaries {
-            // Test for memory leaks using a special entry point that does not exit but returns from main
-            binaries.getTest("DEBUG").freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
-        }
-
-        binaries.test("newMM", [DEBUG]) {
-            def thisTest = it
-            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
+        binaries.getTest("DEBUG").with {
             optimized = true
+            // Test for memory leaks using a special entry point that does not exit but returns from main
+            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
             binaryOptions["memoryModel"] = "experimental"
-            testRuns.create("newMM") {
-                setExecutionSourceFrom(thisTest)
-                // A hack to get different suffixes in the aggregated report.
-                executionTask.configure { targetName = "$targetName new MM" }
-            }
-        }
-
-        binaries.test("worker",  [DEBUG]) {
-            def thisTest = it
-            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
-            testRuns.create("worker") {
-                setExecutionSourceFrom(thisTest)
-                executionTask.configure { targetName = "$targetName worker" }
-            }
         }
 
         binaries.test("workerWithNewMM", [DEBUG]) {
@@ -124,12 +128,31 @@ kotlin {
         }
     }
 
+    def jvmMain = sourceSets.jvmMain
+    def jvmCoreMain = sourceSets.create('jvmCoreMain')
+    def jdk8Main = sourceSets.create('jdk8Main')
+    jvmCoreMain.dependsOn(jvmMain)
+    jdk8Main.dependsOn(jvmMain)
+
+    sourceSets.forEach {
+        SourceSetsKt.configureMultiplatform(it)
+    }
+
     jvm {
+        def main = compilations.main
+        main.source(jvmCoreMain)
+        main.source(jdk8Main)
+
+        /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
+        compilations.create('CoreMain') {
+            /* jvmCore is automatically matched as 'defaultSourceSet' for the compilation, due to its name */
+            tasks.getByName('check').dependsOn(compileKotlinTaskProvider)
+        }
+
         // For animal sniffer
         withJava()
     }
 }
-
 
 configurations {
     configureKotlinJvmPlatform(kotlinCompilerPluginClasspath)
@@ -150,11 +173,11 @@ def configureNativeSourceSetPreset(name, preset) {
     def implementationConfiguration = configurations[hostMainCompilation.defaultSourceSet.implementationMetadataConfigurationName]
     // Now find the libraries: Finds platform libs & stdlib, but platform declarations are still not resolved due to IDE bugs
     def hostNativePlatformLibs = files(
-        provider {
-            implementationConfiguration.findAll {
-                it.path.endsWith(".klib") || it.absolutePath.contains("klib${File.separator}platform") || it.absolutePath.contains("stdlib")
+            provider {
+                implementationConfiguration.findAll {
+                    it.path.endsWith(".klib") || it.absolutePath.contains("klib${File.separator}platform") || it.absolutePath.contains("stdlib")
+                }
             }
-        }
     )
     // Add all those dependencies
     for (suffix in sourceSetSuffixes) {
@@ -188,6 +211,7 @@ kotlin.sourceSets {
         api "org.jetbrains.kotlinx:lincheck:$lincheck_version"
         api "org.jetbrains.kotlinx:kotlinx-knit-test:$knit_version"
         implementation project(":android-unit-tests")
+        implementation "org.openjdk.jol:jol-core:0.16"
     }
 }
 
@@ -204,7 +228,7 @@ jvmTest {
     }
     // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
     if (!Idea.active && rootProject.properties['stress'] == null) {
-        exclude '**/*LincheckTest.*'
+        exclude '**/*LincheckTest*'
         exclude '**/*StressTest.*'
     }
     if (Idea.active) {
@@ -241,30 +265,51 @@ task jvmStressTest(type: Test, dependsOn: compileTestKotlinJvm) {
     enableAssertions = true
     testLogging.showStandardStreams = true
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
-    systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
+    systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '1'
     systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '10'
+    systemProperty 'kotlinx.coroutines.bufferedChannel.segmentSize', '2'
+    systemProperty 'kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations', '1'
 }
 
 task jvmLincheckTest(type: Test, dependsOn: compileTestKotlinJvm) {
     classpath = files { jvmTest.classpath }
     testClassesDirs = files { jvmTest.testClassesDirs }
-    include '**/*LincheckTest.*'
+    include '**/*LincheckTest*'
     enableAssertions = true
     testLogging.showStandardStreams = true
     configureJvmForLincheck(jvmLincheckTest)
 }
 
-static void configureJvmForLincheck(task) {
+// Additional Lincheck tests with `segmentSize = 2`.
+// Some bugs cannot be revealed when storing one request per segment,
+// and some are hard to detect when storing multiple requests.
+task jvmLincheckTestAdditional(type: Test, dependsOn: compileTestKotlinJvm) {
+    classpath = files { jvmTest.classpath }
+    testClassesDirs = files { jvmTest.testClassesDirs }
+    include '**/RendezvousChannelLincheckTest*'
+    include '**/Buffered1ChannelLincheckTest*'
+    include '**/Semaphore*LincheckTest*'
+    enableAssertions = true
+    testLogging.showStandardStreams = true
+    configureJvmForLincheck(jvmLincheckTestAdditional, true)
+}
+
+static void configureJvmForLincheck(task, additional = false) {
     task.minHeapSize = '1g'
     task.maxHeapSize = '4g' // we may need more space for building an interleaving tree in the model checking mode
     task.jvmArgs = ['--add-opens', 'java.base/jdk.internal.misc=ALL-UNNAMED',   // required for transformation
                     '--add-exports', 'java.base/jdk.internal.util=ALL-UNNAMED'] // in the model checking mode
-    task.systemProperty 'kotlinx.coroutines.semaphore.segmentSize', '2'
+    // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
+    var segmentSize = additional ? '2' : '1'
+    task.systemProperty 'kotlinx.coroutines.semaphore.segmentSize', segmentSize
     task.systemProperty 'kotlinx.coroutines.semaphore.maxSpinCycles', '1' // better for the model checking mode
+    task.systemProperty 'kotlinx.coroutines.bufferedChannel.segmentSize', segmentSize
+    task.systemProperty 'kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations', '1'
 }
 
 // Always check additional test sets
-task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest])
+task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest, jvmLincheckTestAdditional])
 check.dependsOn moreTest
 
 tasks.jvmLincheckTest {
@@ -280,17 +325,17 @@ def commonKoverExcludes =
          "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
         ]
 
-tasks.koverHtmlReport {
-    excludes = commonKoverExcludes
-}
-
-tasks.koverVerify {
-    excludes = commonKoverExcludes
+kover {
+    filters {
+        classes {
+            excludes.addAll(commonKoverExcludes)
+        }
+    }
 }
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
     classifier = 'tests'
-    from compileTestKotlinJvm.destinationDir
+    from(compileTestKotlinJvm.destinationDirectory)
 }
 
 artifacts {

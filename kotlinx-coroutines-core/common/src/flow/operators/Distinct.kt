@@ -7,10 +7,8 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out.
@@ -45,10 +43,8 @@ public fun <T> Flow<T>.distinctUntilChanged(areEquivalent: (old: T, new: T) -> B
 public fun <T, K> Flow<T>.distinctUntilChangedBy(keySelector: (T) -> K): Flow<T> =
     distinctUntilChangedBy(keySelector = keySelector, areEquivalent = defaultAreEquivalent)
 
-@SharedImmutable
 private val defaultKeySelector: (Any?) -> Any? = { it }
 
-@SharedImmutable
 private val defaultAreEquivalent: (Any?, Any?) -> Boolean = { old, new -> old == new }
 
 /**

@@ -5,9 +5,9 @@ public final class kotlinx/coroutines/reactive/AwaitKt {
 	public static final fun awaitFirstOrNull (Lorg/reactivestreams/Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun awaitLast (Lorg/reactivestreams/Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun awaitSingle (Lorg/reactivestreams/Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun awaitSingleOrDefault (Lorg/reactivestreams/Publisher;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun awaitSingleOrElse (Lorg/reactivestreams/Publisher;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun awaitSingleOrNull (Lorg/reactivestreams/Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun awaitSingleOrDefault (Lorg/reactivestreams/Publisher;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun awaitSingleOrElse (Lorg/reactivestreams/Publisher;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun awaitSingleOrNull (Lorg/reactivestreams/Publisher;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/reactive/ChannelKt {
@@ -49,7 +49,7 @@ public final class kotlinx/coroutines/reactive/PublishKt {
 	public static final fun publishInternal (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
 }
 
-public final class kotlinx/coroutines/reactive/PublisherCoroutine : kotlinx/coroutines/AbstractCoroutine, kotlinx/coroutines/channels/ProducerScope, kotlinx/coroutines/selects/SelectClause2, org/reactivestreams/Subscription {
+public final class kotlinx/coroutines/reactive/PublisherCoroutine : kotlinx/coroutines/AbstractCoroutine, kotlinx/coroutines/channels/ProducerScope, org/reactivestreams/Subscription {
 	public fun <init> (Lkotlin/coroutines/CoroutineContext;Lorg/reactivestreams/Subscriber;Lkotlin/jvm/functions/Function2;)V
 	public fun cancel ()V
 	public fun close (Ljava/lang/Throwable;)Z
@@ -60,7 +60,6 @@ public final class kotlinx/coroutines/reactive/PublisherCoroutine : kotlinx/coro
 	public fun isClosedForSend ()Z
 	public fun offer (Ljava/lang/Object;)Z
 	public synthetic fun onCompleted (Ljava/lang/Object;)V
-	public fun registerSelectClause2 (Lkotlinx/coroutines/selects/SelectInstance;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public fun request (J)V
 	public fun send (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun trySend-JP2dKIU (Ljava/lang/Object;)Ljava/lang/Object;

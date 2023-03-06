@@ -11,6 +11,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
+import kotlin.reflect.*
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 import kotlinx.coroutines.flow.unsafeTransform as transform
 
@@ -33,6 +34,11 @@ public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Bo
  */
 @Suppress("UNCHECKED_CAST")
 public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it is R } as Flow<R>
+
+/**
+ * Returns a flow containing only values that are instances of the given [klass].
+ */
+public fun <R : Any> Flow<*>.filterIsInstance(klass: KClass<R>): Flow<R> = filter { klass.isInstance(it) } as Flow<R>
 
 /**
  * Returns a flow containing only values of the original flow that are not null.
@@ -81,7 +87,7 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform 
  * ```
  * flowOf(1, 2, 3).scan(emptyList<Int>()) { acc, value -> acc + value }.toList()
  * ```
- * will produce `[], [1], [1, 2], [1, 2, 3]`.
+ * will produce `[[], [1], [1, 2], [1, 2, 3]]`.
  *
  * This function is an alias to [runningFold] operator.
  */
@@ -94,7 +100,7 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  * ```
  * flowOf(1, 2, 3).runningFold(emptyList<Int>()) { acc, value -> acc + value }.toList()
  * ```
- * will produce `[], [1], [1, 2], [1, 2, 3]`.
+ * will produce `[[], [1], [1, 2], [1, 2, 3]]`.
  */
 public fun <T, R> Flow<T>.runningFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
     var accumulator: R = initial

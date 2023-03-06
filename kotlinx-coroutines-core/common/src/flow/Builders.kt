@@ -65,7 +65,6 @@ private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit
 /**
  * Creates a _cold_ flow that produces a single value from the given functional type.
  */
-@FlowPreview
 public fun <T> (() -> T).asFlow(): Flow<T> = flow {
     emit(invoke())
 }
@@ -80,7 +79,6 @@ public fun <T> (() -> T).asFlow(): Flow<T> = flow {
  * fun remoteCallFlow(): Flow<R> = ::remoteCall.asFlow()
  * ```
  */
-@FlowPreview
 public fun <T> (suspend () -> T).asFlow(): Flow<T> = flow {
     emit(invoke())
 }

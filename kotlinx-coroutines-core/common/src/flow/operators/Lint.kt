@@ -144,7 +144,7 @@ public inline fun <T> SharedFlow<T>.retryWhen(noinline predicate: suspend FlowCo
     level = DeprecationLevel.WARNING
 )
 @InlineOnly
-public suspend inline fun <T> SharedFlow<T>.toList(): List<T> =
+public suspend inline fun <T> SharedFlow<T>.toList(destination: MutableList<T> = ArrayList()): List<T> =
     (this as Flow<T>).toList()
 
 /**
@@ -156,7 +156,7 @@ public suspend inline fun <T> SharedFlow<T>.toList(): List<T> =
     level = DeprecationLevel.WARNING
 )
 @InlineOnly
-public suspend inline fun <T> SharedFlow<T>.toSet(): Set<T> =
+public suspend inline fun <T> SharedFlow<T>.toSet(destination: MutableSet<T> = LinkedHashSet()): Set<T> =
     (this as Flow<T>).toSet()
 
 /**

@@ -1,7 +1,6 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines.selects
 
@@ -9,155 +8,11 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.intrinsics.*
-import kotlinx.coroutines.sync.*
+import kotlinx.coroutines.selects.TrySelectDetailedResult.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
-import kotlin.coroutines.intrinsics.*
+import kotlin.internal.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
-import kotlin.time.*
-
-/**
- * Scope for [select] invocation.
- */
-public interface SelectBuilder<in R> {
-    /**
-     * Registers a clause in this [select] expression without additional parameters that does not select any value.
-     */
-    public operator fun SelectClause0.invoke(block: suspend () -> R)
-
-    /**
-     * Registers clause in this [select] expression without additional parameters that selects value of type [Q].
-     */
-    public operator fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R)
-
-    /**
-     * Registers clause in this [select] expression with additional parameter of type [P] that selects value of type [Q].
-     */
-    public operator fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R)
-
-    /**
-     * Registers clause in this [select] expression with additional nullable parameter of type [P]
-     * with the `null` value for this parameter that selects value of type [Q].
-     */
-    public operator fun <P, Q> SelectClause2<P?, Q>.invoke(block: suspend (Q) -> R): Unit = invoke(null, block)
-
-    /**
-     * Clause that selects the given [block] after a specified timeout passes.
-     * If timeout is negative or zero, [block] is selected immediately.
-     *
-     * **Note: This is an experimental api.** It may be replaced with light-weight timer/timeout channels in the future.
-     *
-     * @param timeMillis timeout time in milliseconds.
-     */
-    @ExperimentalCoroutinesApi
-    public fun onTimeout(timeMillis: Long, block: suspend () -> R)
-}
-
-/**
- * Clause that selects the given [block] after the specified [timeout] passes.
- * If timeout is negative or zero, [block] is selected immediately.
- *
- * **Note: This is an experimental api.** It may be replaced with light-weight timer/timeout channels in the future.
- */
-@ExperimentalCoroutinesApi
-public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R): Unit =
-        onTimeout(timeout.toDelayMillis(), block)
-
-/**
- * Clause for [select] expression without additional parameters that does not select any value.
- */
-public interface SelectClause0 {
-    /**
-     * Registers this clause with the specified [select] instance and [block] of code.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    @InternalCoroutinesApi
-    public fun <R> registerSelectClause0(select: SelectInstance<R>, block: suspend () -> R)
-}
-
-/**
- * Clause for [select] expression without additional parameters that selects value of type [Q].
- */
-public interface SelectClause1<out Q> {
-    /**
-     * Registers this clause with the specified [select] instance and [block] of code.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    @InternalCoroutinesApi
-    public fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (Q) -> R)
-}
-
-/**
- * Clause for [select] expression with additional parameter of type [P] that selects value of type [Q].
- */
-public interface SelectClause2<in P, out Q> {
-    /**
-     * Registers this clause with the specified [select] instance and [block] of code.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    @InternalCoroutinesApi
-    public fun <R> registerSelectClause2(select: SelectInstance<R>, param: P, block: suspend (Q) -> R)
-}
-
-/**
- * Internal representation of select instance. This instance is called _selected_ when
- * the clause to execute is already picked.
- *
- * @suppress **This is unstable API and it is subject to change.**
- */
-@InternalCoroutinesApi // todo: sealed interface https://youtrack.jetbrains.com/issue/KT-22286
-public interface SelectInstance<in R> {
-    /**
-     * Returns `true` when this [select] statement had already picked a clause to execute.
-     */
-    public val isSelected: Boolean
-
-    /**
-     * Tries to select this instance. Returns `true` on success.
-     */
-    public fun trySelect(): Boolean
-
-    /**
-     * Tries to select this instance. Returns:
-     * * [RESUME_TOKEN] on success,
-     * * [RETRY_ATOMIC] on deadlock (needs retry, it is only possible when [otherOp] is not `null`)
-     * * `null` on failure to select (already selected).
-     * [otherOp] is not null when trying to rendezvous with this select from inside of another select.
-     * In this case, [PrepareOp.finishPrepare] must be called before deciding on any value other than [RETRY_ATOMIC].
-     *
-     * Note, that this method's actual return type is `Symbol?` but we cannot declare it as such, because this
-     * member is public, but [Symbol] is internal. When [SelectInstance] becomes a `sealed interface`
-     * (see KT-222860) we can declare this method as internal.
-     */
-    public fun trySelectOther(otherOp: PrepareOp?): Any?
-
-    /**
-     * Performs action atomically with [trySelect].
-     * May return [RETRY_ATOMIC], caller shall retry with **fresh instance of desc**.
-     */
-    public fun performAtomicTrySelect(desc: AtomicDesc): Any?
-
-    /**
-     * Returns completion continuation of this select instance.
-     * This select instance must be _selected_ first.
-     * All resumption through this instance happen _directly_ without going through dispatcher.
-     */
-    public val completion: Continuation<R>
-
-    /**
-     * Resumes this instance in a dispatched way with exception.
-     * This method can be called from any context.
-     */
-    public fun resumeSelectWithException(exception: Throwable)
-
-    /**
-     * Disposes the specified handle when this instance is selected.
-     * Note, that [DisposableHandle.dispose] could be called multiple times.
-     */
-    public fun disposeOnSelect(handle: DisposableHandle)
-}
 
 /**
  * Waits for the result of multiple suspending functions simultaneously, which are specified using _clauses_
@@ -195,463 +50,823 @@ public interface SelectInstance<in R> {
  * Note that this function does not check for cancellation when it is not suspended.
  * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
  */
+@OptIn(ExperimentalContracts::class)
 public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R {
     contract {
         callsInPlace(builder, InvocationKind.EXACTLY_ONCE)
     }
-    return suspendCoroutineUninterceptedOrReturn { uCont ->
-        val scope = SelectBuilderImpl(uCont)
-        try {
-            builder(scope)
-        } catch (e: Throwable) {
-            scope.handleBuilderException(e)
-        }
-        scope.getResult()
+    return SelectImplementation<R>(coroutineContext).run {
+        builder(this)
+        // TAIL-CALL OPTIMIZATION: the only
+        // suspend call is at the last position.
+        doSelect()
     }
 }
 
+/**
+ * Scope for [select] invocation.
+ *
+ * An instance of [SelectBuilder] can only be retrieved as a receiver of a [select] block call,
+ * and it is only valid during the registration phase of the select builder.
+ * Any uses outside it lead to unspecified behaviour and are prohibited.
+ *
+ * The general rule of thumb is that instances of this type should always be used
+ * implicitly and there shouldn't be any signatures mentioning this type,
+ * whether explicitly (e.g. function signature) or implicitly (e.g. inferred `val` type).
+ */
+public sealed interface SelectBuilder<in R> {
+    /**
+     * Registers a clause in this [select] expression without additional parameters that does not select any value.
+     */
+    public operator fun SelectClause0.invoke(block: suspend () -> R)
 
-@SharedImmutable
-internal val NOT_SELECTED: Any = Symbol("NOT_SELECTED")
-@SharedImmutable
-internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
-@SharedImmutable
-private val UNDECIDED: Any = Symbol("UNDECIDED")
-@SharedImmutable
-private val RESUMED: Any = Symbol("RESUMED")
+    /**
+     * Registers clause in this [select] expression without additional parameters that selects value of type [Q].
+     */
+    public operator fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R)
 
-// Global counter of all atomic select operations for their deadlock resolution
-// The separate internal class is work-around for Atomicfu's current implementation that creates public classes
-// for static atomics
-internal class SeqNumber {
-    private val number = atomic(1L)
-    fun next() = number.incrementAndGet()
+    /**
+     * Registers clause in this [select] expression with additional parameter of type [P] that selects value of type [Q].
+     */
+    public operator fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R)
+
+    /**
+     * Registers clause in this [select] expression with additional nullable parameter of type [P]
+     * with the `null` value for this parameter that selects value of type [Q].
+     */
+    public operator fun <P, Q> SelectClause2<P?, Q>.invoke(block: suspend (Q) -> R): Unit = invoke(null, block)
+
+    /**
+     * Clause that selects the given [block] after a specified timeout passes.
+     * If timeout is negative or zero, [block] is selected immediately.
+     *
+     * **Note: This is an experimental api.** It may be replaced with light-weight timer/timeout channels in the future.
+     *
+     * @param timeMillis timeout time in milliseconds.
+     */
+    @ExperimentalCoroutinesApi
+    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+    @LowPriorityInOverloadResolution
+    @Deprecated(
+        message = "Replaced with the same extension function",
+        level = DeprecationLevel.ERROR, replaceWith = ReplaceWith(expression = "onTimeout", imports = ["kotlinx.coroutines.selects.onTimeout"])
+    ) // Since 1.7.0, was experimental
+    public fun onTimeout(timeMillis: Long, block: suspend () -> R): Unit = onTimeout(timeMillis, block)
 }
 
-@SharedImmutable
-private val selectOpSequenceNumber = SeqNumber()
+/**
+ * Each [select] clause is specified with:
+ * 1) the [object of this clause][clauseObject],
+ *    such as the channel instance for [SendChannel.onSend];
+ * 2) the function that specifies how this clause
+ *    should be registered in the object above;
+ * 3) the function that modifies the internal result
+ *    (passed via [SelectInstance.trySelect] or
+ *    [SelectInstance.selectInRegistrationPhase])
+ *    to the argument of the user-specified block.
+ * 4) the function that specifies how the internal result provided via
+ *    [SelectInstance.trySelect] or [SelectInstance.selectInRegistrationPhase]
+ *    should be processed in case of this `select` cancellation while dispatching.
+ */
+@InternalCoroutinesApi
+public sealed interface SelectClause {
+    public val clauseObject: Any
+    public val regFunc: RegistrationFunction
+    public val processResFunc: ProcessResultFunction
+    public val onCancellationConstructor: OnCancellationConstructor?
+}
+
+/**
+ * The registration function specifies how the `select` instance should be registered into
+ * the specified clause object. In case of channels, the registration logic
+ * coincides with the plain `send/receive` operation with the only difference that
+ * the `select` instance is stored as a waiter instead of continuation.
+ */
+@InternalCoroutinesApi
+public typealias RegistrationFunction = (clauseObject: Any, select: SelectInstance<*>, param: Any?) -> Unit
+
+/**
+ * This function specifies how the _internal_ result, provided via [SelectInstance.selectInRegistrationPhase]
+ * or [SelectInstance.trySelect] should be processed. For example, both [ReceiveChannel.onReceive] and
+ * [ReceiveChannel.onReceiveCatching] clauses perform exactly the same synchronization logic,
+ * but differ when the channel has been discovered in the closed or cancelled state.
+ */
+@InternalCoroutinesApi
+public typealias ProcessResultFunction = (clauseObject: Any, param: Any?, clauseResult: Any?) -> Any?
+
+/**
+ * This function specifies how the internal result, provided via [SelectInstance.trySelect]
+ * or [SelectInstance.selectInRegistrationPhase], should be processed in case of this `select`
+ * cancellation while dispatching. Unfortunately, we cannot pass this function only in [SelectInstance.trySelect],
+ * as [SelectInstance.selectInRegistrationPhase] can be called when the coroutine is already cancelled.
+ */
+@InternalCoroutinesApi
+public typealias OnCancellationConstructor = (select: SelectInstance<*>, param: Any?, internalResult: Any?) -> (Throwable) -> Unit
+
+/**
+ * Clause for [select] expression without additional parameters that does not select any value.
+ */
+public sealed interface SelectClause0 : SelectClause
+
+internal class SelectClause0Impl(
+    override val clauseObject: Any,
+    override val regFunc: RegistrationFunction,
+    override val onCancellationConstructor: OnCancellationConstructor? = null
+) : SelectClause0 {
+    override val processResFunc: ProcessResultFunction = DUMMY_PROCESS_RESULT_FUNCTION
+}
+private val DUMMY_PROCESS_RESULT_FUNCTION: ProcessResultFunction = { _, _, _ -> null }
+
+/**
+ * Clause for [select] expression without additional parameters that selects value of type [Q].
+ */
+public sealed interface SelectClause1<out Q> : SelectClause
+
+internal class SelectClause1Impl<Q>(
+    override val clauseObject: Any,
+    override val regFunc: RegistrationFunction,
+    override val processResFunc: ProcessResultFunction,
+    override val onCancellationConstructor: OnCancellationConstructor? = null
+) : SelectClause1<Q>
+
+/**
+ * Clause for [select] expression with additional parameter of type [P] that selects value of type [Q].
+ */
+public sealed interface SelectClause2<in P, out Q> : SelectClause
+
+internal class SelectClause2Impl<P, Q>(
+    override val clauseObject: Any,
+    override val regFunc: RegistrationFunction,
+    override val processResFunc: ProcessResultFunction,
+    override val onCancellationConstructor: OnCancellationConstructor? = null
+) : SelectClause2<P, Q>
+
+/**
+ * Internal representation of `select` instance.
+ *
+ * @suppress **This is unstable API, and it is subject to change.**
+ */
+@InternalCoroutinesApi
+public sealed interface SelectInstance<in R> {
+    /**
+     * The context of the coroutine that is performing this `select` operation.
+     */
+    public val context: CoroutineContext
+
+    /**
+     * This function should be called by other operations,
+     * which are trying to perform a rendezvous with this `select`.
+     * Returns `true` if the rendezvous succeeds, `false` otherwise.
+     *
+     * Note that according to the current implementation, a rendezvous attempt can fail
+     * when either another clause is already selected or this `select` is still in
+     * REGISTRATION phase. To distinguish the reasons, [SelectImplementation.trySelectDetailed]
+     * function can be used instead.
+     */
+    public fun trySelect(clauseObject: Any, result: Any?): Boolean
+
+    /**
+     * When this `select` instance is stored as a waiter, the specified [handle][disposableHandle]
+     * defines how the stored `select` should be removed in case of cancellation or another clause selection.
+     */
+    public fun disposeOnCompletion(disposableHandle: DisposableHandle)
+
+    /**
+     * When a clause becomes selected during registration, the corresponding internal result
+     * (which is further passed to the clause's [ProcessResultFunction]) should be provided
+     * via this function. After that, other clause registrations are ignored and [trySelect] fails.
+     */
+    public fun selectInRegistrationPhase(internalResult: Any?)
+}
+internal interface SelectInstanceInternal<R>: SelectInstance<R>, Waiter
 
 @PublishedApi
-internal class SelectBuilderImpl<in R>(
-    private val uCont: Continuation<R> // unintercepted delegate continuation
-) : LockFreeLinkedListHead(), SelectBuilder<R>,
-    SelectInstance<R>, Continuation<R>, CoroutineStackFrame
-{
-    override val callerFrame: CoroutineStackFrame?
-        get() = uCont as? CoroutineStackFrame
+internal open class SelectImplementation<R> constructor(
+    override val context: CoroutineContext
+) : CancelHandler(), SelectBuilder<R>, SelectInstanceInternal<R> {
 
-    override fun getStackTraceElement(): StackTraceElement? = null
-
-    // selection state is NOT_SELECTED initially and is replaced by idempotent marker (or null) when selected
-    private val _state = atomic<Any?>(NOT_SELECTED)
-
-    // this is basically our own SafeContinuation
-    private val _result = atomic<Any?>(UNDECIDED)
-
-    // cancellability support
-    private val _parentHandle = atomic<DisposableHandle?>(null)
-    private var parentHandle: DisposableHandle?
-        get() = _parentHandle.value
-        set(value) { _parentHandle.value = value }
-
-    /* Result state machine
-
-        +-----------+   getResult   +---------------------+   resume   +---------+
-        | UNDECIDED | ------------> | COROUTINE_SUSPENDED | ---------> | RESUMED |
-        +-----------+               +---------------------+            +---------+
-              |
-              | resume
-              V
-        +------------+  getResult
-        | value/Fail | -----------+
-        +------------+            |
-              ^                   |
-              |                   |
-              +-------------------+
+    /**
+     * Essentially, the `select` operation is split into three phases: REGISTRATION, WAITING, and COMPLETION.
+     *
+     * == Phase 1: REGISTRATION ==
+     * In the first REGISTRATION phase, the user-specified [SelectBuilder] is applied, and all the listed clauses
+     * are registered via the provided [registration functions][SelectClause.regFunc]. Intuitively, `select` clause
+     * registration is similar to the plain blocking operation, with the only difference that this [SelectInstance]
+     * is stored as a waiter instead of continuation, and [SelectInstance.trySelect] is used to make a rendezvous.
+     * Also, when registering, it is possible for the operation to complete immediately, without waiting. In this case,
+     * [SelectInstance.selectInRegistrationPhase] should be used. Otherwise, when no rendezvous happens and this `select`
+     * instance is stored as a waiter, a completion handler for the registering clause should be specified via
+     * [SelectInstance.disposeOnCompletion]; this handler specifies how to remove this `select` instance from the
+     * clause object when another clause becomes selected or the operation cancels.
+     *
+     * After a clause registration is completed, another coroutine can attempt to make a rendezvous with this `select`.
+     * However, to resolve a race between clauses registration and [SelectInstance.trySelect], the latter fails when
+     * this `select` is still in REGISTRATION phase. Thus, the corresponding clause has to be registered again.
+     *
+     * In this phase, the `state` field stores either a special [STATE_REG] marker or
+     * a list of clauses to be re-registered due to failed rendezvous attempts.
+     *
+     * == Phase 2: WAITING ==
+     * If no rendezvous happens in REGISTRATION phase, the `select` operation moves to WAITING one and suspends until
+     * [SelectInstance.trySelect] is called. Also, when waiting, this `select` can be cancelled. In the latter case,
+     * further [SelectInstance.trySelect] attempts fail, and all the completion handlers, specified via
+     * [SelectInstance.disposeOnCompletion], are invoked to remove this `select` instance from the corresponding
+     * clause objects.
+     *
+     * In this phase, the `state` field stores either the continuation to be later resumed or a special `Cancelled`
+     * object (with the cancellation cause inside) when this `select` becomes cancelled.
+     *
+     * == Phase 3: COMPLETION ==
+     * Once a rendezvous happens either in REGISTRATION phase (via [SelectInstance.selectInRegistrationPhase]) or
+     * in WAITING phase (via [SelectInstance.trySelect]), this `select` moves to the final `COMPLETION` phase.
+     * First, the provided internal result is processed via the [ProcessResultFunction] of the selected clause;
+     * it returns the argument for the user-specified block or throws an exception (see [SendChannel.onSend] as
+     * an example). After that, this `select` should be removed from all other clause objects by calling the
+     * corresponding [DisposableHandle]-s, provided via [SelectInstance.disposeOnCompletion] during registration.
+     * At the end, the user-specified block is called and this `select` finishes.
+     *
+     * In this phase, once a rendezvous is happened, the `state` field stores the corresponding clause.
+     * After that, it moves to [STATE_COMPLETED] to avoid memory leaks.
+     *
+     *
+     *
+     * The state machine is listed below:
+     *
+     *            REGISTRATION PHASE                   WAITING PHASE             COMPLETION PHASE
+     *       ⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢             ⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢         ⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢⌢
+     *
+     *                                                 +-----------+                 +-----------+
+     *                                                 | CANCELLED |                 | COMPLETED |
+     *                                                 +-----------+                 +-----------+
+     *                                                       ^                             ^
+     *     INITIAL STATE                                     |                             | this `select`
+     *     ------------+                                     |  cancelled                  | is completed
+     *                  \                                    |                             |
+     *                   +=============+     move to     +------+    successful   +------------+
+     *                +--|  STATE_REG  |---------------> | cont |-----------------| ClauseData |
+     *                |  +=============+  WAITING phase  +------+  trySelect(..)  +------------+
+     *                |    ^     |                                                       ^
+     *                |    |     |    some clause has been selected during registration  |
+     *         add a  |    |     +-------------------------------------------------------+
+     *   clause to be |    |                                                             |
+     *  re-registered |    | re-register                   some clause has been selected |
+     *                |    | clauses                     during registration while there |
+     *                v    |                            are clauses to be re-registered; |
+     *          +------------------+                                   ignore the latter |
+     *       +--| List<ClauseData> |-----------------------------------------------------+
+     *       |  +------------------+
+     *       |            ^
+     *       |            |  add one more clause
+     *       |            |  for re-registration
+     *       +------------+
+     *
+     * One of the most valuable benefits of this `select` design is that it allows processing clauses
+     * in a way similar to plain operations, such as `send` or `receive` on channels. The only difference
+     * is that instead of continuation, the operation should store the provided `select` instance object.
+     * Thus, this design makes it possible to support the `select` expression for any blocking data structure
+     * in Kotlin Coroutines.
+     *
+     * It is worth mentioning that the algorithm above provides "obstruction-freedom" non-blocking guarantee
+     * instead of the standard "lock-freedom" to avoid using heavy descriptors. In practice, this relaxation
+     * does not make significant difference. However, it is vital for Kotlin Coroutines to provide some
+     * non-blocking guarantee, as users may add blocking code in [SelectBuilder], and this blocking code
+     * should not cause blocking behaviour in other places, such as an attempt to make a rendezvous with
+     * the `select` that is hang in REGISTRATION phase.
+     *
+     * Also, this implementation is NOT linearizable under some circumstances. The reason is that a rendezvous
+     * attempt with `select` (via [SelectInstance.trySelect]) may fail when this `select` operation is still
+     * in REGISTRATION phase. Consider the following situation on two empty rendezvous channels `c1` and `c2`
+     * and the `select` operation that tries to send an element to one of these channels. First, this `select`
+     * instance is registered as a waiter in `c1`. After that, another thread can observe that `c1` is no longer
+     * empty and try to receive an element from `c1` -- this receive attempt fails due to the `select` operation
+     * being in REGISTRATION phase.
+     * It is also possible to observe that this `select` operation registered in `c2` first, and only after that in
+     * `c1` (it has to re-register in `c1` after the unsuccessful rendezvous attempt), which is also non-linearizable.
+     * We, however, find such a non-linearizable behaviour not so important in practice and leverage the correctness
+     * relaxation for the algorithm simplicity and the non-blocking progress guarantee.
      */
 
-    override val context: CoroutineContext get() = uCont.context
+    /**
+     * The state of this `select` operation. See the description above for details.
+     */
+    private val state = atomic<Any>(STATE_REG)
+    /**
+     * Returns `true` if this `select` instance is in the REGISTRATION phase;
+     * otherwise, returns `false`.
+     */
+    private val inRegistrationPhase
+        get() = state.value.let {
+            it === STATE_REG || it is List<*>
+        }
+    /**
+     * Returns `true` if this `select` is already selected;
+     * thus, other parties are bound to fail when making a rendezvous with it.
+     */
+    private val isSelected
+        get() = state.value is ClauseData<*>
+    /**
+     * Returns `true` if this `select` is cancelled.
+     */
+    private val isCancelled
+        get() = state.value === STATE_CANCELLED
 
-    override val completion: Continuation<R> get() = this
+    /**
+     * List of clauses waiting on this `select` instance.
+     */
+    private var clauses: MutableList<ClauseData<R>>? = ArrayList(2)
 
-    private inline fun doResume(value: () -> Any?, block: () -> Unit) {
-        assert { isSelected } // "Must be selected first"
-        _result.loop { result ->
+    /**
+     * Stores the completion action provided through [disposeOnCompletion] or [invokeOnCancellation]
+     * during clause registration. After that, if the clause is successfully registered
+     * (so, it has not completed immediately), this handler is stored into
+     * the corresponding [ClauseData] instance.
+     *
+     * Note that either [DisposableHandle] is provided, or a [Segment] instance with
+     * the index in it, which specify the location of storing this `select`.
+     * In the latter case, [Segment.onCancellation] should be called on completion/cancellation.
+     */
+    private var disposableHandleOrSegment: Any? = null
+
+    /**
+     * In case the disposable handle is specified via [Segment]
+     * and index in it, implying calling [Segment.onCancellation],
+     * the corresponding index is stored in this field.
+     * The segment is stored in [disposableHandleOrSegment].
+     */
+    private var indexInSegment: Int = -1
+
+    /**
+     * Stores the result passed via [selectInRegistrationPhase] during clause registration
+     * or [trySelect], which is called by another coroutine trying to make a rendezvous
+     * with this `select` instance. Further, this result is processed via the
+     * [ProcessResultFunction] of the selected clause.
+     *
+     * Unfortunately, we cannot store the result in the [state] field, as the latter stores
+     * the clause object upon selection (see [ClauseData.clauseObject] and [SelectClause.clauseObject]).
+     * Instead, it is possible to merge the [internalResult] and [disposableHandle] fields into
+     * one that stores either result when the clause is successfully registered ([inRegistrationPhase] is `true`),
+     * or [DisposableHandle] instance when the clause is completed during registration ([inRegistrationPhase] is `false`).
+     * Yet, this optimization is omitted for code simplicity.
+     */
+    private var internalResult: Any? = NO_RESULT
+
+    /**
+     * This function is called after the [SelectBuilder] is applied. In case one of the clauses is already selected,
+     * the algorithm applies the corresponding [ProcessResultFunction] and invokes the user-specified [block][ClauseData.block].
+     * Otherwise, it moves this `select` to WAITING phase (re-registering clauses if needed), suspends until a rendezvous
+     * is happened, and then completes the operation by applying the corresponding [ProcessResultFunction] and
+     * invoking the user-specified [block][ClauseData.block].
+     */
+    @PublishedApi
+    internal open suspend fun doSelect(): R =
+        if (isSelected) complete()  // Fast path
+        else doSelectSuspend()      // Slow path
+
+    // We separate the following logic as it has two suspension points
+    // and, therefore, breaks the tail-call optimization if it were
+    // inlined in [doSelect]
+    private suspend fun doSelectSuspend(): R {
+        // In case no clause has been selected during registration,
+        // the `select` operation suspends and waits for a rendezvous.
+        waitUntilSelected() // <-- suspend call => no tail-call optimization here
+        // There is a selected clause! Apply the corresponding
+        // [ProcessResultFunction] and invoke the user-specified block.
+        return complete() // <-- one more suspend call
+    }
+
+    // ========================
+    // = CLAUSES REGISTRATION =
+    // ========================
+
+    override fun SelectClause0.invoke(block: suspend () -> R) =
+        ClauseData<R>(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_0, block, onCancellationConstructor).register()
+    override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) =
+        ClauseData<R>(clauseObject, regFunc, processResFunc, null, block, onCancellationConstructor).register()
+    override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) =
+        ClauseData<R>(clauseObject, regFunc, processResFunc, param, block, onCancellationConstructor).register()
+
+    /**
+     * Attempts to register this `select` clause. If another clause is already selected,
+     * this function does nothing and completes immediately.
+     * Otherwise, it registers this `select` instance in
+     * the [clause object][ClauseData.clauseObject]
+     * according to the provided [registration function][ClauseData.regFunc].
+     * On success, this `select` instance is stored as a waiter
+     * in the clause object -- the algorithm also stores
+     * the provided via [disposeOnCompletion] completion action
+     * and adds the clause to the list of registered one.
+     * In case of registration failure, the internal result
+     * (not processed by [ProcessResultFunction] yet) must be
+     * provided via [selectInRegistrationPhase] -- the algorithm
+     * updates the state to this clause reference.
+     */
+    @JvmName("register")
+    internal fun ClauseData<R>.register(reregister: Boolean = false) {
+        assert { state.value !== STATE_CANCELLED }
+        // Is there already selected clause?
+        if (state.value.let { it is ClauseData<*> }) return
+        // For new clauses, check that there does not exist
+        // another clause with the same object.
+        if (!reregister) checkClauseObject(clauseObject)
+        // Try to register in the corresponding object.
+        if (tryRegisterAsWaiter(this@SelectImplementation)) {
+            // Successfully registered, and this `select` instance
+            // is stored as a waiter. Add this clause to the list
+            // of registered clauses and store the provided via
+            // [invokeOnCompletion] completion action into the clause.
+            //
+            // Importantly, the [waitUntilSelected] function is implemented
+            // carefully to ensure that the cancellation handler has not been
+            // installed when clauses re-register, so the logic below cannot
+            // be invoked concurrently with the clean-up procedure.
+            // This also guarantees that the list of clauses cannot be cleared
+            // in the registration phase, so it is safe to read it with "!!".
+            if (!reregister) clauses!! += this
+            disposableHandleOrSegment = this@SelectImplementation.disposableHandleOrSegment
+            indexInSegment = this@SelectImplementation.indexInSegment
+            this@SelectImplementation.disposableHandleOrSegment = null
+            this@SelectImplementation.indexInSegment = -1
+        } else {
+            // This clause has been selected!
+            // Update the state correspondingly.
+            state.value = this
+        }
+    }
+
+    /**
+     * Checks that there does not exist another clause with the same object.
+     */
+    private fun checkClauseObject(clauseObject: Any) {
+        // Read the list of clauses, it is guaranteed that it is non-null.
+        // In fact, it can become `null` only in the clean-up phase, while
+        // this check can be called only in the registration one.
+        val clauses = clauses!!
+        // Check that there does not exist another clause with the same object.
+        check(clauses.none { it.clauseObject === clauseObject }) {
+            "Cannot use select clauses on the same object: $clauseObject"
+        }
+    }
+
+    override fun disposeOnCompletion(disposableHandle: DisposableHandle) {
+        this.disposableHandleOrSegment = disposableHandle
+    }
+
+    /**
+     * An optimized version for the code below that does not allocate
+     * a cancellation handler object and efficiently stores the specified
+     * [segment] and [index].
+     *
+     * ```
+     * disposeOnCompletion {
+     *   segment.onCancellation(index, null)
+     * }
+     * ```
+     */
+    override fun invokeOnCancellation(segment: Segment<*>, index: Int) {
+        this.disposableHandleOrSegment = segment
+        this.indexInSegment = index
+    }
+
+    override fun selectInRegistrationPhase(internalResult: Any?) {
+        this.internalResult = internalResult
+    }
+
+    // =========================
+    // = WAITING FOR SELECTION =
+    // =========================
+
+    /**
+     * Suspends and waits until some clause is selected. However, it is possible for a concurrent
+     * coroutine to invoke [trySelect] while this `select` is still in REGISTRATION phase.
+     * In this case, [trySelect] marks the corresponding select clause to be re-registered, and
+     * this function performs registration of such clauses. After that, it atomically stores
+     * the continuation into the [state] field if there is no more clause to be re-registered.
+     */
+    private suspend fun waitUntilSelected() = suspendCancellableCoroutine<Unit> sc@ { cont ->
+        // Update the state.
+        state.loop { curState ->
             when {
-                result === UNDECIDED -> {
-                    val update = value()
-                    if (_result.compareAndSet(UNDECIDED, update)) return
+                // This `select` is in REGISTRATION phase, and there is no clause to be re-registered.
+                // Perform a transition to WAITING phase by storing the current continuation.
+                curState === STATE_REG -> if (state.compareAndSet(curState, cont)) {
+                    // Perform a clean-up in case of cancellation.
+                    //
+                    // Importantly, we MUST install the cancellation handler
+                    // only when the algorithm is bound to suspend. Otherwise,
+                    // a race with [tryRegister] is possible, and the provided
+                    // via [disposeOnCompletion] cancellation action can be ignored.
+                    // Also, we MUST guarantee that this dispose handle is _visible_
+                    // according to the memory model, and we CAN guarantee this when
+                    // the state is updated.
+                    cont.invokeOnCancellation(this.asHandler)
+                    return@sc
                 }
-                result === COROUTINE_SUSPENDED -> if (_result.compareAndSet(COROUTINE_SUSPENDED, RESUMED)) {
-                    block()
-                    return
+                // This `select` is in REGISTRATION phase, but there are clauses that has to be registered again.
+                // Perform the required registrations and try again.
+                curState is List<*> -> if (state.compareAndSet(curState, STATE_REG)) {
+                    @Suppress("UNCHECKED_CAST")
+                    curState as List<Any>
+                    curState.forEach { reregisterClause(it) }
                 }
-                else -> throw IllegalStateException("Already resumed")
+                // This `select` operation became completed during clauses re-registration.
+                curState is ClauseData<*> -> {
+                    cont.resume(Unit, curState.createOnCancellationAction(this, internalResult))
+                    return@sc
+                }
+                // This `select` cannot be in any other state.
+                else -> error("unexpected state: $curState")
             }
         }
     }
 
-    // Resumes in direct mode, without going through dispatcher. Should be called in the same context.
-    override fun resumeWith(result: Result<R>) {
-        doResume({ result.toState() }) {
-            if (result.isFailure) {
-                uCont.resumeWithStackTrace(result.exceptionOrNull()!!)
+    /**
+     * Re-registers the clause with the specified
+     * [clause object][clauseObject] after unsuccessful
+     * [trySelect] of this clause while the `select`
+     * was still in REGISTRATION phase.
+     */
+    private fun reregisterClause(clauseObject: Any) {
+        val clause = findClause(clauseObject)!! // it is guaranteed that the corresponding clause is presented
+        clause.disposableHandleOrSegment = null
+        clause.indexInSegment = -1
+        clause.register(reregister = true)
+    }
+
+    // ==============
+    // = RENDEZVOUS =
+    // ==============
+
+    override fun trySelect(clauseObject: Any, result: Any?): Boolean =
+        trySelectInternal(clauseObject, result) == TRY_SELECT_SUCCESSFUL
+
+    /**
+     * Similar to [trySelect] but provides a failure reason
+     * if this rendezvous is unsuccessful. We need this function
+     * in the channel implementation.
+     */
+    fun trySelectDetailed(clauseObject: Any, result: Any?) =
+        TrySelectDetailedResult(trySelectInternal(clauseObject, result))
+
+    private fun trySelectInternal(clauseObject: Any, internalResult: Any?): Int {
+        while (true) {
+            when (val curState = state.value) {
+                // Perform a rendezvous with this select if it is in WAITING state.
+                is CancellableContinuation<*> -> {
+                    val clause = findClause(clauseObject) ?: continue // retry if `clauses` is already `null`
+                    val onCancellation = clause.createOnCancellationAction(this@SelectImplementation, internalResult)
+                    if (state.compareAndSet(curState, clause)) {
+                        @Suppress("UNCHECKED_CAST")
+                        val cont = curState as CancellableContinuation<Unit>
+                        // Success! Store the resumption value and
+                        // try to resume the continuation.
+                        this.internalResult = internalResult
+                        if (cont.tryResume(onCancellation)) return TRY_SELECT_SUCCESSFUL
+                        // If the resumption failed, we need to clean
+                        // the [result] field to avoid memory leaks.
+                        this.internalResult = null
+                        return TRY_SELECT_CANCELLED
+                    }
+                }
+                // Already selected.
+                STATE_COMPLETED, is ClauseData<*> -> return TRY_SELECT_ALREADY_SELECTED
+                // Already cancelled.
+                STATE_CANCELLED -> return TRY_SELECT_CANCELLED
+                // This select is still in REGISTRATION phase, re-register the clause
+                // in order not to wait until this select moves to WAITING phase.
+                // This is a rare race, so we do not need to worry about performance here.
+                STATE_REG -> if (state.compareAndSet(curState, listOf(clauseObject))) return TRY_SELECT_REREGISTER
+                // This select is still in REGISTRATION phase, and the state stores a list of clauses
+                // for re-registration, add the selecting clause to this list.
+                // This is a rare race, so we do not need to worry about performance here.
+                is List<*> -> if (state.compareAndSet(curState, curState + clauseObject)) return TRY_SELECT_REREGISTER
+                // Another state? Something went really wrong.
+                else -> error("Unexpected state: $curState")
+            }
+        }
+    }
+
+    /**
+     * Finds the clause with the corresponding [clause object][SelectClause.clauseObject].
+     * If the reference to the list of clauses is already cleared due to completion/cancellation,
+     * this function returns `null`
+     */
+    private fun findClause(clauseObject: Any): ClauseData<R>? {
+        // Read the list of clauses. If the `clauses` field is already `null`,
+        // the clean-up phase has already completed, and this function returns `null`.
+        val clauses = this.clauses ?: return null
+        // Find the clause with the specified clause object.
+        return clauses.find { it.clauseObject === clauseObject }
+            ?: error("Clause with object $clauseObject is not found")
+    }
+
+    // ==============
+    // = COMPLETION =
+    // ==============
+
+    /**
+     * Completes this `select` operation after the internal result is provided
+     * via [SelectInstance.trySelect] or [SelectInstance.selectInRegistrationPhase].
+     * (1) First, this function applies the [ProcessResultFunction] of the selected clause
+     * to the internal result.
+     * (2) After that, the [clean-up procedure][cleanup]
+     * is called to remove this `select` instance from other clause objects, and
+     * make it possible to collect it by GC after this `select` finishes.
+     * (3) Finally, the user-specified block is invoked
+     * with the processed result as an argument.
+     */
+    private suspend fun complete(): R {
+        assert { isSelected }
+        // Get the selected clause.
+        @Suppress("UNCHECKED_CAST")
+        val selectedClause = state.value as ClauseData<R>
+        // Perform the clean-up before the internal result processing and
+        // the user-specified block invocation to guarantee the absence
+        // of memory leaks. Collect the internal result before that.
+        val internalResult = this.internalResult
+        cleanup(selectedClause)
+        // Process the internal result and invoke the user's block.
+        return if (!RECOVER_STACK_TRACES) {
+            // TAIL-CALL OPTIMIZATION: the `suspend` block
+            // is invoked at the very end.
+            val blockArgument = selectedClause.processResult(internalResult)
+            selectedClause.invokeBlock(blockArgument)
+        } else {
+            // TAIL-CALL OPTIMIZATION: the `suspend`
+            // function is invoked at the very end.
+            // However, internally this `suspend` function
+            // constructs a state machine to recover a
+            // possible stack-trace.
+            processResultAndInvokeBlockRecoveringException(selectedClause, internalResult)
+        }
+    }
+
+    private suspend fun processResultAndInvokeBlockRecoveringException(clause: ClauseData<R>, internalResult: Any?): R =
+        try {
+            val blockArgument = clause.processResult(internalResult)
+            clause.invokeBlock(blockArgument)
+        } catch (e: Throwable) {
+            // In the debug mode, we need to properly recover
+            // the stack-trace of the exception; the tail-call
+            // optimization cannot be applied here.
+            recoverAndThrow(e)
+        }
+
+    /**
+     * Invokes all [DisposableHandle]-s provided via
+     * [SelectInstance.disposeOnCompletion] during
+     * clause registrations.
+     */
+    private fun cleanup(selectedClause: ClauseData<R>) {
+        assert { state.value == selectedClause }
+        // Read the list of clauses. If the `clauses` field is already `null`,
+        // a concurrent clean-up procedure has already completed, and it is safe to finish.
+        val clauses = this.clauses ?: return
+        // Invoke all cancellation handlers except for the
+        // one related to the selected clause, if specified.
+        clauses.forEach { clause ->
+            if (clause !== selectedClause) clause.dispose()
+        }
+        // We do need to clean all the data to avoid memory leaks.
+        this.state.value = STATE_COMPLETED
+        this.internalResult = NO_RESULT
+        this.clauses = null
+    }
+
+    // [CompletionHandler] implementation, must be invoked on cancellation.
+    override fun invoke(cause: Throwable?) {
+        // Update the state.
+        state.update { cur ->
+            // Finish immediately when this `select` is already completed.
+            // Notably, this select might be logically completed
+            // (the `state` field stores the selected `ClauseData`),
+            // while the continuation is already cancelled.
+            // We need to invoke the cancellation handler in this case.
+            if (cur === STATE_COMPLETED) return
+            STATE_CANCELLED
+        }
+        // Read the list of clauses. If the `clauses` field is already `null`,
+        // a concurrent clean-up procedure has already completed, and it is safe to finish.
+        val clauses = this.clauses ?: return
+        // Remove this `select` instance from all the clause object (channels, mutexes, etc.).
+        clauses.forEach { it.dispose() }
+        // We do need to clean all the data to avoid memory leaks.
+        this.internalResult = NO_RESULT
+        this.clauses = null
+    }
+
+    /**
+     * Each `select` clause is internally represented with a [ClauseData] instance.
+      */
+    internal class ClauseData<R>(
+        @JvmField val clauseObject: Any, // the object of this `select` clause: Channel, Mutex, Job, ...
+        private val regFunc: RegistrationFunction,
+        private val processResFunc: ProcessResultFunction,
+        private val param: Any?, // the user-specified param
+        private val block: Any, // the user-specified block, which should be called if this clause becomes selected
+        @JvmField val onCancellationConstructor: OnCancellationConstructor?
+    ) {
+        @JvmField var disposableHandleOrSegment: Any? = null
+        @JvmField var indexInSegment: Int = -1
+
+        /**
+         * Tries to register the specified [select] instance in [clauseObject] and check
+         * whether the registration succeeded or a rendezvous has happened during the registration.
+         * This function returns `true` if this [select] is successfully registered and
+         * is _waiting_ for a rendezvous, or `false` when this clause becomes
+         * selected during registration.
+         *
+         * For example, the [Channel.onReceive] clause registration
+         * on a non-empty channel retrieves the first element and completes
+         * the corresponding [select] via [SelectInstance.selectInRegistrationPhase].
+         */
+        fun tryRegisterAsWaiter(select: SelectImplementation<R>): Boolean {
+            assert { select.inRegistrationPhase || select.isCancelled }
+            assert { select.internalResult === NO_RESULT }
+            regFunc(clauseObject, select, param)
+            return select.internalResult === NO_RESULT
+        }
+
+        /**
+         * Processes the internal result provided via either
+         * [SelectInstance.selectInRegistrationPhase] or
+         * [SelectInstance.trySelect] and returns an argument
+         * for the user-specified [block].
+         *
+         * Importantly, this function may throw an exception
+         * (e.g., when the channel is closed in [Channel.onSend], the
+         * corresponding [ProcessResultFunction] is bound to fail).
+         */
+        fun processResult(result: Any?) = processResFunc(clauseObject, param, result)
+
+        /**
+         * Invokes the user-specified block and returns
+         * the final result of this `select` clause.
+         */
+        @Suppress("UNCHECKED_CAST")
+        suspend fun invokeBlock(argument: Any?): R {
+            val block = block
+            // We distinguish no-argument and 1-argument
+            // lambdas via special markers for the clause
+            // parameters. Specifically, PARAM_CLAUSE_0
+            // is always used with [SelectClause0], which
+            // takes a no-argument lambda.
+            //
+            // TAIL-CALL OPTIMIZATION: we invoke
+            // the `suspend` block at the very end.
+            return if (this.param === PARAM_CLAUSE_0) {
+                block as suspend () -> R
+                block()
             } else {
-                uCont.resumeWith(result)
-            }
-        }
-    }
-
-    // Resumes in dispatched way so that it can be called from an arbitrary context
-    override fun resumeSelectWithException(exception: Throwable) {
-        doResume({ CompletedExceptionally(recoverStackTrace(exception, uCont)) }) {
-            uCont.intercepted().resumeWith(Result.failure(exception))
-        }
-    }
-
-    @PublishedApi
-    internal fun getResult(): Any? {
-        if (!isSelected) initCancellability()
-        var result = _result.value // atomic read
-        if (result === UNDECIDED) {
-            if (_result.compareAndSet(UNDECIDED, COROUTINE_SUSPENDED)) return COROUTINE_SUSPENDED
-            result = _result.value // reread volatile var
-        }
-        when {
-            result === RESUMED -> throw IllegalStateException("Already resumed")
-            result is CompletedExceptionally -> throw result.cause
-            else -> return result // either COROUTINE_SUSPENDED or data
-        }
-    }
-
-    private fun initCancellability() {
-        val parent = context[Job] ?: return
-        val newRegistration = parent.invokeOnCompletion(
-            onCancelling = true, handler = SelectOnCancelling().asHandler)
-        parentHandle = newRegistration
-        // now check our state _after_ registering
-        if (isSelected) newRegistration.dispose()
-    }
-
-    private inner class SelectOnCancelling : JobCancellingNode() {
-        // Note: may be invoked multiple times, but only the first trySelect succeeds anyway
-        override fun invoke(cause: Throwable?) {
-            if (trySelect())
-                resumeSelectWithException(job.getCancellationException())
-        }
-    }
-
-    @PublishedApi
-    internal fun handleBuilderException(e: Throwable) {
-        if (trySelect()) {
-            resumeWithException(e)
-        } else if (e !is CancellationException) {
-            /*
-             * Cannot handle this exception -- builder was already resumed with a different exception,
-             * so treat it as "unhandled exception". But only if  it is not the completion reason
-             *  and it's not the cancellation. Otherwise, in the face of structured concurrency
-             * the same exception will be reported to the global exception handler.
-             */
-            val result = getResult()
-            if (result !is CompletedExceptionally || unwrap(result.cause) !== unwrap(e)) {
-                handleCoroutineException(context, e)
-            }
-        }
-    }
-
-    override val isSelected: Boolean get() = _state.loop { state ->
-        when {
-            state === NOT_SELECTED -> return false
-            state is OpDescriptor -> state.perform(this) // help
-            else -> return true // already selected
-        }
-    }
-
-    override fun disposeOnSelect(handle: DisposableHandle) {
-        val node = DisposeNode(handle)
-        // check-add-check pattern is Ok here since handle.dispose() is safe to be called multiple times
-        if (!isSelected) {
-            addLast(node) // add handle to list
-            // double-check node after adding
-            if (!isSelected) return // all ok - still not selected
-        }
-        // already selected
-        handle.dispose()
-    }
-
-    private fun doAfterSelect() {
-        parentHandle?.dispose()
-        forEach<DisposeNode> {
-            it.handle.dispose()
-        }
-    }
-
-    override fun trySelect(): Boolean {
-        val result = trySelectOther(null)
-        return when {
-            result === RESUME_TOKEN -> true
-            result == null -> false
-            else -> error("Unexpected trySelectIdempotent result $result")
-        }
-    }
-
-    /*
-       Diagram for rendezvous between two select operations:
-
-       +---------+         +------------------------+ state(c)
-       | Channel |         |  SelectBuilderImpl(1)  | -----------------------------------+
-       +---------+         +------------------------+                                    |
-            | queue                   ^                                                  |
-            V                         | select                                           |
-       +---------+  next   +------------------------+  next   +--------------+           |
-       | LLHead  | ------> |  Send/ReceiveSelect(3) | -+----> | NextNode ... |           |
-       +---------+         +------------------------+  |      +--------------+           |
-            ^                              ^           | next(b)     ^                   |
-            |                     affected |           V             |                   |
-            |                          +-----------------+  next     |                   V
-            |                          | PrepareOp(6)    | ----------+           +-----------------+
-            |                          +-----------------+ <-------------------- | PairSelectOp(7) |
-            |                                 | desc                             +-----------------+
-            |                                 V
-            |                  queue   +----------------------+
-            +------------------------- | TryPoll/OfferDesc(5) |
-                                       +----------------------+
-                                     atomicOp |    ^
-                                              V    | desc
-       +----------------------+  impl  +---------------------+
-       | SelectBuilderImpl(2) | <----- |  AtomicSelectOp(4)  |
-       +----------------------+        +---------------------+
-                    | state(a)                   ^
-                    |                            |
-                    +----------------------------+
-
-
-       0. The first select operation SelectBuilderImpl(1) had already registered Send/ReceiveSelect(3) node
-          in the channel.
-       1. The second select operation SelectBuilderImpl(2) is trying to rendezvous calling
-          performAtomicTrySelect(TryPoll/TryOfferDesc).
-       2. A linked pair of AtomicSelectOp(4) and TryPoll/OfferDesc(5) is created to initiate this operation.
-       3. AtomicSelectOp.prepareSelectOp installs a reference to AtomicSelectOp(4) in SelectBuilderImpl(2).state(a)
-          field. STARTING AT THIS MOMENT CONCURRENT HELPERS CAN DISCOVER AND TRY TO HELP PERFORM THIS OPERATION.
-       4. Then TryPoll/OfferDesc.prepare discovers "affectedNode" for this operation as Send/ReceiveSelect(3) and
-          creates PrepareOp(6) that references it. It installs reference to PrepareOp(6) in Send/ReceiveSelect(3).next(b)
-          instead of its original next pointer that was stored in PrepareOp(6).next.
-       5. PrepareOp(6).perform calls TryPoll/OfferDesc(5).onPrepare which validates that PrepareOp(6).affected node
-          is of the correct type and tries to secure ability to resume it by calling affected.tryResumeSend/Receive.
-          Note, that different PrepareOp instances can be repeatedly created for different candidate nodes. If node is
-          found to be be resumed/selected, then REMOVE_PREPARED result causes Send/ReceiveSelect(3).next change to
-          undone and new PrepareOp is created with a different candidate node. Different concurrent helpers may end up
-          creating different PrepareOp instances, so it is important that they ultimately come to consensus about
-          node on which perform operation upon.
-       6. Send/ReceiveSelect(3).affected.tryResumeSend/Receive forwards this call to SelectBuilderImpl.trySelectOther,
-          passing it a reference to PrepareOp(6) as an indication of the other select instance rendezvous.
-       7. SelectBuilderImpl.trySelectOther creates PairSelectOp(7) and installs it as SelectBuilderImpl(1).state(c)
-          to secure the state of the first builder and commit ability to make it selected for this operation.
-       8. NOW THE RENDEZVOUS IS FULLY PREPARED via descriptors installed at
-          - SelectBuilderImpl(2).state(a)
-          - Send/ReceiveSelect(3).next(b)
-          - SelectBuilderImpl(1).state(c)
-          Any concurrent operation that is trying to access any of the select instances or the queue is going to help.
-          Any helper that helps AtomicSelectOp(4) calls TryPoll/OfferDesc(5).prepare which tries to determine
-          "affectedNode" but is bound to discover the same Send/ReceiveSelect(3) node that cannot become
-          non-first node until this operation completes (there are no insertions to the head of the queue!)
-          We have not yet decided to complete this operation, but we cannot ever decide to complete this operation
-          on any other node but Send/ReceiveSelect(3), so it is now safe to perform the next step.
-       9. PairSelectOp(7).perform calls PrepareOp(6).finishPrepare which copies PrepareOp(6).affected and PrepareOp(6).next
-          to the corresponding TryPoll/OfferDesc(5) fields.
-       10. PairSelectOp(7).perform calls AtomicSelect(4).decide to reach consensus on successful completion of this
-          operation. This consensus is important in light of dead-lock resolution algorithm, because a stale helper
-          could have stumbled upon a higher-numbered atomic operation and had decided to abort this atomic operation,
-          reaching decision on RETRY_ATOMIC status of it. We cannot proceed with completion in this case and must abort,
-          all objects including AtomicSelectOp(4) will be dropped, reverting all the three updated pointers to
-          their original values and atomic operation will retry from scratch.
-       11. NOW WITH SUCCESSFUL UPDATE OF AtomicSelectOp(4).consensus to null THE RENDEZVOUS IS COMMITTED. The rest
-           of the code proceeds to update:
-           - SelectBuilderImpl(1).state to TryPoll/OfferDesc(5) so that late helpers would know that we have
-             already successfully completed rendezvous.
-           - Send/ReceiveSelect(3).next to Removed(next) so that this node becomes marked as removed.
-           - SelectBuilderImpl(2).state to null to mark this select instance as selected.
-
-       Note, that very late helper may try to perform this AtomicSelectOp(4) when it is already completed.
-       It can proceed as far as finding affected node, creating PrepareOp, installing this new PrepareOp into the
-       node's next pointer, but PrepareOp.perform checks that AtomicSelectOp(4) is already decided and undoes all
-       the preparations.
-     */
-
-    // it is just like plain trySelect, but support idempotent start
-    // Returns RESUME_TOKEN | RETRY_ATOMIC | null (when already selected)
-    override fun trySelectOther(otherOp: PrepareOp?): Any? {
-        _state.loop { state -> // lock-free loop on state
-            when {
-                // Found initial state (not selected yet) -- try to make it selected
-                state === NOT_SELECTED -> {
-                    if (otherOp == null) {
-                        // regular trySelect -- just mark as select
-                        if (!_state.compareAndSet(NOT_SELECTED, null)) return@loop
-                    } else {
-                        // Rendezvous with another select instance -- install PairSelectOp
-                        val pairSelectOp = PairSelectOp(otherOp)
-                        if (!_state.compareAndSet(NOT_SELECTED, pairSelectOp)) return@loop
-                        val decision = pairSelectOp.perform(this)
-                        if (decision !== null) return decision
-                    }
-                    doAfterSelect()
-                    return RESUME_TOKEN
-                }
-                state is OpDescriptor -> { // state is either AtomicSelectOp or PairSelectOp
-                    // Found descriptor of ongoing operation while working in the context of other select operation
-                    if (otherOp != null) {
-                        val otherAtomicOp = otherOp.atomicOp
-                        when {
-                            // It is the same select instance
-                            otherAtomicOp is AtomicSelectOp && otherAtomicOp.impl === this -> {
-                                /*
-                                 * We cannot do state.perform(this) here and "help" it since it is the same
-                                 * select and we'll get StackOverflowError.
-                                 * See https://github.com/Kotlin/kotlinx.coroutines/issues/1411
-                                 * We cannot support this because select { ... } is an expression and its clauses
-                                 * have a result that shall be returned from the select.
-                                 */
-                                error("Cannot use matching select clauses on the same object")
-                            }
-                            // The other select (that is trying to proceed) had started earlier
-                            otherAtomicOp.isEarlierThan(state) -> {
-                                /**
-                                 * Abort to prevent deadlock by returning a failure to it.
-                                 * See https://github.com/Kotlin/kotlinx.coroutines/issues/504
-                                 * The other select operation will receive a failure and will restart itself with a
-                                 * larger sequence number. This guarantees obstruction-freedom of this algorithm.
-                                 */
-                                return RETRY_ATOMIC
-                            }
-                        }
-                    }
-                    // Otherwise (not a special descriptor)
-                    state.perform(this) // help it
-                }
-                // otherwise -- already selected
-                otherOp == null -> return null // already selected
-                state === otherOp.desc -> return RESUME_TOKEN // was selected with this marker
-                else -> return null // selected with different marker
-            }
-        }
-    }
-
-    // The very last step of rendezvous between two select operations
-    private class PairSelectOp(
-        @JvmField val otherOp: PrepareOp
-    ) : OpDescriptor() {
-        override fun perform(affected: Any?): Any? {
-            val impl = affected as SelectBuilderImpl<*>
-            // here we are definitely not going to RETRY_ATOMIC, so
-            // we must finish preparation of another operation before attempting to reach decision to select
-            otherOp.finishPrepare()
-            val decision = otherOp.atomicOp.decide(null) // try decide for success of operation
-            val update: Any = if (decision == null) otherOp.desc else NOT_SELECTED
-            impl._state.compareAndSet(this, update)
-            return decision
-        }
-
-        override val atomicOp: AtomicOp<*>
-            get() = otherOp.atomicOp
-    }
-
-    override fun performAtomicTrySelect(desc: AtomicDesc): Any? =
-        AtomicSelectOp(this, desc).perform(null)
-
-    override fun toString(): String = "SelectInstance(state=${_state.value}, result=${_result.value})"
-
-    private class AtomicSelectOp(
-        @JvmField val impl: SelectBuilderImpl<*>,
-        @JvmField val desc: AtomicDesc
-    ) : AtomicOp<Any?>() {
-        // all select operations are totally ordered by their creating time using selectOpSequenceNumber
-        override val opSequence = selectOpSequenceNumber.next()
-
-        init {
-            desc.atomicOp = this
-        }
-
-        override fun prepare(affected: Any?): Any? {
-            // only originator of operation makes preparation move of installing descriptor into this selector's state
-            // helpers should never do it, or risk ruining progress when they come late
-            if (affected == null) {
-                // we are originator (affected reference is not null if helping)
-                prepareSelectOp()?.let { return it }
-            }
-            try {
-                return desc.prepare(this)
-            } catch (e: Throwable) {
-                // undo prepareSelectedOp on crash (for example if IllegalStateException is thrown)
-                if (affected == null) undoPrepare()
-                throw e
+                block as suspend (Any?) -> R
+                block(argument)
             }
         }
 
-        override fun complete(affected: Any?, failure: Any?) {
-            completeSelect(failure)
-            desc.complete(this, failure)
-        }
-
-        private fun prepareSelectOp(): Any? {
-            impl._state.loop { state ->
-                when {
-                    state === this -> return null // already in progress
-                    state is OpDescriptor -> state.perform(impl) // help
-                    state === NOT_SELECTED -> {
-                        if (impl._state.compareAndSet(NOT_SELECTED, this))
-                            return null // success
-                    }
-                    else -> return ALREADY_SELECTED
+        fun dispose() {
+            with(disposableHandleOrSegment) {
+                if (this is Segment<*>) {
+                    this.onCancellation(indexInSegment, null)
+                } else {
+                    (this as? DisposableHandle)?.dispose()
                 }
             }
         }
 
-        // reverts the change done by prepareSelectedOp
-        private fun undoPrepare() {
-            impl._state.compareAndSet(this, NOT_SELECTED)
-        }
-
-        private fun completeSelect(failure: Any?) {
-            val selectSuccess = failure == null
-            val update = if (selectSuccess) null else NOT_SELECTED
-            if (impl._state.compareAndSet(this, update)) {
-                if (selectSuccess)
-                    impl.doAfterSelect()
-            }
-        }
-
-        override fun toString(): String = "AtomicSelectOp(sequence=$opSequence)"
+        fun createOnCancellationAction(select: SelectInstance<*>, internalResult: Any?) =
+            onCancellationConstructor?.invoke(select, param, internalResult)
     }
-
-    override fun SelectClause0.invoke(block: suspend () -> R) {
-        registerSelectClause0(this@SelectBuilderImpl, block)
-    }
-
-    override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) {
-        registerSelectClause1(this@SelectBuilderImpl, block)
-    }
-
-    override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) {
-        registerSelectClause2(this@SelectBuilderImpl, param, block)
-    }
-
-    override fun onTimeout(timeMillis: Long, block: suspend () -> R) {
-        if (timeMillis <= 0L) {
-            if (trySelect())
-                block.startCoroutineUnintercepted(completion)
-            return
-        }
-        val action = Runnable {
-            // todo: we could have replaced startCoroutine with startCoroutineUndispatched
-            // But we need a way to know that Delay.invokeOnTimeout had used the right thread
-            if (trySelect())
-                block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
-        }
-        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action, context))
-    }
-
-    private class DisposeNode(
-        @JvmField val handle: DisposableHandle
-    ) : LockFreeLinkedListNode()
 }
+
+private fun CancellableContinuation<Unit>.tryResume(onCancellation: ((cause: Throwable) -> Unit)?): Boolean {
+    val token = tryResume(Unit, null, onCancellation) ?: return false
+    completeResume(token)
+    return true
+}
+
+// trySelectInternal(..) results.
+private const val TRY_SELECT_SUCCESSFUL = 0
+private const val TRY_SELECT_REREGISTER = 1
+private const val TRY_SELECT_CANCELLED = 2
+private const val TRY_SELECT_ALREADY_SELECTED = 3
+// trySelectDetailed(..) results.
+internal enum class TrySelectDetailedResult {
+    SUCCESSFUL, REREGISTER, CANCELLED, ALREADY_SELECTED
+}
+private fun TrySelectDetailedResult(trySelectInternalResult: Int): TrySelectDetailedResult = when(trySelectInternalResult) {
+    TRY_SELECT_SUCCESSFUL -> SUCCESSFUL
+    TRY_SELECT_REREGISTER -> REREGISTER
+    TRY_SELECT_CANCELLED -> CANCELLED
+    TRY_SELECT_ALREADY_SELECTED -> ALREADY_SELECTED
+    else -> error("Unexpected internal result: $trySelectInternalResult")
+}
+
+// Markers for REGISTRATION, COMPLETED, and CANCELLED states.
+private val STATE_REG = Symbol("STATE_REG")
+private val STATE_COMPLETED = Symbol("STATE_COMPLETED")
+private val STATE_CANCELLED = Symbol("STATE_CANCELLED")
+// As the selection result is nullable, we use this special
+// marker for the absence of result.
+private val NO_RESULT = Symbol("NO_RESULT")
+// We use this marker parameter objects to distinguish
+// SelectClause[0,1,2] and invoke the user-specified block correctly.
+internal val PARAM_CLAUSE_0 = Symbol("PARAM_CLAUSE_0")

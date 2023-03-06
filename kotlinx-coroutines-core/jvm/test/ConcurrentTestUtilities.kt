@@ -23,7 +23,7 @@ private object BlackHole {
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias SuppressSupportingThrowable = Throwable
 
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "unused")
 actual fun Throwable.printStackTrace() = printStackTrace()
 
 actual fun currentThreadName(): String = Thread.currentThread().name

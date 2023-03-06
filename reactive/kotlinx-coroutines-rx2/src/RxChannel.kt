@@ -8,7 +8,6 @@ import io.reactivex.*
 import io.reactivex.disposables.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*
 
@@ -46,12 +45,12 @@ internal fun <T> ObservableSource<T>.toChannel(): ReceiveChannel<T> {
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(null), Observer<T>, MaybeObserver<T>
+    BufferedChannel<T>(capacity = Channel.UNLIMITED), Observer<T>, MaybeObserver<T>
 {
     private val _subscription = atomic<Disposable?>(null)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
+    override fun onClosedIdempotent() {
         _subscription.getAndSet(null)?.dispose() // dispose exactly once
     }
 
@@ -60,12 +59,12 @@ private class SubscriptionChannel<T> :
         _subscription.value = sub
     }
 
-    override fun onSuccess(t: T) {
+    override fun onSuccess(t: T & Any) {
         trySend(t)
         close(cause = null)
     }
 
-    override fun onNext(t: T) {
+    override fun onNext(t: T & Any) {
         trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
@@ -80,7 +79,7 @@ private class SubscriptionChannel<T> :
 
 /** @suppress */
 @Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.HIDDEN) // ERROR in 1.4.0, HIDDEN in 1.6.0
-public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
+public fun <T> ObservableSource<T & Any>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
@@ -88,7 +87,7 @@ public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
 
 /** @suppress */
 @Deprecated(message = "Deprecated in the favour of Flow", level = DeprecationLevel.HIDDEN) // ERROR in 1.4.0, HIDDEN in 1.6.0
-public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
+public fun <T> MaybeSource<T & Any>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel

@@ -130,7 +130,7 @@ Completed 100000 actions in
 Counter =
 -->
 
-This code works slower, but we still don't get "Counter = 100000" at the end, because volatile variables guarantee
+This code works slower, but we still don't always get "Counter = 100000" at the end, because volatile variables guarantee
 linearizable (this is a technical term for "atomic") reads and writes to the corresponding variable, but
 do not provide atomicity of larger actions (increment in our case).
 

@@ -107,6 +107,8 @@ on Kotlin/JS. The main differences are the following:
 
 * **The calls to `delay` are automatically skipped**, preserving the relative execution order of the tasks. This way,
   it's possible to make tests finish more-or-less immediately.
+* **The execution times out after 10 seconds**, cancelling the test coroutine to prevent tests from hanging forever 
+  and eating up the CI resources.
 * **Controlling the virtual time**: in case just skipping delays is not sufficient, it's possible to more carefully
   guide the execution, advancing the virtual time by a duration, draining the queue of the awaiting tasks, or running
   the tasks scheduled at the present moment.
@@ -114,6 +116,31 @@ on Kotlin/JS. The main differences are the following:
 * **Waiting for asynchronous callbacks**.
   Sometimes, especially when working with third-party code, it's impossible to mock all the dispatchers in use.
   [runTest] will handle the situations where some code runs in dispatchers not integrated with the test module.
+
+## Timeout
+
+Test automatically time out after 10 seconds. For example, this test will fail with a timeout exception:
+
+```kotlin
+@Test
+fun testHanging() = runTest {
+    CompletableDeferred<Unit>().await() // will hang forever
+}
+```
+
+In case the test is expected to take longer than 10 seconds, the timeout can be increased by passing the `timeout`
+parameter:
+
+```kotlin
+@Test
+fun testTakingALongTime() = runTest(timeout = 30.seconds) {
+    val result = withContext(Dispatchers.Default) {
+        delay(20.seconds) // this delay is not in the test dispatcher and will not be skipped
+        3
+    }
+    assertEquals(3, result)
+}
+```
 
 ## Delay-skipping
 
@@ -163,30 +190,35 @@ fun testWithMultipleDelays() = runTest {
 
 ## Controlling the virtual time
 
-Inside [runTest], the following operations are supported:
+Inside [runTest], the execution is scheduled by [TestCoroutineScheduler], which is a virtual time scheduler.
+The scheduler has several special methods that allow controlling the virtual time:
 * `currentTime` gets the current virtual time.
 * `runCurrent()` runs the tasks that are scheduled at this point of virtual time.
 * `advanceUntilIdle()` runs all enqueued tasks until there are no more.
 * `advanceTimeBy(timeDelta)` runs the enqueued tasks until the current virtual time advances by `timeDelta`.
+* `timeSource` returns a `TimeSource` that uses the virtual time.
 
 ```kotlin
 @Test
 fun testFoo() = runTest {
     launch {
-        println(1)   // executes during runCurrent()
-        delay(1_000) // suspends until time is advanced by at least 1_000
-        println(2)   // executes during advanceTimeBy(2_000)
-        delay(500)   // suspends until the time is advanced by another 500 ms
-        println(3)   // also executes during advanceTimeBy(2_000)
-        delay(5_000) // will suspend by another 4_500 ms
-        println(4)   // executes during advanceUntilIdle()
+        val workDuration = testScheduler.timeSource.measureTime {
+            println(1)   // executes during runCurrent()
+            delay(1_000) // suspends until time is advanced by at least 1_000
+            println(2)   // executes during advanceTimeBy(2_000)
+            delay(500)   // suspends until the time is advanced by another 500 ms
+            println(3)   // also executes during advanceTimeBy(2_000)
+            delay(5_000) // will suspend by another 4_500 ms
+            println(4)   // executes during advanceUntilIdle()
+        }
+        assertEquals(6500.milliseconds, workDuration) // the work took 6_500 ms of virtual time
     }
     // the child coroutine has not run yet
-    runCurrent()
+    testScheduler.runCurrent()
     // the child coroutine has called println(1), and is suspended on delay(1_000)
-    advanceTimeBy(2_000) // progress time, this will cause two calls to `delay` to resume
+    testScheduler.advanceTimeBy(2.seconds) // progress time, this will cause two calls to `delay` to resume
     // the child coroutine has called println(2) and println(3) and suspends for another 4_500 virtual milliseconds
-    advanceUntilIdle() // will run the child coroutine to completion
+    testScheduler.advanceUntilIdle() // will run the child coroutine to completion
     assertEquals(6500, currentTime) // the child coroutine finished at virtual time of 6_500 milliseconds
 }
 ```
@@ -262,6 +294,32 @@ fun tearDown() {
 @Test
 fun testSubject() = scope.runTest {
     // the receiver here is `testScope`
+}
+```
+
+## Running background work
+
+Sometimes, the fact that [runTest] waits for all the coroutines to finish is undesired.
+For example, the system under test may need to receive data from coroutines that always run in the background.
+Emulating such coroutines by launching them from the test body is not sufficient, because [runTest] will wait for them
+to finish, which they never typically do.
+
+For these cases, there is a special coroutine scope: [TestScope.backgroundScope].
+Coroutines launched in it will be cancelled at the end of the test.
+
+```kotlin
+@Test
+fun testExampleBackgroundJob() = runTest {
+  val channel = Channel<Int>()
+  backgroundScope.launch {
+    var i = 0
+    while (true) {
+      channel.send(i++)
+    }
+  }
+  repeat(100) {
+    assertEquals(it, channel.receive())
+  }
 }
 ```
 
@@ -357,7 +415,7 @@ either dependency injection, a service locator, or a default parameter, if it is
 
 ### Status of the API
 
-This API is experimental and it is may change before migrating out of experimental (while it is marked as
+Many parts of the API is experimental, and it is may change before migrating out of experimental (while it is marked as
 [`@ExperimentalCoroutinesApi`][ExperimentalCoroutinesApi]).
 Changes during experimental may have deprecation applied when possible, but it is not
 advised to use the API in stable code before it leaves experimental due to possible breaking changes.
@@ -388,6 +446,7 @@ If you have any suggestions for improvements to this experimental API please sha
 [setMain]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/set-main.html
 [TestScope.testScheduler]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-scope/test-scheduler.html
 [TestScope.runTest]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-test.html
+[TestScope.backgroundScope]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-scope/background-scope.html
 [runCurrent]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-current.html
 
 <!--- END -->

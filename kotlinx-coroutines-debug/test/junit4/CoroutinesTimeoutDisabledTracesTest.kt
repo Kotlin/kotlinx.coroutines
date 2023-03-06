@@ -22,7 +22,7 @@ class CoroutinesTimeoutDisabledTracesTest : TestBase(disableOutCheck = true) {
                 "at kotlinx.coroutines.debug.junit4.CoroutinesTimeoutDisabledTracesTest.hangForever",
                 "at kotlinx.coroutines.debug.junit4.CoroutinesTimeoutDisabledTracesTest.waitForHangJob"
             ),
-            notExpectedOutParts = listOf("Coroutine creation stacktrace"),
+            notExpectedOutParts = listOf("_COROUTINE._CREATION._"),
             error = TestTimedOutException::class.java
         )
     )

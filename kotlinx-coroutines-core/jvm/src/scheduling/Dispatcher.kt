@@ -14,6 +14,14 @@ internal object DefaultScheduler : SchedulerCoroutineDispatcher(
     CORE_POOL_SIZE, MAX_POOL_SIZE,
     IDLE_WORKER_KEEP_ALIVE_NS, DEFAULT_SCHEDULER_NAME
 ) {
+
+    @ExperimentalCoroutinesApi
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        if (parallelism >= CORE_POOL_SIZE) return this
+        return super.limitedParallelism(parallelism)
+    }
+
     // Shuts down the dispatcher, used only by Dispatchers.shutdown()
     internal fun shutdown() {
         super.close()
@@ -37,6 +45,13 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         DefaultScheduler.dispatchWithContext(block, BlockingContext, false)
+    }
+
+    @ExperimentalCoroutinesApi
+    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        if (parallelism >= MAX_POOL_SIZE) return this
+        return super.limitedParallelism(parallelism)
     }
 }
 
