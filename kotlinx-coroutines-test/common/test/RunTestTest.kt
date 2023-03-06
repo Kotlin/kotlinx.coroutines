@@ -215,7 +215,7 @@ class RunTestTest {
             }
         }
     }) {
-        runTest(timeout = 1.milliseconds) {
+        runTest(timeout = 100.milliseconds) {
             coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, TestException("A"))
             withContext(Dispatchers.Default) {
                 delay(10000)
