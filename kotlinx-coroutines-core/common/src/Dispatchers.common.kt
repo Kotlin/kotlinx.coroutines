@@ -57,7 +57,7 @@ public expect object Dispatchers {
      * ```
      * withContext(Dispatchers.Unconfined) {
      *    println(1)
-     *    withContext(Dispatchers.Unconfined) { // Nested unconfined
+     *    launch(Dispatchers.Unconfined) { // Nested unconfined
      *        println(2)
      *    }
      *    println(3)
@@ -65,7 +65,7 @@ public expect object Dispatchers {
      * println("Done")
      * ```
      * Can print both "1 2 3" and "1 3 2". This is an implementation detail that can be changed.
-     * However, it is guaranteed that "Done" will be printed only when both `withContext` calls are completed.
+     * However, it is guaranteed that "Done" will only be printed once the code in both `withContext` and `launch` completes.
      *
      * If you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
      * but still want to execute it in the current call-frame until its first suspension, you can use

@@ -30,7 +30,7 @@ import kotlin.jvm.*
 public fun <E> SendChannel<E>.trySendBlocking(element: E): ChannelResult<Unit> {
     /*
      * Sent successfully -- bail out.
-     * But failure may indicate either that the channel it full or that
+     * But failure may indicate either that the channel is full or that
      * it is close. Go to slow path on failure to simplify the successful path and
      * to materialize default exception.
      */
