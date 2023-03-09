@@ -9,27 +9,14 @@ import kotlin.test.*
 
 public fun String.trimStackTrace(): String =
     trimIndent()
+        // Remove source line
         .replace(Regex(":[0-9]+"), "")
+        // Remove coroutine id
         .replace(Regex("#[0-9]+"), "")
+        // Remove trace prefix: "java.base@11.0.16.1/java.lang.Thread.sleep" => "java.lang.Thread.sleep"
         .replace(Regex("(?<=\tat )[^\n]*/"), "")
         .replace(Regex("\t"), "")
         .replace("sun.misc.Unsafe.", "jdk.internal.misc.Unsafe.") // JDK8->JDK11
-        .applyBackspace()
-
-public fun String.applyBackspace(): String {
-    val array = toCharArray()
-    val stack = CharArray(array.size)
-    var stackSize = -1
-    for (c in array) {
-        if (c != '\b') {
-            stack[++stackSize] = c
-        } else {
-            --stackSize
-        }
-    }
-
-    return String(stack, 0, stackSize + 1)
-}
 
 public fun verifyStackTrace(e: Throwable, traces: List<String>) {
     val stacktrace = toStackTrace(e)
@@ -74,7 +61,7 @@ public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null, f
  *     `$$BlockHound$$_` prepended at the last component.
  */
 private fun cleanBlockHoundTraces(frames: List<String>): List<String> {
-    var result = mutableListOf<String>()
+    val result = mutableListOf<String>()
     val blockHoundSubstr = "\$\$BlockHound\$\$_"
     var i = 0
     while (i < frames.size) {
@@ -87,36 +74,128 @@ private fun cleanBlockHoundTraces(frames: List<String>): List<String> {
     return result
 }
 
-public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
+private data class CoroutineDump(
+    val header: CoroutineDumpHeader,
+    val coroutineStackTrace: List<String>,
+    val threadStackTrace: List<String>,
+    val originDump: String,
+    val originHeader: String,
+) {
+    companion object {
+        private val COROUTINE_CREATION_FRAME_REGEX =
+            "at _COROUTINE\\._CREATION\\._\\(.*\\)".toRegex()
+
+        fun parse(dump: String, traceCleaner: ((List<String>) -> List<String>)? = null): CoroutineDump {
+            val lines = dump
+                .trimStackTrace()
+                .split("\n")
+            val header = CoroutineDumpHeader.parse(lines[0])
+            val traceLines = lines.slice(1 until lines.size)
+            val cleanedTraceLines = if (traceCleaner != null) {
+                traceCleaner(traceLines)
+            } else {
+                traceLines
+            }
+            val coroutineStackTrace = mutableListOf<String>()
+            val threadStackTrace = mutableListOf<String>()
+            var trace = coroutineStackTrace
+            for (line in cleanedTraceLines) {
+                if (line.isEmpty()) {
+                    continue
+                }
+                if (line.matches(COROUTINE_CREATION_FRAME_REGEX)) {
+                    require(trace !== threadStackTrace) {
+                        "Found more than one coroutine creation frame"
+                    }
+                    trace = threadStackTrace
+                    continue
+                }
+                trace.add(line)
+            }
+            return CoroutineDump(header, coroutineStackTrace, threadStackTrace, dump, lines[0])
+        }
+    }
+
+    fun verify(expected: CoroutineDump) {
+        assertEquals(
+            expected.header, header,
+            "Coroutine stacktrace headers are not matched:\n\t- ${expected.originHeader}\n\t+ ${originHeader}\n"
+        )
+        verifyStackTrace("coroutine stack", coroutineStackTrace, expected.coroutineStackTrace)
+        verifyStackTrace("thread stack", threadStackTrace, expected.threadStackTrace)
+    }
+
+    private fun verifyStackTrace(traceName: String, actualStackTrace: List<String>, expectedStackTrace: List<String>) {
+        // It is possible there are more stack frames in a dump than we check
+        for ((ix, expectedLine) in expectedStackTrace.withIndex()) {
+            val actualLine = actualStackTrace[ix]
+            assertEquals(
+                expectedLine, actualLine,
+                "Following lines from $traceName are not matched:\n\t- ${expectedLine}\n\t+ ${actualLine}\nActual dump:\n$originDump\n\n"
+            )
+        }
+    }
+}
+
+private data class CoroutineDumpHeader(
+    val name: String?,
+    val className: String,
+    val state: String,
+) {
+    companion object {
+        /**
+         * Parses following strings:
+         *
+         * - Coroutine "coroutine#10":DeferredCoroutine{Active}@66d87651, state: RUNNING
+         * - Coroutine DeferredCoroutine{Active}@66d87651, state: RUNNING
+         *
+         * into:
+         *
+         * - `CoroutineDumpHeader(name = "coroutine", className = "DeferredCoroutine", state = "RUNNING")`
+         * - `CoroutineDumpHeader(name = null, className = "DeferredCoroutine", state = "RUNNING")`
+         */
+        fun parse(header: String): CoroutineDumpHeader {
+            val (identFull, stateFull) = header.split(", ", limit = 2)
+            val nameAndClassName = identFull.removePrefix("Coroutine ").split('@', limit = 2)[0]
+            val (name, className) = nameAndClassName.split(':', limit = 2).let { parts ->
+                val (quotedName, classNameWithState) = if (parts.size == 1) {
+                    null to parts[0]
+                } else {
+                    parts[0] to parts[1]
+                }
+                val name = quotedName?.removeSurrounding("\"")?.split('#', limit = 2)?.get(0)
+                val className = classNameWithState.replace("\\{.*\\}".toRegex(), "")
+                name to className
+            }
+            val state = stateFull.removePrefix("state: ")
+            return CoroutineDumpHeader(name, className, state)
+        }
+    }
+}
+
+public fun verifyDump(vararg expectedTraces: String, ignoredCoroutine: String? = null) {
     val baos = ByteArrayOutputStream()
     DebugProbes.dumpCoroutines(PrintStream(baos))
     val wholeDump = baos.toString()
-    val trace = wholeDump.split("\n\n")
-    if (traces.isEmpty()) {
-        val filtered = trace.filter { ignoredCoroutine == null || !it.contains(ignoredCoroutine) }
-        assertEquals(1, filtered.count())
-        assertTrue(filtered[0].startsWith("Coroutines dump"))
-        return
-    }
-    // Drop "Coroutine dump" line
-    trace.withIndex().drop(1).forEach { (index, value) ->
-        if (ignoredCoroutine != null && value.contains(ignoredCoroutine)) {
-            return@forEach
-        }
+    val traces = wholeDump.split("\n\n")
+    assertTrue(traces[0].startsWith("Coroutines dump"))
 
-        val expected = traces[index - 1].applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
-        val actual = value.applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
-        assertEquals(expected.size, actual.size, "Creation stacktrace should be part of the expected input. Whole dump:\n$wholeDump")
-
-        expected.withIndex().forEach { (index, trace) ->
-            val actualTrace = actual[index].trimStackTrace().sanitizeAddresses()
-            val expectedTrace = trace.trimStackTrace().sanitizeAddresses()
-            val actualLines = cleanBlockHoundTraces(actualTrace.split("\n"))
-            val expectedLines = expectedTrace.split("\n")
-            for (i in expectedLines.indices) {
-                assertEquals(expectedLines[i], actualLines[i], "Whole dump:\n$wholeDump")
+    val dumps = traces
+        // Drop "Coroutine dump" line
+        .drop(1)
+        // Parse dumps and filter out ignored coroutines
+        .mapNotNull { trace ->
+            val dump = CoroutineDump.parse(trace, traceCleaner = ::cleanBlockHoundTraces)
+            if (dump.header.className == ignoredCoroutine) {
+                null
+            } else {
+                dump
             }
         }
+
+    assertEquals(expectedTraces.size, dumps.size)
+    dumps.zip(expectedTraces.map(CoroutineDump::parse)).forEach { (dump, expectedDump) ->
+        dump.verify(expectedDump)
     }
 }
 
@@ -133,11 +212,4 @@ public fun verifyPartialDump(createdCoroutinesCount: Int, vararg frames: String)
 
     assertEquals(createdCoroutinesCount, DebugProbes.dumpCoroutinesInfo().size)
     assertTrue(matches)
-}
-
-private fun String.sanitizeAddresses(): String {
-    val index = indexOf("coroutine\"")
-    val next = indexOf(',', index)
-    if (index == -1 || next == -1) return this
-    return substring(0, index) + substring(next, length)
 }

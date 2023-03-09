@@ -328,15 +328,22 @@ public suspend inline fun <T> suspendCancellableCoroutine(
  * [CancellableContinuationImpl] is reused.
  */
 internal suspend inline fun <T> suspendCancellableCoroutineReusable(
-    crossinline block: (CancellableContinuation<T>) -> Unit
+    crossinline block: (CancellableContinuationImpl<T>) -> Unit
 ): T = suspendCoroutineUninterceptedOrReturn { uCont ->
     val cancellable = getOrCreateCancellableContinuation(uCont.intercepted())
-    block(cancellable)
+    try {
+        block(cancellable)
+    } catch (e: Throwable) {
+        // Here we catch any unexpected exception from user-supplied block (e.g. invariant violation)
+        // and release claimed continuation in order to leave it in a reasonable state (see #3613)
+        cancellable.releaseClaimedReusableContinuation()
+        throw e
+    }
     cancellable.getResult()
 }
 
 internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): CancellableContinuationImpl<T> {
-    // If used outside of our dispatcher
+    // If used outside our dispatcher
     if (delegate !is DispatchedContinuation<T>) {
         return CancellableContinuationImpl(delegate, MODE_CANCELLABLE)
     }
@@ -359,13 +366,6 @@ internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): 
 }
 
 /**
- * Removes the specified [node] on cancellation. This function assumes that this node is already
- * removed on successful resume and does not try to remove it if the continuation is cancelled during dispatch.
- */
-internal fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode) =
-    invokeOnCancellation(handler = RemoveOnCancel(node).asHandler)
-
-/**
  * Disposes the specified [handle] when this continuation is cancelled.
  *
  * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created):
@@ -378,13 +378,6 @@ internal fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinke
 @InternalCoroutinesApi
 public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle): Unit =
     invokeOnCancellation(handler = DisposeOnCancel(handle).asHandler)
-
-// --------------- implementation details ---------------
-
-private class RemoveOnCancel(private val node: LockFreeLinkedListNode) : BeforeResumeCancelHandler() {
-    override fun invoke(cause: Throwable?) { node.remove() }
-    override fun toString() = "RemoveOnCancel[$node]"
-}
 
 private class DisposeOnCancel(private val handle: DisposableHandle) : CancelHandler() {
     override fun invoke(cause: Throwable?) = handle.dispose()

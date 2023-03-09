@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION_ERROR")
 
 package kotlinx.coroutines.test
 
@@ -21,7 +21,7 @@ import kotlinx.coroutines.*
 @ExperimentalCoroutinesApi
 @Deprecated(
     "Use `TestCoroutineScheduler` to control virtual time.",
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.ERROR
 )
 // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
 public interface DelayController {
@@ -111,7 +111,7 @@ public interface DelayController {
      */
     @Deprecated(
         "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public suspend fun pauseDispatcher(block: suspend () -> Unit)
@@ -124,7 +124,7 @@ public interface DelayController {
      */
     @Deprecated(
         "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public fun pauseDispatcher()
@@ -138,7 +138,7 @@ public interface DelayController {
      */
     @Deprecated(
         "Please use a dispatcher that is paused by default, like `StandardTestDispatcher`.",
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     public fun resumeDispatcher()
@@ -151,7 +151,7 @@ internal interface SchedulerAsDelayController : DelayController {
     @Deprecated(
         "This property delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
         ReplaceWith("this.scheduler.currentTime"),
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     override val currentTime: Long
@@ -162,7 +162,7 @@ internal interface SchedulerAsDelayController : DelayController {
     @Deprecated(
         "This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
         ReplaceWith("this.scheduler.apply { advanceTimeBy(delayTimeMillis); runCurrent() }"),
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     override fun advanceTimeBy(delayTimeMillis: Long): Long {
@@ -176,7 +176,7 @@ internal interface SchedulerAsDelayController : DelayController {
     @Deprecated(
         "This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
         ReplaceWith("this.scheduler.advanceUntilIdle()"),
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     override fun advanceUntilIdle(): Long {
@@ -189,7 +189,7 @@ internal interface SchedulerAsDelayController : DelayController {
     @Deprecated(
         "This function delegates to the test scheduler, which may cause confusing behavior unless made explicit.",
         ReplaceWith("this.scheduler.runCurrent()"),
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     // Since 1.6.0, ERROR in 1.7.0 and removed as experimental in 1.8.0
     override fun runCurrent(): Unit = scheduler.runCurrent()

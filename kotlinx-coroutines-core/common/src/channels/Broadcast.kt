@@ -2,6 +2,8 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("DEPRECATION")
+
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
@@ -16,7 +18,7 @@ import kotlin.coroutines.intrinsics.*
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter:
- * when `capacity` is positive (1 by default), but less than [UNLIMITED] -- uses `ArrayBroadcastChannel` with a buffer of given capacity,
+ * when `capacity` is positive (1 by default), but less than [UNLIMITED] -- uses [BroadcastChannel] with a buffer of given capacity,
  * when `capacity` is [CONFLATED] -- uses [ConflatedBroadcastChannel] that conflates back-to-back sends;
  *   Note that resulting channel behaves like [ConflatedBroadcastChannel] but is not an instance of [ConflatedBroadcastChannel].
  *   otherwise -- throws [IllegalArgumentException].
@@ -35,22 +37,23 @@ import kotlin.coroutines.intrinsics.*
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
  * the broadcasting coroutine in hard-to-specify ways.
  *
- * **Note: This API is obsolete since 1.5.0.** It will be deprecated with warning in 1.6.0
- * and with error in 1.7.0. It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn]
- * operator.
+ * **Note: This API is obsolete since 1.5.0.** It is deprecated with warning in 1.7.0.
+ * It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn] operator.
  *
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  */
 @ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
 ): BroadcastChannel<E> {
     val scope = GlobalScope + Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> }
+    val channel = this
     // We can run this coroutine in the context that ignores all exceptions, because of `onCompletion = consume()`
     // which passes all exceptions upstream to the source ReceiveChannel
     return scope.broadcast(capacity = capacity, start = start, onCompletion = { cancelConsumed(it) }) {
-        for (e in this@broadcast) {
+        for (e in channel) {
             send(e)
         }
     }
@@ -75,7 +78,7 @@ public fun <E> ReceiveChannel<E>.broadcast(
  * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter:
- * * when `capacity` is positive (1 by default), but less than [UNLIMITED] -- uses `ArrayBroadcastChannel` with a buffer of given capacity,
+ * * when `capacity` is positive (1 by default), but less than [UNLIMITED] -- uses [BroadcastChannel] with a buffer of given capacity,
  * * when `capacity` is [CONFLATED] -- uses [ConflatedBroadcastChannel] that conflates back-to-back sends;
  *   Note that resulting channel behaves like [ConflatedBroadcastChannel] but is not an instance of [ConflatedBroadcastChannel].
  * * otherwise -- throws [IllegalArgumentException].
@@ -97,12 +100,11 @@ public fun <E> ReceiveChannel<E>.broadcast(
  *
  * ### Future replacement
  *
- * This API is obsolete since 1.5.0.
+ * This API is obsolete since 1.5.0 and deprecated with warning since 1.7.0.
  * This function has an inappropriate result type of [BroadcastChannel] which provides
  * [send][BroadcastChannel.send] and [close][BroadcastChannel.close] operations that interfere with
- * the broadcasting coroutine in hard-to-specify ways. It will be deprecated with warning in 1.6.0
- * and with error in 1.7.0. It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn]
- * operator.
+ * the broadcasting coroutine in hard-to-specify ways.
+ * It is replaced with [Flow.shareIn][kotlinx.coroutines.flow.shareIn] operator.
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (1 by default).
@@ -111,6 +113,7 @@ public fun <E> ReceiveChannel<E>.broadcast(
  * @param block the coroutine code.
  */
 @ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public fun <E> CoroutineScope.broadcast(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,

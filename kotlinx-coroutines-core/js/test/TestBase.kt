@@ -138,3 +138,5 @@ public actual open class TestBase actual constructor() {
 
 private fun <T> Promise<T>.finally(block: () -> Unit): Promise<T> =
     then(onFulfilled = { value -> block(); value }, onRejected = { ex -> block(); throw ex })
+
+public actual val isJavaAndWindows: Boolean get() = false

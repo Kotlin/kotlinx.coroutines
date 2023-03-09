@@ -96,12 +96,10 @@ public fun <T> CoroutineScope.async(
 private open class DeferredCoroutine<T>(
     parentContext: CoroutineContext,
     active: Boolean
-) : AbstractCoroutine<T>(parentContext, true, active = active), Deferred<T>, SelectClause1<T> {
+) : AbstractCoroutine<T>(parentContext, true, active = active), Deferred<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T> get() = this
-    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectClause1Internal(select, block)
+    override val onAwait: SelectClause1<T> get() = onAwaitInternal as SelectClause1<T>
 }
 
 private class LazyDeferredCoroutine<T>(
@@ -165,7 +163,7 @@ public suspend fun <T> withContext(
         if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
             val coroutine = UndispatchedCoroutine(newContext, uCont)
             // There are changes in the context, so this thread needs to be updated
-            withCoroutineContext(newContext, null) {
+            withCoroutineContext(coroutine.context, null) {
                 return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
             }
         }

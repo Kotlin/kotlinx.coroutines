@@ -30,6 +30,14 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     private const val message = "NonCancellable can be used only as an argument for 'withContext', direct usages of its API are prohibited"
 
     /**
+     * Always returns `null`.
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @Deprecated(level = DeprecationLevel.WARNING, message = message)
+    override val parent: Job?
+        get() = null
+
+    /**
      * Always returns `true`.
      * @suppress **This an internal API and should not be used from general code.**
      */

@@ -31,35 +31,10 @@ public suspend fun <T> FlowCollector<T>.emitAll(channel: ReceiveChannel<T>): Uni
 
 private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>, consume: Boolean) {
     ensureActive()
-    // Manually inlined "consumeEach" implementation that does not use iterator but works via "receiveCatching".
-    // It has smaller and more efficient spilled state which also allows to implement a manual kludge to
-    // fix retention of the last emitted value.
-    // See https://youtrack.jetbrains.com/issue/KT-16222
-    // See https://github.com/Kotlin/kotlinx.coroutines/issues/1333
     var cause: Throwable? = null
     try {
-        while (true) {
-            // :KLUDGE: This "run" call is resolved to an extension function "run" and forces the size of
-            // spilled state to increase by an additional slot, so there are 4 object local variables spilled here
-            // which makes the size of spill state equal to the 4 slots that are spilled around subsequent "emit"
-            // call, ensuring that the previously emitted value is not retained in the state while receiving
-            // the next one.
-            //     L$0 <- this
-            //     L$1 <- channel
-            //     L$2 <- cause
-            //     L$3 <- this$run (actually equal to this)
-            val result = run { channel.receiveCatching() }
-            if (result.isClosed) {
-                result.exceptionOrNull()?.let { throw it }
-                break // returns normally when result.closeCause == null
-            }
-            // result is spilled here to the coroutine state and retained after the call, even though
-            // it is not actually needed in the next loop iteration.
-            //     L$0 <- this
-            //     L$1 <- channel
-            //     L$2 <- cause
-            //     L$3 <- result
-            emit(result.getOrThrow())
+        for (element in channel) {
+            emit(element)
         }
     } catch (e: Throwable) {
         cause = e
@@ -169,11 +144,12 @@ private class ChannelAsFlow<T>(
  * 2) Flow consumer completes normally when the original channel completes (~is closed) normally.
  * 3) If the flow consumer fails with an exception, subscription is cancelled.
  */
+@Suppress("DEPRECATION")
 @Deprecated(
-    level = DeprecationLevel.WARNING,
+    level = DeprecationLevel.ERROR,
     message = "'BroadcastChannel' is obsolete and all corresponding operators are deprecated " +
         "in the favour of StateFlow and SharedFlow"
-) // Since 1.5.0, was @FlowPreview, safe to remove in 1.7.0
+) // Since 1.5.0, ERROR since 1.7.0, was @FlowPreview, safe to remove in 1.8.0
 public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
     emitAll(openSubscription())
 }
@@ -193,7 +169,6 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  * default and to control what happens when data is produced faster than it is consumed,
  * that is to control backpressure behavior.
  */
-@FlowPreview
 public fun <T> Flow<T>.produceIn(
     scope: CoroutineScope
 ): ReceiveChannel<T> =

@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class TestScopeTest {
     /** Tests failing to create a [TestScope] with incorrect contexts. */
@@ -54,7 +55,6 @@ class TestScopeTest {
 
     /** Part of [testCreateProvidesScheduler], disabled for Native */
     @Test
-    @NoNative
     fun testCreateReusesScheduler() {
         // Reuses the scheduler of `Dispatchers.Main`
         run {
@@ -96,7 +96,7 @@ class TestScopeTest {
         }
         assertFalse(result)
         scope.asSpecificImplementation().enter()
-        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().leave() }
+        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().legacyLeave() }
         assertFalse(result)
     }
 
@@ -112,7 +112,7 @@ class TestScopeTest {
         }
         assertFalse(result)
         scope.asSpecificImplementation().enter()
-        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().leave() }
+        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().legacyLeave() }
         assertFalse(result)
     }
 
@@ -129,7 +129,7 @@ class TestScopeTest {
         job.cancel()
         assertFalse(result)
         scope.asSpecificImplementation().enter()
-        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().leave() }
+        assertFailsWith<UncompletedCoroutinesError> { scope.asSpecificImplementation().legacyLeave() }
         assertFalse(result)
     }
 
@@ -163,7 +163,7 @@ class TestScopeTest {
             launch(SupervisorJob()) { throw TestException("y") }
             launch(SupervisorJob()) { throw TestException("z") }
             runCurrent()
-            val e = asSpecificImplementation().leave()
+            val e = asSpecificImplementation().legacyLeave()
             assertEquals(3, e.size)
             assertEquals("x", e[0].message)
             assertEquals("y", e[1].message)
@@ -250,7 +250,7 @@ class TestScopeTest {
             assertEquals(1, j)
         }
         job.join()
-        advanceTimeBy(199) // should work the same for the background tasks
+        advanceTimeBy(199.milliseconds) // should work the same for the background tasks
         assertEquals(2, i)
         assertEquals(4, j)
         advanceUntilIdle() // once again, should do nothing
@@ -378,7 +378,7 @@ class TestScopeTest {
 
         }
     }) {
-        runTest(dispatchTimeoutMs = 100) {
+        runTest(timeout = 100.milliseconds) {
             backgroundScope.launch {
                 while (true) {
                     yield()
@@ -408,7 +408,7 @@ class TestScopeTest {
 
         }
     }) {
-        runTest(UnconfinedTestDispatcher(), dispatchTimeoutMs = 100) {
+        runTest(UnconfinedTestDispatcher(), timeout = 100.milliseconds) {
             /**
              * Having a coroutine like this will still cause the test to hang:
                  backgroundScope.launch {
@@ -475,6 +475,76 @@ class TestScopeTest {
             delay(1)
             throw TestException("y")
         }
+    }
+
+    /**
+     * Tests that [TestScope.withTimeout] notifies the programmer about using the virtual time.
+     */
+    @Test
+    fun testTimingOutWithVirtualTimeMessage() = runTest {
+        try {
+            withTimeout(1_000_000) {
+                Channel<Unit>().receive()
+            }
+        } catch (e: TimeoutCancellationException) {
+            assertContains(e.message!!, "virtual")
+        }
+    }
+
+    /*
+     * Tests that the [TestScope] exception reporting mechanism will report the exceptions that happen between
+     * different tests.
+     *
+     * This test must be ran manually, because such exceptions still go through the global exception handler
+     * (as there's no guarantee that another test will happen), and the global exception handler will
+     * log the exceptions or, on Native, crash the test suite.
+     */
+    @Test
+    @Ignore
+    fun testReportingStrayUncaughtExceptionsBetweenTests() {
+        val thrown = TestException("x")
+        testResultChain({
+            // register a handler for uncaught exceptions
+            runTest { }
+        }, {
+            GlobalScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                throw thrown
+            }
+            runTest {
+                fail("unreached")
+            }
+        }, {
+            // this `runTest` will not report the exception
+            runTest {
+                when (val exception = it.exceptionOrNull()) {
+                    is UncaughtExceptionsBeforeTest -> {
+                        assertEquals(1, exception.suppressedExceptions.size)
+                        assertSame(exception.suppressedExceptions[0], thrown)
+                    }
+                    else -> fail("unexpected exception: $exception")
+                }
+            }
+        })
+    }
+
+    /**
+     * Tests that the uncaught exceptions that happen during the test are reported.
+     */
+    @Test
+    fun testReportingStrayUncaughtExceptionsDuringTest(): TestResult {
+        val thrown = TestException("x")
+        return testResultChain({ _ ->
+            runTest {
+                val job = launch(Dispatchers.Default + NonCancellable) {
+                    throw thrown
+                }
+                job.join()
+            }
+        }, {
+            runTest {
+                assertEquals(thrown, it.exceptionOrNull())
+            }
+        })
     }
 
     companion object {

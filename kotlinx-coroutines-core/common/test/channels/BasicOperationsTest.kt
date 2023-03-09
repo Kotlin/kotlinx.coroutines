@@ -21,7 +21,7 @@ class BasicOperationsTest : TestBase() {
 
     @Test
     fun testTrySendAfterClose() = runTest {
-        TestChannelKind.values().forEach { kind -> testTrySend(kind) }
+        TestChannelKind.values().forEach { kind -> testTrySendAfterClose(kind) }
     }
 
     @Test
@@ -114,7 +114,7 @@ class BasicOperationsTest : TestBase() {
         finish(6)
     }
 
-    private suspend fun testTrySend(kind: TestChannelKind) = coroutineScope {
+    private suspend fun testTrySendAfterClose(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create<Int>()
         val d = async { channel.send(42) }
         yield()

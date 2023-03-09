@@ -5,7 +5,6 @@
 // This file was automatically generated from Delay.kt by Knit tool. Do not edit.
 package kotlinx.coroutines.examples.exampleDelayDuration03
 
-import kotlin.time.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.milliseconds

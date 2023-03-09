@@ -107,3 +107,5 @@ public actual open class TestBase actual constructor() {
             error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
 }
+
+public actual val isJavaAndWindows: Boolean get() = false

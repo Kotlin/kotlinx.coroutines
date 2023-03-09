@@ -31,7 +31,7 @@ import kotlin.jvm.*
  *   It is completed by calling [CompletableJob.complete].
  *
  * Conceptually, an execution of a job does not produce a result value. Jobs are launched solely for their
- * side-effects. See [Deferred] interface for a job that produces a result.
+ * side effects. See [Deferred] interface for a job that produces a result.
  *
  * ### Job states
  *
@@ -116,6 +116,22 @@ public interface Job : CoroutineContext.Element {
     public companion object Key : CoroutineContext.Key<Job>
 
     // ------------ state query ------------
+
+    /**
+     * Returns the parent of the current job if the parent-child relationship
+     * is established or `null` if the job has no parent or was successfully completed.
+     *
+     * Accesses to this property are not idempotent, the property becomes `null` as soon
+     * as the job is transitioned to its final state, whether it is cancelled or completed,
+     * and all job children are completed.
+     *
+     * For a coroutine, its corresponding job completes as soon as the coroutine itself
+     * and all its children are complete.
+     *
+     * @see [Job] state transitions for additional details.
+     */
+    @ExperimentalCoroutinesApi
+    public val parent: Job?
 
     /**
      * Returns `true` when this job is active -- it was already started and has not completed nor was cancelled yet.
@@ -366,7 +382,6 @@ public interface Job : CoroutineContext.Element {
  *
  * If [parent] job is specified, then this job becomes a child job of its parent and
  * is cancelled when its parent fails or is cancelled. All this job's children are cancelled in this case, too.
- * The invocation of [cancel][Job.cancel] with exception (other than [CancellationException]) on this job also cancels parent.
  *
  * Conceptually, the resulting job works in the same way as the job created by the `launch { body }` invocation
  * (see [launch]), but without any code in the body. It is active until cancelled or completed. Invocation of
@@ -524,7 +539,7 @@ public fun Job.cancelChildren(cause: Throwable? = null) {
 
 /**
  * Returns `true` when the [Job] of the coroutine in this context is still active
- * (has not completed and was not cancelled yet).
+ * (has not completed and was not cancelled yet) or the context does not have a [Job] in it.
  *
  * Check this property in long-running computation loops to support cancellation
  * when [CoroutineScope.isActive] is not available:
@@ -535,11 +550,11 @@ public fun Job.cancelChildren(cause: Throwable? = null) {
  * }
  * ```
  *
- * The `coroutineContext.isActive` expression is a shortcut for `coroutineContext[Job]?.isActive == true`.
+ * The `coroutineContext.isActive` expression is a shortcut for `get(Job)?.isActive ?: true`.
  * See [Job.isActive].
  */
 public val CoroutineContext.isActive: Boolean
-    get() = this[Job]?.isActive == true
+    get() = get(Job)?.isActive ?: true
 
 /**
  * Cancels [Job] of this context with an optional cancellation cause.

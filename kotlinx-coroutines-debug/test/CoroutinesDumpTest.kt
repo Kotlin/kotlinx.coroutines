@@ -23,12 +23,13 @@ class CoroutinesDumpTest : DebugTestBase() {
         val found = DebugProbes.dumpCoroutinesInfo().single { it.job === deferred }
         verifyDump(
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: SUSPENDED\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingNestedMethod(CoroutinesDumpTest.kt:95)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingOuterMethod(CoroutinesDumpTest.kt:88)\n" +
-                    "\t(Coroutine creation stacktrace)\n" +
-                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n",
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingNestedMethod(CoroutinesDumpTest.kt)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.sleepingOuterMethod(CoroutinesDumpTest.kt)\n" +
+                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
+                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
+                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
+                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n",
             ignoredCoroutine = "BlockingCoroutine"
         ) {
             deferred.cancel()
@@ -48,19 +49,21 @@ class CoroutinesDumpTest : DebugTestBase() {
         verifyDump(
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@227d9994, state: RUNNING\n" +
                     "\tat java.lang.Thread.sleep(Native Method)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:141)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:133)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest\$testRunningCoroutine\$1$deferred\$1.invokeSuspend(CoroutinesDumpTest.kt:41)\n" +
-                    "\t(Coroutine creation stacktrace)\n" +
-                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
-                    "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:148)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.access\$activeMethod(CoroutinesDumpTest.kt)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest\$testRunningCoroutine\$1\$deferred\$1.invokeSuspend(CoroutinesDumpTest.kt)\n" +
+                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
+                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
+                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
+                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n" +
+                    "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
                     "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutine(CoroutinesDumpTest.kt:49)",
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest\$testRunningCoroutine\$1.invokeSuspend(CoroutinesDumpTest.kt)",
             ignoredCoroutine = "BlockingCoroutine"
         ) {
             deferred.cancel()
@@ -79,18 +82,19 @@ class CoroutinesDumpTest : DebugTestBase() {
         verifyDump(
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: RUNNING\n" +
                     "\tat java.lang.Thread.sleep(Native Method)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:111)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:106)\n" +
-                    "\t(Coroutine creation stacktrace)\n" +
-                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
-                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
-                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
-                    "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:148)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt)\n" +
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt)\n" +
+                    "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
+                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
+                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
+                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
+                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n" +
+                    "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
                     "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
-                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutineWithSuspensionPoint(CoroutinesDumpTest.kt:71)",
+                    "\tat kotlinx.coroutines.debug.CoroutinesDumpTest\$testRunningCoroutineWithSuspensionPoint\$1.invokeSuspend(CoroutinesDumpTest.kt)",
             ignoredCoroutine = "BlockingCoroutine"
         ) {
             deferred.cancel()
@@ -126,9 +130,12 @@ class CoroutinesDumpTest : DebugTestBase() {
             "kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
             "kotlinx.coroutines.debug.CoroutinesDumpTest\$testCreationStackTrace\$1.invokeSuspend(CoroutinesDumpTest.kt)"
         if (!result.startsWith(expected)) {
-            println("=== Actual result")
-            println(result)
-            error("Does not start with expected lines")
+            error("""
+                |Does not start with expected lines
+                |=== Actual result:
+                |$result
+                """.trimMargin()
+            )
         }
 
     }

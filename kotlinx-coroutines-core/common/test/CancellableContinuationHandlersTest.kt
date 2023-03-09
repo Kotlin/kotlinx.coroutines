@@ -6,6 +6,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -158,5 +159,32 @@ class CancellableContinuationHandlersTest : TestBase() {
             expect(2)
         }
         finish(3)
+    }
+
+    @Test
+    fun testSegmentAsHandler() = runTest {
+        class MySegment : Segment<MySegment>(0, null, 0) {
+            override val numberOfSlots: Int get() = 0
+
+            var invokeOnCancellationCalled = false
+            override fun onCancellation(index: Int, cause: Throwable?) {
+                invokeOnCancellationCalled = true
+            }
+        }
+        val s = MySegment()
+        expect(1)
+        try {
+            suspendCancellableCoroutine<Unit> { c ->
+                expect(2)
+                c as CancellableContinuationImpl<*>
+                c.invokeOnCancellation(s, 0)
+                c.cancel()
+            }
+        } catch (e: CancellationException) {
+            expect(3)
+        }
+        expect(4)
+        check(s.invokeOnCancellationCalled)
+        finish(5)
     }
 }

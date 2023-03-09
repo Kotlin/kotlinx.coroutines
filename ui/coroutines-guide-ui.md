@@ -110,7 +110,7 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 `app/build.gradle` file:
 
 ```groovy
-implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0-Beta"
 ```
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 
@@ -335,10 +335,12 @@ processed.
 
 This is also a desired behaviour for UI applications that have to react to incoming high-frequency
 event streams by updating their UI based on the most recently received update. A coroutine that is using
-`ConflatedChannel` avoids delays that are usually introduced by buffering of events.
+a conflated channel (`capacity = Channel.CONFLATED`, or a buffered channel with
+`onBufferOverflow = DROP_OLDEST` or `onBufferOverflow = DROP_LATEST`) avoids delays 
+that are usually introduced by buffering of events.
 
 You can experiment with `capacity` parameter in the above line to see how it affects the behaviour of the code.
-Setting `capacity = Channel.UNLIMITED` creates a coroutine with `LinkedListChannel` mailbox that buffers all 
+Setting `capacity = Channel.UNLIMITED` creates a coroutine with an unbounded mailbox that buffers all 
 events. In this case, the animation runs as many times as the circle is clicked.
 
 ## Blocking operations

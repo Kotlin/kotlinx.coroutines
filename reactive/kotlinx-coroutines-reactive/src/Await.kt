@@ -106,7 +106,7 @@ public suspend fun <T> Publisher<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
 @Deprecated(
     message = "Deprecated without a replacement due to its name incorrectly conveying the behavior. " +
         "Please consider using awaitFirstOrDefault().",
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.HIDDEN
 ) // Warning since 1.5, error in 1.6, hidden in 1.7
 public suspend fun <T> Publisher<T>.awaitSingleOrDefault(default: T): T = awaitOne(Mode.SINGLE_OR_DEFAULT, default)
 
@@ -135,7 +135,7 @@ public suspend fun <T> Publisher<T>.awaitSingleOrDefault(default: T): T = awaitO
     message = "Deprecated without a replacement due to its name incorrectly conveying the behavior. " +
         "There is a specialized version for Reactor's Mono, please use that where applicable. " +
         "Alternatively, please consider using awaitFirstOrNull().",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("this.awaitSingleOrNull()", "kotlinx.coroutines.reactor")
 ) // Warning since 1.5, error in 1.6, hidden in 1.7
 public suspend fun <T> Publisher<T>.awaitSingleOrNull(): T? = awaitOne(Mode.SINGLE_OR_DEFAULT)
@@ -164,7 +164,7 @@ public suspend fun <T> Publisher<T>.awaitSingleOrNull(): T? = awaitOne(Mode.SING
 @Deprecated(
     message = "Deprecated without a replacement due to its name incorrectly conveying the behavior. " +
         "Please consider using awaitFirstOrElse().",
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.HIDDEN
 ) // Warning since 1.5, error in 1.6, hidden in 1.7
 public suspend fun <T> Publisher<T>.awaitSingleOrElse(defaultValue: () -> T): T =
     awaitOne(Mode.SINGLE_OR_DEFAULT) ?: defaultValue()

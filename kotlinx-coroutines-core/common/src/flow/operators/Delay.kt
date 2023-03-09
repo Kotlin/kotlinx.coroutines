@@ -18,7 +18,6 @@ import kotlin.time.*
 <!--- TEST_NAME FlowDelayTest -->
 <!--- PREFIX .*-duration-.*
 ----- INCLUDE .*-duration-.*
-import kotlin.time.*
 ----- INCLUDE .*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -345,3 +344,61 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMil
  */
 @FlowPreview
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
+
+/**
+ * Returns a flow that will emit a [TimeoutCancellationException] if the upstream doesn't emit an item within the given time.
+ *
+ * Example:
+ *
+ * ```kotlin
+ * flow {
+ *     emit(1)
+ *     delay(100)
+ *     emit(2)
+ *     delay(100)
+ *     emit(3)
+ *     delay(1000)
+ *     emit(4)
+ * }.timeout(100.milliseconds).catch {
+ *     emit(-1) // Item to emit on timeout
+ * }.onEach {
+ *     delay(300) // This will not cause a timeout
+ * }
+ * ```
+ * <!--- KNIT example-timeout-duration-01.kt -->
+ *
+ * produces the following emissions
+ *
+ * ```text
+ * 1, 2, 3, -1
+ * ```
+ * <!--- TEST -->
+ *
+ * Note that delaying on the downstream doesn't trigger the timeout.
+ *
+ * @param timeout period. If non-positive, the flow is timed out immediately
+ */
+@FlowPreview
+public fun <T> Flow<T>.timeout(
+    timeout: Duration
+): Flow<T> = timeoutInternal(timeout)
+
+private fun <T> Flow<T>.timeoutInternal(
+    timeout: Duration
+): Flow<T> = scopedFlow { downStream ->
+    if (timeout <= Duration.ZERO) throw TimeoutCancellationException("Timed out immediately")
+    val values = buffer(Channel.RENDEZVOUS).produceIn(this)
+    whileSelect {
+        values.onReceiveCatching { value ->
+            value.onSuccess {
+                downStream.emit(it)
+            }.onClosed {
+                return@onReceiveCatching false
+            }
+            return@onReceiveCatching true
+        }
+        onTimeout(timeout) {
+            throw TimeoutCancellationException("Timed out waiting for $timeout")
+        }
+    }
+}

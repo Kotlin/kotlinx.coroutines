@@ -8,6 +8,7 @@ fun Project.version(target: String): String =
     property("${target}_version") as String
 
 val coreModule = "kotlinx-coroutines-core"
+val jdk8ObsoleteModule = "kotlinx-coroutines-jdk8"
 val testModule = "kotlinx-coroutines-test"
 
 val multiplatform = setOf(coreModule, testModule)

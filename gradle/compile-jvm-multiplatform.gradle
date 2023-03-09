@@ -10,6 +10,8 @@ kotlin {
     sourceSets {
         jvmMain.dependencies {
             compileOnly "org.codehaus.mojo:animal-sniffer-annotations:1.20"
+            // Workaround until https://github.com/JetBrains/kotlin/pull/4999 is picked up
+            api "org.jetbrains:annotations:23.0.0"
         }
 
         jvmTest.dependencies {

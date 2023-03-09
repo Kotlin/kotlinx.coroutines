@@ -6,8 +6,8 @@ import kotlin.test.*
 
 class BroadcastChannelLeakTest : TestBase() {
     @Test
-    fun testArrayBroadcastChannelSubscriptionLeak() {
-        checkLeak { ArrayBroadcastChannel(1) }
+    fun testBufferedBroadcastChannelSubscriptionLeak() {
+        checkLeak { BroadcastChannelImpl(1) }
     }
 
     @Test

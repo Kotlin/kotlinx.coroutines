@@ -185,22 +185,27 @@ private var choreographer: Choreographer? = null
 public suspend fun awaitFrame(): Long {
     // fast path when choreographer is already known
     val choreographer = choreographer
-    if (choreographer != null) {
-        return suspendCancellableCoroutine { cont ->
+    return if (choreographer != null) {
+        suspendCancellableCoroutine { cont ->
             postFrameCallback(choreographer, cont)
         }
+    } else {
+        awaitFrameSlowPath()
     }
-    // post into looper thread to figure it out
-    return suspendCancellableCoroutine { cont ->
-        Dispatchers.Main.dispatch(EmptyCoroutineContext, Runnable {
+}
+
+private suspend fun awaitFrameSlowPath(): Long = suspendCancellableCoroutine { cont ->
+    if (Looper.myLooper() === Looper.getMainLooper()) { // Check if we are already in the main looper thread
+        updateChoreographerAndPostFrameCallback(cont)
+    } else { // post into looper thread to figure it out
+        Dispatchers.Main.dispatch(cont.context, Runnable {
             updateChoreographerAndPostFrameCallback(cont)
         })
     }
 }
 
 private fun updateChoreographerAndPostFrameCallback(cont: CancellableContinuation<Long>) {
-    val choreographer = choreographer ?:
-    Choreographer.getInstance()!!.also { choreographer = it }
+    val choreographer = choreographer ?: Choreographer.getInstance()!!.also { choreographer = it }
     postFrameCallback(choreographer, cont)
 }
 

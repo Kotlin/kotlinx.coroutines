@@ -13,7 +13,7 @@ class StateFlowCommonStressTest : TestBase() {
     private val state = MutableStateFlow<Long>(0)
 
     @Test
-    fun testSingleEmitterAndCollector() = runMtTest {
+    fun testSingleEmitterAndCollector() = runTest {
         var collected = 0L
         val collector = launch(Dispatchers.Default) {
             // collect, but abort and collect again after every 1000 values to stress allocation/deallocation

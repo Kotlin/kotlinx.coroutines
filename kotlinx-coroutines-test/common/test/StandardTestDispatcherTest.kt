@@ -20,7 +20,7 @@ class StandardTestDispatcherTest: OrderedExecutionTestBase() {
     @AfterTest
     fun cleanup() {
         scope.runCurrent()
-        assertEquals(listOf(), scope.asSpecificImplementation().leave())
+        assertEquals(listOf(), scope.asSpecificImplementation().legacyLeave())
     }
 
     /** Tests that the [StandardTestDispatcher] follows an execution order similar to `runBlocking`. */
@@ -64,7 +64,6 @@ class StandardTestDispatcherTest: OrderedExecutionTestBase() {
 
     /** Tests that the [TestCoroutineScheduler] used for [Dispatchers.Main] gets used by default. */
     @Test
-    @NoNative
     fun testSchedulerReuse() {
         val dispatcher1 = StandardTestDispatcher()
         Dispatchers.setMain(dispatcher1)

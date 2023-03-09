@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * A _hot_ [Flow] that shares emitted values among all its collectors in a broadcast fashion, so that all collectors
@@ -710,7 +709,6 @@ internal open class SharedFlowImpl<T>(
     }
 }
 
-@SharedImmutable
 @JvmField
 internal val NO_VALUE = Symbol("NO_VALUE")
 

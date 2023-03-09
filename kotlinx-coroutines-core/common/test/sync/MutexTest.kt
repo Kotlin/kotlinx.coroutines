@@ -4,8 +4,8 @@
 
 package kotlinx.coroutines.sync
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 class MutexTest : TestBase() {
@@ -106,5 +106,46 @@ class MutexTest : TestBase() {
         // no lock
         assertFalse(mutex.holdsLock(firstOwner))
         assertFalse(mutex.holdsLock(secondOwner))
+    }
+
+    @Test
+    fun testUnlockWithNullOwner() {
+        val owner = Any()
+        val mutex = Mutex()
+        assertTrue(mutex.tryLock(owner))
+        assertFailsWith<IllegalStateException> { mutex.unlock(Any()) }
+        mutex.unlock(null)
+        assertFalse(mutex.holdsLock(owner))
+        assertFalse(mutex.isLocked)
+    }
+
+    @Test
+    fun testUnlockWithoutOwnerWithLockedQueue() = runTest {
+        val owner = Any()
+        val owner2 = Any()
+        val mutex = Mutex()
+        assertTrue(mutex.tryLock(owner))
+        expect(1)
+        launch {
+            expect(2)
+            mutex.lock(owner2)
+        }
+        yield()
+        expect(3)
+        assertFailsWith<IllegalStateException> { mutex.unlock(owner2) }
+        mutex.unlock()
+        assertFalse(mutex.holdsLock(owner))
+        assertTrue(mutex.holdsLock(owner2))
+        finish(4)
+    }
+
+    @Test
+    fun testIllegalStateInvariant() = runTest {
+        val mutex = Mutex()
+        val owner = Any()
+        assertTrue(mutex.tryLock(owner))
+        assertFailsWith<IllegalStateException> { mutex.tryLock(owner) }
+        assertFailsWith<IllegalStateException> { mutex.lock(owner) }
+        assertFailsWith<IllegalStateException> { select { mutex.onLock(owner) {} } }
     }
 }

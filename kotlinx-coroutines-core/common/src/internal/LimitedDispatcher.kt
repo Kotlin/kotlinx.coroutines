@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.internal
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
@@ -12,14 +13,25 @@ import kotlin.jvm.*
  * The result of .limitedParallelism(x) call, a dispatcher
  * that wraps the given dispatcher, but limits the parallelism level, while
  * trying to emulate fairness.
+ *
+ * ### Implementation details
+ *
+ * By design, 'LimitedDispatcher' never [dispatches][CoroutineDispatcher.dispatch] originally sent tasks
+ * to the underlying dispatcher. Instead, it maintains its own queue of tasks sent to this dispatcher and
+ * dispatches at most [parallelism] "worker-loop" tasks that poll the underlying queue and cooperatively preempt
+ * in order to avoid starvation of the underlying dispatcher.
+ *
+ * Such behavior is crucial to be compatible with any underlying dispatcher implementation without
+ * direct cooperation.
  */
 internal class LimitedDispatcher(
     private val dispatcher: CoroutineDispatcher,
     private val parallelism: Int
 ) : CoroutineDispatcher(), Runnable, Delay by (dispatcher as? Delay ?: DefaultDelay) {
 
-    @Volatile
-    private var runningWorkers = 0
+    // Atomic is necessary here for the sake of K/N memory ordering,
+    // there is no need in atomic operations for this property
+    private val runningWorkers = atomic(0)
 
     private val queue = LockFreeTaskQueue<Runnable>(singleConsumer = false)
 
@@ -54,9 +66,9 @@ internal class LimitedDispatcher(
             }
 
             synchronized(workerAllocationLock) {
-                --runningWorkers
+                runningWorkers.decrementAndGet()
                 if (queue.size == 0) return
-                ++runningWorkers
+                runningWorkers.incrementAndGet()
                 fairnessCounter = 0
             }
         }
@@ -90,15 +102,15 @@ internal class LimitedDispatcher(
 
     private fun tryAllocateWorker(): Boolean {
         synchronized(workerAllocationLock) {
-            if (runningWorkers >= parallelism) return false
-            ++runningWorkers
+            if (runningWorkers.value >= parallelism) return false
+            runningWorkers.incrementAndGet()
             return true
         }
     }
 
     private fun addAndTryDispatching(block: Runnable): Boolean {
         queue.addLast(block)
-        return runningWorkers >= parallelism
+        return runningWorkers.value >= parallelism
     }
 }
 

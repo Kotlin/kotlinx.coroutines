@@ -61,7 +61,7 @@ stacktraces will be dumped to the console.
 ### Using as JVM agent
 
 Debug module can also be used as a standalone JVM agent to enable debug probes on the application startup.
-You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.6.4.jar`.
+You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.7.0-Beta.jar`.
 Additionally, on Linux and Mac OS X you can use `kill -5 $pid` command in order to force your application to print all alive coroutines.
 When used as Java agent, `"kotlinx.coroutines.debug.enable.creation.stack.trace"` system property can be used to control 
 [DebugProbes.enableCreationStackTraces] along with agent startup.
@@ -123,7 +123,7 @@ Coroutine "coroutine#2":DeferredCoroutine{Active}@289d1c02, state: SUSPENDED
 	at ExampleKt.combineResults(Example.kt:11)
 	at ExampleKt$computeValue$2.invokeSuspend(Example.kt:7)
 	at ExampleKt$main$1$deferred$1.invokeSuspend(Example.kt:25)
-	(Coroutine creation stacktrace)
+	at _COROUTINE._CREATION._(CoroutineDebugging.kt)
 	at kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)
 	at kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:25)
 	at kotlinx.coroutines.BuildersKt.async$default(Unknown Source)

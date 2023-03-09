@@ -6,6 +6,7 @@ package kotlinx.coroutines.debug
 import kotlinx.coroutines.*
 import org.junit.Test
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.*
 
 class DebugProbesTest : DebugTestBase() {
@@ -20,7 +21,7 @@ class DebugProbesTest : DebugTestBase() {
         val traces = listOf(
             "java.util.concurrent.ExecutionException\n" +
                     "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt:14)\n" +
-                    "\t(Coroutine boundary)\n" +
+                    "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
                     "\tat kotlinx.coroutines.debug.DebugProbesTest.oneMoreNestedMethod(DebugProbesTest.kt:49)\n" +
                     "\tat kotlinx.coroutines.debug.DebugProbesTest.nestedMethod(DebugProbesTest.kt:44)\n" +
                     "\tat kotlinx.coroutines.debug.DebugProbesTest\$testAsync\$1.invokeSuspend(DebugProbesTest.kt:17)\n",
@@ -40,11 +41,11 @@ class DebugProbesTest : DebugTestBase() {
             val traces = listOf(
                 "java.util.concurrent.ExecutionException\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt)\n" +
-                        "\t(Coroutine boundary)\n" +
+                        "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest.oneMoreNestedMethod(DebugProbesTest.kt)\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest.nestedMethod(DebugProbesTest.kt)\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest\$testAsyncWithProbes\$1\$1.invokeSuspend(DebugProbesTest.kt:62)\n" +
-                        "\t(Coroutine creation stacktrace)\n" +
+                        "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                         "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
                         "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
                         "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
@@ -71,11 +72,11 @@ class DebugProbesTest : DebugTestBase() {
             val traces = listOf(
                 "java.util.concurrent.ExecutionException\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt:16)\n" +
-                        "\t(Coroutine boundary)\n" +
+                        "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest.oneMoreNestedMethod(DebugProbesTest.kt:71)\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest.nestedMethod(DebugProbesTest.kt:66)\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest\$testAsyncWithSanitizedProbes\$1\$1.invokeSuspend(DebugProbesTest.kt:87)\n" +
-                        "\t(Coroutine creation stacktrace)\n" +
+                        "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                         "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                         "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest.testAsyncWithSanitizedProbes(DebugProbesTest.kt:38)",
@@ -99,5 +100,60 @@ class DebugProbesTest : DebugTestBase() {
         } catch (e: ExecutionException) {
             verifyStackTrace(e, traces)
         }
+    }
+
+    @Test
+    fun testMultipleConsecutiveProbeResumed() = runTest {
+        val job = launch {
+            expect(1)
+            foo()
+            expect(4)
+            delay(Long.MAX_VALUE)
+            expectUnreached()
+        }
+        yield()
+        yield()
+        expect(5)
+        val infos = DebugProbes.dumpCoroutinesInfo()
+        assertEquals(2, infos.size)
+        assertEquals(setOf(State.RUNNING, State.SUSPENDED), infos.map { it.state }.toSet())
+        job.cancel()
+        finish(6)
+    }
+
+    @Test
+    fun testMultipleConsecutiveProbeResumedAndLaterRunning() = runTest {
+        val reachedActiveStage = AtomicBoolean(false)
+        val job = launch(Dispatchers.Default) {
+            expect(1)
+            foo()
+            expect(4)
+            yield()
+            reachedActiveStage.set(true)
+            while (isActive) {
+                // Spin until test is done
+            }
+        }
+        while (!reachedActiveStage.get()) {
+            delay(10)
+        }
+        expect(5)
+        val infos = DebugProbes.dumpCoroutinesInfo()
+        assertEquals(2, infos.size)
+        assertEquals(setOf(State.RUNNING, State.RUNNING), infos.map { it.state }.toSet())
+        job.cancel()
+        finish(6)
+    }
+
+    private suspend fun foo() {
+        bar()
+        // Kill TCO
+        expect(3)
+    }
+
+
+    private suspend fun bar() {
+        yield()
+        expect(2)
     }
 }
