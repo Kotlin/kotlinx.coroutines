@@ -143,6 +143,8 @@ object Java9Modularity {
                 attributes("Multi-Release" to true)
             }
             from(compileJavaModuleInfo) {
+                // Include **only** file we are interested in as JavaCompile output also contains some tmp files
+                include("module-info.class")
                 into("META-INF/versions/9/")
             }
         }
