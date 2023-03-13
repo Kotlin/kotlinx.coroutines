@@ -570,3 +570,16 @@ internal fun throwAll(head: Throwable?, other: List<Throwable>) {
 }
 
 internal expect fun dumpCoroutines()
+
+@Deprecated(
+    "This is for binary compatibility with the `runTest` overload that existed at some point",
+    level = DeprecationLevel.HIDDEN
+)
+@JvmName("runTest\$default")
+@Suppress("DEPRECATION", "UNUSED_PARAMETER")
+public fun TestScope.runTestLegacy(
+    dispatchTimeoutMs: Long?,
+    testBody: suspend TestScope.() -> Unit,
+    unused1: Int?,
+    unused2: Any?,
+): TestResult = runTest(dispatchTimeoutMs ?: 60_000, testBody)
