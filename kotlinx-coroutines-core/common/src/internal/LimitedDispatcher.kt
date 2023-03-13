@@ -107,7 +107,7 @@ internal class LimitedDispatcher(
      * actual tasks are done, nothing prevents the user from closing the dispatcher and making it incorrect to
      * perform any more dispatches.
      */
-    private inner class Worker(var currentTask: Runnable) : Runnable {
+    private inner class Worker(private var currentTask: Runnable) : Runnable {
         override fun run() {
             var fairnessCounter = 0
             while (true) {
