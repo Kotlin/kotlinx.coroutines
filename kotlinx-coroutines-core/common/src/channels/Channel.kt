@@ -105,8 +105,17 @@ public interface SendChannel<in E> {
      * If the channel is closed already, the handler is invoked immediately.
      *
      * The meaning of `cause` that is passed to the handler:
-     * * `null` if the channel was closed or cancelled without the corresponding argument
-     * * the cause of `close` or `cancel` otherwise.
+     * - `null` if the channel was closed normally without the corresponding argument.
+     * - Instance of [CancellationException] if the channel was cancelled normally without the corresponding argument.
+     * - The cause of `close` or `cancel` otherwise.
+     *
+     * ### Execution context and exception safety
+     *
+     * The [handler] is executed in the context of closing or cancelling operation
+     * as the very last action of channel's lifecycle, meaning that improper
+     * (e.g. throwing or hanging) implementations of handler cannot interfere
+     * with the channel's final state.
+     * Unhandled exceptions from [handler] are propagated to the operation's caller.
      *
      * Example of usage (exception handling is omitted):
      *
@@ -117,21 +126,21 @@ public interface SendChannel<in E> {
      * }
      *
      * val uiUpdater = launch(Dispatchers.Main, parent = UILifecycle) {
-     *    events.consume {}
-     *    events.cancel()
+     *    events.consume { ... handle events ... }
      * }
-     *
+     * // Stop callback as soon as the channel is closed or cancelled
      * events.invokeOnClose { callbackBasedApi.stop() }
      * ```
      *
-     * **Note: This is an experimental api.** This function may change its semantics, parameters or return type in the future.
+     * **Stability note.** This function constitutes a stable API surface with the only exception
+     * about [IllegalStateException] being thrown when multiple handlers are registered.
+     * There is a possibility that this restriction will be lifted in the future.
      *
-     * @throws UnsupportedOperationException if the underlying channel doesn't support [invokeOnClose].
+     * @throws UnsupportedOperationException if the underlying channel does not support [invokeOnClose].
      * Implementation note: currently, [invokeOnClose] is unsupported only by Rx-like integrations
      *
      * @throws IllegalStateException if another handler was already registered
      */
-    @ExperimentalCoroutinesApi
     public fun invokeOnClose(handler: (cause: Throwable?) -> Unit)
 
     /**
