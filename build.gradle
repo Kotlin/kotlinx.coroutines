@@ -382,3 +382,17 @@ if (CacheRedirector.enabled) {
         nodeJsExtension.nodeDownloadBaseUrl = CacheRedirector.maybeRedirect(nodeJsExtension.nodeDownloadBaseUrl)
     }
 }
+
+extensions.findByType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension.class).with {
+    it.nodeVersion = "20.0.0-v8-canary2022112061c569ba0d"
+    it.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask.class) {
+    // Node with canary V8 version is not parsed correctly by NPM, producing errors like
+    //
+    //          error typescript@4.7.4: The engine "node" is incompatible with this module.
+    //                                  Expected version ">=4.2.0". Got "20.0.0-v8-canary***"
+    //
+    args.add("--ignore-engines")
+}

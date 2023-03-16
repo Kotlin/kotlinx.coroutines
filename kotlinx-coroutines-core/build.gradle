@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
+
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -254,23 +256,12 @@ jvmTest {
 // Setup manifest for kotlinx-coroutines-core-jvm.jar
 jvmJar { setupManifest(it) }
 
-wasmD8Test {
+wasmNodeTest {
     filter.with {
-        excludeTest("ShareInTest", "testWhileSubscribedBasic")
-        excludeTest("ShareInTest", "testWhileSubscribedCustomAtLeast1")
-        excludeTest("ShareInTest", "testWhileSubscribedCustomAtLeast2")
-        excludeTest("SharedFlowScenarioTest", "testReplay1Extra2")
-        excludeTest("SharedFlowScenarioTest", "testReplay1")
-        excludeTest("SharedFlowScenarioTest", "testReplay2Extra2DropOldest")
-        excludeTest("SharedFlowScenarioTest", "testResumeFastSubscriberOnResumedEmitter")
-        excludeTest("SharingStartedWhileSubscribedTest", "testImmediateUnsubscribe")
-        excludeTest("TimeoutTest", "testSharedFlowCancelledNoTimeout")
+        excludeTest("ChannelsTest", "testIterableAsReceiveChannel")
+        excludeTest("ChannelsTest", "testEmptyList")
+        excludeTest("ChannelsTest", "testToList")
         excludeTest("ChannelBuildersFlowTest", "testConsumeAsFlowProduceBuffered")
-        // d8 withTimeout issue
-        excludeTest("SelectTimeoutDurationTest", "testBasic")
-        excludeTest("SelectTimeoutTest", "testBasic")
-        // Makes nodejs stall
-        excludeTest("BuilderContractsTest", "testContracts")
     }
 }
 
