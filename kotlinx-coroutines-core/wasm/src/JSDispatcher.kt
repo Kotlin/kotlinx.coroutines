@@ -5,7 +5,9 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
+import org.w3c.dom.*
 import kotlin.coroutines.*
+import kotlin.js.*
 
 private const val MAX_DELAY = Int.MAX_VALUE.toLong()
 
@@ -14,7 +16,7 @@ private fun delayToInt(timeMillis: Long): Int =
 
 internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
     inner class ScheduledMessageQueue : MessageQueue() {
-        internal val processQueue: () -> Unit = { process() }
+        internal val processQueue: () -> Unit = ::process
 
         override fun schedule() {
             scheduleQueueProcessing()
@@ -50,6 +52,12 @@ internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
     }
 }
 
+internal class NodeDispatcher(private val process: JsProcess) : SetTimeoutBasedDispatcher() {
+    override fun scheduleQueueProcessing() {
+        process.nextTick(messageQueue.processQueue)
+    }
+}
+
 internal object SetTimeoutDispatcher : SetTimeoutBasedDispatcher() {
     override fun scheduleQueueProcessing() {
         setTimeout(messageQueue.processQueue, 0)
@@ -67,6 +75,64 @@ private open class ClearTimeout(protected val handle: Int) : CancelHandler(), Di
     }
 
     override fun toString(): String = "ClearTimeout[$handle]"
+}
+
+@JsFun("(handle) => handle")
+private external fun toDynamicHandle(handle: () -> Unit): Dynamic
+
+internal class WindowDispatcher(private val window: Window) : CoroutineDispatcher(), Delay {
+    private val queue = WindowMessageQueue(window)
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) = queue.enqueue(block)
+
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        val handle = window.setTimeout(toDynamicHandle { with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
+        continuation.invokeOnCancellation(handler = WindowClearTimeout(handle).asHandler)
+    }
+
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+        val handle = window.setTimeout(toDynamicHandle(block::run), delayToInt(timeMillis))
+        return WindowClearTimeout(handle)
+    }
+
+    private inner class WindowClearTimeout(handle: Int) : ClearTimeout(handle) {
+        override fun dispose() {
+            window.clearTimeout(handle)
+        }
+    }
+}
+
+@JsFun("""(window, process) => {
+    const handler = (event) => {
+        if (event.source == window && event.data == 'dispatchCoroutine') {
+            event.stopPropagation();
+            process();
+        }
+    }
+    window.addEventListener('message', handler, true)
+}""")
+private external fun subscribeToWindowMessages(window: Window, process: () -> Unit)
+
+@JsFun("(window) => () => window.postMessage('dispatchCoroutine', '*')")
+private external fun createRescheduleMessagePoster(window: Window): () -> Unit
+
+@JsFun("(process) => () => Promise.resolve(0).then(process)")
+private external fun createScheduleMessagePoster(process: () -> Unit): () -> Unit
+
+private class WindowMessageQueue(window: Window) : MessageQueue() {
+    private val scheduleMessagePoster = createScheduleMessagePoster(::process)
+    private val rescheduleMessagePoster = createRescheduleMessagePoster(window)
+    init {
+        subscribeToWindowMessages(window, ::process)
+    }
+
+    override fun schedule() {
+        scheduleMessagePoster()
+    }
+
+    override fun reschedule() {
+        rescheduleMessagePoster()
+    }
 }
 
 /**

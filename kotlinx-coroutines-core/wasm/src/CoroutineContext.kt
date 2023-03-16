@@ -5,11 +5,23 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
+import org.w3c.dom.*
 import kotlin.coroutines.*
 
-// TODO: Enable Node and Window dispatchers
+internal external interface JsProcess {
+    fun nextTick(handler: () -> Unit)
+}
+
+@JsFun("() => (typeof(process) !== 'undefined' && typeof(process.nextTick) === 'function') ? process : null")
+internal external fun tryGetProcess(): JsProcess?
+
+@JsFun("() => (typeof(window) !== 'undefined' && window != null && typeof(window.addEventListener) === 'function') ? window : null")
+internal external fun tryGetWindow(): Window?
+
 internal fun createDefaultDispatcher(): CoroutineDispatcher =
-    SetTimeoutDispatcher
+    tryGetProcess()?.let(::NodeDispatcher)
+        ?: tryGetWindow()?.let(::WindowDispatcher)
+        ?: SetTimeoutDispatcher
 
 internal actual val DefaultDelay: Delay
     get() = Dispatchers.Default as Delay
