@@ -7,6 +7,7 @@ package kotlinx.coroutines
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.exceptions.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class LimitedParallelismConcurrentTest : TestBase() {
@@ -57,5 +58,38 @@ class LimitedParallelismConcurrentTest : TestBase() {
         val j2 = launch(view2) { j1.cancel() }
         joinAll(j1, j2)
         executor.close()
+    }
+
+    /**
+     * Tests that, when no tasks are present, the limited dispatcher does not dispatch any tasks.
+     * This is important for the case when a dispatcher is closeable and the [CoroutineDispatcher.limitedParallelism]
+     * machinery could trigger a dispatch after the dispatcher is closed.
+     */
+    @Test
+    fun testNotDoingDispatchesWhenNoTasksArePresent() = runTest {
+        class NaggingDispatcher: CoroutineDispatcher() {
+            val closed = atomic(false)
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                if (closed.value)
+                    fail("Dispatcher was closed, but still dispatched a task")
+                Dispatchers.Default.dispatch(context, block)
+            }
+            fun close() {
+                closed.value = true
+            }
+        }
+        repeat(stressTestMultiplier * 500_000) {
+            val dispatcher = NaggingDispatcher()
+            val view = dispatcher.limitedParallelism(1)
+            val deferred = CompletableDeferred<Unit>()
+            val job = launch(view) {
+                deferred.await()
+            }
+            launch(Dispatchers.Default) {
+                deferred.complete(Unit)
+            }
+            job.join()
+            dispatcher.close()
+        }
     }
 }
