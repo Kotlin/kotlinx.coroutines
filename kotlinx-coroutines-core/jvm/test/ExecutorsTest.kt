@@ -82,6 +82,22 @@ class ExecutorsTest : TestBase() {
     }
 
     @Test
+    fun testCustomDispatcherToExecutorDispatchNotNeeded() {
+        expect(1)
+        val dispatcher = object : CoroutineDispatcher() {
+            override fun isDispatchNeeded(context: CoroutineContext) = false
+
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                fail("should not dispatch")
+            }
+        }
+        dispatcher.asExecutor().execute {
+            expect(2)
+        }
+        finish(3)
+    }
+
+    @Test
     fun testTwoThreads() {
         val ctx1 = newSingleThreadContext("Ctx1")
         val ctx2 = newSingleThreadContext("Ctx2")
