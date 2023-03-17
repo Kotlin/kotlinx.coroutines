@@ -9,11 +9,11 @@ import java.net.*
 apply<DokkaPlugin>()
 //apply<JavaPlugin>()
 
-fun GradleDokkaSourceSetBuilder.makeLinkMapping(projectDir: File) {
+fun GradleDokkaSourceSetBuilder.makeLinkMapping(projectDir: File, branch: String = "master") {
     sourceLink {
         val relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
         localDirectory.set(projectDir.resolve("src"))
-        remoteUrl.set(URL("https://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"))
+        remoteUrl.set(URL("https://github.com/kotlin/kotlinx.coroutines/tree/$branch/$relPath/src"))
         remoteLineSuffix.set("#L")
     }
 }
@@ -63,6 +63,10 @@ if (project.name == "kotlinx-coroutines-core") {
 
             val jvmMain by getting {
                 makeLinkMapping(project.file("jvm"))
+            }
+
+            val wasmMain by getting {
+                makeLinkMapping(project.file("wasm"), "wasm")
             }
         }
     }
