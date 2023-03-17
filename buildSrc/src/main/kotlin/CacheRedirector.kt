@@ -27,8 +27,8 @@ private val mirroredUrls = listOf(
     "https://dl.google.com/go",
     "https://download.jetbrains.com",
     "https://jitpack.io",
-    "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev",
     "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap",
+    "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev",
     "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/eap",
     "https://oss.sonatype.org/content/repositories/releases",
     "https://oss.sonatype.org/content/repositories/snapshots",
@@ -36,21 +36,21 @@ private val mirroredUrls = listOf(
     "https://packages.confluent.io/maven/",
     "https://plugins.gradle.org/m2",
     "https://plugins.jetbrains.com/maven",
-    "https://repo1.maven.org/maven2",
     "https://repo.grails.org/grails/core",
     "https://repo.jenkins-ci.org/releases",
     "https://repo.maven.apache.org/maven2",
     "https://repo.spring.io/milestone",
     "https://repo.typesafe.com/typesafe/ivy-releases",
+    "https://repo1.maven.org/maven2",
     "https://services.gradle.org",
     "https://www.exasol.com/artifactory/exasol-releases",
+    "https://www.jetbrains.com/intellij-repository/nightly",
+    "https://www.jetbrains.com/intellij-repository/releases",
+    "https://www.jetbrains.com/intellij-repository/snapshots",
     "https://www.myget.org/F/intellij-go-snapshots/maven",
     "https://www.myget.org/F/rd-model-snapshots/maven",
     "https://www.myget.org/F/rd-snapshots/maven",
-    "https://www.python.org/ftp",
-    "https://www.jetbrains.com/intellij-repository/nightly",
-    "https://www.jetbrains.com/intellij-repository/releases",
-    "https://www.jetbrains.com/intellij-repository/snapshots"
+    "https://www.python.org/ftp"
 )
 
 private val aliases = mapOf(
