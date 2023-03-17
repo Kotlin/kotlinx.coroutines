@@ -157,7 +157,12 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
             apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
         }
 
+        apply from: rootProject.file("gradle/compile-jsAndWasmShared-multiplatform.gradle")
+
         apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
+
+        apply from: rootProject.file("gradle/compile-wasm-multiplatform.gradle")
+
         kotlin.sourceSets.commonMain.dependencies {
             api project(":$coreModule")
         }
@@ -334,4 +339,18 @@ if (CacheRedirector.enabled) {
     if (nodeJsExtension != null) {
         nodeJsExtension.nodeDownloadBaseUrl = CacheRedirector.maybeRedirect(nodeJsExtension.nodeDownloadBaseUrl)
     }
+}
+
+// Drop this configuration when the Node.JS version in KGP will support wasm gc milestone 4
+// check it here:
+// https://github.com/JetBrains/kotlin/blob/master/libraries/tools/kotlin-gradle-plugin/src/common/kotlin/org/jetbrains/kotlin/gradle/targets/js/nodejs/NodeJsRootExtension.kt
+extensions.findByType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension.class).with {
+    // canary nodejs that supports recent Wasm GC changes
+    it.nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
+    it.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+}
+
+// Drop this when node js version become stable
+tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask).configureEach {
+    args.add("--ignore-engines")
 }

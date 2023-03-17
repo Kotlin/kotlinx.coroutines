@@ -12,6 +12,13 @@ kotlin {
     }
 
     sourceSets {
+        jsMain {
+            dependsOn(jsAndWasmSharedMain)
+        }
+        jsTest {
+            dependsOn(jsAndWasmSharedTest)
+        }
+
         jsTest.dependencies {
             api "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
         }

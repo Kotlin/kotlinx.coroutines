@@ -19,7 +19,11 @@ if (rootProject.ext.native_targets_enabled) {
     apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
 }
 
+apply from: rootProject.file("gradle/compile-jsAndWasmShared-multiplatform.gradle")
+
 apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
+
+apply from: rootProject.file("gradle/compile-wasm-multiplatform.gradle")
 
 apply from: rootProject.file('gradle/dokka.gradle.kts')
 apply from: rootProject.file('gradle/publish.gradle')
@@ -28,9 +32,8 @@ apply from: rootProject.file('gradle/publish.gradle')
 
      TARGETS                            SOURCE SETS
      -------         ----------------------------------------------
-
-     js -----------------------------------------------------+
-                                                             |
+     wasmJs \----------> jsAndWasmShared --------------------+
+     js     /                                                |
                                                              V
      jvmCore\ --------> jvm ---------> concurrent -------> common
      jdk8   /                           ^
@@ -242,7 +245,7 @@ kotlin.sourceSets {
 
 kotlin.sourceSets.configureEach {
     // Do not apply 'ExperimentalForeignApi' where we have allWarningsAsErrors set
-    if (it.name in ["jvmMain", "jvmCoreMain", "jsMain", "concurrentMain", "commonMain"]) return
+    if (it.name in ["jvmMain", "jvmCoreMain", "jsMain", 'wasmJsMain', 'jsAndWasmSharedMain', "concurrentMain", "commonMain"]) return
     languageSettings {
         optIn('kotlinx.cinterop.ExperimentalForeignApi')
         optIn('kotlin.experimental.ExperimentalNativeApi')

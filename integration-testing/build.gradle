@@ -179,3 +179,8 @@ compileKotlin {
         jvmTarget = "1.8"
     }
 }
+
+// Drop this when node js version become stable
+tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask.class).configureEach {
+    it.args.add("--ignore-engines")
+}

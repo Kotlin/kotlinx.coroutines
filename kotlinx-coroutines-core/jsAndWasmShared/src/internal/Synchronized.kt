@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
-public actual typealias SynchronizedObject = Any
+public actual open class SynchronizedObject
 
 /**
  * @suppress **This an internal API and should not be used from general code.**

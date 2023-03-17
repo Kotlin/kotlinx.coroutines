@@ -45,6 +45,8 @@ tasks.withType(DokkaTaskPartial::class).configureEach {
     }
 }
 
+val kotlin_version: String by project
+
 if (project.name == "kotlinx-coroutines-core") {
     // Custom configuration for MPP modules
     tasks.withType(DokkaTaskPartial::class).configureEach {
@@ -63,6 +65,10 @@ if (project.name == "kotlinx-coroutines-core") {
 
             val jvmMain by getting {
                 makeLinkMapping(project.file("jvm"))
+            }
+
+            val wasmJsMain by getting {
+                makeLinkMapping(project.file("wasm"))
             }
         }
     }
