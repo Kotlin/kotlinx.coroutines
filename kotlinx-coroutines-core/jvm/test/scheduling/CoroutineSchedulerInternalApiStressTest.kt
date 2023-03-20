@@ -80,8 +80,8 @@ class CoroutineSchedulerInternalApiStressTest : TestBase() {
                     }
                 }
                 completionLatch.countDown()
-//                assertEquals(100, timesHelped)
-//                assertTrue(Thread.currentThread() in observedDefaultThreads, observedDefaultThreads.toString())
+                assertEquals(100, timesHelped)
+                assertTrue(Thread.currentThread() in observedDefaultThreads, observedDefaultThreads.toString())
             }
         }
     }
