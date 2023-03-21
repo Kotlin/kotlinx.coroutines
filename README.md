@@ -186,7 +186,7 @@ Kotlin/JS version of `kotlinx.coroutines` is published as
 #### Native
 
 Kotlin/Native version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-$platform`](https://mvnrepository.com/search?q=kotlinx-coroutines-core-) where `$platform` is 
+[`kotlinx-coroutines-core-$platform`](https://central.sonatype.com/search?q=kotlinx-coroutines-core&namespace=org.jetbrains.kotlinx) where `$platform` is 
 the target Kotlin/Native platform. 
 Targets are provided in accordance with [official K/N target support](https://kotlinlang.org/docs/native-target-support.html).
 ## Building and Contributing
