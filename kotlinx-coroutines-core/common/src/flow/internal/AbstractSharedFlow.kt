@@ -41,7 +41,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     @Suppress("UNCHECKED_CAST")
     protected fun allocateSlot(): S {
         // Actually create slot under lock
-        var subscriptionCount: SubscriptionCountStateFlow? = null
+        val subscriptionCount: SubscriptionCountStateFlow?
         val slot = synchronized(this) {
             val slots = when (val curSlots = slots) {
                 null -> createSlotArray(2).also { slots = it }
@@ -72,7 +72,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     @Suppress("UNCHECKED_CAST")
     protected fun freeSlot(slot: S) {
         // Release slot under lock
-        var subscriptionCount: SubscriptionCountStateFlow? = null
+        val subscriptionCount: SubscriptionCountStateFlow?
         val resumes = synchronized(this) {
             nCollectors--
             subscriptionCount = _subscriptionCount // retrieve under lock if initialized

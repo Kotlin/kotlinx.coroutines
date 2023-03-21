@@ -208,7 +208,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         assert { state.isCompleting } // consistency check -- must be marked as completing
         val proposedException = (proposedUpdate as? CompletedExceptionally)?.cause
         // Create the final exception and seal the state so that no more exceptions can be added
-        var wasCancelling = false // KLUDGE: we cannot have contract for our own expect fun synchronized
+        val wasCancelling: Boolean
         val finalException = synchronized(state) {
             wasCancelling = state.isCancelling
             val exceptions = state.sealLocked(proposedException)
