@@ -128,13 +128,13 @@ public interface SendChannel<in E> {
      * val uiUpdater = launch(Dispatchers.Main, parent = UILifecycle) {
      *    events.consume { ... handle events ... }
      * }
-     * // Stop callback as soon as the channel is closed or cancelled
+     * // Stop the callback as soon as the channel is closed or cancelled
      * events.invokeOnClose { callbackBasedApi.stop() }
      * ```
      *
-     * **Stability note.** This function constitutes a stable API surface with the only exception
-     * about [IllegalStateException] being thrown when multiple handlers are registered.
-     * There is a possibility that this restriction will be lifted in the future.
+     * **Stability note.** This function constitutes a stable API surface, with the only exception being
+     * that an [IllegalStateException] is thrown when multiple handlers are registered.
+     * This restriction could be lifted in the future.
      *
      * @throws UnsupportedOperationException if the underlying channel does not support [invokeOnClose].
      * Implementation note: currently, [invokeOnClose] is unsupported only by Rx-like integrations
