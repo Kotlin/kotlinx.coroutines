@@ -265,9 +265,13 @@ internal class CoroutineScheduler(
 
     /**
      * The `Long` value describing the state of workers in this pool.
-     * Currently includes created, CPU-acquired, and blocking workers, each occupying [BLOCKING_SHIFT] bits.
+     * Currently, includes created, CPU-acquired, and blocking workers, each occupying [BLOCKING_SHIFT] bits.
+     *
+     * State layout (highest to lowest bits):
+     * | --- number of cpu permits, 22 bits ---  | --- number of blocking tasks, 21 bits ---  | --- number of created threads, 21 bits ---  |
      */
     private val controlState = atomic(corePoolSize.toLong() shl CPU_PERMITS_SHIFT)
+
     private val createdWorkers: Int inline get() = (controlState.value and CREATED_MASK).toInt()
     private val availableCpuPermits: Int inline get() = availableCpuPermits(controlState.value)
 
@@ -383,6 +387,10 @@ internal class CoroutineScheduler(
     fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, tailDispatch: Boolean = false) {
         trackTask() // this is needed for virtual time support
         val task = createTask(block, taskContext)
+        val isBlockingTask = task.isBlocking
+        // Invariant: we increment counter **before** publishing the task
+        // so executing thread can safely decrement the number of blocking tasks
+        val stateSnapshot = if (isBlockingTask) incrementBlockingTasks() else 0
         // try to submit the task to the local queue and act depending on the result
         val currentWorker = currentWorker()
         val notAdded = currentWorker.submitToLocalQueue(task, tailDispatch)
@@ -394,12 +402,12 @@ internal class CoroutineScheduler(
         }
         val skipUnpark = tailDispatch && currentWorker != null
         // Checking 'task' instead of 'notAdded' is completely okay
-        if (task.mode == TASK_NON_BLOCKING) {
+        if (isBlockingTask) {
+            // Use state snapshot to better estimate the number of running threads
+            signalBlockingWork(stateSnapshot, skipUnpark = skipUnpark)
+        } else {
             if (skipUnpark) return
             signalCpuWork()
-        } else {
-            // Increment blocking tasks anyway
-            signalBlockingWork(skipUnpark = skipUnpark)
         }
     }
 
@@ -413,11 +421,11 @@ internal class CoroutineScheduler(
         return TaskImpl(block, nanoTime, taskContext)
     }
 
-    private fun signalBlockingWork(skipUnpark: Boolean) {
-        // Use state snapshot to avoid thread overprovision
-        val stateSnapshot = incrementBlockingTasks()
+    // NB: should only be called from 'dispatch' method due to blocking tasks increment
+    private fun signalBlockingWork(stateSnapshot: Long, skipUnpark: Boolean) {
         if (skipUnpark) return
         if (tryUnpark()) return
+        // Use state snapshot to avoid accidental thread overprovision
         if (tryCreateWorker(stateSnapshot)) return
         tryUnpark() // Try unpark again in case there was race between permit release and parking
     }
