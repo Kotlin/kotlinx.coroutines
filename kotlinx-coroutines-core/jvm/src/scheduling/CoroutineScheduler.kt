@@ -252,16 +252,21 @@ internal class CoroutineScheduler(
 
     /**
      * State of worker threads.
-     * [workers] is array of lazily created workers up to [maxPoolSize] workers.
+     * [workers] is a dynamic array of lazily created workers up to [maxPoolSize] workers.
      * [createdWorkers] is count of already created workers (worker with index lesser than [createdWorkers] exists).
-     * [blockingTasks] is count of pending (either in the queue or being executed) tasks
+     * [blockingTasks] is count of pending (either in the queue or being executed) blocking tasks.
+     *
+     * Workers array is also used as a lock for workers creation and termination sequence.
      *
      * **NOTE**: `workers[0]` is always `null` (never used, works as sentinel value), so
      * workers are 1-indexed, code path in [Worker.trySteal] is a bit faster and index swap during termination
-     * works properly
+     * works properly.
+     *
+     * Initial size is `Dispatchers.Default` size * 2 to prevent unnecessary resizes for slightly or steadily loaded
+     * applications.
      */
     @JvmField
-    val workers = ResizableAtomicArray<Worker>(corePoolSize + 1)
+    val workers = ResizableAtomicArray<Worker>((corePoolSize + 1) * 2)
 
     /**
      * The `Long` value describing the state of workers in this pool.
@@ -456,12 +461,14 @@ internal class CoroutineScheduler(
         }
     }
 
-    /*
+    /**
      * Returns the number of CPU workers after this function (including new worker) or
      * 0 if no worker was created.
      */
     private fun createNewWorker(): Int {
-        synchronized(workers) {
+        var worker: Worker
+        // kotlin.s to have contracts working
+        val result = kotlin.synchronized(workers) {
             // Make sure we're not trying to resurrect terminated scheduler
             if (isTerminated) return -1
             val state = controlState.value
@@ -479,12 +486,14 @@ internal class CoroutineScheduler(
              * 2) Make it observable by increment created workers count
              * 3) Only then start the worker, otherwise it may miss its own creation
              */
-            val worker = Worker(newIndex)
+            worker = Worker(newIndex)
             workers.setSynchronized(newIndex, worker)
             require(newIndex == incrementCreatedWorkers())
-            worker.start()
-            return cpuWorkers + 1
+            cpuWorkers + 1
         }
+
+        worker.start() // Start worker when the lock is released to reduce contention, see #3652
+        return result
     }
 
     /**
