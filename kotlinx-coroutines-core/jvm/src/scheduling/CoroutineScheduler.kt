@@ -256,7 +256,7 @@ internal class CoroutineScheduler(
      * [createdWorkers] is count of already created workers (worker with index lesser than [createdWorkers] exists).
      * [blockingTasks] is count of pending (either in the queue or being executed) blocking tasks.
      *
-     * Workers array is also used as a lock for workers creation and termination sequence.
+     * Workers array is also used as a lock for workers' creation and termination sequence.
      *
      * **NOTE**: `workers[0]` is always `null` (never used, works as sentinel value), so
      * workers are 1-indexed, code path in [Worker.trySteal] is a bit faster and index swap during termination
