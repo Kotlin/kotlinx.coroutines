@@ -466,9 +466,8 @@ internal class CoroutineScheduler(
      * 0 if no worker was created.
      */
     private fun createNewWorker(): Int {
-        var worker: Worker
-        // kotlin.s to have contracts working
-        val result = kotlin.synchronized(workers) {
+        val worker: Worker
+        return synchronized(workers) {
             // Make sure we're not trying to resurrect terminated scheduler
             if (isTerminated) return -1
             val state = controlState.value
@@ -490,10 +489,7 @@ internal class CoroutineScheduler(
             workers.setSynchronized(newIndex, worker)
             require(newIndex == incrementCreatedWorkers())
             cpuWorkers + 1
-        }
-
-        worker.start() // Start worker when the lock is released to reduce contention, see #3652
-        return result
+        }.also { worker.start() } // Start worker when the lock is released to reduce contention, see #3652
     }
 
     /**
