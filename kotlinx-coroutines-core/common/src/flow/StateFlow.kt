@@ -319,8 +319,8 @@ private class StateFlowImpl<T>(
         updateState(expect ?: NULL, update ?: NULL)
 
     private fun updateState(expectedState: Any?, newState: Any): Boolean {
-        var curSequence = 0
-        var curSlots: Array<StateFlowSlot?>? = this.slots // benign race, we will not use it
+        var curSequence: Int
+        var curSlots: Array<StateFlowSlot?>? // benign race, we will not use it
         synchronized(this) {
             val oldState = _state.value
             if (expectedState != null && oldState != expectedState) return false // CAS support
