@@ -120,20 +120,15 @@ public interface SendChannel<in E> {
      * val events = Channel<Event>(UNLIMITED)
      * callbackBasedApi.registerCallback { event ->
      *   events.trySend(event)
-     *       .onFailure { /* buffer overflown, trySend is unsuccessful */ }
-     *       .onClosed { /* channel is already closed, but callback hasn't stopped yet */ }
+     *       .onClosed { /* channel is already closed, but the callback hasn't stopped yet */ }
      * }
      *
-     * val uiUpdater = launch(Dispatchers.Main, parent = UILifecycle) {
+     * val uiUpdater = uiScope.launch(Dispatchers.Main) {
      *    events.consume { /* handle events */ }
      * }
      * // Stop the callback after the channel is closed or cancelled
      * events.invokeOnClose { callbackBasedApi.stop() }
      * ```
-     * Note that `invokeOnClose` is invoked **after** the channel is in its final state,
-     * meaning that [handler] always observes already closed/cancelled channel and
-     * that callback's code should be ready to handle the situation when callback
-     * is yet active, but the channel is already closed.
      *
      * **Stability note.** This function constitutes a stable API surface, with the only exception being
      * that an [IllegalStateException] is thrown when multiple handlers are registered.
