@@ -71,7 +71,7 @@ as threads are expensive resources and blocking them is inefficient and is often
 ### Structured concurrency
 
 Coroutines follow a principle of 
-**structured concurrency** which means that new coroutines can be only launched in a specific [CoroutineScope]
+**structured concurrency** which means that new coroutines can only be launched in a specific [CoroutineScope]
 which delimits the lifetime of the coroutine. The above example shows that [runBlocking] establishes the corresponding
 scope and that is why the previous example waits until `World!` is printed after a second's delay and only then exits.
 
