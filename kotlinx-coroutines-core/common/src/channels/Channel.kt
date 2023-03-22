@@ -111,18 +111,17 @@ public interface SendChannel<in E> {
      *
      * ### Execution context and exception safety
      *
-     * The [handler] is executed in the context of closing or cancelling operation
-     * as the very last action of channel's lifecycle, meaning that improper
-     * (e.g. throwing or hanging) implementations of handler cannot interfere
-     * with the channel's final state.
-     * Unhandled exceptions from [handler] are propagated to the operation's caller.
+     * The [handler] is executed as part of the closing or cancelling operation, and only after the channel reaches its final state.
+     * This means that if the handler throws an exception or hangs, the channel will still be successfully closed or cancelled.
+     * Unhandled exceptions from [handler] are propagated to the closing or cancelling operation's caller.
      *
-     * Example of usage (exception handling is omitted):
-     *
+     * Example of usage:
      * ```
-     * val events = Channel(UNLIMITED)
+     * val events = Channel<Event>(UNLIMITED)
      * callbackBasedApi.registerCallback { event ->
      *   events.trySend(event)
+     *       .onFailure { ... buffer overflown, trySend is unsuccessful ... }
+     *       .onClosed { ... channel is already closed, but callback hasn't stopped yet ... }
      * }
      *
      * val uiUpdater = launch(Dispatchers.Main, parent = UILifecycle) {
@@ -131,6 +130,10 @@ public interface SendChannel<in E> {
      * // Stop the callback as soon as the channel is closed or cancelled
      * events.invokeOnClose { callbackBasedApi.stop() }
      * ```
+     * Note that `invokeOnClose` is invoked **after** the channel is in its final state,
+     * meaning that [handler] always observes already closed/cancelled channel and
+     * that callback's code should be ready to handle the situation when callback
+     * is yet active, but the channel is already closed.
      *
      * **Stability note.** This function constitutes a stable API surface, with the only exception being
      * that an [IllegalStateException] is thrown when multiple handlers are registered.
@@ -397,7 +400,7 @@ public interface ReceiveChannel<out E> {
  * The successful result represents a successful operation with a value of type [T], for example,
  * the result of [Channel.receiveCatching] operation or a successfully sent element as a result of [Channel.trySend].
  *
- * The failed result represents a failed operation attempt to a channel, but it doesn't necessary indicate that the channel is failed.
+ * The failed result represents a failed operation attempt to a channel, but it doesn't necessarily indicate that the channel is failed.
  * E.g. when the channel is full, [Channel.trySend] returns failed result, but the channel itself is not in the failed state.
  *
  * The closed result represents an operation attempt to a closed channel and also implies that the operation has failed.
