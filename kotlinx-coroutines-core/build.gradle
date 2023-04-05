@@ -312,12 +312,6 @@ static void configureJvmForLincheck(task, additional = false) {
 task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest, jvmLincheckTestAdditional])
 check.dependsOn moreTest
 
-tasks.jvmLincheckTest {
-    kover {
-        enabled = false // Always disabled, lincheck doesn't really support coverage
-    }
-}
-
 def commonKoverExcludes =
         ["kotlinx.coroutines.debug.*", // Tested by debug module
          "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
@@ -326,6 +320,9 @@ def commonKoverExcludes =
         ]
 
 kover {
+    instrumentation {
+        excludeTasks.add("jvmLincheckTest") // Always disabled, lincheck doesn't really support coverage
+    }
     filters {
         classes {
             excludes.addAll(commonKoverExcludes)
