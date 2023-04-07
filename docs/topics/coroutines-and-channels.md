@@ -870,13 +870,33 @@ completion or cancel it explicitly, but that won't happen automatically as it wo
 
 ### Canceling the loading of contributors
 
-Consider two versions of the `loadContributorsConcurrent()` function. The first uses `coroutineScope` to start all of the
-child coroutines, whereas the second uses `GlobalScope`. Compare how both versions behave when you try to cancel
-the parent coroutine.
+Create two versions of the function that loads the list of contributors. Compare how both versions behave when you try to
+cancel the parent coroutine. The first version will use `coroutineScope` to start all of the child coroutines,
+whereas the second will use `GlobalScope`.
 
-1. Copy the implementation of `loadContributorsConcurrent()` from `Request5Concurrent.kt` to
-   `loadContributorsNotCancellable()` in `Request5NotCancellable.kt`, and then remove the creation of a new `coroutineScope`.
-2. The `async` calls now fail to resolve, so start them by using `GlobalScope.async`:
+1. In `Request5Concurrent.kt`, add a 3-second delay to the `loadContributorsConcurrent()` function: 
+
+   ```kotlin
+   suspend fun loadContributorsConcurrent(
+       service: GitHubService, 
+       req: RequestData
+   ): List<User> = coroutineScope {
+       // ...
+       async {
+           log("starting loading for ${repo.name}")
+           delay(3000)
+           // load repo contributors
+       }
+       // ...
+   }
+   ```
+   
+   The delay affects all of the coroutines that send requests, so that there's enough time to cancel the loading
+   after the coroutines are started but before the requests are sent.
+
+2. Create the second version of the loading function: copy the implementation of `loadContributorsConcurrent()` to
+   `loadContributorsNotCancellable()` in `Request5NotCancellable.kt` and then remove the creation of a new `coroutineScope`.
+3. The `async` calls now fail to resolve, so start them by using `GlobalScope.async`:
 
     ```kotlin
     suspend fun loadContributorsNotCancellable(
@@ -894,25 +914,8 @@ the parent coroutine.
     ```
 
     * The function now returns the result directly, not as the last expression inside the lambda (lines `#1` and `#3`).
-    * All of the "contributors" coroutines are started inside the `GlobalScope`, not as children of the coroutine scope (
-      line `#2`).
-3. Add a 3-second delay to all of the coroutines that send requests, so that there's enough time to cancel the loading
-   after the coroutines are started but before the requests are sent:
-
-    ```kotlin
-    suspend fun loadContributorsConcurrent(
-        service: GitHubService, 
-        req: RequestData
-    ): List<User> = coroutineScope {
-        // ...
-        async {
-            log("starting loading for ${repo.name}")
-            delay(3000)
-            // load repo contributors
-        }
-        // ...
-    }
-    ```
+    * All of the "contributors" coroutines are started inside the `GlobalScope`, not as children of the coroutine scope
+      (line `#2`).
 
 4. Run the program and choose the _CONCURRENT_ option to load the contributors.
 5. Wait until all of the "contributors" coroutines are started, and then click _Cancel_. The log shows no new results,
