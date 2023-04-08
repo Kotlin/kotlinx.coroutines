@@ -8,15 +8,15 @@ import kotlinx.coroutines.internal.*
 import org.w3c.dom.*
 import kotlin.coroutines.*
 
-internal external interface JsProcess {
+internal external interface JsProcess : JsAny {
     fun nextTick(handler: () -> Unit)
 }
 
-@JsFun("() => (typeof(process) !== 'undefined' && typeof(process.nextTick) === 'function') ? process : null")
-internal external fun tryGetProcess(): JsProcess?
+internal fun tryGetProcess(): JsProcess? =
+    js("(typeof(process) !== 'undefined' && typeof(process.nextTick) === 'function') ? process : null")
 
-@JsFun("() => (typeof(window) !== 'undefined' && window != null && typeof(window.addEventListener) === 'function') ? window : null")
-internal external fun tryGetWindow(): Window?
+internal fun tryGetWindow(): Window? =
+    js("(typeof(window) !== 'undefined' && window != null && typeof(window.addEventListener) === 'function') ? window : null")
 
 internal fun createDefaultDispatcher(): CoroutineDispatcher =
     tryGetProcess()?.let(::NodeDispatcher)

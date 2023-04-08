@@ -11,7 +11,7 @@ public actual val stressTestMultiplier: Int = 1
 public actual val stressTestMultiplierSqrt: Int = 1
 
 @Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
-public actual typealias TestResult = Promise<Dynamic?>
+public actual typealias TestResult = Promise<JsAny?>
 
 public actual val isNative = false
 
@@ -20,7 +20,7 @@ public actual open class TestBase actual constructor() {
     private var actionIndex = 0
     private var finished = false
     private var error: Throwable? = null
-    private var lastTestPromise: Promise<Dynamic?>? = null
+    private var lastTestPromise: Promise<JsAny?>? = null
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not

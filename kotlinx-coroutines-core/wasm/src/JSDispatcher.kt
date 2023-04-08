@@ -77,8 +77,8 @@ private open class ClearTimeout(protected val handle: Int) : CancelHandler(), Di
     override fun toString(): String = "ClearTimeout[$handle]"
 }
 
-@JsFun("(handle) => handle")
-private external fun toDynamicHandle(handle: () -> Unit): Dynamic
+@Suppress("UNUSED_PARAMETER")
+private fun toJsAnyCallback(handle: () -> Unit): JsAny = js("handle")
 
 internal class WindowDispatcher(private val window: Window) : CoroutineDispatcher(), Delay {
     private val queue = WindowMessageQueue(window)
@@ -86,12 +86,12 @@ internal class WindowDispatcher(private val window: Window) : CoroutineDispatche
     override fun dispatch(context: CoroutineContext, block: Runnable) = queue.enqueue(block)
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val handle = window.setTimeout(toDynamicHandle { with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
+        val handle = window.setTimeout(toJsAnyCallback { with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
         continuation.invokeOnCancellation(handler = WindowClearTimeout(handle).asHandler)
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val handle = window.setTimeout(toDynamicHandle(block::run), delayToInt(timeMillis))
+        val handle = window.setTimeout(toJsAnyCallback(block::run), delayToInt(timeMillis))
         return WindowClearTimeout(handle)
     }
 
@@ -102,22 +102,24 @@ internal class WindowDispatcher(private val window: Window) : CoroutineDispatche
     }
 }
 
-@JsFun("""(window, process) => {
+@Suppress("UNUSED_PARAMETER")
+private fun subscribeToWindowMessages(window: Window, process: () -> Unit): Unit = js("""{
     const handler = (event) => {
         if (event.source == window && event.data == 'dispatchCoroutine') {
             event.stopPropagation();
             process();
         }
     }
-    window.addEventListener('message', handler, true)
+    window.addEventListener('message', handler, true);
 }""")
-private external fun subscribeToWindowMessages(window: Window, process: () -> Unit)
 
-@JsFun("(window) => () => window.postMessage('dispatchCoroutine', '*')")
-private external fun createRescheduleMessagePoster(window: Window): () -> Unit
+@Suppress("UNUSED_PARAMETER")
+private fun createRescheduleMessagePoster(window: Window): () -> Unit =
+    js("() => window.postMessage('dispatchCoroutine', '*')")
 
-@JsFun("(process) => () => Promise.resolve(0).then(process)")
-private external fun createScheduleMessagePoster(process: () -> Unit): () -> Unit
+@Suppress("UNUSED_PARAMETER")
+private fun createScheduleMessagePoster(process: () -> Unit): () -> Unit =
+    js("() => Promise.resolve(0).then(process)")
 
 private class WindowMessageQueue(window: Window) : MessageQueue() {
     private val scheduleMessagePoster = createScheduleMessagePoster(::process)
@@ -185,5 +187,6 @@ internal abstract class MessageQueue : MutableList<Runnable> by ArrayDeque() {
 private external fun setTimeout(handler: () -> Unit, timeout: Int): Int
 
 // d8 doesn't have clearTimeout
-@JsFun("typeof clearTimeout === 'undefined' ? (handle) => {} : clearTimeout")
-private external fun clearTimeout(handle: Int)
+@Suppress("UNUSED_PARAMETER")
+private fun clearTimeout(handle: Int): Unit =
+    js("{ if (typeof clearTimeout !== 'undefined') clearTimeout(handle); }")

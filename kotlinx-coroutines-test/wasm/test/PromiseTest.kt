@@ -15,7 +15,7 @@ class PromiseTest {
             promiseEntered = true
         }
         delay(2)
-        p.await<Dynamic>()
+        p.await<JsAny>()
         assertTrue(promiseEntered)
     }
 }

@@ -7,19 +7,15 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 import kotlin.js.*
 
-@JsFun("(promise, deferred) => { promise.deferred = deferred; }")
-internal external fun <T> promiseSetDeferred(promise: Promise<Dynamic?>, deferred: Deferred<T>)
+@Suppress("UNUSED_PARAMETER")
+internal fun promiseSetDeferred(promise: Promise<JsAny?>, deferred: JsAny): Unit =
+    js("promise.deferred = deferred")
 
-@JsFun("""
-    (promise) => {
-      console.assert(promise instanceof Promise, "promiseGetDeferred must receive a promise, but got ", promise);
-      if (promise.deferred == null)
-        return null;
-      return promise.deferred; 
-     }
-    """
-    )
-internal external fun <T> promiseGetDeferred(promise: Promise<Dynamic?>): Deferred<T>?
+@Suppress("UNUSED_PARAMETER")
+internal fun promiseGetDeferred(promise: Promise<JsAny?>): JsAny? = js("""{
+    console.assert(promise instanceof Promise, "promiseGetDeferred must receive a promise, but got ", promise);
+    return promise.deferred == null ? null : promise.deferred; 
+}""")
 
 
 /**
@@ -41,34 +37,35 @@ public fun <T> CoroutineScope.promise(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
-): Promise<Dynamic?> =
+): Promise<JsAny?> =
     async(context, start, block).asPromise()
 
 /**
- * Converts this deferred value to the instance of [Promise<Dynamic?>].
+ * Converts this deferred value to the instance of [Promise<JsAny?>].
  */
 @Suppress("UNCHECKED_CAST_TO_EXTERNAL_INTERFACE")
-public fun <T> Deferred<T>.asPromise(): Promise<Dynamic?> {
-    val promise = Promise<Dynamic?> { resolve, reject ->
+public fun <T> Deferred<T>.asPromise(): Promise<JsAny?> {
+    val promise = Promise<JsAny?> { resolve, reject ->
         invokeOnCompletion {
             val e = getCompletionExceptionOrNull()
             if (e != null) {
-                reject(e as Dynamic)
+                reject(e.toJsReference())
             } else {
-                resolve(getCompleted() as Dynamic)
+                resolve(getCompleted()?.toJsReference())
             }
         }
     }
-    promiseSetDeferred(promise, this)
+    promiseSetDeferred(promise, this.toJsReference())
     return promise
 }
 
 /**
  * Converts this promise value to the instance of [Deferred].
  */
-public fun <T> Promise<Dynamic?>.asDeferred(): Deferred<T> {
-    val deferred = promiseGetDeferred<T>(this)
-    return deferred ?: GlobalScope.async(start = CoroutineStart.UNDISPATCHED) { await() }
+@Suppress("UNCHECKED_CAST_TO_EXTERNAL_INTERFACE", "UNCHECKED_CAST")
+public fun <T> Promise<JsAny?>.asDeferred(): Deferred<T> {
+    val deferred = promiseGetDeferred(this) as? JsReference<Deferred<T>>
+    return deferred?.get() ?: GlobalScope.async(start = CoroutineStart.UNDISPATCHED) { await() }
 }
 
 /**
@@ -81,7 +78,7 @@ public fun <T> Promise<Dynamic?>.asDeferred(): Deferred<T> {
  * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  */
 @Suppress("UNCHECKED_CAST")
-public suspend fun <T> Promise<Dynamic?>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
+public suspend fun <T> Promise<JsAny?>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     this@await.then(
         onFulfilled = { cont.resume(it as T); null },
         onRejected = { cont.resumeWithException(it.toThrowableOrNull() ?: error("Unexpected non-Kotlin exception $it")); null }

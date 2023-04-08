@@ -10,22 +10,22 @@ import kotlin.test.*
 class PromiseTest : TestBase() {
     @Test
     fun testPromiseResolvedAsDeferred() = GlobalScope.promise {
-        val promise = Promise<Dynamic?> { resolve, _ ->
-            resolve("OK" as Dynamic)
+        val promise = Promise<JsReference<String>> { resolve, _ ->
+            resolve("OK".toJsReference())
         }
-        val deferred = promise.asDeferred<String>()
-        assertEquals("OK", deferred.await())
+        val deferred = promise.asDeferred<JsReference<String>>()
+        assertEquals("OK", deferred.await().get())
     }
 
     @Test
     fun testPromiseRejectedAsDeferred() = GlobalScope.promise {
-        lateinit var promiseReject: (Dynamic) -> Unit
-        val promise = Promise<Dynamic?> { _, reject ->
+        lateinit var promiseReject: (JsAny) -> Unit
+        val promise = Promise<JsAny?> { _, reject ->
             promiseReject = reject
         }
-        val deferred = promise.asDeferred<String>()
+        val deferred = promise.asDeferred<JsReference<String>>()
         // reject after converting to deferred to avoid "Unhandled promise rejection" warnings
-        promiseReject(TestException("Rejected") as Dynamic)
+        promiseReject(TestException("Rejected").toJsReference())
         try {
             deferred.await()
             expectUnreached()
@@ -57,13 +57,13 @@ class PromiseTest : TestBase() {
 
     @Test
     fun testCancellableAwaitPromise() = GlobalScope.promise {
-        lateinit var r: (Dynamic) -> Unit
-        val toAwait = Promise<Dynamic?> { resolve, _ -> r = resolve }
+        lateinit var r: (JsAny) -> Unit
+        val toAwait = Promise<JsAny?> { resolve, _ -> r = resolve }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             toAwait.await() // suspends
         }
         job.cancel() // cancel the job
-        r("fail" as Dynamic) // too late, the waiting job was already cancelled
+        r("fail".toJsString()) // too late, the waiting job was already cancelled
     }
 
     @Test

@@ -55,7 +55,7 @@ buildscript {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
         CommunityProjectsBuild.addDevRepositoryIfEnabled(delegate, project)
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental" }
         mavenLocal()
     }
@@ -148,7 +148,7 @@ allprojects {
         google()
         mavenCentral()
         CommunityProjectsBuild.addDevRepositoryIfEnabled(delegate, project)
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap" }
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental" }
         mavenLocal()
     }
