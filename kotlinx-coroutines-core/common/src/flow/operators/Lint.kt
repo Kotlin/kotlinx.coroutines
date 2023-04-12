@@ -148,7 +148,8 @@ public suspend inline fun <T> SharedFlow<T>.toList(): List<T> =
     (this as Flow<T>).toList()
 
 /**
- * @suppress
+ * A specialized version of [Flow.toList] that returns [Nothing]
+ * to indicate that [SharedFlow] collection never completes.
  */
 @InlineOnly
 public suspend inline fun <T> SharedFlow<T>.toList(destination: MutableList<T>): Nothing {
@@ -169,7 +170,8 @@ public suspend inline fun <T> SharedFlow<T>.toSet(): Set<T> =
     (this as Flow<T>).toSet()
 
 /**
- * @suppress
+ * A specialized version of [Flow.toSet] that returns [Nothing]
+ * to indicate that [SharedFlow] collection never completes.
  */
 @InlineOnly
 public suspend inline fun <T> SharedFlow<T>.toSet(destination: MutableSet<T>): Nothing {
