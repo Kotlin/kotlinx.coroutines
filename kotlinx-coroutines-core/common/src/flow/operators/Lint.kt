@@ -144,8 +144,18 @@ public inline fun <T> SharedFlow<T>.retryWhen(noinline predicate: suspend FlowCo
     level = DeprecationLevel.WARNING
 )
 @InlineOnly
-public suspend inline fun <T> SharedFlow<T>.toList(destination: MutableList<T> = ArrayList()): List<T> =
+public suspend inline fun <T> SharedFlow<T>.toList(): List<T> =
     (this as Flow<T>).toList()
+
+/**
+ * A specialized version of [Flow.toList] that returns [Nothing]
+ * to indicate that [SharedFlow] collection never completes.
+ */
+@InlineOnly
+public suspend inline fun <T> SharedFlow<T>.toList(destination: MutableList<T>): Nothing {
+    (this as Flow<T>).toList(destination)
+    throw IllegalStateException("this code is supposed to be unreachable")
+}
 
 /**
  * @suppress
@@ -156,8 +166,18 @@ public suspend inline fun <T> SharedFlow<T>.toList(destination: MutableList<T> =
     level = DeprecationLevel.WARNING
 )
 @InlineOnly
-public suspend inline fun <T> SharedFlow<T>.toSet(destination: MutableSet<T> = LinkedHashSet()): Set<T> =
+public suspend inline fun <T> SharedFlow<T>.toSet(): Set<T> =
     (this as Flow<T>).toSet()
+
+/**
+ * A specialized version of [Flow.toSet] that returns [Nothing]
+ * to indicate that [SharedFlow] collection never completes.
+ */
+@InlineOnly
+public suspend inline fun <T> SharedFlow<T>.toSet(destination: MutableSet<T>): Nothing {
+    (this as Flow<T>).toSet(destination)
+    throw IllegalStateException("this code is supposed to be unreachable")
+}
 
 /**
  * @suppress
