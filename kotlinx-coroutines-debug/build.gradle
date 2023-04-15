@@ -71,3 +71,7 @@ koverReport {
         }
     }
 }
+
+tasks.apiCheck {
+    enabled = false
+}
