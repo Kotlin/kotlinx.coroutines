@@ -50,7 +50,7 @@ module('reactive/kotlinx-coroutines-rx3')
 module('ui/kotlinx-coroutines-android')
 module('ui/kotlinx-coroutines-android/android-unit-tests')
 if (JavaVersion.current().isJava11Compatible()) {
-    module('ui/kotlinx-coroutines-javafx')
+//    module('ui/kotlinx-coroutines-javafx')
 }
 module('ui/kotlinx-coroutines-swing')
 
