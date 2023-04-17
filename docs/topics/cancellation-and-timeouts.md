@@ -424,7 +424,7 @@ fun main() {
 If you run the above code, you'll see that it does not always print zero, though it may depend on the timings 
 of your machine. You may need to tweak the timeout in this example to actually see non-zero values. 
 
-> Note that incrementing and decrementing `acquired` counter here from 100K coroutines is completely thread-safe,
+> Note that incrementing and decrementing `acquired` counter here from 10K coroutines is completely thread-safe,
 > since it always happens from the same thread, the one used by `runBlocking`.
 > More on that will be explained in the chapter on coroutine context.
 > 
