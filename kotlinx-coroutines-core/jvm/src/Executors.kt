@@ -108,7 +108,14 @@ public fun CoroutineDispatcher.asExecutor(): Executor =
     (this as? ExecutorCoroutineDispatcher)?.executor ?: DispatcherExecutor(this)
 
 private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) : Executor {
-    override fun execute(block: Runnable) = dispatcher.dispatch(EmptyCoroutineContext, block)
+    override fun execute(block: Runnable) {
+        if (dispatcher.isDispatchNeeded(EmptyCoroutineContext)) {
+            dispatcher.dispatch(EmptyCoroutineContext, block)
+        } else {
+            block.run()
+        }
+    }
+
     override fun toString(): String = dispatcher.toString()
 }
 
