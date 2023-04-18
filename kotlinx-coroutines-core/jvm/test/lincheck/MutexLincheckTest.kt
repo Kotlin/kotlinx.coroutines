@@ -40,8 +40,5 @@ class MutexLincheckTest : AbstractLincheckTest() {
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
         actorsBefore(0)
 
-    // state[i] == true <=> mutex.holdsLock(i) with the only exception for 0 that specifies `null`.
-    override fun extractState() = (1..2).map { mutex.holdsLock(it) } + mutex.isLocked
-
     private val Int.asOwnerOrNull get() = if (this == 0) null else this
 }

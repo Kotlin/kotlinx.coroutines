@@ -25,8 +25,6 @@ abstract class SemaphoreLincheckTestBase(permits: Int) : AbstractLincheckTest() 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
         actorsBefore(0)
 
-    override fun extractState() = semaphore.availablePermits
-
     override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
         checkObstructionFreedom()
 }
