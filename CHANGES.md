@@ -1,5 +1,19 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.7.0-RC
+
+* Kotlin version is updated to 1.8.20.
+* Atomicfu version is updated to 0.20.2.
+* `JavaFx` version is updated to 17.0.2 in `kotlinx-coroutines-javafx` (#3671).
+* `previous-compilation-data.bin` file is removed from JAR resources (#3668).
+* `CoroutineDispatcher.asExecutor()` runs tasks without dispatching if the dispatcher is unconfined (#3683). Thanks @odedniv!
+* `SharedFlow.toMutableList` lint overload is undeprecated (#3706).
+* `Channel.invokeOnClose` is promoted to stable API (#3358).
+* Improved lock contention in `Dispatchers.Default` and `Dispatchers.IO` during the startup phase (#3652).
+* Fixed a bug that led to threads oversubscription in `Dispatchers.Default` (#3642).
+* Fixed a bug that allowed `limitedParallelism` to perform dispatches even after the underlying dispatcher was closed (#3672).
+* Restored binary compatibility of previously experimental `TestScope.runTest(Long)` (#3673).
+
 ## Version 1.7.0-Beta
 
 ### Core API significant improvements
