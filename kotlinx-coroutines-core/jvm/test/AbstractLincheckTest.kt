@@ -9,7 +9,7 @@ import org.jetbrains.kotlinx.lincheck.strategy.stress.*
 import org.jetbrains.kotlinx.lincheck.verifier.*
 import org.junit.*
 
-abstract class AbstractLincheckTest : VerifierState() {
+abstract class AbstractLincheckTest {
     open fun <O: Options<O, *>> O.customize(isStressTest: Boolean): O = this
     open fun ModelCheckingOptions.customize(isStressTest: Boolean): ModelCheckingOptions = this
     open fun StressOptions.customize(isStressTest: Boolean): StressOptions = this
@@ -41,6 +41,4 @@ abstract class AbstractLincheckTest : VerifierState() {
         .actorsPerThread(if (isStressTest) 3 else 2)
         .actorsAfter(if (isStressTest) 3 else 0)
         .customize(isStressTest)
-
-    override fun extractState(): Any = error("Not implemented")
 }

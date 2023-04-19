@@ -30,8 +30,6 @@ internal abstract class AbstractLockFreeTaskQueueWithoutRemoveLincheckTest(
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =
         verifier(QuiescentConsistencyVerifier::class.java)
 
-    override fun extractState() = q.map { it } to q.isClosed()
-
     override fun ModelCheckingOptions.customize(isStressTest: Boolean) =
         checkObstructionFreedom()
 }
@@ -42,9 +40,8 @@ internal class MCLockFreeTaskQueueWithRemoveLincheckTest : AbstractLockFreeTaskQ
     fun removeFirstOrNull() = q.removeFirstOrNull()
 }
 
-@OpGroupConfig(name = "consumer", nonParallel = true)
 internal class SCLockFreeTaskQueueWithRemoveLincheckTest : AbstractLockFreeTaskQueueWithoutRemoveLincheckTest(singleConsumer = true) {
     @QuiescentConsistent
-    @Operation(group = "consumer")
+    @Operation(nonParallelGroup = "consumer")
     fun removeFirstOrNull() = q.removeFirstOrNull()
 }

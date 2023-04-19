@@ -16,7 +16,6 @@ import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
-import org.jetbrains.kotlinx.lincheck.verifier.*
 
 class RendezvousChannelLincheckTest : ChannelLincheckTestBaseWithOnSend(
     c = Channel(RENDEZVOUS),
@@ -176,7 +175,7 @@ private class NumberedCancellationException(number: Int) : CancellationException
 }
 
 
-abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierState() {
+abstract class SequentialIntChannelBase(private val capacity: Int) {
     private val senders   = ArrayList<Pair<CancellableContinuation<Any>, Int>>()
     private val receivers = ArrayList<CancellableContinuation<Any>>()
     private val buffer = ArrayList<Int>()
@@ -266,8 +265,6 @@ abstract class SequentialIntChannelBase(private val capacity: Int) : VerifierSta
         if (closedMessage !== null) return false
         return buffer.isEmpty() && senders.isEmpty()
     }
-
-    override fun extractState() = buffer to closedMessage
 }
 
 private fun <T> CancellableContinuation<T>.resume(res: T): Boolean {
