@@ -97,10 +97,10 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
 
     private fun printError(message: String, cause: Throwable) {
         setError(cause)
-        println("$message: $cause")
-        cause.printStackTrace(System.out)
-        println("--- Detected at ---")
-        Throwable().printStackTrace(System.out)
+        System.err.println("$message: $cause")
+        cause.printStackTrace(System.err)
+        System.err.println("--- Detected at ---")
+        Throwable().printStackTrace(System.err)
     }
 
     /**

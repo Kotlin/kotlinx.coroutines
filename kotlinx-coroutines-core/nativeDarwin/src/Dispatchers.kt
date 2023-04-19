@@ -20,7 +20,7 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DarwinGloba
 private object DarwinGlobalQueueDispatcher : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         autoreleasepool {
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.convert(), 0)) {
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.convert(), 0u)) {
                 block.run()
             }
         }

@@ -3,12 +3,12 @@
 [![Kotlin Stable](https://kotl.in/badges/stable.svg)](https://kotlinlang.org/docs/components-stability.html)
 [![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.7.0-Beta)](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.7.0-Beta)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.8.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Download](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.7.0-RC)](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.7.0-RC)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.8.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![Slack channel](https://img.shields.io/badge/chat-slack-green.svg?logo=slack)](https://kotlinlang.slack.com/messages/coroutines/)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for the Kotlin `1.8.10` release.
+This is a companion version for the Kotlin `1.8.20` release.
 
 ```kotlin
 suspend fun main() = coroutineScope {
@@ -85,7 +85,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>1.7.0-Beta</version>
+    <version>1.7.0-RC</version>
 </dependency>
 ```
 
@@ -93,7 +93,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.8.10</kotlin.version>
+    <kotlin.version>1.8.20</kotlin.version>
 </properties>
 ```
 
@@ -103,7 +103,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```kotlin
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-RC")
 }
 ```
 
@@ -112,10 +112,10 @@ And make sure that you use the latest Kotlin version:
 ```kotlin
 plugins {
     // For build.gradle.kts (Kotlin DSL)
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "1.8.20"
     
     // For build.gradle (Groovy DSL)
-    id "org.jetbrains.kotlin.jvm" version "1.8.10"
+    id "org.jetbrains.kotlin.jvm" version "1.8.20"
 }
 ```
 
@@ -133,7 +133,7 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as a dependency when using `kotlinx.coroutines` on Android:
 
 ```kotlin
-implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0-Beta")
+implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0-RC")
 ```
 
 This gives you access to the Android [Dispatchers.Main]
@@ -168,7 +168,7 @@ In common code that should get compiled for different platforms, you can add a d
 ```kotlin
 commonMain {
     dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-RC")
     }
 }
 ```
@@ -180,7 +180,7 @@ Platform-specific dependencies are recommended to be used only for non-multiplat
 #### JS
 
 Kotlin/JS version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-js`](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.7.0-Beta)
+[`kotlinx-coroutines-core-js`](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.7.0-RC)
 (follow the link to get the dependency declaration snippet) and as [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) NPM package. 
 
 #### Native

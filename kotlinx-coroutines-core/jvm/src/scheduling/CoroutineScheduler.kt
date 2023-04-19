@@ -252,22 +252,31 @@ internal class CoroutineScheduler(
 
     /**
      * State of worker threads.
-     * [workers] is array of lazily created workers up to [maxPoolSize] workers.
+     * [workers] is a dynamic array of lazily created workers up to [maxPoolSize] workers.
      * [createdWorkers] is count of already created workers (worker with index lesser than [createdWorkers] exists).
-     * [blockingTasks] is count of pending (either in the queue or being executed) tasks
+     * [blockingTasks] is count of pending (either in the queue or being executed) blocking tasks.
+     *
+     * Workers array is also used as a lock for workers' creation and termination sequence.
      *
      * **NOTE**: `workers[0]` is always `null` (never used, works as sentinel value), so
      * workers are 1-indexed, code path in [Worker.trySteal] is a bit faster and index swap during termination
-     * works properly
+     * works properly.
+     *
+     * Initial size is `Dispatchers.Default` size * 2 to prevent unnecessary resizes for slightly or steadily loaded
+     * applications.
      */
     @JvmField
-    val workers = ResizableAtomicArray<Worker>(corePoolSize + 1)
+    val workers = ResizableAtomicArray<Worker>((corePoolSize + 1) * 2)
 
     /**
      * The `Long` value describing the state of workers in this pool.
-     * Currently includes created, CPU-acquired, and blocking workers, each occupying [BLOCKING_SHIFT] bits.
+     * Currently, includes created, CPU-acquired, and blocking workers, each occupying [BLOCKING_SHIFT] bits.
+     *
+     * State layout (highest to lowest bits):
+     * | --- number of cpu permits, 22 bits ---  | --- number of blocking tasks, 21 bits ---  | --- number of created threads, 21 bits ---  |
      */
     private val controlState = atomic(corePoolSize.toLong() shl CPU_PERMITS_SHIFT)
+
     private val createdWorkers: Int inline get() = (controlState.value and CREATED_MASK).toInt()
     private val availableCpuPermits: Int inline get() = availableCpuPermits(controlState.value)
 
@@ -383,6 +392,10 @@ internal class CoroutineScheduler(
     fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, tailDispatch: Boolean = false) {
         trackTask() // this is needed for virtual time support
         val task = createTask(block, taskContext)
+        val isBlockingTask = task.isBlocking
+        // Invariant: we increment counter **before** publishing the task
+        // so executing thread can safely decrement the number of blocking tasks
+        val stateSnapshot = if (isBlockingTask) incrementBlockingTasks() else 0
         // try to submit the task to the local queue and act depending on the result
         val currentWorker = currentWorker()
         val notAdded = currentWorker.submitToLocalQueue(task, tailDispatch)
@@ -394,12 +407,12 @@ internal class CoroutineScheduler(
         }
         val skipUnpark = tailDispatch && currentWorker != null
         // Checking 'task' instead of 'notAdded' is completely okay
-        if (task.mode == TASK_NON_BLOCKING) {
+        if (isBlockingTask) {
+            // Use state snapshot to better estimate the number of running threads
+            signalBlockingWork(stateSnapshot, skipUnpark = skipUnpark)
+        } else {
             if (skipUnpark) return
             signalCpuWork()
-        } else {
-            // Increment blocking tasks anyway
-            signalBlockingWork(skipUnpark = skipUnpark)
         }
     }
 
@@ -413,11 +426,11 @@ internal class CoroutineScheduler(
         return TaskImpl(block, nanoTime, taskContext)
     }
 
-    private fun signalBlockingWork(skipUnpark: Boolean) {
-        // Use state snapshot to avoid thread overprovision
-        val stateSnapshot = incrementBlockingTasks()
+    // NB: should only be called from 'dispatch' method due to blocking tasks increment
+    private fun signalBlockingWork(stateSnapshot: Long, skipUnpark: Boolean) {
         if (skipUnpark) return
         if (tryUnpark()) return
+        // Use state snapshot to avoid accidental thread overprovision
         if (tryCreateWorker(stateSnapshot)) return
         tryUnpark() // Try unpark again in case there was race between permit release and parking
     }
@@ -456,12 +469,13 @@ internal class CoroutineScheduler(
         }
     }
 
-    /*
+    /**
      * Returns the number of CPU workers after this function (including new worker) or
      * 0 if no worker was created.
      */
     private fun createNewWorker(): Int {
-        synchronized(workers) {
+        val worker: Worker
+        return synchronized(workers) {
             // Make sure we're not trying to resurrect terminated scheduler
             if (isTerminated) return -1
             val state = controlState.value
@@ -479,12 +493,11 @@ internal class CoroutineScheduler(
              * 2) Make it observable by increment created workers count
              * 3) Only then start the worker, otherwise it may miss its own creation
              */
-            val worker = Worker(newIndex)
+            worker = Worker(newIndex)
             workers.setSynchronized(newIndex, worker)
             require(newIndex == incrementCreatedWorkers())
-            worker.start()
-            return cpuWorkers + 1
-        }
+            cpuWorkers + 1
+        }.also { worker.start() } // Start worker when the lock is released to reduce contention, see #3652
     }
 
     /**
