@@ -74,6 +74,18 @@ private fun cleanBlockHoundTraces(frames: List<String>): List<String> {
     return result
 }
 
+/**
+ * Removes all frames that contain "java.util.concurrent" in it.
+ *
+ * We do leverage Java's locks for proper rendezvous and to fix the coroutine stack's state,
+ * but this API doesn't have (nor expected to) stable stacktrace, so we are filtering all such
+ * frames out.
+ *
+ * See https://github.com/Kotlin/kotlinx.coroutines/issues/3700 for the example of failure
+ */
+private fun removeJavaUtilConcurrentTraces(frames: List<String>): List<String> =
+    frames.filter { !it.contains("java.util.concurrent") }
+
 private data class CoroutineDump(
     val header: CoroutineDumpHeader,
     val coroutineStackTrace: List<String>,
@@ -185,7 +197,9 @@ public fun verifyDump(vararg expectedTraces: String, ignoredCoroutine: String? =
         .drop(1)
         // Parse dumps and filter out ignored coroutines
         .mapNotNull { trace ->
-            val dump = CoroutineDump.parse(trace, traceCleaner = ::cleanBlockHoundTraces)
+            val dump = CoroutineDump.parse(trace, {
+                removeJavaUtilConcurrentTraces(cleanBlockHoundTraces(it))
+            })
             if (dump.header.className == ignoredCoroutine) {
                 null
             } else {
@@ -194,9 +208,10 @@ public fun verifyDump(vararg expectedTraces: String, ignoredCoroutine: String? =
         }
 
     assertEquals(expectedTraces.size, dumps.size)
-    dumps.zip(expectedTraces.map(CoroutineDump::parse)).forEach { (dump, expectedDump) ->
-        dump.verify(expectedDump)
-    }
+    dumps.zip(expectedTraces.map { CoroutineDump.parse(it, ::removeJavaUtilConcurrentTraces) })
+        .forEach { (dump, expectedDump) ->
+            dump.verify(expectedDump)
+        }
 }
 
 public fun String.trimPackage() = replace("kotlinx.coroutines.debug.", "")
