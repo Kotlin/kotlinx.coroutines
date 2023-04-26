@@ -1,7 +1,6 @@
 /*
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
@@ -170,7 +169,8 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         assertTrue(true)
     }
 
-    @Test
+    @Test // IDEA-specific debugger API test
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     fun testActiveThread() = runBlocking<Unit> {
         launchCoroutine()
         awaitCoroutineStarted()
