@@ -13,23 +13,23 @@ the first one that becomes available.
 
 ## Selecting from channels
 
-Let us have two producers of strings: `fizz` and `buzz`. The `fizz` produces "Fizz" string every 300 ms:
+Let us have two producers of strings: `fizz` and `buzz`. The `fizz` produces "Fizz" string every 500 ms:
 
 ```kotlin
 fun CoroutineScope.fizz() = produce<String> {
-    while (true) { // sends "Fizz" every 300 ms
-        delay(300)
+    while (true) { // sends "Fizz" every 500 ms
+        delay(500)
         send("Fizz")
     }
 }
 ```
 
-And the `buzz` produces "Buzz!" string every 500 ms:
+And the `buzz` produces "Buzz!" string every 1000 ms:
 
 ```kotlin
 fun CoroutineScope.buzz() = produce<String> {
-    while (true) { // sends "Buzz!" every 500 ms
-        delay(500)
+    while (true) { // sends "Buzz!" every 1000 ms
+        delay(1000)
         send("Buzz!")
     }
 }
@@ -62,14 +62,14 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
 
 fun CoroutineScope.fizz() = produce<String> {
-    while (true) { // sends "Fizz" every 300 ms
+    while (true) { // sends "Fizz" every 500 ms
         delay(500)
         send("Fizz")
     }
 }
 
 fun CoroutineScope.buzz() = produce<String> {
-    while (true) { // sends "Buzz!" every 500 ms
+    while (true) { // sends "Buzz!" every 1000 ms
         delay(1000)
         send("Buzz!")
     }
