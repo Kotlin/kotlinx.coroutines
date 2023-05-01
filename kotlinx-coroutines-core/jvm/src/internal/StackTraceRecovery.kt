@@ -84,9 +84,6 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
 
 private fun <E : Throwable> tryCopyAndVerify(exception: E): E? {
     val newException = tryCopyException(exception) ?: return null
-    // Verify that the new exception has the same message as the original one (bail out if not, see #1631)
-    // CopyableThrowable has control over its message and thus can modify it the way it wants
-    if (exception !is CopyableThrowable<*> && newException.message != exception.message) return null
     return newException
 }
 
@@ -157,7 +154,6 @@ private fun mergeRecoveredTraces(recoveredStacktrace: Array<StackTraceElement>, 
     }
 }
 
-@Suppress("NOTHING_TO_INLINE")
 internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothing {
     if (!RECOVER_STACK_TRACES) throw exception
     suspendCoroutineUninterceptedOrReturn<Nothing> {
