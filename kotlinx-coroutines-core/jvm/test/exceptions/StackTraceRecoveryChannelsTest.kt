@@ -67,6 +67,7 @@ class StackTraceRecoveryChannelsTest : TestBase() {
             block()
             expectUnreached()
         } catch (e: RecoverableTestException) {
+            e.printStackTrace()
             verifyStackTrace("channels/${name.methodName}", e)
         }
     }
