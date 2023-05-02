@@ -35,33 +35,39 @@ subprojects {
         * ./gradlew :p:check -Pkover.enabled=true -- verifies coverage
         * ./gradlew :p:koverHtmlReport -Pkover.enabled=true -- generates HTML report
         */
-        isDisabled = !(properties["kover.enabled"]?.toString()?.toBoolean() ?: false)
+        if (properties["kover.enabled"]?.toString()?.toBoolean() != true) {
+            disable()
+        }
     }
 
     extensions.configure<KoverReportExtension>("koverReport") {
-        html {
-            setReportDir(conventionProject.layout.buildDirectory.dir("kover/${project.name}/html"))
-        }
+        defaults {
+            html {
+                setReportDir(conventionProject.layout.buildDirectory.dir("kover/${project.name}/html"))
+            }
 
-        verify {
-            rule {
-                /*
-                * 85 is our baseline that we aim to raise to 90+.
-                * Missing coverage is typically due to bugs in the agent
-                * (e.g. signatures deprecated with an error are counted),
-                * sometimes it's various diagnostic `toString` or `catch` for OOMs/VerificationErrors,
-                * but some places are definitely worth visiting.
-                */
-                minBound(expectedCoverage[projectName] ?: 85) // COVERED_LINES_PERCENTAGE
+            verify {
+                rule {
+                    /*
+                    * 85 is our baseline that we aim to raise to 90+.
+                    * Missing coverage is typically due to bugs in the agent
+                    * (e.g. signatures deprecated with an error are counted),
+                    * sometimes it's various diagnostic `toString` or `catch` for OOMs/VerificationErrors,
+                    * but some places are definitely worth visiting.
+                    */
+                    minBound(expectedCoverage[projectName] ?: 85) // COVERED_LINES_PERCENTAGE
+                }
             }
         }
     }
 }
 
 koverReport{
-    verify {
-        rule {
-            minBound(85) // COVERED_LINES_PERCENTAGE
+    defaults {
+        verify {
+            rule {
+                minBound(85) // COVERED_LINES_PERCENTAGE
+            }
         }
     }
 }

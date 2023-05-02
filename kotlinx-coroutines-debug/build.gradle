@@ -60,7 +60,7 @@ koverReport {
     filters {
         excludes {
             // Never used, safety mechanism
-            className("kotlinx.coroutines.debug.internal.NoOpProbesKt")
+            classes("kotlinx.coroutines.debug.internal.NoOpProbesKt")
         }
     }
 }

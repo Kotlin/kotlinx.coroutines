@@ -45,7 +45,7 @@ externalDocumentationLink(
 koverReport {
     filters {
         excludes {
-            className(
+            classes(
                 "kotlinx.coroutines.reactive.FlowKt", // Deprecated
                 "kotlinx.coroutines.reactive.FlowKt__MigrationKt", // Deprecated
                 "kotlinx.coroutines.reactive.ConvertKt" // Deprecated

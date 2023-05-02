@@ -37,7 +37,7 @@ externalDocumentationLink(
 koverReport {
     filters {
         excludes {
-            className(
+            classes(
                 "kotlinx.coroutines.reactor.FlowKt", // Deprecated
                 "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
             )
