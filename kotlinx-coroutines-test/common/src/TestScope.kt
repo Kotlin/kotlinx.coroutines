@@ -312,7 +312,7 @@ internal fun TestScope.asSpecificImplementation(): TestScopeImpl = when (this) {
 }
 
 internal class UncaughtExceptionsBeforeTest : IllegalStateException(
-    "There were uncaught exceptions in coroutines launched from TestScope before the test started. Please avoid this," +
+    "There were uncaught exceptions before the test started. Please avoid this," +
         " as such exceptions are also reported in a platform-dependent manner so that they are not lost."
 )
 
