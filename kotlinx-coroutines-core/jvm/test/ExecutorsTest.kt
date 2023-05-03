@@ -122,4 +122,16 @@ class ExecutorsTest : TestBase() {
         dispatcher.close()
         check(executorService.isShutdown)
     }
+
+    @Test
+    fun testInvoke() {
+        val executor = Executors.newSingleThreadExecutor { r -> Thread(r, "TestExecutor") }
+        runBlocking {
+            executor {
+                expect(1)
+                checkThreadName("TestExecutor")
+            }
+            finish(2)
+        }
+    }
 }

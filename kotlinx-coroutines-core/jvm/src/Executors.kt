@@ -107,6 +107,13 @@ public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
 public fun CoroutineDispatcher.asExecutor(): Executor =
     (this as? ExecutorCoroutineDispatcher)?.executor ?: DispatcherExecutor(this)
 
+/** Executes the [Runnable] and suspends until the execution completes. */
+public inline suspend operator fun Executor.invoke(runnable: Runnable) {
+    withContext(asCoroutineDispatcher()) {
+        launch { runnable.run() }
+    }
+}
+
 private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) : Executor {
     override fun execute(block: Runnable) {
         if (dispatcher.isDispatchNeeded(EmptyCoroutineContext)) {
