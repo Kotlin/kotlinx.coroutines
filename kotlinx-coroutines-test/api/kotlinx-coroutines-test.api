@@ -121,9 +121,11 @@ public final class kotlinx/coroutines/test/TestScopeKt {
 	public static final fun advanceTimeBy (Lkotlinx/coroutines/test/TestScope;J)V
 	public static final fun advanceTimeBy-HG0u8IE (Lkotlinx/coroutines/test/TestScope;J)V
 	public static final fun advanceUntilIdle (Lkotlinx/coroutines/test/TestScope;)V
+	public static final fun getCatchNonTestRelatedExceptions ()Z
 	public static final fun getCurrentTime (Lkotlinx/coroutines/test/TestScope;)J
 	public static final fun getTestTimeSource (Lkotlinx/coroutines/test/TestScope;)Lkotlin/time/TimeSource$WithComparableMarks;
 	public static final fun runCurrent (Lkotlinx/coroutines/test/TestScope;)V
+	public static final fun setCatchNonTestRelatedExceptions (Z)V
 }
 
 public abstract interface class kotlinx/coroutines/test/UncaughtExceptionCaptor {
