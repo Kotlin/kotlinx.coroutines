@@ -88,6 +88,26 @@ class StackTraceRecoveryCustomExceptionsTest : TestBase() {
     }
 
     @Test
+    fun testNestedExceptionWithCause() = runTest {
+        val result = runCatching {
+            coroutineScope<Unit> {
+                throw NestedException(IllegalStateException("ERROR"))
+            }
+        }
+        val ex = result.exceptionOrNull() ?: error("Expected to fail")
+        assertIs<NestedException>(ex)
+        assertIs<NestedException>(ex.cause)
+        val originalCause = ex.cause?.cause
+        assertIs<IllegalStateException>(originalCause)
+        assertEquals("ERROR", originalCause.message)
+    }
+
+    class NestedException : RuntimeException {
+        constructor(cause: Throwable) : super(cause)
+        constructor() : super()
+    }
+
+    @Test
     fun testWrongMessageExceptionInChannel() = runTest {
         val result = produce<Unit>(SupervisorJob() + Dispatchers.Unconfined) {
             throw WrongMessageException("OK")

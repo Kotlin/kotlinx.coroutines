@@ -32,42 +32,48 @@ internal fun <E : Throwable> tryCopyException(exception: E): E? {
 
 private fun <E : Throwable> createConstructor(clz: Class<E>): Ctor {
     val nullResult: Ctor = { null } // Pre-cache class
-    // Skip reflective copy if an exception has additional fields (that are usually populated in user-defined constructors)
+    // Skip reflective copy if an exception has additional fields (that are typically populated in user-defined constructors)
     if (throwableFields != clz.fieldsCountOrDefault(0)) return nullResult
     /*
-    * Try to reflectively find constructor(), constructor(message, cause), constructor(cause) or constructor(message).
-    * Exceptions are shared among coroutines, so we should copy exception before recovering current stacktrace.
-    */
-    val constructors = clz.constructors.sortedByDescending { it.parameterTypes.size }
-    for (constructor in constructors) {
-        val result = createSafeConstructor(constructor)
-        if (result != null) return result
-    }
-    return nullResult
+     * Try to reflectively find constructor(message, cause), constructor(message), constructor(cause), or constructor(),
+     * in that order of priority.
+     * Exceptions are shared among coroutines, so we should copy exception before recovering current stacktrace.
+     *
+     * By default, Java's reflection iterates over ctors in the source-code order and the sorting is stable, so we can
+     * not rely on the order of iteration. Instead, we assign a unique priority to each ctor type.
+     */
+    return clz.constructors.map { constructor ->
+        val p = constructor.parameterTypes
+        when (p.size) {
+            2 -> when {
+                p[0] == String::class.java && p[1] == Throwable::class.java ->
+                    safeCtor { e -> constructor.newInstance(e.message, e) as Throwable } to 3
+                else -> null to -1
+            }
+            1 -> when (p[0]) {
+                String::class.java ->
+                    safeCtor { e -> (constructor.newInstance(e.message) as Throwable).also { it.initCause(e) } } to 2
+                Throwable::class.java ->
+                    safeCtor { e -> constructor.newInstance(e) as Throwable } to 1
+                else -> null to -1
+            }
+            0 -> safeCtor { e -> (constructor.newInstance() as Throwable).also { it.initCause(e) } } to 0
+            else -> null to -1
+        }
+    }.maxByOrNull(Pair<*, Int>::second)?.first ?: nullResult
 }
 
-private fun createSafeConstructor(constructor: Constructor<*>): Ctor? {
-    val p = constructor.parameterTypes
-    return when (p.size) {
-        2 -> when {
-            p[0] == String::class.java && p[1] == Throwable::class.java ->
-                safeCtor { e -> constructor.newInstance(e.message, e) as Throwable }
-            else -> null
-        }
-        1 -> when (p[0]) {
-            Throwable::class.java ->
-                safeCtor { e -> constructor.newInstance(e) as Throwable }
-            String::class.java ->
-                safeCtor { e -> (constructor.newInstance(e.message) as Throwable).also { it.initCause(e) } }
-            else -> null
-        }
-        0 -> safeCtor { e -> (constructor.newInstance() as Throwable).also { it.initCause(e) } }
-        else -> null
-    }
+private fun safeCtor(block: (Throwable) -> Throwable): Ctor = { e ->
+    runCatching {
+        val result = block(e)
+        /*
+         * Verify that the new exception has the same message as the original one (bail out if not, see #1631)
+         * or if the new message complies the contract from `Throwable(cause).message` contract.
+         */
+        if (e.message != result.message && result.message != e.toString()) null
+        else result
+    }.getOrNull()
 }
-
-private inline fun safeCtor(crossinline block: (Throwable) -> Throwable): Ctor =
-    { e -> runCatching { block(e) }.getOrNull() }
 
 private fun Class<*>.fieldsCountOrDefault(defaultValue: Int) =
     kotlin.runCatching { fieldsCount() }.getOrDefault(defaultValue)
