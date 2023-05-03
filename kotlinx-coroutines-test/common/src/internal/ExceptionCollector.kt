@@ -43,8 +43,10 @@ internal object ExceptionCollector : AbstractCoroutineContextElement(CoroutineEx
      * Unregisters the callback associated with [owner].
      */
     fun removeOnExceptionCallback(owner: Any) = synchronized(lock) {
-        val existingValue = callbacks.remove(owner)
-        check(existingValue !== null)
+        if (enabled) {
+            val existingValue = callbacks.remove(owner)
+            check(existingValue !== null)
+        }
     }
 
     /**
