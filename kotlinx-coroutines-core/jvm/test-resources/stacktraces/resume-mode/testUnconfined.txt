@@ -1,5 +1,4 @@
 kotlinx.coroutines.RecoverableTestException
-	at kotlinx.coroutines.internal.StackTraceRecoveryKt.recoverStackTrace(StackTraceRecovery.kt)
 	at kotlinx.coroutines.channels.BufferedChannel.receive$suspendImpl(BufferedChannel.kt)
 	at kotlinx.coroutines.channels.BufferedChannel.receive(BufferedChannel.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$withContext$2.invokeSuspend(StackTraceRecoveryResumeModeTest.kt)

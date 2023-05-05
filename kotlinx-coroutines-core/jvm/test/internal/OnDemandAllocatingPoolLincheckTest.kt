@@ -27,8 +27,6 @@ abstract class OnDemandAllocatingPoolLincheckTest(maxCapacity: Int) : AbstractLi
 
     @Operation
     fun close(): String = pool.close().sorted().toString()
-
-    override fun extractState(): Any = pool.stateRepresentation()
 }
 
 abstract class OnDemandAllocatingSequentialPool(private val maxCapacity: Int) {
