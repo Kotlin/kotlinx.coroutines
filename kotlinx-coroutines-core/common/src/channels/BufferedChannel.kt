@@ -1220,9 +1220,9 @@ internal open class BufferedChannel<E>(
                 incCompletedExpandBufferAttempts()
                 return
             }
-            // Is `bufferEndSegment` outdated?
+            // Is `bufferEndSegment` outdated or is the segment with the required id already removed?
             // Find the required segment, creating new ones if needed.
-            if (segment.id < id) {
+            if (segment.id != id) {
                 segment = findSegmentBufferEnd(id, segment, b)
                     // Restart if the required segment is removed, or
                     // the linked list of segments is already closed,
