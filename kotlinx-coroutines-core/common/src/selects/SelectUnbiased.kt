@@ -38,7 +38,7 @@ public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<
  */
 @PublishedApi
 internal open class UnbiasedSelectImplementation<R>(context: CoroutineContext) : SelectImplementation<R>(context) {
-    private val clausesToRegister: MutableList<ClauseData<R>> = arrayListOf()
+    private val clausesToRegister: MutableList<ClauseData> = arrayListOf()
 
     override fun SelectClause0.invoke(block: suspend () -> R) {
         clausesToRegister += ClauseData(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_0, block, onCancellationConstructor)

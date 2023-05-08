@@ -177,29 +177,17 @@ internal open class BufferedChannel<E>(
         } else {
             when (this) {
                 is CancellableContinuation<*> -> {
-                    invokeOnCancellation(SenderWithOnUndeliveredElementCancellationHandler(segment, index, context).asHandler)
+                    invokeOnCancellation(segment, index + SEGMENT_SIZE)
                 }
                 is SelectInstance<*> -> {
-                    disposeOnCompletion(SenderWithOnUndeliveredElementCancellationHandler(segment, index, context))
+                    invokeOnCancellation(segment, index + SEGMENT_SIZE)
                 }
                 is SendBroadcast -> {
-                    cont.invokeOnCancellation(SenderWithOnUndeliveredElementCancellationHandler(segment, index, cont.context).asHandler)
+                    invokeOnCancellation(segment, index + SEGMENT_SIZE)
                 }
                 else -> error("unexpected sender: $this")
             }
         }
-    }
-
-    private class SenderWithOnUndeliveredElementCancellationHandler<E>(
-        private val segment: ChannelSegment<E>,
-        private val index: Int,
-        private val context: CoroutineContext
-    ) : BeforeResumeCancelHandler(), DisposableHandle {
-        override fun dispose() {
-            segment.onSenderCancellationWithOnUndeliveredElement(index, context)
-        }
-
-        override fun invoke(cause: Throwable?) = dispose()
     }
 
     private fun onClosedSendOnNoWaiterSuspend(element: E, cont: CancellableContinuation<Unit>) {
@@ -2809,7 +2797,11 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
     // # Cancellation Support #
     // ########################
 
-    override fun onCancellation(index: Int, cause: Throwable?) {
+    override fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext) {
+        if (index >= SEGMENT_SIZE) {
+            onSenderCancellationWithOnUndeliveredElement(index - SEGMENT_SIZE, context)
+            return
+        }
         onCancellation(index)
     }
 

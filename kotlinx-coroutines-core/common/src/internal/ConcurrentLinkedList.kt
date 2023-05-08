@@ -6,6 +6,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlin.coroutines.*
 import kotlin.jvm.*
 
 /**
@@ -231,7 +232,7 @@ internal abstract class Segment<S : Segment<S>>(
      * with the specified [index] are installed as cancellation handler via
      * `SegmentDisposable.disposeOnCancellation(Segment, Int)`.
      */
-    abstract fun onCancellation(index: Int, cause: Throwable?)
+    abstract fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext)
 
     /**
      * Invoked on each slot clean-up; should not be invoked twice for the same slot.
