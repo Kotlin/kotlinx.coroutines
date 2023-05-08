@@ -172,22 +172,10 @@ internal open class BufferedChannel<E>(
         segment: ChannelSegment<E>,
         index: Int
     ) {
-        if (onUndeliveredElement == null) {
-            invokeOnCancellation(segment, index)
-        } else {
-            when (this) {
-                is CancellableContinuation<*> -> {
-                    invokeOnCancellation(segment, index + SEGMENT_SIZE)
-                }
-                is SelectInstance<*> -> {
-                    invokeOnCancellation(segment, index + SEGMENT_SIZE)
-                }
-                is SendBroadcast -> {
-                    invokeOnCancellation(segment, index + SEGMENT_SIZE)
-                }
-                else -> error("unexpected sender: $this")
-            }
-        }
+        // To distinguish cancelled senders and receivers,
+        // senders equip the index value with an additional marker,
+        // adding `SEGMENT_SIZE` to the value.
+        invokeOnCancellation(segment, index + SEGMENT_SIZE)
     }
 
     private fun onClosedSendOnNoWaiterSuspend(element: E, cont: CancellableContinuation<Unit>) {
@@ -2798,70 +2786,50 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
     // ########################
 
     override fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext) {
-        if (index >= SEGMENT_SIZE) {
-            onSenderCancellationWithOnUndeliveredElement(index - SEGMENT_SIZE, context)
-            return
-        }
-        onCancellation(index)
-    }
-
-    fun onSenderCancellationWithOnUndeliveredElement(index: Int, context: CoroutineContext) {
-        // Read the element first. If the operation has not been successfully resumed
-        // (this cancellation may be caused by prompt cancellation during dispatching),
-        // it is guaranteed that the element is presented.
+        // To distinguish cancelled senders and receivers, senders equip the index value with
+        // an additional marker, adding `SEGMENT_SIZE` to the value.
+        val isSender = index >= SEGMENT_SIZE
+        // Unwrap the index.
+        @Suppress("NAME_SHADOWING") val index = if (isSender) index - SEGMENT_SIZE else index
+        // Read the element, which may be needed further to call `onUndeliveredElement`.
         val element = getElement(index)
-        // Perform the cancellation; `onCancellationImpl(..)` return `true` if the
-        // cancelled operation had not been resumed. In this case, the `onUndeliveredElement`
-        // lambda should be called.
-        if (onCancellation(index)) {
-            channel.onUndeliveredElement!!.callUndeliveredElement(element, context)
-        }
-    }
-
-    /**
-     *  Returns `true` if the request is successfully cancelled,
-     *  and no rendezvous has happened. We need this knowledge
-     *  to keep [BufferedChannel.onUndeliveredElement] correct.
-     */
-    @Suppress("ConvertTwoComparisonsToRangeCheck")
-    fun onCancellation(index: Int): Boolean {
-        // Count the global index of this cell and read
-        // the current counters of send and receive operations.
-        val globalIndex = id * SEGMENT_SIZE + index
-        val s = channel.sendersCounter
-        val r = channel.receiversCounter
-        // Update the cell state trying to distinguish whether
-        // the cancelled coroutine is sender or receiver.
-        var isSender: Boolean
-        var isReceiver: Boolean
-        while (true) { // CAS-loop
+        // Update the cell state.
+        while (true) {
+            // CAS-loop
             // Read the current state of the cell.
-            val cur = data[index * 2 + 1].value
+            val cur = getState(index)
             when {
                 // The cell stores a waiter.
                 cur is Waiter || cur is WaiterEB -> {
-                    // Is the cancelled request send for sure?
-                    isSender = globalIndex < s && globalIndex >= r
-                    // Is the cancelled request receiver for sure?
-                    isReceiver = globalIndex < r && globalIndex >= s
-                    // If the cancelled coroutine neither sender
-                    // nor receiver, clean the element slot and finish.
-                    // An opposite operation will resume this request
-                    // and update the cell state eventually.
-                    if (!isSender && !isReceiver) {
-                        cleanElement(index)
-                        return true
-                    }
                     // The cancelled request is either send or receive.
                     // Update the cell state correspondingly.
                     val update = if (isSender) INTERRUPTED_SEND else INTERRUPTED_RCV
-                    if (data[index * 2 + 1].compareAndSet(cur, update)) break
+                    if (casState(index, cur, update)) {
+                        // The waiter has been successfully cancelled.
+                        // Clean the element slot and invoke `onSlotCleaned()`,
+                        // which may cause deleting the whole segment from the linked list.
+                        // In case the cancelled request is receiver, it is critical to ensure
+                        // that the `expandBuffer()` attempt that processes this cell is completed,
+                        // so `onCancelledRequest(..)` waits for its completion before invoking `onSlotCleaned()`.
+                        cleanElement(index)
+                        onCancelledRequest(index, !isSender)
+                        // Call `onUndeliveredElement` if needed.
+                        if (isSender) {
+                            channel.onUndeliveredElement?.callUndeliveredElement(element, context)
+                        }
+                        return
+                    }
                 }
                 // The cell already indicates that the operation is cancelled.
                 cur === INTERRUPTED_SEND || cur === INTERRUPTED_RCV -> {
-                    // Clean the element slot to avoid memory leaks and finish.
+                    // Clean the element slot to avoid memory leaks,
+                    // invoke `onUndeliveredElement` if needed, and finish
                     cleanElement(index)
-                    return true
+                    // Call `onUndeliveredElement` if needed.
+                    if (isSender) {
+                        channel.onUndeliveredElement?.callUndeliveredElement(element, context)
+                    }
+                    return
                 }
                 // An opposite operation is resuming this request;
                 // wait until the cell state updates.
@@ -2872,23 +2840,13 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
                 cur === RESUMING_BY_EB || cur === RESUMING_BY_RCV -> continue
                 // This request was successfully resumed, so this cancellation
                 // is caused by the prompt cancellation feature and should be ignored.
-                cur === DONE_RCV || cur === BUFFERED -> return false
+                cur === DONE_RCV || cur === BUFFERED -> return
                 // The cell state indicates that the channel is closed;
                 // this cancellation should be ignored.
-                cur === CHANNEL_CLOSED -> {
-                    return false
-                }
+                cur === CHANNEL_CLOSED -> return
                 else -> error("unexpected state: $cur")
             }
         }
-        // Clean the element slot and invoke `onSlotCleaned()`,
-        // which may cause deleting the whole segment from the linked list.
-        // In case the cancelled request is receiver, it is critical to ensure
-        // that the `expandBuffer()` attempt that processes this cell is completed,
-        // so `onCancelledRequest(..)` waits for its completion before invoking `onSlotCleaned()`.
-        cleanElement(index)
-        onCancelledRequest(index, isReceiver)
-        return true
     }
 
     /**
