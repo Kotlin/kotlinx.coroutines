@@ -578,8 +578,8 @@ internal expect fun dumpCoroutines()
 @JvmName("runTest\$default")
 @Suppress("DEPRECATION", "UNUSED_PARAMETER")
 public fun TestScope.runTestLegacy(
-    dispatchTimeoutMs: Long?,
+    dispatchTimeoutMs: Long,
     testBody: suspend TestScope.() -> Unit,
-    unused1: Int?,
+    unused1: Int,
     unused2: Any?,
-): TestResult = runTest(dispatchTimeoutMs ?: 60_000, testBody)
+): TestResult = runTest(dispatchTimeoutMs, testBody)
