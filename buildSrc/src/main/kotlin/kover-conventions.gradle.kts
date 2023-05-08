@@ -62,7 +62,7 @@ subprojects {
     }
 }
 
-koverReport{
+koverReport {
     defaults {
         verify {
             rule {
@@ -70,4 +70,8 @@ koverReport{
             }
         }
     }
+}
+
+conventionProject.tasks.register("koverReport") {
+    dependsOn(conventionProject.tasks.named("koverHtmlReport"))
 }
