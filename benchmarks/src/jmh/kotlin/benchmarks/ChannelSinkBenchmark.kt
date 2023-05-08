@@ -24,6 +24,42 @@ open class ChannelSinkBenchmark {
     private val unconfinedOneElement = Dispatchers.Unconfined + tl.asContextElement()
     private val unconfinedTwoElements = Dispatchers.Unconfined + tl.asContextElement() + tl2.asContextElement()
 
+    // Temporary benchmarks
+
+    @Benchmark
+    fun withoutCancellationHandler(): Unit = runBlocking {
+        val channel = Channel<Int>()
+        launch {
+            repeat(10_000) {
+                channel.send(it)
+            }
+            channel.close()
+        }
+
+        launch {
+            for (i in channel) {
+                // Do nothing
+            }
+        }
+    }
+
+    @Benchmark
+    fun withCancellationHandler(): Unit = runBlocking {
+        val channel = Channel<Int>() { }
+        launch {
+            repeat(10_000) {
+                channel.send(it)
+            }
+            channel.close()
+        }
+
+        launch {
+            for (i in channel) {
+                // Do nothing
+            }
+        }
+    }
+
     @Benchmark
     fun channelPipeline(): Int = runBlocking {
         run(unconfined)

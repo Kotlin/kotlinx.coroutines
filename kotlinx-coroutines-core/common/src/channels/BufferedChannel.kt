@@ -190,7 +190,7 @@ internal open class BufferedChannel<E>(
         }
     }
 
-    private inner class SenderWithOnUndeliveredElementCancellationHandler(
+    private class SenderWithOnUndeliveredElementCancellationHandler<E>(
         private val segment: ChannelSegment<E>,
         private val index: Int,
         private val context: CoroutineContext
@@ -1594,7 +1594,7 @@ internal open class BufferedChannel<E>(
      * and [SelectInstance.trySelect]. When the channel becomes closed,
      * [tryResumeHasNextOnClosedChannel] should be used instead.
      */
-    private inner class BufferedChannelIterator : ChannelIterator<E>, BeforeResumeCancelHandler(), Waiter {
+    private inner class BufferedChannelIterator : ChannelIterator<E>, Waiter {
         /**
          * Stores the element retrieved by [hasNext] or
          * a special [CHANNEL_CLOSED] token if this channel is closed.
@@ -1607,20 +1607,7 @@ internal open class BufferedChannel<E>(
          * continuation. The [tryResumeHasNext] and [tryResumeHasNextOnClosedChannel]
          * function resume this continuation when the [hasNext] invocation should complete.
          */
-        private var continuation: CancellableContinuation<Boolean>? = null
-
-        // When `hasNext()` suspends, the location where the continuation
-        // is stored is specified via the segment and the index in it.
-        // We need this information in the cancellation handler below.
-        private var segment: Segment<*>? = null
-        private var index = -1
-
-        /**
-         * Invoked on cancellation, [BeforeResumeCancelHandler] implementation.
-         */
-        override fun invoke(cause: Throwable?) {
-            segment?.onCancellation(index, null)
-        }
+        private var continuation: CancellableContinuationImpl<Boolean>? = null
 
         // `hasNext()` is just a special receive operation.
         override suspend fun hasNext(): Boolean =
@@ -1680,11 +1667,7 @@ internal open class BufferedChannel<E>(
         }
 
         override fun invokeOnCancellation(segment: Segment<*>, index: Int) {
-            this.segment = segment
-            this.index = index
-            // It is possible that this `hasNext()` invocation is already
-            // resumed, and the `continuation` field is already updated to `null`.
-            this.continuation?.invokeOnCancellation(this.asHandler)
+            this.continuation?.invokeOnCancellation(segment, index)
         }
 
         private fun onClosedHasNextNoWaiterSuspend() {
