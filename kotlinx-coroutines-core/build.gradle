@@ -336,16 +336,14 @@ kover {
 }
 
 koverReport {
-    defaults {
-        filters {
-            excludes {
-                classes(
-                        "kotlinx.coroutines.debug.*", // Tested by debug module
-                        "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
-                        "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
-                        "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
-                )
-            }
+    filters {
+        excludes {
+            classes(
+                    "kotlinx.coroutines.debug.*", // Tested by debug module
+                    "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
+                    "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
+                    "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
+            )
         }
     }
 }
