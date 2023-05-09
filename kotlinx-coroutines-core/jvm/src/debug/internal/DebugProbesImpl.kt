@@ -182,8 +182,8 @@ internal object DebugProbesImpl {
         val coroutinesInfoAsJson = ArrayList<String>(size)
         for (info in coroutinesInfo) {
             val context = info.context
-            val name = context[CoroutineName.Key]?.name?.toStringWithQuotes()
-            val dispatcher = context[CoroutineDispatcher.Key]?.toStringWithQuotes()
+            val name = context[CoroutineName.Key]?.name?.toStringRepr()
+            val dispatcher = context[CoroutineDispatcher.Key]?.toStringRepr()
             coroutinesInfoAsJson.add(
                 """
                 {
@@ -219,7 +219,7 @@ internal object DebugProbesImpl {
                 {
                     "declaringClass": "${element.className}",
                     "methodName": "${element.methodName}",
-                    "fileName": ${element.fileName?.toStringWithQuotes()},
+                    "fileName": ${element.fileName?.toStringRepr()},
                     "lineNumber": ${element.lineNumber}
                 }
                 """.trimIndent()
@@ -229,7 +229,7 @@ internal object DebugProbesImpl {
         return "[${stackTraceElementsInfoAsJson.joinToString()}]"
     }
 
-    private fun Any.toStringWithQuotes() = "\"$this\""
+    private fun Any.toStringRepr() = toString().repr()
 
     /*
      * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
@@ -589,4 +589,20 @@ internal object DebugProbesImpl {
     }
 
     private val StackTraceElement.isInternalMethod: Boolean get() = className.startsWith("kotlinx.coroutines")
+}
+
+private fun String.repr(): String = buildString {
+    append('"')
+    for (c in this@repr) {
+        when (c) {
+            '"' -> append("\\\"")
+            '\\' -> append("\\\\")
+            '\b' -> append("\\b")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> append(c)
+        }
+    }
+    append('"')
 }
