@@ -4,6 +4,10 @@
 
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: 'org.jetbrains.dokka'
+
+// apply plugin to use autocomplete for Kover DSL
+apply plugin: 'org.jetbrains.kotlinx.kover'
+
 apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
 apply from: rootProject.file("gradle/compile-common.gradle")
 
@@ -320,12 +324,26 @@ def commonKoverExcludes =
         ]
 
 kover {
-    instrumentation {
-        excludeTasks.add("jvmLincheckTest") // Always disabled, lincheck doesn't really support coverage
+    excludeTests {
+        // Always disabled, lincheck doesn't really support coverage
+        tasks("jvmLincheckTest")
     }
+
+    excludeInstrumentation {
+        // lincheck has NPE error on `ManagedStrategyStateHolder` class
+        classes("org.jetbrains.kotlinx.lincheck.*")
+    }
+}
+
+koverReport {
     filters {
-        classes {
-            excludes.addAll(commonKoverExcludes)
+        excludes {
+            classes(
+                    "kotlinx.coroutines.debug.*", // Tested by debug module
+                    "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
+                    "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
+                    "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
+            )
         }
     }
 }

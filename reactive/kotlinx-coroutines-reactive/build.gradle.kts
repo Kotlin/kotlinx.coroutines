@@ -1,6 +1,13 @@
+import kotlinx.kover.gradle.plugin.dsl.*
+
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+plugins {
+    // apply plugin to use autocomplete for Kover DSL
+    id("org.jetbrains.kotlinx.kover")
+}
 
 val reactiveStreamsVersion = property("reactive_streams_version")
 
@@ -35,16 +42,14 @@ externalDocumentationLink(
     url = "https://www.reactive-streams.org/reactive-streams-$reactiveStreamsVersion-javadoc/"
 )
 
-val commonKoverExcludes = listOf(
-    "kotlinx.coroutines.reactive.FlowKt", // Deprecated
-    "kotlinx.coroutines.reactive.FlowKt__MigrationKt", // Deprecated
-    "kotlinx.coroutines.reactive.ConvertKt" // Deprecated
-)
-
-kover {
+koverReport {
     filters {
-        classes {
-            excludes += commonKoverExcludes
+        excludes {
+            classes(
+                "kotlinx.coroutines.reactive.FlowKt", // Deprecated
+                "kotlinx.coroutines.reactive.FlowKt__MigrationKt", // Deprecated
+                "kotlinx.coroutines.reactive.ConvertKt" // Deprecated
+            )
         }
     }
 }

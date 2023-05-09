@@ -1,9 +1,11 @@
-import kotlinx.kover.api.*
-import kotlinx.kover.tasks.*
+import kotlinx.kover.gradle.plugin.dsl.*
 
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+plugins {
+    id("org.jetbrains.kotlinx.kover")
+}
 
 val notCovered = sourceless + internal + unpublished
 
@@ -16,38 +18,60 @@ val expectedCoverage = mutableMapOf(
     "kotlinx-coroutines-reactor" to 75
 )
 
+val conventionProject = project
+
 subprojects {
     val projectName = name
     if (projectName in notCovered) return@subprojects
-    apply(plugin = "kover")
 
-    extensions.configure<KoverProjectConfig> {
+    project.apply(plugin = "org.jetbrains.kotlinx.kover")
+    conventionProject.dependencies.add("kover", this)
+
+    extensions.configure<KoverProjectExtension>("kover") {
         /*
-         * Is explicitly enabled on TC in a separate build step.
-         * Examples:
-         * ./gradlew :p:check -- doesn't verify coverage
-         * ./gradlew :p:check -Pkover.enabled=true -- verifies coverage
-         * ./gradlew :p:koverReport -Pkover.enabled=true -- generates report
-         */
-        isDisabled.set(!(properties["kover.enabled"]?.toString()?.toBoolean() ?: false))
+        * Is explicitly enabled on TC in a separate build step.
+        * Examples:
+        * ./gradlew :p:check -- doesn't verify coverage
+        * ./gradlew :p:check -Pkover.enabled=true -- verifies coverage
+        * ./gradlew :p:koverHtmlReport -Pkover.enabled=true -- generates HTML report
+        */
+        if (properties["kover.enabled"]?.toString()?.toBoolean() != true) {
+            disable()
+        }
+    }
 
-        verify {
-            rule {
-                bound {
+    extensions.configure<KoverReportExtension>("koverReport") {
+        defaults {
+            html {
+                setReportDir(conventionProject.layout.buildDirectory.dir("kover/${project.name}/html"))
+            }
+
+            verify {
+                rule {
                     /*
-                     * 85 is our baseline that we aim to raise to 90+.
-                     * Missing coverage is typically due to bugs in the agent
-                     * (e.g. signatures deprecated with an error are counted),
-                     * sometimes it's various diagnostic `toString` or `catch` for OOMs/VerificationErrors,
-                     * but some places are definitely worth visiting.
-                     */
-                    minValue = expectedCoverage[projectName] ?: 85 // COVERED_LINES_PERCENTAGE
+                    * 85 is our baseline that we aim to raise to 90+.
+                    * Missing coverage is typically due to bugs in the agent
+                    * (e.g. signatures deprecated with an error are counted),
+                    * sometimes it's various diagnostic `toString` or `catch` for OOMs/VerificationErrors,
+                    * but some places are definitely worth visiting.
+                    */
+                    minBound(expectedCoverage[projectName] ?: 85) // COVERED_LINES_PERCENTAGE
                 }
             }
         }
+    }
+}
 
-        htmlReport {
-            reportDir.set(file(rootProject.buildDir.toString() + "/kover/" + project.name + "/html"))
+koverReport {
+    defaults {
+        verify {
+            rule {
+                minBound(85) // COVERED_LINES_PERCENTAGE
+            }
         }
     }
+}
+
+conventionProject.tasks.register("koverReport") {
+    dependsOn(conventionProject.tasks.named("koverHtmlReport"))
 }

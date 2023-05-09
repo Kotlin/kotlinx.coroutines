@@ -4,6 +4,9 @@
 
 apply plugin: "com.github.johnrengelman.shadow"
 
+// apply plugin to use autocomplete for Kover DSL
+apply plugin: 'org.jetbrains.kotlinx.kover'
+
 configurations {
     shadowDeps // shaded dependencies, not included into the resulting .pom file
     compileOnly.extendsFrom(shadowDeps)
@@ -53,14 +56,11 @@ configurations {
     }
 }
 
-def commonKoverExcludes =
-        // Never used, safety mechanism
-        ["kotlinx.coroutines.debug.internal.NoOpProbesKt"]
-
-tasks.koverHtmlReport {
-    excludes = commonKoverExcludes
-}
-
-tasks.koverVerify {
-    excludes = commonKoverExcludes
+koverReport {
+    filters {
+        excludes {
+            // Never used, safety mechanism
+            classes("kotlinx.coroutines.debug.internal.NoOpProbesKt")
+        }
+    }
 }

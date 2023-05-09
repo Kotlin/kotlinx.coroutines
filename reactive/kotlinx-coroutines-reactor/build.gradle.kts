@@ -2,6 +2,11 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+plugins {
+    // apply plugin to use autocomplete for Kover DSL
+    id("org.jetbrains.kotlinx.kover")
+}
+
 val reactorVersion = version("reactor")
 
 dependencies {
@@ -28,15 +33,14 @@ externalDocumentationLink(
     url = "https://projectreactor.io/docs/core/$reactorVersion/api/"
 )
 
-val commonKoverExcludes = listOf(
-    "kotlinx.coroutines.reactor.FlowKt", // Deprecated
-    "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
-)
 
-kover {
+koverReport {
     filters {
-        classes {
-            excludes += commonKoverExcludes
+        excludes {
+            classes(
+                "kotlinx.coroutines.reactor.FlowKt", // Deprecated
+                "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
+            )
         }
     }
 }
