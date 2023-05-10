@@ -241,7 +241,7 @@ public sealed interface SelectInstance<in R> {
 internal interface SelectInstanceInternal<R>: SelectInstance<R>, Waiter
 
 @PublishedApi
-internal open class SelectImplementation<R> constructor(
+internal open class SelectImplementation<R>(
     override val context: CoroutineContext
 ) : CancelHandler(), SelectBuilder<R>, SelectInstanceInternal<R> {
 
