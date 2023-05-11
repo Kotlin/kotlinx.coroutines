@@ -6,6 +6,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlin.coroutines.*
 import kotlin.jvm.*
 
 /**
@@ -230,8 +231,14 @@ internal abstract class Segment<S : Segment<S>>(
      * This function is invoked on continuation cancellation when this segment
      * with the specified [index] are installed as cancellation handler via
      * `SegmentDisposable.disposeOnCancellation(Segment, Int)`.
+     *
+     * @param index the index under which the sement registered itself in the continuation.
+     *        Indicies are opaque and arithmetics or numeric intepretation is not allowed on them,
+     *        as they may encode additional metadata.
+     * @param cause the cause of the cancellation, with the same semantics as [CancellableContinuation.invokeOnCancellation]
+     * @param context the context of the cancellable continuation the segment was registered in
      */
-    abstract fun onCancellation(index: Int, cause: Throwable?)
+    abstract fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext)
 
     /**
      * Invoked on each slot clean-up; should not be invoked twice for the same slot.

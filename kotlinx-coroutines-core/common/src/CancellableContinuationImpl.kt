@@ -251,7 +251,7 @@ internal open class CancellableContinuationImpl<in T>(
     private fun callSegmentOnCancellation(segment: Segment<*>, cause: Throwable?) {
         val index = _decisionAndIndex.value.index
         check(index != NO_INDEX) { "The index for Segment.onCancellation(..) is broken" }
-        callCancelHandlerSafely { segment.onCancellation(index, cause) }
+        callCancelHandlerSafely { segment.onCancellation(index, cause, context) }
     }
 
     fun callOnCancellation(onCancellation: (cause: Throwable) -> Unit, cause: Throwable) {
@@ -376,8 +376,7 @@ internal open class CancellableContinuationImpl<in T>(
      * [segment] and [index] in this [CancellableContinuationImpl].
      *
      * The only difference is that `segment.onCancellation(..)` is never
-     * called if this continuation is already completed; thus,
-     * the semantics is similar to [BeforeResumeCancelHandler].
+     * called if this continuation is already completed;
      *
      * ```
      * invokeOnCancellation { cause ->
@@ -436,9 +435,8 @@ internal open class CancellableContinuationImpl<in T>(
                      * Continuation was already completed, and might already have cancel handler.
                      */
                     if (state.cancelHandler != null) multipleHandlersError(handler, state)
-                    // BeforeResumeCancelHandler and Segment.invokeOnCancellation(..)
-                    // do NOT need to be called on completed continuation.
-                    if (handler is BeforeResumeCancelHandler || handler is Segment<*>) return
+                    // Segment.invokeOnCancellation(..) does NOT need to be called on completed continuation.
+                    if (handler is Segment<*>) return
                     handler as CancelHandler
                     if (state.cancelled) {
                         // Was already cancelled while being dispatched -- invoke the handler directly
@@ -451,10 +449,10 @@ internal open class CancellableContinuationImpl<in T>(
                 else -> {
                     /*
                      * Continuation was already completed normally, but might get cancelled while being dispatched.
-                     * Change its state to CompletedContinuation, unless we have BeforeResumeCancelHandler which
+                     * Change its state to CompletedContinuation, unless we have Segment which
                      * does not need to be called in this case.
                      */
-                    if (handler is BeforeResumeCancelHandler || handler is Segment<*>) return
+                    if (handler is Segment<*>) return
                     handler as CancelHandler
                     val update = CompletedContinuation(state, cancelHandler = handler)
                     if (_state.compareAndSet(state, update)) return // quit on cas success
@@ -489,7 +487,7 @@ internal open class CancellableContinuationImpl<in T>(
             proposedUpdate
         }
         !resumeMode.isCancellableMode && idempotent == null -> proposedUpdate // cannot be cancelled in process, all is fine
-        onCancellation != null || (state is CancelHandler && state !is BeforeResumeCancelHandler) || idempotent != null ->
+        onCancellation != null || state is CancelHandler || idempotent != null ->
             // mark as CompletedContinuation if special cases are present:
             // Cancellation handlers that shall be called after resume or idempotent resume
             CompletedContinuation(proposedUpdate, state as? CancelHandler, onCancellation, idempotent)
@@ -635,14 +633,6 @@ private object Active : NotCompleted {
  * on JVM, yet support JS where you cannot extend from a functional type.
  */
 internal abstract class CancelHandler : CancelHandlerBase(), NotCompleted
-
-/**
- * Base class for all [CancellableContinuation.invokeOnCancellation] handlers that don't need to be invoked
- * if continuation is cancelled after resumption, during dispatch, because the corresponding resources
- * were already released before calling `resume`. This cancel handler is called only before `resume`.
- * It avoids allocation of [CompletedContinuation] instance during resume on JVM.
- */
-internal abstract class BeforeResumeCancelHandler : CancelHandler()
 
 // Wrapper for lambdas, for the performance sake CancelHandler can be subclassed directly
 private class InvokeOnCancel( // Clashes with InvokeOnCancellation

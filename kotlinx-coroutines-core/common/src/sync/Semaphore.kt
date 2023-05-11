@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
+import kotlin.coroutines.*
 import kotlin.js.*
 import kotlin.math.*
 
@@ -378,7 +379,7 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int)
 
     // Cleans the acquirer slot located by the specified index
     // and removes this segment physically if all slots are cleaned.
-    override fun onCancellation(index: Int, cause: Throwable?) {
+    override fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext) {
         // Clean the slot
         set(index, CANCELLED)
         // Remove this segment if needed

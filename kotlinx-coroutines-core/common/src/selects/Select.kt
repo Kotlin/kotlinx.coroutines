@@ -241,7 +241,7 @@ public sealed interface SelectInstance<in R> {
 internal interface SelectInstanceInternal<R>: SelectInstance<R>, Waiter
 
 @PublishedApi
-internal open class SelectImplementation<R> constructor(
+internal open class SelectImplementation<R>(
     override val context: CoroutineContext
 ) : CancelHandler(), SelectBuilder<R>, SelectInstanceInternal<R> {
 
@@ -363,7 +363,7 @@ internal open class SelectImplementation<R> constructor(
      * thus, other parties are bound to fail when making a rendezvous with it.
      */
     private val isSelected
-        get() = state.value is ClauseData<*>
+        get() = state.value is SelectImplementation<*>.ClauseData
     /**
      * Returns `true` if this `select` is cancelled.
      */
@@ -373,7 +373,7 @@ internal open class SelectImplementation<R> constructor(
     /**
      * List of clauses waiting on this `select` instance.
      */
-    private var clauses: MutableList<ClauseData<R>>? = ArrayList(2)
+    private var clauses: MutableList<ClauseData>? = ArrayList(2)
 
     /**
      * Stores the completion action provided through [disposeOnCompletion] or [invokeOnCancellation]
@@ -439,11 +439,11 @@ internal open class SelectImplementation<R> constructor(
     // ========================
 
     override fun SelectClause0.invoke(block: suspend () -> R) =
-        ClauseData<R>(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_0, block, onCancellationConstructor).register()
+        ClauseData(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_0, block, onCancellationConstructor).register()
     override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) =
-        ClauseData<R>(clauseObject, regFunc, processResFunc, null, block, onCancellationConstructor).register()
+        ClauseData(clauseObject, regFunc, processResFunc, null, block, onCancellationConstructor).register()
     override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) =
-        ClauseData<R>(clauseObject, regFunc, processResFunc, param, block, onCancellationConstructor).register()
+        ClauseData(clauseObject, regFunc, processResFunc, param, block, onCancellationConstructor).register()
 
     /**
      * Attempts to register this `select` clause. If another clause is already selected,
@@ -461,10 +461,10 @@ internal open class SelectImplementation<R> constructor(
      * updates the state to this clause reference.
      */
     @JvmName("register")
-    internal fun ClauseData<R>.register(reregister: Boolean = false) {
+    internal fun ClauseData.register(reregister: Boolean = false) {
         assert { state.value !== STATE_CANCELLED }
         // Is there already selected clause?
-        if (state.value.let { it is ClauseData<*> }) return
+        if (state.value.let { it is SelectImplementation<*>.ClauseData }) return
         // For new clauses, check that there does not exist
         // another clause with the same object.
         if (!reregister) checkClauseObject(clauseObject)
@@ -569,7 +569,7 @@ internal open class SelectImplementation<R> constructor(
                     curState.forEach { reregisterClause(it) }
                 }
                 // This `select` operation became completed during clauses re-registration.
-                curState is ClauseData<*> -> {
+                curState is SelectImplementation<*>.ClauseData -> {
                     cont.resume(Unit, curState.createOnCancellationAction(this, internalResult))
                     return@sc
                 }
@@ -628,7 +628,7 @@ internal open class SelectImplementation<R> constructor(
                     }
                 }
                 // Already selected.
-                STATE_COMPLETED, is ClauseData<*> -> return TRY_SELECT_ALREADY_SELECTED
+                STATE_COMPLETED, is SelectImplementation<*>.ClauseData -> return TRY_SELECT_ALREADY_SELECTED
                 // Already cancelled.
                 STATE_CANCELLED -> return TRY_SELECT_CANCELLED
                 // This select is still in REGISTRATION phase, re-register the clause
@@ -650,7 +650,7 @@ internal open class SelectImplementation<R> constructor(
      * If the reference to the list of clauses is already cleared due to completion/cancellation,
      * this function returns `null`
      */
-    private fun findClause(clauseObject: Any): ClauseData<R>? {
+    private fun findClause(clauseObject: Any): ClauseData? {
         // Read the list of clauses. If the `clauses` field is already `null`,
         // the clean-up phase has already completed, and this function returns `null`.
         val clauses = this.clauses ?: return null
@@ -678,7 +678,7 @@ internal open class SelectImplementation<R> constructor(
         assert { isSelected }
         // Get the selected clause.
         @Suppress("UNCHECKED_CAST")
-        val selectedClause = state.value as ClauseData<R>
+        val selectedClause = state.value as SelectImplementation<R>.ClauseData
         // Perform the clean-up before the internal result processing and
         // the user-specified block invocation to guarantee the absence
         // of memory leaks. Collect the internal result before that.
@@ -700,7 +700,7 @@ internal open class SelectImplementation<R> constructor(
         }
     }
 
-    private suspend fun processResultAndInvokeBlockRecoveringException(clause: ClauseData<R>, internalResult: Any?): R =
+    private suspend fun processResultAndInvokeBlockRecoveringException(clause: ClauseData, internalResult: Any?): R =
         try {
             val blockArgument = clause.processResult(internalResult)
             clause.invokeBlock(blockArgument)
@@ -716,7 +716,7 @@ internal open class SelectImplementation<R> constructor(
      * [SelectInstance.disposeOnCompletion] during
      * clause registrations.
      */
-    private fun cleanup(selectedClause: ClauseData<R>) {
+    private fun cleanup(selectedClause: ClauseData) {
         assert { state.value == selectedClause }
         // Read the list of clauses. If the `clauses` field is already `null`,
         // a concurrent clean-up procedure has already completed, and it is safe to finish.
@@ -757,7 +757,7 @@ internal open class SelectImplementation<R> constructor(
     /**
      * Each `select` clause is internally represented with a [ClauseData] instance.
       */
-    internal class ClauseData<R>(
+    internal inner class ClauseData(
         @JvmField val clauseObject: Any, // the object of this `select` clause: Channel, Mutex, Job, ...
         private val regFunc: RegistrationFunction,
         private val processResFunc: ProcessResultFunction,
@@ -825,7 +825,7 @@ internal open class SelectImplementation<R> constructor(
         fun dispose() {
             with(disposableHandleOrSegment) {
                 if (this is Segment<*>) {
-                    this.onCancellation(indexInSegment, null)
+                    this.onCancellation(indexInSegment, null, context)
                 } else {
                     (this as? DisposableHandle)?.dispose()
                 }
