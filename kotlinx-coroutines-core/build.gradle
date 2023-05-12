@@ -219,6 +219,14 @@ kotlin.sourceSets {
     }
 }
 
+kotlin.sourceSets.configureEach {
+    // Do not apply 'ExperimentalForeignApi' where we have allWarningsAsErrors set
+    if (it.name in ["jvmMain", "jsMain", "concurrentMain", "commonMain"]) return
+    languageSettings {
+        optIn('kotlinx.cinterop.ExperimentalForeignApi')
+    }
+}
+
 jvmTest {
     minHeapSize = '1g'
     maxHeapSize = '1g'
