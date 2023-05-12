@@ -49,7 +49,7 @@ public suspend inline fun <T, R> Flow<T>.fold(
 
 /**
  * The terminal operator that awaits for one and only one value to be emitted.
- * Throws [NoSuchElementException] for empty flow and [IllegalStateException] for flow
+ * Throws [NoSuchElementException] for empty flow and [IllegalArgumentException] for flow
  * that contains more than one element.
  */
 public suspend fun <T> Flow<T>.single(): T {
