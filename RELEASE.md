@@ -19,6 +19,7 @@ To release a new `<version>` of `kotlinx-coroutines`:
      * [`coroutines-guide-ui.md`](ui/coroutines-guide-ui.md)
    * Properties
      * [`gradle.properties`](gradle.properties)
+     * [`integration-testing/gradle.properties`](integration-testing/gradle.properties)
    * Make sure to **exclude** `CHANGES.md` from replacements.
 
    As an alternative approach, you can use `./bump-version.sh new_version`

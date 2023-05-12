@@ -80,7 +80,8 @@ done)
 set +e
 version_mentions=$(
     find . -type f \( -iname '*.properties' -o -iname '*.md' \) \
-    -not -iname CHANGES.md \
+    -not -iname CHANGES.md -not -iname CHANGES_UP_TO_1.7.md \
+    -not -path ./integration/kotlinx-coroutines-jdk8/README.md \
     -exec git grep --fixed-strings --word "$old_version" {} +
     )
 set -e
