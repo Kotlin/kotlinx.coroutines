@@ -1,5 +1,13 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.7.1
+
+### Bug fixes and improvements
+
+* Special characters in coroutine names in JSON dumps are supported (#3747)
+* The binary compatibility of the experimental overload of `runTest` is restored (#3673)
+* Channels that don't use `onUndeliveredElement` now allocate less memory (#3646)
+
 ## Version 1.7.0
 
 ### Core API significant improvements
