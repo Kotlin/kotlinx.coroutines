@@ -580,6 +580,6 @@ internal expect fun dumpCoroutines()
 public fun TestScope.runTestLegacy(
     dispatchTimeoutMs: Long,
     testBody: suspend TestScope.() -> Unit,
-    unused1: Int,
+    marker: Int,
     unused2: Any?,
-): TestResult = runTest(dispatchTimeoutMs, testBody)
+): TestResult = runTest(dispatchTimeoutMs = if (marker and 1 != 0) dispatchTimeoutMs else 60_000L, testBody)
