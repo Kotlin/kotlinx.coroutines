@@ -30,6 +30,10 @@ class DumpCoroutineInfoAsJsonAndReferencesTest : DebugTestBase() {
         runTestWithNamedDeferred("Name")
 
     @Test
+    fun testDumpOfNamedCoroutineWithSpecialCharacters() =
+        runTestWithNamedDeferred("Name with\n \"special\" characters\\/\t\b")
+
+    @Test
     fun testDumpWithNoCoroutines() {
         val dumpResult = DebugProbesImpl.dumpCoroutinesInfoAsJsonAndReferences()
         assertEquals(dumpResult.size, 4)
