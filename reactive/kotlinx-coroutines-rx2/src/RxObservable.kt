@@ -120,8 +120,7 @@ private class RxObservableCoroutine<T : Any>(
 
     // assert: mutex.isLocked()
     private fun doLockedNext(elem: T): Throwable? {
-        // check if already closed for send
-        if (!isActive) {
+        if (isClosedForSend) {
             doLockedSignalCompleted(completionCause, completionCauseHandled)
             return getCancellationException()
         }
