@@ -40,7 +40,9 @@ internal object DebugProbesImpl {
     private val sequenceNumber = atomic(0L)
 
     public var sanitizeStackTraces: Boolean = true
-    public var enableCreationStackTraces: Boolean = true
+    public var enableCreationStackTraces: Boolean = runCatching {
+        System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()
+    }.getOrNull() ?: true
 
     /*
      * Substitute for service loader, DI between core and debug modules.

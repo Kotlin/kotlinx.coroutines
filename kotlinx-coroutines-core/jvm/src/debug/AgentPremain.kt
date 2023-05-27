@@ -21,16 +21,11 @@ import java.security.*
 @IgnoreJRERequirement // Never touched on Android
 internal object AgentPremain {
 
-    private val enableCreationStackTraces = runCatching {
-        System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()
-    }.getOrNull() ?: DebugProbesImpl.enableCreationStackTraces
-
     @JvmStatic
     @Suppress("UNUSED_PARAMETER")
     fun premain(args: String?, instrumentation: Instrumentation) {
         AgentInstallationType.isInstalledStatically = true
         instrumentation.addTransformer(DebugProbesTransformer)
-        DebugProbesImpl.enableCreationStackTraces = enableCreationStackTraces
         DebugProbesImpl.install()
         installSignalHandler()
     }
