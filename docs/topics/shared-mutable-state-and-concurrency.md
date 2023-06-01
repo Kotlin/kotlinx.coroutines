@@ -490,6 +490,11 @@ have to switch to a different context at all.
 >
 {type="note"}
 
+> The Actor API will become obsolete in future updates with introduction of complex actors. 
+> See issue [#87](https://github.com/Kotlin/kotlinx.coroutines/issues/87).
+>
+{type="warning"}
+
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
 
