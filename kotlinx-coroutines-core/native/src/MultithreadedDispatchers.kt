@@ -9,6 +9,8 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 @ExperimentalCoroutinesApi
 public actual fun newSingleThreadContext(name: String): CloseableCoroutineDispatcher {
@@ -20,6 +22,7 @@ public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): Closea
     return MultiWorkerDispatcher(name, nThreads)
 }
 
+@OptIn(ExperimentalTime::class)
 internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), Delay {
     private val worker = Worker.start(name = name)
 
@@ -52,10 +55,24 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
             override fun dispose() {
                 disposableHolder.value = null
             }
+
+            fun isDisposed() = disposableHolder.value == null
+        }
+
+        fun Worker.runAfterDelay(block: DisposableBlock, targetMoment: TimeMark) {
+            if (block.isDisposed()) return
+            val durationUntilTarget = -targetMoment.elapsedNow()
+            val quantum = 100.milliseconds
+            if (durationUntilTarget > quantum) {
+                executeAfter(quantum.inWholeMicroseconds) { runAfterDelay(block, targetMoment) }
+            } else {
+                executeAfter(durationUntilTarget.inWholeMicroseconds, block)
+            }
         }
 
         val disposableBlock = DisposableBlock(block)
-        worker.executeAfter(timeMillis.toMicrosSafe(), disposableBlock)
+        val targetMoment = TimeSource.Monotonic.markNow() + timeMillis.milliseconds
+        worker.runAfterDelay(disposableBlock, targetMoment)
         return disposableBlock
     }
 
