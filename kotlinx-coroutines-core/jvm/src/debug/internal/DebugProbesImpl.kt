@@ -246,6 +246,7 @@ internal object DebugProbesImpl {
     fun dumpDebuggerInfo(): List<DebuggerInfo> =
         dumpCoroutinesInfoImpl { owner, context -> DebuggerInfo(owner.info, context) }
 
+    @JvmName("dumpCoroutines")
     internal fun dumpCoroutines(out: PrintStream): Unit = synchronized(out) {
         /*
          * This method synchronizes both on `out` and `this` for a reason:
