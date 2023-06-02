@@ -1440,7 +1440,9 @@ internal class ChildHandleNode(
 }
 
 // Same as ChildHandleNode, but for cancellable continuation
+@PublishedApi
 internal class ChildContinuation(
+    // used by the IDEA's debugger
     @JvmField val child: CancellableContinuationImpl<*>
 ) : JobCancellingNode() {
     override fun invoke(cause: Throwable?) {

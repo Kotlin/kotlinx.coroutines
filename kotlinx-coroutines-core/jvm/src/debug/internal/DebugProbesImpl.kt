@@ -525,9 +525,10 @@ internal object DebugProbesImpl {
      * This class is injected as completion of all continuations in [probeCoroutineCompleted].
      * It is owning the coroutine info and responsible for managing all its external info related to debug agent.
      */
-    private class CoroutineOwner<T>(
-        @JvmField val delegate: Continuation<T>,
-        @JvmField val info: DebugCoroutineInfoImpl
+    public class CoroutineOwner<T> internal constructor(
+        @JvmField internal val delegate: Continuation<T>,
+        // Used by IDEA's debugger
+        @JvmField public val info: DebugCoroutineInfoImpl
     ) : Continuation<T> by delegate, CoroutineStackFrame {
         private val frame get() = info.creationStackBottom
 

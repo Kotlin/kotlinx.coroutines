@@ -79,12 +79,14 @@ internal val NonBlockingContext: TaskContext = TaskContextImpl(TASK_NON_BLOCKING
 @JvmField
 internal val BlockingContext: TaskContext = TaskContextImpl(TASK_PROBABLY_BLOCKING)
 
-internal abstract class Task(
+@PublishedApi
+internal abstract class Task internal constructor(
+    // used by IDEA's debugger
     @JvmField var submissionTime: Long,
-    @JvmField var taskContext: TaskContext
+    @JvmField internal var taskContext: TaskContext
 ) : Runnable {
-    constructor() : this(0, NonBlockingContext)
-    inline val mode: Int get() = taskContext.taskMode // TASK_XXX
+    internal constructor() : this(0, NonBlockingContext)
+    internal inline val mode: Int get() = taskContext.taskMode // TASK_XXX
 }
 
 internal inline val Task.isBlocking get() = taskContext.taskMode == TASK_PROBABLY_BLOCKING

@@ -282,9 +282,12 @@ internal actual val CoroutineContext.coroutineName: String? get() {
 private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 
 @IgnoreJreRequirement // desugared hashcode implementation
+@PublishedApi
 internal data class CoroutineId(
+    // Used by IDEA's debugger
     val id: Long
 ) : ThreadContextElement<String>, AbstractCoroutineContextElement(CoroutineId) {
+    // Used by IDEA's debugger
     companion object Key : CoroutineContext.Key<CoroutineId>
     override fun toString(): String = "CoroutineId($id)"
 
