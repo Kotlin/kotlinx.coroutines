@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
@@ -10,6 +10,9 @@ import kotlinx.coroutines.scheduling.*
 import reactor.blockhound.*
 import reactor.blockhound.integration.*
 
+/**
+ * @suppress
+ */
 public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
 
     override fun applyTo(builder: BlockHound.Builder): Unit = with(builder) {
