@@ -161,7 +161,7 @@ internal abstract class ChannelFlowOperator<S, T>(
         // Fast-path: When channel creation is optional (flowOn/flowWith operators without buffer)
         if (capacity == Channel.OPTIONAL_CHANNEL) {
             val collectContext = coroutineContext
-            val newContext = collectContext + context // compute resulting collect context
+            val newContext = collectContext.newCoroutineContext(context) // compute resulting collect context
             // #1: If the resulting context happens to be the same as it was -- fallback to plain collect
             if (newContext == collectContext)
                 return flowCollect(collector)
