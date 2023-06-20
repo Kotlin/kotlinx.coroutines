@@ -296,7 +296,6 @@ class ThreadLocalContextElement(): CopyableThreadContextElement<MyData?> {
 
     val myData: MyData? = myThreadLocal.get()
 
-
     override fun copyForChild(): CopyableThreadContextElement<MyData?> {
         return ThreadLocalContextElement()
     }
@@ -304,7 +303,6 @@ class ThreadLocalContextElement(): CopyableThreadContextElement<MyData?> {
     override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext {
         return ThreadLocalContextElement()
     }
-
 
     override fun updateThreadContext(context: CoroutineContext): MyData? {
         val oldState = myThreadLocal.get()
