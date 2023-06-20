@@ -424,8 +424,7 @@ internal object DebugProbesImpl {
     private fun updateState(frame: Continuation<*>, state: String) {
         if (!isInstalled) return
         if (ignoreCoroutinesWithEmptyContext && frame.context === EmptyCoroutineContext) return // See ignoreCoroutinesWithEmptyContext
-        // KT-29997 is here only since 1.3.30
-        if (state == RUNNING && KotlinVersion.CURRENT.isAtLeast(1, 3, 30)) {
+        if (state == RUNNING) {
             val stackFrame = frame as? CoroutineStackFrame ?: return
             updateRunningState(stackFrame, state)
             return
