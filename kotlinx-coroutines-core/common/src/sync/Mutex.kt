@@ -150,6 +150,11 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     override fun holdsLock(owner: Any): Boolean = holdsLockImpl(owner) == HOLDS_LOCK_YES
 
+    /**
+     * [HOLDS_LOCK_UNLOCKED] if the mutex is unlocked
+     * [HOLDS_LOCK_YES] if the mutex is held with the specified [owner]
+     * [HOLDS_LOCK_ANOTHER_OWNER] if the mutex is held with a different owner
+     */
     private fun holdsLockImpl(owner: Any?): Int {
         while (true) {
             // Is this mutex locked?
@@ -189,18 +194,15 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
                 // The semaphore permit acquisition has failed.
                 // However, we need to check that this mutex is not
                 // locked by our owner.
-                if (owner != null) {
-                    // Is this mutex locked by our owner?
-                    when (holdsLockImpl(owner)) {
-                        // This mutex is already locked by our owner.
-                        HOLDS_LOCK_YES -> return TRY_LOCK_ALREADY_LOCKED_BY_OWNER
-                        // This mutex is locked by another owner, `trylock(..)` must fail.
-                        HOLDS_LOCK_ANOTHER_OWNER -> TRY_LOCK_FAILED
-                        // This mutex is no longer locked, restart the operation.
-                        HOLDS_LOCK_UNLOCKED -> continue
-                    }
+                if (owner == null) return TRY_LOCK_FAILED
+                when (holdsLockImpl(owner)) {
+                    // This mutex is already locked by our owner.
+                    HOLDS_LOCK_YES -> return TRY_LOCK_ALREADY_LOCKED_BY_OWNER
+                    // This mutex is locked by another owner, `trylock(..)` must return `false`.
+                    HOLDS_LOCK_ANOTHER_OWNER -> return TRY_LOCK_FAILED
+                    // This mutex is no longer locked, restart the operation.
+                    HOLDS_LOCK_UNLOCKED -> continue
                 }
-                return TRY_LOCK_FAILED
             }
         }
     }
