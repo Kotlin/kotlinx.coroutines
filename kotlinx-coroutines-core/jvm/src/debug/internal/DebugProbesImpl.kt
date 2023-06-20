@@ -477,7 +477,7 @@ internal object DebugProbesImpl {
     internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> {
         if (!isInstalled) return completion
         // See DebugProbes.ignoreCoroutinesWithEmptyContext for the additional details.
-        if (ignoreCoroutinesWithEmptyContext && completion.context == EmptyCoroutineContext) return completion
+        if (ignoreCoroutinesWithEmptyContext && completion.context === EmptyCoroutineContext) return completion
         /*
          * If completion already has an owner, it means that we are in scoped coroutine (coroutineScope, withContext etc.),
          * then piggyback on its already existing owner and do not replace completion
