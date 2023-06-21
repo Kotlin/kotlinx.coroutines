@@ -21,7 +21,7 @@ internal actual fun ensurePlatformExceptionHandlerLoaded(callback: CoroutineExce
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
+@OptIn(kotlin.experimental.ExperimentalNativeApi::class)
 internal actual fun propagateExceptionFinalResort(exception: Throwable) {
     // log exception
     processUnhandledException(exception)
