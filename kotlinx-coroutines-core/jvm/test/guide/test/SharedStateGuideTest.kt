@@ -56,12 +56,4 @@ class SharedStateGuideTest {
             "Counter = 100000"
         )
     }
-
-    @Test
-    fun testExampleSync07() {
-        test("ExampleSync07") { kotlinx.coroutines.guide.exampleSync07.main() }.verifyLinesArbitraryTime(
-            "Completed 100000 actions in xxx ms",
-            "Counter = 100000"
-        )
-    }
 }
