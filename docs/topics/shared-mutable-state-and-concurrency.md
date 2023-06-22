@@ -195,8 +195,7 @@ state or to complex operations that do not have ready-to-use thread-safe impleme
 
 _Thread confinement_ is an approach to the problem of shared mutable state where all access to the particular shared
 state is confined to a single thread. It is typically used in UI applications, where all UI state is confined to 
-the single event-dispatch/application thread. It is easy to apply with coroutines by using a  
-single-threaded context. 
+the single event-dispatch/application thread. It is easy to apply with coroutines by using a single-threaded context. 
 
 <!--- CLEAR -->
 
