@@ -38,7 +38,7 @@ class ThreadContextElementTest : TestBase() {
     }
 
     @Test
-    fun testUndispatched()= runTest {
+    fun testUndispatched() = runTest {
         val exceptionHandler = coroutineContext[CoroutineExceptionHandler]!!
         val data = MyData()
         val element = MyElement(data)
@@ -194,24 +194,18 @@ class ThreadContextElementTest : TestBase() {
     }
 
     @Test
-    fun testFlowOnContextWithSameDispatcher() = runTest {
-        try {
-            val context: CoroutineContext = Dispatchers.Default + ThreadLocalContextElement()
-            val myData = MyData()
-            myThreadLocal.set(myData)
-            launch {
-                withContext(context) {
-                    flow {
-                        assertEquals(myThreadLocal.get(), myData)
-                        emit(1)
-                    }
-                    .flowOn(context)
-                    .single()
-                }
-            }.join()
-        } finally {
-            myThreadLocal.set(null)
+    fun testThreadLocalFlowOn() = runTest {
+        val myData = MyData()
+        myThreadLocal.set(myData)
+        expect(1)
+        flow {
+            assertEquals(myData, myThreadLocal.get())
+            emit(1)
         }
+            .flowOn(myThreadLocal.asContextElement() + Dispatchers.Default)
+            .single()
+        myThreadLocal.set(null)
+        finish(2)
     }
 }
 
@@ -278,41 +272,6 @@ class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextEle
      */
     override fun copyForChild(): CopyForChildCoroutineElement {
         return CopyForChildCoroutineElement(myThreadLocal.get())
-    }
-}
-
-/**
- * A thread context element that captures the latest thread local value when it is being
- * constructed.
- *
- * <p> This thread context element can be used to propagate modification to thread local to child
- * coroutines.
- */
-class ThreadLocalContextElement(): CopyableThreadContextElement<MyData?> {
-    companion object Key : CoroutineContext.Key<ThreadLocalContextElement>
-
-    override val key: CoroutineContext.Key<*>
-        get() = Key
-
-    val myData: MyData? = myThreadLocal.get()
-
-    override fun copyForChild(): CopyableThreadContextElement<MyData?> {
-        return ThreadLocalContextElement()
-    }
-
-    override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext {
-        return ThreadLocalContextElement()
-    }
-
-    override fun updateThreadContext(context: CoroutineContext): MyData? {
-        val oldState = myThreadLocal.get()
-        myThreadLocal.set(myData)
-        return oldState
-    }
-
-    // this is invoked after coroutine has suspended on current thread
-    override fun restoreThreadContext(context: CoroutineContext, oldState: MyData?) {
-        myThreadLocal.set(oldState)
     }
 }
 
