@@ -224,6 +224,7 @@ kotlin.sourceSets.configureEach {
     if (it.name in ["jvmMain", "jsMain", "concurrentMain", "commonMain"]) return
     languageSettings {
         optIn('kotlinx.cinterop.ExperimentalForeignApi')
+        optIn('kotlin.experimental.ExperimentalNativeApi')
     }
 }
 
