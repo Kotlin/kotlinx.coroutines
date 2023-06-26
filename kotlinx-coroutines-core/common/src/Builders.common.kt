@@ -225,7 +225,7 @@ internal class DispatchedCoroutine<in T> internal constructor(
 ) : ScopeCoroutine<T>(context, uCont) {
     // this is copy-and-paste of a decision state machine inside AbstractionContinuation
     // todo: we may some-how abstract it via inline class
-    // Used by IDEA's debugger
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField
     public val _decision = atomic(UNDECIDED)
 

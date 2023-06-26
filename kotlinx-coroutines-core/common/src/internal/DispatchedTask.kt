@@ -49,7 +49,7 @@ internal val Int.isReusableMode get() = this == MODE_CANCELLABLE_REUSABLE
 
 @PublishedApi
 internal abstract class DispatchedTask<in T> internal constructor(
-    // Used by IDEA's debugger
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField public var resumeMode: Int
 ) : SchedulerTask() {
     internal abstract val delegate: Continuation<T>

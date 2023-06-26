@@ -24,7 +24,7 @@ internal class DebugCoroutineInfoImpl internal constructor(
      * The actual reference to the coroutine is not stored here, so we keep a strong reference.
      */
     internal val creationStackBottom: StackTraceFrame?,
-    // Used by IDEA's debugger
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField public val sequenceNumber: Long
 ) {
     /**
@@ -44,7 +44,7 @@ internal class DebugCoroutineInfoImpl internal constructor(
      */
     internal val state: String get() = _state
 
-    // Used by IDEA's debugger
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @Volatile
     @JvmField
     public var _state: String = CREATED
@@ -125,7 +125,7 @@ internal class DebugCoroutineInfoImpl internal constructor(
         }
     }
 
-    // Used by IDEA's debugger
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField
     @Volatile
     public var lastObservedThread: Thread? = null
@@ -134,7 +134,7 @@ internal class DebugCoroutineInfoImpl internal constructor(
      * We cannot keep a strong reference to the last observed frame of the coroutine, because this will
      * prevent garbage-collection of a coroutine that was lost.
      *
-     * Used by IDEA's debugger
+     * Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
      */
     @Volatile
     @JvmField

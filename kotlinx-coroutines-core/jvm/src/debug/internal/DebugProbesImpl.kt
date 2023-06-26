@@ -33,7 +33,7 @@ internal object DebugProbesImpl {
 
     /**
      * This internal method is used by the IDEA debugger under the JVM name
-     * "isInstalled$kotlinx_coroutines_debug".
+     * "isInstalled$kotlinx_coroutines_debug" and must be kept binary-compatible, see KTIJ-24102
      */
     val isInstalled: Boolean get() = installations.value > 0
 
@@ -174,6 +174,7 @@ internal object DebugProbesImpl {
      * to save an exponential number of roundtrips.
      *
      * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
+     * See KTIJ-24102.
      */
     @OptIn(ExperimentalStdlibApi::class)
     fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> {
@@ -210,7 +211,7 @@ internal object DebugProbesImpl {
     }
 
     /*
-     * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
+     * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC, must be kept binary-compatible, see KTIJ-24102
      */
     fun enhanceStackTraceWithThreadDumpAsJson(info: DebugCoroutineInfo): String {
         val stackTraceElements = enhanceStackTraceWithThreadDump(info, info.lastObservedStackTrace)
@@ -234,7 +235,7 @@ internal object DebugProbesImpl {
     private fun Any.toStringWithQuotes() = "\"$this\""
 
     /*
-     * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
+     * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3. See KTIJ-24102
      */
     fun dumpCoroutinesInfo(): List<DebugCoroutineInfo> =
         dumpCoroutinesInfoImpl { owner, context -> DebugCoroutineInfo(owner.info, context) }
@@ -305,7 +306,7 @@ internal object DebugProbesImpl {
     }
 
     /*
-     * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3.
+     * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3, must be kept binary-compatible. See KTIJ-24102.
      * It is similar to [enhanceStackTraceWithThreadDumpImpl], but uses debugger-facing [DebugCoroutineInfo] type.
      */
     @Suppress("unused")
@@ -527,7 +528,7 @@ internal object DebugProbesImpl {
      */
     public class CoroutineOwner<T> internal constructor(
         @JvmField internal val delegate: Continuation<T>,
-        // Used by IDEA's debugger
+        // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
         @JvmField public val info: DebugCoroutineInfoImpl
     ) : Continuation<T> by delegate, CoroutineStackFrame {
         private val frame get() = info.creationStackBottom

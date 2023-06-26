@@ -81,8 +81,9 @@ internal val BlockingContext: TaskContext = TaskContextImpl(TASK_PROBABLY_BLOCKI
 
 @PublishedApi
 internal abstract class Task internal constructor(
-    // used by IDEA's debugger
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField var submissionTime: Long,
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField internal var taskContext: TaskContext
 ) : Runnable {
     internal constructor() : this(0, NonBlockingContext)
