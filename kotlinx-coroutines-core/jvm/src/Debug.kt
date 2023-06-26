@@ -17,8 +17,6 @@ import kotlin.internal.InlineOnly
  * ### Debugging facilities
  *
  * In debug mode every coroutine is assigned a unique consecutive identifier.
- * Every thread that executes a coroutine has its name modified to include the name and identifier of
- * the currently running coroutine.
  *
  * Enable debugging facilities with "`kotlinx.coroutines.debug`" ([DEBUG_PROPERTY_NAME]) system property,
  * use the following values:
@@ -32,6 +30,11 @@ import kotlin.internal.InlineOnly
  *
  * Debugging facilities are implemented by [newCoroutineContext][CoroutineScope.newCoroutineContext] function that
  * is used in all coroutine builders to create context of a new coroutine.
+ *
+ * ### Legacy note
+ *
+ * Previously, every thread that executed a coroutine had its name modified to include the name and identifier of the currently running coroutine.
+ * This behaviour was removed as part of #3677 and #2234.
  */
 public const val DEBUG_PROPERTY_NAME: String = "kotlinx.coroutines.debug"
 

@@ -284,27 +284,7 @@ private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 @IgnoreJreRequirement // desugared hashcode implementation
 internal data class CoroutineId(
     val id: Long
-) : ThreadContextElement<String>, AbstractCoroutineContextElement(CoroutineId) {
+) : AbstractCoroutineContextElement(CoroutineId) {
     companion object Key : CoroutineContext.Key<CoroutineId>
     override fun toString(): String = "CoroutineId($id)"
-
-    override fun updateThreadContext(context: CoroutineContext): String {
-        val coroutineName = context[CoroutineName]?.name ?: "coroutine"
-        val currentThread = Thread.currentThread()
-        val oldName = currentThread.name
-        var lastIndex = oldName.lastIndexOf(DEBUG_THREAD_NAME_SEPARATOR)
-        if (lastIndex < 0) lastIndex = oldName.length
-        currentThread.name = buildString(lastIndex + coroutineName.length + 10) {
-            append(oldName.substring(0, lastIndex))
-            append(DEBUG_THREAD_NAME_SEPARATOR)
-            append(coroutineName)
-            append('#')
-            append(id)
-        }
-        return oldName
-    }
-
-    override fun restoreThreadContext(context: CoroutineContext, oldState: String) {
-        Thread.currentThread().name = oldState
-    }
 }
