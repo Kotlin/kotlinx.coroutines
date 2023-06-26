@@ -19,6 +19,32 @@ private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
  */
 
 /**
+ * Should be used for running against of non-released Kotlin compiler on a system test level.
+ *
+ * @return a Kotlin API version parametrized from command line nor gradle.properties, null otherwise
+ */
+fun getOverriddenKotlinApiVersion(project: Project): String? {
+    val apiVersion = project.rootProject.properties["kotlin_api_version"] as? String
+    if (apiVersion != null) {
+        LOGGER.info("""Configured Kotlin API version: '$apiVersion' for project $${project.name}""")
+    }
+    return apiVersion
+}
+
+/**
+ * Should be used for running against of non-released Kotlin compiler on a system test level
+ *
+ * @return a Kotlin Language version parametrized from command line nor gradle.properties, null otherwise
+ */
+fun getOverriddenKotlinLanguageVersion(project: Project): String? {
+    val languageVersion = project.rootProject.properties["kotlin_language_version"] as? String
+    if (languageVersion != null) {
+        LOGGER.info("""Configured Kotlin Language version: '$languageVersion' for project ${project.name}""")
+    }
+    return languageVersion
+}
+
+/**
  * Should be used for running against of non-released Kotlin compiler on a system test level
  * Kotlin compiler artifacts are expected to be downloaded from maven central by default.
  * In case of compiling with not-published into the MC kotlin compiler artifacts, a kotlin_repo_url gradle parameter should be specified.
