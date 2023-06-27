@@ -70,7 +70,7 @@ class MultithreadedDispatchersTest {
      */
     @Test
     fun timeoutsNotPreventingClosing(): Unit = runBlocking {
-        val dispatcher = newSingleThreadContext("test")
+        val dispatcher = WorkerDispatcher("test")
         withContext(dispatcher) {
             withTimeout(5.seconds) {
             }

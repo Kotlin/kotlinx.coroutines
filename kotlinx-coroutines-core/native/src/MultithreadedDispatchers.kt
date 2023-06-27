@@ -12,11 +12,6 @@ import kotlin.native.concurrent.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 
-@ExperimentalCoroutinesApi
-public actual fun newSingleThreadContext(name: String): CloseableCoroutineDispatcher {
-    return WorkerDispatcher(name)
-}
-
 public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): CloseableCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but got: $nThreads" }
     return MultiWorkerDispatcher(name, nThreads)
