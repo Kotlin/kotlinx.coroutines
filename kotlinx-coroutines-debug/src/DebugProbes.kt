@@ -71,11 +71,11 @@ public object DebugProbes {
         }
 
     /**
-     * Whether to ignore coroutines that have their context equal to [EmptyCoroutineContext].
+     * Whether to ignore coroutines whose context is [EmptyCoroutineContext].
      *
-     * Coroutines with empty context are considered to be irrelevant for the concurrent's coroutines observability:
+     * Coroutines with empty context are considered to be irrelevant for the concurrent coroutines' observability:
      * - They do not contribute to any concurrent executions
-     * - They do not contribute to the (concurrent) system's liveness and/or deadlocks as no other coroutines might wait for them
+     * - They do not contribute to the (concurrent) system's liveness and/or deadlocks, as no other coroutines might wait for them
      * - The typical usage of such coroutines is a combinator/builder/lookahead parser that can be debugged using more convenient tools.
      *
      * `true` by default.
