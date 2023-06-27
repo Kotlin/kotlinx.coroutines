@@ -42,7 +42,7 @@ internal object DebugProbesImpl {
 
     internal var sanitizeStackTraces: Boolean = true
     internal var enableCreationStackTraces: Boolean = true
-    public var ignoreCoroutinesWithEmptyContext = true
+    public var ignoreCoroutinesWithEmptyContext: Boolean = true
 
     /*
      * Substitute for service loader, DI between core and debug modules.
