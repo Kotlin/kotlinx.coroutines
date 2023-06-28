@@ -938,7 +938,9 @@ public final class kotlinx/coroutines/debug/internal/DebugProbesImpl {
 	public final fun dumpDebuggerInfo ()Ljava/util/List;
 	public final fun enhanceStackTraceWithThreadDump (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;Ljava/util/List;)Ljava/util/List;
 	public final fun enhanceStackTraceWithThreadDumpAsJson (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;)Ljava/lang/String;
+	public final fun getIgnoreCoroutinesWithEmptyContext ()Z
 	public final fun isInstalled ()Z
+	public final fun setIgnoreCoroutinesWithEmptyContext (Z)V
 }
 
 public final class kotlinx/coroutines/debug/internal/DebugProbesImpl$CoroutineOwner : kotlin/coroutines/Continuation, kotlin/coroutines/jvm/internal/CoroutineStackFrame {

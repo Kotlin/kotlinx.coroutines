@@ -42,6 +42,7 @@ internal object DebugProbesImpl {
 
     internal var sanitizeStackTraces: Boolean = true
     internal var enableCreationStackTraces: Boolean = true
+    public var ignoreCoroutinesWithEmptyContext: Boolean = true
 
     /*
      * Substitute for service loader, DI between core and debug modules.
@@ -422,8 +423,8 @@ internal object DebugProbesImpl {
 
     private fun updateState(frame: Continuation<*>, state: String) {
         if (!isInstalled) return
-        // KT-29997 is here only since 1.3.30
-        if (state == RUNNING && KotlinVersion.CURRENT.isAtLeast(1, 3, 30)) {
+        if (ignoreCoroutinesWithEmptyContext && frame.context === EmptyCoroutineContext) return // See ignoreCoroutinesWithEmptyContext
+        if (state == RUNNING) {
             val stackFrame = frame as? CoroutineStackFrame ?: return
             updateRunningState(stackFrame, state)
             return
@@ -475,6 +476,8 @@ internal object DebugProbesImpl {
     // Not guarded by the lock at all, does not really affect consistency
     internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> {
         if (!isInstalled) return completion
+        // See DebugProbes.ignoreCoroutinesWithEmptyContext for the additional details.
+        if (ignoreCoroutinesWithEmptyContext && completion.context === EmptyCoroutineContext) return completion
         /*
          * If completion already has an owner, it means that we are in scoped coroutine (coroutineScope, withContext etc.),
          * then piggyback on its already existing owner and do not replace completion
