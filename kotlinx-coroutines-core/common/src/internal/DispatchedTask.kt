@@ -47,7 +47,9 @@ internal const val MODE_UNINITIALIZED = -1
 internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE || this == MODE_CANCELLABLE_REUSABLE
 internal val Int.isReusableMode get() = this == MODE_CANCELLABLE_REUSABLE
 
-internal abstract class DispatchedTask<in T>(
+@PublishedApi
+internal abstract class DispatchedTask<in T> internal constructor(
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField public var resumeMode: Int
 ) : SchedulerTask() {
     internal abstract val delegate: Continuation<T>
@@ -78,7 +80,7 @@ internal abstract class DispatchedTask<in T>(
     internal open fun getExceptionalResult(state: Any?): Throwable? =
         (state as? CompletedExceptionally)?.cause
 
-    public final override fun run() {
+    final override fun run() {
         assert { resumeMode != MODE_UNINITIALIZED } // should have been set before dispatching
         val taskContext = this.taskContext
         var fatalException: Throwable? = null
@@ -134,7 +136,7 @@ internal abstract class DispatchedTask<in T>(
      * Fatal exception handling can be intercepted with [CoroutineExceptionHandler] element in the context of
      * a failed coroutine, but such exceptions should be reported anyway.
      */
-    public fun handleFatalException(exception: Throwable?, finallyException: Throwable?) {
+    internal fun handleFatalException(exception: Throwable?, finallyException: Throwable?) {
         if (exception === null && finallyException === null) return
         if (exception !== null && finallyException !== null) {
             exception.addSuppressedThrowable(finallyException)

@@ -124,6 +124,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      */
 
     // Note: use shared objects while we have no listeners
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     private val _state = atomic<Any?>(if (active) EMPTY_ACTIVE else EMPTY_NEW)
 
     private val _parentHandle = atomic<ChildHandle?>(null)
@@ -1440,7 +1441,9 @@ internal class ChildHandleNode(
 }
 
 // Same as ChildHandleNode, but for cancellable continuation
+@PublishedApi
 internal class ChildContinuation(
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField val child: CancellableContinuationImpl<*>
 ) : JobCancellingNode() {
     override fun invoke(cause: Throwable?) {

@@ -13,8 +13,10 @@ private val UNDEFINED = Symbol("UNDEFINED")
 @JvmField
 internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
 
+@PublishedApi
 internal class DispatchedContinuation<in T>(
-    @JvmField val dispatcher: CoroutineDispatcher,
+    @JvmField internal val dispatcher: CoroutineDispatcher,
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField val continuation: Continuation<T>
 ) : DispatchedTask<T>(MODE_UNINITIALIZED), CoroutineStackFrame, Continuation<T> by continuation {
     @JvmField
@@ -58,7 +60,7 @@ internal class DispatchedContinuation<in T>(
     private val reusableCancellableContinuation: CancellableContinuationImpl<*>?
         get() = _reusableCancellableContinuation.value as? CancellableContinuationImpl<*>
 
-    fun isReusable(): Boolean {
+    internal fun isReusable(): Boolean {
         /*
         Invariant: caller.resumeMode.isReusableMode
          * Reusability control:
@@ -72,13 +74,13 @@ internal class DispatchedContinuation<in T>(
      * Awaits until previous call to `suspendCancellableCoroutineReusable` will
      * stop mutating cached instance
      */
-    fun awaitReusability() {
+    internal fun awaitReusability() {
         _reusableCancellableContinuation.loop {
             if (it !== REUSABLE_CLAIMED) return
         }
     }
 
-    fun release() {
+    internal fun release() {
         /*
          * Called from `releaseInterceptedContinuation`, can be concurrent with
          * the code in `getResult` right after `trySuspend` returned `true`, so we have
@@ -93,7 +95,7 @@ internal class DispatchedContinuation<in T>(
      * so all cancellations will be postponed.
      */
     @Suppress("UNCHECKED_CAST")
-    fun claimReusableCancellableContinuation(): CancellableContinuationImpl<T>? {
+    internal fun claimReusableCancellableContinuation(): CancellableContinuationImpl<T>? {
         /*
          * Transitions:
          * 1) `null` -> claimed, caller will instantiate CC instance
@@ -142,7 +144,7 @@ internal class DispatchedContinuation<in T>(
      *
      * See [CancellableContinuationImpl.getResult].
      */
-    fun tryReleaseClaimedContinuation(continuation: CancellableContinuation<*>): Throwable? {
+    internal fun tryReleaseClaimedContinuation(continuation: CancellableContinuation<*>): Throwable? {
         _reusableCancellableContinuation.loop { state ->
             // not when(state) to avoid Intrinsics.equals call
             when {
@@ -162,7 +164,7 @@ internal class DispatchedContinuation<in T>(
      * Tries to postpone cancellation if reusable CC is currently in [REUSABLE_CLAIMED] state.
      * Returns `true` if cancellation is (or previously was) postponed, `false` otherwise.
      */
-    fun postponeCancellation(cause: Throwable): Boolean {
+    internal fun postponeCancellation(cause: Throwable): Boolean {
         _reusableCancellableContinuation.loop { state ->
             when (state) {
                 REUSABLE_CLAIMED -> {
@@ -208,7 +210,7 @@ internal class DispatchedContinuation<in T>(
     // We inline it to save an entry on the stack in cases where it shows (unconfined dispatcher)
     // It is used only in Continuation<T>.resumeCancellableWith
     @Suppress("NOTHING_TO_INLINE")
-    inline fun resumeCancellableWith(
+    internal inline fun resumeCancellableWith(
         result: Result<T>,
         noinline onCancellation: ((cause: Throwable) -> Unit)?
     ) {
@@ -237,7 +239,7 @@ internal class DispatchedContinuation<in T>(
 
     // inline here is to save us an entry on the stack for the sake of better stacktraces
     @Suppress("NOTHING_TO_INLINE")
-    inline fun resumeCancelled(state: Any?): Boolean {
+    internal inline fun resumeCancelled(state: Any?): Boolean {
         val job = context[Job]
         if (job != null && !job.isActive) {
             val cause = job.getCancellationException()
@@ -249,7 +251,7 @@ internal class DispatchedContinuation<in T>(
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun resumeUndispatchedWith(result: Result<T>) {
+    internal inline fun resumeUndispatchedWith(result: Result<T>) {
         withContinuationContext(continuation, countOrElement) {
             continuation.resumeWith(result)
         }
