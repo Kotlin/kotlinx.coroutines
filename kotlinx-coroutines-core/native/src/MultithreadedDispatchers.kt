@@ -61,7 +61,7 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
             if (durationUntilTarget > quantum) {
                 executeAfter(quantum.inWholeMicroseconds) { runAfterDelay(block, targetMoment) }
             } else {
-                executeAfter(durationUntilTarget.inWholeMicroseconds, block)
+                executeAfter(maxOf(0, durationUntilTarget.inWholeMicroseconds), block)
             }
         }
 
