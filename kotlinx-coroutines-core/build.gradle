@@ -135,8 +135,21 @@ kotlin {
     def jvmMain = sourceSets.jvmMain
     def jvmCoreMain = sourceSets.create('jvmCoreMain')
     def jdk8Main = sourceSets.create('jdk8Main')
-    jvmCoreMain.dependsOn(jvmMain)
     jdk8Main.dependsOn(jvmMain)
+
+    /**
+     * See: https://youtrack.jetbrains.com/issue/KTIJ-25959
+     * The dependency from jvmCore to jvmMain is only for CLI builds and not intended for the IDE.
+     * In the current setup there are two tooling unfriendly configurations used:
+     * 1: - jvmMain, despite being a platform source set, is not a leaf (jvmCoreMain and jdk8Main dependOn it)
+     * 2: - jvmMain effectively becomes a 'shared jvm' source set
+     *
+     * Using this kludge here, will prevent issue 2 from being visible to the IDE.
+     * Therefore jvmMain will resolve using the 'single' compilation it participates in (from the perspective of the IDE)
+     */
+    if (!Idea.active) {
+        jvmCoreMain.dependsOn(jvmMain)
+    }
 
     sourceSets.forEach {
         SourceSetsKt.configureMultiplatform(it)
