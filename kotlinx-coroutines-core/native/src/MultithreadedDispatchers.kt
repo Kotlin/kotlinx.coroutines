@@ -74,11 +74,6 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     override fun close() {
         worker.requestTermination().result // Note: calling "result" blocks
     }
-
-    private fun Long.toMicrosSafe(): Long {
-        val result = this * 1000
-        return if (result > this) result else Long.MAX_VALUE
-    }
 }
 
 private class MultiWorkerDispatcher(
