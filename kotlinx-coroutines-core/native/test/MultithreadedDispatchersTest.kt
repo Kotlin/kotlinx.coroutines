@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlin.native.concurrent.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 private class BlockingBarrier(val n: Int) {
     val counter = atomic(0)
@@ -61,6 +62,22 @@ class MultithreadedDispatchersTest {
             }
         } finally {
             dispatcher.close()
+        }
+    }
+
+    /**
+     * Test that [newSingleThreadContext] will not wait for the cancelled scheduled coroutines before closing.
+     */
+    @Test
+    fun timeoutsNotPreventingClosing(): Unit = runBlocking {
+        val dispatcher = WorkerDispatcher("test")
+        withContext(dispatcher) {
+            withTimeout(5.seconds) {
+            }
+        }
+        withTimeout(1.seconds) {
+            dispatcher.close() // should not wait for the timeout
+            yield()
         }
     }
 }

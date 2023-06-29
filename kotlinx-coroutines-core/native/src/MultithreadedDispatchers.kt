@@ -9,17 +9,15 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
-
-@ExperimentalCoroutinesApi
-public actual fun newSingleThreadContext(name: String): CloseableCoroutineDispatcher {
-    return WorkerDispatcher(name)
-}
+import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): CloseableCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but got: $nThreads" }
     return MultiWorkerDispatcher(name, nThreads)
 }
 
+@OptIn(ExperimentalTime::class)
 internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), Delay {
     private val worker = Worker.start(name = name)
 
@@ -52,20 +50,29 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
             override fun dispose() {
                 disposableHolder.value = null
             }
+
+            fun isDisposed() = disposableHolder.value == null
+        }
+
+        fun Worker.runAfterDelay(block: DisposableBlock, targetMoment: TimeMark) {
+            if (block.isDisposed()) return
+            val durationUntilTarget = -targetMoment.elapsedNow()
+            val quantum = 100.milliseconds
+            if (durationUntilTarget > quantum) {
+                executeAfter(quantum.inWholeMicroseconds) { runAfterDelay(block, targetMoment) }
+            } else {
+                executeAfter(maxOf(0, durationUntilTarget.inWholeMicroseconds), block)
+            }
         }
 
         val disposableBlock = DisposableBlock(block)
-        worker.executeAfter(timeMillis.toMicrosSafe(), disposableBlock)
+        val targetMoment = TimeSource.Monotonic.markNow() + timeMillis.milliseconds
+        worker.runAfterDelay(disposableBlock, targetMoment)
         return disposableBlock
     }
 
     override fun close() {
         worker.requestTermination().result // Note: calling "result" blocks
-    }
-
-    private fun Long.toMicrosSafe(): Long {
-        val result = this * 1000
-        return if (result > this) result else Long.MAX_VALUE
     }
 }
 
