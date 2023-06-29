@@ -148,15 +148,22 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     override val isLocked: Boolean get() =
         availablePermits == 0
 
-    override fun holdsLock(owner: Any): Boolean {
+    override fun holdsLock(owner: Any): Boolean = holdsLockImpl(owner) == HOLDS_LOCK_YES
+
+    /**
+     * [HOLDS_LOCK_UNLOCKED] if the mutex is unlocked
+     * [HOLDS_LOCK_YES] if the mutex is held with the specified [owner]
+     * [HOLDS_LOCK_ANOTHER_OWNER] if the mutex is held with a different owner
+     */
+    private fun holdsLockImpl(owner: Any?): Int {
         while (true) {
             // Is this mutex locked?
-            if (!isLocked) return false
+            if (!isLocked) return HOLDS_LOCK_UNLOCKED
             val curOwner = this.owner.value
             // Wait in a spin-loop until the owner is set
             if (curOwner === NO_OWNER) continue // <-- ATTENTION, BLOCKING PART HERE
             // Check the owner
-            return curOwner === owner
+            return if (curOwner === owner) HOLDS_LOCK_YES else HOLDS_LOCK_ANOTHER_OWNER
         }
     }
 
@@ -187,16 +194,15 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
                 // The semaphore permit acquisition has failed.
                 // However, we need to check that this mutex is not
                 // locked by our owner.
-                if (owner != null) {
-                    // Is this mutex locked by our owner?
-                    if (holdsLock(owner)) return TRY_LOCK_ALREADY_LOCKED_BY_OWNER
-                    // This mutex is either locked by another owner or unlocked.
-                    // In the latter case, it is possible that it WAS locked by
-                    // our owner when the semaphore permit acquisition has failed.
-                    // To preserve linearizability, the operation restarts in this case.
-                    if (!isLocked) continue
+                if (owner == null) return TRY_LOCK_FAILED
+                when (holdsLockImpl(owner)) {
+                    // This mutex is already locked by our owner.
+                    HOLDS_LOCK_YES -> return TRY_LOCK_ALREADY_LOCKED_BY_OWNER
+                    // This mutex is locked by another owner, `trylock(..)` must return `false`.
+                    HOLDS_LOCK_ANOTHER_OWNER -> return TRY_LOCK_FAILED
+                    // This mutex is no longer locked, restart the operation.
+                    HOLDS_LOCK_UNLOCKED -> continue
                 }
-                return TRY_LOCK_FAILED
             }
         }
     }
@@ -297,3 +303,7 @@ private val ON_LOCK_ALREADY_LOCKED_BY_OWNER = Symbol("ALREADY_LOCKED_BY_OWNER")
 private const val TRY_LOCK_SUCCESS = 0
 private const val TRY_LOCK_FAILED = 1
 private const val TRY_LOCK_ALREADY_LOCKED_BY_OWNER = 2
+
+private const val HOLDS_LOCK_UNLOCKED = 0
+private const val HOLDS_LOCK_YES = 1
+private const val HOLDS_LOCK_ANOTHER_OWNER = 2

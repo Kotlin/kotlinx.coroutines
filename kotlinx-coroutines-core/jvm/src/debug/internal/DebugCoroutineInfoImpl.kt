@@ -16,14 +16,16 @@ internal const val SUSPENDED = "SUSPENDED"
  * Internal implementation class where debugger tracks details it knows about each coroutine.
  * Its mutable fields can be updated concurrently, thus marked with `@Volatile`
  */
-internal class DebugCoroutineInfoImpl(
+@PublishedApi
+internal class DebugCoroutineInfoImpl internal constructor(
     context: CoroutineContext?,
     /**
      * A reference to a stack-trace that is converted to a [StackTraceFrame] which implements [CoroutineStackFrame].
      * The actual reference to the coroutine is not stored here, so we keep a strong reference.
      */
-    public val creationStackBottom: StackTraceFrame?,
-    @JvmField internal val sequenceNumber: Long
+    internal val creationStackBottom: StackTraceFrame?,
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
+    @JvmField public val sequenceNumber: Long
 ) {
     /**
      * We cannot keep a strong reference to the context, because with the [Job] in the context it will indirectly
@@ -40,10 +42,12 @@ internal class DebugCoroutineInfoImpl(
      * Last observed state of the coroutine.
      * Can be CREATED, RUNNING, SUSPENDED.
      */
-    public val state: String get() = _state
+    internal val state: String get() = _state
 
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @Volatile
-    private var _state: String = CREATED
+    @JvmField
+    public var _state: String = CREATED
 
     /*
      * How many consecutive unmatched 'updateState(RESUMED)' this object has received.
@@ -121,16 +125,20 @@ internal class DebugCoroutineInfoImpl(
         }
     }
 
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField
     @Volatile
-    internal var lastObservedThread: Thread? = null
+    public var lastObservedThread: Thread? = null
 
     /**
      * We cannot keep a strong reference to the last observed frame of the coroutine, because this will
      * prevent garbage-collection of a coroutine that was lost.
+     *
+     * Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
      */
     @Volatile
-    private var _lastObservedFrame: WeakReference<CoroutineStackFrame>? = null
+    @JvmField
+    public var _lastObservedFrame: WeakReference<CoroutineStackFrame>? = null
     internal var lastObservedFrame: CoroutineStackFrame?
         get() = _lastObservedFrame?.get()
         set(value) {
@@ -142,7 +150,7 @@ internal class DebugCoroutineInfoImpl(
      * It means that for [running][State.RUNNING] coroutines resulting stacktrace is inaccurate and
      * reflects stacktrace of the resumption point, not the actual current stacktrace.
      */
-    public fun lastObservedStackTrace(): List<StackTraceElement> {
+    internal fun lastObservedStackTrace(): List<StackTraceElement> {
         var frame: CoroutineStackFrame? = lastObservedFrame ?: return emptyList()
         val result = ArrayList<StackTraceElement>()
         while (frame != null) {

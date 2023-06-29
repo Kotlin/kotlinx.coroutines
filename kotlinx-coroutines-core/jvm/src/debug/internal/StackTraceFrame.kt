@@ -9,9 +9,11 @@ import kotlin.coroutines.jvm.internal.*
 /**
  * A stack-trace represented as [CoroutineStackFrame].
  */
-internal class StackTraceFrame(
+@PublishedApi
+internal class StackTraceFrame internal constructor(
     override val callerFrame: CoroutineStackFrame?,
-    private val stackTraceElement: StackTraceElement
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
+    @JvmField public val stackTraceElement: StackTraceElement
 ) : CoroutineStackFrame {
     override fun getStackTraceElement(): StackTraceElement = stackTraceElement
 }

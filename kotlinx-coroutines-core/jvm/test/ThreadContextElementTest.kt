@@ -7,6 +7,7 @@ package kotlinx.coroutines
 import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlinx.coroutines.flow.*
 
 class ThreadContextElementTest : TestBase() {
 
@@ -37,7 +38,7 @@ class ThreadContextElementTest : TestBase() {
     }
 
     @Test
-    fun testUndispatched()= runTest {
+    fun testUndispatched() = runTest {
         val exceptionHandler = coroutineContext[CoroutineExceptionHandler]!!
         val data = MyData()
         val element = MyElement(data)
@@ -191,6 +192,21 @@ class ThreadContextElementTest : TestBase() {
 
         assertEquals(manuallyCaptured, captor.capturees)
     }
+
+    @Test
+    fun testThreadLocalFlowOn() = runTest {
+        val myData = MyData()
+        myThreadLocal.set(myData)
+        expect(1)
+        flow {
+            assertEquals(myData, myThreadLocal.get())
+            emit(1)
+        }
+            .flowOn(myThreadLocal.asContextElement() + Dispatchers.Default)
+            .single()
+        myThreadLocal.set(null)
+        finish(2)
+    }
 }
 
 class MyData
@@ -258,6 +274,7 @@ class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextEle
         return CopyForChildCoroutineElement(myThreadLocal.get())
     }
 }
+
 
 /**
  * Calls [block], setting the value of [this] [ThreadLocal] for the duration of [block].

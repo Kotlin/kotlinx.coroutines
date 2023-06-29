@@ -18,6 +18,7 @@ public final class kotlinx/coroutines/debug/DebugProbes {
 	public static synthetic fun dumpCoroutines$default (Lkotlinx/coroutines/debug/DebugProbes;Ljava/io/PrintStream;ILjava/lang/Object;)V
 	public final fun dumpCoroutinesInfo ()Ljava/util/List;
 	public final fun getEnableCreationStackTraces ()Z
+	public final fun getIgnoreCoroutinesWithEmptyContext ()Z
 	public final fun getSanitizeStackTraces ()Z
 	public final fun install ()V
 	public final fun isInstalled ()Z
@@ -28,6 +29,7 @@ public final class kotlinx/coroutines/debug/DebugProbes {
 	public static synthetic fun printScope$default (Lkotlinx/coroutines/debug/DebugProbes;Lkotlinx/coroutines/CoroutineScope;Ljava/io/PrintStream;ILjava/lang/Object;)V
 	public final fun scopeToString (Lkotlinx/coroutines/CoroutineScope;)Ljava/lang/String;
 	public final fun setEnableCreationStackTraces (Z)V
+	public final fun setIgnoreCoroutinesWithEmptyContext (Z)V
 	public final fun setSanitizeStackTraces (Z)V
 	public final fun uninstall ()V
 	public final fun withDebugProbes (Lkotlin/jvm/functions/Function0;)V

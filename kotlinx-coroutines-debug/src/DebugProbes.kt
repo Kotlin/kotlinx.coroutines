@@ -46,6 +46,8 @@ public object DebugProbes {
      * Whether coroutine creation stack traces should be sanitized.
      * Sanitization removes all frames from `kotlinx.coroutines` package except
      * the first one and the last one to simplify diagnostic.
+     *
+     * `true` by default.
      */
     public var sanitizeStackTraces: Boolean
         get() = DebugProbesImpl.sanitizeStackTraces
@@ -59,11 +61,29 @@ public object DebugProbes {
      * thread is captured and attached to the coroutine.
      * This option can be useful during local debug sessions, but is recommended
      * to be disabled in production environments to avoid stack trace dumping overhead.
+     *
+     * `true` by default.
      */
     public var enableCreationStackTraces: Boolean
         get() = DebugProbesImpl.enableCreationStackTraces
         set(value) {
             DebugProbesImpl.enableCreationStackTraces = value
+        }
+
+    /**
+     * Whether to ignore coroutines whose context is [EmptyCoroutineContext].
+     *
+     * Coroutines with empty context are considered to be irrelevant for the concurrent coroutines' observability:
+     * - They do not contribute to any concurrent executions
+     * - They do not contribute to the (concurrent) system's liveness and/or deadlocks, as no other coroutines might wait for them
+     * - The typical usage of such coroutines is a combinator/builder/lookahead parser that can be debugged using more convenient tools.
+     *
+     * `true` by default.
+     */
+    public var ignoreCoroutinesWithEmptyContext: Boolean
+        get() = DebugProbesImpl.ignoreCoroutinesWithEmptyContext
+        set(value) {
+            DebugProbesImpl.ignoreCoroutinesWithEmptyContext = value
         }
 
     /**
@@ -122,13 +142,14 @@ public object DebugProbes {
      * Throws [IllegalStateException] if the scope has no a job in it.
      */
     public fun printScope(scope: CoroutineScope, out: PrintStream = System.out): Unit =
-       printJob(scope.coroutineContext[Job] ?: error("Job is not present in the scope"), out)
+        printJob(scope.coroutineContext[Job] ?: error("Job is not present in the scope"), out)
 
     /**
      * Returns all existing coroutines' info.
      * The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.
      */
-    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo().map { CoroutineInfo(it) }
+    public fun dumpCoroutinesInfo(): List<CoroutineInfo> =
+        DebugProbesImpl.dumpCoroutinesInfo().map { CoroutineInfo(it) }
 
     /**
      * Dumps all active coroutines into the given output stream, providing a consistent snapshot of all existing coroutines at the moment of invocation.
