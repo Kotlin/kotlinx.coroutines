@@ -14,6 +14,7 @@ val kotlinDevUrl = project.rootProject.properties["kotlin_repo_url"] as? String
 
 repositories {
     mavenCentral()
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
     if (cacheRedirectorEnabled) {
         maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
     } else {
