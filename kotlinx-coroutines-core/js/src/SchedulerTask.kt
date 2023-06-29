@@ -6,10 +6,11 @@ package kotlinx.coroutines
 
 internal actual abstract class SchedulerTask : Runnable
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
-internal actual typealias SchedulerTaskContext = Unit
+internal actual interface SchedulerTaskContext { }
 
-internal actual val SchedulerTask.taskContext: SchedulerTaskContext get() = Unit
+private object taskContext: SchedulerTaskContext { }
+
+internal actual val SchedulerTask.taskContext: SchedulerTaskContext get() = taskContext
 
 @Suppress("NOTHING_TO_INLINE")
 internal actual inline fun SchedulerTaskContext.afterTask() {}
