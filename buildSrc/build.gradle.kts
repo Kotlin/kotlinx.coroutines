@@ -4,9 +4,13 @@ plugins {
     `kotlin-dsl`
 }
 
+val gradleProperties = Properties().apply {
+    file("../gradle.properties").inputStream().use { load(it) }
+}
+
 val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
 val buildSnapshotTrain = properties["build_snapshot_train"]?.toString()?.toBoolean() == true
-val kotlinDevUrl = project.rootProject.properties["kotlin_repo_url"] as? String
+val kotlinDevUrl = project.rootProject.properties["kotlin_repo_url"] as? String ?: gradleProperties.getProperty("kotlin_repo_url")
 
 repositories {
     mavenCentral()
@@ -21,10 +25,6 @@ repositories {
     if (buildSnapshotTrain) {
         mavenLocal()
     }
-}
-
-val gradleProperties = Properties().apply {
-    file("../gradle.properties").inputStream().use { load(it) }
 }
 
 fun version(target: String): String {
