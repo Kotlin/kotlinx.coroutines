@@ -23,7 +23,7 @@ internal actual class SafeCollector<T> actual constructor(
     @JvmField internal actual val collectContext: CoroutineContext
 ) : FlowCollector<T>, ContinuationImpl(NoOpContinuation, EmptyCoroutineContext), CoroutineStackFrame {
 
-    override val callerFrame: CoroutineStackFrame? get() = completion as? CoroutineStackFrame
+    override val callerFrame: CoroutineStackFrame? get() = completion_ as? CoroutineStackFrame
 
     override fun getStackTraceElement(): StackTraceElement? = null
 
@@ -32,20 +32,20 @@ internal actual class SafeCollector<T> actual constructor(
 
     // Either context of the last emission or wrapper 'DownstreamExceptionContext'
     private var lastEmissionContext: CoroutineContext? = null
-    // Completion if we are currently suspended or within completion body or null otherwise
-    private var completion: Continuation<Unit>? = null
+    // Completion if we are currently suspended or within completion_ body or null otherwise
+    private var completion_: Continuation<Unit>? = null
 
     /*
      * This property is accessed in two places:
      * * ContinuationImpl invokes this in its `releaseIntercepted` as `context[ContinuationInterceptor]!!`
-     * * When we are within a callee, it is used to create its continuation object with this collector as completion
+     * * When we are within a callee, it is used to create its continuation object with this collector as completion_
      */
     override val context: CoroutineContext
         get() = lastEmissionContext ?: EmptyCoroutineContext
 
     override fun invokeSuspend(result: Result<Any?>): Any {
         result.onFailure { lastEmissionContext = DownstreamExceptionContext(it, context) }
-        completion?.resumeWith(result as Result<Unit>)
+        completion_?.resumeWith(result as Result<Unit>)
         return COROUTINE_SUSPENDED
     }
 
@@ -57,7 +57,7 @@ internal actual class SafeCollector<T> actual constructor(
     /**
      * This is a crafty implementation of state-machine reusing.
      * First it checks that it is not used concurrently (which we explicitly prohibit) and
-     * then just cache an instance of the completion in order to avoid extra allocation on each emit,
+     * then just cache an instance of the completion_ in order to avoid extra allocation on each emit,
      * making it effectively garbage-free on its hot-path.
      */
     actual override suspend fun emit(value: T) {
@@ -83,14 +83,14 @@ internal actual class SafeCollector<T> actual constructor(
             checkContext(currentContext, previousContext, value)
             lastEmissionContext = currentContext
         }
-        completion = uCont
+        completion_ = uCont
         val result = emitFun(collector as FlowCollector<Any?>, value, this as Continuation<Unit>)
         /*
          * If the callee hasn't suspended, that means that it won't (it's forbidden) call 'resumeWith` (-> `invokeSuspend`)
          * and we don't have to retain a strong reference to it to avoid memory leaks.
          */
         if (result != COROUTINE_SUSPENDED) {
-            completion = null
+            completion_ = null
         }
         return result
     }
