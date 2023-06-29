@@ -1,5 +1,15 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.7.2
+
+### Bug fixes and improvements
+
+* Coroutines debugger no longer keeps track of coroutines with empty coroutine context (#3782).
+* `CopyableThreadContextElement` now properly copies an element when crossing the coroutine boundary in `flowOn` (#3787). Thanks @wanyingd1996!
+* Coroutine timeouts no longer prevent K/N `newSingleThreadContext` from closing (#3768).
+* A non-linearizability in `Mutex` during `tryLock`/`unlock` sequence with owners is fixed (#3745).
+* Atomicfu version is updated to 0.21.0.
+
 ## Version 1.7.1
 
 ### Bug fixes and improvements
