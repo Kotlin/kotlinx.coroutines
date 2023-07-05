@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
+
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -227,6 +229,10 @@ kotlin.sourceSets.configureEach {
         optIn('kotlinx.cinterop.ExperimentalForeignApi')
         optIn('kotlin.experimental.ExperimentalNativeApi')
     }
+}
+
+tasks.withType(KotlinNativeCompile).configureEach {
+    kotlinOptions.freeCompilerArgs += ["-Xpartial-linkage=enable", "-Xpartial-linkage-loglevel=error"]
 }
 
 jvmTest {
