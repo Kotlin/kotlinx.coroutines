@@ -7,6 +7,7 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.*
 import kotlin.test.*
 
 class BroadcastTest : TestBase() {
@@ -17,7 +18,7 @@ class BroadcastTest : TestBase() {
             expect(4)
             send(1) // goes to receiver
             expect(5)
-            send(2) // goes to buffer
+            select<Unit> { onSend(2) {} } // goes to buffer
             expect(6)
             send(3) // suspends, will not be consumes, but will not be cancelled either
             expect(10)
@@ -63,7 +64,7 @@ class BroadcastTest : TestBase() {
         val a = produce {
             expect(3)
             send("MSG")
-            expect(5)
+            expectUnreached() // is not executed, because send is cancelled
         }
         expect(2)
         yield() // to produce
@@ -72,7 +73,7 @@ class BroadcastTest : TestBase() {
         expect(4)
         yield() // to abort produce
         assertTrue(a.isClosedForReceive) // the source channel was consumed
-        finish(6)
+        finish(5)
     }
 
     @Test

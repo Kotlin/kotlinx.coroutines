@@ -1,10 +1,12 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("unused", "NO_EXPLICIT_RETURN_TYPE_IN_API_MODE", "NO_EXPLICIT_VISIBILITY_IN_API_MODE")
 
 package kotlinx.coroutines.internal
+
+import kotlinx.coroutines.*
 
 private typealias Node = LinkedListNode
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -15,7 +17,7 @@ public actual typealias LockFreeLinkedListNode = LinkedListNode
 public actual typealias LockFreeLinkedListHead = LinkedListHead
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public open class LinkedListNode {
+public open class LinkedListNode : DisposableHandle {
     @PublishedApi internal var _next = this
     @PublishedApi internal var _prev = this
     @PublishedApi internal var _removed: Boolean = false
@@ -32,7 +34,22 @@ public open class LinkedListNode {
         this._prev = node
     }
 
+    /*
+     * Remove that is invoked as a virtual function with a
+     * potentially augmented behaviour.
+     * I.g. `LockFreeLinkedListHead` throws, while `SendElementWithUndeliveredHandler`
+     * invokes handler on remove
+     */
     public open fun remove(): Boolean {
+        return removeImpl()
+    }
+
+    override fun dispose() {
+        remove()
+    }
+
+    @PublishedApi
+    internal fun removeImpl(): Boolean {
         if (_removed) return false
         val prev = this._prev
         val next = this._next
@@ -76,76 +93,9 @@ public open class LinkedListNode {
     public fun removeFirstOrNull(): Node? {
         val next = _next
         if (next === this) return null
-        check(next.remove()) { "Should remove" }
+        check(next.removeImpl()) { "Should remove" }
         return next
     }
-
-    public inline fun <reified T> removeFirstIfIsInstanceOfOrPeekIf(predicate: (T) -> Boolean): T? {
-        val next = _next
-        if (next === this) return null
-        if (next !is T) return null
-        if (predicate(next)) return next
-        check(next.remove()) { "Should remove" }
-        return next
-    }
-}
-
-/** @suppress **This is unstable API and it is subject to change.** */
-public actual open class AddLastDesc<T : Node> actual constructor(
-    actual val queue: Node,
-    actual val node: T
-) : AbstractAtomicDesc() {
-    override val affectedNode: Node get() = queue._prev
-    actual override fun finishPrepare(prepareOp: PrepareOp) {}
-    override fun onComplete() = queue.addLast(node)
-    actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
-}
-
-/** @suppress **This is unstable API and it is subject to change.** */
-public actual open class RemoveFirstDesc<T> actual constructor(
-    actual val queue: LockFreeLinkedListNode
-) : AbstractAtomicDesc() {
-    @Suppress("UNCHECKED_CAST")
-    actual val result: T get() = affectedNode as T
-    override val affectedNode: Node = queue.nextNode
-    actual override fun finishPrepare(prepareOp: PrepareOp) {}
-    override fun onComplete() { queue.removeFirstOrNull() }
-    actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
-}
-
-/** @suppress **This is unstable API and it is subject to change.** */
-public actual abstract class AbstractAtomicDesc : AtomicDesc() {
-    protected abstract val affectedNode: Node
-    actual abstract fun finishPrepare(prepareOp: PrepareOp)
-    protected abstract fun onComplete()
-
-    actual open fun onPrepare(prepareOp: PrepareOp): Any? {
-        finishPrepare(prepareOp)
-        return null
-    }
-
-    actual final override fun prepare(op: AtomicOp<*>): Any? {
-        val affected = affectedNode
-        val failure = failure(affected)
-        if (failure != null) return failure
-        @Suppress("UNCHECKED_CAST")
-        return onPrepare(PrepareOp(affected, this, op))
-    }
-
-    actual final override fun complete(op: AtomicOp<*>, failure: Any?) = onComplete()
-    protected actual open fun failure(affected: LockFreeLinkedListNode): Any? = null // Never fails by default
-    protected actual open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean = false // Always succeeds
-    protected actual abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
-}
-
-/** @suppress **This is unstable API and it is subject to change.** */
-public actual class PrepareOp(
-    actual val affected: LockFreeLinkedListNode,
-    actual val desc: AbstractAtomicDesc,
-    actual override val atomicOp: AtomicOp<*>
-): OpDescriptor() {
-    override fun perform(affected: Any?): Any? = null
-    actual fun finishPrepare() {}
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -164,5 +114,5 @@ public open class LinkedListHead : LinkedListNode() {
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    public final override fun remove(): Boolean = throw UnsupportedOperationException()
+    public final override fun remove(): Nothing = throw UnsupportedOperationException()
 }

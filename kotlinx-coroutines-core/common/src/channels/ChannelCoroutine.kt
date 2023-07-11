@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -7,14 +7,16 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-@Suppress("DEPRECATION")
 internal open class ChannelCoroutine<E>(
     parentContext: CoroutineContext,
     protected val _channel: Channel<E>,
+    initParentJob: Boolean,
     active: Boolean
-) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by _channel {
+) : AbstractCoroutine<Unit>(parentContext, initParentJob, active), Channel<E> by _channel {
+
     val channel: Channel<E> get() = this
 
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     override fun cancel() {
         cancelInternal(defaultCancellationException())
     }
@@ -26,6 +28,7 @@ internal open class ChannelCoroutine<E>(
     }
 
     final override fun cancel(cause: CancellationException?) {
+        if (isCancelled) return // Do not create an exception if the coroutine (-> the channel) is already cancelled
         cancelInternal(cause ?: defaultCancellationException())
     }
 
@@ -33,10 +36,5 @@ internal open class ChannelCoroutine<E>(
         val exception = cause.toCancellationException()
         _channel.cancel(exception) // cancel the channel
         cancelCoroutine(exception) // cancel the job
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    suspend fun sendFair(element: E) {
-        (_channel as AbstractSendChannel<E>).sendFair(element)
     }
 }

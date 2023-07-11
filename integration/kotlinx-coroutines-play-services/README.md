@@ -6,6 +6,7 @@ Extension functions:
 
 | **Name** | **Description**
 | -------- | ---------------
+| [Task.asDeferred][asDeferred] | Converts a Task into a Deferred
 | [Task.await][await] | Awaits for completion of the Task (cancellable)
 | [Deferred.asTask][asTask] | Converts a deferred value to a Task
 
@@ -25,5 +26,20 @@ val snapshot = try {
 // Do stuff
 ```
 
-[await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/com.google.android.gms.tasks.-task/await.html
-[asTask]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/kotlinx.coroutines.-deferred/as-task.html
+If the `Task` supports cancellation via passing a `CancellationToken`, pass the corresponding `CancellationTokenSource` to `asDeferred` or `await` to support bi-directional cancellation:
+
+```kotlin
+val cancellationTokenSource = CancellationTokenSource()
+val currentLocationTask = fusedLocationProviderClient.getCurrentLocation(PRIORITY_HIGH_ACCURACY, cancellationTokenSource.token)
+val currentLocation = currentLocationTask.await(cancellationTokenSource) // cancelling `await` also cancels `currentLocationTask`, and vice versa
+```
+
+
+<!--- MODULE kotlinx-coroutines-play-services -->
+<!--- INDEX kotlinx.coroutines.tasks -->
+
+[asDeferred]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/as-deferred.html
+[await]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/await.html
+[asTask]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.tasks/as-task.html
+
+<!--- END -->

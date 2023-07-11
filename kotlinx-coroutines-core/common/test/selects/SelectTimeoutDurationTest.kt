@@ -7,8 +7,9 @@ package kotlinx.coroutines.selects
 import kotlinx.coroutines.*
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-@ExperimentalTime
 class SelectTimeoutDurationTest : TestBase() {
     @Test
     fun testBasic() = runTest {
@@ -71,7 +72,7 @@ class SelectTimeoutDurationTest : TestBase() {
         val iterations =10_000
         for (i in 0..iterations) {
             val result = selectUnbiased<Int> {
-                onTimeout(-1.seconds) {
+                onTimeout((-1).seconds) {
                     0
                 }
                 onTimeout(Duration.ZERO) {

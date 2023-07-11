@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // Need InlineOnly for efficient bytecode on Android
@@ -59,7 +59,7 @@ public const val DEBUG_PROPERTY_VALUE_AUTO: String = "auto"
 public const val DEBUG_PROPERTY_VALUE_ON: String = "on"
 
 /**
- * Debug turned on value for [DEBUG_PROPERTY_NAME].
+ * Debug turned off value for [DEBUG_PROPERTY_NAME].
  */
 public const val DEBUG_PROPERTY_VALUE_OFF: String = "off"
 

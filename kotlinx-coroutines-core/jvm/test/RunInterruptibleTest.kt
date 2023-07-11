@@ -41,7 +41,7 @@ class RunInterruptibleTest : TestBase() {
         val job = launch {
             runInterruptible(Dispatchers.IO) {
                 expect(2)
-                latch.offer(Unit)
+                latch.trySend(Unit)
                 try {
                     Thread.sleep(10_000L)
                     expectUnreached()

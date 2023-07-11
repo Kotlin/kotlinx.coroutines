@@ -39,4 +39,16 @@ class CoroutineExceptionHandlerJvmTest : TestBase() {
 
         finish(3)
     }
+
+    @Test
+    fun testLastDitchHandlerContainsContextualInformation() = runBlocking {
+        expect(1)
+        GlobalScope.launch(CoroutineName("last-ditch")) {
+            expect(2)
+            throw TestException()
+        }.join()
+        assertTrue(caughtException is TestException)
+        assertContains(caughtException.suppressed[0].toString(), "last-ditch")
+        finish(3)
+    }
 }

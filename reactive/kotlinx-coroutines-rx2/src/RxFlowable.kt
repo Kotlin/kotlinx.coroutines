@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
@@ -31,7 +31,6 @@ import kotlin.internal.*
  *
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  */
-@ExperimentalCoroutinesApi
 public fun <T: Any> rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
@@ -41,9 +40,10 @@ public fun <T: Any> rxFlowable(
     return Flowable.fromPublisher(publishInternal(GlobalScope, context, RX_HANDLER, block))
 }
 
+/** @suppress */
 @Deprecated(
     message = "CoroutineScope.rxFlowable is deprecated in favour of top-level rxFlowable",
-    level = DeprecationLevel.ERROR,
+    level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("rxFlowable(context, block)")
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
 @LowPriorityInOverloadResolution

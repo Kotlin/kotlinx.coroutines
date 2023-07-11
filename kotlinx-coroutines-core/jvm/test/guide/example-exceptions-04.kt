@@ -7,6 +7,7 @@ package kotlinx.coroutines.guide.exampleExceptions04
 
 import kotlinx.coroutines.*
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("CoroutineExceptionHandler got $exception") 

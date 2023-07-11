@@ -55,7 +55,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
         for (event in channel) action(event) // pass event to action
     }
     onMouseClicked = EventHandler { event ->
-        eventActor.offer(event)
+        eventActor.trySend(event)
     }
 }
 

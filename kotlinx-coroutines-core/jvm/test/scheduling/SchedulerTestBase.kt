@@ -6,7 +6,6 @@
 
 package kotlinx.coroutines.scheduling
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import org.junit.*
@@ -39,17 +38,9 @@ abstract class SchedulerTestBase : TestBase() {
             )
         }
 
-        /**
-         * Asserts that any number of pool worker threads in [range] exists at the time of method invocation
-         */
-        fun checkPoolThreadsExist(range: IntRange) {
-            val threads = Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }.count()
-            assertTrue(threads in range, "Expected threads in $range interval, but has $threads")
-        }
-
         private fun maxSequenceNumber(): Int? {
             return Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }
-                .map { sequenceNumber(it.name) }.max()
+                .map { sequenceNumber(it.name) }.maxOrNull()
         }
 
         private fun sequenceNumber(threadName: String): Int {
@@ -69,11 +60,11 @@ abstract class SchedulerTestBase : TestBase() {
     protected var maxPoolSize = 1024
     protected var idleWorkerKeepAliveNs = IDLE_WORKER_KEEP_ALIVE_NS
 
-    private var _dispatcher: ExperimentalCoroutineDispatcher? = null
+    private var _dispatcher: SchedulerCoroutineDispatcher? = null
     protected val dispatcher: CoroutineDispatcher
         get() {
             if (_dispatcher == null) {
-                _dispatcher = ExperimentalCoroutineDispatcher(
+                _dispatcher = SchedulerCoroutineDispatcher(
                     corePoolSize,
                     maxPoolSize,
                     idleWorkerKeepAliveNs
@@ -94,7 +85,7 @@ abstract class SchedulerTestBase : TestBase() {
 
     protected fun view(parallelism: Int): CoroutineDispatcher {
         val intitialize = dispatcher
-        return _dispatcher!!.limited(parallelism)
+        return _dispatcher!!.limitedParallelism(parallelism)
     }
 
     @After
@@ -105,4 +96,18 @@ abstract class SchedulerTestBase : TestBase() {
             }
         }
     }
+}
+
+internal fun SchedulerCoroutineDispatcher.blocking(parallelism: Int = 16): CoroutineDispatcher {
+    return object : CoroutineDispatcher() {
+
+        @InternalCoroutinesApi
+        override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+            this@blocking.dispatchWithContext(block, BlockingContext, true)
+        }
+
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            this@blocking.dispatchWithContext(block, BlockingContext, false)
+        }
+    }.limitedParallelism(parallelism)
 }

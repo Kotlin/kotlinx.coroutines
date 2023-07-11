@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.debug.internal
@@ -10,11 +10,10 @@ import java.lang.ref.*
 
 // This is very limited implementation, not suitable as a generic map replacement.
 // It has lock-free get and put with synchronized rehash for simplicity (and better CPU usage on contention)
-@OptIn(ExperimentalStdlibApi::class)
 @Suppress("UNCHECKED_CAST")
 internal class ConcurrentWeakMap<K : Any, V: Any>(
     /**
-     * Weak reference queue is needed when a small key is mapped to a large value and we need to promptly release a
+     * Weak reference queue is needed when a small key is mapped to a large value, and we need to promptly release a
      * reference to the value when the key was already disposed.
      */
     weakRefQueue: Boolean = false
@@ -73,7 +72,7 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
             while (true) {
                 cleanWeakRef(weakRefQueue.remove() as HashedWeakRef<*>)
             }
-        } catch(e: InterruptedException) {
+        } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
         }
     }

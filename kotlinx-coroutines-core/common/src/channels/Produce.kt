@@ -1,19 +1,16 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.flow.*
 
 /**
- * Scope for the [produce][CoroutineScope.produce] coroutine builder.
- *
- * **Note: This is an experimental api.** Behavior of producers that work as children in a parent scope with respect
- *        to cancellation and error handling may change in the future.
+ * Scope for the [produce][CoroutineScope.produce], [callbackFlow] and [channelFlow] builders.
  */
-@ExperimentalCoroutinesApi
 public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
     /**
      * A reference to the channel this coroutine [sends][send] elements to.
@@ -27,7 +24,11 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
 
 /**
  * Suspends the current coroutine until the channel is either [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel]
- * and invokes the given [block] before resuming the coroutine. This suspending function is cancellable.
+ * and invokes the given [block] before resuming the coroutine.
+ *
+ * This suspending function is cancellable.
+ * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+ * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
  *
  * Note that when the producer channel is cancelled, this function resumes with a cancellation exception.
  * Therefore, in case of cancellation, no code after the call to this function will be executed.
@@ -41,7 +42,6 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
     check(kotlin.coroutines.coroutineContext[Job] === this) { "awaitClose() can only be invoked from the producer context" }
     try {
@@ -91,13 +91,8 @@ public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
     @BuilderInference block: suspend ProducerScope<E>.() -> Unit
-): ReceiveChannel<E> {
-    val channel = Channel<E>(capacity)
-    val newContext = newCoroutineContext(context)
-    val coroutine = ProducerCoroutine(newContext, channel)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    return coroutine
-}
+): ReceiveChannel<E> =
+    produce(context, capacity, BufferOverflow.SUSPEND, CoroutineStart.DEFAULT, onCompletion = null, block = block)
 
 /**
  * **This is an internal API and should not be used from general code.**
@@ -118,8 +113,19 @@ public fun <E> CoroutineScope.produce(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     @BuilderInference block: suspend ProducerScope<E>.() -> Unit
+): ReceiveChannel<E> =
+    produce(context, capacity, BufferOverflow.SUSPEND, start, onCompletion, block)
+
+// Internal version of produce that is maximally flexible, but is not exposed through public API (too many params)
+internal fun <E> CoroutineScope.produce(
+    context: CoroutineContext = EmptyCoroutineContext,
+    capacity: Int = 0,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> {
-    val channel = Channel<E>(capacity)
+    val channel = Channel<E>(capacity, onBufferOverflow)
     val newContext = newCoroutineContext(context)
     val coroutine = ProducerCoroutine(newContext, channel)
     if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
@@ -127,9 +133,9 @@ public fun <E> CoroutineScope.produce(
     return coroutine
 }
 
-internal open class ProducerCoroutine<E>(
+private class ProducerCoroutine<E>(
     parentContext: CoroutineContext, channel: Channel<E>
-) : ChannelCoroutine<E>(parentContext, channel, active = true), ProducerScope<E> {
+) : ChannelCoroutine<E>(parentContext, channel, true, active = true), ProducerScope<E> {
     override val isActive: Boolean
         get() = super.isActive
 

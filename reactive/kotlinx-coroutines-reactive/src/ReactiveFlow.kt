@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactive
@@ -13,15 +13,16 @@ import kotlinx.coroutines.intrinsics.*
 import org.reactivestreams.*
 import java.util.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.internal.*
 
 /**
  * Transforms the given reactive [Publisher] into [Flow].
- * Use [buffer] operator on the resulting flow to specify the size of the backpressure.
- * More precisely, it specifies the value of the subscription's [request][Subscription.request].
- * [buffer] default capacity is used by default.
+ * Use the [buffer] operator on the resulting flow to specify the size of the back-pressure.
+ * In effect, it specifies the value of the subscription's [request][Subscription.request].
+ * The [default buffer capacity][Channel.BUFFERED] for a suspending channel is used by default.
  *
- * If any of the resulting flow transformations fails, subscription is immediately cancelled and all in-flight elements
- * are discarded.
+ * If any of the resulting flow transformations fails, the subscription is immediately cancelled and all the in-flight
+ * elements are discarded.
  *
  * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
  * see its documentation for additional details.
@@ -30,13 +31,13 @@ public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
     PublisherAsFlow(this)
 
 /**
- * Transforms the given flow to a reactive specification compliant [Publisher].
+ * Transforms the given flow into a reactive specification compliant [Publisher].
  *
  * This function is integrated with `ReactorContext` from `kotlinx-coroutines-reactor` module,
  * see its documentation for additional details.
  *
- * An optional [context] can be specified to control the execution context of calls to [Subscriber] methods.
- * You can set a [CoroutineDispatcher] to confine them to a specific thread and/or various [ThreadContextElement] to
+ * An optional [context] can be specified to control the execution context of calls to the [Subscriber] methods.
+ * A [CoroutineDispatcher] can be set to confine them to a specific thread; various [ThreadContextElement] can be set to
  * inject additional context into the caller thread. By default, the [Unconfined][Dispatchers.Unconfined] dispatcher
  * is used, so calls are performed from an arbitrary thread.
  */
@@ -47,25 +48,28 @@ public fun <T : Any> Flow<T>.asPublisher(context: CoroutineContext = EmptyCorout
 private class PublisherAsFlow<T : Any>(
     private val publisher: Publisher<T>,
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = Channel.BUFFERED
-) : ChannelFlow<T>(context, capacity) {
-    override fun create(context: CoroutineContext, capacity: Int): ChannelFlow<T> =
-        PublisherAsFlow(publisher, context, capacity)
+    capacity: Int = Channel.BUFFERED,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
+    override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
+        PublisherAsFlow(publisher, context, capacity, onBufferOverflow)
 
     /*
-     * Suppress for Channel.CHANNEL_DEFAULT_CAPACITY.
-     * It's too counter-intuitive to be public and moving it to Flow companion
+     * The @Suppress is for Channel.CHANNEL_DEFAULT_CAPACITY.
+     * It's too counter-intuitive to be public, and moving it to Flow companion
      * will also create undesired effect.
      */
     @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     private val requestSize: Long
-        get() = when (capacity) {
-            Channel.CONFLATED -> Long.MAX_VALUE // request all and conflate incoming
-            Channel.RENDEZVOUS -> 1L // need to request at least one anyway
-            Channel.UNLIMITED -> Long.MAX_VALUE // reactive streams way to say "give all" must be Long.MAX_VALUE
-            Channel.BUFFERED -> Channel.CHANNEL_DEFAULT_CAPACITY.toLong()
-            else -> capacity.toLong().also { check(it >= 1) }
-        }
+        get() =
+            if (onBufferOverflow != BufferOverflow.SUSPEND) {
+                Long.MAX_VALUE // request all, since buffering strategy is to never suspend
+            } else when (capacity) {
+                Channel.RENDEZVOUS -> 1L // need to request at least one anyway
+                Channel.UNLIMITED -> Long.MAX_VALUE // reactive streams way to say "give all", must be Long.MAX_VALUE
+                Channel.BUFFERED -> Channel.CHANNEL_DEFAULT_CAPACITY.toLong()
+                else -> capacity.toLong().also { check(it >= 1) }
+            }
 
     override suspend fun collect(collector: FlowCollector<T>) {
         val collectContext = coroutineContext
@@ -85,7 +89,7 @@ private class PublisherAsFlow<T : Any>(
     }
 
     private suspend fun collectImpl(injectContext: CoroutineContext, collector: FlowCollector<T>) {
-        val subscriber = ReactiveSubscriber<T>(capacity, requestSize)
+        val subscriber = ReactiveSubscriber<T>(capacity, onBufferOverflow, requestSize)
         // inject subscribe context into publisher
         publisher.injectCoroutineContext(injectContext).subscribe(subscriber)
         try {
@@ -109,19 +113,27 @@ private class PublisherAsFlow<T : Any>(
         collectImpl(scope.coroutineContext, SendingCollector(scope.channel))
 }
 
-@Suppress("SubscriberImplementation")
+@Suppress("ReactiveStreamsSubscriberImplementation")
 private class ReactiveSubscriber<T : Any>(
     capacity: Int,
+    onBufferOverflow: BufferOverflow,
     private val requestSize: Long
 ) : Subscriber<T> {
     private lateinit var subscription: Subscription
-    private val channel = Channel<T>(capacity)
 
-    suspend fun takeNextOrNull(): T? = channel.receiveOrNull()
+    // This implementation of ReactiveSubscriber always uses "offer" in its onNext implementation and it cannot
+    // be reliable with rendezvous channel, so a rendezvous channel is replaced with buffer=1 channel
+    private val channel = Channel<T>(if (capacity == Channel.RENDEZVOUS) 1 else capacity, onBufferOverflow)
+
+    suspend fun takeNextOrNull(): T? {
+        val result = channel.receiveCatching()
+        result.exceptionOrNull()?.let { throw it }
+        return result.getOrElse { null } // Closed channel
+    }
 
     override fun onNext(value: T) {
         // Controlled by requestSize
-        require(channel.offer(value)) { "Element $value was not added to channel because it was full, $channel" }
+        require(channel.trySend(value).isSuccess) { "Element $value was not added to channel because it was full, $channel" }
     }
 
     override fun onComplete() {
@@ -177,9 +189,15 @@ public class FlowSubscription<T>(
     @JvmField public val flow: Flow<T>,
     @JvmField public val subscriber: Subscriber<in T>,
     context: CoroutineContext
-) : Subscription, AbstractCoroutine<Unit>(context, true) {
+) : Subscription, AbstractCoroutine<Unit>(context, initParentJob = false, true) {
+    /*
+     * We deliberately set initParentJob to false and do not establish parent-child
+     * relationship because FlowSubscription doesn't support it
+     */
     private val requested = atomic(0L)
     private val producer = atomic<Continuation<Unit>?>(createInitialContinuation())
+    @Volatile
+    private var cancellationRequested = false
 
     // This code wraps startCoroutineCancellable into continuation
     private fun createInitialContinuation(): Continuation<Unit> = Continuation(coroutineContext) {
@@ -189,18 +207,25 @@ public class FlowSubscription<T>(
     private suspend fun flowProcessing() {
         try {
             consumeFlow()
+        } catch (cause: Throwable) {
+            @Suppress("INVISIBLE_MEMBER")
+            val unwrappedCause = unwrap(cause)
+            if (!cancellationRequested || isActive || unwrappedCause !== getCancellationException()) {
+                try {
+                    subscriber.onError(cause)
+                } catch (e: Throwable) {
+                    // Last ditch report
+                    cause.addSuppressed(e)
+                    handleCoroutineException(coroutineContext, cause)
+                }
+            }
+            return
+        }
+        // We only call this if `consumeFlow()` finished successfully
+        try {
             subscriber.onComplete()
         } catch (e: Throwable) {
-            try {
-                if (e is CancellationException) {
-                    subscriber.onComplete()
-                } else {
-                    subscriber.onError(e)
-                }
-            } catch (e: Throwable) {
-                // Last ditch report
-                handleCoroutineException(coroutineContext, e)
-            }
+            handleCoroutineException(coroutineContext, e)
         }
     }
 
@@ -224,6 +249,7 @@ public class FlowSubscription<T>(
     }
 
     override fun cancel() {
+        cancellationRequested = true
         cancel(null)
     }
 
@@ -236,7 +262,7 @@ public class FlowSubscription<T>(
         if (old <= 0L) {
             assert(old == 0L)
             // Emitter is not started yet or has suspended -- spin on race with suspendCancellableCoroutine
-            while(true) {
+            while (true) {
                 val producer = producer.getAndSet(null) ?: continue // spin if not set yet
                 producer.resume(Unit)
                 break

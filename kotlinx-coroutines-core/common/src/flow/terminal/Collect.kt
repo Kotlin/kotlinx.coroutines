@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -44,34 +44,11 @@ public suspend fun Flow<*>.collect(): Unit = collect(NopCollector)
  *     .launchIn(uiScope)
  * ```
  *
- * Note that resulting value of [launchIn] is not used the provided scope takes care of cancellation.
+ * Note that the resulting value of [launchIn] is not used and the provided scope takes care of cancellation.
  */
 public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
     collect() // tail-call
 }
-
-/**
- * Terminal flow operator that collects the given flow with a provided [action].
- * If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
- *
- * Example of use:
- *
- * ```
- * val flow = getMyEvents()
- * try {
- *     flow.collect { value ->
- *         println("Received $value")
- *     }
- *     println("My events are consumed successfully")
- * } catch (e: Throwable) {
- *     println("Exception from the flow: $e")
- * }
- * ```
- */
-public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit =
-    collect(object : FlowCollector<T> {
-        override suspend fun emit(value: T) = action(value)
-    })
 
 /**
  * Terminal flow operator that collects the given flow with a provided [action] that takes the index of an element (zero-based) and the element.
@@ -87,8 +64,8 @@ public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend
 
 /**
  * Terminal flow operator that collects the given flow with a provided [action].
- * The crucial difference from [collect] is that when the original flow emits a new value, [action] block for previous
- * value is cancelled.
+ * The crucial difference from [collect] is that when the original flow emits a new value
+ * then the [action] block for the previous value is cancelled.
  *
  * It can be demonstrated by the following example:
  *
@@ -127,5 +104,14 @@ public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit)
  * Collects all the values from the given [flow] and emits them to the collector.
  * It is a shorthand for `flow.collect { value -> emit(value) }`.
  */
-@BuilderInference
-public suspend inline fun <T> FlowCollector<T>.emitAll(flow: Flow<T>): Unit = flow.collect(this)
+public suspend fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) {
+    ensureActive()
+    flow.collect(this)
+}
+
+/** @suppress */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Backwards compatibility with JS and K/N")
+public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit =
+    collect(object : FlowCollector<T> {
+        override suspend fun emit(value: T) = action(value)
+    })

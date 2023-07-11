@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.intrinsics
@@ -17,17 +17,6 @@ import kotlin.coroutines.intrinsics.*
 internal fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Continuation<T>) {
     startDirect(completion) { actualCompletion ->
         startCoroutineUninterceptedOrReturn(actualCompletion)
-    }
-}
-
-/**
- * Use this function to restart a coroutine directly from inside of [suspendCoroutine],
- * when the code is already in the context of this coroutine.
- * It does not use [ContinuationInterceptor] and does not update the context of the current thread.
- */
-internal fun <R, T> (suspend (R) -> T).startCoroutineUnintercepted(receiver: R, completion: Continuation<T>) {
-    startDirect(completion) {  actualCompletion ->
-        startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
     }
 }
 
@@ -82,11 +71,9 @@ private inline fun <T> startDirect(completion: Continuation<T>, block: (Continua
  * This function shall be invoked at most once on this coroutine.
  * This function checks cancellation of the outer [Job] on fast-path.
  *
- * First, this function initializes the parent job from the `parentContext` of this coroutine that was passed to it
- * during construction. Second, it starts the coroutine using [startCoroutineUninterceptedOrReturn].
+ * It starts the coroutine using [startCoroutineUninterceptedOrReturn].
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
-    initParentJob()
     return undispatchedResult({ true }) {
         block.startCoroutineUninterceptedOrReturn(receiver, this)
     }
@@ -96,8 +83,8 @@ internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(receiver: R, blo
  * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
-    receiver: R, block: suspend R.() -> T): Any? {
-    initParentJob()
+    receiver: R, block: suspend R.() -> T
+): Any? {
     return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === this) }) {
         block.startCoroutineUninterceptedOrReturn(receiver, this)
     }

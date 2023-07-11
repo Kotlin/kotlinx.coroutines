@@ -1,12 +1,15 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:OptIn(ExperimentalContracts::class)
 package kotlinx.coroutines
 
 import kotlinx.cinterop.*
 import platform.posix.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
+import kotlin.native.concurrent.*
 
 /**
  * Runs new coroutine and **blocks** current thread _interruptibly_ until its completion.
@@ -30,10 +33,13 @@ import kotlin.coroutines.*
  * @param context context of the coroutine. The default value is an implementation of [EventLoop].
  * @param block the coroutine code.
  */
-public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
+public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
     val contextInterceptor = context[ContinuationInterceptor]
     val eventLoop: EventLoop?
-    var newContext: CoroutineContext = context // todo: kludge for data flow analysis error
+    val newContext: CoroutineContext
     if (contextInterceptor == null) {
         // create or use private event loop if no dispatcher is specified
         eventLoop = ThreadLocalEventLoop.eventLoop
@@ -46,28 +52,78 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
         newContext = GlobalScope.newCoroutineContext(context)
     }
     val coroutine = BlockingCoroutine<T>(newContext, eventLoop)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    return coroutine.joinBlocking()
+    var completed = false
+    ThreadLocalKeepAlive.addCheck { !completed }
+    try {
+        coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+        return coroutine.joinBlocking()
+    } finally {
+        completed = true
+    }
+}
+
+@ThreadLocal
+private object ThreadLocalKeepAlive {
+    /** If any of these checks passes, this means this [Worker] is still used. */
+    private var checks = mutableListOf<() -> Boolean>()
+
+    /** Whether the worker currently tries to keep itself alive. */
+    private var keepAliveLoopActive = false
+
+    /** Adds another stopgap that must be passed before the [Worker] can be terminated. */
+    fun addCheck(terminationForbidden: () -> Boolean) {
+        checks.add(terminationForbidden)
+        if (!keepAliveLoopActive) keepAlive()
+    }
+
+    /**
+     * Send a ping to the worker to prevent it from terminating while this coroutine is running,
+     * ensuring that continuations don't get dropped and forgotten.
+     */
+    private fun keepAlive() {
+        // only keep the checks that still forbid the termination
+        checks = checks.filter { it() }.toMutableList()
+        // if there are no checks left, we no longer keep the worker alive, it can be terminated
+        keepAliveLoopActive = checks.isNotEmpty()
+        if (keepAliveLoopActive) {
+            Worker.current.executeAfter(afterMicroseconds = 100_000) {
+                keepAlive()
+            }
+        }
+    }
 }
 
 private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val eventLoop: EventLoop?
-) : AbstractCoroutine<T>(parentContext, true) {
+) : AbstractCoroutine<T>(parentContext, true, true) {
+    private val joinWorker = Worker.current
+
     override val isScopedCoroutine: Boolean get() = true
 
+    override fun afterCompletion(state: Any?) {
+        // wake up blocked thread
+        if (joinWorker != Worker.current) {
+            // Unpark waiting worker
+            joinWorker.executeAfter(0L, {}) // send an empty task to unpark the waiting event loop
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
-    fun joinBlocking(): T = memScoped {
+    fun joinBlocking(): T {
         try {
             eventLoop?.incrementUseCount()
-            val timespec = alloc<timespec>()
             while (true) {
-                val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
-                // note: process next even may loose unpark flag, so check if completed before parking
+                var parkNanos: Long
+                // Workaround for bug in BE optimizer that cannot eliminate boxing here
+                if (eventLoop != null) {
+                    parkNanos = eventLoop.processNextEvent()
+                } else {
+                    parkNanos = Long.MAX_VALUE
+                }
+                // note: processNextEvent may lose unpark flag, so check if completed before parking
                 if (isCompleted) break
-                timespec.tv_sec = (parkNanos / 1000000000L).convert() // 1e9 ns -> sec
-                timespec.tv_nsec = (parkNanos % 1000000000L).convert() // % 1e9
-                nanosleep(timespec.ptr, null)
+                joinWorker.park(parkNanos / 1000L, true)
             }
         } finally { // paranoia
             eventLoop?.decrementUseCount()
@@ -75,6 +131,6 @@ private class BlockingCoroutine<T>(
         // now return result
         val state = state.unboxState()
         (state as? CompletedExceptionally)?.let { throw it.cause }
-        state as T
+        return state as T
     }
 }

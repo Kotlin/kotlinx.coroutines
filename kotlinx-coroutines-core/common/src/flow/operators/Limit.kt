@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -109,10 +109,8 @@ public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
  *         emit(progress) // always emit progress
  *         !progress.isDone() // continue while download is not done
  *     }
- * }
  * ```
  */
-@ExperimentalCoroutinesApi
 public fun <T, R> Flow<T>.transformWhile(
     @BuilderInference transform: suspend FlowCollector<R>.(value: T) -> Boolean
 ): Flow<R> =

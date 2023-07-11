@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package benchmarks
@@ -25,12 +25,11 @@ abstract class ParametrizedDispatcherBase : CoroutineScope {
     private var closeable: Closeable? = null
 
     @Setup
-    @UseExperimental(InternalCoroutinesApi::class)
     open fun setup() {
         coroutineContext = when {
             dispatcher == "fjp" -> ForkJoinPool.commonPool().asCoroutineDispatcher()
             dispatcher == "scheduler" -> {
-                ExperimentalCoroutineDispatcher(CORES_COUNT).also { closeable = it }
+                Dispatchers.Default
             }
             dispatcher.startsWith("ftp") -> {
                 newFixedThreadPoolContext(dispatcher.substring(4).toInt(), dispatcher).also { closeable = it }

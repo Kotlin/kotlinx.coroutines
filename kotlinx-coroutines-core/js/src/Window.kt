@@ -1,10 +1,9 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import org.w3c.dom.Window
 
 /**
@@ -35,8 +34,8 @@ private fun Window.asWindowAnimationQueue(): WindowAnimationQueue =
 private class WindowAnimationQueue(private val window: Window) {
     private val dispatcher = window.asCoroutineDispatcher()
     private var scheduled = false
-    private var current = ArrayQueue<CancellableContinuation<Double>>()
-    private var next = ArrayQueue<CancellableContinuation<Double>>()
+    private var current = ArrayDeque<CancellableContinuation<Double>>()
+    private var next = ArrayDeque<CancellableContinuation<Double>>()
     private var timestamp = 0.0
 
     fun enqueue(cont: CancellableContinuation<Double>) {

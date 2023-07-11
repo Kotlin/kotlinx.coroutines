@@ -38,16 +38,16 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testFatalException() = withExceptionHandler(handler<LinkageError>(3)) {
+    fun testFatalException() = withExceptionHandler({ expectUnreached() }) {
         rxFlowable<Int>(Dispatchers.Unconfined) {
             expect(1)
             throw LinkageError()
         }.subscribe({
             expectUnreached()
         }, {
-            expect(2) // Fatal exception is reported to both onError and CEH
+            expect(2) // Fatal exceptions are not treated as special
         })
-        finish(4)
+        finish(3)
     }
 
     @Test
@@ -66,7 +66,7 @@ class FlowableExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    fun testFatalExceptionAsynchronous() = withExceptionHandler(handler<LinkageError>(3)) {
+    fun testFatalExceptionAsynchronous() = withExceptionHandler({ expectUnreached() }) {
         rxFlowable<Int>(Dispatchers.Unconfined) {
             expect(1)
             throw LinkageError()
@@ -77,19 +77,19 @@ class FlowableExceptionHandlingTest : TestBase() {
             }, {
                 expect(2)
             })
-        finish(4)
+        finish(3)
     }
 
     @Test
-    fun testFatalExceptionFromSubscribe() = withExceptionHandler(handler<LinkageError>(4)) {
+    fun testFatalExceptionFromSubscribe() = withExceptionHandler(handler<LinkageError>(3)) {
         rxFlowable(Dispatchers.Unconfined) {
             expect(1)
             send(Unit)
         }.subscribe({
             expect(2)
             throw LinkageError()
-        }, { expect(3) }) // Fatal exception is reported to both onError and CEH
-        finish(5)
+        }, { expectUnreached() }) // Fatal exception is rethrown from `onNext` => the subscription is thought to be cancelled
+        finish(4)
     }
 
     @Test

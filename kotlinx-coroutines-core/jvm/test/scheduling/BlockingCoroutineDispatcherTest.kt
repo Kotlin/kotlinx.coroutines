@@ -101,7 +101,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         firstBarrier.await()
         secondBarrier.await()
         blockingTasks.joinAll()
-        checkPoolThreadsCreated(21..22)
+        checkPoolThreadsCreated(21 /* blocking tasks + 1 for CPU */..20 + CORES_COUNT)
     }
 
     @Test
@@ -122,72 +122,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         barrier.await()
         blockingTasks.joinAll()
         // There may be race when multiple CPU threads are trying to lazily created one more
-        checkPoolThreadsCreated(104..120)
-    }
-
-    @Test
-    fun testBlockingFairness() = runBlocking {
-        corePoolSize = 1
-        maxPoolSize = 1
-
-        val blocking = blockingDispatcher(1)
-        val task = async(dispatcher) {
-            expect(1)
-
-            val nonBlocking = async(dispatcher) {
-                expect(3)
-            }
-
-            val firstBlocking = async(blocking) {
-                expect(2)
-            }
-
-            val secondBlocking = async(blocking) {
-                // Already have 1 queued blocking task, so this one wouldn't be scheduled to head
-                expect(4)
-            }
-
-            listOf(firstBlocking, nonBlocking, secondBlocking).joinAll()
-            finish(5)
-        }
-
-        task.await()
-    }
-
-    @Test
-    fun testBoundedBlockingFairness() = runBlocking {
-        corePoolSize = 1
-        maxPoolSize = 1
-
-        val blocking = blockingDispatcher(2)
-        val task = async(dispatcher) {
-            expect(1)
-
-            val nonBlocking = async(dispatcher) {
-                expect(3)
-            }
-
-            val firstBlocking = async(blocking) {
-                expect(4)
-            }
-
-            val secondNonBlocking = async(dispatcher) {
-                expect(5)
-            }
-
-            val secondBlocking = async(blocking) {
-                expect(2) // <- last submitted blocking is executed first
-            }
-
-            val thirdBlocking = async(blocking) {
-                expect(6) // parallelism level is reached before this task
-            }
-
-            listOf(firstBlocking, nonBlocking, secondBlocking, secondNonBlocking, thirdBlocking).joinAll()
-            finish(7)
-        }
-
-        task.await()
+        checkPoolThreadsCreated(101..100 + CORES_COUNT)
     }
 
     @Test(timeout = 1_000)

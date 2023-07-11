@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow
@@ -9,8 +9,7 @@ import kotlinx.coroutines.flow.internal.*
 import kotlin.coroutines.*
 
 /**
- * A cold asynchronous data stream that sequentially emits values
- * and completes normally or with an exception.
+ * An asynchronous data stream that sequentially emits values and completes normally or with an exception.
  *
  * _Intermediate operators_ on the flow such as [map], [filter], [take], [zip], etc are functions that are
  * applied to the _upstream_ flow or flows and return a _downstream_ flow where further operators can be applied to.
@@ -39,11 +38,12 @@ import kotlin.coroutines.*
  * with an exception for a few operations specifically designed to introduce concurrency into flow
  * execution such as [buffer] and [flatMapMerge]. See their documentation for details.
  *
- * The `Flow` interface does not carry information whether a flow truly is a cold stream that can be collected repeatedly and
- * triggers execution of the same code every time it is collected, or if it is a hot stream that emits different
- * values from the same running source on each collection. However, conventionally flows represent cold streams.
- * Transitions between hot and cold streams are supported via channels and the corresponding API:
- * [channelFlow], [produceIn], [broadcastIn].
+ * The `Flow` interface does not carry information whether a flow is a _cold_ stream that can be collected repeatedly and
+ * triggers execution of the same code every time it is collected, or if it is a _hot_ stream that emits different
+ * values from the same running source on each collection. Usually flows represent _cold_ streams, but
+ * there is a [SharedFlow] subtype that represents _hot_ streams. In addition to that, any flow can be turned
+ * into a _hot_ one by the [stateIn] and [shareIn] operators, or by converting the flow into a hot channel
+ * via the [produceIn] operator.
  *
  * ### Flow builders
  *
@@ -55,6 +55,8 @@ import kotlin.coroutines.*
  *   sequential calls to [emit][FlowCollector.emit] function.
  * * [channelFlow { ... }][channelFlow] builder function to construct arbitrary flows from
  *   potentially concurrent calls to the [send][kotlinx.coroutines.channels.SendChannel.send] function.
+ * * [MutableStateFlow] and [MutableSharedFlow] define the corresponding constructor functions to create
+ *   a _hot_ flow that can be directly updated.
  *
  * ### Flow constraints
  *
@@ -99,14 +101,14 @@ import kotlin.coroutines.*
  * From the implementation point of view, it means that all flow implementations should
  * only emit from the same coroutine.
  * This constraint is efficiently enforced by the default [flow] builder.
- * The [flow] builder should be used if flow implementation does not start any coroutines.
+ * The [flow] builder should be used if the flow implementation does not start any coroutines.
  * Its implementation prevents most of the development mistakes:
  *
  * ```
  * val myFlow = flow {
  *    // GlobalScope.launch { // is prohibited
  *    // launch(Dispatchers.IO) { // is prohibited
- *    // withContext(CoroutineName("myFlow")) // is prohibited
+ *    // withContext(CoroutineName("myFlow")) { // is prohibited
  *    emit(1) // OK
  *    coroutineScope {
  *        emit(2) // OK -- still the same coroutine
@@ -129,10 +131,12 @@ import kotlin.coroutines.*
  *
  * ### Exception transparency
  *
- * Flow implementations never catch or handle exceptions that occur in downstream flows. From the implementation standpoint
- * it means that calls to [emit][FlowCollector.emit] and [emitAll] shall never be wrapped into
- * `try { ... } catch { ... }` blocks. Exception handling in flows shall be performed with
- * [catch][Flow.catch] operator and it is designed to only catch exceptions coming from upstream flows while passing
+ * When `emit` or `emitAll` throws, the Flow implementations must immediately stop emitting new values and finish with an exception.
+ * For diagnostics or application-specific purposes, the exception may be different from the one thrown by the emit operation,
+ * suppressing the original exception as discussed below.
+ * If there is a need to emit values after the downstream failed, please use the [catch][Flow.catch] operator.
+ *
+ * The [catch][Flow.catch] operator only catches upstream exceptions, but passes
  * all downstream exceptions. Similarly, terminal operators like [collect][Flow.collect]
  * throw any unhandled exceptions that occur in their code or in upstream flows, for example:
  *
@@ -144,6 +148,13 @@ import kotlin.coroutines.*
  *     .collect { process(it) } // throws exceptions from process and computeTwo
  * ```
  * The same reasoning can be applied to the [onCompletion] operator that is a declarative replacement for the `finally` block.
+ *
+ * All exception-handling Flow operators follow the principle of exception suppression:
+ *
+ * If the upstream flow throws an exception during its completion when the downstream exception has been thrown,
+ * the downstream exception becomes superseded and suppressed by the upstream exception, being a semantic
+ * equivalent of throwing from `finally` block. However, this doesn't affect the operation of the exception-handling operators,
+ * which consider the downstream exception to be the root cause and behave as if the upstream didn't throw anything.
  *
  * Failure to adhere to the exception transparency requirement can lead to strange behaviors which make
  * it hard to reason about the code because an exception in the `collect { ... }` could be somehow "caught"
@@ -159,21 +170,31 @@ import kotlin.coroutines.*
  *
  * ### Not stable for inheritance
  *
- * **`Flow` interface is not stable for inheritance in 3rd party libraries**, as new methods
+ * **The `Flow` interface is not stable for inheritance in 3rd party libraries**, as new methods
  * might be added to this interface in the future, but is stable for use.
- * Use `flow { ... }` builder function to create an implementation.
+ *
+ * Use the `flow { ... }` builder function to create an implementation, or extend [AbstractFlow].
+ * These implementations ensure that the context preservation property is not violated, and prevent most
+ * of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.
  */
 public interface Flow<out T> {
+
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
-     * This method should never be implemented or used directly.
      *
-     * The only way to implement the `Flow` interface directly is to extend [AbstractFlow].
-     * To collect it into a specific collector, either `collector.emitAll(flow)` or `collect { ... }` extension
-     * should be used. Such limitation ensures that the context preservation property is not violated and prevents most
-     * of the developer mistakes related to concurrency, inconsistent flow dispatchers and cancellation.
+     * This method can be used along with SAM-conversion of [FlowCollector]:
+     * ```
+     * myFlow.collect { value -> println("Collected $value") }
+     * ```
+     *
+     * ### Method inheritance
+     *
+     * To ensure the context preservation property, it is not recommended implementing this method directly.
+     * Instead, [AbstractFlow] can be used as the base type to properly ensure flow's properties.
+     *
+     * All default flow implementations ensure context preservation and exception transparency properties on a best-effort basis
+     * and throw [IllegalStateException] if a violation was detected.
      */
-    @InternalCoroutinesApi
     public suspend fun collect(collector: FlowCollector<T>)
 }
 
@@ -200,10 +221,9 @@ public interface Flow<out T> {
  * }
  * ```
  */
-@FlowPreview
-public abstract class AbstractFlow<T> : Flow<T> {
+@ExperimentalCoroutinesApi
+public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
-    @InternalCoroutinesApi
     public final override suspend fun collect(collector: FlowCollector<T>) {
         val safeCollector = SafeCollector(collector, coroutineContext)
         try {

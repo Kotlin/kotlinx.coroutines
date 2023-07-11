@@ -11,6 +11,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class SampleTest : TestBase() {
     @Test
@@ -323,7 +324,6 @@ class SampleTest : TestBase() {
             expect(2)
             yield()
             throw TestException()
-            it
         }
 
         assertFailsWith<TestException>(flow)
@@ -346,14 +346,12 @@ class SampleTest : TestBase() {
             expect(2)
             yield()
             throw TestException()
-            it
         }
 
         assertFailsWith<TestException>(flow)
         finish(4)
     }
 
-    @ExperimentalTime
     @Test
     fun testDurationBasic() = withVirtualTime {
         expect(1)

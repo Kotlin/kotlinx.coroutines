@@ -21,7 +21,7 @@ public class TestComponent {
 
     fun launchDelayed() {
         scope.launch {
-            delay(Long.MAX_VALUE)
+            delay(Long.MAX_VALUE / 2)
             delayedLaunchCompleted = true
         }
     }

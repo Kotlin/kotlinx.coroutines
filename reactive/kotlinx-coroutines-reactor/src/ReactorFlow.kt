@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.reactor
@@ -32,8 +32,7 @@ private class FlowAsFlux<T : Any>(
     private val flow: Flow<T>,
     private val context: CoroutineContext
 ) : Flux<T>() {
-    override fun subscribe(subscriber: CoreSubscriber<in T>?) {
-        if (subscriber == null) throw NullPointerException()
+    override fun subscribe(subscriber: CoreSubscriber<in T>) {
         val hasContext = !subscriber.currentContext().isEmpty
         val source = if (hasContext) flow.flowOn(subscriber.currentContext().asCoroutineContext()) else flow
         subscriber.onSubscribe(FlowSubscription(source, subscriber, context))

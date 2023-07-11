@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -9,9 +9,9 @@ import java.lang.reflect.*
 import java.text.*
 import java.util.*
 import java.util.Collections.*
+import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
-import kotlin.collections.ArrayList
 import kotlin.test.*
 
 object FieldWalker {
@@ -27,11 +27,11 @@ object FieldWalker {
         // excluded/terminal classes (don't walk them)
         fieldsCache += listOf(
             Any::class, String::class, Thread::class, Throwable::class, StackTraceElement::class,
-            WeakReference::class, ReferenceQueue::class, AbstractMap::class,
-            ReentrantReadWriteLock::class, SimpleDateFormat::class
+            WeakReference::class, ReferenceQueue::class, AbstractMap::class, Enum::class,
+            ReentrantLock::class, ReentrantReadWriteLock::class, SimpleDateFormat::class, ThreadPoolExecutor::class,
         )
             .map { it.java }
-            .associateWith { emptyList<Field>() }
+            .associateWith { emptyList() }
     }
 
     /*
@@ -56,7 +56,7 @@ object FieldWalker {
      * Reflectively starts to walk through object graph and map to all the reached object to their path
      * in from root. Use [showPath] do display a path if needed.
      */
-    private fun walkRefs(root: Any?, rootStatics: Boolean): Map<Any, Ref> {
+    private fun walkRefs(root: Any?, rootStatics: Boolean): IdentityHashMap<Any, Ref> {
         val visited = IdentityHashMap<Any, Ref>()
         if (root == null) return visited
         visited[root] = Ref.RootRef
@@ -79,9 +79,8 @@ object FieldWalker {
         val path = ArrayList<String>()
         var cur = element
         while (true) {
-            val ref = visited.getValue(cur)
-            if (ref is Ref.RootRef) break
-            when (ref) {
+            when (val ref = visited.getValue(cur)) {
+                Ref.RootRef -> break
                 is Ref.FieldRef -> {
                     cur = ref.parent
                     path += "|${ref.parent.javaClass.simpleName}::${ref.name}"
@@ -89,6 +88,9 @@ object FieldWalker {
                 is Ref.ArrayRef -> {
                     cur = ref.parent
                     path += "[${ref.index}]"
+                }
+                else -> {
+                    // Nothing, kludge for IDE
                 }
             }
         }
@@ -154,8 +156,16 @@ object FieldWalker {
         while (true) {
             val fields = type.declaredFields.filter {
                 !it.type.isPrimitive
-                        && (statics || !Modifier.isStatic(it.modifiers))
-                        && !(it.type.isArray && it.type.componentType.isPrimitive)
+                    && (statics || !Modifier.isStatic(it.modifiers))
+                    && !(it.type.isArray && it.type.componentType.isPrimitive)
+                    && it.name != "previousOut" // System.out from TestBase that we store in a field to restore later
+            }
+            check(fields.isEmpty() || !type.name.startsWith("java.")) {
+                """
+                    Trying to walk trough JDK's '$type' will get into illegal reflective access on JDK 9+.
+                    Either modify your test to avoid usage of this class or update FieldWalker code to retrieve 
+                    the captured state of this class without going through reflection (see how collections are handled).  
+                """.trimIndent()
             }
             fields.forEach { it.isAccessible = true } // make them all accessible
             result.addAll(fields)

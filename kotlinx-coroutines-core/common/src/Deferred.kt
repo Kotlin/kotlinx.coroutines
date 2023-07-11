@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -22,7 +22,7 @@ import kotlinx.coroutines.selects.*
  * Usually, a deferred value is created in _active_ state (it is created and started).
  * However, the [async][CoroutineScope.async] coroutine builder has an optional `start` parameter that creates a deferred value in _new_ state
  * when this parameter is set to [CoroutineStart.LAZY].
- * Such a deferred can be be made _active_ by invoking [start], [join], or [await].
+ * Such a deferred can be made _active_ by invoking [start], [join], or [await].
  *
  * A deferred value is a [Job]. A job in the
  * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
@@ -43,6 +43,8 @@ public interface Deferred<out T> : Job {
      * This suspending function is cancellable.
      * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
      *
      * This function can be used in [select] invocation with [onAwait] clause.
      * Use [isCompleted] to check for completion of this deferred value without waiting.
