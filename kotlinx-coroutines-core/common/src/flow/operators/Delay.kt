@@ -203,7 +203,7 @@ public fun <T> Flow<T>.debounce(timeout: (T) -> Duration): Flow<T> =
         timeout(emittedItem).toDelayMillis()
     }
 
-private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long) : Flow<T> =
+private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long): Flow<T> =
     scopedFlow { downstream ->
         // Produce the values using the default (rendezvous) channel
         val values = produce {
@@ -310,9 +310,9 @@ public fun <T, R> Flow<T>.sample(sampler: Flow<R>): Flow<T> {
             collect { value -> send(value ?: NULL) }
         }
 
-        val otherChannel = produce(capacity = 0) {
-            sampler.collect {
-                value -> send(value)
+        val samplerProducer = produce(capacity = 0) {
+            sampler.collect { value ->
+                send(value)
             }
         }
         var lastValue: Any? = null
@@ -323,19 +323,26 @@ public fun <T, R> Flow<T>.sample(sampler: Flow<R>): Flow<T> {
                         .onSuccess { lastValue = it }
                         .onFailure {
                             it?.let { throw it }
-                            ticker.cancel(ChildCancelledException())
+                            samplerProducer.cancel(ChildCancelledException())
                             lastValue = DONE
                         }
                 }
 
-                otherChannel.onReceiveOrNull {
-                    if(it != null) {
-                        val value = lastValue ?: return@onReceiveOrNull
-                        lastValue = null // Consume the value
-                        downstream.emit(NULL.unbox(value))
-                    }else{
-                        lastValue = DONE
-                    }
+                samplerProducer.onReceiveCatching { samplerResult ->
+                    samplerResult
+                        .onSuccess { sampledValue ->
+                            if (sampledValue != null) {
+                                val value = lastValue ?: return@onSuccess
+                                lastValue = null // Consume the value
+                                downstream.emit(NULL.unbox(value))
+                            } else {
+                                lastValue = DONE
+                            }
+                        }
+                        .onFailure {
+                            lastValue = DONE
+                        }
+
                 }
             }
         }
@@ -345,7 +352,10 @@ public fun <T, R> Flow<T>.sample(sampler: Flow<R>): Flow<T> {
 /*
  * TODO this design (and design of the corresponding operator) depends on #540
  */
-internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long, initialDelayMillis: Long = delayMillis): ReceiveChannel<Unit> {
+internal fun CoroutineScope.fixedPeriodTicker(
+    delayMillis: Long,
+    initialDelayMillis: Long = delayMillis
+): ReceiveChannel<Unit> {
     require(delayMillis >= 0) { "Expected non-negative delay, but has $delayMillis ms" }
     require(initialDelayMillis >= 0) { "Expected non-negative initial delay, but has $initialDelayMillis ms" }
     return produce(capacity = 0) {

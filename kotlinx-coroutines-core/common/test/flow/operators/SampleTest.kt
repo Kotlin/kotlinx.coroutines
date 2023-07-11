@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 
 class SampleTest : TestBase() {
@@ -196,6 +195,7 @@ class SampleTest : TestBase() {
                 emit(1)
             }
         }).toList()
+
         assertEquals(listOf("A", "B", "C"), result)
         finish(3)
     }
