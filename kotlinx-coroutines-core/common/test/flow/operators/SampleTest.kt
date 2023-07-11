@@ -41,6 +41,7 @@ class SampleTest : TestBase() {
             emit("B1")
         }
         expect(2)
+
         val result = flow.sample(samplerFlow).toList()
         assertEquals(listOf("B", "D"), result)
         finish(8)
