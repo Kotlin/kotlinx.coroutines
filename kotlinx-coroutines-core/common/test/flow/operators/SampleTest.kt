@@ -36,9 +36,9 @@ class SampleTest : TestBase() {
         val samplerFlow = flow {
             delay(1000)
             expect(5)
-            emit("AA")
+            emit("A1")
             delay(1000)
-            emit("BB")
+            emit("B1")
         }
         expect(2)
         val result = flow.sample(samplerFlow).toList()
