@@ -81,7 +81,7 @@ internal object ExceptionCollector : AbstractCoroutineContextElement(CoroutineEx
         return executedACallback
     }
 
-    @Suppress("INVISIBLE_MEMBER")
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     override fun handleException(context: CoroutineContext, exception: Throwable) {
         if (handleException(exception)) {
             throw ExceptionSuccessfullyProcessed

@@ -287,7 +287,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
             if (finished) {
                 throw throwable
             } else {
-                @Suppress("INVISIBLE_MEMBER")
+                @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
                 for (existingThrowable in uncaughtExceptions) {
                     // avoid reporting exceptions that already were reported.
                     if (unwrap(throwable) == unwrap(existingThrowable))

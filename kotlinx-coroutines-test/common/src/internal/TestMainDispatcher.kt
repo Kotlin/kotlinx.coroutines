@@ -91,9 +91,9 @@ internal class TestMainDispatcher(delegate: CoroutineDispatcher):
     }
 }
 
-@Suppress("INVISIBLE_MEMBER")
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 private val defaultDelay
     inline get() = DefaultDelay
 
-@Suppress("INVISIBLE_MEMBER")
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 internal expect fun Dispatchers.getTestMainDispatcher(): TestMainDispatcher
