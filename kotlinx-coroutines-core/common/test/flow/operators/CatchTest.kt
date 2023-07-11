@@ -133,16 +133,72 @@ class CatchTest : TestBase() {
             .flowOn(d2)
             // flowOn with a different dispatcher introduces asynchrony so that all exceptions in the
             // upstream flows are handled before they go downstream
-            .onEach { value ->
-                expect(8)
-                assertEquals("OK", value)
+            .onEach {
+                expectUnreached() // already cancelled
             }
             .catch { e ->
-                expect(9)
+                expect(8)
                 assertTrue(e is TestException)
                 assertSame(d0, kotlin.coroutines.coroutineContext[ContinuationInterceptor] as CoroutineContext)
             }
             .collect()
-        finish(10)
+        finish(9)
+    }
+
+    @Test
+    fun testUpstreamExceptionConcurrentWithDownstream() = runTest {
+        val flow = flow {
+            try {
+                expect(1)
+                emit(1)
+            } finally {
+                expect(3)
+                throw TestException()
+            }
+        }.catch { expectUnreached() }.onEach {
+            expect(2)
+            throw TestException2()
+        }
+
+        assertFailsWith<TestException>(flow)
+        finish(4)
+    }
+
+    @Test
+    fun testUpstreamExceptionConcurrentWithDownstreamCancellation() = runTest {
+        val flow = flow {
+            try {
+                expect(1)
+                emit(1)
+            } finally {
+                expect(3)
+                throw TestException()
+            }
+        }.catch { expectUnreached() }.onEach {
+            expect(2)
+            throw CancellationException("")
+        }
+
+        assertFailsWith<TestException>(flow)
+        finish(4)
+    }
+
+    @Test
+    fun testUpstreamCancellationIsIgnoredWhenDownstreamFails() = runTest {
+        val flow = flow {
+            try {
+                expect(1)
+                emit(1)
+            } finally {
+                expect(3)
+                throw CancellationException("")
+            }
+        }.catch { expectUnreached() }.onEach {
+            expect(2)
+            throw TestException("")
+        }
+
+        assertFailsWith<TestException>(flow)
+        finish(4)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 
@@ -77,14 +77,14 @@ open class NumbersBenchmark {
 
     @Benchmark
     fun zipRx() {
-        val numbers = rxNumbers().take(natural.toLong())
+        val numbers = rxNumbers().take(natural)
         val first = numbers
             .filter { it % 2L != 0L }
             .map { it * it }
         val second = numbers
             .filter { it % 2L == 0L }
             .map { it * it }
-        first.zipWith(second, BiFunction<Long, Long, Long> { v1, v2 -> v1 + v2 }).filter { it % 3 == 0L }.count()
+        first.zipWith(second, { v1, v2 -> v1 + v2 }).filter { it % 3 == 0L }.count()
             .blockingGet()
     }
 
@@ -98,7 +98,7 @@ open class NumbersBenchmark {
 
     @Benchmark
     fun transformationsRx(): Long {
-       return rxNumbers().take(natural.toLong())
+       return rxNumbers().take(natural)
             .filter { it % 2L != 0L }
             .map { it * it }
             .filter { (it + 1) % 3 == 0L }.count()

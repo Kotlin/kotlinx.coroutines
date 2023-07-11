@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.junit.*
 import org.junit.Test
+import java.io.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -105,6 +106,8 @@ class ToStringTest : TestBase() {
         expect(6)
         assertEquals(expected, DebugProbes.jobToString(root).trimEnd().trimStackTrace().trimPackage())
         assertEquals(expected, DebugProbes.scopeToString(CoroutineScope(root)).trimEnd().trimStackTrace().trimPackage())
+        assertEquals(expected, printToString { DebugProbes.printScope(CoroutineScope(root), it) }.trimEnd().trimStackTrace().trimPackage())
+        assertEquals(expected, printToString { DebugProbes.printJob(root, it) }.trimEnd().trimStackTrace().trimPackage())
 
         root.cancelAndJoin()
         finish(7)
@@ -144,5 +147,13 @@ class ToStringTest : TestBase() {
                 dispatcher.dispatch(context, block)
             }
         }
+    }
+
+    private inline fun printToString(block: (PrintStream) -> Unit): String {
+        val baos = ByteArrayOutputStream()
+        val ps = PrintStream(baos)
+        block(ps)
+        ps.close()
+        return baos.toString()
     }
 }

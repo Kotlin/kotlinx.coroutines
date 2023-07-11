@@ -4,55 +4,53 @@
 
 package kotlinx.coroutines
 
+import org.junit.*
+import org.junit.Test
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 
+/**
+ * Stress test for [runInterruptible].
+ * It does not pass on JDK 1.6 on Windows: [Thread.sleep] times out without being interrupted despite the
+ * fact that thread interruption flag is set.
+ */
 class RunInterruptibleStressTest : TestBase() {
-
-    private val dispatcher = Dispatchers.IO
-    private val REPEAT_TIMES = 1000 * stressTestMultiplier
+    @get:Rule
+    val dispatcher = ExecutorRule(4)
+    private val repeatTimes = 1000 * stressTestMultiplier
 
     @Test
-    fun testStress() = runBlocking {
-        val interruptLeak = AtomicBoolean(false)
+    fun testStress() = runTest {
         val enterCount = AtomicInteger(0)
         val interruptedCount = AtomicInteger(0)
-        val otherExceptionCount = AtomicInteger(0)
 
-        repeat(REPEAT_TIMES) { repeat ->
-            val job = launch(dispatcher, start = CoroutineStart.LAZY) {
+        repeat(repeatTimes) {
+            val job = launch(dispatcher) {
                 try {
                     runInterruptible {
                         enterCount.incrementAndGet()
                         try {
-                            Thread.sleep(Long.MAX_VALUE)
+                            Thread.sleep(10_000)
+                            error("Sleep was not interrupted, Thread.isInterrupted=${Thread.currentThread().isInterrupted}")
                         } catch (e: InterruptedException) {
                             interruptedCount.incrementAndGet()
                             throw e
                         }
                     }
                 } catch (e: CancellationException) {
-                } catch (e: Throwable) {
-                    otherExceptionCount.incrementAndGet()
+                    // Expected
                 } finally {
-                    interruptLeak.set(interruptLeak.get() || Thread.currentThread().isInterrupted)
+                    assertFalse(Thread.currentThread().isInterrupted, "Interrupt flag should not leak")
                 }
             }
-
-            val cancelJob = launch(dispatcher, start = CoroutineStart.LAZY) {
+            // Add dispatch delay
+            val cancelJob = launch(dispatcher) {
                 job.cancel()
             }
-
-            job.start()
-            val canceller = launch(dispatcher) {
-                cancelJob.start()
-            }
-
-            joinAll(job, cancelJob, canceller)
+            joinAll(job, cancelJob)
         }
-
-        assertFalse(interruptLeak.get())
+        println("Entered runInterruptible ${enterCount.get()} times")
+        assertTrue(enterCount.get() > 0) // ensure timing is Ok and we don't cancel it all prematurely
         assertEquals(enterCount.get(), interruptedCount.get())
-        assertEquals(0, otherExceptionCount.get())
     }
 }

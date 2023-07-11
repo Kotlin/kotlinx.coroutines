@@ -5,6 +5,7 @@
 // This file was automatically generated from select-expression.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
+import kotlinx.coroutines.knit.*
 import org.junit.Test
 
 class SelectGuideTest {
@@ -17,7 +18,7 @@ class SelectGuideTest {
             "fizz -> 'Fizz'",
             "buzz -> 'Buzz!'",
             "fizz -> 'Fizz'",
-            "buzz -> 'Buzz!'"
+            "fizz -> 'Fizz'"
         )
     }
 

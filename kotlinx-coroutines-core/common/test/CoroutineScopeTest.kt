@@ -277,4 +277,15 @@ class CoroutineScopeTest : TestBase() {
 
     private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
         (ContextScope(c1) + c2).coroutineContext
+
+    @Test
+    fun testIsActiveWithoutJob() {
+        var invoked = false
+        suspend fun testIsActive() {
+            assertTrue(coroutineContext.isActive)
+            invoked = true
+        }
+        ::testIsActive.startCoroutine(Continuation(EmptyCoroutineContext){})
+        assertTrue(invoked)
+    }
 }

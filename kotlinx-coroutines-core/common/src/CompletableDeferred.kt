@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("DEPRECATION_ERROR")
 
@@ -19,7 +19,7 @@ import kotlinx.coroutines.selects.*
  * All functions on this interface are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  *
- * **`CompletableDeferred` interface is not stable for inheritance in 3rd party libraries**,
+ * **The `CompletableDeferred` interface is not stable for inheritance in 3rd party libraries**,
  * as new methods might be added to this interface in the future, but is stable for use.
  */
 public interface CompletableDeferred<T> : Deferred<T> {
@@ -57,7 +57,6 @@ public interface CompletableDeferred<T> : Deferred<T> {
  * This function transitions this deferred in the same ways described by [CompletableDeferred.complete] and
  * [CompletableDeferred.completeExceptionally].
  */
-@ExperimentalCoroutinesApi // since 1.3.2, tentatively until 1.4.0
 public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>): Boolean =
     result.fold({ complete(it) }, { completeExceptionally(it) })
 
@@ -80,14 +79,12 @@ public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = Completab
 @Suppress("UNCHECKED_CAST")
 private class CompletableDeferredImpl<T>(
     parent: Job?
-) : JobSupport(true), CompletableDeferred<T>, SelectClause1<T> {
-    init { initParentJobInternal(parent) }
+) : JobSupport(true), CompletableDeferred<T> {
+    init { initParentJob(parent) }
     override val onCancelComplete get() = true
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T> get() = this
-    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectClause1Internal(select, block)
+    override val onAwait: SelectClause1<T> get() = onAwaitInternal as SelectClause1<T>
 
     override fun complete(value: T): Boolean =
         makeCompleting(value)

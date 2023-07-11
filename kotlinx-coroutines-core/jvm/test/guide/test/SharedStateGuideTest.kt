@@ -5,6 +5,7 @@
 // This file was automatically generated from shared-mutable-state-and-concurrency.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.test
 
+import kotlinx.coroutines.knit.*
 import org.junit.Test
 
 class SharedStateGuideTest {
@@ -51,14 +52,6 @@ class SharedStateGuideTest {
     @Test
     fun testExampleSync06() {
         test("ExampleSync06") { kotlinx.coroutines.guide.exampleSync06.main() }.verifyLinesArbitraryTime(
-            "Completed 100000 actions in xxx ms",
-            "Counter = 100000"
-        )
-    }
-
-    @Test
-    fun testExampleSync07() {
-        test("ExampleSync07") { kotlinx.coroutines.guide.exampleSync07.main() }.verifyLinesArbitraryTime(
             "Completed 100000 actions in xxx ms",
             "Counter = 100000"
         )

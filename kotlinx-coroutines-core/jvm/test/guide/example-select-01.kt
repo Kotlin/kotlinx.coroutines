@@ -10,15 +10,15 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
 
 fun CoroutineScope.fizz() = produce<String> {
-    while (true) { // sends "Fizz" every 300 ms
-        delay(300)
+    while (true) { // sends "Fizz" every 500 ms
+        delay(500)
         send("Fizz")
     }
 }
 
 fun CoroutineScope.buzz() = produce<String> {
-    while (true) { // sends "Buzz!" every 500 ms
-        delay(500)
+    while (true) { // sends "Buzz!" every 1000 ms
+        delay(1000)
         send("Buzz!")
     }
 }

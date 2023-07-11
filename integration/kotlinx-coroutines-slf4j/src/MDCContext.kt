@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.slf4j
@@ -28,7 +28,7 @@ public typealias MDCContextMap = Map<String, String>?
  * }
  * ```
  *
- * Note that you cannot update MDC context from inside of the coroutine simply
+ * Note that you cannot update MDC context from inside the coroutine simply
  * using [MDC.put]. These updates are going to be lost on the next suspension and
  * reinstalled to the MDC context that was captured or explicitly specified in
  * [contextMap] when this object was created on the next resumption.
@@ -43,6 +43,7 @@ public class MDCContext(
     /**
      * The value of [MDC] context map.
      */
+    @Suppress("MemberVisibilityCanBePrivate")
     public val contextMap: MDCContextMap = MDC.getCopyOfContextMap()
 ) : ThreadContextElement<MDCContextMap>, AbstractCoroutineContextElement(Key) {
     /**

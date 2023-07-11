@@ -1,1 +1,0 @@
-This is a workaround for Dokka to generate proper references for Kotlin 1.3 API.

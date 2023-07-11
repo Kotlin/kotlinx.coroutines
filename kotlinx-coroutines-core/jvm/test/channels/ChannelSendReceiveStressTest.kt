@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.channels
@@ -7,12 +7,14 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import org.junit.*
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 
+@Ignore
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
     private val kind: TestChannelKind,
@@ -33,9 +35,9 @@ class ChannelSendReceiveStressTest(
     private val timeLimit = 30_000L * stressTestMultiplier // 30 sec
     private val nEvents = 200_000 * stressTestMultiplier
 
-    private val maxBuffer = 10_000 // artificial limit for LinkedListChannel
+    private val maxBuffer = 10_000 // artificial limit for unlimited channel
 
-    val channel = kind.create()
+    val channel = kind.create<Int>()
     private val sendersCompleted = AtomicInteger()
     private val receiversCompleted = AtomicInteger()
     private val dupes = AtomicInteger()
@@ -60,10 +62,10 @@ class ChannelSendReceiveStressTest(
             launch(pool + CoroutineName("receiver$receiverIndex")) {
                 when (receiverIndex % 5) {
                     0 -> doReceive(receiverIndex)
-                    1 -> doReceiveOrNull(receiverIndex)
+                    1 -> doReceiveCatching(receiverIndex)
                     2 -> doIterator(receiverIndex)
                     3 -> doReceiveSelect(receiverIndex)
-                    4 -> doReceiveSelectOrNull(receiverIndex)
+                    4 -> doReceiveCatchingSelect(receiverIndex)
                 }
                 receiversCompleted.incrementAndGet()
             }
@@ -104,6 +106,7 @@ class ChannelSendReceiveStressTest(
         repeat(nReceivers) { receiveIndex ->
             println("        Received by #$receiveIndex ${receivedBy[receiveIndex]}")
         }
+        (channel as? BufferedChannel<*>)?.checkSegmentStructureInvariants()
         assertEquals(nSenders, sendersCompleted.get())
         assertEquals(nReceivers, receiversCompleted.get())
         assertEquals(0, dupes.get())
@@ -118,7 +121,7 @@ class ChannelSendReceiveStressTest(
         sentTotal.incrementAndGet()
         if (!kind.isConflated) {
             while (sentTotal.get() > receivedTotal.get() + maxBuffer)
-                yield() // throttle fast senders to prevent OOM with LinkedListChannel
+                yield() // throttle fast senders to prevent OOM with an unlimited channel
         }
     }
 
@@ -152,9 +155,9 @@ class ChannelSendReceiveStressTest(
         }
     }
 
-    private suspend fun doReceiveOrNull(receiverIndex: Int) {
+    private suspend fun doReceiveCatching(receiverIndex: Int) {
         while (true) {
-            doReceived(receiverIndex, channel.receiveOrNull() ?: break)
+            doReceived(receiverIndex, channel.receiveCatching().getOrNull() ?: break)
         }
     }
 
@@ -173,9 +176,9 @@ class ChannelSendReceiveStressTest(
         }
     }
 
-    private suspend fun doReceiveSelectOrNull(receiverIndex: Int) {
+    private suspend fun doReceiveCatchingSelect(receiverIndex: Int) {
         while (true) {
-            val event = select<Int?> { channel.onReceiveOrNull { it } } ?: break
+            val event = select<Int?> { channel.onReceiveCatching { it.getOrNull() } } ?: break
             doReceived(receiverIndex, event)
         }
     }

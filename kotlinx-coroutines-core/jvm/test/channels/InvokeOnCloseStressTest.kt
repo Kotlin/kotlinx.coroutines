@@ -5,7 +5,6 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -28,7 +27,7 @@ class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
 
     @Test
     fun testInvokedExactlyOnce() = runBlocking {
-        runStressTest(TestChannelKind.ARRAY_1)
+        runStressTest(TestChannelKind.BUFFERED_1)
     }
 
     @Test
@@ -39,7 +38,7 @@ class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
     private suspend fun runStressTest(kind: TestChannelKind) {
         repeat(iterations) {
             val counter = AtomicInteger(0)
-            val channel = kind.create()
+            val channel = kind.create<Int>()
 
             val latch = CountDownLatch(1)
             val j1 = async {

@@ -7,7 +7,7 @@ package kotlinx.coroutines.rx3
 import io.reactivex.rxjava3.core.*
 import io.reactivex.rxjava3.plugins.*
 
-fun <T> checkSingleValue(
+fun <T : Any> checkSingleValue(
     observable: Observable<T>,
     checker: (T) -> Unit
 ) {
@@ -16,15 +16,15 @@ fun <T> checkSingleValue(
 }
 
 fun checkErroneous(
-        observable: Observable<*>,
-        checker: (Throwable) -> Unit
+    observable: Observable<*>,
+    checker: (Throwable) -> Unit
 ) {
     val singleNotification = observable.materialize().blockingSingle()
     val error = singleNotification.error ?: error("Excepted error")
     checker(error)
 }
 
-fun <T> checkSingleValue(
+fun <T : Any> checkSingleValue(
     single: Single<T>,
     checker: (T) -> Unit
 ) {
@@ -45,8 +45,8 @@ fun checkErroneous(
 }
 
 fun <T> checkMaybeValue(
-        maybe: Maybe<T>,
-        checker: (T?) -> Unit
+    maybe: Maybe<T>,
+    checker: (T?) -> Unit
 ) {
     val maybeValue = maybe.toFlowable().blockingIterable().firstOrNull()
     checker(maybeValue)

@@ -1,14 +1,17 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
+import java.lang.ref.*
 import java.lang.reflect.*
+import java.text.*
 import java.util.*
 import java.util.Collections.*
+import java.util.concurrent.*
 import java.util.concurrent.atomic.*
-import kotlin.collections.ArrayList
+import java.util.concurrent.locks.*
 import kotlin.test.*
 
 object FieldWalker {
@@ -22,19 +25,23 @@ object FieldWalker {
 
     init {
         // excluded/terminal classes (don't walk them)
-        fieldsCache += listOf(Any::class, String::class, Thread::class, Throwable::class)
+        fieldsCache += listOf(
+            Any::class, String::class, Thread::class, Throwable::class, StackTraceElement::class,
+            WeakReference::class, ReferenceQueue::class, AbstractMap::class, Enum::class,
+            ReentrantLock::class, ReentrantReadWriteLock::class, SimpleDateFormat::class, ThreadPoolExecutor::class,
+        )
             .map { it.java }
-            .associateWith { emptyList<Field>() }
+            .associateWith { emptyList() }
     }
 
     /*
      * Reflectively starts to walk through object graph and returns identity set of all reachable objects.
      * Use [walkRefs] if you need a path from root for debugging.
      */
-    public fun walk(root: Any?): Set<Any> = walkRefs(root).keys
+    public fun walk(root: Any?): Set<Any> = walkRefs(root, false).keys
 
-    public fun assertReachableCount(expected: Int, root: Any?, predicate: (Any) -> Boolean) {
-        val visited = walkRefs(root)
+    public fun assertReachableCount(expected: Int, root: Any?, rootStatics: Boolean = false, predicate: (Any) -> Boolean) {
+        val visited = walkRefs(root, rootStatics)
         val actual = visited.keys.filter(predicate)
         if (actual.size != expected) {
             val textDump = actual.joinToString("") { "\n\t" + showPath(it, visited) }
@@ -49,16 +56,18 @@ object FieldWalker {
      * Reflectively starts to walk through object graph and map to all the reached object to their path
      * in from root. Use [showPath] do display a path if needed.
      */
-    private fun walkRefs(root: Any?): Map<Any, Ref> {
+    private fun walkRefs(root: Any?, rootStatics: Boolean): IdentityHashMap<Any, Ref> {
         val visited = IdentityHashMap<Any, Ref>()
         if (root == null) return visited
         visited[root] = Ref.RootRef
         val stack = ArrayDeque<Any>()
         stack.addLast(root)
+        var statics = rootStatics
         while (stack.isNotEmpty()) {
             val element = stack.removeLast()
             try {
-                visit(element, visited, stack)
+                visit(element, visited, stack, statics)
+                statics = false // only scan root static when asked
             } catch (e: Exception) {
                 error("Failed to visit element ${showPath(element, visited)}: $e")
             }
@@ -70,16 +79,18 @@ object FieldWalker {
         val path = ArrayList<String>()
         var cur = element
         while (true) {
-            val ref = visited.getValue(cur)
-            if (ref is Ref.RootRef) break
-            when (ref) {
+            when (val ref = visited.getValue(cur)) {
+                Ref.RootRef -> break
                 is Ref.FieldRef -> {
                     cur = ref.parent
-                    path += ".${ref.name}"
+                    path += "|${ref.parent.javaClass.simpleName}::${ref.name}"
                 }
                 is Ref.ArrayRef -> {
                     cur = ref.parent
                     path += "[${ref.index}]"
+                }
+                else -> {
+                    // Nothing, kludge for IDE
                 }
             }
         }
@@ -87,7 +98,7 @@ object FieldWalker {
         return path.joinToString("")
     }
 
-    private fun visit(element: Any, visited: IdentityHashMap<Any, Ref>, stack: ArrayDeque<Any>) {
+    private fun visit(element: Any, visited: IdentityHashMap<Any, Ref>, stack: ArrayDeque<Any>, statics: Boolean) {
         val type = element.javaClass
         when {
             // Special code for arrays
@@ -111,8 +122,16 @@ object FieldWalker {
             element is AtomicReference<*> -> {
                 push(element.get(), visited, stack) { Ref.FieldRef(element, "value") }
             }
+            element is AtomicReferenceArray<*> -> {
+                for (index in 0 until element.length()) {
+                    push(element[index], visited, stack) { Ref.ArrayRef(element, index) }
+                }
+            }
+            element is AtomicLongFieldUpdater<*> -> {
+                /* filter it out here to suppress its subclasses too */
+            }
             // All the other classes are reflectively scanned
-            else -> fields(type).forEach { field ->
+            else -> fields(type, statics).forEach { field ->
                 push(field.get(element), visited, stack) { Ref.FieldRef(element, field.name) }
                 // special case to scan Throwable cause (cannot get it reflectively)
                 if (element is Throwable) {
@@ -129,19 +148,29 @@ object FieldWalker {
         }
     }
 
-    private fun fields(type0: Class<*>): List<Field> {
+    private fun fields(type0: Class<*>, rootStatics: Boolean): List<Field> {
         fieldsCache[type0]?.let { return it }
         val result = ArrayList<Field>()
         var type = type0
+        var statics = rootStatics
         while (true) {
             val fields = type.declaredFields.filter {
                 !it.type.isPrimitive
-                        && !Modifier.isStatic(it.modifiers)
-                        && !(it.type.isArray && it.type.componentType.isPrimitive)
+                    && (statics || !Modifier.isStatic(it.modifiers))
+                    && !(it.type.isArray && it.type.componentType.isPrimitive)
+                    && it.name != "previousOut" // System.out from TestBase that we store in a field to restore later
+            }
+            check(fields.isEmpty() || !type.name.startsWith("java.")) {
+                """
+                    Trying to walk trough JDK's '$type' will get into illegal reflective access on JDK 9+.
+                    Either modify your test to avoid usage of this class or update FieldWalker code to retrieve 
+                    the captured state of this class without going through reflection (see how collections are handled).  
+                """.trimIndent()
             }
             fields.forEach { it.isAccessible = true } // make them all accessible
             result.addAll(fields)
             type = type.superclass
+            statics = false
             val superFields = fieldsCache[type] // will stop at Any anyway
             if (superFields != null) {
                 result.addAll(superFields)

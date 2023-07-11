@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("UNUSED", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
@@ -20,13 +20,20 @@ import kotlin.coroutines.*
  * asynchronous stack-traces and coroutine dumps (similar to [ThreadMXBean.dumpAllThreads] and `jstack` via [DebugProbes.dumpCoroutines].
  * All introspecting methods throw [IllegalStateException] if debug probes were not installed.
  *
- * Installed hooks:
+ * ### Consistency guarantees
  *
+ * All snapshotting operations (e.g. [dumpCoroutines]) are *weakly-consistent*, meaning that they happen
+ * concurrently with coroutines progressing their own state. These operations are guaranteed to observe
+ * each coroutine's state exactly once, but the state is not guaranteed to be the most recent before the operation.
+ * In practice, it means that for snapshotting operations in progress, for each concurrent coroutine either
+ * the state prior to the operation or the state that was reached during the current operation is observed.
+ *
+ * ### Installed hooks
  * * `probeCoroutineResumed` is invoked on every [Continuation.resume].
  * * `probeCoroutineSuspended` is invoked on every continuation suspension.
- * * `probeCoroutineCreated` is invoked on every coroutine creation using stdlib intrinsics.
+ * * `probeCoroutineCreated` is invoked on every coroutine creation.
  *
- * Overhead:
+ * ### Overhead
  *  * Every created coroutine is stored in a concurrent hash map and hash map is looked up and
  *    updated on each suspension and resumption.
  *  * If [DebugProbes.enableCreationStackTraces] is enabled, stack trace of the current thread is captured on
@@ -39,6 +46,8 @@ public object DebugProbes {
      * Whether coroutine creation stack traces should be sanitized.
      * Sanitization removes all frames from `kotlinx.coroutines` package except
      * the first one and the last one to simplify diagnostic.
+     *
+     * `true` by default.
      */
     public var sanitizeStackTraces: Boolean
         get() = DebugProbesImpl.sanitizeStackTraces
@@ -52,11 +61,29 @@ public object DebugProbes {
      * thread is captured and attached to the coroutine.
      * This option can be useful during local debug sessions, but is recommended
      * to be disabled in production environments to avoid stack trace dumping overhead.
+     *
+     * `true` by default.
      */
     public var enableCreationStackTraces: Boolean
         get() = DebugProbesImpl.enableCreationStackTraces
         set(value) {
             DebugProbesImpl.enableCreationStackTraces = value
+        }
+
+    /**
+     * Whether to ignore coroutines whose context is [EmptyCoroutineContext].
+     *
+     * Coroutines with empty context are considered to be irrelevant for the concurrent coroutines' observability:
+     * - They do not contribute to any concurrent executions
+     * - They do not contribute to the (concurrent) system's liveness and/or deadlocks, as no other coroutines might wait for them
+     * - The typical usage of such coroutines is a combinator/builder/lookahead parser that can be debugged using more convenient tools.
+     *
+     * `true` by default.
+     */
+    public var ignoreCoroutinesWithEmptyContext: Boolean
+        get() = DebugProbesImpl.ignoreCoroutinesWithEmptyContext
+        set(value) {
+            DebugProbesImpl.ignoreCoroutinesWithEmptyContext = value
         }
 
     /**
@@ -115,13 +142,14 @@ public object DebugProbes {
      * Throws [IllegalStateException] if the scope has no a job in it.
      */
     public fun printScope(scope: CoroutineScope, out: PrintStream = System.out): Unit =
-       printJob(scope.coroutineContext[Job] ?: error("Job is not present in the scope"), out)
+        printJob(scope.coroutineContext[Job] ?: error("Job is not present in the scope"), out)
 
     /**
-     * Returns all existing coroutines info.
+     * Returns all existing coroutines' info.
      * The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.
      */
-    public fun dumpCoroutinesInfo(): List<CoroutineInfo> = DebugProbesImpl.dumpCoroutinesInfo().map { CoroutineInfo(it) }
+    public fun dumpCoroutinesInfo(): List<CoroutineInfo> =
+        DebugProbesImpl.dumpCoroutinesInfo().map { CoroutineInfo(it) }
 
     /**
      * Dumps all active coroutines into the given output stream, providing a consistent snapshot of all existing coroutines at the moment of invocation.
@@ -134,7 +162,7 @@ public object DebugProbes {
      *
      * Coroutine "coroutine#42":StandaloneCoroutine{Active}@58fdd99, state: SUSPENDED
      *     at MyClass$awaitData.invokeSuspend(MyClass.kt:37)
-     * (Coroutine creation stacktrace)
+     *     at _COROUTINE._CREATION._(CoroutineDebugging.kt)
      *     at MyClass.createIoRequest(MyClass.kt:142)
      *     at MyClass.fetchData(MyClass.kt:154)
      *     at MyClass.showData(MyClass.kt:31)
@@ -143,10 +171,3 @@ public object DebugProbes {
      */
     public fun dumpCoroutines(out: PrintStream = System.out): Unit = DebugProbesImpl.dumpCoroutines(out)
 }
-
-// Stubs which are injected as coroutine probes. Require direct match of signatures
-internal fun probeCoroutineResumed(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineResumed(frame)
-
-internal fun probeCoroutineSuspended(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineSuspended(frame)
-internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> =
-    DebugProbesImpl.probeCoroutineCreated(completion)

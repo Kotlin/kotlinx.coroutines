@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.sync
@@ -7,12 +7,9 @@ package kotlinx.coroutines.sync
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
-import kotlin.coroutines.*
 import kotlin.jvm.*
-import kotlin.native.concurrent.*
 
 /**
  * Mutual exclusion for coroutines.
@@ -23,17 +20,21 @@ import kotlin.native.concurrent.*
  *
  * JVM API note:
  * Memory semantic of the [Mutex] is similar to `synchronized` block on JVM:
- * An unlock on a [Mutex] happens-before every subsequent successful lock on that [Mutex].
+ * An unlock operation on a [Mutex] happens-before every subsequent successful lock on that [Mutex].
  * Unsuccessful call to [tryLock] do not have any memory effects.
  */
 public interface Mutex {
     /**
-     * Returns `true` when this mutex is locked.
+     * Returns `true` if this mutex is locked.
      */
     public val isLocked: Boolean
 
     /**
      * Tries to lock this mutex, returning `false` if this mutex is already locked.
+     *
+     * It is recommended to use [withLock] for safety reasons, so that the acquired lock is always
+     * released at the end of your critical section, and [unlock] is never invoked before a successful
+     * lock acquisition.
      *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
      *        is already locked with the same token (same identity), this function throws [IllegalStateException].
@@ -45,20 +46,21 @@ public interface Mutex {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
-     *
-     * *Cancellation of suspended lock invocation is atomic* -- when this function
-     * throws [CancellationException] it means that the mutex was not locked.
-     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
-     * continue to execute even after it was cancelled from the same thread in the case when this lock operation
-     * was already resumed and the continuation was posted for execution to the thread's queue.
+     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
+     * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
+     * This function releases the lock if it was already acquired by this function before the [CancellationException]
+     * was thrown.
      *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
-     * This function can be used in [select] invocation with [onLock] clause.
-     * Use [tryLock] to try acquire lock without waiting.
+     * Use [tryLock] to try acquiring the lock without waiting.
      *
      * This function is fair; suspended callers are resumed in first-in-first-out order.
+     *
+     * It is recommended to use [withLock] for safety reasons, so that the acquired lock is always
+     * released at the end of the critical section, and [unlock] is never invoked before a successful
+     * lock acquisition.
      *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
      *        is already locked with the same token (same identity), this function throws [IllegalStateException].
@@ -70,18 +72,25 @@ public interface Mutex {
      * Additional parameter for the clause in the `owner` (see [lock]) and when the clause is selected
      * the reference to this mutex is passed into the corresponding block.
      */
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Mutex.onLock deprecated without replacement. " +
+        "For additional details please refer to #2794") // WARNING since 1.6.0
     public val onLock: SelectClause2<Any?, Mutex>
 
     /**
-     * Checks mutex locked by owner
+     * Checks whether this mutex is locked by the specified owner.
      *
-     * @return `true` on mutex lock by owner, `false` if not locker or it is locked by different owner
+     * @return `true` when this mutex is locked by the specified owner;
+     * `false` if the mutex is not locked or locked by another owner.
      */
     public fun holdsLock(owner: Any): Boolean
 
     /**
      * Unlocks this mutex. Throws [IllegalStateException] if invoked on a mutex that is not locked or
      * was locked with a different owner token (by identity).
+     *
+     * It is recommended to use [withLock] for safety reasons, so that the acquired lock is always
+     * released at the end of the critical section, and [unlock] is never invoked before a successful
+     * lock acquisition.
      *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
      *        was locked with the different token (by identity), this function throws [IllegalStateException].
@@ -109,7 +118,7 @@ public fun Mutex(locked: Boolean = false): Mutex =
  */
 @OptIn(ExperimentalContracts::class)
 public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T): T {
-    contract { 
+    contract {
         callsInPlace(action, InvocationKind.EXACTLY_ONCE)
     }
 
@@ -121,278 +130,180 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
     }
 }
 
-@SharedImmutable
-private val LOCK_FAIL = Symbol("LOCK_FAIL")
-@SharedImmutable
-private val ENQUEUE_FAIL = Symbol("ENQUEUE_FAIL")
-@SharedImmutable
-private val UNLOCK_FAIL = Symbol("UNLOCK_FAIL")
-@SharedImmutable
-private val SELECT_SUCCESS = Symbol("SELECT_SUCCESS")
-@SharedImmutable
-private val LOCKED = Symbol("LOCKED")
-@SharedImmutable
-private val UNLOCKED = Symbol("UNLOCKED")
 
-@SharedImmutable
-private val EMPTY_LOCKED = Empty(LOCKED)
-@SharedImmutable
-private val EMPTY_UNLOCKED = Empty(UNLOCKED)
+internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 0), Mutex {
+    /**
+     * After the lock is acquired, the corresponding owner is stored in this field.
+     * The [unlock] operation checks the owner and either re-sets it to [NO_OWNER],
+     * if there is no waiting request, or to the owner of the suspended [lock] operation
+     * to be resumed, otherwise.
+     */
+    private val owner = atomic<Any?>(if (locked) null else NO_OWNER)
 
-private class Empty(
-    @JvmField val locked: Any
-) {
-    override fun toString(): String = "Empty[$locked]"
-}
+    private val onSelectCancellationUnlockConstructor: OnCancellationConstructor =
+        { _: SelectInstance<*>, owner: Any?, _: Any? ->
+            { unlock(owner) }
+        }
 
-internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
-    // State is: Empty | LockedQueue | OpDescriptor
-    // shared objects while we have no waiters
-    private val _state = atomic<Any?>(if (locked) EMPTY_LOCKED else EMPTY_UNLOCKED)
+    override val isLocked: Boolean get() =
+        availablePermits == 0
 
-    public override val isLocked: Boolean get() {
-        _state.loop { state ->
-            when (state) {
-                is Empty -> return state.locked !== UNLOCKED
-                is LockedQueue -> return true
-                is OpDescriptor -> state.perform(this) // help
-                else -> error("Illegal state $state")
-            }
+    override fun holdsLock(owner: Any): Boolean = holdsLockImpl(owner) == HOLDS_LOCK_YES
+
+    /**
+     * [HOLDS_LOCK_UNLOCKED] if the mutex is unlocked
+     * [HOLDS_LOCK_YES] if the mutex is held with the specified [owner]
+     * [HOLDS_LOCK_ANOTHER_OWNER] if the mutex is held with a different owner
+     */
+    private fun holdsLockImpl(owner: Any?): Int {
+        while (true) {
+            // Is this mutex locked?
+            if (!isLocked) return HOLDS_LOCK_UNLOCKED
+            val curOwner = this.owner.value
+            // Wait in a spin-loop until the owner is set
+            if (curOwner === NO_OWNER) continue // <-- ATTENTION, BLOCKING PART HERE
+            // Check the owner
+            return if (curOwner === owner) HOLDS_LOCK_YES else HOLDS_LOCK_ANOTHER_OWNER
         }
     }
 
-    // for tests ONLY
-    internal val isLockedEmptyQueueState: Boolean get() {
-        val state = _state.value
-        return state is LockedQueue && state.isEmpty
-    }
-
-    public override fun tryLock(owner: Any?): Boolean {
-        _state.loop { state ->
-            when (state) {
-                is Empty -> {
-                    if (state.locked !== UNLOCKED) return false
-                    val update = if (owner == null) EMPTY_LOCKED else Empty(
-                        owner
-                    )
-                    if (_state.compareAndSet(state, update)) return true
-                }
-                is LockedQueue -> {
-                    check(state.owner !== owner) { "Already locked by $owner" }
-                    return false
-                }
-                is OpDescriptor -> state.perform(this) // help
-                else -> error("Illegal state $state")
-            }
-        }
-    }
-
-    public override suspend fun lock(owner: Any?) {
-        // fast-path -- try lock
+    override suspend fun lock(owner: Any?) {
         if (tryLock(owner)) return
-        // slow-path -- suspend
-        return lockSuspend(owner)
+        lockSuspend(owner)
     }
 
-    private suspend fun lockSuspend(owner: Any?) = suspendAtomicCancellableCoroutineReusable<Unit> sc@ { cont ->
-        val waiter = LockCont(owner, cont)
-        _state.loop { state ->
-            when (state) {
-                is Empty -> {
-                    if (state.locked !== UNLOCKED) {  // try upgrade to queue & retry
-                        _state.compareAndSet(state, LockedQueue(state.locked))
-                    } else {
-                        // try lock
-                        val update = if (owner == null) EMPTY_LOCKED else Empty(owner)
-                        if (_state.compareAndSet(state, update)) { // locked
-                            cont.resume(Unit)
-                            return@sc
-                        }
-                    }
-                }
-                is LockedQueue -> {
-                    val curOwner = state.owner
-                    check(curOwner !== owner) { "Already locked by $owner" }
-                    if (state.addLastIf(waiter) { _state.value === state }) {
-                        // added to waiter list!
-                        cont.removeOnCancellation(waiter)
-                        return@sc
-                    }
-                }
-                is OpDescriptor -> state.perform(this) // help
-                else -> error("Illegal state $state")
-            }
-        }
+    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable<Unit> { cont ->
+        val contWithOwner = CancellableContinuationWithOwner(cont, owner)
+        acquire(contWithOwner)
     }
 
-    override val onLock: SelectClause2<Any?, Mutex>
-        get() = this
-
-    // registerSelectLock
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-    override fun <R> registerSelectClause2(select: SelectInstance<R>, owner: Any?, block: suspend (Mutex) -> R) {
-        while (true) { // lock-free loop on state
-            if (select.isSelected) return
-            when (val state = _state.value) {
-                is Empty -> {
-                    if (state.locked !== UNLOCKED) { // try upgrade to queue & retry
-                        _state.compareAndSet(state, LockedQueue(state.locked))
-                    } else {
-                        // try lock
-                        val failure = select.performAtomicTrySelect(TryLockDesc(this, owner))
-                        when {
-                            failure == null -> { // success
-                                block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
-                                return
-                            }
-                            failure === ALREADY_SELECTED -> return // already selected -- bail out
-                            failure === LOCK_FAIL -> {} // retry
-                            failure === RETRY_ATOMIC -> {} // retry
-                            else -> error("performAtomicTrySelect(TryLockDesc) returned $failure")
-                        }
-                    }
-                }
-                is LockedQueue -> {
-                    check(state.owner !== owner) { "Already locked by $owner" }
-                    val node = LockSelect(owner, this, select, block)
-                    if (state.addLastIf(node) { _state.value === state }) {
-                        // successfully enqueued
-                        select.disposeOnSelect(node)
-                        return
-                    }
-                }
-                is OpDescriptor -> state.perform(this) // help
-                else -> error("Illegal state $state")
-            }
-        }
+    override fun tryLock(owner: Any?): Boolean = when (tryLockImpl(owner)) {
+        TRY_LOCK_SUCCESS -> true
+        TRY_LOCK_FAILED -> false
+        TRY_LOCK_ALREADY_LOCKED_BY_OWNER -> error("This mutex is already locked by the specified owner: $owner")
+        else -> error("unexpected")
     }
 
-    private class TryLockDesc(
-        @JvmField val mutex: MutexImpl,
-        @JvmField val owner: Any?
-    ) : AtomicDesc() {
-        // This is Harris's RDCSS (Restricted Double-Compare Single Swap) operation
-        private inner class PrepareOp(override val atomicOp: AtomicOp<*>) : OpDescriptor() {
-            override fun perform(affected: Any?): Any? {
-                val update: Any = if (atomicOp.isDecided) EMPTY_UNLOCKED else atomicOp // restore if was already decided
-                (affected as MutexImpl)._state.compareAndSet(this, update)
-                return null // ok
-            }
-        }
-
-        override fun prepare(op: AtomicOp<*>): Any? {
-            val prepare = PrepareOp(op)
-            if (!mutex._state.compareAndSet(EMPTY_UNLOCKED, prepare)) return LOCK_FAIL
-            return prepare.perform(mutex)
-        }
-
-        override fun complete(op: AtomicOp<*>, failure: Any?) {
-            val update = if (failure != null) EMPTY_UNLOCKED else {
-                if (owner == null) EMPTY_LOCKED else Empty(owner)
-            }
-            mutex._state.compareAndSet(op, update)
-        }
-    }
-
-    public override fun holdsLock(owner: Any) =
-            _state.value.let { state ->
-                when (state) {
-                    is Empty -> state.locked === owner
-                    is LockedQueue -> state.owner === owner
-                    else -> false
+    private fun tryLockImpl(owner: Any?): Int {
+        while (true) {
+            if (tryAcquire()) {
+                assert { this.owner.value === NO_OWNER }
+                this.owner.value = owner
+                return TRY_LOCK_SUCCESS
+            } else {
+                // The semaphore permit acquisition has failed.
+                // However, we need to check that this mutex is not
+                // locked by our owner.
+                if (owner == null) return TRY_LOCK_FAILED
+                when (holdsLockImpl(owner)) {
+                    // This mutex is already locked by our owner.
+                    HOLDS_LOCK_YES -> return TRY_LOCK_ALREADY_LOCKED_BY_OWNER
+                    // This mutex is locked by another owner, `trylock(..)` must return `false`.
+                    HOLDS_LOCK_ANOTHER_OWNER -> return TRY_LOCK_FAILED
+                    // This mutex is no longer locked, restart the operation.
+                    HOLDS_LOCK_UNLOCKED -> continue
                 }
             }
+        }
+    }
 
-    public override fun unlock(owner: Any?) {
-        _state.loop { state ->
-            when (state) {
-                is Empty -> {
-                    if (owner == null)
-                        check(state.locked !== UNLOCKED) { "Mutex is not locked" }
-                    else
-                        check(state.locked === owner) { "Mutex is locked by ${state.locked} but expected $owner" }
-                    if (_state.compareAndSet(state, EMPTY_UNLOCKED)) return
-                }
-                is OpDescriptor -> state.perform(this)
-                is LockedQueue -> {
-                    if (owner != null)
-                        check(state.owner === owner) { "Mutex is locked by ${state.owner} but expected $owner" }
-                    val waiter = state.removeFirstOrNull()
-                    if (waiter == null) {
-                        val op = UnlockOp(state)
-                        if (_state.compareAndSet(state, op) && op.perform(this) == null) return
-                    } else {
-                        val token = (waiter as LockWaiter).tryResumeLockWaiter()
-                        if (token != null) {
-                            state.owner = waiter.owner ?: LOCKED
-                            waiter.completeResumeLockWaiter(token)
-                            return
-                        }
-                    }
-                }
-                else -> error("Illegal state $state")
+    override fun unlock(owner: Any?) {
+        while (true) {
+            // Is this mutex locked?
+            check(isLocked) { "This mutex is not locked" }
+            // Read the owner, waiting until it is set in a spin-loop if required.
+            val curOwner = this.owner.value
+            if (curOwner === NO_OWNER) continue // <-- ATTENTION, BLOCKING PART HERE
+            // Check the owner.
+            check(curOwner === owner || owner == null) { "This mutex is locked by $curOwner, but $owner is expected" }
+            // Try to clean the owner first. We need to use CAS here to synchronize with concurrent `unlock(..)`-s.
+            if (!this.owner.compareAndSet(curOwner, NO_OWNER)) continue
+            // Release the semaphore permit at the end.
+            release()
+            return
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST", "OverridingDeprecatedMember", "OVERRIDE_DEPRECATION")
+    override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
+        clauseObject = this,
+        regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
+        processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
+        onCancellationConstructor = onSelectCancellationUnlockConstructor
+    )
+
+    protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
+        if (owner != null && holdsLock(owner)) {
+            select.selectInRegistrationPhase(ON_LOCK_ALREADY_LOCKED_BY_OWNER)
+        } else {
+            onAcquireRegFunction(SelectInstanceWithOwner(select as SelectInstanceInternal<*>, owner), owner)
+        }
+    }
+
+    protected open fun onLockProcessResult(owner: Any?, result: Any?): Any? {
+        if (result == ON_LOCK_ALREADY_LOCKED_BY_OWNER) {
+            error("This mutex is already locked by the specified owner: $owner")
+        }
+        return this
+    }
+
+    private inner class CancellableContinuationWithOwner(
+        @JvmField
+        val cont: CancellableContinuationImpl<Unit>,
+        @JvmField
+        val owner: Any?
+    ) : CancellableContinuation<Unit> by cont, Waiter by cont {
+        override fun tryResume(value: Unit, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any? {
+            assert { this@MutexImpl.owner.value === NO_OWNER }
+            val token = cont.tryResume(value, idempotent) {
+                assert { this@MutexImpl.owner.value.let { it === NO_OWNER ||it === owner } }
+                this@MutexImpl.owner.value = owner
+                unlock(owner)
+            }
+            if (token != null) {
+                assert { this@MutexImpl.owner.value === NO_OWNER }
+                this@MutexImpl.owner.value = owner
+            }
+            return token
+        }
+
+        override fun resume(value: Unit, onCancellation: ((cause: Throwable) -> Unit)?) {
+            assert { this@MutexImpl.owner.value === NO_OWNER }
+            this@MutexImpl.owner.value = owner
+            cont.resume(value) { unlock(owner) }
+        }
+    }
+
+    private inner class SelectInstanceWithOwner<Q>(
+        @JvmField
+        val select: SelectInstanceInternal<Q>,
+        @JvmField
+        val owner: Any?
+    ) : SelectInstanceInternal<Q> by select {
+        override fun trySelect(clauseObject: Any, result: Any?): Boolean {
+            assert { this@MutexImpl.owner.value === NO_OWNER }
+            return select.trySelect(clauseObject, result).also { success ->
+                if (success) this@MutexImpl.owner.value = owner
             }
         }
-    }
 
-    override fun toString(): String {
-        _state.loop { state ->
-            when (state) {
-                is Empty -> return "Mutex[${state.locked}]"
-                is OpDescriptor -> state.perform(this)
-                is LockedQueue -> return "Mutex[${state.owner}]"
-                else -> error("Illegal state $state")
-            }
+        override fun selectInRegistrationPhase(internalResult: Any?) {
+            assert { this@MutexImpl.owner.value === NO_OWNER }
+            this@MutexImpl.owner.value = owner
+            select.selectInRegistrationPhase(internalResult)
         }
     }
 
-    private class LockedQueue(
-        @JvmField var owner: Any
-    ) : LockFreeLinkedListHead() {
-        override fun toString(): String = "LockedQueue[$owner]"
-    }
-
-    private abstract class LockWaiter(
-        @JvmField val owner: Any?
-    ) : LockFreeLinkedListNode(), DisposableHandle {
-        final override fun dispose() { remove() }
-        abstract fun tryResumeLockWaiter(): Any?
-        abstract fun completeResumeLockWaiter(token: Any)
-    }
-
-    private class LockCont(
-        owner: Any?,
-        @JvmField val cont: CancellableContinuation<Unit>
-    ) : LockWaiter(owner) {
-        override fun tryResumeLockWaiter() = cont.tryResume(Unit)
-        override fun completeResumeLockWaiter(token: Any) = cont.completeResume(token)
-        override fun toString(): String = "LockCont[$owner, $cont]"
-    }
-
-    private class LockSelect<R>(
-        owner: Any?,
-        @JvmField val mutex: Mutex,
-        @JvmField val select: SelectInstance<R>,
-        @JvmField val block: suspend (Mutex) -> R
-    ) : LockWaiter(owner) {
-        override fun tryResumeLockWaiter(): Any? = if (select.trySelect()) SELECT_SUCCESS else null
-        override fun completeResumeLockWaiter(token: Any) {
-            assert { token === SELECT_SUCCESS }
-            block.startCoroutine(receiver = mutex, completion = select.completion)
-        }
-        override fun toString(): String = "LockSelect[$owner, $mutex, $select]"
-    }
-
-    // atomic unlock operation that checks that waiters queue is empty
-    private class UnlockOp(
-        @JvmField val queue: LockedQueue
-    ) : AtomicOp<MutexImpl>() {
-        override fun prepare(affected: MutexImpl): Any? =
-            if (queue.isEmpty) null else UNLOCK_FAIL
-
-        override fun complete(affected: MutexImpl, failure: Any?) {
-            val update: Any = if (failure == null) EMPTY_UNLOCKED else queue
-            affected._state.compareAndSet(this, update)
-        }
-    }
+    override fun toString() = "Mutex@${hexAddress}[isLocked=$isLocked,owner=${owner.value}]"
 }
+
+private val NO_OWNER = Symbol("NO_OWNER")
+private val ON_LOCK_ALREADY_LOCKED_BY_OWNER = Symbol("ALREADY_LOCKED_BY_OWNER")
+
+private const val TRY_LOCK_SUCCESS = 0
+private const val TRY_LOCK_FAILED = 1
+private const val TRY_LOCK_ALREADY_LOCKED_BY_OWNER = 2
+
+private const val HOLDS_LOCK_UNLOCKED = 0
+private const val HOLDS_LOCK_YES = 1
+private const val HOLDS_LOCK_ANOTHER_OWNER = 2

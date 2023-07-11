@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
@@ -18,10 +18,12 @@ public class CoroutineInfo internal constructor(delegate: DebugCoroutineInfo) {
      * [Coroutine context][coroutineContext] of the coroutine
      */
     public val context: CoroutineContext = delegate.context
+
     /**
      * Last observed state of the coroutine
      */
     public val state: State = State.valueOf(delegate.state)
+
     private val creationStackBottom: CoroutineStackFrame? = delegate.creationStackBottom
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -25,3 +25,5 @@ internal actual object DefaultExecutor {
 
 private fun unsupported(): Nothing =
     throw UnsupportedOperationException("runBlocking event loop is not supported")
+
+internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()

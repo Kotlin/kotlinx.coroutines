@@ -8,8 +8,9 @@ package kotlinx.coroutines
 
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-@ExperimentalTime
 class WithTimeoutDurationTest : TestBase() {
     /**
      * Tests a case of no timeout and no suspension inside.

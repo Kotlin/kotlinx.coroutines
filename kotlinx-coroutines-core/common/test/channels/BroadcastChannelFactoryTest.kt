@@ -16,7 +16,7 @@ class BroadcastChannelFactoryTest : TestBase() {
     }
 
     @Test
-    fun testLinkedListChannelNotSupported() {
+    fun testUnlimitedChannelNotSupported() {
         assertFailsWith<IllegalArgumentException> { BroadcastChannel<Int>(Channel.UNLIMITED) }
     }
 
@@ -26,9 +26,9 @@ class BroadcastChannelFactoryTest : TestBase() {
     }
 
     @Test
-    fun testArrayBroadcastChannel() {
-        assertTrue { BroadcastChannel<Int>(1) is ArrayBroadcastChannel }
-        assertTrue { BroadcastChannel<Int>(10) is ArrayBroadcastChannel }
+    fun testBufferedBroadcastChannel() {
+        assertTrue { BroadcastChannel<Int>(1) is BroadcastChannelImpl }
+        assertTrue { BroadcastChannel<Int>(10) is BroadcastChannelImpl }
     }
 
     @Test

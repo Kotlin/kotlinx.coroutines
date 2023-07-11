@@ -1,9 +1,10 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**
@@ -44,6 +45,9 @@ public abstract class CoroutineDispatcher :
      * potentially forming an event-loop to prevent stack overflows.
      * The event loop is an advanced topic and its implications can be found in [Dispatchers.Unconfined] documentation.
      *
+     * The [context] parameter represents the context of the coroutine that is being dispatched,
+     * or [EmptyCoroutineContext] if a non-coroutine-specific [Runnable] is dispatched instead.
+     *
      * A dispatcher can override this method to provide a performance optimization and avoid paying a cost of an unnecessary dispatch.
      * E.g. [MainCoroutineDispatcher.immediate] checks whether we are already in the required UI thread in this method and avoids
      * an additional dispatch when it is not required.
@@ -57,22 +61,78 @@ public abstract class CoroutineDispatcher :
      *
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
+     *
+     * @see dispatch
+     * @see Dispatchers.Unconfined
      */
     public open fun isDispatchNeeded(context: CoroutineContext): Boolean = true
 
     /**
-     * Dispatches execution of a runnable [block] onto another thread in the given [context].
+     * Creates a view of the current dispatcher that limits the parallelism to the given [value][parallelism].
+     * The resulting view uses the original dispatcher for execution, but with the guarantee that
+     * no more than [parallelism] coroutines are executed at the same time.
+     *
+     * This method does not impose restrictions on the number of views or the total sum of parallelism values,
+     * each view controls its own parallelism independently with the guarantee that the effective parallelism
+     * of all views cannot exceed the actual parallelism of the original dispatcher.
+     *
+     * ### Limitations
+     *
+     * The default implementation of `limitedParallelism` does not support direct dispatchers,
+     * such as executing the given runnable in place during [dispatch] calls.
+     * Any dispatcher that may return `false` from [isDispatchNeeded] is considered direct.
+     * For direct dispatchers, it is recommended to override this method
+     * and provide a domain-specific implementation or to throw an [UnsupportedOperationException].
+     *
+     * ### Example of usage
+     * ```
+     * private val backgroundDispatcher = newFixedThreadPoolContext(4, "App Background")
+     * // At most 2 threads will be processing images as it is really slow and CPU-intensive
+     * private val imageProcessingDispatcher = backgroundDispatcher.limitedParallelism(2)
+     * // At most 3 threads will be processing JSON to avoid image processing starvation
+     * private val jsonProcessingDispatcher = backgroundDispatcher.limitedParallelism(3)
+     * // At most 1 thread will be doing IO
+     * private val fileWriterDispatcher = backgroundDispatcher.limitedParallelism(1)
+     * ```
+     * Note how in this example the application has an executor with 4 threads, but the total sum of all limits
+     * is 6. Still, at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism.
+     *
+     * Note that this example was structured in such a way that it illustrates the parallelism guarantees.
+     * In practice, it is usually better to use [Dispatchers.IO] or [Dispatchers.Default] instead of creating a
+     * `backgroundDispatcher`. It is both possible and advised to call `limitedParallelism` on them.
+     */
+    @ExperimentalCoroutinesApi
+    public open fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        return LimitedDispatcher(this, parallelism)
+    }
+
+    /**
+     * Requests execution of a runnable [block].
+     * The dispatcher guarantees that [block] will eventually execute, typically by dispatching it to a thread pool,
+     * using a dedicated thread, or just executing the block in place.
+     * The [context] parameter represents the context of the coroutine that is being dispatched,
+     * or [EmptyCoroutineContext] if a non-coroutine-specific [Runnable] is dispatched instead.
+     * Implementations may use [context] for additional context-specific information,
+     * such as priority, whether the dispatched coroutine can be invoked in place,
+     * coroutine name, and additional diagnostic elements.
+     *
      * This method should guarantee that the given [block] will be eventually invoked,
      * otherwise the system may reach a deadlock state and never leave it.
-     * Cancellation mechanism is transparent for [CoroutineDispatcher] and is managed by [block] internals.
+     * The cancellation mechanism is transparent for [CoroutineDispatcher] and is managed by [block] internals.
      *
      * This method should generally be exception-safe. An exception thrown from this method
-     * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
+     * may leave the coroutines that use this dispatcher in an inconsistent and hard-to-debug state.
      *
-     * This method must not immediately call [block]. Doing so would result in [StackOverflowError]
-     * when [yield] is repeatedly called from a loop. However, an implementation that returns `false` from
-     * [isDispatchNeeded] can delegate this function to `dispatch` method of [Dispatchers.Unconfined], which is
-     * integrated with [yield] to avoid this problem.
+     * This method must not immediately call [block]. Doing so may result in `StackOverflowError`
+     * when `dispatch` is invoked repeatedly, for example when [yield] is called in a loop.
+     * In order to execute a block in place, it is required to return `false` from [isDispatchNeeded]
+     * and delegate the `dispatch` implementation to `Dispatchers.Unconfined.dispatch` in such cases.
+     * To support this, the coroutines machinery ensures in-place execution and forms an event-loop to
+     * avoid unbound recursion.
+     *
+     * @see isDispatchNeeded
+     * @see Dispatchers.Unconfined
      */
     public abstract fun dispatch(context: CoroutineContext, block: Runnable)
 
@@ -98,9 +158,13 @@ public abstract class CoroutineDispatcher :
     public final override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
         DispatchedContinuation(this, continuation)
 
-    @InternalCoroutinesApi
-    public override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
-        (continuation as DispatchedContinuation<*>).reusableCancellableContinuation?.detachChild()
+    public final override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
+        /*
+         * Unconditional cast is safe here: we only return DispatchedContinuation from `interceptContinuation`,
+         * any ClassCastException can only indicate compiler bug
+         */
+        val dispatched = continuation as DispatchedContinuation<*>
+        dispatched.release()
     }
 
     /**

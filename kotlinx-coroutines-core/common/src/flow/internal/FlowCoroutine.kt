@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines.flow.internal
@@ -51,33 +51,11 @@ internal fun <R> scopedFlow(@BuilderInference block: suspend CoroutineScope.(Flo
         flowScope { block(this@flow) }
     }
 
-internal fun <T> CoroutineScope.flowProduce(
-    context: CoroutineContext,
-    capacity: Int = 0,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): ReceiveChannel<T> {
-    val channel = Channel<T>(capacity)
-    val newContext = newCoroutineContext(context)
-    val coroutine = FlowProduceCoroutine(newContext, channel)
-    coroutine.start(CoroutineStart.ATOMIC, coroutine, block)
-    return coroutine
-}
-
 private class FlowCoroutine<T>(
     context: CoroutineContext,
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(context, uCont) {
-    public override fun childCancelled(cause: Throwable): Boolean {
-        if (cause is ChildCancelledException) return true
-        return cancelImpl(cause)
-    }
-}
-
-private class FlowProduceCoroutine<T>(
-    parentContext: CoroutineContext,
-    channel: Channel<T>
-) : ProducerCoroutine<T>(parentContext, channel) {
-    public override fun childCancelled(cause: Throwable): Boolean {
+    override fun childCancelled(cause: Throwable): Boolean {
         if (cause is ChildCancelledException) return true
         return cancelImpl(cause)
     }
