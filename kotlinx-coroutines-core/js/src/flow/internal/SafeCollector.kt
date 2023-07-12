@@ -17,7 +17,7 @@ internal actual class SafeCollector<T> actual constructor(
     internal actual val collectContextSize = collectContext.fold(0) { count, _ -> count + 1 }
     private var lastEmissionContext: CoroutineContext? = null
 
-    override suspend fun emit(value: T) {
+    actual override suspend fun emit(value: T) {
         val currentContext = currentCoroutineContext()
         currentContext.ensureActive()
         if (lastEmissionContext !== currentContext) {

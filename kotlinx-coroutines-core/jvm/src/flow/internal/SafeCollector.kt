@@ -60,7 +60,7 @@ internal actual class SafeCollector<T> actual constructor(
      * then just cache an instance of the completion in order to avoid extra allocation on each emit,
      * making it effectively garbage-free on its hot-path.
      */
-    override suspend fun emit(value: T) {
+    actual override suspend fun emit(value: T) {
         return suspendCoroutineUninterceptedOrReturn sc@{ uCont ->
             try {
                 emit(uCont, value)
