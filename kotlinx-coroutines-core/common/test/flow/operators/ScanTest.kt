@@ -24,6 +24,13 @@ class ScanTest : TestBase() {
     }
 
     @Test
+    fun testScanNotNullWithInitial() = runTest {
+        val flow = flowOf(1, 2, 3)
+        val result = flow.scanNotNull(emptyList<Int>()) { acc, value -> if (value == 2) null else acc + value }.toList()
+        assertEquals(listOf(emptyList(), listOf(1), listOf(1, 3)), result)
+    }
+
+    @Test
     fun testFoldWithInitial() = runTest {
         val flow = flowOf(1, 2, 3)
         val result = flow.runningFold(emptyList<Int>()) { acc, value -> acc + value }.toList()

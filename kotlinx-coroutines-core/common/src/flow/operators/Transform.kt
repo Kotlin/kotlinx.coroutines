@@ -94,6 +94,27 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform 
 public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = runningFold(initial, operation)
 
 /**
+ * Folds the given flow with [operation], emitting every intermediate non-null result, including [initial] value.
+ * Note that initial value should be immutable (or should not be mutated) as it is shared between different collectors.
+ *
+ * If the result of [operation] is `null`, it will be skipped and not emitted in the resulting flow.
+ *
+ * For example:
+ * ```
+ * flowOf(1, 2, 3).scanNotNull(emptyList<Int>()) { acc, value -> if (value == 2) null else acc + value }.toList()
+ * ```
+ * will produce `[[], [1], [1, 3]]`.
+ */
+public fun <T, R> Flow<T>.scanNotNull(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R?): Flow<R> = flow {
+    var accumulator: R = initial
+    emit(accumulator)
+    collect { value ->
+        accumulator = operation(accumulator, value) ?: return@collect
+        emit(accumulator)
+    }
+}
+
+/**
  * Folds the given flow with [operation], emitting every intermediate result, including [initial] value.
  * Note that initial value should be immutable (or should not be mutated) as it is shared between different collectors.
  * For example:
