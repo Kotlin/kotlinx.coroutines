@@ -68,7 +68,7 @@ class LimitedParallelismConcurrentTest : TestBase() {
     @Test
     fun testNotDoingDispatchesWhenNoTasksArePresent() = runTest {
         class NaggingDispatcher: CoroutineDispatcher() {
-            val closed = atomic(false)
+            private val closed = atomic(false)
             override fun dispatch(context: CoroutineContext, block: Runnable) {
                 if (closed.value)
                     fail("Dispatcher was closed, but still dispatched a task")
