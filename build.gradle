@@ -75,10 +75,6 @@ buildscript {
 
     CacheRedirector.configureBuildScript(buildscript, rootProject)
 }
-// todo:KLUDGE: Hierarchical project structures are not fully supported in IDEA, enable only for a regular built
-if (!Idea.active) {
-    ext.set("kotlin.mpp.enableGranularSourceSetsMetadata", "true")
-}
 
 // todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
 def configureKotlinJvmPlatform(configuration) {
@@ -278,7 +274,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 
     List<String> jarTasks
     if (isMultiplatform(it)) {
-        jarTasks = ["jvmJar", "metadataJar"]
+        jarTasks = ["jvmJar"]
     } else if (it.name == "kotlinx-coroutines-debug") {
         // We shadow debug module instead of just packaging it
         jarTasks = ["shadowJar"]
