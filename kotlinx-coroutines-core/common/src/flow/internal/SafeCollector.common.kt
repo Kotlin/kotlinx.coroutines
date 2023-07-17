@@ -18,6 +18,7 @@ internal expect class SafeCollector<T>(
     internal val collectContext: CoroutineContext
     internal val collectContextSize: Int
     public fun releaseIntercepted()
+    public override suspend fun emit(value: T)
 }
 
 @JvmName("checkContext") // For prettier stack traces
