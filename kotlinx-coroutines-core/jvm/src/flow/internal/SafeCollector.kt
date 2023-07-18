@@ -13,9 +13,25 @@ import kotlin.coroutines.jvm.internal.*
 @Suppress("UNCHECKED_CAST")
 private val emitFun =
     FlowCollector<Any?>::emit as Function3<FlowCollector<Any?>, Any?, Continuation<Unit>, Any?>
-/*
- * Implementor of ContinuationImpl (that will be preserved as ABI nearly forever)
- * in order to properly control 'intercepted()' lifecycle.
+
+/**
+ * A safe collector is an instance of [FlowCollector] that ensures that neither context preservation
+ * nor exception transparency invariants are broken. Instances of [SafeCollector] are used in flow
+ * operators that provide raw access to the [FlowCollector] e.g. [Flow.transform].
+ * Mechanically, each [emit] call captures [currentCoroutineContext], ensures it is not different from the
+ * previously caught one and proceeds further. If an exception is thrown from the downstream,
+ * it is caught, and any further attempts to [emit] lead to the [IllegalStateException].
+ *
+ * ### Performance hacks
+ *
+ * Implementor of [ContinuationImpl] (that will be preserved as ABI nearly forever)
+ * in order to properly control `intercepted()` lifecycle.
+ * The safe collector implements [ContinuationImpl] to pretend it *is* a state-machine of its own `emit` method.
+ * It is [ContinuationImpl] and not any other [Continuation] subclass because only [ContinuationImpl] supports `intercepted()` caching.
+ * This is the most performance-sensitive place in the overall flow pipeline, because otherwise safe collector is forced to allocate
+ * a state machine on each element being emitted, for an each intermediate stage where safe collector is present.
+ *
+ * See a comment to [emit] for the explanation of what and how is being optimized.
  */
 @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNCHECKED_CAST")
 internal actual class SafeCollector<T> actual constructor(
@@ -56,11 +72,15 @@ internal actual class SafeCollector<T> actual constructor(
 
     /**
      * This is a crafty implementation of state-machine reusing.
-     * First it checks that it is not used concurrently (which we explicitly prohibit) and
-     * then just cache an instance of the completion_ in order to avoid extra allocation on each emit,
+     *
+     * First it checks that it is not used concurrently (which we explicitly prohibit), and
+     * then just caches an instance of the completion_ in order to avoid extra allocation on each emit,
      * making it effectively garbage-free on its hot-path.
+     *
+     * See `emit` overload.
      */
     actual override suspend fun emit(value: T) {
+        // NB: it is a tail-call, so we are sure `uCont` is the completion of the emit's **caller**.
         return suspendCoroutineUninterceptedOrReturn sc@{ uCont ->
             try {
                 emit(uCont, value)
@@ -74,10 +94,20 @@ internal actual class SafeCollector<T> actual constructor(
         }
     }
 
+    /**
+     * Here we use the following trick:
+     * - Proceed with all checks required
+     * - Having a non-intercepted, non-cancellable caller's `uCont`, we leverage our implementation knowledge
+     *   and invoke `collector.emit(T)` as `collector.emit(value: T, completion: Continuation), passing `this`
+     *   as the completion. We also setup `this` state, so if the `completion.resume` is invoked, we are
+     *   invoking `uCont.resume` properly in accordance with `ContinuationImpl`/`BaseContinuationImpl` internal invariants.
+     *
+     * Note that in such scenarios, `collector.emit` completion is the current instance of SafeCollector and thus is reused.
+     */
     private fun emit(uCont: Continuation<Unit>, value: T): Any? {
         val currentContext = uCont.context
         currentContext.ensureActive()
-        // This check is triggered once per flow on happy path.
+        // This check is triggered once per flow on a happy path.
         val previousContext = lastEmissionContext
         if (previousContext !== currentContext) {
             checkContext(currentContext, previousContext, value)
