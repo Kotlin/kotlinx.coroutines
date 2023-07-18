@@ -9,7 +9,7 @@ import kotlin.coroutines.*
 import kotlin.test.*
 
 class MultithreadedDispatcherStressTest {
-    val shared = atomic(0)
+    private val shared = atomic(0)
 
     /**
      * Tests that [newFixedThreadPoolContext] will not drop tasks when closed.
