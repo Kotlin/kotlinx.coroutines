@@ -93,7 +93,7 @@ private class UnconfinedTestDispatcherImpl(
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
 
-    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "INVISIBLE_SETTER")
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         checkSchedulerInContext(scheduler, context)
         scheduler.sendDispatchEvent(context)
