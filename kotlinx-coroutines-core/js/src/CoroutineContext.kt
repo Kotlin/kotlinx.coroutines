@@ -33,6 +33,7 @@ private fun isJsdom() = jsTypeOf(navigator) != UNDEFINED &&
     jsTypeOf(navigator.userAgent.match) != UNDEFINED &&
     navigator.userAgent.match("\\bjsdom\\b")
 
+@PublishedApi // Used from kotlinx-coroutines-test via suppress, not part of ABI
 internal actual val DefaultDelay: Delay
     get() = Dispatchers.Default as Delay
 
