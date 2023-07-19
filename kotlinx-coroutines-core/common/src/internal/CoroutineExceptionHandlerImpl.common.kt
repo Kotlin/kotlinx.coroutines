@@ -69,4 +69,7 @@ internal expect class DiagnosticCoroutineContextException(context: CoroutineCont
  * For now, we will take solace in knowledge that such exceptions are exceedingly rare, even rarer than globally
  * uncaught exceptions in general.
  */
-internal object ExceptionSuccessfullyProcessed : Exception()
+@PublishedApi
+internal object ExceptionSuccessfullyProcessed : Exception() {
+    val SELF = this
+}

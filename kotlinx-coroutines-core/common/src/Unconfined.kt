@@ -40,7 +40,9 @@ internal object Unconfined : CoroutineDispatcher() {
  */
 @PublishedApi
 internal class YieldContext : AbstractCoroutineContextElement(Key) {
-    companion object Key : CoroutineContext.Key<YieldContext>
+    companion object Key : CoroutineContext.Key<YieldContext> {
+        val SELF = this
+    }
 
     @JvmField
     var dispatcherWasUnconfined = false

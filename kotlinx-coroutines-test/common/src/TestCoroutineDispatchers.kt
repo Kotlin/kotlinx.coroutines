@@ -100,7 +100,7 @@ private class UnconfinedTestDispatcherImpl(
 
         /** copy-pasted from [kotlinx.coroutines.Unconfined.dispatch] */
         /** It can only be called by the [yield] function. See also code of [yield] function. */
-        val yieldContext = context[YieldContext]
+        val yieldContext = context[YieldContext.SELF]
         if (yieldContext !== null) {
             // report to "yield" that it is an unconfined dispatcher and don't call "block.run()"
             yieldContext.dispatcherWasUnconfined = true
