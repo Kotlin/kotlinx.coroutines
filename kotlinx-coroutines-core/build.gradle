@@ -16,7 +16,6 @@ if (rootProject.ext.native_targets_enabled) {
 }
 
 apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
-apply from: rootProject.file('gradle/publish-npm-js.gradle')
 
 apply from: rootProject.file('gradle/dokka.gradle.kts')
 apply from: rootProject.file('gradle/publish.gradle')
