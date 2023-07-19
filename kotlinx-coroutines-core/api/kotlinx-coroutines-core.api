@@ -264,6 +264,7 @@ public final class kotlinx/coroutines/CoroutineStart : java/lang/Enum {
 	public static final field DEFAULT Lkotlinx/coroutines/CoroutineStart;
 	public static final field LAZY Lkotlinx/coroutines/CoroutineStart;
 	public static final field UNDISPATCHED Lkotlinx/coroutines/CoroutineStart;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun invoke (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)V
 	public final fun invoke (Lkotlin/jvm/functions/Function2;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)V
 	public final fun isLazy ()Z
@@ -667,6 +668,7 @@ public final class kotlinx/coroutines/channels/BufferOverflow : java/lang/Enum {
 	public static final field DROP_LATEST Lkotlinx/coroutines/channels/BufferOverflow;
 	public static final field DROP_OLDEST Lkotlinx/coroutines/channels/BufferOverflow;
 	public static final field SUSPEND Lkotlinx/coroutines/channels/BufferOverflow;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/channels/BufferOverflow;
 	public static fun values ()[Lkotlinx/coroutines/channels/BufferOverflow;
 }
@@ -907,6 +909,7 @@ public final class kotlinx/coroutines/channels/TickerChannelsKt {
 public final class kotlinx/coroutines/channels/TickerMode : java/lang/Enum {
 	public static final field FIXED_DELAY Lkotlinx/coroutines/channels/TickerMode;
 	public static final field FIXED_PERIOD Lkotlinx/coroutines/channels/TickerMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/channels/TickerMode;
 	public static fun values ()[Lkotlinx/coroutines/channels/TickerMode;
 }
@@ -1178,6 +1181,7 @@ public final class kotlinx/coroutines/flow/SharingCommand : java/lang/Enum {
 	public static final field START Lkotlinx/coroutines/flow/SharingCommand;
 	public static final field STOP Lkotlinx/coroutines/flow/SharingCommand;
 	public static final field STOP_AND_RESET_REPLAY_CACHE Lkotlinx/coroutines/flow/SharingCommand;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/flow/SharingCommand;
 	public static fun values ()[Lkotlinx/coroutines/flow/SharingCommand;
 }
