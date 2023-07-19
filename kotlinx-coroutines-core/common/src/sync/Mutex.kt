@@ -42,7 +42,7 @@ public interface Mutex {
     public fun tryLock(owner: Any? = null): Boolean
 
     /**
-     * Locks this mutex, suspending caller while the mutex is locked.
+     * Locks this mutex, suspending caller until the lock is acquired (in other words, while the lock is held elsewhere).
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
