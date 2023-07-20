@@ -21,12 +21,12 @@ flow {
     emit(4)
 }.timeout(100.milliseconds).catch { exception ->
     if (exception is TimeoutCancellationException) {
-      // Catch the TimeoutCancellationException emitted above.
-      // Emit desired item on timeout.
-      emit(-1)
+        // Catch the TimeoutCancellationException emitted above.
+        // Emit desired item on timeout.
+        emit(-1)
     } else {
-      // Throw other exceptions.
-      throw exception
+        // Throw other exceptions.
+        throw exception
     }
 }.onEach {
     delay(300) // This will not cause a timeout
