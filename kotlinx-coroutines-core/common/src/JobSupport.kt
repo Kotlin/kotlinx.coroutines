@@ -349,9 +349,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * This allow parent to cancel its children (normally) without being cancelled itself, unless
          * child crashes and produce some other exception during its completion.
          */
-        var isCancellation = cause is JobCancellationException && 
+        val isCancellation = cause is JobCancellationException && 
             (cause.job as JobSupport).state.let{it is Finishing && it.isCancelling()}
-        
         val parent = parentHandle
         // No parent -- ignore CE, report other exceptions.
         if (parent === null || parent === NonDisposableHandle) {
