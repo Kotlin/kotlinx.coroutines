@@ -276,6 +276,11 @@ public final class kotlinx/coroutines/DebugKt {
 	public static final field DEBUG_PROPERTY_VALUE_AUTO Ljava/lang/String;
 	public static final field DEBUG_PROPERTY_VALUE_OFF Ljava/lang/String;
 	public static final field DEBUG_PROPERTY_VALUE_ON Ljava/lang/String;
+	public static final fun getRECOVER_STACK_TRACES ()Z
+}
+
+public final class kotlinx/coroutines/DefaultExecutorKt {
+	public static final fun getDefaultDelay ()Lkotlinx/coroutines/Delay;
 }
 
 public abstract interface class kotlinx/coroutines/Deferred : kotlinx/coroutines/Job {

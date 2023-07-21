@@ -20,7 +20,7 @@ public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 @InternalCoroutinesApi
 public expect fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext
 
-@PublishedApi
+@PublishedApi // to have unmangled name when using from other modules via suppress
 @Suppress("PropertyName")
 internal expect val DefaultDelay: Delay
 

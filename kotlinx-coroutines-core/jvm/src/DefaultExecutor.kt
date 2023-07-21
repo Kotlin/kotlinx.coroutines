@@ -10,6 +10,7 @@ import kotlin.coroutines.*
 
 private val defaultMainDelayOptIn = systemProp("kotlinx.coroutines.main.delay", false)
 
+@PublishedApi
 internal actual val DefaultDelay: Delay = initializeDefaultDelay()
 
 private fun initializeDefaultDelay(): Delay {

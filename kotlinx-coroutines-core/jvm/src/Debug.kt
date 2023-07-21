@@ -78,7 +78,8 @@ internal actual val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
 
 // Note: stack-trace recovery is enabled only in debug mode
 // @JvmField: Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
-internal actual val RECOVER_STACK_TRACES =
+@PublishedApi
+internal actual val RECOVER_STACK_TRACES: Boolean =
     DEBUG && systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
 
 // It is used only in debug mode
