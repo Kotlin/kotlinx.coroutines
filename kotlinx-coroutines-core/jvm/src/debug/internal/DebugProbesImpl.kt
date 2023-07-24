@@ -35,7 +35,9 @@ internal object DebugProbesImpl {
      * This internal method is used by the IDEA debugger under the JVM name
      * "isInstalled$kotlinx_coroutines_debug" and must be kept binary-compatible, see KTIJ-24102
      */
-    val isInstalled: Boolean get() = installations.value > 0
+    val isInstalled: Boolean
+        @JvmName("isInstalled\$kotlinx_coroutines_debug")
+        get() = installations.value > 0
 
     // To sort coroutines by creation order, used as a unique id
     private val sequenceNumber = atomic(0L)
