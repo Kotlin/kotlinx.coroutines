@@ -166,7 +166,7 @@ class RunTestTest {
             it()
             fail("unreached")
         } catch (e: UncompletedCoroutinesError) {
-            @Suppress("INVISIBLE_MEMBER")
+            @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
             val suppressed = unwrap(e).suppressedExceptions
             assertEquals(1, suppressed.size, "$suppressed")
             assertIs<TestException>(suppressed[0]).also {
@@ -207,7 +207,7 @@ class RunTestTest {
             fn()
             fail("unreached")
         } catch (e: UncompletedCoroutinesError) {
-            @Suppress("INVISIBLE_MEMBER")
+            @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
             val suppressed = unwrap(e).suppressedExceptions
             assertEquals(1, suppressed.size, "$suppressed")
             assertIs<TestException>(suppressed[0]).also {
