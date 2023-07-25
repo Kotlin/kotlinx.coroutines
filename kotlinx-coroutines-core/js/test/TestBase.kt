@@ -10,8 +10,14 @@ public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 public actual val stressTestMultiplierSqrt: Int = 1
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
-public actual typealias TestResult = Promise<Unit>
+@JsName("Promise")
+external class MyPromise {
+    fun then(onFulfilled: ((Unit) -> Unit), onRejected: ((Throwable) -> Unit)): MyPromise
+    fun then(onFulfilled: ((Unit) -> Unit)): MyPromise
+}
+
+/** Always a `Promise<Unit>` */
+public actual typealias TestResult = MyPromise
 
 public actual val isNative = false
 
@@ -135,7 +141,7 @@ public actual open class TestBase actual constructor() {
             check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
         }
         lastTestPromise = result
-        return result
+        return result as MyPromise
     }
 }
 
