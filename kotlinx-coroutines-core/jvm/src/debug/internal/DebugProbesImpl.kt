@@ -36,6 +36,7 @@ internal object DebugProbesImpl {
      * "isInstalled$kotlinx_coroutines_debug" and must be kept binary-compatible, see KTIJ-24102
      */
     val isInstalled: Boolean
+        // IDEA depended on "internal val isInstalled", thus the mangling. Public + JvmName in order to make this getter part of the ABI
         @JvmName("isInstalled\$kotlinx_coroutines_debug")
         get() = installations.value > 0
 
