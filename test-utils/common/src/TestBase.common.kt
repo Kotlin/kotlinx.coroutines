@@ -225,6 +225,9 @@ public expect open class TestBase(): OrderedExecutionTestBase, ErrorCatching {
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
     ): TestResult
+
+    override fun hasError(): Boolean
+    override fun reportError(error: Throwable)
 }
 
 public suspend inline fun hang(onCancellation: () -> Unit) {
