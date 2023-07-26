@@ -3,22 +3,22 @@
  */
 
 kotlin {
-    js(LEGACY) {
+    js(IR) {
         binaries.executable()
         browser {
-            distribution {
-                directory = directory.parentFile.resolve("dist")
-            }
-            commonWebpackConfig {
+            distribution(Action {
+                outputDirectory.set(outputDirectory.get().asFile.parentFile.resolve("dist"))
+            })
+            commonWebpackConfig(Action {
                 cssSupport {
                     enabled.set(true)
                 }
-            }
-            testTask {
+            })
+            testTask(Action {
                 useKarma {
                     useChromeHeadless()
                 }
-            }
+            })
         }
     }
 }

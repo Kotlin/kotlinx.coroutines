@@ -39,6 +39,7 @@ public final class kotlinx/coroutines/debug/State : java/lang/Enum {
 	public static final field CREATED Lkotlinx/coroutines/debug/State;
 	public static final field RUNNING Lkotlinx/coroutines/debug/State;
 	public static final field SUSPENDED Lkotlinx/coroutines/debug/State;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/debug/State;
 	public static fun values ()[Lkotlinx/coroutines/debug/State;
 }

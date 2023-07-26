@@ -63,7 +63,6 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "org.jetbrains.kotlinx:kotlinx-knit:$knit_version"
-        classpath "com.github.node-gradle:gradle-node-plugin:$gradle_node_version"
         classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
         classpath "ru.vyarus:gradle-animalsniffer-plugin:1.5.4" // Android API check
         classpath "org.jetbrains.kotlin:atomicfu:$kotlin_version"
@@ -161,7 +160,6 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
         }
 
         apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
-        apply from: rootProject.file("gradle/publish-npm-js.gradle")
         kotlin.sourceSets.commonMain.dependencies {
             api project(":$coreModule")
         }
@@ -303,7 +301,7 @@ allprojects {
 
 // --------------- Configure sub-projects that are published ---------------
 
-def publishTasks = getTasksByName("publish", true) + getTasksByName("publishNpm", true)
+def publishTasks = getTasksByName("publish", true)
 
 task deploy(dependsOn: publishTasks)
 
