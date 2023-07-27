@@ -1,4 +1,4 @@
-import static KotlinVersion.isKotlinVersionAtLeast
+import kotlin.KotlinVersion
 
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
@@ -10,7 +10,7 @@ project.ext.nativeTestSets = []
 // TODO: this block should be removed when Kotlin version is updated to 1.9.20
 // Right now it is used for conditional removal of native targets that will be removed in 1.9.20 (iosArm32, watchosX86)
 // and is necessary for testing of Kotlin dev builds.
-def enableDeprecatedNativeTargets = !isKotlinVersionAtLeast(ext.kotlin_version, 1, 9, 20)
+def enableDeprecatedNativeTargets = !KotlinVersion.CURRENT.isAtLeast(1, 9, 20)
 
 kotlin {
     targets {
