@@ -15,7 +15,7 @@ private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
  * Functions in this file are responsible for configuring kotlinx.coroutines build against a custom dev version
  * of Kotlin compiler.
  * Such configuration is used in a composite community build of Kotlin in order to check whether not-yet-released changes
- * are compatible with our libraries (aka "integration testing that substitues lack of unit testing").
+ * are compatible with our libraries (aka "integration testing that substitutes lack of unit testing").
  */
 
 /**
