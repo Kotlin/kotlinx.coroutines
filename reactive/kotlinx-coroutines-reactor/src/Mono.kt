@@ -97,7 +97,6 @@ private class MonoCoroutine<in T>(
     private val sink: MonoSink<T>
 ) : AbstractCoroutine<T>(parentContext, false, true), Disposable {
     @Volatile
-    @OptIn(ExperimentalStdlibApi::class)
     private var disposed = false
 
     override fun onCompleted(value: T) {

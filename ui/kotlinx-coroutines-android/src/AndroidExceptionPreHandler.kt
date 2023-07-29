@@ -13,7 +13,6 @@ internal class AndroidExceptionPreHandler :
     AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler
 {
     @Volatile
-    @OptIn(ExperimentalStdlibApi::class)
     private var _preHandler: Any? = this // uninitialized marker
 
     // Reflectively lookup pre-handler.

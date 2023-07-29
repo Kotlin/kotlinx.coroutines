@@ -63,11 +63,9 @@ class CancellableContinuationJvmTest : TestBase() {
 
     private class BlockingSource {
         @Volatile
-        @OptIn(ExperimentalStdlibApi::class)
         private var isCancelled = false
 
         @Volatile
-        @OptIn(ExperimentalStdlibApi::class)
         public var hasSubscriber = false
 
         public fun subscribe() {

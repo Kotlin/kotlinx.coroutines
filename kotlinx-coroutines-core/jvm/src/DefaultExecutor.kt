@@ -44,7 +44,6 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
 
     @Suppress("ObjectPropertyName")
     @Volatile
-    @OptIn(ExperimentalStdlibApi::class)
     private var _thread: Thread? = null
 
     override val thread: Thread
@@ -57,7 +56,6 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     private const val SHUTDOWN = 4
 
     @Volatile
-    @OptIn(ExperimentalStdlibApi::class)
     private var debugStatus: Int = FRESH
 
     private val isShutDown: Boolean get() = debugStatus == SHUTDOWN
