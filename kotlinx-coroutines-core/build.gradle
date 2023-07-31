@@ -233,7 +233,7 @@ kotlin.sourceSets {
 
 kotlin.sourceSets.configureEach {
     // Do not apply 'ExperimentalForeignApi' where we have allWarningsAsErrors set
-    if (it.name in ["jvmMain", "jsMain", "concurrentMain", "commonMain"]) return
+    if (it.name in ["jvmMain", "jvmCoreMain", "jsMain", "concurrentMain", "commonMain"]) return
     languageSettings {
         optIn('kotlinx.cinterop.ExperimentalForeignApi')
         optIn('kotlin.experimental.ExperimentalNativeApi')
