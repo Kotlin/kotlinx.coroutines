@@ -337,7 +337,7 @@ internal class BroadcastChannelImpl<E>(
         // in case `broadcast.cancel(..)` is called.
         subscribers = subscribers.filter { it.hasElements() }
         // Delegate to the parent implementation.
-        super.close(cause)
+        super<BufferedChannel>.close(cause)
     }
 
     override fun cancelImpl(cause: Throwable?): Boolean = lock.withLock { // protected by lock

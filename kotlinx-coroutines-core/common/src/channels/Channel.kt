@@ -95,7 +95,9 @@ public interface SendChannel<in E> {
      * A channel that was closed with non-null [cause] is called a _failed_ channel. Attempts to send or
      * receive on a failed channel throw the specified [cause] exception.
      */
-    public fun close(cause: Throwable? = null): Boolean
+    public fun close(cause: Throwable?): Boolean
+
+    public fun close(): Boolean = close(null)
 
     /**
      * Registers a [handler] which is synchronously invoked once the channel is [closed][close]
