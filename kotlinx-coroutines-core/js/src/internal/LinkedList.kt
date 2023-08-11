@@ -10,7 +10,14 @@ import kotlinx.coroutines.*
 
 private typealias Node = LinkedListNode
 /** @suppress **This is unstable API and it is subject to change.** */
-@Suppress("NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS") // :TODO: Remove when fixed: https://youtrack.jetbrains.com/issue/KT-23703
+@Suppress(
+    // :TODO: Remove when fixed: https://youtrack.jetbrains.com/issue/KT-23703
+    "NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS",
+    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
+    "ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER",
+    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
+    "ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_SUPERTYPES_AS_NON_FINAL_EXPECT_CLASSIFIER"
+)
 public actual typealias LockFreeLinkedListNode = LinkedListNode
 
 /** @suppress **This is unstable API and it is subject to change.** */
