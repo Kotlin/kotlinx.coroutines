@@ -8,7 +8,7 @@ import kotlinx.cinterop.*
 import platform.CoreFoundation.*
 import platform.darwin.*
 import kotlin.coroutines.*
-import kotlin.native.concurrent.*
+import kotlin.concurrent.*
 import kotlin.native.internal.NativePtr
 
 internal fun isMainThread(): Boolean = CFRunLoopGetCurrent() == CFRunLoopGetMain()

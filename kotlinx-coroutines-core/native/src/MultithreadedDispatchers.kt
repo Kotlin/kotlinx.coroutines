@@ -8,7 +8,8 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.native.concurrent.*
+import kotlin.concurrent.AtomicReference
+import kotlin.native.concurrent.Worker
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 
