@@ -1690,8 +1690,11 @@ internal open class BufferedChannel<E>(
         }
 
         fun tryResumeHasNextOnClosedChannel() {
-            // Read the current continuation and clean
-            // the corresponding field to avoid memory leaks.
+            /*
+             * Read the current continuation of the suspended `hasNext()` call and clean the corresponding field to avoid memory leaks.
+             * While this nulling out is unnecessary, it eliminates memory leaks (through the continuation)
+             * if the channel iterator accidentally remains GC-reachable after the channel is closed.
+             */
             val cont = this.continuation!!
             this.continuation = null
             // Update the `hasNext()` internal result and inform
