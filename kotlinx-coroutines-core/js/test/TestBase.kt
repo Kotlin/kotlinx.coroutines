@@ -15,6 +15,7 @@ public actual typealias TestResult = Promise<Unit>
 
 public actual val isNative = false
 
+@Suppress("NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS") // Counterpart for @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
 public actual open class TestBase actual constructor() {
     public actual val isBoundByJsTestTimeout = true
     private var actionIndex = 0
