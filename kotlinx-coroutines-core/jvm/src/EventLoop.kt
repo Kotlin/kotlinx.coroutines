@@ -8,7 +8,11 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.scheduling.*
 import kotlinx.coroutines.scheduling.CoroutineScheduler
 
+// fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
+@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER")
 internal actual abstract class EventLoopImplPlatform: EventLoop() {
+    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
+    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     protected abstract val thread: Thread
 
     protected actual fun unpark() {
@@ -17,6 +21,8 @@ internal actual abstract class EventLoopImplPlatform: EventLoop() {
             unpark(thread)
     }
 
+    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
+    @Suppress("MODALITY_CHANGED_IN_NON_FINAL_EXPECT_CLASSIFIER_ACTUALIZATION")
     protected actual open fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
         DefaultExecutor.schedule(now, delayedTask)
     }
