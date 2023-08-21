@@ -15,6 +15,7 @@ public actual val isNative = true
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit
 
+@Suppress("NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS") // Counterpart for @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
 public actual open class TestBase actual constructor() {
     public actual val isBoundByJsTestTimeout = false
     private var actionIndex = atomic(0)
