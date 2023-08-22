@@ -6,12 +6,14 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 
+@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_SUPERTYPES_AS_NON_FINAL_EXPECT_CLASSIFIER")
 internal actual abstract class CompletionHandlerBase actual constructor() : LockFreeLinkedListNode(), CompletionHandler {
     actual abstract override fun invoke(cause: Throwable?)
 }
 
 internal actual inline val CompletionHandlerBase.asHandler: CompletionHandler get() = this
 
+@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_SUPERTYPES_AS_NON_FINAL_EXPECT_CLASSIFIER")
 internal actual abstract class CancelHandlerBase actual constructor() : CompletionHandler {
     actual abstract override fun invoke(cause: Throwable?)
 }

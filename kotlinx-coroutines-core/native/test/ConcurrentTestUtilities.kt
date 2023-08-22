@@ -25,6 +25,7 @@ private object BlackHole {
     var sink = 1
 }
 
+@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER")
 internal actual typealias SuppressSupportingThrowable = SuppressSupportingThrowableImpl
 
 actual val Throwable.suppressed: Array<Throwable>

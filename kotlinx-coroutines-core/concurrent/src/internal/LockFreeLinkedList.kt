@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
+@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE", "NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
 
 package kotlinx.coroutines.internal
 
@@ -42,7 +42,7 @@ internal val CONDITION_FALSE: Any = Symbol("CONDITION_FALSE")
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-@Suppress("LeakingThis")
+@Suppress("LeakingThis", "ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER")
 @InternalCoroutinesApi
 public actual open class LockFreeLinkedListNode {
     private val _next = atomic<Any>(this) // Node | Removed | OpDescriptor
@@ -74,6 +74,7 @@ public actual open class LockFreeLinkedListNode {
             override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
         }
 
+    @Suppress("MODALITY_CHANGED_IN_NON_FINAL_EXPECT_CLASSIFIER_ACTUALIZATION")
     public actual open val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed
@@ -331,6 +332,7 @@ internal fun Any.unwrap(): Node = (this as? Removed)?.ref ?: this as Node
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER")
 public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     public actual val isEmpty: Boolean get() = next === this
 

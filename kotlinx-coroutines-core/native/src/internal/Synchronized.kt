@@ -11,6 +11,7 @@ import kotlinx.atomicfu.locks.withLock as withLock2
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
+@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER")
 public actual typealias SynchronizedObject = kotlinx.atomicfu.locks.SynchronizedObject
 
 /**
