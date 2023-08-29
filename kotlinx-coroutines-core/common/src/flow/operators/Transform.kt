@@ -48,10 +48,70 @@ public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = transform<T?, T> { value
 }
 
 /**
- * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
+ * Returns a flow containing the results of applying the given [transform] function to each value of the original flow with the help of a state.
  */
 public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -> R): Flow<R> = transform { value ->
     return@transform emit(transform(value))
+}
+
+/**
+ * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
+ *
+ * @param state the initial state
+ * @param onCompletion will be called when completion, return a non-null value for optional completion value.
+ * @param transform function applied to each value to get a new result with next state
+ * @return a new flow
+ */
+public fun <S, T, R> Flow<T>.statefulMap(
+    state: S,
+    onCompletion: suspend (S) -> R?,
+    transform: suspend (state: S, value: T) -> Pair<S, R>,
+): Flow<R> = StatefulMapImpl(this, state, onCompletion, transform)
+
+/**
+ * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
+ *
+ * @param state the initial state
+ * @param transform function applied to each value to get a new result with next state
+ * @return a new flow
+ */
+public fun <S, T, R> Flow<T>.statefulMap(
+    state: S,
+    transform: suspend (state: S, value: T) -> Pair<S, R>,
+): Flow<R> = statefulMap(state, defaultCompletion as ((S) -> R?), transform)
+
+private val defaultCompletion:(Any) -> Any? = {null}
+
+private class StatefulMapImpl<S, T, R>(
+    private val upstream: Flow<T>,
+    private val state: S,
+    private val onCompletion: suspend (S) -> R? = { null },
+    private val transform: suspend (state: S, value: T) -> Pair<S, R>
+) : Flow<R> {
+    override suspend fun collect(collector: FlowCollector<R>) {
+        var currentState: S = state
+        try {
+            upstream.collect { value ->
+                val (newState, result) = transform(currentState, value)
+                currentState = newState
+                collector.emit(result)
+            }
+        } catch (cause: Throwable) {
+            try {
+                onCompletion(currentState)?.let {
+                    collector.emit(it)
+                }
+            } catch (e: Throwable) {
+                if (cause !== e) e.addSuppressed(cause)
+                throw e
+            }
+            throw cause
+        }
+        //Normal completion
+        onCompletion(currentState)?.let {
+            collector.emit(it)
+        }
+    }
 }
 
 /**
