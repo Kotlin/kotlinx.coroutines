@@ -81,13 +81,12 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
      */
     private lateinit var previousOut: PrintStream
 
-        /**
+    /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
      * complete successfully even if this exception is consumed somewhere in the test.
      */
     // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-    public actual fun error(message: Any, cause: Throwable? = null): Nothing {
+    public actual fun error(message: Any, cause: Throwable?): Nothing {
         throw makeError(message, cause)
     }
 

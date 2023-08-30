@@ -27,8 +27,7 @@ public actual open class TestBase actual constructor() {
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
      * complete successfully even if this exception is consumed somewhere in the test.
      */
-    @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-    public actual fun error(message: Any, cause: Throwable? = null): Nothing {
+    public actual fun error(message: Any, cause: Throwable?): Nothing {
         if (cause != null) console.log(cause)
         val exception = IllegalStateException(
             if (cause == null) message.toString() else "$message; caused by $cause")
