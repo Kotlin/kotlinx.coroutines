@@ -63,7 +63,7 @@ public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -
  * @return a new flow
  */
 public fun <S, T, R> Flow<T>.statefulMap(
-    create: () -> S,
+    create: suspend () -> S,
     onCompletion: suspend (S) -> R?,
     transform: suspend (state: S, value: T) -> Pair<S, R>,
 ): Flow<R> = StatefulMapImpl(this, create, onCompletion, transform)
@@ -76,7 +76,7 @@ public fun <S, T, R> Flow<T>.statefulMap(
  * @return a new flow
  */
 public fun <S, T, R> Flow<T>.statefulMap(
-    create: () -> S,
+    create: suspend () -> S,
     transform: suspend (state: S, value: T) -> Pair<S, R>,
 ): Flow<R> = statefulMap(create, defaultCompletion as ((S) -> R?), transform)
 
@@ -84,7 +84,7 @@ private val defaultCompletion:(Any) -> Any? = {null}
 
 private class StatefulMapImpl<S, T, R>(
     private val upstream: Flow<T>,
-    private val create: () -> S,
+    private val create: suspend () -> S,
     private val onCompletion: suspend (S) -> R? = { null },
     private val transform: suspend (state: S, value: T) -> Pair<S, R>
 ) : Flow<R> {
