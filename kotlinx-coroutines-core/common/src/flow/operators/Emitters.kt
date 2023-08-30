@@ -43,6 +43,16 @@ public inline fun <T, R> Flow<T>.transform(
     }
 }
 
+public inline fun <T, R> Flow<T>.statefulTransform(
+    @BuilderInference crossinline transformCreator: suspend () -> (suspend FlowCollector<R>.(value: T) -> Unit)
+): Flow<R> = flow {
+    val transform = transformCreator()
+    collect { value ->
+        // kludge, without it Unit will be returned and TCE won't kick in, KT-28938
+        return@collect transform(value)
+    }
+}
+
 // For internal operator implementation
 @PublishedApi
 internal inline fun <T, R> Flow<T>.unsafeTransform(
