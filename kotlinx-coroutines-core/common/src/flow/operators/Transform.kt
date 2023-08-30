@@ -57,39 +57,39 @@ public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -
 /**
  * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
  *
- * @param state the initial state
+ * @param create create the initial state
  * @param onCompletion will be called when completion, return a non-null value for optional completion value.
  * @param transform function applied to each value to get a new result with next state
  * @return a new flow
  */
 public fun <S, T, R> Flow<T>.statefulMap(
-    state: S,
+    create: () -> S,
     onCompletion: suspend (S) -> R?,
     transform: suspend (state: S, value: T) -> Pair<S, R>,
-): Flow<R> = StatefulMapImpl(this, state, onCompletion, transform)
+): Flow<R> = StatefulMapImpl(this, create, onCompletion, transform)
 
 /**
  * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
  *
- * @param state the initial state
+ * @param create create the initial state
  * @param transform function applied to each value to get a new result with next state
  * @return a new flow
  */
 public fun <S, T, R> Flow<T>.statefulMap(
-    state: S,
+    create: () -> S,
     transform: suspend (state: S, value: T) -> Pair<S, R>,
-): Flow<R> = statefulMap(state, defaultCompletion as ((S) -> R?), transform)
+): Flow<R> = statefulMap(create, defaultCompletion as ((S) -> R?), transform)
 
 private val defaultCompletion:(Any) -> Any? = {null}
 
 private class StatefulMapImpl<S, T, R>(
     private val upstream: Flow<T>,
-    private val state: S,
+    private val create: () -> S,
     private val onCompletion: suspend (S) -> R? = { null },
     private val transform: suspend (state: S, value: T) -> Pair<S, R>
 ) : Flow<R> {
     override suspend fun collect(collector: FlowCollector<R>) {
-        var currentState: S = state
+        var currentState: S = create()
         try {
             upstream.collect { value ->
                 val (newState, result) = transform(currentState, value)

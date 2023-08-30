@@ -10,7 +10,7 @@ import kotlin.test.*
 
 class StatefulMapTest : TestBase() {
 
-    private fun <T> Flow<T>.zipWithIndex(): Flow<Pair<T, Long>> = statefulMap(0L) { index, value ->
+    private fun <T> Flow<T>.zipWithIndex(): Flow<Pair<T, Long>> = statefulMap({0L}) { index, value ->
         return@statefulMap Pair(index + 1L, Pair(value, index))
     }
 
@@ -31,7 +31,7 @@ class StatefulMapTest : TestBase() {
             emit("b")
             emit("c")
         }
-        val flow2: Flow<Any> = flow.statefulMap(0, { it }) { counter, value ->
+        val flow2: Flow<Any> = flow.statefulMap({0}, { it }) { counter, value ->
             return@statefulMap Pair(counter + 1, value)
         }
         assertEquals(listOf("a", "b", "c", 3), flow2.toList())
@@ -39,7 +39,7 @@ class StatefulMapTest : TestBase() {
 
     @Test
     fun testEmptyFlow() = runTest {
-        val sum = emptyFlow<Int>().statefulMap(1) { state, value ->
+        val sum = emptyFlow<Int>().statefulMap({1}) { state, value ->
             expectUnreached()
             Pair(state, value)
         }.sum()
@@ -47,7 +47,7 @@ class StatefulMapTest : TestBase() {
     }
 
     private fun <T> Flow<T>.grouped(size: Int): Flow<List<T>> =
-        statefulMap(mutableListOf<T>(), { value -> value.toList() }) { acc, value ->
+        statefulMap({mutableListOf<T>()}, { value -> value.toList() }) { acc, value ->
             if (acc.size < size) {
                 acc.add(value)
             }
@@ -71,7 +71,7 @@ class StatefulMapTest : TestBase() {
         assertEquals(listOf(listOf(1, 2), listOf(3, 4), listOf(5)), flow.grouped(2).toList())
     }
 
-    private fun <T> Flow<T>.distinct(): Flow<T?> = statefulMap(mutableSetOf<T>()) { set, value ->
+    private fun <T> Flow<T>.distinct(): Flow<T?> = statefulMap({mutableSetOf<T>()}) { set, value ->
         if (set.add(value)) {
             return@statefulMap Pair(set, value)
         }
@@ -104,7 +104,7 @@ class StatefulMapTest : TestBase() {
                 emit(1)
                 expectUnreached()
             }
-        }.statefulMap<Int, Int, Int>(1) { _, _ ->
+        }.statefulMap<Int, Int, Int>({1}) { _, _ ->
             latch.receive()
             throw TestException()
         }.catch { emit(42) }
