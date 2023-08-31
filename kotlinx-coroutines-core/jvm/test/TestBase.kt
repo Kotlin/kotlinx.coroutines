@@ -55,8 +55,6 @@ public actual typealias TestResult = Unit
  * ```
  */
 @Suppress(
-    // Counterpart for @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-    "NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS",
     // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
     "ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER"
 )
