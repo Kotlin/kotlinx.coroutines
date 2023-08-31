@@ -413,6 +413,7 @@ internal open class SelectImplementation<R>(
      * or [DisposableHandle] instance when the clause is completed during registration ([inRegistrationPhase] is `false`).
      * Yet, this optimization is omitted for code simplicity.
      */
+    @BenignDataRace // See its cleanup phase for the explanation
     private var internalResult: Any? = NO_RESULT
 
     /**
@@ -626,9 +627,11 @@ internal open class SelectImplementation<R>(
                         // try to resume the continuation.
                         this.internalResult = internalResult
                         if (cont.tryResume(onCancellation)) return TRY_SELECT_SUCCESSFUL
-                        // If the resumption failed, we need to clean
-                        // the [result] field to avoid memory leaks.
-                        this.internalResult = null
+                        /*
+                         * If the resumption failed, we need to clean the [result] field to avoid memory leaks.
+                         * This write is benignly races with the very same write in cancellation invoke() handler
+                         */
+                        this.internalResult = NO_RESULT
                         return TRY_SELECT_CANCELLED
                     }
                 }
