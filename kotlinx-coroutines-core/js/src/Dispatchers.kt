@@ -12,6 +12,8 @@ public actual object Dispatchers {
         get() = injectedMainDispatcher ?: mainDispatcher
     public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
 
+    public actual val IO: CoroutineDispatcher = Default
+
     private val mainDispatcher = JsMainDispatcher(Default, false)
     private var injectedMainDispatcher: MainCoroutineDispatcher? = null
 

@@ -6,7 +6,6 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
-import kotlin.coroutines.*
 
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.
@@ -66,7 +65,7 @@ public actual object Dispatchers {
      * during operations over IO dispatcher.
      */
     @JvmStatic
-    public val IO: CoroutineDispatcher = DefaultIoScheduler
+    public actual val IO: CoroutineDispatcher = DefaultIoScheduler
 
     /**
      * Shuts down built-in dispatchers, such as [Default] and [IO],
@@ -95,13 +94,3 @@ public actual object Dispatchers {
         DefaultScheduler.shutdown()
     }
 }
-
-/**
- * `actual` counterpart of the corresponding `expect` declaration.
- * Should never be used directly from JVM sources, all accesses
- * to `Dispatchers.IO` should be resolved to the corresponding member of [Dispatchers] object.
- * @suppress
- */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-@Deprecated(message = "Should not be used directly", level = DeprecationLevel.HIDDEN)
-public actual val Dispatchers.IO: CoroutineDispatcher get() = Dispatchers.IO
