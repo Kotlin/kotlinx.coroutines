@@ -1583,6 +1583,7 @@ internal open class BufferedChannel<E>(
          * continuation. The [tryResumeHasNext] and [tryResumeHasNextOnClosedChannel]
          * function resume this continuation when the [hasNext] invocation should complete.
          */
+        @BenignDataRace // See its uses for the explanation of the race
         private var continuation: CancellableContinuationImpl<Boolean>? = null
 
         // `hasNext()` is just a special receive operation.
