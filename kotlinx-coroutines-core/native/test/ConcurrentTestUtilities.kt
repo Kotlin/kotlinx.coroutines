@@ -25,6 +25,7 @@ private object BlackHole {
     var sink = 1
 }
 
+@Suppress("NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS")
 internal actual typealias SuppressSupportingThrowable = SuppressSupportingThrowableImpl
 
 actual val Throwable.suppressed: Array<Throwable>
