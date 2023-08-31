@@ -19,8 +19,11 @@ configure(subprojects) {
             }
             val newOptions =
                 listOf(
-                    "-progressive", "-Xno-param-assertions", "-Xno-receiver-assertions",
-                    "-Xno-call-assertions"
+                    "-progressive",
+                    "-Xno-param-assertions",
+                    "-Xno-receiver-assertions",
+                    "-Xexpect-actual-classes",
+                    "-Xno-call-assertions",
                 ) + optInAnnotations.map { "-opt-in=$it" }
             freeCompilerArgs = freeCompilerArgs + newOptions
         }
