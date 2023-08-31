@@ -372,7 +372,12 @@ internal open class SelectImplementation<R>(
 
     /**
      * List of clauses waiting on this `select` instance.
+     *
+     * This property is the subject to bening data-race: concurrent cancellation might null-out this property
+     * while [trySelect] operation reads it and iterates over its content.
+     * A logical race is resolved by the consensus on [state] property.
      */
+    @BenignDataRace
     private var clauses: MutableList<ClauseData>? = ArrayList(2)
 
     /**
