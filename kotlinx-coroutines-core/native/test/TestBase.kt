@@ -15,7 +15,6 @@ public actual val isNative = true
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit
 
-@Suppress("NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS") // Counterpart for @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
 public actual open class TestBase actual constructor() {
     public actual val isBoundByJsTestTimeout = false
     private var actionIndex = atomic(0)
@@ -26,8 +25,7 @@ public actual open class TestBase actual constructor() {
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
      * complete successfully even if this exception is consumed somewhere in the test.
      */
-    @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-    public actual fun error(message: Any, cause: Throwable? = null): Nothing {
+    public actual fun error(message: Any, cause: Throwable?): Nothing {
         val exception = IllegalStateException(message.toString(), cause)
         if (error == null) error = exception
         throw exception
