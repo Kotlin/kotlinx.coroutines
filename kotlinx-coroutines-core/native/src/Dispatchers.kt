@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 
@@ -23,7 +22,7 @@ public actual object Dispatchers {
         injectedMainDispatcher = dispatcher
     }
 
-    internal val IO: CoroutineDispatcher = DefaultIoScheduler
+    public actual val IO: CoroutineDispatcher = DefaultIoScheduler
 }
 
 internal object DefaultIoScheduler : CoroutineDispatcher() {
@@ -49,8 +48,14 @@ internal object DefaultIoScheduler : CoroutineDispatcher() {
     override fun toString(): String = "Dispatchers.IO"
 }
 
-
+/**
+ * Should never be used directly from native sources, all accesses
+ * to `Dispatchers.IO` should be resolved to the corresponding member of [Dispatchers] object.
+ * Saved for binary compatibility.
+ * @suppress
+ */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-public actual val Dispatchers.IO: CoroutineDispatcher get() = IO
+@Deprecated("May be removed in the future releases")
+public val Dispatchers.IO: CoroutineDispatcher get() = IO
 
 internal expect fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher
