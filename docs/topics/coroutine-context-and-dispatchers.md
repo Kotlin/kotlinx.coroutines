@@ -239,7 +239,7 @@ fun main() {
             }
         }
     }
-//sampleEnd    
+//sampleEnd
 }
 ```
 
