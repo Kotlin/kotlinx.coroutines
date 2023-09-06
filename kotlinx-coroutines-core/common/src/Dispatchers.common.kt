@@ -31,13 +31,13 @@ public expect object Dispatchers {
      *   [`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html).
      * - On JS it is equivalent to the [Default] dispatcher with [immediate][MainCoroutineDispatcher.immediate] support.
      * - On Native Darwin-based targets, it is a dispatcher backed by Darwin's main queue.
-     * - On other Native targets, it is a single-threaded dispatcher backed by a standalone worker.
+     * - On other Native targets, it is not available.
+     * - `Dispatchers.setMain` from the `kotlinx-coroutines-test` artifact can replace the main dispatcher with a mock one for testing.
      *
-     * In order to work with the `Main` dispatcher, the following artifact should be added to the project runtime dependencies:
+     * In order to work with the `Main` dispatcher on the JVM, the following artifact should be added to the project runtime dependencies:
      *  - `kotlinx-coroutines-android` &mdash; for Android Main thread dispatcher
      *  - `kotlinx-coroutines-javafx` &mdash; for JavaFx Application thread dispatcher
      *  - `kotlinx-coroutines-swing` &mdash; for Swing EDT dispatcher
-     *  - `kotlinx-coroutines-test` &mdash; for mocking the `Main` dispatcher in tests via `Dispatchers.setMain`
      */
     public val Main: MainCoroutineDispatcher
 
