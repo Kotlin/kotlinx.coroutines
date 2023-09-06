@@ -148,4 +148,20 @@ class MutexTest : TestBase() {
         assertFailsWith<IllegalStateException> { mutex.lock(owner) }
         assertFailsWith<IllegalStateException> { select { mutex.onLock(owner) {} } }
     }
+
+    @Test
+    fun testWithLockJsMiscompilation() = runTest {
+        // This is a reproducer for KT-58685
+        // On Kotlin/JS IR, the compiler miscompiles calls to 'unlock' in an inlined finally
+        // This is visible on the withLock function
+        // Until the compiler bug is fixed, this test case checks that we do not suffer from it
+        val mutex = Mutex()
+        assertFailsWith<IndexOutOfBoundsException> {
+            try {
+                mutex.withLock { null } ?: throw IndexOutOfBoundsException() // should throw…
+            } catch (e: Exception) {
+                throw e // …but instead fails here
+            }
+        }
+    }
 }
