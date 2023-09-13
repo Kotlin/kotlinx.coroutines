@@ -181,4 +181,9 @@ class StateFlowTest : TestBase() {
         state.update { it + 3 }
         assertEquals(5, state.value)
     }
+
+    @Test
+    fun testSubscriptionByFirstSuspensionInStateFlow() = runTest {
+        testSubscriptionByFirstSuspensionInCollect(MutableStateFlow(0)) { value = it; yield() }
+    }
 }
