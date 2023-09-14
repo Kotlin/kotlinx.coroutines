@@ -86,4 +86,9 @@ class StateInTest : TestBase() {
         assertFailsWith<TestException> { flow.stateIn(CoroutineScope(currentCoroutineContext() + Job() + ceh)) }
         finish(3)
     }
+
+    @Test
+    fun testSubscriptionByFirstSuspensionInStateFlow() = runTest {
+        testSubscriptionByFirstSuspensionInCollect(flowOf(1).stateIn(this@runTest)) { }
+    }
 }

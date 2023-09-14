@@ -137,6 +137,16 @@ public interface SharedFlow<out T> : Flow<T> {
      * **A shared flow never completes**. A call to [Flow.collect] or any other terminal operator
      * on a shared flow never completes normally.
      *
+     * It is guaranteed that, by the time the first suspension happens, [collect] has already subscribed to the
+     * [SharedFlow] and is eligible for receiving emissions. In particular, the following code will always print `1`:
+     * ```
+     * val flow = MutableSharedFlow<Int>()
+     * launch(start = CoroutineStart.UNDISPATCHED) {
+     *   flow.collect { println(1) }
+     * }
+     * flow.emit(1)
+     * ```
+     *
      * @see [Flow.collect] for implementation and inheritance details.
      */
     override suspend fun collect(collector: FlowCollector<T>): Nothing

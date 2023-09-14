@@ -818,4 +818,24 @@ class SharedFlowTest : TestBase() {
         j2.cancelAndJoin()
         assertEquals(0, flow.subscriptionCount.first())
     }
+
+    @Test
+    fun testSubscriptionByFirstSuspensionInSharedFlow() = runTest {
+        testSubscriptionByFirstSuspensionInCollect(MutableSharedFlow()) { emit(it) }
+    }
+}
+
+/**
+ * Check that, by the time [SharedFlow.collect] suspends for the first time, its subscription is already active.
+ */
+inline fun<T: Flow<Int>> CoroutineScope.testSubscriptionByFirstSuspensionInCollect(flow: T, emit: T.(Int) -> Unit) {
+    var received = 0
+    val job = launch(start = CoroutineStart.UNDISPATCHED) {
+        flow.collect {
+            received = it
+        }
+    }
+    flow.emit(1)
+    assertEquals(1, received)
+    job.cancel()
 }

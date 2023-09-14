@@ -236,4 +236,9 @@ class ShareInTest : TestBase() {
         assertEquals(239, shared.first())
         j.cancel()
     }
+
+    @Test
+    fun testSubscriptionByFirstSuspensionInSharedFlow() = runTest {
+        testSubscriptionByFirstSuspensionInCollect(flowOf(1).stateIn(this@runTest), emit = { })
+    }
 }
