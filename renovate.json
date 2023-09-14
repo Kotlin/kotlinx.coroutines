@@ -1,6 +1,33 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:recommended"
+  ],
+  "ignorePaths": [
+    "benchmarks/**",
+    "buildSrc/**",
+    "gradle/**",
+    "integration-testing/**",
+    "js/**",
+    "kotlinx-coroutines-bom/**",
+    "kotlinx-coroutines-core/**",
+    "kotlinx-coroutines-debug/**",
+    "kotlinx-coroutines-test/**",
+    "reactive/**",
+    "ui/**",
+    "integration/**"
+  ],
+  "schedule": "before 4am on the first day of the month",
+  "minimumReleaseAge": "15",
+  "packageRules": [
+    {
+      "matchFileNames": [
+        "*"
+      ],
+      "groupName": "Kotlin dependencies"
+    }
+  ],
+  "baseBranches": [
+    "develop"
   ]
 }
