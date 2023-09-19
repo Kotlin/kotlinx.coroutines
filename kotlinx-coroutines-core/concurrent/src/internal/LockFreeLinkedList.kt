@@ -372,6 +372,9 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
 
     // optimization: because head is never removed, we don't have to read _next.value to check these:
     override val isRemoved: Boolean get() = false
+
+    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
+    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     override fun nextIfRemoved(): Node? = null
 
     // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
