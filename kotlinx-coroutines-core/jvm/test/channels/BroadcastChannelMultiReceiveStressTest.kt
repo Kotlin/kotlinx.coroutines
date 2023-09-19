@@ -15,15 +15,17 @@ import java.util.concurrent.atomic.*
 class BroadcastChannelMultiReceiveStressTest(
     private val kind: TestBroadcastChannelKind
 ) : TestBase() {
+
+    // Stressed by lincheck
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
         fun params(): Collection<Array<Any>> =
-            TestBroadcastChannelKind.values().map { arrayOf<Any>(it) }
+            TestBroadcastChannelKind.entries.map { arrayOf<Any>(it) }
     }
 
     private val nReceivers = if (isStressTest) 10 else 5
-    private val nSeconds = 3 * stressTestMultiplier
+    private val nSeconds = 3 * stressTestMultiplierSqrt
 
     private val broadcast = kind.create<Long>()
     private val pool = newFixedThreadPoolContext(nReceivers + 1, "BroadcastChannelMultiReceiveStressTest")
@@ -62,13 +64,13 @@ class BroadcastChannelMultiReceiveStressTest(
             println("Launching $name")
             receivers += launch(pool + CoroutineName(name)) {
                 val channel = broadcast.openSubscription()
-                    when (receiverIndex % 5) {
-                        0 -> doReceive(channel, receiverIndex)
-                        1 -> doReceiveCatching(channel, receiverIndex)
-                        2 -> doIterator(channel, receiverIndex)
-                        3 -> doReceiveSelect(channel, receiverIndex)
-                        4 -> doReceiveCatchingSelect(channel, receiverIndex)
-                    }
+                when (receiverIndex % 5) {
+                    0 -> doReceive(channel, receiverIndex)
+                    1 -> doReceiveCatching(channel, receiverIndex)
+                    2 -> doIterator(channel, receiverIndex)
+                    3 -> doReceiveSelect(channel, receiverIndex)
+                    4 -> doReceiveCatchingSelect(channel, receiverIndex)
+                }
                 channel.cancel()
             }
             printProgress()
@@ -93,7 +95,7 @@ class BroadcastChannelMultiReceiveStressTest(
         } catch (e: Exception) {
             println("Failed: $e")
             pool.dumpThreads("Threads in pool")
-            receivers.indices.forEach { index  ->
+            receivers.indices.forEach { index ->
                 println("lastReceived[$index] = ${lastReceived[index].get()}")
             }
             throw e
@@ -116,8 +118,9 @@ class BroadcastChannelMultiReceiveStressTest(
             try {
                 val stop = doReceived(receiverIndex, channel.receive())
                 if (stop) break
+            } catch (ex: ClosedReceiveChannelException) {
+                break
             }
-            catch (ex: ClosedReceiveChannelException) { break }
         }
     }
 
@@ -141,7 +144,9 @@ class BroadcastChannelMultiReceiveStressTest(
                 val event = select<Long> { channel.onReceive { it } }
                 val stop = doReceived(receiverIndex, event)
                 if (stop) break
-            } catch (ex: ClosedReceiveChannelException) { break }
+            } catch (ex: ClosedReceiveChannelException) {
+                break
+            }
         }
     }
 
@@ -151,5 +156,11 @@ class BroadcastChannelMultiReceiveStressTest(
             val stop = doReceived(receiverIndex, event)
             if (stop) break
         }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun println(debugMessage: String) {
+        // Uncomment for local debugging
+        // kotlin.io.println(debugMessage)
     }
 }

@@ -7,7 +7,7 @@ import org.junit.Test
 import kotlin.test.*
 
 class SelectPhilosophersStressTest : TestBase() {
-    private val TEST_DURATION = 3000L * stressTestMultiplier
+    private val TEST_DURATION = 3000L * stressTestMultiplierSqrt
 
     val n = 10 // number of philosophers
     private val forks = Array(n) { Mutex() }
