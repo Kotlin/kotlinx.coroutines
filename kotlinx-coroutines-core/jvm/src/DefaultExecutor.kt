@@ -135,6 +135,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     private fun createThreadSync(): Thread {
         return _thread ?: Thread(this, THREAD_NAME).apply {
             _thread = this
+            contextClassLoader = this@DefaultExecutor.javaClass.classLoader
             isDaemon = true
             start()
         }
