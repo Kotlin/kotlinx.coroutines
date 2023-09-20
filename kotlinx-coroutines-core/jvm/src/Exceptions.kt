@@ -17,7 +17,6 @@ public actual typealias CancellationException = java.util.concurrent.Cancellatio
 /**
  * Creates a cancellation exception with a specified message and [cause].
  */
-@Suppress("FunctionName")
 public actual fun CancellationException(message: String?, cause: Throwable?) : CancellationException =
     CancellationException(message).apply { initCause(cause) }
 

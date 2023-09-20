@@ -14,7 +14,6 @@ public class CompletionHandlerException(message: String, cause: Throwable) : Run
 
 public expect open class CancellationException(message: String?) : IllegalStateException
 
-@Suppress("FunctionName", "NO_ACTUAL_FOR_EXPECT")
 public expect fun CancellationException(message: String?, cause: Throwable?) : CancellationException
 
 internal expect class JobCancellationException(
