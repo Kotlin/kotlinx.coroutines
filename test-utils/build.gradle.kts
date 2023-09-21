@@ -24,5 +24,10 @@ kotlin {
                 api("org.jetbrains.kotlin:kotlin-test-wasm-js:${version("kotlin")}")
             }
         }
+        val wasmWasiMain by getting {
+            dependencies {
+                api("org.jetbrains.kotlin:kotlin-test-wasm-wasi:${version("kotlin")}")
+            }
+        }
     }
 }

@@ -135,6 +135,8 @@ class RunTestTest {
     @Test
     @NoJs
     @NoNative
+    @NoWasmWasi
+    @NoWasmJs
     fun testListingActiveCoroutinesOnTimeout(): TestResult {
         val name1 = "GoodUniqueName"
         val name2 = "BadUniqueName"
@@ -471,4 +473,18 @@ class RunTestTest {
         runTest {
         }
     })
+
+    @Test
+    fun testCancellingTestScope() = testResultMap({
+        try {
+            it()
+            fail("unreached")
+        } catch (e: CancellationException) {
+            // expected
+        }
+    }) {
+        runTest {
+            cancel(CancellationException("Oh no", TestException()))
+        }
+    }
 }
