@@ -178,6 +178,7 @@ private class LazyActorCoroutine<E>(
         return super.trySend(element)
     }
 
+    @Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING") // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
     override fun close(cause: Throwable?): Boolean {
         // close the channel _first_
         val closed = super.close(cause)

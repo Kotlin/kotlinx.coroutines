@@ -136,6 +136,7 @@ public class ConflatedBroadcastChannel<E> private constructor(
  *
  * This channel is created by `BroadcastChannel(capacity)` factory function invocation.
  */
+@Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING", "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE_DEPRECATION_WARNING") // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
 internal class BroadcastChannelImpl<E>(
     /**
      * Buffer capacity; [Channel.CONFLATED] when this broadcast is conflated.
