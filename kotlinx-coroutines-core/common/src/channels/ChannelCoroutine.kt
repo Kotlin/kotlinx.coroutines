@@ -21,12 +21,14 @@ internal open class ChannelCoroutine<E>(
         cancelInternal(defaultCancellationException())
     }
 
+    @Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_ERROR")
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     final override fun cancel(cause: Throwable?): Boolean {
         cancelInternal(defaultCancellationException())
         return true
     }
 
+    @Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_ERROR")
     final override fun cancel(cause: CancellationException?) {
         if (isCancelled) return // Do not create an exception if the coroutine (-> the channel) is already cancelled
         cancelInternal(cause ?: defaultCancellationException())
