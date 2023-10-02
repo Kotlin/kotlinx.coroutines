@@ -223,7 +223,7 @@ abstract class SequentialIntChannelBase(private val capacity: Int) {
         if (buffer.isNotEmpty()) {
             val el = buffer.removeAt(0)
             resumeFirstSender().also {
-                if (it !== null) buffer.add(it)
+                if (it != null) buffer.add(it)
             }
             return el
         }
