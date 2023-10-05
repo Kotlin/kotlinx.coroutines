@@ -12,7 +12,7 @@ import kotlinx.atomicfu.locks.withLock as withLock2
  */
 @InternalCoroutinesApi
 // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER")
+@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER_WARNING")
 public actual typealias SynchronizedObject = kotlinx.atomicfu.locks.SynchronizedObject
 
 /**
