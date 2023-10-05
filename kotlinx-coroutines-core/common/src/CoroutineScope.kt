@@ -90,7 +90,7 @@ public interface CoroutineScope {
  * Adds the specified coroutine context to this scope, overriding existing elements in the current
  * scope's context with the corresponding keys.
  *
- * This is a shorthand for `CoroutineScope(thisScope + context)`.
+ * This is a shorthand for `CoroutineScope(thisScope.coroutineContext + context)`.
  */
 public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineScope =
     ContextScope(coroutineContext + context)
