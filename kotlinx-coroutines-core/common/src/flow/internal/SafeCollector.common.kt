@@ -67,6 +67,8 @@ internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
         if (emissionParentJob !== collectJob) {
             error(
                 "Flow invariant is violated:\n" +
+                        "\t\tCold flows doesn't allow to emit() concurrently.\n" +
+                        "\t\tMake sure no emit() is called concurrently.\n" +
                         "\t\tEmission from another coroutine is detected.\n" +
                         "\t\tChild of $emissionParentJob, expected child of $collectJob.\n" +
                         "\t\tFlowCollector is not thread-safe and concurrent emissions are prohibited.\n" +
