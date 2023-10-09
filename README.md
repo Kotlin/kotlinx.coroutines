@@ -36,7 +36,7 @@ suspend fun main() = coroutineScope {
   * [select] expression support and more.
 * [core/jvm](kotlinx-coroutines-core/jvm/) &mdash; additional core features available on Kotlin/JVM:
   * [Dispatchers.IO] dispatcher for blocking coroutines;
-  * [Executor.asCoroutineDispatcher][asCoroutineDispatcher] extension, custom thread pools, and more.
+  * [Executor.asCoroutineDispatcher][asCoroutineDispatcher] extension, custom thread pools, and more;
   * Integrations with `CompletableFuture` and JVM-specific extensions.
 * [core/js](kotlinx-coroutines-core/js/) &mdash; additional core features available on Kotlin/JS:
   * Integration with `Promise` via [Promise.await] and [promise] builder;
