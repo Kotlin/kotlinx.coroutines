@@ -413,6 +413,8 @@ class RunTestTest {
      * Tests that [runTest] cleans up the exception handler even if it threw on initialization.
      *
      * This test must be run manually, because it writes garbage to the log.
+     *
+     * The JVM-only source set contains a test equivalent to this one that isn't ignored.
      */
     @Test
     @Ignore

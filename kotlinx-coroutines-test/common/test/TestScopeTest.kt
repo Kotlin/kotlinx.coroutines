@@ -495,9 +495,11 @@ class TestScopeTest {
      * Tests that the [TestScope] exception reporting mechanism will report the exceptions that happen between
      * different tests.
      *
-     * This test must be ran manually, because such exceptions still go through the global exception handler
+     * This test must be run manually, because such exceptions still go through the global exception handler
      * (as there's no guarantee that another test will happen), and the global exception handler will
      * log the exceptions or, on Native, crash the test suite.
+     *
+     * The JVM-only source set contains a test equivalent to this one that isn't ignored.
      */
     @Test
     @Ignore
