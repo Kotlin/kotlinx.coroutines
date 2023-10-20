@@ -951,8 +951,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      *
      * If it returns `false` then there is no children to wait for and it's safe to finalize the final job's state.
      * Note that at this point, new children can appear:
-     * * For `cancelling` state they are immediately cancelled.
-     * * For `completing` state they are not cancelled and left hanging out to dry.
+     * * If the state is `cancelling`, they are immediately cancelled.
+     * * If the state is `completing`, they are not cancelled; instead, we observe an inconsistent state where their parent is completed and doesn't store references to the children, but they are still active.
      */
     private tailrec fun tryWaitForChildren(state: Finishing, child: ChildHandleNode, proposedUpdate: Any?): Boolean {
         val handle = child.childJob.invokeOnCompletion(
