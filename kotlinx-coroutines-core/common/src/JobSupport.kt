@@ -943,7 +943,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         state as? ChildHandleNode ?: state.list?.nextChild()
 
     /**
-     * This method is invoked by the JobSupport lifecycle when it transitions into "completing" state (also includes "cancelling"),
+     * This method is invoked by the JobSupport lifecycle when it transitions into "finishing" state,
      * and in order to be transitioned into its final state it has to wait for all the children.
      * If this method returns `true` then the current job is waiting for its children.
      * It's done via an addition of a special completion handler to the child that, when invoked, invokes
