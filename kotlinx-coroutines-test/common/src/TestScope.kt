@@ -239,6 +239,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
             uncaughtExceptions
         }
         if (exceptions.isNotEmpty()) {
+            ExceptionCollector.removeOnExceptionCallback(lock)
             throw UncaughtExceptionsBeforeTest().apply {
                 for (e in exceptions)
                     addSuppressed(e)

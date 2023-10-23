@@ -408,4 +408,69 @@ class RunTestTest {
     fun testCoroutineCompletingWithoutDispatch() = runTest(timeout = Duration.INFINITE) {
         launch(Dispatchers.Default) { delay(100) }
     }
+
+    /**
+     * Tests that [runTest] cleans up the exception handler even if it threw on initialization.
+     *
+     * This test must be run manually, because it writes garbage to the log.
+     *
+     * The JVM-only source set contains a test equivalent to this one that isn't ignored.
+     */
+    @Test
+    @Ignore
+    fun testExceptionCaptorCleanedUpOnPreliminaryExit(): TestResult = testResultChain({
+        // step 1: installing the exception handler
+        println("step 1")
+        runTest { }
+    }, {
+        it.getOrThrow()
+        // step 2: throwing an uncaught exception to be caught by the exception-handling system
+        println("step 2")
+        createTestResult {
+            launch(NonCancellable) { throw TestException("A") }
+        }
+    }, {
+        it.getOrThrow()
+        // step 3: trying to run a test should immediately fail, even before entering the test body
+        println("step 3")
+        try {
+            runTest {
+                fail("unreached")
+            }
+            fail("unreached")
+        } catch (e: UncaughtExceptionsBeforeTest) {
+            val cause = e.suppressedExceptions.single()
+            assertIs<TestException>(cause)
+            assertEquals("A", cause.message)
+        }
+        // step 4: trying to run a test again should not fail with an exception
+        println("step 4")
+        runTest {
+        }
+    }, {
+        it.getOrThrow()
+        // step 5: throwing an uncaught exception to be caught by the exception-handling system, again
+        println("step 5")
+        createTestResult {
+            launch(NonCancellable) { throw TestException("B") }
+        }
+    }, {
+        it.getOrThrow()
+        // step 6: trying to run a test should immediately fail, again
+        println("step 6")
+        try {
+            runTest {
+                fail("unreached")
+            }
+            fail("unreached")
+        } catch (e: Exception) {
+            val cause = e.suppressedExceptions.single()
+            assertIs<TestException>(cause)
+            assertEquals("B", cause.message)
+        }
+        // step 7: trying to run a test again should not fail with an exception, again
+        println("step 7")
+        runTest {
+        }
+    })
 }
