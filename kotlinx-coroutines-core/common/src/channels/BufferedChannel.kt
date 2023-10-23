@@ -1582,7 +1582,12 @@ internal open class BufferedChannel<E>(
          * When [hasNext] suspends, this field stores the corresponding
          * continuation. The [tryResumeHasNext] and [tryResumeHasNextOnClosedChannel]
          * function resume this continuation when the [hasNext] invocation should complete.
+         *
+         * This property is the subject to bening data race:
+         * It is nulled-out on both completion and cancellation paths that
+         * could happen concurrently.
          */
+        @BenignDataRace
         private var continuation: CancellableContinuationImpl<Boolean>? = null
 
         // `hasNext()` is just a special receive operation.

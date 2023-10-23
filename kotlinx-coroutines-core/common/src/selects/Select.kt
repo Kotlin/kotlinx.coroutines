@@ -372,7 +372,12 @@ internal open class SelectImplementation<R>(
 
     /**
      * List of clauses waiting on this `select` instance.
+     *
+     * This property is the subject to bening data race: concurrent cancellation might null-out this property
+     * while [trySelect] operation reads it and iterates over its content.
+     * A logical race is resolved by the consensus on [state] property.
      */
+    @BenignDataRace
     private var clauses: MutableList<ClauseData>? = ArrayList(2)
 
     /**
@@ -407,7 +412,13 @@ internal open class SelectImplementation<R>(
      * one that stores either result when the clause is successfully registered ([inRegistrationPhase] is `true`),
      * or [DisposableHandle] instance when the clause is completed during registration ([inRegistrationPhase] is `false`).
      * Yet, this optimization is omitted for code simplicity.
+     *
+     * This property is the subject to benign data race:
+     * [Cleanup][cleanup] procedure can be invoked both as part of the completion sequence
+     * and as a cancellation handler triggered by an external cancellation.
+     * In both scenarios, [NO_RESULT] is written to this property via race.
      */
+    @BenignDataRace
     private var internalResult: Any? = NO_RESULT
 
     /**
@@ -621,9 +632,8 @@ internal open class SelectImplementation<R>(
                         // try to resume the continuation.
                         this.internalResult = internalResult
                         if (cont.tryResume(onCancellation)) return TRY_SELECT_SUCCESSFUL
-                        // If the resumption failed, we need to clean
-                        // the [result] field to avoid memory leaks.
-                        this.internalResult = null
+                        // If the resumption failed, we need to clean the [result] field to avoid memory leaks.
+                        this.internalResult = NO_RESULT
                         return TRY_SELECT_CANCELLED
                     }
                 }
