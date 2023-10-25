@@ -398,14 +398,14 @@ private class ReadonlyStateFlow<T>(
  *
  * The receiver of the [action] is [FlowCollector], so `onSubscription` can emit additional elements.
  */
-public fun <T> SharedFlow<T>.onSubscription(action: suspend FlowCollector<T>.() -> Unit): SharedFlow<T> =
+public fun <T : R, R> SharedFlow<T>.onSubscription(action: suspend FlowCollector<R>.() -> Unit): SharedFlow<R> =
     SubscribedSharedFlow(this, action)
 
-private class SubscribedSharedFlow<T>(
+private class SubscribedSharedFlow<T : R, R>(
     private val sharedFlow: SharedFlow<T>,
-    private val action: suspend FlowCollector<T>.() -> Unit
-) : SharedFlow<T> by sharedFlow {
-    override suspend fun collect(collector: FlowCollector<T>) =
+    private val action: suspend FlowCollector<R>.() -> Unit
+) : SharedFlow<R> by sharedFlow {
+    override suspend fun collect(collector: FlowCollector<R>) =
         sharedFlow.collect(SubscribedFlowCollector(collector, action))
 }
 
