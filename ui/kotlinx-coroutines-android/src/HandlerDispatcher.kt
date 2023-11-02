@@ -127,11 +127,8 @@ internal class HandlerContext private constructor(
         name: String? = null
     ) : this(handler, name, false)
 
-    @Volatile
-    private var _immediate: HandlerContext? = if (invokeImmediately) this else null
-
-    override val immediate: HandlerContext = _immediate ?:
-        HandlerContext(handler, name, true).also { _immediate = it }
+    override val immediate: HandlerContext = if (invokeImmediately) this else
+        HandlerContext(handler, name, true)
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         return !invokeImmediately || Looper.myLooper() != handler.looper
