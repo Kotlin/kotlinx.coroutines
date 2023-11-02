@@ -168,4 +168,20 @@ class SemaphoreTest : TestBase() {
         assertFailsWith<IllegalArgumentException> { Semaphore(1, -1) }
         assertFailsWith<IllegalArgumentException> { Semaphore(1, 2) }
     }
+
+    @Test
+    fun testWithPermitJsMiscompilation() = runTest {
+        // This is a reproducer for KT-58685
+        // On Kotlin/JS IR, the compiler miscompiles calls to 'release' in an inlined finally
+        // This is visible on the withPermit function
+        // Until the compiler bug is fixed, this test case checks that we do not suffer from it
+        val semaphore = Semaphore(1)
+        assertFailsWith<IndexOutOfBoundsException> {
+            try {
+                semaphore.withPermit { null } ?: throw IndexOutOfBoundsException() // should throw…
+            } catch (e: Exception) {
+                throw e // …but instead fails here
+            }
+        }
+    }
 }

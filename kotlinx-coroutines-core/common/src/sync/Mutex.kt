@@ -122,12 +122,18 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
         callsInPlace(action, InvocationKind.EXACTLY_ONCE)
     }
 
+    // Cannot use 'finally' in this function because of KT-58685
+    // See kotlinx.coroutines.sync.MutexTest.testWithLockJsMiscompilation
+
     lock(owner)
-    try {
-        return action()
-    } finally {
+    val result = try {
+        action()
+    } catch (e: Throwable) {
         unlock(owner)
+        throw e
     }
+    unlock(owner)
+    return result
 }
 
 
