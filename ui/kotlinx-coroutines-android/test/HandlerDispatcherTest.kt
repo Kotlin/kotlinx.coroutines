@@ -132,4 +132,11 @@ class HandlerDispatcherTest : TestBase() {
         mainLooper.scheduler.advanceBy(51, TimeUnit.MILLISECONDS)
         finish(5)
     }
+
+    @Test
+    fun testHandlerDispatcherNotEqualToImmediate() {
+        val main = AndroidDispatcherFactory().createDispatcher(listOf())
+        val immediate = main.immediate
+        assertNotEquals(main, immediate)
+    }
 }

@@ -169,8 +169,9 @@ internal class HandlerContext private constructor(
         if (invokeImmediately) "$str.immediate" else str
     }
 
-    override fun equals(other: Any?): Boolean = other is HandlerContext && other.handler === handler
-    override fun hashCode(): Int = System.identityHashCode(handler)
+    override fun equals(other: Any?): Boolean =
+        other is HandlerContext && other.handler === handler && other.invokeImmediately == invokeImmediately
+    override fun hashCode(): Int = System.identityHashCode(handler) xor invokeImmediately.hashCode()
 }
 
 @Volatile
