@@ -11,96 +11,35 @@ import javax.swing.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class SwingTest : TestBase() {
+class SwingTest : MainDispatcherTestBase() {
     @Before
     fun setup() {
         ignoreLostThreads("AWT-EventQueue-")
     }
 
+    override fun checkIsMainThread() { check(SwingUtilities.isEventDispatchThread()) }
+
+
+    /** Tests that the Main dispatcher is in fact the JavaFx one. */
     @Test
-    fun testDelay() = runBlocking {
+    fun testMainIsJavaFx() {
+        assertSame(Dispatchers.Swing, Dispatchers.Main)
+    }
+
+    /** similar to [MainDispatcherTestBase.testDelay], but also uses `invokeLater` */
+    @Test
+    fun testDelayWithInvokeLater() = runBlocking {
         expect(1)
         SwingUtilities.invokeLater { expect(2) }
-        val job = launch(Dispatchers.Swing) {
-            check(SwingUtilities.isEventDispatchThread())
+        val job = launch(Dispatchers.Main) {
+            checkIsMainThread()
             expect(3)
             SwingUtilities.invokeLater { expect(4) }
             delay(100)
-            check(SwingUtilities.isEventDispatchThread())
+            checkIsMainThread()
             expect(5)
         }
         job.join()
         finish(6)
-    }
-
-    private class SwingComponent(coroutineContext: CoroutineContext = EmptyCoroutineContext) :
-        CoroutineScope by MainScope() + coroutineContext
-    {
-        public var executed = false
-        fun testLaunch(): Job = launch {
-            check(SwingUtilities.isEventDispatchThread())
-            executed = true
-        }
-        fun testFailure(): Job = launch {
-            check(SwingUtilities.isEventDispatchThread())
-            throw TestException()
-        }
-        fun testCancellation() : Job = launch(start = CoroutineStart.ATOMIC) {
-            check(SwingUtilities.isEventDispatchThread())
-            delay(Long.MAX_VALUE)
-        }
-    }
-
-    @Test
-    fun testLaunchInMainScope() = runTest {
-        val component = SwingComponent()
-        val job = component.testLaunch()
-        job.join()
-        assertTrue(component.executed)
-        component.cancel()
-        component.coroutineContext[Job]!!.join()
-    }
-
-    @Test
-    fun testFailureInMainScope() = runTest {
-        var exception: Throwable? = null
-        val component = SwingComponent(CoroutineExceptionHandler { ctx, e ->  exception = e})
-        val job = component.testFailure()
-        job.join()
-        assertTrue(exception!! is TestException)
-        component.cancel()
-        join(component)
-    }
-
-    @Test
-    fun testCancellationInMainScope() = runTest {
-        val component = SwingComponent()
-        component.cancel()
-        component.testCancellation().join()
-        join(component)
-    }
-
-    private suspend fun join(component: SwingComponent) {
-        component.coroutineContext[Job]!!.join()
-    }
-
-    @Test
-    fun testImmediateDispatcherYield() = runBlocking(Dispatchers.Swing) {
-        expect(1)
-        // launch in the immediate dispatcher
-        launch(Dispatchers.Swing.immediate) {
-            expect(2)
-            yield()
-            expect(4)
-        }
-        expect(3) // after yield
-        yield() // yield back
-        finish(5)
-    }
-
-    @Test
-    fun testMainDispatcherToString() {
-        assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
-        assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
     }
 }

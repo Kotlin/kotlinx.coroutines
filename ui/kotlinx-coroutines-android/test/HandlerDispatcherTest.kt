@@ -17,27 +17,7 @@ import kotlin.test.*
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [28])
 @LooperMode(LooperMode.Mode.LEGACY)
-class HandlerDispatcherTest : TestBase() {
-    @Test
-    fun testImmediateDispatcherYield() = runBlocking(Dispatchers.Main) {
-        expect(1)
-        // launch in the immediate dispatcher
-        launch(Dispatchers.Main.immediate) {
-            expect(2)
-            yield()
-            expect(4)
-        }
-        expect(3) // after yield
-        yield() // yield back
-        finish(5)
-    }
-
-    @Test
-    fun testMainDispatcherToString() {
-        assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
-        assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
-    }
-
+class HandlerDispatcherTest : MainDispatcherTestBase() {
     @Test
     fun testDefaultDelayIsNotDelegatedToMain() = runTest {
         val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
@@ -131,12 +111,5 @@ class HandlerDispatcherTest : TestBase() {
         expect(3)
         mainLooper.scheduler.advanceBy(51, TimeUnit.MILLISECONDS)
         finish(5)
-    }
-
-    @Test
-    fun testHandlerDispatcherNotEqualToImmediate() {
-        val main = AndroidDispatcherFactory().createDispatcher(listOf())
-        val immediate = main.immediate
-        assertNotEquals(main, immediate)
     }
 }

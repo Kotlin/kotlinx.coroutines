@@ -6,7 +6,7 @@ package kotlinx.coroutines
 
 import kotlin.test.*
 
-class ImmediateDispatcherTest : TestBase() {
+class ImmediateDispatcherTest : MainDispatcherTestBase(Dispatchers.Main) {
 
     @Test
     fun testImmediate() = runTest {
