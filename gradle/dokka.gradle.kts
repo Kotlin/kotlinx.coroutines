@@ -9,14 +9,6 @@ import java.net.*
 apply<DokkaPlugin>()
 //apply<JavaPlugin>()
 
-fun GradleDokkaSourceSetBuilder.makeLinkMapping(projectDir: File) {
-    sourceLink {
-        val relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
-        localDirectory.set(projectDir.resolve("src"))
-        remoteUrl.set(URL("https://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"))
-        remoteLineSuffix.set("#L")
-    }
-}
 
 val knit_version: String by project
 tasks.withType(DokkaTaskPartial::class).configureEach {
@@ -45,25 +37,14 @@ tasks.withType(DokkaTaskPartial::class).configureEach {
     }
 }
 
-if (project.name == "kotlinx-coroutines-core") {
-    // Custom configuration for MPP modules
-    tasks.withType(DokkaTaskPartial::class).configureEach {
-        dokkaSourceSets {
-            val commonMain by getting {
-                makeLinkMapping(project.file("common"))
-            }
-
-            val nativeMain by getting {
-                makeLinkMapping(project.file("native"))
-            }
-
-            val jsMain by getting {
-                makeLinkMapping(project.file("js"))
-            }
-
-            val jvmMain by getting {
-                makeLinkMapping(project.file("jvm"))
-            }
+// Custom configuration for MPP modules
+tasks.withType(DokkaTaskPartial::class).configureEach {
+    dokkaSourceSets.configureEach {
+        sourceLink {
+            val relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
+            localDirectory.set(projectDir.resolve("src"))
+            remoteUrl.set(URL("https://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"))
+            remoteLineSuffix.set("#L")
         }
     }
 }
