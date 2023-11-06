@@ -276,10 +276,6 @@ fun main() = runBlocking {
 >
 {type="note"}
 
-> Note: This above code will work properly only on JDK7+ that supports `suppressed` exceptions
->
-{type="note"}
-
 The output of this code is:
 
 ```text
