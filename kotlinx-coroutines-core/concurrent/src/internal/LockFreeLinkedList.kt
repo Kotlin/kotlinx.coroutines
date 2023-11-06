@@ -42,11 +42,7 @@ internal val CONDITION_FALSE: Any = Symbol("CONDITION_FALSE")
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-@Suppress(
-    "LeakingThis",
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    "ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER_WARNING"
-)
+@Suppress("LeakingThis")
 @InternalCoroutinesApi
 public actual open class LockFreeLinkedListNode {
     private val _next = atomic<Any>(this) // Node | Removed | OpDescriptor
@@ -72,20 +68,14 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING")
     @PublishedApi
     internal inline fun makeCondAddOp(node: Node, crossinline condition: () -> Boolean): CondAddOp =
         object : CondAddOp(node) {
             override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
         }
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("MODALITY_CHANGED_IN_NON_FINAL_EXPECT_CLASSIFIER_ACTUALIZATION_WARNING")
     public actual open val isRemoved: Boolean get() = next is Removed
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING")
     // LINEARIZABLE. Returns Node | Removed
     public val next: Any get() {
         _next.loop { next ->
@@ -176,8 +166,6 @@ public actual open class LockFreeLinkedListNode {
      *  Where `==>` denotes linearization point.
      *  Returns `false` if `next` was not following `this` node.
      */
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING")
     @PublishedApi
     internal fun addNext(node: Node, next: Node): Boolean {
         node._prev.lazySet(this)
@@ -188,8 +176,6 @@ public actual open class LockFreeLinkedListNode {
         return true
     }
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING")
     // returns UNDECIDED, SUCCESS or FAILURE
     @PublishedApi
     internal fun tryCondAddNext(node: Node, next: Node, condAdd: CondAddOp): Int {
@@ -213,8 +199,6 @@ public actual open class LockFreeLinkedListNode {
     public actual open fun remove(): Boolean =
         removeOrNext() == null
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING")
     // returns null if removed successfully or next node if this node is already removed
     @PublishedApi
     internal fun removeOrNext(): Node? {
@@ -271,8 +255,6 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING")
     protected open fun nextIfRemoved(): Node? = (next as? Removed)?.ref
 
     /**
@@ -329,8 +311,6 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING")
     internal fun validateNode(prev: Node, next: Node) {
         assert { prev === this._prev.value }
         assert { next === this._next.value }
@@ -351,8 +331,6 @@ internal fun Any.unwrap(): Node = (this as? Removed)?.ref ?: this as Node
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-// fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-@Suppress("ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER_WARNING")
 public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     public actual val isEmpty: Boolean get() = next === this
 
@@ -373,12 +351,8 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     // optimization: because head is never removed, we don't have to read _next.value to check these:
     override val isRemoved: Boolean get() = false
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION")
     override fun nextIfRemoved(): Node? = null
 
-    // fixme replace the suppress with AllowDifferentMembersInActual once stdlib is updated to 1.9.20 https://github.com/Kotlin/kotlinx.coroutines/issues/3846
-    @Suppress("NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING")
     internal fun validate() {
         var prev: Node = this
         var cur: Node = next as Node
