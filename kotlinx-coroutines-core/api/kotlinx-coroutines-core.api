@@ -321,7 +321,7 @@ public abstract interface annotation class kotlinx/coroutines/DelicateCoroutines
 }
 
 public final class kotlinx/coroutines/DispatchedCoroutine {
-	public static final fun get_decision$FU ()Ljava/util/concurrent/atomic/AtomicIntegerFieldUpdater;
+	public static final synthetic fun get_decision$volatile$FU$kotlinx_coroutines_core ()Ljava/util/concurrent/atomic/AtomicIntegerFieldUpdater;
 }
 
 public abstract class kotlinx/coroutines/DispatchedTask : kotlinx/coroutines/scheduling/Task {
