@@ -26,13 +26,8 @@ abstract class MainDispatcherTestBase: TestBase() {
     /** Tests the [toString] behavior of [Dispatchers.Main] and [MainCoroutineDispatcher.immediate] */
     @Test
     fun testMainDispatcherToString() {
-        // TODO: workaround for not having module-info.java for the `test` source set
-        if (Dispatchers.Main.toString() != "Dispatchers.Main") {
-            throw AssertionError("Expected Dispatchers.Main, but had ${Dispatchers.Main}")
-        }
-        if (Dispatchers.Main.immediate.toString() != "Dispatchers.Main.immediate") {
-            throw AssertionError("Expected Dispatchers.Main.immediate, but had ${Dispatchers.Main.immediate}")
-        }
+        assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
+        assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
     }
 
     /** Tests that the tasks scheduled earlier from [MainCoroutineDispatcher.immediate] will be executed earlier,
@@ -54,10 +49,7 @@ abstract class MainDispatcherTestBase: TestBase() {
     /** Tests that [Dispatchers.Main] and its [MainCoroutineDispatcher.immediate] are treated as different values. */
     @Test
     fun testHandlerDispatcherNotEqualToImmediate() {
-        // TODO: workaround for not having module-info.java for the `test` source set
-        if (Dispatchers.Main == Dispatchers.Main.immediate) {
-            throw AssertionError("Expected Dispatchers.Main and Dispatchers.Main.immediate not to be equal")
-        }
+        assertNotEquals(Dispatchers.Main, Dispatchers.Main.immediate)
     }
 
     /** Tests that after a delay, the execution gets back to the main thread. */
