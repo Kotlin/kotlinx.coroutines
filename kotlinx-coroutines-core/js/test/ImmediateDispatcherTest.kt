@@ -4,14 +4,17 @@
 
 package kotlinx.coroutines
 
+import kotlin.coroutines.*
 import kotlin.test.*
 
-class ImmediateDispatcherTest : MainDispatcherTestBase(Dispatchers.Main) {
+class ImmediateDispatcherTest : MainDispatcherTestBase() {
 
+    /** Tests that entering [MainCoroutineDispatcher.immediate] takes priority even outside [Dispatchers.Main]. */
     @Test
     fun testImmediate() = runTest {
         expect(1)
         val job = launch { expect(3) }
+        assertTrue(Dispatchers.Main.immediate.isDispatchNeeded(currentCoroutineContext()))
         withContext(Dispatchers.Main.immediate) {
             expect(2)
         }
@@ -28,5 +31,11 @@ class ImmediateDispatcherTest : MainDispatcherTestBase(Dispatchers.Main) {
         }
         job.join()
         finish(4)
+    }
+
+    override fun isMainThread(): Boolean? = null
+
+    override fun scheduleOnMainQueue(block: () -> Unit) {
+        Dispatchers.Default.dispatch(EmptyCoroutineContext, Runnable { block() })
     }
 }

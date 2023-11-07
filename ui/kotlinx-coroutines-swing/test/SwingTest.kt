@@ -17,29 +17,15 @@ class SwingTest : MainDispatcherTestBase() {
         ignoreLostThreads("AWT-EventQueue-")
     }
 
-    override fun checkIsMainThread() { check(SwingUtilities.isEventDispatchThread()) }
+    override fun isMainThread() = SwingUtilities.isEventDispatchThread()
 
+    override fun scheduleOnMainQueue(block: () -> Unit) {
+        SwingUtilities.invokeLater { block() }
+    }
 
     /** Tests that the Main dispatcher is in fact the JavaFx one. */
     @Test
     fun testMainIsJavaFx() {
         assertSame(Dispatchers.Swing, Dispatchers.Main)
-    }
-
-    /** similar to [MainDispatcherTestBase.testDelay], but also uses `invokeLater` */
-    @Test
-    fun testDelayWithInvokeLater() = runBlocking {
-        expect(1)
-        SwingUtilities.invokeLater { expect(2) }
-        val job = launch(Dispatchers.Main) {
-            checkIsMainThread()
-            expect(3)
-            SwingUtilities.invokeLater { expect(4) }
-            delay(100)
-            checkIsMainThread()
-            expect(5)
-        }
-        job.join()
-        finish(6)
     }
 }

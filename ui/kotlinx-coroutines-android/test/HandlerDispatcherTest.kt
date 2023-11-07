@@ -15,8 +15,8 @@ import java.util.concurrent.*
 import kotlin.test.*
 
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE, sdk = [28])
 @LooperMode(LooperMode.Mode.LEGACY)
+@Config(manifest = Config.NONE, sdk = [28])
 class HandlerDispatcherTest : MainDispatcherTestBase() {
     @Test
     fun testDefaultDelayIsNotDelegatedToMain() = runTest {
@@ -111,5 +111,11 @@ class HandlerDispatcherTest : MainDispatcherTestBase() {
         expect(3)
         mainLooper.scheduler.advanceBy(51, TimeUnit.MILLISECONDS)
         finish(5)
+    }
+
+    override fun isMainThread(): Boolean = Looper.getMainLooper().thread === Thread.currentThread()
+
+    override fun scheduleOnMainQueue(block: () -> Unit) {
+        Handler(Looper.getMainLooper()).post(block)
     }
 }

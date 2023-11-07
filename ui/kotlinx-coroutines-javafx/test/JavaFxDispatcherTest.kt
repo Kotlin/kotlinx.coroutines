@@ -8,6 +8,7 @@ import javafx.application.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
+import javax.swing.*
 import kotlin.test.*
 
 class JavaFxDispatcherTest : MainDispatcherTestBase() {
@@ -24,7 +25,11 @@ class JavaFxDispatcherTest : MainDispatcherTestBase() {
         return false
     }
 
-    override fun checkIsMainThread() { check(Platform.isFxApplicationThread()) }
+    override fun isMainThread() = Platform.isFxApplicationThread()
+
+    override fun scheduleOnMainQueue(block: () -> Unit) {
+        Platform.runLater { block() }
+    }
 
     /** Tests that the Main dispatcher is in fact the JavaFx one. */
     @Test
