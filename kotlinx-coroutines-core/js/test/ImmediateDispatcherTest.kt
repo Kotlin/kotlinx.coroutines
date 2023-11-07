@@ -9,13 +9,12 @@ import kotlin.test.*
 
 class ImmediateDispatcherTest : MainDispatcherTestBase() {
 
-    /** Tests that entering [MainCoroutineDispatcher.immediate] takes priority even outside [Dispatchers.Main]. */
+    /** Tests that [MainCoroutineDispatcher.immediate] doesn't require dispatches from the test context. */
     @Test
-    @Ignore // TODO: started failing for some reason
     fun testImmediate() = runTest {
         expect(1)
         val job = launch { expect(3) }
-        assertTrue(Dispatchers.Main.immediate.isDispatchNeeded(currentCoroutineContext()))
+        assertFalse(Dispatchers.Main.immediate.isDispatchNeeded(currentCoroutineContext()))
         withContext(Dispatchers.Main.immediate) {
             expect(2)
         }
