@@ -15,9 +15,12 @@ abstract class MainDispatcherTestBase: TestBase() {
     open fun checkNotMainThread() {}
 
     /** Runs the given block as a test, unless [shouldSkipTesting] indicates that the environment is not suitable. */
-    fun runTestOrSkip(block: suspend CoroutineScope.() -> Unit) {
-        if (shouldSkipTesting()) return
-        runTest(block = block)
+    fun runTestOrSkip(block: suspend CoroutineScope.() -> Unit): TestResult {
+        // written as a block body to make the need to return `TestResult` explicit
+        return runTest {
+            if (shouldSkipTesting()) return@runTest
+            block()
+        }
     }
 
     /** Tests the [toString] behavior of [Dispatchers.Main] and [MainCoroutineDispatcher.immediate] */
