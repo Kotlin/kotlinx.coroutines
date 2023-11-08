@@ -6,12 +6,19 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlin.js.*
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
-public actual typealias TestResult = Promise<Unit>
+@JsName("Promise")
+public external class MyPromise {
+    public fun then(onFulfilled: ((Unit) -> Unit), onRejected: ((Throwable) -> Unit)): MyPromise
+    public fun then(onFulfilled: ((Unit) -> Unit)): MyPromise
+}
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
+public actual typealias TestResult = MyPromise
+
+@Suppress("CAST_NEVER_SUCCEEDS") // 'external' + JsName false-positive suppress
 internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() -> Unit): TestResult =
     GlobalScope.promise {
         testProcedure()
-    }
+    } as MyPromise
 
 internal actual fun dumpCoroutines() { }
