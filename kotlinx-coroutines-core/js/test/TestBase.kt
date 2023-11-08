@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
@@ -10,8 +10,14 @@ public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 public actual val stressTestMultiplierSqrt: Int = 1
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
-public actual typealias TestResult = Promise<Unit>
+@JsName("Promise")
+public external class MyPromise {
+    fun then(onFulfilled: ((Unit) -> Unit), onRejected: ((Throwable) -> Unit)): MyPromise
+    fun then(onFulfilled: ((Unit) -> Unit)): MyPromise
+}
+
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
+public actual typealias TestResult = MyPromise
 
 public actual val isNative = false
 
@@ -29,7 +35,8 @@ public actual open class TestBase actual constructor() {
     public actual fun error(message: Any, cause: Throwable?): Nothing {
         if (cause != null) console.log(cause)
         val exception = IllegalStateException(
-            if (cause == null) message.toString() else "$message; caused by $cause")
+            if (cause == null) message.toString() else "$message; caused by $cause"
+        )
         if (error == null) error = exception
         throw exception
     }
@@ -113,6 +120,7 @@ public actual open class TestBase actual constructor() {
             when {
                 exCount > unhandled.size ->
                     printError("Too many unhandled exceptions $exCount, expected ${unhandled.size}, got: $e", e)
+
                 !unhandled[exCount - 1](e) ->
                     printError("Unhandled exception was unexpected: $e", e)
             }
@@ -131,7 +139,8 @@ public actual open class TestBase actual constructor() {
             check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
         }
         lastTestPromise = result
-        return result
+        @Suppress("CAST_NEVER_SUCCEEDS") // 'external' + JsName false-positive suppress
+        return result as MyPromise
     }
 }
 

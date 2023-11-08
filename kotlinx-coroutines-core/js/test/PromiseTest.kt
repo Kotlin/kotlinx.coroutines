@@ -84,6 +84,6 @@ class PromiseTest : TestBase() {
         }
         return result.then {
             if (seq != 1) error("Unexpected result: $seq")
-        }
+        }.unsafeCast<TestResult>()
     }
 }
