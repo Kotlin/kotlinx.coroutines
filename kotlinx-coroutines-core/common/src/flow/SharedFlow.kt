@@ -231,7 +231,11 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      *     .launchIn(scope) // launch it
      * ```
      *
-     * Implementation note: the resulting flow **does not** conflate subscription count.
+     * Usually, [StateFlow] conflates values, but [subscriptionCount] is not conflated.
+     * This is done so that any subscribers that need to be notified when subscribers appear do
+     * reliably observe it. With conflation, if a single subscriber appeared and immediately left, those
+     * collecting [subscriptionCount] could fail to notice it due to `0` immediately conflating the
+     * subscription count.
      */
     public val subscriptionCount: StateFlow<Int>
 
