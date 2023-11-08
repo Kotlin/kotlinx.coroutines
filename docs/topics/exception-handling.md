@@ -9,7 +9,7 @@ coroutine throw an exception.
 
 ## Exception propagation
 
-Coroutine builders come in two flavors: propagating exceptions automatically ([launch] and [actor]) or
+Coroutine builders come in two flavors: propagating exceptions automatically ([launch]) or
 exposing them to users ([async] and [produce]).
 When these builders are used to create a _root_ coroutine, that is not a _child_ of another coroutine,
 the former builders treat exceptions as **uncaught** exceptions, similar to Java's `Thread.uncaughtExceptionHandler`,
@@ -519,7 +519,6 @@ The scope is completed
 
 <!--- INDEX kotlinx.coroutines.channels -->
 
-[actor]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html
 [produce]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/produce.html
 [ReceiveChannel.receive]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/receive.html
 
