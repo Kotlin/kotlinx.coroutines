@@ -26,8 +26,7 @@ javafx {
 tasks {
     test {
         extensions.configure(org.javamodularity.moduleplugin.extensions.TestModuleOptions::class) {
-            addReads["kotlinx.coroutines.core"] = "junit"
-            addReads["kotlinx.coroutines.core"] = "kotlin.test"
+            addReads["kotlinx.coroutines.core"] = "junit,kotlin.test"
             addReads["kotlinx.coroutines.javafx"] = "kotlin.test"
         }
         jvmArgs = listOf(
