@@ -10,14 +10,9 @@ public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 public actual val stressTestMultiplierSqrt: Int = 1
 
-@JsName("Promise")
-public external class MyPromise {
-    fun then(onFulfilled: ((Unit) -> Unit), onRejected: ((Throwable) -> Unit)): MyPromise
-    fun then(onFulfilled: ((Unit) -> Unit)): MyPromise
-}
-
-@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-public actual typealias TestResult = MyPromise
+public actual class TestResult(
+    executor: (resolve: (Unit) -> Unit, reject: (Throwable) -> Unit) -> Unit
+) : Promise<Unit>(executor)
 
 public actual val isNative = false
 
@@ -140,7 +135,7 @@ public actual open class TestBase actual constructor() {
         }
         lastTestPromise = result
         @Suppress("CAST_NEVER_SUCCEEDS") // 'external' + JsName false-positive suppress
-        return result as MyPromise
+        return result.unsafeCast<TestResult>()
     }
 }
 
