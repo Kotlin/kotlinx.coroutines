@@ -29,7 +29,7 @@ private val emitFun =
  * The safe collector implements [ContinuationImpl] to pretend it *is* a state-machine of its own `emit` method.
  * It is [ContinuationImpl] and not any other [Continuation] subclass because only [ContinuationImpl] supports `intercepted()` caching.
  * This is the most performance-sensitive place in the overall flow pipeline, because otherwise safe collector is forced to allocate
- * a state machine on each element being emitted, for an each intermediate stage where safe collector is present.
+ * a state machine on each element being emitted for each intermediate stage where the safe collector is present.
  *
  * See a comment to [emit] for the explanation of what and how is being optimized.
  */
