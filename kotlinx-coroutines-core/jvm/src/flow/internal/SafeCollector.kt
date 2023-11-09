@@ -96,7 +96,7 @@ internal actual class SafeCollector<T> actual constructor(
 
     /**
      * Here we use the following trick:
-     * - Proceed with all checks required
+     * - Perform all the required checks
      * - Having a non-intercepted, non-cancellable caller's `uCont`, we leverage our implementation knowledge
      *   and invoke `collector.emit(T)` as `collector.emit(value: T, completion: Continuation), passing `this`
      *   as the completion. We also setup `this` state, so if the `completion.resume` is invoked, we are
