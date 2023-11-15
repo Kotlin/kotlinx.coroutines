@@ -85,7 +85,8 @@ public actual open class LockFreeLinkedListNode {
     }
 
     // LINEARIZABLE. Returns next non-removed Node
-    public actual val nextNode: Node get() = next.unwrap()
+    public actual val nextNode: Node get() =
+        next.let { (it as? Removed)?.ref ?: it as Node } // unwraps the `next` node
 
     // LINEARIZABLE WHEN THIS NODE IS NOT REMOVED:
     // Returns prev non-removed Node, makes sure prev is correct (prev.next === this)
@@ -322,9 +323,6 @@ public actual open class LockFreeLinkedListNode {
 private class Removed(@JvmField val ref: Node) {
     override fun toString(): String = "Removed[$ref]"
 }
-
-@PublishedApi
-internal fun Any.unwrap(): Node = (this as? Removed)?.ref ?: this as Node
 
 /**
  * Head (sentinel) item of the linked list that is never removed.
