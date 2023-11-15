@@ -17,8 +17,8 @@ public actual typealias TestResult = Unit
 
 public actual open class TestBase actual constructor() {
     public actual val isBoundByJsTestTimeout = false
-    private var actionIndex = atomic(0)
-    private var finished = atomic(false)
+    private val actionIndex = atomic(0)
+    private val finished = atomic(false)
     private var error: Throwable? = null
 
     /**
