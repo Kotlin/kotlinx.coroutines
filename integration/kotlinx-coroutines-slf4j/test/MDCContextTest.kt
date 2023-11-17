@@ -108,4 +108,16 @@ class MDCContextTest : TestBase() {
             }
         }
     }
+
+    @Test
+    fun testContextFollowsInnerUpdatesAfterRestoration() = runTest {
+        withContext(MDCContext()) {
+            MDC.put("myKey", "myValue")
+            // force coroutine suspending
+            delay(1)
+            assertEquals("myValue", MDC.get("myKey"))
+        }
+
+        assertEquals(null, MDC.get("myKey"))
+    }
 }

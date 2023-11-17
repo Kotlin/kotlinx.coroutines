@@ -44,7 +44,7 @@ public class MDCContext(
      * The value of [MDC] context map.
      */
     @Suppress("MemberVisibilityCanBePrivate")
-    public val contextMap: MDCContextMap = MDC.getCopyOfContextMap()
+    public var contextMap: MDCContextMap = MDC.getCopyOfContextMap()
 ) : ThreadContextElement<MDCContextMap>, AbstractCoroutineContextElement(Key) {
     /**
      * Key of [MDCContext] in [CoroutineContext].
@@ -60,6 +60,7 @@ public class MDCContext(
 
     /** @suppress */
     override fun restoreThreadContext(context: CoroutineContext, oldState: MDCContextMap) {
+        contextMap = MDC.getCopyOfContextMap()
         setCurrent(oldState)
     }
 
