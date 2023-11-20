@@ -15,6 +15,9 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
     }
 }
 
+internal actual fun environmentVariableImpl(name: String): String? =
+    System.getenv(name)
+
 internal actual fun dumpCoroutines() {
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     if (DebugProbesImpl.isInstalled) {
