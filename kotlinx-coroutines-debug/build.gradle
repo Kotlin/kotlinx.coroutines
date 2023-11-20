@@ -48,6 +48,7 @@ def shadowJarTask = shadowJar {
     classifier null
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = [project.configurations.shadowDeps]
+    exclude('META-INF/versions/9/module-info.class')
     relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
 
     manifest {
