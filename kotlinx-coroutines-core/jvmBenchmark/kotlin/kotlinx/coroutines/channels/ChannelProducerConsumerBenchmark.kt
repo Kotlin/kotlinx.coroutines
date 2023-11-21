@@ -1,16 +1,16 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks
+package kotlinx.coroutines.channels
 
-import benchmarks.common.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.scheduling.*
 import kotlinx.coroutines.selects.select
 import org.openjdk.jmh.annotations.*
 import java.lang.Integer.max
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 
@@ -136,8 +136,7 @@ open class ChannelProducerConsumerBenchmark {
 }
 
 enum class DispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
-    //FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() }),
     DEFAULT({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
 }
 

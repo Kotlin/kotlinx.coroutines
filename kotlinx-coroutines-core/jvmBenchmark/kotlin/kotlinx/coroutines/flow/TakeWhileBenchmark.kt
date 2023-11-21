@@ -1,16 +1,15 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
-package benchmarks.flow
+package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.internal.*
+import kotlinx.coroutines.flow.internal.AbortFlowException
+import kotlinx.coroutines.flow.internal.unsafeFlow
 import org.openjdk.jmh.annotations.*
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
