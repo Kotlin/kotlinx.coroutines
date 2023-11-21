@@ -116,15 +116,13 @@ kotlin {
             optimized = true
             // Test for memory leaks using a special entry point that does not exit but returns from main
             freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
-            binaryOptions["memoryModel"] = "experimental"
         }
 
-        binaries.test("workerWithNewMM", [DEBUG]) {
+        binaries.test("workerTest", [DEBUG]) {
             def thisTest = it
             optimized = true
             freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
-            binaryOptions["memoryModel"] = "experimental"
-            testRuns.create("workerWithNewMM") {
+            testRuns.create("workerTest") {
                 setExecutionSourceFrom(thisTest)
                 executionTask.configure { targetName = "$targetName worker with new MM" }
             }
