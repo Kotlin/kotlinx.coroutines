@@ -106,8 +106,8 @@ if (rootProject.ext.native_targets_enabled) {
 kotlin {
     /*
      * Configure two test runs:
-     * 1) New memory model, Main thread
-     * 2) New memory model, BG thread (required for Dispatchers.Main tests on Darwin)
+     * 1) Main thread
+     * 2) BG thread (required for Dispatchers.Main tests on Darwin)
      *
      * All new MM targets are build with optimize = true to have stress tests properly run.
      */
