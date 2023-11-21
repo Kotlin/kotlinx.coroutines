@@ -45,22 +45,40 @@ jar {
 }
 
 def shadowJarTask = shadowJar {
-    classifier null
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = [project.configurations.shadowDeps]
-    exclude('META-INF/versions/9/module-info.class')
     relocate('net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy')
+    // exclude the module-info.class provided by bytebuddy
+    exclude("META-INF/versions/9/module-info.class")
+}
 
+// adapted from <https://github.com/johnrengelman/shadow/issues/710#issuecomment-1280585784>
+// There doesn't seem to be a way to ask the shadow jar to contain the `module-info.class` provided by us and not
+// the one provided by bytebuddy. So, this is done in two steps: `shadowJarTask` excludes the module-info from
+// bytebuddy, and this task creates another jar file, this time one that has the correct module-info.
+def shadowJarWithCorrectModuleInfoTask = task shadowJarWithCorrectModuleInfo(type: Jar) {
+    group 'shadow'
+    from zipTree(shadowJarTask.archiveFile)
+    from(tasks.compileModuleInfoJava) {
+        // Include **only** file we are interested in as JavaCompile output also contains some tmp files
+        include("module-info.class")
+        into("META-INF/versions/9/")
+    }
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    archiveBaseName.set(shadowJarTask.archiveBaseName)
+    archiveVersion.set(shadowJarTask.archiveVersion)
+    classifier null
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Redefine-Classes": "true"
+        attributes "Multi-Release": "true"
     }
 }
 
 configurations {
     artifacts {
-        add("apiElements", shadowJarTask)
-        add("runtimeElements", shadowJarTask)
+        add("apiElements", shadowJarWithCorrectModuleInfoTask)
+        add("runtimeElements", shadowJarWithCorrectModuleInfoTask)
     }
 }
 
