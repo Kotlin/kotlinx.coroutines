@@ -1,14 +1,13 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package benchmarks.tailcall
+package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 public abstract class SimpleChannel {
     companion object {
         const val NULL_SURROGATE: Int = -1
@@ -83,13 +82,11 @@ class CancellableChannel : SimpleChannel() {
 }
 
 class CancellableReusableChannel : SimpleChannel() {
-    @Suppress("INVISIBLE_MEMBER")
     override suspend fun suspendReceive(): Int = suspendCancellableCoroutineReusable {
         consumer = it.intercepted()
         COROUTINE_SUSPENDED
     }
 
-    @Suppress("INVISIBLE_MEMBER")
     override suspend fun suspendSend(element: Int) = suspendCancellableCoroutineReusable<Unit> {
         enqueuedValue = element
         producer = it.intercepted()
