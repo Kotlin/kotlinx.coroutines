@@ -92,11 +92,11 @@ tasks.getByName("publishMavenPublicationToMavenLocal") {
 VersionFile.configure(project, shadowJarWithCorrectModuleInfo.get())
 
 configurations.all {
-    outgoing.artifacts.removeIf {
-        val dependencies = it.buildDependencies.getDependencies(null)
-        dependencies.contains(jar) || dependencies.contains(shadowJar)
-    }
-    if (name == "apiElements" || name == "runtimeElements") {
+    // we're not interested at all in the output of the shadowJar task; it's just an intermediate stage
+    outgoing.artifacts.removeIf { it.buildDependencies.getDependencies(null).contains(shadowJar) }
+    // if something wants a `jar` to be published, we want to publish the `shadowJarWithCorrectModuleInfo` instead
+    if (outgoing.artifacts.buildDependencies.getDependencies(null).contains(jar)) {
+        outgoing.artifacts.removeIf { it.buildDependencies.getDependencies(null).contains(jar) }
         outgoing.artifact(shadowJarWithCorrectModuleInfo)
     }
 }
