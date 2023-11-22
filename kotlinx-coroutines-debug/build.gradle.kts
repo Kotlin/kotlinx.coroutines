@@ -1,8 +1,8 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.*
-
 /*
  * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.*
 
 apply(plugin = "com.github.johnrengelman.shadow")
 
