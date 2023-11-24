@@ -92,7 +92,7 @@ val shadowJarWithCorrectModuleInfo by tasks.registering(Jar::class) {
     VersionFile.fromVersionFile(this, versionFileTask)
 }
 
-tasks.getByName("publishMavenPublicationToMavenLocal") {
+tasks.named("publishMavenPublicationToMavenLocal") {
     dependsOn(shadowJarWithCorrectModuleInfo)
 }
 
