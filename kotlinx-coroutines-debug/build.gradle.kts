@@ -4,10 +4,10 @@
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.*
 
-apply(plugin = "com.github.johnrengelman.shadow")
-
-// apply plugin to use autocomplete for Kover DSL
-apply(plugin = "org.jetbrains.kotlinx.kover")
+plugins {
+   id("com.github.johnrengelman.shadow")
+   id("org.jetbrains.kotlinx.kover") // apply plugin to use autocomplete for Kover DSL
+}
 
 configurations{
   val shadowDeps by creating
