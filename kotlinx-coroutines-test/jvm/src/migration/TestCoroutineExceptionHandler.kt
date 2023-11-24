@@ -55,7 +55,7 @@ public class TestCoroutineExceptionHandler :
     private val _lock = SynchronizedObject()
     private var _coroutinesCleanedUp = false
 
-    @Suppress("INVISIBLE_MEMBER")
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
     override fun handleException(context: CoroutineContext, exception: Throwable) {
         synchronized(_lock) {
             if (_coroutinesCleanedUp) {

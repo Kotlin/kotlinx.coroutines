@@ -92,7 +92,7 @@ class RunTestLegacyScopeTest {
             fn()
             fail("unreached")
         } catch (e: UncompletedCoroutinesError) {
-            @Suppress("INVISIBLE_MEMBER")
+            @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
             val suppressed = unwrap(e).suppressedExceptions
             assertEquals(1, suppressed.size)
             assertIs<TestException>(suppressed[0]).also {

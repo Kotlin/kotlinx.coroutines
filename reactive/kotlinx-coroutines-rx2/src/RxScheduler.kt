@@ -136,7 +136,7 @@ private fun CoroutineScope.scheduleTask(
     if (delayMillis <= 0) {
         toSchedule.run()
     } else {
-        @Suppress("INVISIBLE_MEMBER")
+        @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
         ctx.delay.invokeOnTimeout(delayMillis, toSchedule, ctx).let { handle = it }
     }
     return disposable
