@@ -10,13 +10,13 @@ import org.gradle.api.tasks.*
  * for the better toolability. See #2941
  */
 object VersionFile {
-    fun registerVersionFileTask(project: Project): TaskProvider<Task> = with(project) {
-        tasks.register("versionFileTask") {
-            val name = project.name.replace('-', '_')
-            val versionFile = project.layout.buildDirectory.file("$name.version")
+    fun registerVersionFileTask(project: Project): TaskProvider<Task> {
+        val versionFile = project.layout.buildDirectory.file("${project.name.replace('-', '_')}.version")
+        val version = project.version.toString()
+        return project.tasks.register("versionFileTask") {
             outputs.file(versionFile)
             doLast {
-                versionFile.get().asFile.writeText(project.version.toString())
+                versionFile.get().asFile.writeText(version)
             }
         }
     }
