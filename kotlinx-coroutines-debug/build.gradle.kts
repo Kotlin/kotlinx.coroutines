@@ -9,10 +9,14 @@ apply(plugin = "com.github.johnrengelman.shadow")
 // apply plugin to use autocomplete for Kover DSL
 apply(plugin = "org.jetbrains.kotlinx.kover")
 
-configurations {
-    val shadowDeps by creating // shaded dependencies, not included into the resulting .pom file
-    compileOnly.get().extendsFrom(shadowDeps)
-    runtimeOnly.get().extendsFrom(shadowDeps)
+configurations{
+  val shadowDeps by creating
+  compileOnly.configure {
+    extendsFrom(shadowDeps)
+  }
+  runtimeOnly.configure {
+    extendsFrom(shadowDeps)
+  }
 }
 
 val junit_version by properties
