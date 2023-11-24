@@ -70,7 +70,7 @@ private class RxObservableCoroutine<T : Any>(
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
     private val mutex: Mutex = Mutex()
 
-    @Suppress("UNCHECKED_CAST", "INVISIBLE_MEMBER")
+    @Suppress("UNCHECKED_CAST", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
     override val onSend: SelectClause2<T, SendChannel<T>> get() = SelectClause2Impl(
         clauseObject = this,
         regFunc = RxObservableCoroutine<*>::registerSelectForSend as RegistrationFunction,
@@ -165,7 +165,7 @@ private class RxObservableCoroutine<T : Any>(
             if (_signal.value == SIGNALLED)
                 return
             _signal.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
-            @Suppress("INVISIBLE_MEMBER")
+            @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
             val unwrappedCause = cause?.let { unwrap(it) }
             if (unwrappedCause == null) {
                 try {
