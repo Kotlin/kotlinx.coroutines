@@ -60,6 +60,8 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     exclude("META-INF/versions/9/module-info.class")
 }
 
+val versionFileTask = VersionFile.registerVersionFileTask(project)
+
 // adapted from <https://github.com/johnrengelman/shadow/issues/710#issuecomment-1280585784>
 // There doesn't seem to be a way to ask the shadow jar to contain the `module-info.class` provided by us and not
 // the one provided by bytebuddy. So, this is done in two steps: `shadowJarTask` excludes the module-info from
@@ -83,13 +85,12 @@ val shadowJarWithCorrectModuleInfo by tasks.registering(Jar::class) {
             "Multi-Release" to "true"
         ))
     }
+    VersionFile.fromVersionFile(this, versionFileTask)
 }
 
 tasks.getByName("publishMavenPublicationToMavenLocal") {
     dependsOn(shadowJarWithCorrectModuleInfo)
 }
-
-VersionFile.configure(project, shadowJarWithCorrectModuleInfo.get())
 
 configurations.all {
     // we're not interested at all in the output of the shadowJar task; it's just an intermediate stage

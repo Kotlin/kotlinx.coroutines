@@ -4,15 +4,14 @@
 
 import org.gradle.api.*
 import org.gradle.api.tasks.*
-import org.gradle.kotlin.dsl.*
 
 /**
  * Adds 'module_name.version' file to the project's JAR META-INF
  * for the better toolability. See #2941
  */
 object VersionFile {
-    fun configure(project: Project, jarTask: AbstractCopyTask) = with(project) {
-        val versionFileTask by tasks.register("versionFileTask") {
+    fun registerVersionFileTask(project: Project): TaskProvider<Task> = with(project) {
+        tasks.register("versionFileTask") {
             val name = project.name.replace('-', '_')
             val versionFile = project.layout.buildDirectory.file("$name.version")
             outputs.file(versionFile)
@@ -20,8 +19,10 @@ object VersionFile {
                 versionFile.get().asFile.writeText(project.version.toString())
             }
         }
-        jarTask.dependsOn(versionFileTask)
-        jarTask.from(versionFileTask) {
+    }
+
+    fun fromVersionFile(target: AbstractCopyTask, versionFileTask: TaskProvider<Task>) {
+        target.from(versionFileTask) {
             into("META-INF")
         }
     }
