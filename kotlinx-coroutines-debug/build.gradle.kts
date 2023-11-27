@@ -56,32 +56,20 @@ val jar by tasks.getting(Jar::class) {
     enabled = false
 }
 
+val versionFileTask = VersionFile.registerVersionFileTask(project)
+
 val shadowJar by tasks.getting(ShadowJar::class) {
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = listOf(project.configurations["shadowDeps"])
-    relocate("net.bytebuddy", "kotlinx.coroutines.repackaged.net.bytebuddy")
-    // exclude the module-info.class provided by bytebuddy
-    exclude("META-INF/versions/9/module-info.class")
-}
-
-val versionFileTask = VersionFile.registerVersionFileTask(project)
-
-// adapted from <https://github.com/johnrengelman/shadow/issues/710#issuecomment-1280585784>
-// There doesn't seem to be a way to ask the shadow jar to contain the `module-info.class` provided by us and not
-// the one provided by bytebuddy. So, this is done in two steps: `shadowJarTask` excludes the module-info from
-// bytebuddy, and this task creates another jar file, this time one that has the correct module-info.
-val shadowJarWithCorrectModuleInfo by tasks.registering(Jar::class) {
-    group = "shadow"
-    from(zipTree(shadowJar.archiveFile))
-    from(tasks.compileModuleInfoJava) {
-        // Include **only** file we are interested in as JavaCompile output also contains some tmp files
-        include("module-info.class")
-        into("META-INF/versions/9/")
+    relocate("net.bytebuddy", "kotlinx.coroutines.repackaged.net.bytebuddy") {
+        this.exclude("META-INF/versions/9/module-info.class")
     }
-    duplicatesStrategy = DuplicatesStrategy.FAIL
+    // // exclude the module-info.class provided by bytebuddy
+    // exclude("META-INF/versions/9/module-info.class")
+    archiveClassifier.convention(null as String?)
+    archiveClassifier.set(null as String?)
     archiveBaseName.set(jar.archiveBaseName)
     archiveVersion.set(jar.archiveVersion)
-    archiveClassifier.set(jar.archiveClassifier)
     manifest {
         attributes(mapOf(
             "Premain-Class" to "kotlinx.coroutines.debug.AgentPremain",
@@ -90,19 +78,19 @@ val shadowJarWithCorrectModuleInfo by tasks.registering(Jar::class) {
         ))
     }
     VersionFile.fromVersionFile(this, versionFileTask)
+    from(tasks.compileModuleInfoJava) {
+        // Include **only** file we are interested in as JavaCompile output also contains some tmp files
+        include("module-info.class")
+        into("META-INF/versions/9/")
+    }
+    duplicatesStrategy = DuplicatesStrategy.FAIL
 }
 
-tasks.named("publishMavenPublicationToMavenLocal") {
-    dependsOn(shadowJarWithCorrectModuleInfo)
-}
-
-configurations.all {
-    // we're not interested at all in the output of the shadowJar task; it's just an intermediate stage
-    outgoing.artifacts.removeIf { it.buildDependencies.getDependencies(null).contains(shadowJar) }
-    // if something wants a `jar` to be published, we want to publish the `shadowJarWithCorrectModuleInfo` instead
-    if (outgoing.artifacts.buildDependencies.getDependencies(null).contains(jar)) {
-        outgoing.artifacts.removeIf { it.buildDependencies.getDependencies(null).contains(jar) }
-        outgoing.artifact(shadowJarWithCorrectModuleInfo)
+configurations {
+    // shadowJar is already part of the `shadowRuntimeElements` and `shadowApiElements`, but it's not enough.
+    artifacts {
+        add("apiElements", shadowJar)
+        add("runtimeElements", shadowJar)
     }
 }
 
