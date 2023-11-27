@@ -4,9 +4,6 @@
 
 package kotlinx.coroutines.test
 import kotlinx.coroutines.*
-import kotlin.native.concurrent.*
-import kotlinx.cinterop.*
-import platform.posix.*
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit
@@ -17,8 +14,6 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
     }
 }
 
-@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
-internal actual fun environmentVariableImpl(name: String): String? =
-    getenv(name)?.toKString()
+internal actual fun systemPropertyImpl(name: String): String? = null
 
 internal actual fun dumpCoroutines() { }

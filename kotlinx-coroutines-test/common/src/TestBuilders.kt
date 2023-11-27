@@ -14,7 +14,6 @@ import kotlin.jvm.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.internal.*
 
 /**
  * A test result.
@@ -124,11 +123,12 @@ public expect class TestResult
  *
  * There's a built-in timeout of 60 seconds for the test body. If the test body doesn't complete within this time,
  * then the test fails with an [AssertionError]. The timeout can be changed for each test separately by setting the
- * [timeout] parameter. Additionally, setting the `kotlinx.coroutines.test.default_timeout` environment variable to
- * any string that can be parsed using [Duration.parse] (like `1m`, `30s` or `1500ms`) will change the default timeout
- * to that value for all tests whose [timeout] is not set explicitly; setting it to anything else will throw an
+ * [timeout] parameter.
+ *
+ * Additionally, setting the `kotlinx.coroutines.test.default_timeout` system property on the
+ * JVM to any string that can be parsed using [Duration.parse] (like `1m`, `30s` or `1500ms`) will change the default
+ * timeout to that value for all tests whose [timeout] is not set explicitly; setting it to anything else will throw an
  * exception every time [runTest] is invoked.
- * Note that environment variables and JVM system properties are separate concepts and are configured differently.
  *
  * On timeout, the test body is cancelled so that the test finishes. If the code inside the test body does not
  * respond to cancellation, the timeout will not be able to make the test execution stop.
@@ -433,7 +433,7 @@ internal const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
  * other ones would get an incomprehensible `NoClassDefFoundError`.
  */
 private val DEFAULT_TIMEOUT: Result<Duration> = runCatching {
-    environmentVariable("kotlinx.coroutines.test.default_timeout", Duration::parse, 60.seconds)
+    systemProperty("kotlinx.coroutines.test.default_timeout", Duration::parse, 60.seconds)
 }
 
 /**
@@ -583,16 +583,16 @@ internal fun throwAll(head: Throwable?, other: List<Throwable>) {
 
 internal expect fun dumpCoroutines()
 
-private fun <T: Any> environmentVariable(
+private fun <T: Any> systemProperty(
     name: String,
     parse: (String) -> T,
     default: T,
 ): T {
-    val value = environmentVariableImpl(name) ?: return default
+    val value = systemPropertyImpl(name) ?: return default
     return parse(value)
 }
 
-internal expect fun environmentVariableImpl(name: String): String?
+internal expect fun systemPropertyImpl(name: String): String?
 
 @Deprecated(
     "This is for binary compatibility with the `runTest` overload that existed at some point",

@@ -9,14 +9,7 @@ import kotlin.js.*
 @Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
 public actual typealias TestResult = Promise<Unit>
 
-private external val process: dynamic
-
-internal actual fun environmentVariableImpl(name: String): String? {
-    if (jsTypeOf(process) == "undefined") return null
-    if (jsTypeOf(process.env) == "undefined") return null
-    return process.env[name] as? String
-}
-
+internal actual fun systemPropertyImpl(name: String): String? = null
 
 internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() -> Unit): TestResult =
     GlobalScope.promise {
