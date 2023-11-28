@@ -54,13 +54,13 @@ tasks.withType<Test>().configureEach {
     }
 }
 
-val jar by tasks.getting(Jar::class) {
+val jar by tasks.existing(Jar::class) {
     enabled = false
 }
 
 val versionFileTask = VersionFile.registerVersionFileTask(project)
 
-val shadowJar by tasks.getting(ShadowJar::class) {
+val shadowJar by tasks.existing(ShadowJar::class) {
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = listOf(project.configurations["shadowDeps"])
     relocate("net.bytebuddy", "kotlinx.coroutines.repackaged.net.bytebuddy") {
@@ -73,8 +73,8 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     from the `jar` task is not present when the compilaton finishes, even if the file with this name exists. */
     archiveClassifier.convention(null as String?)
     archiveClassifier.set(null as String?)
-    archiveBaseName.set(jar.archiveBaseName)
-    archiveVersion.set(jar.archiveVersion)
+    archiveBaseName.set(jar.flatMap { it.archiveBaseName })
+    archiveVersion.set(jar.flatMap { it.archiveVersion })
     manifest {
         attributes(mapOf(
             "Premain-Class" to "kotlinx.coroutines.debug.AgentPremain",
@@ -88,7 +88,7 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     doLast {
         // add module-info.class to the META-INF/versions/9/ directory.
         // We can't do that directly with the shadowJar task because it doesn't support replacing existing files.
-        val zipPath = this@getting.outputs.files.singleFile.toPath()
+        val zipPath = this@existing.outputs.files.singleFile.toPath()
         val zipUri = URI.create("jar:${zipPath.toUri()}")
         println(tasks.compileModuleInfoJava.get().outputs.files.asFileTree.toList())
         val moduleInfoFilePath = tasks.compileModuleInfoJava.get().outputs.files.asFileTree.matching {
