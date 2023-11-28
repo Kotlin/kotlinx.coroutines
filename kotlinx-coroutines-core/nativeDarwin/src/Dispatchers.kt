@@ -66,7 +66,7 @@ private class DarwinMainDispatcher(
     }
 
     override fun toString(): String =
-        "MainDispatcher${ if(invokeImmediately) "[immediate]" else "" }"
+        if (invokeImmediately) "Dispatchers.Main.immediate" else "Dispatchers.Main"
 }
 
 private typealias TimerBlock = (CFRunLoopTimerRef?) -> Unit
