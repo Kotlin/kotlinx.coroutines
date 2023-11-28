@@ -3,6 +3,8 @@
  */
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.*
+import java.net.*
+import java.nio.file.*
 
 plugins {
    id("com.github.johnrengelman.shadow")
@@ -66,6 +68,9 @@ val shadowJar by tasks.getting(ShadowJar::class) {
     }
     // // exclude the module-info.class provided by bytebuddy
     // exclude("META-INF/versions/9/module-info.class")
+    /* These classifiers are both set to `null` to trick Gradle into thinking that this jar file is both the
+    artifact from the `jar` task and the one from `shadowJar`. Without this, Gradle complains that the artifact
+    from the `jar` task is not present when the compilaton finishes, even if the file with this name exists. */
     archiveClassifier.convention(null as String?)
     archiveClassifier.set(null as String?)
     archiveBaseName.set(jar.archiveBaseName)
@@ -78,12 +83,22 @@ val shadowJar by tasks.getting(ShadowJar::class) {
         ))
     }
     VersionFile.fromVersionFile(this, versionFileTask)
-    from(tasks.compileModuleInfoJava) {
-        // Include **only** file we are interested in as JavaCompile output also contains some tmp files
-        include("module-info.class")
-        into("META-INF/versions/9/")
-    }
     duplicatesStrategy = DuplicatesStrategy.FAIL
+    dependsOn(tasks.compileModuleInfoJava)
+    doLast {
+        // add module-info.class to the META-INF/versions/9/ directory.
+        // We can't do that directly with the shadowJar task because it doesn't support replacing existing files.
+        val zipPath = this@getting.outputs.files.singleFile.toPath()
+        val zipUri = URI.create("jar:${zipPath.toUri()}")
+        println(tasks.compileModuleInfoJava.get().outputs.files.asFileTree.toList())
+        val moduleInfoFilePath = tasks.compileModuleInfoJava.get().outputs.files.asFileTree.matching {
+            include("module-info.class")
+        }.singleFile.toPath()
+        FileSystems.newFileSystem(zipUri, emptyMap<String, String>()).use { fs ->
+            val moduleInfoFile = fs.getPath("META-INF/versions/9/module-info.class")
+            Files.copy(moduleInfoFilePath, moduleInfoFile, StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
 }
 
 configurations {
