@@ -63,9 +63,7 @@ val versionFileTask = VersionFile.registerVersionFileTask(project)
 val shadowJar by tasks.existing(ShadowJar::class) {
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = listOf(project.configurations["shadowDeps"])
-    relocate("net.bytebuddy", "kotlinx.coroutines.repackaged.net.bytebuddy") {
-        this.exclude("META-INF/versions/9/module-info.class")
-    }
+    relocate("net.bytebuddy", "kotlinx.coroutines.repackaged.net.bytebuddy")
     // // exclude the module-info.class provided by bytebuddy
     // exclude("META-INF/versions/9/module-info.class")
     /* These classifiers are both set to `null` to trick Gradle into thinking that this jar file is both the
