@@ -10,6 +10,10 @@ abstract class MainDispatcherTestBase: TestBase() {
 
     open fun shouldSkipTesting(): Boolean = false
 
+    open suspend fun spinTest(testBody: Job) {
+        testBody.join()
+    }
+
     abstract fun isMainThread(): Boolean?
 
     abstract fun scheduleOnMainQueue(block: () -> Unit)
@@ -19,7 +23,10 @@ abstract class MainDispatcherTestBase: TestBase() {
         // written as a block body to make the need to return `TestResult` explicit
         return runTest {
             if (shouldSkipTesting()) return@runTest
-            block()
+            val testBody = launch(Dispatchers.Default) {
+                block()
+            }
+            spinTest(testBody)
         }
     }
 
@@ -52,25 +59,6 @@ abstract class MainDispatcherTestBase: TestBase() {
         assertNotEquals(Dispatchers.Main, Dispatchers.Main.immediate)
     }
 
-    /** Tests that after a delay, the execution gets back to the main thread. */
-    @Test
-    @Ignore // TODO: hangs on Android
-    fun testDelay() = runTestOrSkip {
-        expect(1)
-        checkNotMainThread()
-        scheduleOnMainQueue { expect(2) }
-        withContext(Dispatchers.Main) {
-            checkIsMainThread()
-            expect(3)
-            scheduleOnMainQueue { expect(4) }
-            delay(100)
-            checkIsMainThread()
-            expect(5)
-        }
-        checkNotMainThread()
-        finish(6)
-    }
-
     /** Tests that [Dispatchers.Main] shares its queue with [MainCoroutineDispatcher.immediate]. */
     @Test
     fun testImmediateDispatcherYield() = runTestOrSkip {
@@ -90,82 +78,6 @@ abstract class MainDispatcherTestBase: TestBase() {
         finish(6)
     }
 
-    /** Tests that [Dispatchers.Main] is in agreement with the default time source: it's not much slower. */
-    @Test
-    @Ignore // TODO: hangs on Android
-    fun testWithTimeoutContextDelayNoTimeout() = runTestOrSkip {
-        expect(1)
-        withTimeout(1000) {
-            withContext(Dispatchers.Main) {
-                checkIsMainThread()
-                expect(2)
-                delay(100)
-                checkIsMainThread()
-                expect(3)
-            }
-        }
-        checkNotMainThread()
-        finish(4)
-    }
-
-    /** Tests that [Dispatchers.Main] is in agreement with the default time source: it's not much faster. */
-    @Test
-    @Ignore // TODO: hangs on Android
-    fun testWithTimeoutContextDelayTimeout() = runTestOrSkip {
-        expect(1)
-        assertFailsWith<TimeoutCancellationException> {
-            withTimeout(300) {
-                withContext(Dispatchers.Main) {
-                    checkIsMainThread()
-                    expect(2)
-                    delay(1000)
-                    expectUnreached()
-                }
-            }
-            expectUnreached()
-        }
-        checkNotMainThread()
-        finish(3)
-    }
-
-    /** Tests that the timeout of [Dispatchers.Main] is in agreement with its [delay]: it's not much faster. */
-    @Test
-    @Ignore // TODO: hangs on Android
-    fun testWithContextTimeoutDelayNoTimeout() = runTestOrSkip {
-        expect(1)
-        withContext(Dispatchers.Main) {
-            withTimeout(1000) {
-                checkIsMainThread()
-                expect(2)
-                delay(100)
-                checkIsMainThread()
-                expect(3)
-            }
-        }
-        checkNotMainThread()
-        finish(4)
-    }
-
-    /** Tests that the timeout of [Dispatchers.Main] is in agreement with its [delay]: it's not much slower. */
-    @Test
-    @Ignore // TODO: hangs on Android
-    fun testWithContextTimeoutDelayTimeout() = runTestOrSkip {
-        expect(1)
-        assertFailsWith<TimeoutCancellationException> {
-            withContext(Dispatchers.Main) {
-                withTimeout(100) {
-                    checkIsMainThread()
-                    expect(2)
-                    delay(1000)
-                    expectUnreached()
-                }
-            }
-            expectUnreached()
-        }
-        checkNotMainThread()
-        finish(3)
-    }
-
     /** Tests that entering [MainCoroutineDispatcher.immediate] from [Dispatchers.Main] happens immediately. */
     @Test
     fun testEnteringImmediateFromMain() = runTestOrSkip {
@@ -183,23 +95,22 @@ abstract class MainDispatcherTestBase: TestBase() {
     /** Tests that dispatching to [MainCoroutineDispatcher.immediate] is required from and only from dispatchers
      * other than the main dispatchers and that it's always required for [Dispatchers.Main] itself. */
     @Test
-    @Ignore // TODO: hangs on Android
     fun testDispatchRequirements() = runTestOrSkip {
-        withContext(Dispatchers.Default) {
-            assertTrue(Dispatchers.Main.immediate.isDispatchNeeded(currentCoroutineContext()))
-            assertTrue(Dispatchers.Main.isDispatchNeeded(currentCoroutineContext()))
-            assertTrue(Dispatchers.Default.isDispatchNeeded(currentCoroutineContext()))
-            withContext(Dispatchers.Main) {
-                assertFalse(Dispatchers.Main.immediate.isDispatchNeeded(currentCoroutineContext()))
-                assertTrue(Dispatchers.Main.isDispatchNeeded(currentCoroutineContext()))
-                assertTrue(Dispatchers.Default.isDispatchNeeded(currentCoroutineContext()))
-                withContext(Dispatchers.Main.immediate) {
-                    assertFalse(Dispatchers.Main.immediate.isDispatchNeeded(currentCoroutineContext()))
-                    assertTrue(Dispatchers.Main.isDispatchNeeded(currentCoroutineContext()))
-                    assertTrue(Dispatchers.Default.isDispatchNeeded(currentCoroutineContext()))
-                }
+        checkDispatchRequirements()
+        withContext(Dispatchers.Main) {
+            checkDispatchRequirements()
+            withContext(Dispatchers.Main.immediate) {
+                checkDispatchRequirements()
             }
+            checkDispatchRequirements()
         }
+        checkDispatchRequirements()
+    }
+
+    private suspend fun checkDispatchRequirements() {
+        isMainThread()?.let { assertNotEquals(it, Dispatchers.Main.immediate.isDispatchNeeded(currentCoroutineContext())) }
+        assertTrue(Dispatchers.Main.isDispatchNeeded(currentCoroutineContext()))
+        assertTrue(Dispatchers.Default.isDispatchNeeded(currentCoroutineContext()))
     }
 
     /** Tests that launching a coroutine in [MainScope] will execute it in the main thread. */
@@ -255,6 +166,98 @@ abstract class MainDispatcherTestBase: TestBase() {
             withContext(Dispatchers.Main) {
                 finish(3)
             }
+        }
+    }
+
+    abstract class WithRealTimeDelay : MainDispatcherTestBase() {
+        /** Tests that after a delay, the execution gets back to the main thread. */
+        @Test
+        fun testDelay() = runTestOrSkip {
+            expect(1)
+            checkNotMainThread()
+            scheduleOnMainQueue { expect(2) }
+            withContext(Dispatchers.Main) {
+                checkIsMainThread()
+                expect(3)
+                scheduleOnMainQueue { expect(4) }
+                delay(100)
+                checkIsMainThread()
+                expect(5)
+            }
+            checkNotMainThread()
+            finish(6)
+        }
+
+        /** Tests that [Dispatchers.Main] is in agreement with the default time source: it's not much slower. */
+        @Test
+        fun testWithTimeoutContextDelayNoTimeout() = runTestOrSkip {
+            expect(1)
+            withTimeout(1000) {
+                withContext(Dispatchers.Main) {
+                    checkIsMainThread()
+                    expect(2)
+                    delay(100)
+                    checkIsMainThread()
+                    expect(3)
+                }
+            }
+            checkNotMainThread()
+            finish(4)
+        }
+
+        /** Tests that [Dispatchers.Main] is in agreement with the default time source: it's not much faster. */
+        @Test
+        fun testWithTimeoutContextDelayTimeout() = runTestOrSkip {
+            expect(1)
+            assertFailsWith<TimeoutCancellationException> {
+                withTimeout(300) {
+                    withContext(Dispatchers.Main) {
+                        checkIsMainThread()
+                        expect(2)
+                        delay(1000)
+                        expectUnreached()
+                    }
+                }
+                expectUnreached()
+            }
+            checkNotMainThread()
+            finish(3)
+        }
+
+        /** Tests that the timeout of [Dispatchers.Main] is in agreement with its [delay]: it's not much faster. */
+        @Test
+        fun testWithContextTimeoutDelayNoTimeout() = runTestOrSkip {
+            expect(1)
+            withContext(Dispatchers.Main) {
+                withTimeout(1000) {
+                    checkIsMainThread()
+                    expect(2)
+                    delay(100)
+                    checkIsMainThread()
+                    expect(3)
+                }
+            }
+            checkNotMainThread()
+            finish(4)
+        }
+
+        /** Tests that the timeout of [Dispatchers.Main] is in agreement with its [delay]: it's not much slower. */
+        @Test
+        fun testWithContextTimeoutDelayTimeout() = runTestOrSkip {
+            expect(1)
+            assertFailsWith<TimeoutCancellationException> {
+                withContext(Dispatchers.Main) {
+                    withTimeout(100) {
+                        checkIsMainThread()
+                        expect(2)
+                        delay(1000)
+                        expectUnreached()
+                    }
+                }
+                expectUnreached()
+            }
+            checkNotMainThread()
+            finish(3)
         }
     }
 

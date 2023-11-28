@@ -11,7 +11,7 @@ import javax.swing.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class SwingTest : MainDispatcherTestBase() {
+class SwingTest : MainDispatcherTestBase.WithRealTimeDelay() {
     @Before
     fun setup() {
         ignoreLostThreads("AWT-EventQueue-")

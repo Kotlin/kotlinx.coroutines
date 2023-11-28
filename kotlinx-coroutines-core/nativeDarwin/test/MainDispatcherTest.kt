@@ -9,7 +9,7 @@ import platform.darwin.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class MainDispatcherTest : MainDispatcherTestBase() {
+class MainDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
 
     override fun isMainThread(): Boolean = CFRunLoopGetCurrent() == CFRunLoopGetMain()
 

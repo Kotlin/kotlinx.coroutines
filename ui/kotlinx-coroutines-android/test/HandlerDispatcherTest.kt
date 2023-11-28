@@ -13,11 +13,14 @@ import org.robolectric.annotation.*
 import org.robolectric.shadows.*
 import java.util.concurrent.*
 import kotlin.test.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(RobolectricTestRunner::class)
 @LooperMode(LooperMode.Mode.LEGACY)
 @Config(manifest = Config.NONE, sdk = [28])
-class HandlerDispatcherTest : MainDispatcherTestBase() {
+class HandlerDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
     @Test
     fun testDefaultDelayIsNotDelegatedToMain() = runTest {
         val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
@@ -117,5 +120,15 @@ class HandlerDispatcherTest : MainDispatcherTestBase() {
 
     override fun scheduleOnMainQueue(block: () -> Unit) {
         Handler(Looper.getMainLooper()).post(block)
+    }
+
+    // by default, Robolectric only schedules tasks on the main thread but doesn't run them.
+    // This function nudges it to run them, 10 milliseconds of virtual time at a time.
+    override suspend fun spinTest(testBody: Job) {
+        val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
+        while (testBody.isActive) {
+            Thread.sleep(10, 0)
+            mainLooper.idleFor(10, TimeUnit.MILLISECONDS)
+        }
     }
 }

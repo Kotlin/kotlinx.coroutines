@@ -11,7 +11,7 @@ import org.junit.Test
 import javax.swing.*
 import kotlin.test.*
 
-class JavaFxDispatcherTest : MainDispatcherTestBase() {
+class JavaFxDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
     @Before
     fun setup() {
         ignoreLostThreads("JavaFX Application Thread", "Thread-", "QuantumRenderer-", "InvokeLaterDispatcher")

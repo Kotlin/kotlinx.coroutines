@@ -7,7 +7,7 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class ImmediateDispatcherTest : MainDispatcherTestBase() {
+class ImmediateDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
 
     /** Tests that [MainCoroutineDispatcher.immediate] doesn't require dispatches from the test context. */
     @Test
