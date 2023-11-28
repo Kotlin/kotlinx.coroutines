@@ -12,13 +12,13 @@ plugins {
 }
 
 configurations{
-  val shadowDeps by creating
-  compileOnly.configure {
-    extendsFrom(shadowDeps)
-  }
-  runtimeOnly.configure {
-    extendsFrom(shadowDeps)
-  }
+    val shadowDeps by creating
+    compileOnly.configure {
+        extendsFrom(shadowDeps)
+    }
+    runtimeOnly.configure {
+        extendsFrom(shadowDeps)
+    }
 }
 
 val junit_version by properties
@@ -64,8 +64,6 @@ val shadowJar by tasks.existing(ShadowJar::class) {
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = listOf(project.configurations["shadowDeps"])
     relocate("net.bytebuddy", "kotlinx.coroutines.repackaged.net.bytebuddy")
-    // // exclude the module-info.class provided by bytebuddy
-    // exclude("META-INF/versions/9/module-info.class")
     /* These classifiers are both set to `null` to trick Gradle into thinking that this jar file is both the
     artifact from the `jar` task and the one from `shadowJar`. Without this, Gradle complains that the artifact
     from the `jar` task is not present when the compilaton finishes, even if the file with this name exists. */
@@ -88,7 +86,6 @@ val shadowJar by tasks.existing(ShadowJar::class) {
         // We can't do that directly with the shadowJar task because it doesn't support replacing existing files.
         val zipPath = this@existing.outputs.files.singleFile.toPath()
         val zipUri = URI.create("jar:${zipPath.toUri()}")
-        println(tasks.compileModuleInfoJava.get().outputs.files.asFileTree.toList())
         val moduleInfoFilePath = tasks.compileModuleInfoJava.get().outputs.files.asFileTree.matching {
             include("module-info.class")
         }.singleFile.toPath()
@@ -100,7 +97,8 @@ val shadowJar by tasks.existing(ShadowJar::class) {
 }
 
 configurations {
-    // shadowJar is already part of the `shadowRuntimeElements` and `shadowApiElements`, but it's not enough.
+    // shadowJar is already part of the `shadowRuntimeElements` and `shadowApiElements`, but it's not enough:
+    // the BOM plugin does not notice it. See <https://github.com/Kotlin/kotlinx.coroutines/pull/3357>
     artifacts {
         add("apiElements", shadowJar)
         add("runtimeElements", shadowJar)
