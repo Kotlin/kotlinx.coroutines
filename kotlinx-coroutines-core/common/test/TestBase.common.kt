@@ -39,6 +39,7 @@ public expect open class TestBase constructor() {
     public fun finish(index: Int)
     public fun ensureFinished() // Ensures that 'finish' was invoked
     public fun reset() // Resets counter and finish flag. Workaround for parametrized tests absence in common
+    public fun println(message: Any?)
 
     public fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
