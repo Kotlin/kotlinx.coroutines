@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.cinterop.*
 import platform.CoreFoundation.*
 import platform.darwin.*
 import kotlin.coroutines.*
@@ -16,16 +17,11 @@ class MainDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
     // skip if already on the main thread, run blocking doesn't really work well with that
     override fun shouldSkipTesting(): Boolean = isMainThread()
 
-    @Test
-    fun testDispatchNecessityCheckWithMainImmediateDispatcher() = runTestOrSkip {
-        val immediate = Dispatchers.Main.immediate
-        assertTrue(immediate.isDispatchNeeded(EmptyCoroutineContext))
-        withContext(Dispatchers.Default) {
-            assertTrue(immediate.isDispatchNeeded(EmptyCoroutineContext))
-            withContext(Dispatchers.Main) {
-                assertFalse(immediate.isDispatchNeeded(EmptyCoroutineContext))
+    override fun scheduleOnMainQueue(block: () -> Unit) {
+        autoreleasepool {
+            dispatch_async(dispatch_get_main_queue()) {
+                block()
             }
-            assertTrue(immediate.isDispatchNeeded(EmptyCoroutineContext))
         }
     }
 }

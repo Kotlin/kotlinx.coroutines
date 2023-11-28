@@ -16,8 +16,6 @@ abstract class MainDispatcherTestBase: TestBase() {
 
     abstract fun isMainThread(): Boolean?
 
-    abstract fun scheduleOnMainQueue(block: () -> Unit)
-
     /** Runs the given block as a test, unless [shouldSkipTesting] indicates that the environment is not suitable. */
     fun runTestOrSkip(block: suspend CoroutineScope.() -> Unit): TestResult {
         // written as a block body to make the need to return `TestResult` explicit
@@ -170,6 +168,8 @@ abstract class MainDispatcherTestBase: TestBase() {
     }
 
     abstract class WithRealTimeDelay : MainDispatcherTestBase() {
+        abstract fun scheduleOnMainQueue(block: () -> Unit)
+
         /** Tests that after a delay, the execution gets back to the main thread. */
         @Test
         fun testDelay() = runTestOrSkip {
