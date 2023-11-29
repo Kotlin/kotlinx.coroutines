@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
