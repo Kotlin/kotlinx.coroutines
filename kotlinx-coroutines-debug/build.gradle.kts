@@ -7,11 +7,11 @@ import java.net.*
 import java.nio.file.*
 
 plugins {
-   id("com.github.johnrengelman.shadow")
-   id("org.jetbrains.kotlinx.kover") // apply plugin to use autocomplete for Kover DSL
+    id("com.github.johnrengelman.shadow")
+    id("org.jetbrains.kotlinx.kover") // apply plugin to use autocomplete for Kover DSL
 }
 
-configurations{
+configurations {
     val shadowDeps by creating
     compileOnly.configure {
         extendsFrom(shadowDeps)
@@ -58,8 +58,6 @@ val jar by tasks.existing(Jar::class) {
     enabled = false
 }
 
-val versionFileTask = VersionFile.registerVersionFileTask(project)
-
 val shadowJar by tasks.existing(ShadowJar::class) {
     // Shadow only byte buddy, do not package kotlin stdlib
     configurations = listOf(project.configurations["shadowDeps"])
@@ -72,17 +70,17 @@ val shadowJar by tasks.existing(ShadowJar::class) {
     archiveBaseName.set(jar.flatMap { it.archiveBaseName })
     archiveVersion.set(jar.flatMap { it.archiveVersion })
     manifest {
-        attributes(mapOf(
-            "Premain-Class" to "kotlinx.coroutines.debug.AgentPremain",
-            "Can-Redefine-Classes" to "true",
-            "Multi-Release" to "true"
-        ))
+        attributes(
+            mapOf(
+                "Premain-Class" to "kotlinx.coroutines.debug.AgentPremain",
+                "Can-Redefine-Classes" to "true",
+                "Multi-Release" to "true"
+            )
+        )
     }
-    VersionFile.fromVersionFile(this, versionFileTask)
-    duplicatesStrategy = DuplicatesStrategy.FAIL
+    // add module-info.class to the META-INF/versions/9/ directory.
     dependsOn(tasks.compileModuleInfoJava)
     doLast {
-        // add module-info.class to the META-INF/versions/9/ directory.
         // We can't do that directly with the shadowJar task because it doesn't support replacing existing files.
         val zipPath = this@existing.outputs.files.singleFile.toPath()
         val zipUri = URI.create("jar:${zipPath.toUri()}")
@@ -97,8 +95,8 @@ val shadowJar by tasks.existing(ShadowJar::class) {
 }
 
 configurations {
-    // shadowJar is already part of the `shadowRuntimeElements` and `shadowApiElements`, but it's not enough:
-    // the BOM plugin does not notice it. See <https://github.com/Kotlin/kotlinx.coroutines/pull/3357>
+    // shadowJar is already part of the `shadowRuntimeElements` and `shadowApiElements`, but the other subprojects
+    // that depend on `kotlinx-coroutines-debug` look at `runtimeElements` and `apiElements`.
     artifacts {
         add("apiElements", shadowJar)
         add("runtimeElements", shadowJar)
