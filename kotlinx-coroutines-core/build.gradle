@@ -374,7 +374,9 @@ koverReport {
                     "kotlinx.coroutines.debug.*", // Tested by debug module
                     "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
                     "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
-                    "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
+                    "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher", // Deprecated
+                    "_COROUTINE._CREATION", // For IDE navigation
+                    "_COROUTINE._BOUNDARY", // For IDE navigation
             )
         }
     }
