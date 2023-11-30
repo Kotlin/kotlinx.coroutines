@@ -135,6 +135,13 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     private fun createThreadSync(): Thread {
         return _thread ?: Thread(this, THREAD_NAME).apply {
             _thread = this
+            /*
+             * `DefaultExecutor` is a global singleton that creates its thread lazily.
+             * To isolate the classloaders properly, we are inherting the context classloader from
+             * the singleton itself instead of using parent' thread one
+             * in order not to accidentally capture temporary application classloader.
+             */
+            contextClassLoader = this@DefaultExecutor.javaClass.classLoader
             isDaemon = true
             start()
         }
