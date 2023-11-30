@@ -10,6 +10,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * A [SharedFlow] that represents a read-only state with a single updatable data [value] that emits updates
@@ -238,9 +239,11 @@ public inline fun <T> MutableStateFlow<T>.update(function: (T) -> T) {
 
 // ------------------------------------ Implementation ------------------------------------
 
-private val NONE = Symbol("NONE")
+@JvmField
+internal val NONE = Symbol("NONE")
 
-private val PENDING = Symbol("PENDING")
+@JvmField
+internal val PENDING = Symbol("PENDING")
 
 // StateFlow slots are allocated for its collectors
 private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
@@ -294,7 +297,6 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
         return state === PENDING
     }
 
-    @Suppress("UNCHECKED_CAST")
     suspend fun awaitPending(): Unit = suspendCancellableCoroutine sc@ { cont ->
         assert { _state.value !is CancellableContinuationImpl<*> } // can be NONE or PENDING
         if (_state.compareAndSet(NONE, cont)) return@sc // installed continuation, waiting for pending
@@ -310,7 +312,6 @@ private class StateFlowImpl<T>(
     private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
 
-    @Suppress("UNCHECKED_CAST")
     public override var value: T
         get() = NULL.unbox(_state.value)
         set(value) { updateState(null, value ?: NULL) }
@@ -373,7 +374,6 @@ private class StateFlowImpl<T>(
         this.value = value
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun resetReplayCache() {
         throw UnsupportedOperationException("MutableStateFlow.resetReplayCache is not supported")
     }
