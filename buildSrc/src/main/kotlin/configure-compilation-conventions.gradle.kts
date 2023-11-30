@@ -10,7 +10,7 @@ configure(subprojects) {
     if (name in sourceless) return@configure
     apply(plugin = "kotlinx-atomicfu")
     tasks.withType<KotlinCompile<*>>().configureEach {
-        val isMainTaskName = name == "compileKotlin" || name == "compileKotlinJvm"
+        val isMainTaskName = name.startsWith("compileKotlin")
         kotlinOptions {
             languageVersion = getOverriddenKotlinLanguageVersion(project)
             apiVersion = getOverriddenKotlinApiVersion(project)

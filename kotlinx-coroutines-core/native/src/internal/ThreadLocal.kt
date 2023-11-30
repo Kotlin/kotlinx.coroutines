@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines.internal
 
+import kotlin.native.concurrent.ThreadLocal
+
 internal actual class CommonThreadLocal<T>(private val name: Symbol) {
     @Suppress("UNCHECKED_CAST")
     actual fun get(): T = Storage[name] as T
