@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.cinterop.*
 
+@OptIn(BetaInteropApi::class)
 internal actual inline fun workerMain(block: () -> Unit) {
     autoreleasepool {
         block()
