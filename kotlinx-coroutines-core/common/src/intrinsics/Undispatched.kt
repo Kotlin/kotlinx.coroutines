@@ -25,19 +25,6 @@ internal fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Conti
  * immediately execute the coroutine in the current thread until the next suspension.
  * It does not use [ContinuationInterceptor], but updates the context of the current thread for the new coroutine.
  */
-internal fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Continuation<T>) {
-    startDirect(completion) { actualCompletion ->
-        withCoroutineContext(completion.context, null) {
-            startCoroutineUninterceptedOrReturn(actualCompletion)
-        }
-    }
-}
-
-/**
- * Use this function to start a new coroutine in [CoroutineStart.UNDISPATCHED] mode &mdash;
- * immediately execute the coroutine in the current thread until the next suspension.
- * It does not use [ContinuationInterceptor], but updates the context of the current thread for the new coroutine.
- */
 internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
     startDirect(completion) { actualCompletion ->
         withCoroutineContext(completion.context, null) {

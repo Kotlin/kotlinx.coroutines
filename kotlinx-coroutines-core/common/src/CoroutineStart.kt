@@ -76,25 +76,6 @@ public enum class CoroutineStart {
     UNDISPATCHED;
 
     /**
-     * Starts the corresponding block as a coroutine with this coroutine's start strategy.
-     *
-     * * [DEFAULT] uses [startCoroutineCancellable].
-     * * [ATOMIC] uses [startCoroutine].
-     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
-     * * [LAZY] does nothing.
-     *
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @InternalCoroutinesApi
-    public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>): Unit =
-        when (this) {
-            DEFAULT -> block.startCoroutineCancellable(completion)
-            ATOMIC -> block.startCoroutine(completion)
-            UNDISPATCHED -> block.startCoroutineUndispatched(completion)
-            LAZY -> Unit // will start lazily
-        }
-
-    /**
      * Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.
      *
      * * [DEFAULT] uses [startCoroutineCancellable].
