@@ -261,6 +261,10 @@ class CombineTest : CombineTestBase() {
     override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineOriginal(other, transform)
 }
 
+class CombineOverloadTest : CombineTestBase() {
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineOriginal(this, other, transform)
+}
+
 class CombineTransformTest : CombineTestBase() {
     override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineTransformOriginal(other) { a, b ->
         emit(transform(a, b))

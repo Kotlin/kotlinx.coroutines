@@ -348,12 +348,6 @@ static void configureJvmForLincheck(task, additional = false) {
 task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest, jvmLincheckTestAdditional])
 check.dependsOn moreTest
 
-def commonKoverExcludes =
-        ["kotlinx.coroutines.debug.*", // Tested by debug module
-         "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
-         "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
-         "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
-        ]
 
 kover {
     excludeTests {
@@ -375,6 +369,9 @@ koverReport {
                     "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
                     "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
                     "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher", // Deprecated
+                    "kotlinx.coroutines.flow.FlowKt__MigrationKt.*", // Migrations
+                    "kotlinx.coroutines.flow.LintKt.*", // Migrations
+                    "kotlinx.coroutines.internal.WeakMapCtorCache", // Fallback implementation that we never test
                     "_COROUTINE._CREATION", // For IDE navigation
                     "_COROUTINE._BOUNDARY", // For IDE navigation
             )

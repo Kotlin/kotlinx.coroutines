@@ -350,16 +350,4 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     override val isRemoved: Boolean get() = false
 
     override fun nextIfRemoved(): Node? = null
-
-    internal fun validate() {
-        var prev: Node = this
-        var cur: Node = next as Node
-        while (cur != this) {
-            val next = cur.nextNode
-            cur.validateNode(prev, next)
-            prev = cur
-            cur = next
-        }
-        validateNode(prev, next as Node)
-    }
 }

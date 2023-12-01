@@ -315,4 +315,10 @@ class DebounceTest : TestBase() {
         assertEquals(listOf("A", "C", "D", "E"), result)
         finish(5)
     }
+
+    @Test
+    fun testFailsWithIllegalArgument() {
+        val flow = emptyFlow<Int>()
+        assertFailsWith<IllegalArgumentException> { flow.debounce(-1) }
+    }
 }

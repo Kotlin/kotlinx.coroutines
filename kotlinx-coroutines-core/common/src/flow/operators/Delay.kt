@@ -308,12 +308,9 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
  */
 internal fun CoroutineScope.fixedPeriodTicker(
     delayMillis: Long,
-    initialDelayMillis: Long = delayMillis
 ): ReceiveChannel<Unit> {
-    require(delayMillis >= 0) { "Expected non-negative delay, but has $delayMillis ms" }
-    require(initialDelayMillis >= 0) { "Expected non-negative initial delay, but has $initialDelayMillis ms" }
     return produce(capacity = 0) {
-        delay(initialDelayMillis)
+        delay(delayMillis)
         while (true) {
             channel.send(Unit)
             delay(delayMillis)

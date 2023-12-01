@@ -4,7 +4,7 @@
 
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
-@file:Suppress("UNCHECKED_CAST", "NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE") // KT-32203
+@file:Suppress("UNCHECKED_CAST")
 
 package kotlinx.coroutines.flow
 

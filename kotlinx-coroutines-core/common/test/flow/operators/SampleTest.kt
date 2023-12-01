@@ -296,4 +296,10 @@ class SampleTest : TestBase() {
         assertEquals(listOf("A", "B", "D"), result)
         finish(5)
     }
+
+    @Test
+    fun testFailsWithIllegalArgument() {
+        val flow = emptyFlow<Int>()
+        assertFailsWith<IllegalArgumentException> { flow.debounce(-1) }
+    }
 }

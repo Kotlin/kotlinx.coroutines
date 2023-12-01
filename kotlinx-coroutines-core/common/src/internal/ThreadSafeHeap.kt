@@ -32,11 +32,6 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
 
     public val isEmpty: Boolean get() = size == 0
 
-    public fun clear(): Unit = synchronized(this) {
-        a?.fill(null)
-        _size.value = 0
-    }
-
     public fun find(
         predicate: (value: T) -> Boolean
     ): T? = synchronized(this) block@{
