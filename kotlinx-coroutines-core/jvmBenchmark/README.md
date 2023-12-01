@@ -11,5 +11,5 @@ and decide on their usability.
 
 ```
 ./gradlew :kotlinx-coroutines-core:jvmBenchmarkBenchmarkJar
-java -jar kotlinx-coroutines-core/build/benchmarks/jvmBenchmark/jars/kotlinx-coroutines-core-jvmBenchmark-jmh-1.7.2-SNAPSHOT-JMH.jar
+java -jar kotlinx-coroutines-core/build/benchmarks/jvmBenchmark/jars/kotlinx-coroutines-core-jvmBenchmark-jmh-*-JMH.jar
 ```
