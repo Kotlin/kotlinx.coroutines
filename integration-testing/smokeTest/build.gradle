@@ -3,15 +3,18 @@ plugins {
 }
 
 repositories {
-    // Coroutines from the outer project are published by previous CI buils step
-    mavenLocal()
     mavenCentral()
     maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+    // Coroutines from the outer project are published by previous CI buils step
+    mavenLocal()
 }
 
 kotlin {
     jvm()
     js(IR) {
+        nodejs()
+    }
+    wasmJs() {
         nodejs()
     }
 
@@ -34,6 +37,11 @@ kotlin {
                 implementation kotlin('test-js')
             }
         }
+        wasmJsTest {
+            dependencies {
+                implementation kotlin('test-wasm-js')
+            }
+        }
         jvmTest {
             dependencies {
                 implementation kotlin('test')
@@ -50,3 +58,11 @@ kotlin {
     }
 }
 
+// Drop this configuration when the Node.JS version in KGP will support wasm gc milestone 4
+// check it here:
+// https://github.com/JetBrains/kotlin/blob/master/libraries/tools/kotlin-gradle-plugin/src/common/kotlin/org/jetbrains/kotlin/gradle/targets/js/nodejs/NodeJsRootExtension.kt
+rootProject.extensions.findByType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension.class).with {
+    // canary nodejs that supports recent Wasm GC changes
+    it.nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
+    it.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+}
