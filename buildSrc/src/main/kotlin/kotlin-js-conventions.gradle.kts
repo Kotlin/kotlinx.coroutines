@@ -36,6 +36,5 @@ tasks.withType<KotlinJsCompile> {
     kotlinOptions {
         moduleKind = "umd"
         sourceMap = true
-        metaInfo = true
     }
 }
