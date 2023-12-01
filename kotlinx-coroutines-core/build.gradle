@@ -386,7 +386,7 @@ koverReport {
 }
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
-    classifier = 'tests'
+    archiveClassifier = 'tests'
     from(compileTestKotlinJvm.destinationDirectory)
 }
 

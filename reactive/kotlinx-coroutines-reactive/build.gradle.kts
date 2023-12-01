@@ -18,7 +18,7 @@ dependencies {
 
 val testNG by tasks.registering(Test::class) {
     useTestNG()
-    reports.html.destination = file("$buildDir/reports/testng")
+    reports.html.outputLocation.set(file("$buildDir/reports/testng"))
     include("**/*ReactiveStreamTckTest.*")
     // Skip testNG when tests are filtered with --tests, otherwise it simply fails
     onlyIf {
@@ -31,7 +31,7 @@ val testNG by tasks.registering(Test::class) {
 }
 
 tasks.test {
-    reports.html.destination = file("$buildDir/reports/junit")
+    reports.html.outputLocation.set(file("$buildDir/reports/junit"))
 }
 
 tasks.check {
