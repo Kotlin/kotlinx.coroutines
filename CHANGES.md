@@ -1,5 +1,10 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.7.3
+
+* Disabled the publication of the multiplatform library metadata for the old (1.6 and earlier) KMP Gradle plugin (#3809).
+* Fixed a bug introduced in 1.7.2 that disabled the coroutine debugger in IDEA (#3822).
+
 ## Version 1.7.2
 
 ### Bug fixes and improvements

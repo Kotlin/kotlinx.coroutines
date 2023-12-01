@@ -9,14 +9,6 @@ import java.net.*
 apply<DokkaPlugin>()
 //apply<JavaPlugin>()
 
-fun GradleDokkaSourceSetBuilder.makeLinkMapping(projectDir: File) {
-    sourceLink {
-        val relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
-        localDirectory.set(projectDir.resolve("src"))
-        remoteUrl.set(URL("https://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"))
-        remoteLineSuffix.set("#L")
-    }
-}
 
 val knit_version: String by project
 tasks.withType(DokkaTaskPartial::class).configureEach {
@@ -45,31 +37,31 @@ tasks.withType(DokkaTaskPartial::class).configureEach {
     }
 }
 
-val kotlin_version: String by project
+fun GradleDokkaSourceSetBuilder.makeLinkMapping(projectDir: File) {
+    sourceLink {
+        val relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
+        localDirectory.set(projectDir.resolve("src"))
+        remoteUrl.set(URL("https://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"))
+        remoteLineSuffix.set("#L")
+    }
+}
 
-if (project.name == "kotlinx-coroutines-core") {
-    // Custom configuration for MPP modules
+if (project.isMultiplatform) {
+    // Configuration for MPP modules
     tasks.withType(DokkaTaskPartial::class).configureEach {
-        dokkaSourceSets {
-            val commonMain by getting {
-                makeLinkMapping(project.file("common"))
-            }
-
-            val nativeMain by getting {
-                makeLinkMapping(project.file("native"))
-            }
-
-            val jsMain by getting {
-                makeLinkMapping(project.file("js"))
-            }
-
-            val jvmMain by getting {
-                makeLinkMapping(project.file("jvm"))
-            }
-
-            val wasmJsMain by getting {
-                makeLinkMapping(project.file("wasm"))
-            }
+        // sources in MPP are located in moduleDir/PLATFORM/src,
+        // where PLATFORM could be jvm, js, jdk8, concurrent, etc
+        // configuration happens in buildSrc/src/main/kotlin/SourceSetsKt.configureMultiplatform
+        dokkaSourceSets.matching { it.name.endsWith("Main") }.configureEach {
+            val platform = name.dropLast(4)
+            makeLinkMapping(project.file(platform))
+        }
+    }
+} else {
+    // Configuration for JVM modules
+    tasks.withType(DokkaTaskPartial::class).configureEach {
+        dokkaSourceSets.named("main") {
+            makeLinkMapping(projectDir)
         }
     }
 }

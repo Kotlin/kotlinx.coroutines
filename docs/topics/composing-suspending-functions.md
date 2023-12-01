@@ -189,6 +189,12 @@ standard `lazy` function in cases when computation of the value involves suspend
 
 ## Async-style functions
 
+> This programming style with async functions is provided here only for illustration, because it is a popular style
+> in other programming languages. Using this style with Kotlin coroutines is **strongly discouraged** for the
+> reasons explained below.
+>
+{type="note"}
+
 We can define async-style functions that invoke `doSomethingUsefulOne` and `doSomethingUsefulTwo`
 _asynchronously_ using the [async] coroutine builder using a [GlobalScope] reference to 
 opt-out of the structured concurrency.
@@ -274,12 +280,6 @@ suspend fun doSomethingUsefulTwo(): Int {
 The answer is 42
 Completed in 1085 ms
 -->
-
-> This programming style with async functions is provided here only for illustration, because it is a popular style
-> in other programming languages. Using this style with Kotlin coroutines is **strongly discouraged** for the
-> reasons explained below.
->
-{type="note"}
 
 Consider what happens if between the `val one = somethingUsefulOneAsync()` line and `one.await()` expression there is some logic
 error in the code, and the program throws an exception, and the operation that was being performed by the program aborts. 
