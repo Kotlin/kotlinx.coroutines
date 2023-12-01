@@ -13,31 +13,14 @@ import org.robolectric.annotation.*
 import org.robolectric.shadows.*
 import java.util.concurrent.*
 import kotlin.test.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE, sdk = [28])
 @LooperMode(LooperMode.Mode.LEGACY)
-class HandlerDispatcherTest : TestBase() {
-    @Test
-    fun testImmediateDispatcherYield() = runBlocking(Dispatchers.Main) {
-        expect(1)
-        // launch in the immediate dispatcher
-        launch(Dispatchers.Main.immediate) {
-            expect(2)
-            yield()
-            expect(4)
-        }
-        expect(3) // after yield
-        yield() // yield back
-        finish(5)
-    }
-
-    @Test
-    fun testMainDispatcherToString() {
-        assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
-        assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
-    }
-
+@Config(manifest = Config.NONE, sdk = [28])
+class HandlerDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
     @Test
     fun testDefaultDelayIsNotDelegatedToMain() = runTest {
         val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
@@ -131,5 +114,21 @@ class HandlerDispatcherTest : TestBase() {
         expect(3)
         mainLooper.scheduler.advanceBy(51, TimeUnit.MILLISECONDS)
         finish(5)
+    }
+
+    override fun isMainThread(): Boolean = Looper.getMainLooper().thread === Thread.currentThread()
+
+    override fun scheduleOnMainQueue(block: () -> Unit) {
+        Handler(Looper.getMainLooper()).post(block)
+    }
+
+    // by default, Robolectric only schedules tasks on the main thread but doesn't run them.
+    // This function nudges it to run them, 10 milliseconds of virtual time at a time.
+    override suspend fun spinTest(testBody: Job) {
+        val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
+        while (testBody.isActive) {
+            Thread.sleep(10, 0)
+            mainLooper.idleFor(10, TimeUnit.MILLISECONDS)
+        }
     }
 }

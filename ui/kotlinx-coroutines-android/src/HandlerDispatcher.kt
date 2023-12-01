@@ -127,11 +127,8 @@ internal class HandlerContext private constructor(
         name: String? = null
     ) : this(handler, name, false)
 
-    @Volatile
-    private var _immediate: HandlerContext? = if (invokeImmediately) this else null
-
-    override val immediate: HandlerContext = _immediate ?:
-        HandlerContext(handler, name, true).also { _immediate = it }
+    override val immediate: HandlerContext = if (invokeImmediately) this else
+        HandlerContext(handler, name, true)
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
         return !invokeImmediately || Looper.myLooper() != handler.looper
@@ -172,8 +169,10 @@ internal class HandlerContext private constructor(
         if (invokeImmediately) "$str.immediate" else str
     }
 
-    override fun equals(other: Any?): Boolean = other is HandlerContext && other.handler === handler
-    override fun hashCode(): Int = System.identityHashCode(handler)
+    override fun equals(other: Any?): Boolean =
+        other is HandlerContext && other.handler === handler && other.invokeImmediately == invokeImmediately
+    // inlining `Boolean.hashCode()` for Android compatibility, as requested by Animal Sniffer
+    override fun hashCode(): Int = System.identityHashCode(handler) xor if (invokeImmediately) 1231 else 1237
 }
 
 @Volatile
