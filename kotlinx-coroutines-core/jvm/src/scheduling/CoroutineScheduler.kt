@@ -350,18 +350,12 @@ internal class CoroutineScheduler(
         for (i in 1..created) {
             val worker = workers[i]!!
             if (worker !== currentWorker) {
-                while (worker.isAlive) {
+                while (worker.getState() != Thread.State.TERMINATED) {
                     LockSupport.unpark(worker)
                     worker.join(timeout)
                 }
                 val state = worker.state
-                if (state !== WorkerState.TERMINATED) {
-                    throw AssertionError(
-                        "State: $state, thread state: ${worker.getState()}, idx: ${worker.indexInArray}," +
-                            "total size: ${workers.currentLength()}"
-                    )
-                }
-//                assert { state === WorkerState.TERMINATED } // Expected TERMINATED state
+                assert { state === WorkerState.TERMINATED } // Expected TERMINATED state
                 worker.localQueue.offloadAllWorkTo(globalBlockingQueue) // Doesn't actually matter which queue to use
             }
         }
