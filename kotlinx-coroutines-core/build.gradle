@@ -12,7 +12,7 @@ apply plugin: 'org.jetbrains.dokka'
 // apply plugin to use autocomplete for Kover DSL
 apply plugin: 'org.jetbrains.kotlinx.kover'
 
-apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
+apply plugin: "kotlin-jvm-multiplatform-conventions"
 apply from: rootProject.file("gradle/compile-common.gradle")
 
 if (rootProject.ext.native_targets_enabled) {

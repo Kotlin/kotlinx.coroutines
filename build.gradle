@@ -150,7 +150,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
     evaluationDependsOn(":$coreModule")
     if (isMultiplatform(it)) {
         apply plugin: "kotlin-multiplatform"
-        apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
+        apply plugin: "kotlin-jvm-multiplatform-conventions"
         apply from: rootProject.file("gradle/compile-common.gradle")
 
         if (rootProject.ext["native_targets_enabled"] as Boolean) {
