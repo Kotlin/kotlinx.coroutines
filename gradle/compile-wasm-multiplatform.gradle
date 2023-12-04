@@ -4,7 +4,7 @@
 
 kotlin {
     wasmJs {
-        moduleName = project.name
+        moduleName = project.name + "Wasm" // Module name should be different from the one from JS
         nodejs()
         compilations['main']?.dependencies {
             api "org.jetbrains.kotlinx:atomicfu-wasm-js:$atomicfu_version"
