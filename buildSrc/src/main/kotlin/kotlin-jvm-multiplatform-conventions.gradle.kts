@@ -12,8 +12,21 @@ plugins {
     kotlin("multiplatform")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 kotlin {
     jvm {}
+    jvm().compilations.all {
+        compilerOptions.configure {
+            jvmTarget.set(JvmTarget.JVM_1_8)
+        }
+    }
+
+    jvmToolchain(jdkToolchainVersion)
+
     sourceSets {
         jvmMain.dependencies {
             compileOnly("org.codehaus.mojo:animal-sniffer-annotations:1.20")

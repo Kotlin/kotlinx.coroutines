@@ -1,10 +1,11 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // Platform-specific configuration to compile JVM modules
 
 import org.gradle.api.*
+import org.jetbrains.kotlin.gradle.dsl.*
 
 plugins {
     kotlin("jvm")
@@ -13,6 +14,13 @@ plugins {
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+    }
+    jvmToolchain(jdkToolchainVersion)
 }
 
 dependencies {
