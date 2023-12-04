@@ -1,11 +1,12 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("unused")
 
-package kotlinx.coroutines.debug.internal
+package kotlinx.coroutines.debugging
 
+import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import kotlin.coroutines.*
 
 /*
