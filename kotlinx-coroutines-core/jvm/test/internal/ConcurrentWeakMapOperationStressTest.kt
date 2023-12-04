@@ -6,7 +6,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.internal.*
+import kotlinx.coroutines.debugging.*
 import org.junit.Test
 import kotlin.concurrent.*
 import kotlin.test.*

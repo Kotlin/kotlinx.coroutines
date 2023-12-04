@@ -10,13 +10,13 @@ import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
 import java.lang.StackTraceElement
 import java.text.*
-import java.util.concurrent.locks.*
 import kotlin.collections.ArrayList
 import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 import kotlin.synchronized
 import _COROUTINE.ArtificialStackFrames
+import kotlinx.coroutines.debugging.*
 
 @PublishedApi
 internal object DebugProbesImpl {

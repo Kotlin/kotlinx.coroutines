@@ -6,7 +6,7 @@ package kotlinx.coroutines.internal
 
 import junit.framework.Assert.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.debug.internal.*
+import kotlinx.coroutines.debugging.*
 import org.junit.*
 import kotlin.concurrent.*
 
