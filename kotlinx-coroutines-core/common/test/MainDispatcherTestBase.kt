@@ -211,12 +211,12 @@ abstract class MainDispatcherTestBase: TestBase() {
             expect(1)
             assertFailsWith<TimeoutCancellationException> {
                 withTimeout(300) {
-                    withContext(Dispatchers.Main) {
+                    launch(Dispatchers.Main, start = CoroutineStart.ATOMIC) {
                         checkIsMainThread()
                         expect(2)
                         delay(1000)
                         expectUnreached()
-                    }
+                    }.join()
                 }
                 expectUnreached()
             }
