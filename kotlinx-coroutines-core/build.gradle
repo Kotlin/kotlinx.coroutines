@@ -393,3 +393,8 @@ task testsJar(type: Jar, dependsOn: jvmTestClasses) {
 artifacts {
     archives testsJar
 }
+
+// Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
+tasks.named("dokkaHtmlPartial") {
+    it.dependsOn("jvmJar")
+}
