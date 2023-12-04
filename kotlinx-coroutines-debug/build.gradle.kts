@@ -72,7 +72,7 @@ val shadowJar by tasks.existing(ShadowJar::class) {
     manifest {
         attributes(
             mapOf(
-                "Premain-Class" to "kotlinx.coroutines.debug.AgentPremain",
+                "Premain-Class" to "kotlinx.coroutines.debugging.AgentPremain",
                 "Can-Redefine-Classes" to "true",
                 "Multi-Release" to "true"
             )

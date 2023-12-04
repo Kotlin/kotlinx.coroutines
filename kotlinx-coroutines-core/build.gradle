@@ -288,7 +288,7 @@ allMetadataJar { setupManifest(it) }
 
 static def setupManifest(Jar jar) {
     jar.manifest {
-        attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
+        attributes "Premain-Class": "kotlinx.coroutines.debugging.AgentPremain"
         attributes "Can-Retransform-Classes": "true"
     }
 }
