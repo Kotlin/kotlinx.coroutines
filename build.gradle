@@ -337,29 +337,6 @@ tasks.named("dokkaHtmlMultiModule") {
     pluginsMapConfiguration.set(["org.jetbrains.dokka.base.DokkaBase": """{ "templatesDir": "${projectDir.toString().replace('\\', '/')}/dokka-templates" }"""])
 }
 
-if (CacheRedirector.enabled) {
-    def yarnRootExtension = rootProject.extensions.findByType(YarnRootExtension.class)
-    if (yarnRootExtension != null) {
-        yarnRootExtension.downloadBaseUrl = CacheRedirector.maybeRedirect(yarnRootExtension.downloadBaseUrl)
-    }
-
-    def nodeJsExtension = rootProject.extensions.findByType(NodeJsRootExtension.class)
-    if (nodeJsExtension != null) {
-        nodeJsExtension.nodeDownloadBaseUrl = CacheRedirector.maybeRedirect(nodeJsExtension.nodeDownloadBaseUrl)
-    }
-}
-
-// Drop this configuration when the Node.JS version in KGP will support wasm gc milestone 4
-// check it here:
-// https://github.com/JetBrains/kotlin/blob/master/libraries/tools/kotlin-gradle-plugin/src/common/kotlin/org/jetbrains/kotlin/gradle/targets/js/nodejs/NodeJsRootExtension.kt
-extensions.findByType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension.class).with {
-    // canary nodejs that supports recent Wasm GC changes
-    it.nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
-    it.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
-}
-
-// Drop this when node js version become stable
-tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask).configureEach {
-    args.add("--ignore-engines")
-}
+CacheRedirector.configureJsPackageManagers(rootProject)
+CacheRedirector.configureWasmNodeRepositories(rootProject)
 

@@ -6,6 +6,10 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.artifacts.repositories.*
 import org.gradle.api.initialization.dsl.*
+import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.*
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.*
+import org.jetbrains.kotlin.gradle.targets.js.yarn.*
 import java.net.*
 
 /**
@@ -73,9 +77,9 @@ private fun URI.maybeRedirect(): URI? {
 }
 
 private fun URI.isCachedOrLocal() = scheme == "file" ||
-            host == "cache-redirector.jetbrains.com" ||
-            host == "teamcity.jetbrains.com" ||
-            host == "buildserver.labs.intellij.net"
+    host == "cache-redirector.jetbrains.com" ||
+    host == "teamcity.jetbrains.com" ||
+    host == "buildserver.labs.intellij.net"
 
 private fun Project.checkRedirectUrl(url: URI, containerName: String): URI {
     val redirected = url.maybeRedirect()
@@ -100,6 +104,20 @@ private fun Project.checkRedirect(repositories: RepositoryHandler, containerName
     }
 }
 
+private fun Project.configureYarnAndNodeRedirects() {
+    if (CacheRedirector.isEnabled) {
+        val yarnRootExtension = extensions.findByType<YarnRootExtension>()
+        if (yarnRootExtension != null) {
+            yarnRootExtension.downloadBaseUrl = CacheRedirector.maybeRedirect(yarnRootExtension.downloadBaseUrl)
+        }
+
+        val nodeJsExtension = rootProject.extensions.findByType<NodeJsRootExtension>()
+        if (nodeJsExtension != null) {
+            nodeJsExtension.nodeDownloadBaseUrl = CacheRedirector.maybeRedirect(nodeJsExtension.nodeDownloadBaseUrl)
+        }
+    }
+}
+
 // Used from Groovy scripts
 object CacheRedirector {
     /**
@@ -116,6 +134,31 @@ object CacheRedirector {
     @JvmStatic
     fun Project.configure() {
         checkRedirect(repositories, displayName)
+    }
+
+    /**
+     * Configures JS-specific extensions to use
+     */
+    @JvmStatic
+    fun Project.configureJsPackageManagers() {
+        configureYarnAndNodeRedirects()
+    }
+
+    /**
+     * Temporary repositories to depend on until GC milestone 4 in KGP
+     * and stable Node release. Safe to remove when its removal does not break WASM tests.
+     */
+    @JvmStatic
+    fun Project.configureWasmNodeRepositories() {
+        val extension = extensions.findByType<NodeJsRootExtension>()
+        if (extension != null) {
+            extension.nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
+            extension.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+        }
+
+        tasks.withType<KotlinNpmInstallTask>().configureEach {
+            args.add("--ignore-engines")
+        }
     }
 
     @JvmStatic
