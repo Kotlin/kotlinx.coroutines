@@ -5,6 +5,8 @@
 
 import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
+import org.gradle.api.tasks.testing.Test
+import org.gradle.kotlin.dsl.*
 import java.net.*
 import java.util.logging.*
 
@@ -68,5 +70,44 @@ fun addDevRepositoryIfEnabled(rh: RepositoryHandler, project: Project) {
     val devRepoUrl = getKotlinDevRepositoryUrl(project) ?: return
     rh.maven {
         url = devRepoUrl
+    }
+}
+
+/**
+ * Changes the build config when 'build_snapshot_train' is enabled:
+ * Disables flaky and Kotlin-specific tests, prints the real version of Kotlin applied (to be sure overridden version of Kotlin is properly picked).
+ */
+fun Project.configureCommunityBuildTweaks() {
+    // Flag that detects whether community build is enabled
+    val buildSnapshotTrain = (project.rootProject.properties["build_snapshot_train"] as? String) != null
+    if (!buildSnapshotTrain) return
+
+    allprojects {
+        // Disable stress tests and tests that are flaky on Kotlin version specific
+        tasks.withType<Test>().configureEach {
+            exclude("**/*LinearizabilityTest*")
+            exclude("**/*LFTest*")
+            exclude("**/*StressTest*")
+            exclude("**/*scheduling*")
+            exclude("**/*Timeout*")
+            exclude("**/*definitely/not/kotlinx*")
+            exclude("**/*PrecompiledDebugProbesTest*")
+        }
+    }
+
+    println("Manifest of kotlin-compiler-embeddable.jar for coroutines")
+    val coreProject = subprojects.single { it.name == coreModule }
+    configure(listOf(coreProject)) {
+        configurations.matching { it.name == "kotlinCompilerClasspath" }.configureEach {
+            val config = resolvedConfiguration.getFiles().first { it.name.contains("kotlin-compiler-embeddable") }
+
+            val manifest = zipTree(config).matching {
+                include("META-INF/MANIFEST.MF")
+            }.getFiles().first()
+
+            manifest.readLines().forEach {
+                println(it)
+            }
+        }
     }
 }

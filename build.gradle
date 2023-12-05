@@ -1,12 +1,10 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
@@ -184,38 +182,7 @@ apply plugin: "bom-conventions"
 apply plugin: "java-modularity-conventions"
 apply plugin: "version-file-conventions"
 
-if (build_snapshot_train) {
-    println "Hacking test tasks, removing stress and flaky tests"
-    allprojects {
-        tasks.withType(Test).all {
-            exclude '**/*LinearizabilityTest*'
-            exclude '**/*LFTest*'
-            exclude '**/*StressTest*'
-            exclude '**/*scheduling*'
-            exclude '**/*Timeout*'
-            exclude '**/*definitely/not/kotlinx*'
-            // Disable because of KT-11567 in 1.4
-            exclude '**/*CasesPublicAPITest*'
-            // Kotlin
-            exclude '**/*PrecompiledDebugProbesTest*'
-        }
-    }
-
-    println "Manifest of kotlin-compiler-embeddable.jar for coroutines"
-    configure(subprojects.findAll { it.name == coreModule }) {
-        configurations.matching { it.name == "kotlinCompilerClasspath" }.all {
-            resolvedConfiguration.getFiles().findAll { it.name.contains("kotlin-compiler-embeddable") }.each {
-                def manifest = zipTree(it).matching {
-                    include 'META-INF/MANIFEST.MF'
-                }.getFiles().first()
-
-                manifest.readLines().each {
-                    println it
-                }
-            }
-        }
-    }
-}
+CommunityProjectsBuild.configureCommunityBuildTweaks(rootProject)
 
 // Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
 configure(subprojects.findAll {
