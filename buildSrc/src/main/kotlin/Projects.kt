@@ -16,7 +16,7 @@ val multiplatform = setOf(coreModule, testModule)
 val sourceless = setOf("kotlinx.coroutines", "kotlinx-coroutines-bom")
 val internal = setOf("kotlinx.coroutines", "benchmarks")
 // Not published
-val unpublished = internal + setOf("example-frontend-js", "android-unit-tests")
+val unpublished = internal + setOf("android-unit-tests")
 
 val Project.isMultiplatform: Boolean get() = name in multiplatform
 

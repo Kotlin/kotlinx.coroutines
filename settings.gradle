@@ -51,7 +51,3 @@ if (JavaVersion.current().isJava11Compatible()) {
     module('ui/kotlinx-coroutines-javafx')
 }
 module('ui/kotlinx-coroutines-swing')
-
-if (!build_snapshot_train) {
-    module('js/example-frontend-js')
-}

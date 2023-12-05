@@ -121,7 +121,6 @@ apply plugin: "kover-conventions"
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
     if (build_snapshot_train) {
-        ignoredProjects.remove("example-frontend-js")
         ignoredProjects.add(coreModule)
     }
     ignoredPackages += "kotlinx.coroutines.internal"
@@ -187,8 +186,7 @@ CommunityProjectsBuild.configureCommunityBuildTweaks(rootProject)
 // Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
 configure(subprojects.findAll {
     !sourceless.contains(it.name) && !isMultiplatform(it) &&
-            it.name != "benchmarks" &&
-            it.name != "example-frontend-js"
+            it.name != "benchmarks"
 }) {
     // Pure JS and pure MPP doesn't have this notion and are configured separately
     // TODO detect it via platformOf and migrate benchmarks to the same scheme
