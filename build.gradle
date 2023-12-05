@@ -260,6 +260,14 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     }
 }
 
+// Workaround for https://youtrack.jetbrains.com/issue/KT-58303:
+// the 'clean' task cannot delete expanded.lock file on Windows as it is still held by Gradle, failing the build
+// Gradle issue: https://github.com/gradle/gradle/issues/25752
+clean {
+    delete.add(fileTree(buildDir))
+    delete.remove("tmp/.cache/expanded/expanded.lock")
+}
+
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $KotlinCompilerVersion.VERSION")
 
@@ -354,3 +362,4 @@ extensions.findByType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootEx
 tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask).configureEach {
     args.add("--ignore-engines")
 }
+
