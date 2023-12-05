@@ -3,7 +3,7 @@
 [![Kotlin Stable](https://kotl.in/badges/stable.svg)](https://kotlinlang.org/docs/components-stability.html)
 [![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.7.2)](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.7.2)
+[![Download](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.8.0-RC)](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core/1.8.0-RC)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.9.21-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![Slack channel](https://img.shields.io/badge/chat-slack-green.svg?logo=slack)](https://kotlinlang.slack.com/messages/coroutines/)
 
@@ -26,7 +26,7 @@ suspend fun main() = coroutineScope {
 
 * [core](kotlinx-coroutines-core/README.md) &mdash; common coroutines across all platforms:
   * [launch] and [async] coroutine builders returning [Job] and [Deferred] light-weight futures with cancellation support;
-  * [Dispatchers] object with [Main][Dispatchers.Main] dispatcher for Android/Swing/JavaFx, and [Default][Dispatchers.Default] dispatcher for background coroutines;
+  * [Dispatchers] object with [Main][Dispatchers.Main] dispatcher for Android/Swing/JavaFx (which require the corresponding artifacts in runtime) and Darwin (included out of the box), and [Default][Dispatchers.Default] dispatcher for background coroutines;
   * [delay] and [yield] top-level suspending functions;
   * [Flow] &mdash; cold asynchronous stream with [flow][_flow] builder and comprehensive operator set ([filter], [map], etc);
   * [Channel], [Mutex], and [Semaphore] communication and synchronization primitives;
@@ -36,7 +36,7 @@ suspend fun main() = coroutineScope {
   * [select] expression support and more.
 * [core/jvm](kotlinx-coroutines-core/jvm/) &mdash; additional core features available on Kotlin/JVM:
   * [Dispatchers.IO] dispatcher for blocking coroutines;
-  * [Executor.asCoroutineDispatcher][asCoroutineDispatcher] extension, custom thread pools, and more.
+  * [Executor.asCoroutineDispatcher][asCoroutineDispatcher] extension, custom thread pools, and more;
   * Integrations with `CompletableFuture` and JVM-specific extensions.
 * [core/js](kotlinx-coroutines-core/js/) &mdash; additional core features available on Kotlin/JS:
   * Integration with `Promise` via [Promise.await] and [promise] builder;
@@ -54,7 +54,7 @@ suspend fun main() = coroutineScope {
   * RxJava 2.x ([rxFlowable], [rxSingle], etc), and
   * RxJava 3.x ([rxFlowable], [rxSingle], etc), and
   * Project Reactor ([flux], [mono], etc).
-* [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
+* [ui](ui/README.md) &mdash; modules that provide the [Main][Dispatchers.Main] dispatcher for various single-threaded UI libraries:
   * Android, JavaFX, and Swing.
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries:
   * Guava [ListenableFuture.await], and Google Play Services [Task.await];
@@ -85,7 +85,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>1.7.2</version>
+    <version>1.8.0-RC</version>
 </dependency>
 ```
 
@@ -103,7 +103,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```kotlin
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0-RC")
 }
 ```
 
@@ -133,7 +133,7 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as a dependency when using `kotlinx.coroutines` on Android:
 
 ```kotlin
-implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2")
+implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0-RC")
 ```
 
 This gives you access to the Android [Dispatchers.Main]
@@ -168,7 +168,7 @@ In common code that should get compiled for different platforms, you can add a d
 ```kotlin
 commonMain {
     dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0-RC")
     }
 }
 ```
@@ -180,7 +180,7 @@ Platform-specific dependencies are recommended to be used only for non-multiplat
 #### JS
 
 Kotlin/JS version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-js`](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.7.2)
+[`kotlinx-coroutines-core-js`](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.8.0-RC)
 (follow the link to get the dependency declaration snippet) and as [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) NPM package. 
 
 #### Native
