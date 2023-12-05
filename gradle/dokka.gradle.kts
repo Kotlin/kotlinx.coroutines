@@ -37,31 +37,12 @@ tasks.withType(DokkaTaskPartial::class).configureEach {
     }
 }
 
-fun GradleDokkaSourceSetBuilder.makeLinkMapping(projectDir: File) {
-    sourceLink {
-        val relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
-        localDirectory.set(projectDir.resolve("src"))
-        remoteUrl.set(URL("https://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"))
-        remoteLineSuffix.set("#L")
-    }
-}
-
-if (project.isMultiplatform) {
-    // Configuration for MPP modules
-    tasks.withType(DokkaTaskPartial::class).configureEach {
-        // sources in MPP are located in moduleDir/PLATFORM/src,
-        // where PLATFORM could be jvm, js, jdk8, concurrent, etc
-        // configuration happens in buildSrc/src/main/kotlin/SourceSetsKt.configureMultiplatform
-        dokkaSourceSets.matching { it.name.endsWith("Main") }.configureEach {
-            val platform = name.dropLast(4)
-            makeLinkMapping(project.file(platform))
-        }
-    }
-} else {
-    // Configuration for JVM modules
-    tasks.withType(DokkaTaskPartial::class).configureEach {
-        dokkaSourceSets.named("main") {
-            makeLinkMapping(projectDir)
+tasks.withType(DokkaTaskPartial::class).configureEach {
+    dokkaSourceSets.configureEach {
+        sourceLink {
+            localDirectory.set(rootDir)
+            remoteUrl.set(URL("https://github.com/kotlin/kotlinx.coroutines/tree/master"))
+            remoteLineSuffix.set("#L")
         }
     }
 }
