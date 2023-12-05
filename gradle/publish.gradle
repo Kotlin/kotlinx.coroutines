@@ -71,10 +71,7 @@ publishing {
         }
     }
 
-    // Establish dependency between 'sign' and 'publish*' tasks
-    tasks.withType(AbstractPublishToMaven).configureEach {
-        dependsOn(tasks.withType(Sign))
-    }
+    PublishingKt.establishSignDependencies(project)
 }
 
 tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication"}.configureEach {
