@@ -211,6 +211,8 @@ abstract class MainDispatcherTestBase: TestBase() {
             expect(1)
             assertFailsWith<TimeoutCancellationException> {
                 withTimeout(300) {
+                    // A substitute for withContext(Dispatcher.Main) that is started even if the 300ms
+                    // timeout happens fsater then dispatch
                     launch(Dispatchers.Main, start = CoroutineStart.ATOMIC) {
                         checkIsMainThread()
                         expect(2)
