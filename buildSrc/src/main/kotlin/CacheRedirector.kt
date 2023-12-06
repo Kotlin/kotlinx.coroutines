@@ -119,6 +119,7 @@ private fun Project.configureYarnAndNodeRedirects() {
 }
 
 // Used from Groovy scripts
+// TODO get rid of Groovy, come up with a proper convention for rootProject vs arbitrary project argument
 object CacheRedirector {
     /**
      * Substitutes repositories in buildScript { } block.
@@ -128,20 +129,17 @@ object CacheRedirector {
         rootProject.checkRedirect(repositories, "${rootProject.displayName} buildscript")
     }
 
-    /**
-     * Substitutes repositories in a project.
-     */
     @JvmStatic
-    fun Project.configure() {
-        checkRedirect(repositories, displayName)
+    fun configure(project: Project) {
+        project.checkRedirect(project.repositories, project.displayName)
     }
 
     /**
      * Configures JS-specific extensions to use
      */
     @JvmStatic
-    fun Project.configureJsPackageManagers() {
-        configureYarnAndNodeRedirects()
+    fun configureJsPackageManagers(project: Project) {
+        project.configureYarnAndNodeRedirects()
     }
 
     /**
@@ -149,14 +147,14 @@ object CacheRedirector {
      * and stable Node release. Safe to remove when its removal does not break WASM tests.
      */
     @JvmStatic
-    fun Project.configureWasmNodeRepositories() {
-        val extension = extensions.findByType<NodeJsRootExtension>()
+    fun configureWasmNodeRepositories(project: Project) {
+        val extension = project.extensions.findByType<NodeJsRootExtension>()
         if (extension != null) {
             extension.nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
             extension.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
         }
 
-        tasks.withType<KotlinNpmInstallTask>().configureEach {
+        project.tasks.withType<KotlinNpmInstallTask>().configureEach {
             args.add("--ignore-engines")
         }
     }
