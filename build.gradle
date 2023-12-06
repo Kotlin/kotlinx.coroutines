@@ -6,11 +6,8 @@
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 import static Projects.*
-
-apply plugin: 'jdk-convention'
 
 buildscript {
     /*
