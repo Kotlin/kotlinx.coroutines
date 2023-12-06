@@ -8,6 +8,7 @@ import kotlin.coroutines.jvm.internal.*
 
 /**
  * A stack-trace represented as [CoroutineStackFrame].
+ * It's not used in IDEA -> may be moved to the debugging package.
  */
 @PublishedApi
 internal class StackTraceFrame internal constructor(

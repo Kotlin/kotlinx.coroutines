@@ -37,6 +37,8 @@ internal class DebugCoroutineInfoImpl internal constructor(
         get() = _context.get()
 
     public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
+    
+    // todo: create enhancedStackTrace public field
 
     /**
      * Last observed state of the coroutine.

@@ -5,12 +5,12 @@
 package kotlinx.coroutines.debugging
 
 import android.annotation.*
-import kotlinx.coroutines.debug.internal.*
 import org.codehaus.mojo.animal_sniffer.*
 import sun.misc.*
 import java.lang.instrument.*
 import java.lang.instrument.ClassFileTransformer
 import java.security.*
+import kotlinx.coroutines.debug.internal.DebugProbesImpl
 
 /*
  * This class is loaded if and only if kotlinx-coroutines-core was used as -javaagent argument,

@@ -312,6 +312,7 @@ internal object DebugProbesImpl {
     /*
      * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3, must be kept binary-compatible. See KTIJ-24102.
      * It is similar to [enhanceStackTraceWithThreadDumpImpl], but uses debugger-facing [DebugCoroutineInfo] type.
+     * // TODO: may be moved to DebugCoroutineInfo, and exposed as a public field.
      */
     @Suppress("unused")
     fun enhanceStackTraceWithThreadDump(
@@ -529,13 +530,13 @@ internal object DebugProbesImpl {
     }
 
     /**
-     * This class is injected as completion of all continuations in [probeCoroutineCompleted].
+     * This class is injected as completion of all continuations in [probeCoroutineCompleted]. // todo fix in probeCoroutineCreated
      * It is owning the coroutine info and responsible for managing all its external info related to debug agent.
      */
     public class CoroutineOwner<T> internal constructor(
         @JvmField internal val delegate: Continuation<T>,
         // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
-        @JvmField public val info: DebugCoroutineInfoImpl
+        @JvmField public val info: DebugCoroutineInfoImpl // TODO: should be DebugCoroutineInfo type
     ) : Continuation<T> by delegate, CoroutineStackFrame {
         private val frame get() = info.creationStackBottom
 

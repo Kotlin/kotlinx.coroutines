@@ -21,9 +21,12 @@ internal class DebugCoroutineInfo internal constructor(
 ) {
     internal val creationStackBottom: CoroutineStackFrame? = source.creationStackBottom // field is used as of 1.4-M3
     public val sequenceNumber: Long = source.sequenceNumber // field is used as of 1.4-M3
+    // ok, should be public, there is the same field in CoroutineInfo
     public val creationStackTrace = source.creationStackTrace // getter is used as of 1.4-M3
     public val state: String = source.state // getter is used as of 1.4-M3
+    // ok, may be public
     public val lastObservedThread: Thread? = source.lastObservedThread // field is used as of 1.4-M3
+    // ok, may be public
     public val lastObservedFrame: CoroutineStackFrame? = source.lastObservedFrame // field is used as of 1.4-M3
     @get:JvmName("lastObservedStackTrace") // method with this name is used as of 1.4-M3
     public val lastObservedStackTrace: List<StackTraceElement> = source.lastObservedStackTrace()
