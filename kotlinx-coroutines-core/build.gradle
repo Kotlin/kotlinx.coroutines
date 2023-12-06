@@ -25,7 +25,6 @@ apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
 
 apply from: rootProject.file("gradle/compile-wasm-multiplatform.gradle")
 
-apply from: rootProject.file('gradle/dokka.gradle.kts')
 apply from: rootProject.file('gradle/publish.gradle')
 /* ==========================================================================
   Configure source sets structure for kotlinx-coroutines-core:

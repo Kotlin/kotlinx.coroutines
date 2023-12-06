@@ -198,32 +198,33 @@ configure(subprojects.findAll {
     }
 }
 
-def core_docs_url = "https://kotlinlang.org/api/kotlinx.coroutines/$coreModule/"
-def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
-apply plugin: "org.jetbrains.dokka"
 
-configure(subprojects.findAll { !unpublished.contains(it.name)
-        && it.name != coreModule }) {
-    if (it.name != 'kotlinx-coroutines-bom' && it.name != jdk8ObsoleteModule) {
-        apply from: rootProject.file('gradle/dokka.gradle.kts')
-    }
+apply plugin: "org.jetbrains.dokka"
+apply plugin: "dokka-conventions"
+
+configure(subprojects.findAll {
+    !unpublished.contains(it.name) && it.name != coreModule
+}) {
     apply from: rootProject.file('gradle/publish.gradle')
 }
 
-configure(subprojects.findAll { !unpublished.contains(it.name) }) {
-    if (it.name != "kotlinx-coroutines-bom") {
-        if (it.name != coreModule && it.name != jdk8ObsoleteModule) {
-            tasks.withType(DokkaTaskPartial.class) {
-                dokkaSourceSets.configureEach {
-                    externalDocumentationLink {
-                        url.set(new URL(core_docs_url))
-                        packageListUrl.set(new File(core_docs_file).toURI().toURL())
-                    }
-                }
-            }
-        }
-    }
+// --------------- Knit configuration ---------------
+
+apply plugin: 'kotlinx-knit'
+
+knit {
+    siteRoot = "https://kotlinlang.org/api/kotlinx.coroutines"
+    moduleRoots = [".", "integration", "reactive", "ui"]
+    moduleDocs = "build/dokka/htmlPartial"
+    dokkaMultiModuleRoot = "build/dokka/htmlMultiModule/"
 }
+
+knitPrepare.dependsOn getTasksByName("dokkaHtmlMultiModule", true)
+
+dependencies {
+    dokkaHtmlMultiModulePlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+}
+
 
 // Workaround for https://youtrack.jetbrains.com/issue/KT-58303:
 // the 'clean' task cannot delete expanded.lock file on Windows as it is still held by Gradle, failing the build
@@ -249,23 +250,6 @@ def publishTasks = getTasksByName("publish", true)
 task deploy(dependsOn: publishTasks)
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
-
-// --------------- Knit configuration ---------------
-
-apply plugin: 'kotlinx-knit'
-
-knit {
-    siteRoot = "https://kotlinlang.org/api/kotlinx.coroutines"
-    moduleRoots = [".", "integration", "reactive", "ui"]
-    moduleDocs = "build/dokka/htmlPartial"
-    dokkaMultiModuleRoot = "build/dokka/htmlMultiModule/"
-}
-
-knitPrepare.dependsOn getTasksByName("dokkaHtmlMultiModule", true)
-
-dependencies {
-    dokkaHtmlMultiModulePlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
-}
 
 // Opt-in for build scan in order to troubleshoot Gradle on TC
 if (hasProperty('buildScan')) {
@@ -296,10 +280,6 @@ allprojects { subProject ->
                                     "triggering all sort of incompatible class changes errors")
                 }
             }
-}
-
-tasks.named("dokkaHtmlMultiModule") {
-    pluginsMapConfiguration.set(["org.jetbrains.dokka.base.DokkaBase": """{ "templatesDir": "${projectDir.toString().replace('\\', '/')}/dokka-templates" }"""])
 }
 
 CacheRedirector.configureJsPackageManagers(rootProject)
