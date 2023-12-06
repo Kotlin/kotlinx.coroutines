@@ -31,6 +31,11 @@ tasks.withType<DokkaMultiModuleTask>().named("dokkaHtmlMultiModule") {
     )
 }
 
+dependencies {
+    // Add explicit dependency between Dokka and Knit plugin
+    add("dokkaHtmlMultiModulePlugin", "org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+}
+
 // Dependencies for Knit processing: Knit plugin to work with Dokka
 private fun Project.configurePathsaver() {
     tasks.withType(DokkaTaskPartial::class).configureEach {
