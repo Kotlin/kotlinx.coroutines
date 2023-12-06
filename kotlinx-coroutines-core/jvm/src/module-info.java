@@ -11,7 +11,7 @@ module kotlinx.coroutines.core {
 
     exports kotlinx.coroutines;
     exports kotlinx.coroutines.channels;
-    exports kotlinx.coroutines.debug;
+    exports kotlinx.coroutines.debugging;
     exports kotlinx.coroutines.debug.internal;
     exports kotlinx.coroutines.flow;
     exports kotlinx.coroutines.flow.internal;
