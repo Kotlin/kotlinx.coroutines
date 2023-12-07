@@ -5,6 +5,8 @@
 import org.gradle.api.*
 import org.gradle.api.tasks.testing.logging.*
 import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 // JVM
 
@@ -74,34 +76,46 @@ kotlin.sourceSets {
 
 if (nativeTargetsAreEnabled) {
     kotlin {
-        // According to https://kotlinlang.org/docs/native-target-support.html
-        // Tier 1
-        linuxX64()
-        macosX64()
-        macosArm64()
-        iosSimulatorArm64()
-        iosX64()
-        // Tier 2
-        linuxArm64()
-        watchosSimulatorArm64()
-        watchosX64()
-        watchosArm32()
-        watchosArm64()
-        tvosSimulatorArm64()
-        tvosX64()
-        tvosArm64()
-        iosArm64()
-        // Tier 3
-        androidNativeArm32()
-        androidNativeArm64()
-        androidNativeX86()
-        androidNativeX64()
-        mingwX64()
-        watchosDeviceArm64()
+        val targets = buildList<KotlinNativeTarget> {
+            // According to https://kotlinlang.org/docs/native-target-support.html
+            // Tier 1
+            add(linuxX64())
+            add(macosX64())
+            add(macosArm64())
+            add(iosSimulatorArm64())
+            add(iosX64())
+            // Tier 2
+            add(linuxArm64())
+            add(watchosSimulatorArm64())
+            add(watchosX64())
+            add(watchosArm32())
+            add(watchosArm64())
+            add(tvosSimulatorArm64())
+            add(tvosX64())
+            add(tvosArm64())
+            add(iosArm64())
+            // Tier 3
+            add(androidNativeArm32())
+            add(androidNativeArm64())
+            add(androidNativeX86())
+            add(androidNativeX64())
+            add(mingwX64())
+            add(watchosDeviceArm64())
+        }
 
         sourceSets {
-            nativeMain
-            nativeTest
+            commonMain
+            commonTest
+            nativeMain {
+                dependsOn(commonMain.get())
+            }
+            nativeTest {
+                dependsOn(commonTest.get())
+            }
+            for (target in targets) {
+                named(target.name + "Main") { dependsOn(nativeMain.get()) }
+                named(target.name + "Test") { dependsOn(nativeTest.get()) }
+            }
         }
     }
 }
