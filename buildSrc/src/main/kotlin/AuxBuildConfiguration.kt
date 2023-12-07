@@ -31,11 +31,13 @@ object AuxBuildConfiguration {
     private fun Project.workaroundForCleanTask() {
         // the 'clean' task cannot delete expanded.lock file on Windows as it is still held by Gradle, failing the build
         // Gradle issue: https://github.com/gradle/gradle/issues/25752
-        tasks.named<Delete>("clean") {
-            delete.add(layout.buildDirectory)
-            delete.remove("tmp/.cache/expanded/expanded.lock")
+        tasks {
+            val clean by existing(Delete::class) {
+                setDelete(fileTree(layout.buildDirectory) {
+                    exclude("tmp/.cache/expanded/expanded.lock")
+                })
+            }
         }
-
     }
 
     /*
