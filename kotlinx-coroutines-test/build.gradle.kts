@@ -11,8 +11,6 @@ val experimentalAnnotations = listOf(
 )
 
 kotlin {
-    sourceSets.all { configureMultiplatform() }
-
     targets.withType(KotlinNativeTargetWithTests::class.java).configureEach {
         binaries.getTest("DEBUG").apply {
             optimized = true

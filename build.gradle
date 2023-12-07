@@ -150,7 +150,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name) }) {
     }
 }
 
-// Add dependency to core source sets. Core is configured in kx-core/build.gradle
+// Add dependency to the core module in all the other subprojects.
 configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
     if (isMultiplatform(it)) {
@@ -175,22 +175,7 @@ apply plugin: "version-file-conventions"
 
 CommunityProjectsBuild.configureCommunityBuildTweaks(rootProject)
 
-// Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
-configure(subprojects.findAll {
-    !sourceless.contains(it.name) && !isMultiplatform(it) &&
-            it.name != "benchmarks"
-}) {
-    // Pure JS and pure MPP doesn't have this notion and are configured separately
-    // TODO detect it via platformOf and migrate benchmarks to the same scheme
-    sourceSets {
-        main.kotlin.srcDirs = ['src']
-        test.kotlin.srcDirs = ['test']
-        main.resources.srcDirs = ['resources']
-        test.resources.srcDirs = ['test-resources']
-    }
-}
-
-
+apply plugin: "source-set-conventions"
 apply plugin: "dokka-conventions"
 apply plugin: "knit-conventions"
 

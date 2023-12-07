@@ -99,11 +99,11 @@ fun Project.configureCommunityBuildTweaks() {
     val coreProject = subprojects.single { it.name == coreModule }
     configure(listOf(coreProject)) {
         configurations.matching { it.name == "kotlinCompilerClasspath" }.configureEach {
-            val config = resolvedConfiguration.getFiles().first { it.name.contains("kotlin-compiler-embeddable") }
+            val config = resolvedConfiguration.files.single { it.name.contains("kotlin-compiler-embeddable") }
 
             val manifest = zipTree(config).matching {
                 include("META-INF/MANIFEST.MF")
-            }.getFiles().first()
+            }.files.single()
 
             manifest.readLines().forEach {
                 println(it)

@@ -140,10 +140,6 @@ kotlin {
         jvmCoreMain.dependsOn(jvmMain)
     }
 
-    sourceSets.forEach {
-        SourceSetsKt.configureMultiplatform(it)
-    }
-
     jvm {
         def main = compilations.main
         main.source(jvmCoreMain)
