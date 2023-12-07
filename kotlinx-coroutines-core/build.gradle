@@ -83,7 +83,7 @@ static boolean isNativeOther(String name) { return ["linux", "mingw", "androidNa
 
 defineSourceSet("concurrent", ["common"]) { it in ["jvm", "native"] }
 
-if (rootProject.ext.native_targets_enabled) {
+if (PropertiesKt.getNativeTargetsAreEnabled(project)) {
     defineSourceSet("nativeDarwin", ["native"]) { isNativeDarwin(it) }
     defineSourceSet("nativeOther", ["native"]) { isNativeOther(it) }
 }
@@ -201,7 +201,7 @@ def configureNativeSourceSetPreset(name, preset) {
 }
 
 // :KLUDGE: Idea.active: Configure platform libraries for native source sets when working in IDEA
-if (Idea.active && rootProject.ext.native_targets_enabled) {
+if (Idea.active && PropertiesKt.getNativeTargetsAreEnabled(project)) {
     def manager = project.ext.hostManager
     def linuxPreset = kotlin.presets.linuxX64
     def macosPreset = kotlin.presets.macosX64

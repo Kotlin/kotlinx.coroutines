@@ -27,7 +27,6 @@ buildscript {
             throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
         }
     }
-    ext.native_targets_enabled = rootProject.properties['disable_native_targets'] == null
 
     // Determine if any project dependency is using a snapshot version
     ext.using_snapshot_version = build_snapshot_train

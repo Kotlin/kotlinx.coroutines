@@ -10,3 +10,5 @@ infix fun <T> Property<T>.by(value: T) {
 }
 
 val Project.jdkToolchainVersion: Int get() = property("jdk_toolchain_version").toString().toInt()
+
+val Project.nativeTargetsAreEnabled: Boolean get() = rootProject.properties["disable_native_targets"] == null

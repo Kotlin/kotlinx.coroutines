@@ -55,11 +55,9 @@ tasks.named("jvmTest", Test::class) {
     }
 }
 
-val nativeTargetsEnabled = rootProject.properties["disable_native_targets"] == null
-
 apply(from = rootProject.file("gradle/compile-common.gradle"))
 
-if (nativeTargetsEnabled) {
+if (nativeTargetsAreEnabled) {
     apply(from = rootProject.file("gradle/compile-native-multiplatform.gradle"))
 }
 
