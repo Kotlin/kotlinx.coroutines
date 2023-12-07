@@ -350,12 +350,13 @@ internal class CoroutineScheduler(
         for (i in 1..created) {
             val worker = workers[i]!!
             if (worker !== currentWorker) {
+                // Note: this is java.lang.Thread.getState() of type java.lang.Thread.State
                 while (worker.getState() != Thread.State.TERMINATED) {
                     LockSupport.unpark(worker)
                     worker.join(timeout)
                 }
-                val state = worker.state
-                assert { state === WorkerState.TERMINATED } // Expected TERMINATED state
+                // Note: this is CoroutineScheduler.Worker.state of type CoroutineScheduler.WorkerState
+                assert { worker.state === WorkerState.TERMINATED } // Expected TERMINATED state
                 worker.localQueue.offloadAllWorkTo(globalBlockingQueue) // Doesn't actually matter which queue to use
             }
         }
