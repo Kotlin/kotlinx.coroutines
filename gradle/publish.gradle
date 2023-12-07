@@ -59,8 +59,7 @@ publishing {
                 // With Kotlin 1.4 & HMPP, the root module should have no suffix in the ID, but for compatibility with
                 // the consumers who can't read Gradle module metadata, we publish the JVM artifacts in it, too
                 it.artifactId =  project.name
-                apply from: "$rootDir/gradle/publish-mpp-root-module-in-platform.gradle"
-                publishPlatformArtifactsInRootModule(publications["jvm"])
+                PublishingKt.reconfigureMultiplatformPublication(project, publications["jvm"])
                 break
             case 'metadata':
             case 'jvm':

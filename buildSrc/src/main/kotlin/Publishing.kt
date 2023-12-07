@@ -4,8 +4,12 @@
 
 @file:Suppress("UnstableApiUsage")
 
+import groovy.util.Node
+import groovy.util.NodeList
 import org.gradle.api.Project
+import org.gradle.api.XmlProvider
 import org.gradle.api.artifacts.dsl.*
+import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.*
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
 import org.gradle.jvm.tasks.*
@@ -122,5 +126,59 @@ fun Project.establishSignDependencies() {
     // Establish dependency between 'sign' and 'publish*' tasks
     tasks.withType<AbstractPublishToMaven>().configureEach {
         dependsOn(tasks.withType<Sign>())
+    }
+}
+
+/**
+ * Re-configure common publication to depend on JVM artifact only in pom.xml.
+ * It allows us to keep backwards compatibility with pre-multiplatform 'kotlinx-coroutines' publication scheme
+ * for Maven consumers:
+ * - Previously, we published 'kotlinx-coroutines-core' as the JVM artifact
+ * - With a multiplatform enabled as is, 'kotlinx-coroutines-core' is a common artifact not consumable from Maven,
+ *   instead, users should depend on 'kotlinx-coroutines-core-jvm'
+ * - To keep the compatibility and experience, we do add dependency on 'kotlinx-coroutines-core-jvm' for
+ *   'kotlinx-coroutines-core' in pom.xml only (e.g. Gradle will keep using the metadata), so Maven users can
+ *   depend on previous coordinates.
+ *
+ * Original code comment:
+ *  Publish the platform JAR and POM so that consumers who depend on this module and can't read Gradle module
+ *  metadata can still get the platform artifact and transitive dependencies from the POM.
+ */
+public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPublication) {
+    val mavenPublications =
+        extensions.getByType(PublishingExtension::class.java).publications.withType<MavenPublication>()
+    val kmpPublication = mavenPublications.getByName("kotlinMultiplatform")
+
+    // TODO: this one can be rewritten in a more straightforward manner
+    // right now it's translated almost as-is from Groovy
+    var platformXml: XmlProvider? = null
+    jvmPublication.pom.withXml { platformXml = this }
+
+    kmpPublication.pom.withXml {
+        val root = asNode()
+        // Remove the original content and add the content from the platform POM:
+        root.children().toList().forEach { root.remove(it as Node) }
+        platformXml!!.asNode().children().forEach { root.append(it as Node) }
+
+        // Adjust the self artifact ID, as it should match the root module's coordinates:
+        ((root.get("artifactId") as NodeList).get(0) as Node).setValue(kmpPublication.artifactId)
+
+        // Set packaging to POM to indicate that there's no artifact:
+        root.appendNode("packaging", "pom")
+
+        // Remove the original platform dependencies and add a single dependency on the platform module:
+        val dependencies = (root.get("dependencies") as NodeList).get(0) as Node
+        dependencies.children().toList().forEach { dependencies.remove(it as Node) }
+        val singleDependency = dependencies.appendNode("dependency")
+        singleDependency.appendNode("groupId", jvmPublication.groupId)
+        singleDependency.appendNode("artifactId", jvmPublication.artifactId)
+        singleDependency.appendNode("version", jvmPublication.version)
+        singleDependency.appendNode("scope", "compile")
+    }
+
+    // TODO verify if this is still relevant
+    tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }.configureEach {
+        @Suppress("DEPRECATION")
+        dependsOn(tasks["generatePomFileFor${jvmPublication.name.capitalize()}Publication"])
     }
 }
