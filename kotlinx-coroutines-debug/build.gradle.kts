@@ -49,9 +49,7 @@ java {
 
 // This is required for BlockHound tests to work, see https://github.com/Kotlin/kotlinx.coroutines/issues/3701
 tasks.withType<Test>().configureEach {
-    if (JavaVersion.toVersion(jdkToolchainVersion).isCompatibleWith(JavaVersion.VERSION_13)) {
-        jvmArgs("-XX:+AllowRedefinitionToAddDeleteMethods")
-    }
+    jvmArgs("-XX:+AllowRedefinitionToAddDeleteMethods")
 }
 
 val jar by tasks.existing(Jar::class) {

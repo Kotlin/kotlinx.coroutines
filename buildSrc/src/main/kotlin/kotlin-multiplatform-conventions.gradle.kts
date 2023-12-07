@@ -132,7 +132,9 @@ kotlin {
     }
     @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
     wasmJs {
-        moduleName = project.name + "Wasm" // Module name should be different from the one from JS
+        // Module name should be different from the one from JS
+        // otherwise IC tasks that start clashing different modules with the same module name
+        moduleName = project.name + "Wasm"
         nodejs()
         compilations["main"]?.dependencies {
             api("org.jetbrains.kotlinx:atomicfu-wasm-js:${version("atomicfu")}")

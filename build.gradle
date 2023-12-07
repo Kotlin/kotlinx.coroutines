@@ -105,7 +105,7 @@ allprojects {
     def stressTest = project.properties['stressTest']
 
     // Copy it to all test tasks
-    tasks.withType(Test) {
+    tasks.withType(Test).configureEach {
         systemProperty 'stressTest', stressTest
     }
 }

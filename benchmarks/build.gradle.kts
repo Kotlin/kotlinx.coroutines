@@ -29,9 +29,9 @@ tasks.named<KotlinCompile>("compileJmhKotlin") {
 }
 
 val jmhJarTask = tasks.named<Jar>("jmhJar") {
-    archiveBaseName by "benchmarks"
-    archiveClassifier by null
-    archiveVersion by null
+    archiveBaseName = "benchmarks"
+    archiveClassifier = null
+    archiveVersion = null
     archiveVersion.convention(null as String?)
     destinationDirectory.set(file("$rootDir"))
 }

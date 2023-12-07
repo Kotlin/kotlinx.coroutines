@@ -4,6 +4,7 @@
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
+import org.jetbrains.kotlin.gradle.tasks.*
 
 configure(subprojects) {
     val project = this
@@ -18,16 +19,24 @@ configure(subprojects) {
                 allWarningsAsErrors = true
                 freeCompilerArgs = freeCompilerArgs + "-Xexplicit-api=strict"
             }
-            val newOptions =
-                listOf(
-                    "-progressive",
+
+            /*
+             * Coroutines do not interop with Java and these flags provide a significant
+             * (i.e. close to double-digit) reduction in both bytecode and optimized dex size
+             */
+            val bytecodeSizeReductionOptions =
+                if (this@configureEach is KotlinJvmCompile) listOf(
                     "-Xno-param-assertions",
-                    "-Xno-receiver-assertions",
-                    "-Xexpect-actual-classes",
                     "-Xno-call-assertions",
-                ) + optInAnnotations.map { "-opt-in=$it" }
+                    "-Xno-receiver-assertions"
+                ) else emptyList()
+
+            val newOptions = listOf(
+                "-progressive", "-Xexpect-actual-classes"
+            ) + bytecodeSizeReductionOptions + optInAnnotations.map { "-opt-in=$it" }
             freeCompilerArgs = freeCompilerArgs + newOptions
         }
+
     }
 }
 

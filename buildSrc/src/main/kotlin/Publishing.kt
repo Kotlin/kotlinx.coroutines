@@ -21,29 +21,29 @@ import java.net.*
 // Pom configuration
 
 fun MavenPom.configureMavenCentralMetadata(project: Project) {
-    name by project.name
-    description by "Coroutines support libraries for Kotlin"
-    url by "https://github.com/Kotlin/kotlinx.coroutines"
+    name = project.name
+    description = "Coroutines support libraries for Kotlin"
+    url = "https://github.com/Kotlin/kotlinx.coroutines"
 
     licenses {
         license {
-            name by "The Apache Software License, Version 2.0"
-            url by "https://www.apache.org/licenses/LICENSE-2.0.txt"
-            distribution by "repo"
+            name = "The Apache Software License, Version 2.0"
+            url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution = "repo"
         }
     }
 
     developers {
         developer {
-            id by "JetBrains"
-            name by "JetBrains Team"
-            organization by "JetBrains"
-            organizationUrl by "https://www.jetbrains.com"
+            id = "JetBrains"
+            name = "JetBrains Team"
+            organization = "JetBrains"
+            organizationUrl = "https://www.jetbrains.com"
         }
     }
 
     scm {
-        url by "https://github.com/Kotlin/kotlinx.coroutines"
+        url = "https://github.com/Kotlin/kotlinx.coroutines"
     }
 }
 
@@ -63,11 +63,6 @@ fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
             username = project.getSensitiveProperty("libs.sonatype.user")
             password = project.getSensitiveProperty("libs.sonatype.password")
         }
-    }
-
-    // Something that's easy to "clean" for development, not mavenLocal
-    rh.maven("${project.rootProject.buildDir}/repo") {
-        name = "buildRepo"
     }
 }
 
@@ -150,31 +145,30 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
         extensions.getByType(PublishingExtension::class.java).publications.withType<MavenPublication>()
     val kmpPublication = mavenPublications.getByName("kotlinMultiplatform")
 
-    // TODO: this one can be rewritten in a more straightforward manner
-    // right now it's translated almost as-is from Groovy
-    var platformXml: XmlProvider? = null
-    jvmPublication.pom.withXml { platformXml = this }
+    var jvmPublicationXml: XmlProvider? = null
+    jvmPublication.pom.withXml { jvmPublicationXml = this }
 
     kmpPublication.pom.withXml {
         val root = asNode()
         // Remove the original content and add the content from the platform POM:
         root.children().toList().forEach { root.remove(it as Node) }
-        platformXml!!.asNode().children().forEach { root.append(it as Node) }
+        jvmPublicationXml!!.asNode().children().forEach { root.append(it as Node) }
 
         // Adjust the self artifact ID, as it should match the root module's coordinates:
-        ((root.get("artifactId") as NodeList).get(0) as Node).setValue(kmpPublication.artifactId)
+        ((root["artifactId"] as NodeList).first() as Node).setValue(kmpPublication.artifactId)
 
         // Set packaging to POM to indicate that there's no artifact:
         root.appendNode("packaging", "pom")
 
         // Remove the original platform dependencies and add a single dependency on the platform module:
-        val dependencies = (root.get("dependencies") as NodeList).get(0) as Node
+        val dependencies = (root["dependencies"] as NodeList).first() as Node
         dependencies.children().toList().forEach { dependencies.remove(it as Node) }
-        val singleDependency = dependencies.appendNode("dependency")
-        singleDependency.appendNode("groupId", jvmPublication.groupId)
-        singleDependency.appendNode("artifactId", jvmPublication.artifactId)
-        singleDependency.appendNode("version", jvmPublication.version)
-        singleDependency.appendNode("scope", "compile")
+        dependencies.appendNode("dependency").apply {
+            appendNode("groupId", jvmPublication.groupId)
+            appendNode("artifactId", jvmPublication.artifactId)
+            appendNode("version", jvmPublication.version)
+            appendNode("scope", "compile")
+        }
     }
 
     // TODO verify if this is still relevant

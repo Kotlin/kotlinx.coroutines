@@ -9,7 +9,11 @@ import org.gradle.api.tasks.*
 fun Project.version(target: String): String =
     property("${target}_version") as String
 
-public val Project.sourceSets: SourceSetContainer get() =
+val Project.jdkToolchainVersion: Int get() = property("jdk_toolchain_version").toString().toInt()
+
+val Project.nativeTargetsAreEnabled: Boolean get() = rootProject.properties["disable_native_targets"] == null
+
+val Project.sourceSets: SourceSetContainer get() =
     extensions.getByName("sourceSets") as SourceSetContainer
 
 
