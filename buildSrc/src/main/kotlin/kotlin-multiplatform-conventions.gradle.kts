@@ -6,6 +6,8 @@ import org.gradle.api.*
 import org.gradle.api.tasks.testing.logging.*
 import org.jetbrains.kotlin.gradle.dsl.*
 
+// JVM
+
 plugins {
     kotlin("multiplatform")
 }
@@ -55,14 +57,82 @@ tasks.named("jvmTest", Test::class) {
     }
 }
 
-apply(from = rootProject.file("gradle/compile-common.gradle"))
+// COMMON
+
+val kotlin_version: String? by ext
+
+kotlin.sourceSets {
+    commonTest {
+        dependencies {
+            api("org.jetbrains.kotlin:kotlin-test-common:$kotlin_version")
+            api("org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version")
+        }
+    }
+}
+
+kotlin.sourceSets.matching { it.name.contains("Main") }.forEach { srcSet ->
+    project.ext.set("kotlin.mpp.freeCompilerArgsForSourceSet.${srcSet.name}", "-Xexplicit-api=strict")
+}
+
+// NATIVE
 
 if (nativeTargetsAreEnabled) {
     apply(from = rootProject.file("gradle/compile-native-multiplatform.gradle"))
 }
 
-apply(from = rootProject.file("gradle/compile-jsAndWasmShared-multiplatform.gradle"))
+// JS
 
-apply(from = rootProject.file("gradle/compile-js-multiplatform.gradle"))
+kotlin {
+    js {
+        moduleName = project.name
+        nodejs()
+        compilations["main"]?.dependencies {
+            api("org.jetbrains.kotlinx:atomicfu-js:${version("atomicfu")}")
+        }
+    }
+    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    wasmJs {
+        moduleName = project.name + "Wasm" // Module name should be different from the one from JS
+        nodejs()
+        compilations["main"]?.dependencies {
+            api("org.jetbrains.kotlinx:atomicfu-wasm-js:${version("atomicfu")}")
+        }
+    }
+}
 
-apply(from = rootProject.file("gradle/compile-wasm-multiplatform.gradle"))
+kotlin {
+    sourceSets {
+        val jsAndWasmSharedMain by registering {
+            dependsOn(commonMain.get())
+        }
+        val jsAndWasmSharedTest by registering {
+            dependsOn(commonTest.get())
+        }
+        jsMain {
+            dependsOn(jsAndWasmSharedMain.get())
+        }
+        jsTest {
+            dependsOn(jsAndWasmSharedTest.get())
+        }
+
+        jsTest.dependencies {
+            api("org.jetbrains.kotlin:kotlin-test-js:$kotlin_version")
+        }
+        val wasmJsMain by getting {
+            dependsOn(jsAndWasmSharedMain.get())
+        }
+        val wasmJsTest by getting {
+            dependsOn(jsAndWasmSharedTest.get())
+        }
+        wasmJsTest.dependencies {
+            api("org.jetbrains.kotlin:kotlin-test-wasm-js:$kotlin_version")
+        }
+    }
+}
+
+// Disable intermediate sourceSet compilation because we do not need js-wasmJs artifact
+tasks.configureEach {
+    if (name == "compileJsAndWasmSharedMainKotlinMetadata") {
+        enabled = false
+    }
+}
