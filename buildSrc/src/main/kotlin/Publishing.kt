@@ -12,7 +12,8 @@ import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.*
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
-import org.gradle.jvm.tasks.*
+import org.gradle.api.tasks.*
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.plugins.signing.*
 import java.net.*
@@ -182,3 +183,22 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
         dependsOn(tasks["generatePomFileFor${jvmPublication.name.capitalize()}Publication"])
     }
 }
+
+// Top-level deploy task that publishes all artifacts
+public fun Project.registerTopLevelDeployTask() {
+    assert(this === rootProject)
+    tasks.register("deploy") {
+        allprojects {
+            val publishTasks = tasks.matching { it.name == "publish" }
+            dependsOn(publishTasks)
+        }
+    }
+}
+
+public fun Project.registerEmptyJavadocArtifact(): TaskProvider<Jar> {
+    return tasks.register("javadocJar", Jar::class) {
+        archiveClassifier.set("javadoc")
+        // contents are deliberately left empty
+    }
+}
+

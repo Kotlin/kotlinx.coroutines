@@ -179,21 +179,21 @@ apply plugin: "source-set-conventions"
 apply plugin: "dokka-conventions"
 apply plugin: "knit-conventions"
 
+/*
+ * TODO: core and non-core cannot be configured via 'configure(subprojects)'
+ * because of 'afterEvaluate' issue. This one should be migrated to
+ * `plugins { id("pub-conventions") }` eventually
+ */
 configure(subprojects.findAll {
     !unpublished.contains(it.name) && it.name != coreModule
 }) {
-    apply from: rootProject.file('gradle/publish.gradle')
+    apply plugin: "pub-conventions"
 }
 
 AuxBuildConfiguration.configure(rootProject)
-
+PublishingKt.registerTopLevelDeployTask(rootProject)
 
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $KotlinCompilerVersion.VERSION")
 
-// --------------- Configure sub-projects that are published ---------------
-
-def publishTasks = getTasksByName("publish", true)
-
-task deploy(dependsOn: publishTasks)
 

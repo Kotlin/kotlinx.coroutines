@@ -11,7 +11,8 @@ apply plugin: 'org.jetbrains.dokka'
 // apply plugin to use autocomplete for Kover DSL
 apply plugin: 'org.jetbrains.kotlinx.kover'
 
-apply from: rootProject.file('gradle/publish.gradle')
+apply plugin: 'pub-conventions'
+
 /* ==========================================================================
   Configure source sets structure for kotlinx-coroutines-core:
 
