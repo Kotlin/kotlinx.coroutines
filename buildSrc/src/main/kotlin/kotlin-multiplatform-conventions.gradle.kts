@@ -70,10 +70,6 @@ kotlin.sourceSets {
     }
 }
 
-kotlin.sourceSets.matching { it.name.contains("Main") }.forEach { srcSet ->
-    project.ext.set("kotlin.mpp.freeCompilerArgsForSourceSet.${srcSet.name}", "-Xexplicit-api=strict")
-}
-
 // NATIVE
 
 if (nativeTargetsAreEnabled) {
@@ -143,19 +139,18 @@ kotlin {
         }
         jsTest {
             dependsOn(jsAndWasmSharedTest.get())
-        }
-
-        jsTest.dependencies {
-            api("org.jetbrains.kotlin:kotlin-test-js:$kotlin_version")
+            dependencies {
+                api("org.jetbrains.kotlin:kotlin-test-js:$kotlin_version")
+            }
         }
         val wasmJsMain by getting {
             dependsOn(jsAndWasmSharedMain.get())
         }
         val wasmJsTest by getting {
             dependsOn(jsAndWasmSharedTest.get())
-        }
-        wasmJsTest.dependencies {
-            api("org.jetbrains.kotlin:kotlin-test-wasm-js:$kotlin_version")
+            dependencies {
+                api("org.jetbrains.kotlin:kotlin-test-wasm-js:$kotlin_version")
+            }
         }
     }
 }

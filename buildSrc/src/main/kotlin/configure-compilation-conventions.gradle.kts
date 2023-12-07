@@ -16,6 +16,7 @@ configure(subprojects) {
             apiVersion = getOverriddenKotlinApiVersion(project)
             if (isMainTaskName && versionsAreNotOverridden) {
                 allWarningsAsErrors = true
+                freeCompilerArgs = freeCompilerArgs + "-Xexplicit-api=strict"
             }
             val newOptions =
                 listOf(

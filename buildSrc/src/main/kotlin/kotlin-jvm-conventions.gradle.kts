@@ -32,12 +32,6 @@ dependencies {
     testImplementation("junit:junit:${version("junit")}")
 }
 
-tasks.compileKotlin {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-Xexplicit-api=strict")
-    }
-}
-
 tasks.withType<Test> {
     testLogging {
         showStandardStreams = true
