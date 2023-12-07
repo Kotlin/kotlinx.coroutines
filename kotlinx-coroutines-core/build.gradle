@@ -6,24 +6,10 @@ plugins {
     id 'org.jetbrains.kotlinx.benchmark' version '0.4.9'
 }
 
-apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: 'org.jetbrains.dokka'
 
 // apply plugin to use autocomplete for Kover DSL
 apply plugin: 'org.jetbrains.kotlinx.kover'
-
-apply plugin: "kotlin-jvm-multiplatform-conventions"
-apply from: rootProject.file("gradle/compile-common.gradle")
-
-if (rootProject.ext.native_targets_enabled) {
-    apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
-}
-
-apply from: rootProject.file("gradle/compile-jsAndWasmShared-multiplatform.gradle")
-
-apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
-
-apply from: rootProject.file("gradle/compile-wasm-multiplatform.gradle")
 
 apply from: rootProject.file('gradle/publish.gradle')
 /* ==========================================================================

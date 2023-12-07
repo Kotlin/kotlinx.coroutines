@@ -139,15 +139,14 @@ allprojects {
 // needs to be before evaluationDependsOn due to weird Gradle ordering
 apply plugin: "animalsniffer-conventions"
 
-// Add dependency to core source sets. Core is configured in kx-core/build.gradle
-configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
-    evaluationDependsOn(":$coreModule")
+configure(subprojects.findAll { !sourceless.contains(it.name) }) {
     if (isMultiplatform(it)) {
-        apply plugin: "kotlin-multiplatform"
+        apply plugin: 'kotlin-multiplatform'
+
         apply plugin: "kotlin-jvm-multiplatform-conventions"
         apply from: rootProject.file("gradle/compile-common.gradle")
 
-        if (rootProject.ext["native_targets_enabled"] as Boolean) {
+        if (rootProject.ext.native_targets_enabled) {
             apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
         }
 
@@ -156,23 +155,30 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
         apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
 
         apply from: rootProject.file("gradle/compile-wasm-multiplatform.gradle")
+    } else if (PlatformKt.platformOf(it) == "jvm") {
+        apply plugin: "kotlin-jvm-conventions"
+    } else {
+        def platform = PlatformKt.platformOf(it)
+        throw IllegalStateException("No configuration rules for $platform")
+    }
+}
 
+// Add dependency to core source sets. Core is configured in kx-core/build.gradle
+configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
+    evaluationDependsOn(":$coreModule")
+    if (isMultiplatform(it)) {
         kotlin.sourceSets.commonMain.dependencies {
             api project(":$coreModule")
         }
         kotlin.sourceSets.jvmTest.dependencies {
             implementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
         }
-    } else if (PlatformKt.platformOf(it) == "jvm") {
-        apply plugin: "kotlin-jvm-conventions"
+    } else {
         dependencies {
             api project(":$coreModule")
             // the only way IDEA can resolve test classes
             testImplementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
         }
-    } else {
-        def platform = PlatformKt.platformOf(it)
-        throw IllegalStateException("No configuration rules for $platform")
     }
 }
 
