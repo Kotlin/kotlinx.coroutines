@@ -2,8 +2,6 @@
  * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-// Platform-specific configuration to compile JVM modules
-
 import org.gradle.api.*
 import org.gradle.api.tasks.testing.logging.*
 import org.jetbrains.kotlin.gradle.dsl.*
@@ -56,3 +54,17 @@ tasks.named("jvmTest", Test::class) {
         systemProperty("stressTest", "stressTest")
     }
 }
+
+val nativeTargetsEnabled = rootProject.properties["disable_native_targets"] == null
+
+apply(from = rootProject.file("gradle/compile-common.gradle"))
+
+if (nativeTargetsEnabled) {
+    apply(from = rootProject.file("gradle/compile-native-multiplatform.gradle"))
+}
+
+apply(from = rootProject.file("gradle/compile-jsAndWasmShared-multiplatform.gradle"))
+
+apply(from = rootProject.file("gradle/compile-js-multiplatform.gradle"))
+
+apply(from = rootProject.file("gradle/compile-wasm-multiplatform.gradle"))

@@ -142,19 +142,7 @@ apply plugin: "animalsniffer-conventions"
 configure(subprojects.findAll { !sourceless.contains(it.name) }) {
     if (isMultiplatform(it)) {
         apply plugin: 'kotlin-multiplatform'
-
-        apply plugin: "kotlin-jvm-multiplatform-conventions"
-        apply from: rootProject.file("gradle/compile-common.gradle")
-
-        if (rootProject.ext.native_targets_enabled) {
-            apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
-        }
-
-        apply from: rootProject.file("gradle/compile-jsAndWasmShared-multiplatform.gradle")
-
-        apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
-
-        apply from: rootProject.file("gradle/compile-wasm-multiplatform.gradle")
+        apply plugin: "kotlin-multiplatform-conventions"
     } else if (PlatformKt.platformOf(it) == "jvm") {
         apply plugin: "kotlin-jvm-conventions"
     } else {
