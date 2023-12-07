@@ -22,13 +22,9 @@ configure(subprojects.filterNot { projetsWithoutDokka.contains(it.name) }) {
     configureExternalLinks()
 }
 
-// Setup top-level 'dokkaHtmlMultiModule' with the same suspicious template setup
+// Setup top-level 'dokkaHtmlMultiModule' with templates
 tasks.withType<DokkaMultiModuleTask>().named("dokkaHtmlMultiModule") {
-    pluginsMapConfiguration = mapOf(
-        "org.jetbrains.dokka.base.DokkaBase" to """{ "templatesDir" : "${
-            rootProject.projectDir.toString().replace('\\', '/')
-        }/dokka-templates" }"""
-    )
+    setupDokkaTemplatesDir(this)
 }
 
 dependencies {
@@ -49,12 +45,7 @@ private fun Project.configurePathsaver() {
 private fun Project.condigureDokkaSetup() {
     tasks.withType(DokkaTaskPartial::class).configureEach {
         suppressInheritedMembers = true
-        // Something suspicious to figure out
-        pluginsMapConfiguration = mapOf(
-            "org.jetbrains.dokka.base.DokkaBase" to """{ "templatesDir" : "${
-                rootProject.projectDir.toString().replace('\\', '/')
-            }/dokka-templates" }"""
-        )
+        setupDokkaTemplatesDir(this)
 
         dokkaSourceSets.configureEach {
             jdkVersion.set(11)
@@ -92,4 +83,21 @@ private fun Project.configureExternalLinks() {
             }
         }
     }
+}
+
+/**
+ * Setups Dokka templates. While this directory is empty in our repository,
+ * 'kotlinlang' build pipeline adds templates there when preparing our documentation
+ * to be published on kotlinlang.
+ *
+ * See:
+ * - Template setup: https://github.com/JetBrains/kotlin-web-site/blob/master/.teamcity/builds/apiReferences/kotlinx/coroutines/KotlinxCoroutinesPrepareDokkaTemplates.kt
+ * - Templates repository: https://github.com/JetBrains/kotlin-web-site/tree/master/dokka-templates
+ */
+private fun Project.setupDokkaTemplatesDir(dokkaTask: AbstractDokkaTask) {
+    dokkaTask.pluginsMapConfiguration = mapOf(
+        "org.jetbrains.dokka.base.DokkaBase" to """{ "templatesDir" : "${
+            project.rootProject.projectDir.toString().replace('\\', '/')
+        }/dokka-templates" }"""
+    )
 }
