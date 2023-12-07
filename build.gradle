@@ -163,14 +163,16 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
         kotlin.sourceSets.jvmTest.dependencies {
             implementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
         }
-    } else {
-        def platform = PlatformKt.platformOf(it)
-        apply plugin: "kotlin-${platform}-conventions"
+    } else if (PlatformKt.platformOf(it) == "jvm") {
+        apply plugin: "kotlin-jvm-conventions"
         dependencies {
             api project(":$coreModule")
             // the only way IDEA can resolve test classes
             testImplementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
         }
+    } else {
+        def platform = PlatformKt.platformOf(it)
+        throw IllegalStateException("No configuration rules for $platform")
     }
 }
 
