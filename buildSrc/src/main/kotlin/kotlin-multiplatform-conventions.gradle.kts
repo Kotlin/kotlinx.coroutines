@@ -5,6 +5,7 @@
 import org.gradle.api.*
 import org.gradle.api.tasks.testing.logging.*
 import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.plugin.*
 
 // JVM
 
@@ -77,7 +78,53 @@ kotlin.sourceSets.matching { it.name.contains("Main") }.forEach { srcSet ->
 // NATIVE
 
 if (nativeTargetsAreEnabled) {
-    apply(from = rootProject.file("gradle/compile-native-multiplatform.gradle"))
+    val nativeMainSets = mutableListOf<KotlinSourceSet>()
+    val nativeTestSets = mutableListOf<KotlinSourceSet>()
+    kotlin {
+        fun TargetsFromPresetExtension.addTarget(name: String) {
+            val preset = presets.getByName(name)
+            val target = fromPreset(preset, preset.name)
+            nativeMainSets.add(target.compilations["main"].kotlinSourceSets.first())
+            nativeTestSets.add(target.compilations["test"].kotlinSourceSets.first())
+        }
+
+        targets {
+            // According to https://kotlinlang.org/docs/native-target-support.html
+            // Tier 1
+            addTarget("linuxX64")
+            addTarget("macosX64")
+            addTarget("macosArm64")
+            addTarget("iosSimulatorArm64")
+            addTarget("iosX64")
+
+            // Tier 2
+            addTarget("linuxArm64")
+            addTarget("watchosSimulatorArm64")
+            addTarget("watchosX64")
+            addTarget("watchosArm32")
+            addTarget("watchosArm64")
+            addTarget("tvosSimulatorArm64")
+            addTarget("tvosX64")
+            addTarget("tvosArm64")
+            addTarget("iosArm64")
+
+            // Tier 3
+            addTarget("androidNativeArm32")
+            addTarget("androidNativeArm64")
+            addTarget("androidNativeX86")
+            addTarget("androidNativeX64")
+            addTarget("mingwX64")
+            addTarget("watchosDeviceArm64")
+        }
+
+        sourceSets {
+            nativeMain { dependsOn(commonMain.get()) }
+            nativeTest { dependsOn(commonTest.get()) }
+
+            configure(nativeMainSets) { dependsOn(nativeMain.get()) }
+            configure(nativeTestSets) { dependsOn(nativeTest.get()) }
+        }
+    }
 }
 
 // JS
