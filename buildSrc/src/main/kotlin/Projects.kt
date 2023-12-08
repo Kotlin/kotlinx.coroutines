@@ -15,12 +15,15 @@ fun Project.version(target: String): String {
 
 val Project.jdkToolchainVersion: Int get() = property("jdk_toolchain_version").toString().toInt()
 
+/**
+ * TODO: check if this is still relevant.
+ * It was introduced in <https://github.com/Kotlin/kotlinx.coroutines/pull/2389>, and the project for which this was
+ * done is already long finished.
+ */
 val Project.nativeTargetsAreEnabled: Boolean get() = rootProject.properties["disable_native_targets"] == null
 
 val Project.sourceSets: SourceSetContainer
-    get() =
-        extensions.getByName("sourceSets") as SourceSetContainer
-
+    get() = extensions.getByName("sourceSets") as SourceSetContainer
 
 val coreModule = "kotlinx-coroutines-core"
 val jdk8ObsoleteModule = "kotlinx-coroutines-jdk8"
