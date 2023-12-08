@@ -89,7 +89,7 @@ open class RunR8 : JavaExec() {
 
     init {
         classpath = project.configurations["r8"]
-        mainClass.set("com.android.tools.r8.R8")
+        mainClass = "com.android.tools.r8.R8"
     }
 
     override fun exec() {

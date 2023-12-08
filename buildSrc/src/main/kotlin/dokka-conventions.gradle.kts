@@ -48,13 +48,13 @@ private fun Project.condigureDokkaSetup() {
         setupDokkaTemplatesDir(this)
 
         dokkaSourceSets.configureEach {
-            jdkVersion.set(11)
+            jdkVersion = 11
             includes.from("README.md")
-            noStdlibLink.set(true)
+            noStdlibLink = true
 
             externalDocumentationLink {
-                url.set(URL("https://kotlinlang.org/api/latest/jvm/stdlib/"))
-                packageListUrl.set(rootProject.projectDir.toPath().resolve("site/stdlib.package.list").toUri().toURL())
+                url = URL("https://kotlinlang.org/api/latest/jvm/stdlib/")
+                packageListUrl = rootProject.projectDir.toPath().resolve("site/stdlib.package.list").toUri().toURL()
             }
 
             // Something suspicious to figure out, probably legacy of earlier days
@@ -66,9 +66,9 @@ private fun Project.condigureDokkaSetup() {
         // Source links
         dokkaSourceSets.configureEach {
             sourceLink {
-                localDirectory.set(rootDir)
-                remoteUrl.set(URL("https://github.com/kotlin/kotlinx.coroutines/tree/master"))
-                remoteLineSuffix.set("#L")
+                localDirectory = rootDir
+                remoteUrl = URL("https://github.com/kotlin/kotlinx.coroutines/tree/master")
+                remoteLineSuffix ="#L"
             }
         }
     }
@@ -78,8 +78,8 @@ private fun Project.configureExternalLinks() {
     tasks.withType<DokkaTaskPartial>() {
         dokkaSourceSets.configureEach {
             externalDocumentationLink {
-                url.set(URL(coreModuleDocsUrl))
-                packageListUrl.set(File(coreModuleDocsPackageList).toURI().toURL())
+                url = URL(coreModuleDocsUrl)
+                packageListUrl = File(coreModuleDocsPackageList).toURI().toURL()
             }
         }
     }

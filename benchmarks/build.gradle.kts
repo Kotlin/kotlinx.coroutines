@@ -23,7 +23,7 @@ java {
 
 tasks.named<KotlinCompile>("compileJmhKotlin") {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_1_8)
+        jvmTarget = JvmTarget.JVM_1_8
         freeCompilerArgs.add("-Xjvm-default=all")
     }
 }
@@ -33,7 +33,7 @@ val jmhJarTask = tasks.named<Jar>("jmhJar") {
     archiveClassifier = null
     archiveVersion = null
     archiveVersion.convention(null as String?)
-    destinationDirectory.set(file("$rootDir"))
+    destinationDirectory = rootDir
 }
 
 tasks {

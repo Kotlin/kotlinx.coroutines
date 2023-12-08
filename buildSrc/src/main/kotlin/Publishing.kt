@@ -191,7 +191,7 @@ public fun Project.registerTopLevelDeployTask() {
 
 public fun Project.registerEmptyJavadocArtifact(): TaskProvider<Jar> {
     return tasks.register("javadocJar", Jar::class) {
-        archiveClassifier.set("javadoc")
+        archiveClassifier = "javadoc"
         // contents are deliberately left empty
     }
 }

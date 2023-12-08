@@ -16,11 +16,11 @@ configure(subprojects) {
         compilerOptions {
             var versionsAreNotOverridden = true
             getOverriddenKotlinLanguageVersion(project)?.let {
-                languageVersion.set(it)
+                languageVersion = it
                 versionsAreNotOverridden = false
             }
             getOverriddenKotlinApiVersion(project)?.let {
-                apiVersion.set(it)
+                apiVersion = it
                 versionsAreNotOverridden = false
             }
             if (isMainTaskName && versionsAreNotOverridden) {

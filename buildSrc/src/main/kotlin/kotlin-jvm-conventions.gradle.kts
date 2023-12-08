@@ -18,7 +18,7 @@ java {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_1_8)
+        jvmTarget = JvmTarget.JVM_1_8
     }
     jvmToolchain(jdkToolchainVersion)
 }

@@ -15,11 +15,11 @@ java {
 
 tasks {
     compileKotlin {
-        compilerOptions.jvmTarget.set(JvmTarget.JVM_9)
+        compilerOptions.jvmTarget = JvmTarget.JVM_9
     }
 
     compileTestKotlin {
-        compilerOptions.jvmTarget.set(JvmTarget.JVM_9)
+        compilerOptions.jvmTarget = JvmTarget.JVM_9
     }
 }
 
