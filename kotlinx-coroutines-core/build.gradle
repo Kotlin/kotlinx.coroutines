@@ -13,6 +13,7 @@ apply plugin: 'org.jetbrains.kotlinx.kover'
 
 apply plugin: 'pub-conventions'
 
+// TODO: rename `nativeDarwin` to `apple` to avoid defining it explicitly: https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template
 /* ==========================================================================
   Configure source sets structure for kotlinx-coroutines-core:
 

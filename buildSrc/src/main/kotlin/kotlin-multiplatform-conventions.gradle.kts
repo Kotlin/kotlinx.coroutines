@@ -5,8 +5,6 @@
 import org.gradle.api.*
 import org.gradle.api.tasks.testing.logging.*
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.plugin.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 // JVM
 
@@ -26,103 +24,33 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_1_8)
         }
     }
-
     jvmToolchain(jdkToolchainVersion)
-
-    sourceSets {
-        jvmMain.dependencies {
-            compileOnly("org.codehaus.mojo:animal-sniffer-annotations:1.20")
-            // Workaround until https://github.com/JetBrains/kotlin/pull/4999 is picked up
-            api("org.jetbrains:annotations:23.0.0")
-        }
-
-        jvmTest.dependencies {
-            api("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
-            // Workaround to make addSuppressed work in tests
-            api("org.jetbrains.kotlin:kotlin-reflect:${version("kotlin")}")
-            api("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${version("kotlin")}")
-            api("org.jetbrains.kotlin:kotlin-test-junit:${version("kotlin")}")
-            api("junit:junit:${version("junit")}")
-        }
+    if (nativeTargetsAreEnabled) {
+        // According to https://kotlinlang.org/docs/native-target-support.html
+        // Tier 1
+        linuxX64()
+        macosX64()
+        macosArm64()
+        iosSimulatorArm64()
+        iosX64()
+        // Tier 2
+        linuxArm64()
+        watchosSimulatorArm64()
+        watchosX64()
+        watchosArm32()
+        watchosArm64()
+        tvosSimulatorArm64()
+        tvosX64()
+        tvosArm64()
+        iosArm64()
+        // Tier 3
+        androidNativeArm32()
+        androidNativeArm64()
+        androidNativeX86()
+        androidNativeX64()
+        mingwX64()
+        watchosDeviceArm64()
     }
-}
-
-tasks.named("jvmTest", Test::class) {
-    testLogging {
-        showStandardStreams = true
-        events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
-    }
-
-    val stressTest = project.properties["stressTest"]
-    if (stressTest != null) {
-        systemProperty("stressTest", "stressTest")
-    }
-}
-
-// COMMON
-
-val kotlin_version: String? by ext
-
-kotlin.sourceSets {
-    commonTest {
-        dependencies {
-            api("org.jetbrains.kotlin:kotlin-test-common:$kotlin_version")
-            api("org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version")
-        }
-    }
-}
-
-// NATIVE
-
-if (nativeTargetsAreEnabled) {
-    kotlin {
-        val targets = buildList<KotlinNativeTarget> {
-            // According to https://kotlinlang.org/docs/native-target-support.html
-            // Tier 1
-            add(linuxX64())
-            add(macosX64())
-            add(macosArm64())
-            add(iosSimulatorArm64())
-            add(iosX64())
-            // Tier 2
-            add(linuxArm64())
-            add(watchosSimulatorArm64())
-            add(watchosX64())
-            add(watchosArm32())
-            add(watchosArm64())
-            add(tvosSimulatorArm64())
-            add(tvosX64())
-            add(tvosArm64())
-            add(iosArm64())
-            // Tier 3
-            add(androidNativeArm32())
-            add(androidNativeArm64())
-            add(androidNativeX86())
-            add(androidNativeX64())
-            add(mingwX64())
-            add(watchosDeviceArm64())
-        }
-
-        sourceSets {
-            commonMain
-            commonTest
-            nativeMain {
-                dependsOn(commonMain.get())
-            }
-            nativeTest {
-                dependsOn(commonTest.get())
-            }
-            for (target in targets) {
-                named(target.name + "Main") { dependsOn(nativeMain.get()) }
-                named(target.name + "Test") { dependsOn(nativeTest.get()) }
-            }
-        }
-    }
-}
-
-// JS
-
-kotlin {
     js {
         moduleName = project.name
         nodejs()
@@ -140,10 +68,29 @@ kotlin {
             api("org.jetbrains.kotlinx:atomicfu-wasm-js:${version("atomicfu")}")
         }
     }
-}
-
-kotlin {
+    applyDefaultHierarchyTemplate()
     sourceSets {
+        commonTest {
+            dependencies {
+                api("org.jetbrains.kotlin:kotlin-test-common:${version("kotlin")}")
+                api("org.jetbrains.kotlin:kotlin-test-annotations-common:${version("kotlin")}")
+            }
+        }
+    }
+    sourceSets {
+        jvmMain.dependencies {
+            compileOnly("org.codehaus.mojo:animal-sniffer-annotations:1.20")
+            // Workaround until https://github.com/JetBrains/kotlin/pull/4999 is picked up
+            api("org.jetbrains:annotations:23.0.0")
+        }
+        jvmTest.dependencies {
+            api("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
+            // Workaround to make addSuppressed work in tests
+            api("org.jetbrains.kotlin:kotlin-reflect:${version("kotlin")}")
+            api("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${version("kotlin")}")
+            api("org.jetbrains.kotlin:kotlin-test-junit:${version("kotlin")}")
+            api("junit:junit:${version("junit")}")
+        }
         val jsAndWasmSharedMain by registering {
             dependsOn(commonMain.get())
         }
@@ -175,5 +122,17 @@ kotlin {
 tasks.configureEach {
     if (name == "compileJsAndWasmSharedMainKotlinMetadata") {
         enabled = false
+    }
+}
+
+tasks.named("jvmTest", Test::class) {
+    testLogging {
+        showStandardStreams = true
+        events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
+    }
+
+    val stressTest = project.properties["stressTest"]
+    if (stressTest != null) {
+        systemProperty("stressTest", "stressTest")
     }
 }
