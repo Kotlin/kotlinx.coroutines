@@ -17,24 +17,22 @@ val Project.jdkToolchainVersion: Int get() = property("jdk_toolchain_version").t
 
 val Project.nativeTargetsAreEnabled: Boolean get() = rootProject.properties["disable_native_targets"] == null
 
-val Project.sourceSets: SourceSetContainer get() =
-    extensions.getByName("sourceSets") as SourceSetContainer
+val Project.sourceSets: SourceSetContainer
+    get() =
+        extensions.getByName("sourceSets") as SourceSetContainer
 
 
 val coreModule = "kotlinx-coroutines-core"
 val jdk8ObsoleteModule = "kotlinx-coroutines-jdk8"
 val testModule = "kotlinx-coroutines-test"
 
-val multiplatform = setOf(coreModule, testModule)
-
 // Not applicable for Kotlin plugin
 val sourceless = setOf("kotlinx.coroutines", "kotlinx-coroutines-bom")
-val internal = setOf("kotlinx.coroutines", "benchmarks")
 
 // Not published
-val unpublished = internal + setOf("android-unit-tests")
+val unpublished = setOf("kotlinx.coroutines", "benchmarks", "android-unit-tests")
 
-val Project.isMultiplatform: Boolean get() = name in multiplatform
+val Project.isMultiplatform: Boolean get() = name in setOf(coreModule, testModule)
 val Project.isBom: Boolean get() = name == "kotlinx-coroutines-bom"
 
 // Projects that we do not check for Android API level 14 check due to various limitations

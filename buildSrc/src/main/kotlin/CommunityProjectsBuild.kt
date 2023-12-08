@@ -9,6 +9,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
 import java.net.*
 import java.util.logging.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
 
@@ -33,12 +34,14 @@ private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
  *
  * @return a Kotlin API version parametrized from command line nor gradle.properties, null otherwise
  */
-fun getOverriddenKotlinApiVersion(project: Project): String? {
+fun getOverriddenKotlinApiVersion(project: Project): KotlinVersion? {
     val apiVersion = project.rootProject.properties["kotlin_api_version"] as? String
-    if (apiVersion != null) {
+    return if (apiVersion != null) {
         LOGGER.info("""Configured Kotlin API version: '$apiVersion' for project $${project.name}""")
+        KotlinVersion.fromVersion(apiVersion)
+    } else {
+        null
     }
-    return apiVersion
 }
 
 /**
@@ -46,12 +49,14 @@ fun getOverriddenKotlinApiVersion(project: Project): String? {
  *
  * @return a Kotlin Language version parametrized from command line nor gradle.properties, null otherwise
  */
-fun getOverriddenKotlinLanguageVersion(project: Project): String? {
+fun getOverriddenKotlinLanguageVersion(project: Project): KotlinVersion? {
     val languageVersion = project.rootProject.properties["kotlin_language_version"] as? String
-    if (languageVersion != null) {
+    return if (languageVersion != null) {
         LOGGER.info("""Configured Kotlin Language version: '$languageVersion' for project ${project.name}""")
+        KotlinVersion.fromVersion(languageVersion)
+    } else {
+        null
     }
-    return languageVersion
 }
 
 /**

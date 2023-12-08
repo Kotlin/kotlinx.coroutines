@@ -4,8 +4,8 @@
 
 @file:Suppress("UnstableApiUsage")
 
-import me.champeau.jmh.*
 import org.jetbrains.kotlin.gradle.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.github.johnrengelman.shadow")
@@ -22,9 +22,9 @@ java {
 }
 
 tasks.named<KotlinCompile>("compileJmhKotlin") {
-    kotlinOptions {
-        jvmTarget = "1.8"
-        freeCompilerArgs += "-Xjvm-default=all"
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+        freeCompilerArgs.add("-Xjvm-default=all")
     }
 }
 

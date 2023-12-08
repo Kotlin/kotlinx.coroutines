@@ -6,8 +6,6 @@ import org.gradle.api.*
 import org.gradle.api.tasks.testing.logging.*
 import org.jetbrains.kotlin.gradle.dsl.*
 
-// JVM
-
 plugins {
     kotlin("multiplatform")
 }
@@ -18,10 +16,11 @@ java {
 }
 
 kotlin {
-    jvm {}
-    jvm().compilations.all {
-        compilerOptions.configure {
-            jvmTarget.set(JvmTarget.JVM_1_8)
+    jvm {
+        compilations.all {
+            compilerOptions.configure {
+                jvmTarget.set(JvmTarget.JVM_1_8)
+            }
         }
     }
     jvmToolchain(jdkToolchainVersion)
@@ -76,8 +75,6 @@ kotlin {
                 api("org.jetbrains.kotlin:kotlin-test-annotations-common:${version("kotlin")}")
             }
         }
-    }
-    sourceSets {
         jvmMain.dependencies {
             compileOnly("org.codehaus.mojo:animal-sniffer-annotations:1.20")
             // Workaround until https://github.com/JetBrains/kotlin/pull/4999 is picked up
