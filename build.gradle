@@ -2,7 +2,6 @@
  * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -10,34 +9,9 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import static Projects.*
 
 buildscript {
-    /*
-     * These property group is used to build kotlinx.coroutines against Kotlin compiler snapshot.
-     * How does it work:
-     * When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version,
-     * atomicfu_version is overwritten by TeamCity environment (AFU is built with snapshot and published to mavenLocal
-     * as previous step or the snapshot build).
-     * Additionally, mavenLocal and Sonatype snapshots are added to repository list and stress tests are disabled.
-     * DO NOT change the name of these properties without adapting kotlinx.train build chain.
-     */
-    def prop = rootProject.properties['build_snapshot_train']
-    ext.build_snapshot_train = prop != null && prop != ""
-    if (build_snapshot_train) {
-        ext.kotlin_version = rootProject.properties['kotlin_snapshot_version']
-        if (kotlin_version == null) {
-            throw new IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
-        }
-    }
+    ext.kotlin_version = CommunityProjectsBuild.getOverriddenKotlinVersion(rootProject)
 
-    // Determine if any project dependency is using a snapshot version
-    ext.using_snapshot_version = build_snapshot_train
-    rootProject.properties.each { key, value ->
-        if (key.endsWith("_version") && value instanceof String && value.endsWith("-SNAPSHOT")) {
-            println("NOTE: USING SNAPSHOT VERSION: $key=$value")
-            ext.using_snapshot_version = true
-        }
-    }
-
-    if (using_snapshot_version) {
+    if (CommunityProjectsBuild.shouldUseLocalMaven(rootProject)) {
         repositories {
             mavenLocal()
         }
@@ -81,25 +55,18 @@ allprojects {
     def deployVersion = properties['DeployVersion']
     if (deployVersion != null) version = deployVersion
 
-    if (build_snapshot_train) {
-        ext.kotlin_version = rootProject.properties['kotlin_snapshot_version']
-        println "Using Kotlin $kotlin_version for project $it"
-
+    if (CommunityProjectsBuild.isSnapshotTrainEnabled(rootProject)) {
         def skipSnapshotChecks = rootProject.properties['skip_snapshot_checks'] != null
         if (!skipSnapshotChecks && version != atomicfu_version) {
             throw new IllegalStateException("Current deploy version is $version, but atomicfu version is not overridden ($atomicfu_version) for $it")
         }
-
-        kotlin_version = rootProject.properties['kotlin_snapshot_version']
     }
 
-    if (using_snapshot_version) {
+    if (CommunityProjectsBuild.shouldUseLocalMaven(rootProject)) {
         repositories {
             mavenLocal()
         }
     }
-
-    ext.unpublished = unpublished
 
     // This project property is set during nightly stress test
     def stressTest = project.properties['stressTest']
@@ -116,7 +83,7 @@ apply plugin: "kover-conventions"
 
 apiValidation {
     ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
-    if (build_snapshot_train) {
+    if (CommunityProjectsBuild.isSnapshotTrainEnabled(rootProject)) {
         ignoredProjects.add(coreModule)
     }
     ignoredPackages += "kotlinx.coroutines.internal"

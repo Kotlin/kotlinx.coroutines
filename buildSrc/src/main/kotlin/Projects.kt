@@ -6,8 +6,12 @@
 import org.gradle.api.*
 import org.gradle.api.tasks.*
 
-fun Project.version(target: String): String =
-    property("${target}_version") as String
+fun Project.version(target: String): String {
+    if (target == "kotlin") {
+        getOverriddenKotlinVersion(this)?.let { return it }
+    }
+    return property("${target}_version") as String
+}
 
 val Project.jdkToolchainVersion: Int get() = property("jdk_toolchain_version").toString().toInt()
 

@@ -12,13 +12,21 @@ import java.util.logging.*
 
 private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
 
-
 /**
  * Functions in this file are responsible for configuring kotlinx.coroutines build against a custom dev version
  * of Kotlin compiler.
  * Such configuration is used in a composite community build of Kotlin in order to check whether not-yet-released changes
  * are compatible with our libraries (aka "integration testing that substitutes lack of unit testing").
- */
+ *
+ * When `build_snapshot_train` is set to true (and [isSnapshotTrainEnabled] returns `true`),
+ * * `kotlin_version property` is overridden with `kotlin_snapshot_version` (see [getOverriddenKotlinVersion]),
+ * * `atomicfu_version` is overwritten by TeamCity environment (AFU is built with snapshot and published to mavenLocal
+ *   as previous step or the snapshot build).
+ * Additionally, mavenLocal and Sonatype snapshots are added to repository list and stress tests are disabled
+ * (see [configureCommunityBuildTweaks]).
+ *
+ * DO NOT change the name of these properties without adapting the kotlinx.train build chain.
+*/
 
 /**
  * Should be used for running against of non-released Kotlin compiler on a system test level.
@@ -78,10 +86,7 @@ fun addDevRepositoryIfEnabled(rh: RepositoryHandler, project: Project) {
  * Disables flaky and Kotlin-specific tests, prints the real version of Kotlin applied (to be sure overridden version of Kotlin is properly picked).
  */
 fun Project.configureCommunityBuildTweaks() {
-    // Flag that detects whether community build is enabled
-    val buildSnapshotTrain = (project.rootProject.properties["build_snapshot_train"] as? String) != null
-    if (!buildSnapshotTrain) return
-
+    if (!isSnapshotTrainEnabled(this)) return
     allprojects {
         // Disable stress tests and tests that are flaky on Kotlin version specific
         tasks.withType<Test>().configureEach {
@@ -110,4 +115,37 @@ fun Project.configureCommunityBuildTweaks() {
             }
         }
     }
+}
+
+/**
+ * Ensures that, if [isSnapshotTrainEnabled] is true, the project is built with a snapshot version of Kotlin compiler.
+ */
+fun getOverriddenKotlinVersion(project: Project): String? =
+    if (isSnapshotTrainEnabled(project)) {
+        val snapshotVersion = project.rootProject.properties["kotlin_snapshot_version"]
+            ?: error("'kotlin_snapshot_version' should be defined when building with a snapshot compiler")
+        snapshotVersion.toString()
+    } else {
+        null
+    }
+
+/**
+ * Checks if the project is built with a snapshot version of Kotlin compiler.
+ */
+fun isSnapshotTrainEnabled(project: Project): Boolean =
+    when (project.rootProject.properties["build_snapshot_train"]) {
+        null -> false
+        "" -> false
+        else -> true
+    }
+
+fun shouldUseLocalMaven(project: Project): Boolean {
+    var someDependencyIsSnapshot = false
+    project.rootProject.properties.forEach { key, value ->
+        if (key.endsWith("_version") && value is String && value.endsWith("-SNAPSHOT")) {
+            println("NOTE: USING SNAPSHOT VERSION: $key=$value")
+            someDependencyIsSnapshot = true
+        }
+    }
+    return isSnapshotTrainEnabled(project) || someDependencyIsSnapshot
 }

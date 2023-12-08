@@ -156,7 +156,7 @@ kotlin {
         jsTest {
             dependsOn(jsAndWasmSharedTest.get())
             dependencies {
-                api("org.jetbrains.kotlin:kotlin-test-js:$kotlin_version")
+                api("org.jetbrains.kotlin:kotlin-test-js:${version("kotlin")}")
             }
         }
         val wasmJsMain by getting {
@@ -165,7 +165,7 @@ kotlin {
         val wasmJsTest by getting {
             dependsOn(jsAndWasmSharedTest.get())
             dependencies {
-                api("org.jetbrains.kotlin:kotlin-test-wasm-js:$kotlin_version")
+                api("org.jetbrains.kotlin:kotlin-test-wasm-js:${version("kotlin")}")
             }
         }
     }
