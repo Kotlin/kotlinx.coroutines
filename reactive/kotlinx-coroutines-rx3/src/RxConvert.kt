@@ -72,7 +72,7 @@ public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> 
  * resulting flow to specify a user-defined value and to control what happens when data is produced faster
  * than consumed, i.e. to control the back-pressure behavior. Check [callbackFlow] for more details.
  */
-public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
+public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow (capacity = Channel.UNLIMITED) {
     val disposableRef = AtomicReference<Disposable>()
     val observer = object : Observer<T> {
         override fun onComplete() { close() }

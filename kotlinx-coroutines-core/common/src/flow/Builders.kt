@@ -304,7 +304,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  * > `awaitClose` block can be called at any time due to asynchronous nature of cancellation, even
  * > concurrently with the call of the callback.
  */
-public fun <T> callbackFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(block)
+public fun <T> callbackFlow(capacity: Int = BUFFERED, @BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(capacity = capacity, block = block)
 
 // ChannelFlow implementation that is the first in the chain of flow operations and introduces (builds) a flow
 private open class ChannelFlowBuilder<T>(
