@@ -82,19 +82,12 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     contract {
         callsInPlace(action, InvocationKind.EXACTLY_ONCE)
     }
-
-    // Cannot use 'finally' in this function because of KT-58685
-    // See kotlinx.coroutines.sync.SemaphoreTest.testWithPermitJsMiscompilation
-
     acquire()
-    val result = try {
+    return try {
         action()
-    } catch (e: Throwable) {
+    } finally {
         release()
-        throw e
     }
-    release()
-    return result
 }
 
 @Suppress("UNCHECKED_CAST")
