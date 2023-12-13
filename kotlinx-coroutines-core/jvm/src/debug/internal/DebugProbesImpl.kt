@@ -30,6 +30,28 @@ internal object DebugProbesImpl {
     private val capturedCoroutines: Set<CoroutineOwner<*>> get() = capturedCoroutinesMap.keys
 
     private val installations = atomic(0)
+    
+    /**
+     * A thread local value that stores CoroutineId of the coroutine that is being executed on the thread.
+     */
+    private val threadLocalCoroutineId: ThreadLocal<CoroutineId> = ThreadLocal()
+
+    /**
+     * This function is used by debugger (just to test the solution for now).
+     *
+     * For every debug step inside the coroutine we need to determine whether 
+     * we are about to stop in the same coroutine we were on the previous step.
+     * 
+     * Knowing the coroutine id that is currently running on the given thread allows 
+     * to avoid unrolling the continuation stack till the continuation corresponding to the frame from the previous step.
+     * 
+     * Also, it will help for stepping into a non-suspend function from a suspend function,
+     * when the continuation is not passed to the function call.
+     * 
+     * The current coroutine id is saved in the breakpoint and 
+     * debugger will only stop at the breakpoint if the coroutine with same id is running in the current thread.
+     */
+    public fun getCurrentThreadCoroutineId(): Long = threadLocalCoroutineId.get().id
 
     /**
      * This internal method is used by the IDEA debugger under the JVM name
@@ -426,6 +448,7 @@ internal object DebugProbesImpl {
 
     private fun updateState(frame: Continuation<*>, state: String) {
         if (!isInstalled) return
+        saveCoroutineIdToThreadLocal(frame)
         if (ignoreCoroutinesWithEmptyContext && frame.context === EmptyCoroutineContext) return // See ignoreCoroutinesWithEmptyContext
         if (state == RUNNING) {
             val stackFrame = frame as? CoroutineStackFrame ?: return
@@ -436,6 +459,13 @@ internal object DebugProbesImpl {
         // Find ArtificialStackFrame of the coroutine
         val owner = frame.owner() ?: return
         updateState(owner, frame, state)
+    }
+    
+    private fun saveCoroutineIdToThreadLocal(frame: Continuation<*>) {
+        frame.owner()?.info?.let { debugCoroutineInfo ->
+            val coroutineId = debugCoroutineInfo.context?.get(CoroutineId) ?: return
+            threadLocalCoroutineId.set(coroutineId)
+        }
     }
 
     // See comment to callerInfoCache
