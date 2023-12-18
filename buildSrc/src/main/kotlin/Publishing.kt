@@ -47,7 +47,18 @@ fun MavenPom.configureMavenCentralMetadata(project: Project) {
     }
 }
 
+/**
+ * 'libs.space.pub' is a dev option that is set on our CI in order to publish
+ * dev build into 'https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven' Maven repository.
+ * In order to use it, pass the corresponding ENV to the TC 'Deploy' task.
+ */
+private val spacePublicationEnabled = System.getenv("libs.space.pub")?.equals("true") ?: false
+
 fun mavenRepositoryUri(): URI {
+    if (spacePublicationEnabled) {
+        return URI("https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven")
+    }
+
     val repositoryId: String? = System.getenv("libs.repository.id")
     return if (repositoryId == null) {
         URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
@@ -60,8 +71,15 @@ fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
     rh.maven {
         url = mavenRepositoryUri()
         credentials {
-            username = project.getSensitiveProperty("libs.sonatype.user")
-            password = project.getSensitiveProperty("libs.sonatype.password")
+            if (spacePublicationEnabled) {
+                // Configure space credentials
+                username = project.getSensitiveProperty("libs.space.user")
+                password = project.getSensitiveProperty("libs.space.password")
+            } else {
+                // Configure sonatype credentials
+                username = project.getSensitiveProperty("libs.sonatype.user")
+                password = project.getSensitiveProperty("libs.sonatype.password")
+            }
         }
     }
 }
