@@ -273,13 +273,49 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long): Fl
  */
 @FlowPreview
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
-    require(periodMillis > 0) { "Sample period should be positive" }
+    return sample(flow {
+        delay(periodMillis)
+        while (true) {
+            emit(Unit)
+            delay(periodMillis)
+        }
+    })
+}
+
+/**
+ * Returns a flow that emits only the latest value emitted by the original flow only when the [sampler] emits.
+ *
+ * Example:
+ * ```
+ * flow {
+ *     repeat(10) {
+ *         emit(it)
+ *         delay(50)
+ *     }
+ * }.sampleBy(flow {
+ *     repeat(10) {
+ *         delay(100)
+ *         emit(it)
+ *     }
+ * })
+ *
+ * ```
+ * produces `0, 2, 4, 6, 8`.
+ *
+ * Note that the latest element is not emitted if it does not fit into the sampling window.
+ */
+public fun <T, R> Flow<T>.sample(sampler: Flow<R>): Flow<T> {
     return scopedFlow { downstream ->
         val values = produce(capacity = Channel.CONFLATED) {
             collect { value -> send(value ?: NULL) }
         }
+
+        val samplerProducer = produce(capacity = 0) {
+            sampler.collect { value ->
+                send(value)
+            }
+        }
         var lastValue: Any? = null
-        val ticker = fixedPeriodTicker(periodMillis)
         while (lastValue !== DONE) {
             select<Unit> {
                 values.onReceiveCatching { result ->
@@ -287,16 +323,26 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
                         .onSuccess { lastValue = it }
                         .onFailure {
                             it?.let { throw it }
-                            ticker.cancel(ChildCancelledException())
+                            samplerProducer.cancel(ChildCancelledException())
                             lastValue = DONE
                         }
                 }
 
-                // todo: shall be start sampling only when an element arrives or sample aways as here?
-                ticker.onReceive {
-                    val value = lastValue ?: return@onReceive
-                    lastValue = null // Consume the value
-                    downstream.emit(NULL.unbox(value))
+                samplerProducer.onReceiveCatching { samplerResult ->
+                    samplerResult
+                        .onSuccess { sampledValue ->
+                            if (sampledValue != null) {
+                                val value = lastValue ?: return@onSuccess
+                                lastValue = null // Consume the value
+                                downstream.emit(NULL.unbox(value))
+                            } else {
+                                lastValue = DONE
+                            }
+                        }
+                        .onFailure {
+                            lastValue = DONE
+                        }
+
                 }
             }
         }
