@@ -19,12 +19,6 @@ public abstract class OpDescriptor {
      */
     abstract fun perform(affected: Any?): Any?
 
-    /**
-     * Returns reference to atomic operation that this descriptor is a part of or `null`
-     * if not a part of any [AtomicOp].
-     */
-    abstract val atomicOp: AtomicOp<*>?
-
     override fun toString(): String = "$classSimpleName@$hexAddress" // debug
 }
 
@@ -45,8 +39,6 @@ internal val NO_DECISION: Any = Symbol("NO_DECISION")
 @InternalCoroutinesApi
 public abstract class AtomicOp<in T> : OpDescriptor() {
     private val _consensus = atomic<Any?>(NO_DECISION)
-
-    override val atomicOp: AtomicOp<*> get() = this
 
     private fun decide(decision: Any?): Any? {
         assert { decision !== NO_DECISION }

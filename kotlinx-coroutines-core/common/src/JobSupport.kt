@@ -144,7 +144,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             return
         }
         parent.start() // make sure the parent is started
-        @Suppress("DEPRECATION")
         val handle = parent.attachChild(this)
         parentHandle = handle
         // now check our state _after_ registering (see tryFinalizeSimpleState order of actions)
@@ -1171,7 +1170,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             return parent.getCancellationException()
         }
 
-        protected override fun nameString(): String =
+        override fun nameString(): String =
             "AwaitContinuation"
     }
 
@@ -1387,7 +1386,7 @@ internal class NodeList : LockFreeLinkedListHead(), Incomplete {
         if (DEBUG) getString("Active") else super.toString()
 }
 
-internal class InactiveNodeList(
+private class InactiveNodeList(
     override val list: NodeList
 ) : Incomplete {
     override val isActive: Boolean get() = false
@@ -1421,12 +1420,6 @@ private class ResumeAwaitOnCompletion<T>(
             continuation.resume(state.unboxState() as T)
         }
     }
-}
-
-internal class DisposeOnCompletion(
-    private val handle: DisposableHandle
-) : JobNode() {
-    override fun invoke(cause: Throwable?) = handle.dispose()
 }
 
 // -------- invokeOnCancellation nodes
