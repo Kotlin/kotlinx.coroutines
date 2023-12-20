@@ -12,7 +12,7 @@ import kotlin.test.*
 class MemoryFootprintTest : TestBase(true) {
 
     @Test
-    fun testJobLayout() = assertLayout(Job().javaClass, 24)
+    fun testJobLayout() = assertLayout(Job().javaClass, 32)
 
     @Test
     fun testCancellableContinuationFootprint() = assertLayout(CancellableContinuationImpl::class.java, 48)

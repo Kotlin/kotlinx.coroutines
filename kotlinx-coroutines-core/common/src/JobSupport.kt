@@ -127,6 +127,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     private val _state = atomic<Any?>(if (active) EMPTY_ACTIVE else EMPTY_NEW)
 
+    /** `true` means that the Job is cancelling and shouldn't accept [invokeOnCompletion] with `onCancelling = true` */
+    private val onCancellingHandlersNotAccepted = atomic(false)
+
     private val _parentHandle = atomic<ChildHandle?>(null)
     internal var parentHandle: ChildHandle?
         get() = _parentHandle.value
@@ -235,6 +238,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         if (!wasCancelling) onCancelling(finalException)
         onCompletionInternal(finalState)
         // Then CAS to completed state -> it must succeed
+        // forbid any new children
+        onCancellingHandlersNotAccepted.value = true
         val casSuccess = _state.compareAndSet(state, finalState.boxIncomplete())
         assert { casSuccess }
         // And process all post-completion actions
@@ -326,7 +331,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     private fun notifyCancelling(list: NodeList, cause: Throwable) {
-        // first cancel our own children
+        // then cancel our own children
         onCancelling(cause)
         notifyHandlers<JobCancellingNode>(list, cause)
         // then cancel parent
@@ -359,8 +364,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         return parent.childCancelled(cause) || isCancellation
     }
 
-    private fun NodeList.notifyCompletion(cause: Throwable?) =
+    private fun NodeList.notifyCompletion(cause: Throwable?) {
+        close()
         notifyHandlers<JobNode>(this, cause)
+    }
 
     private inline fun <reified T: JobNode> notifyHandlers(list: NodeList, cause: Throwable?) {
         var exception: Throwable? = null
@@ -458,51 +465,62 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // for user-defined handlers it allocates a JobNode object that we might not need, but this is Ok.
         val node: JobNode = makeNode(handler, onCancelling)
         loopOnState { state ->
-            when (state) {
-                is Empty -> { // EMPTY_X state -- no completion handlers
+            when {
+                state !is Incomplete || onCancelling && onCancellingHandlersNotAccepted.value -> {
+                    if (invokeImmediately) {
+                        val exception = when (state) {
+                            is CompletedExceptionally -> state.cause
+                            is Finishing -> state.rootCause
+                            else -> null
+                        }
+                        // :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
+                        // because we play type tricks on Kotlin/JS and handler is not necessarily a function there
+                        handler.invokeIt(exception)
+                    }
+                    return NonDisposableHandle
+                }
+                state is Empty -> { // EMPTY_X state -- no completion handlers
                     if (state.isActive) {
                         // try move to SINGLE state
                         if (_state.compareAndSet(state, node)) return node
                     } else
                         promoteEmptyToNodeList(state) // that way we can add listener for non-active coroutine
                 }
-                is Incomplete -> {
+                else -> {
+                    // is Incomplete
                     val list = state.list
                     if (list == null) { // SINGLE/SINGLE+
                         promoteSingleToNodeList(state as JobNode)
                     } else {
-                        var rootCause: Throwable? = null
-                        var handle: DisposableHandle = NonDisposableHandle
-                        if (onCancelling && state is Finishing) {
-                            synchronized(state) {
-                                // check if we are installing cancellation handler on job that is being cancelled
-                                rootCause = state.rootCause // != null if cancelling job
-                                // We add node to the list in two cases --- either the job is not being cancelled
-                                // or we are adding a child to a coroutine that is not completing yet
-                                if (rootCause == null || handler.isHandlerOf<ChildHandleNode>() && !state.isCompleting) {
-                                    // Note: add node the list while holding lock on state (make sure it cannot change)
-                                    if (!addLastAtomic(state, list, node)) return@loopOnState // retry
-                                    // just return node if we don't have to invoke handler (not cancelling yet)
-                                    if (rootCause == null) return node
-                                    // otherwise handler is invoked immediately out of the synchronized section & handle returned
-                                    handle = node
+                        if (onCancelling) {
+                            if (state is Finishing) {
+                                val rootCause: Throwable?
+                                val handle: DisposableHandle
+                                synchronized(state) {
+                                    // check if we are installing cancellation handler on job that is being cancelled
+                                    rootCause = state.rootCause // != null if cancelling job
+                                    // We add node to the list in two cases --- either the job is not being cancelled
+                                    // or we are adding a child to a coroutine that is not completing yet
+                                    if (rootCause == null || handler.isHandlerOf<ChildHandleNode>() && !state.isCompleting) {
+                                        // Note: add node the list while holding lock on state (make sure it cannot change)
+                                        if (!list.addLastIf(node) { !onCancellingHandlersNotAccepted.value }) return@loopOnState // retry
+                                        // just return node if we don't have to invoke handler (not cancelling yet)
+                                        if (rootCause == null) return node
+                                        // otherwise handler is invoked immediately out of the synchronized section & handle returned
+                                        handle = node
+                                    } else {
+                                        handle = NonDisposableHandle
+                                    }
                                 }
+                                // Note: attachChild uses invokeImmediately, so it gets invoked when adding to cancelled job
+                                if (invokeImmediately) handler.invokeIt(rootCause)
+                                return handle
                             }
-                        }
-                        if (rootCause != null) {
-                            // Note: attachChild uses invokeImmediately, so it gets invoked when adding to cancelled job
-                            if (invokeImmediately) handler.invokeIt(rootCause)
-                            return handle
+                            if (list.addLastIf(node) { !onCancellingHandlersNotAccepted.value }) return node
                         } else {
-                            if (addLastAtomic(state, list, node)) return node
+                            if (list.addLast(node)) return node
                         }
                     }
-                }
-                else -> { // is complete
-                    // :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
-                    // because we play type tricks on Kotlin/JS and handler is not necessarily a function there
-                    if (invokeImmediately) handler.invokeIt((state as? CompletedExceptionally)?.cause)
-                    return NonDisposableHandle
                 }
             }
         }
@@ -880,6 +898,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val finishing = state as? Finishing ?: Finishing(list, false, null)
         // must synchronize updates to finishing state
         var notifyRootCause: Throwable? = null
+        // forbid any new children
+        onCancellingHandlersNotAccepted.value = true
         synchronized(finishing) {
             // check if this state is already completing
             if (finishing.isCompleting) return COMPLETING_ALREADY
