@@ -16,7 +16,6 @@ kotlin {
     targets.withType(KotlinNativeTargetWithTests::class.java).configureEach {
         binaries.getTest("DEBUG").apply {
             optimized = true
-            binaryOptions["memoryModel"] = "experimental"
         }
     }
 
@@ -24,6 +23,17 @@ kotlin {
         jvmTest {
             dependencies {
                 implementation(project(":kotlinx-coroutines-debug"))
+            }
+        }
+    }
+
+    wasmJs {
+        nodejs {
+            testTask {
+                filter.apply {
+                    // https://youtrack.jetbrains.com/issue/KT-61888
+                    excludeTest("TestDispatchersTest", "testMainMocking")
+                }
             }
         }
     }

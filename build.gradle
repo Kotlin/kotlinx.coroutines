@@ -57,9 +57,11 @@ buildscript {
     }
 
     dependencies {
+        // Please ensure that atomicfu-gradle-plugin is added to the classpath first, do not change the order, for details see #3984.
+        // The corresponding issue in kotlinx-atomicfu: https://github.com/Kotlin/kotlinx-atomicfu/issues/384
+        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
-        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
         classpath "org.jetbrains.kotlinx:kotlinx-knit:$knit_version"
         classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
         classpath "ru.vyarus:gradle-animalsniffer-plugin:1.5.4" // Android API check
@@ -157,7 +159,12 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
             apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
         }
 
+        apply from: rootProject.file("gradle/compile-jsAndWasmShared-multiplatform.gradle")
+
         apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
+
+        apply from: rootProject.file("gradle/compile-wasm-multiplatform.gradle")
+
         kotlin.sourceSets.commonMain.dependencies {
             api project(":$coreModule")
         }
@@ -177,6 +184,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != core
 
 apply plugin: "bom-conventions"
 apply plugin: "java-modularity-conventions"
+apply plugin: "version-file-conventions"
 
 if (build_snapshot_train) {
     println "Hacking test tasks, removing stress and flaky tests"
@@ -249,40 +257,6 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
                         packageListUrl.set(new File(core_docs_file).toURI().toURL())
                     }
                 }
-            }
-        }
-    }
-
-    def thisProject = it
-    if (thisProject.name in sourceless) {
-        return
-    }
-
-    def versionFileTask = thisProject.tasks.register("versionFileTask") {
-        def name = thisProject.name.replace("-", "_")
-        def versionFile = thisProject.layout.buildDirectory.file("${name}.version")
-        it.outputs.file(versionFile)
-
-        it.doLast {
-            versionFile.get().asFile.text = version.toString()
-        }
-    }
-
-    List<String> jarTasks
-    if (isMultiplatform(it)) {
-        jarTasks = ["jvmJar"]
-    } else if (it.name == "kotlinx-coroutines-debug") {
-        // We shadow debug module instead of just packaging it
-        jarTasks = ["shadowJar"]
-    } else {
-        jarTasks = ["jar"]
-    }
-
-    for (name in jarTasks) {
-        thisProject.tasks.named(name, Jar) {
-            it.dependsOn versionFileTask
-            it.from(versionFileTask) {
-                into("META-INF")
             }
         }
     }
@@ -367,4 +341,18 @@ if (CacheRedirector.enabled) {
     if (nodeJsExtension != null) {
         nodeJsExtension.nodeDownloadBaseUrl = CacheRedirector.maybeRedirect(nodeJsExtension.nodeDownloadBaseUrl)
     }
+}
+
+// Drop this configuration when the Node.JS version in KGP will support wasm gc milestone 4
+// check it here:
+// https://github.com/JetBrains/kotlin/blob/master/libraries/tools/kotlin-gradle-plugin/src/common/kotlin/org/jetbrains/kotlin/gradle/targets/js/nodejs/NodeJsRootExtension.kt
+extensions.findByType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension.class).with {
+    // canary nodejs that supports recent Wasm GC changes
+    it.nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
+    it.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+}
+
+// Drop this when node js version become stable
+tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask).configureEach {
+    args.add("--ignore-engines")
 }

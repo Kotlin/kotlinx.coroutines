@@ -8,60 +8,33 @@ import javafx.application.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
+import javax.swing.*
 import kotlin.test.*
 
-class JavaFxDispatcherTest : TestBase() {
+class JavaFxDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
     @Before
     fun setup() {
         ignoreLostThreads("JavaFX Application Thread", "Thread-", "QuantumRenderer-", "InvokeLaterDispatcher")
     }
 
-    @Test
-    fun testDelay() {
+    override fun shouldSkipTesting(): Boolean {
         if (!initPlatform()) {
             println("Skipping JavaFxTest in headless environment")
-            return // ignore test in headless environments
+            return true // ignore test in headless environments
         }
-
-        runBlocking {
-            expect(1)
-            val job = launch(Dispatchers.JavaFx) {
-                check(Platform.isFxApplicationThread())
-                expect(2)
-                delay(100)
-                check(Platform.isFxApplicationThread())
-                expect(3)
-            }
-            job.join()
-            finish(4)
-        }
+        return false
     }
 
+    override fun isMainThread() = Platform.isFxApplicationThread()
+
+    override fun scheduleOnMainQueue(block: () -> Unit) {
+        Platform.runLater { block() }
+    }
+
+    /** Tests that the Main dispatcher is in fact the JavaFx one. */
     @Test
-    fun testImmediateDispatcherYield() {
-        if (!initPlatform()) {
-            println("Skipping JavaFxTest in headless environment")
-            return // ignore test in headless environments
-        }
-
-        runBlocking(Dispatchers.JavaFx) {
-            expect(1)
-            check(Platform.isFxApplicationThread())
-            // launch in the immediate dispatcher
-            launch(Dispatchers.JavaFx.immediate) {
-                expect(2)
-                yield()
-                expect(4)
-            }
-            expect(3) // after yield
-            yield() // yield back
-            finish(5)
-        }
+    fun testMainIsJavaFx() {
+        assertSame(Dispatchers.JavaFx, Dispatchers.Main)
     }
 
-    @Test
-    fun testMainDispatcherToString() {
-        assertEquals("Dispatchers.Main", Dispatchers.Main.toString())
-        assertEquals("Dispatchers.Main.immediate", Dispatchers.Main.immediate.toString())
-    }
 }

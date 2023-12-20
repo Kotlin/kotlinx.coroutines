@@ -2,8 +2,6 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import org.gradle.util.VersionNumber
-
 // Configures publishing of Maven artifacts to Maven Central
 
 apply plugin: 'maven-publish'
@@ -15,10 +13,6 @@ def isMultiplatform = project.name == "kotlinx-coroutines-core" || project.name 
 def isBom = project.name == "kotlinx-coroutines-bom"
 
 if (!isBom) {
-    if (project.name == "kotlinx-coroutines-debug") {
-        apply plugin: "com.github.johnrengelman.shadow"
-    }
-
     // empty xxx-javadoc.jar
     task javadocJar(type: Jar) {
         archiveClassifier = 'javadoc'

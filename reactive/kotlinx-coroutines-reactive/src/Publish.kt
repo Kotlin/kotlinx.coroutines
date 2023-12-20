@@ -84,7 +84,7 @@ public class PublisherCoroutine<in T>(
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
     private val mutex: Mutex = Mutex(locked = true)
 
-    @Suppress("UNCHECKED_CAST", "INVISIBLE_MEMBER")
+    @Suppress("UNCHECKED_CAST", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
     override val onSend: SelectClause2<T, SendChannel<T>> get() = SelectClause2Impl(
         clauseObject = this,
         regFunc = PublisherCoroutine<*>::registerSelectForSend as RegistrationFunction,

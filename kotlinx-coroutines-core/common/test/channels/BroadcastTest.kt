@@ -1,8 +1,8 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED")
+@file:Suppress("DEPRECATION")
 
 package kotlinx.coroutines.channels
 
@@ -25,13 +25,14 @@ class BroadcastTest : TestBase() {
         }
         yield() // has no effect, because default is lazy
         expect(2)
-        b.consume {
-            expect(3)
-            assertEquals(1, receive()) // suspends
-            expect(7)
-            assertEquals(2, receive()) // suspends
-            expect(8)
-        }
+
+        val subscription = b.openSubscription()
+        expect(3)
+        assertEquals(1, subscription.receive()) // suspends
+        expect(7)
+        assertEquals(2, subscription.receive()) // suspends
+        expect(8)
+        subscription.cancel()
         expect(9)
         yield() // to broadcast
         finish(11)

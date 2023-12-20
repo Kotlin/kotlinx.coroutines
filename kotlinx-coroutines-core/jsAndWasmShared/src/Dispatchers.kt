@@ -6,6 +6,8 @@ package kotlinx.coroutines
 
 import kotlin.coroutines.*
 
+internal expect fun createDefaultDispatcher(): CoroutineDispatcher
+
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
     public actual val Main: MainCoroutineDispatcher

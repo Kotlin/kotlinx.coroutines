@@ -593,6 +593,13 @@ internal class CoroutineScheduler(
     internal inner class Worker private constructor() : Thread() {
         init {
             isDaemon = true
+            /*
+             * `Dispatchers.Default` is used as *the* dispatcher in the containerized environments,
+             * isolated by their own classloaders. Workers are populated lazily, thus we are inheriting
+             * `Dispatchers.Default` context class loader here instead of using parent' thread one
+             * in order not to accidentally capture temporary application classloader.
+             */
+            contextClassLoader = this@CoroutineScheduler.javaClass.classLoader
         }
 
         // guarded by scheduler lock, index in workers array, 0 when not in array (terminated)

@@ -17,8 +17,8 @@ public actual typealias TestResult = Unit
 
 public actual open class TestBase actual constructor() {
     public actual val isBoundByJsTestTimeout = false
-    private var actionIndex = atomic(0)
-    private var finished = atomic(false)
+    private val actionIndex = atomic(0)
+    private val finished = atomic(false)
     private var error: Throwable? = null
 
     /**
@@ -71,6 +71,10 @@ public actual open class TestBase actual constructor() {
         check(actionIndex.value == 0 || finished.value) { "Expecting that 'finish(...)' was invoked, but it was not" }
         actionIndex.value = 0
         finished.value = false
+    }
+
+    actual fun println(message: Any?) {
+        kotlin.io.println(message)
     }
 
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")

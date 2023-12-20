@@ -15,6 +15,13 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
     }
 }
 
+internal actual fun systemPropertyImpl(name: String): String? =
+    try {
+        System.getProperty(name)
+    } catch (e: SecurityException) {
+        null
+    }
+
 internal actual fun dumpCoroutines() {
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     if (DebugProbesImpl.isInstalled) {

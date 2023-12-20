@@ -2,6 +2,10 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+plugins {
+    id 'org.jetbrains.kotlinx.benchmark' version '0.4.9'
+}
+
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: 'org.jetbrains.dokka'
 
@@ -15,7 +19,11 @@ if (rootProject.ext.native_targets_enabled) {
     apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
 }
 
+apply from: rootProject.file("gradle/compile-jsAndWasmShared-multiplatform.gradle")
+
 apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
+
+apply from: rootProject.file("gradle/compile-wasm-multiplatform.gradle")
 
 apply from: rootProject.file('gradle/dokka.gradle.kts')
 apply from: rootProject.file('gradle/publish.gradle')
@@ -24,9 +32,8 @@ apply from: rootProject.file('gradle/publish.gradle')
 
      TARGETS                            SOURCE SETS
      -------         ----------------------------------------------
-
-     js -----------------------------------------------------+
-                                                             |
+     wasmJs \----------> jsAndWasmShared --------------------+
+     js     /                                                |
                                                              V
      jvmCore\ --------> jvm ---------> concurrent -------> common
      jdk8   /                           ^
@@ -106,8 +113,8 @@ if (rootProject.ext.native_targets_enabled) {
 kotlin {
     /*
      * Configure two test runs:
-     * 1) New memory model, Main thread
-     * 2) New memory model, BG thread (required for Dispatchers.Main tests on Darwin)
+     * 1) Main thread
+     * 2) BG thread (required for Dispatchers.Main tests on Darwin)
      *
      * All new MM targets are build with optimize = true to have stress tests properly run.
      */
@@ -116,15 +123,13 @@ kotlin {
             optimized = true
             // Test for memory leaks using a special entry point that does not exit but returns from main
             freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
-            binaryOptions["memoryModel"] = "experimental"
         }
 
-        binaries.test("workerWithNewMM", [DEBUG]) {
+        binaries.test("workerTest", [DEBUG]) {
             def thisTest = it
             optimized = true
             freeCompilerArgs += ["-e", "kotlinx.coroutines.mainBackground"]
-            binaryOptions["memoryModel"] = "experimental"
-            testRuns.create("workerWithNewMM") {
+            testRuns.create("workerTest") {
                 setExecutionSourceFrom(thisTest)
                 executionTask.configure { targetName = "$targetName worker with new MM" }
             }
@@ -167,6 +172,13 @@ kotlin {
 
         // For animal sniffer
         withJava()
+        compilations.create('benchmark') { associateWith(compilations.main) }
+    }
+}
+
+benchmark {
+    targets {
+        register("jvmBenchmark")
     }
 }
 
@@ -233,7 +245,7 @@ kotlin.sourceSets {
 
 kotlin.sourceSets.configureEach {
     // Do not apply 'ExperimentalForeignApi' where we have allWarningsAsErrors set
-    if (it.name in ["jvmMain", "jvmCoreMain", "jsMain", "concurrentMain", "commonMain"]) return
+    if (it.name in ["jvmMain", "jvmCoreMain", "jsMain", 'wasmJsMain', 'jsAndWasmSharedMain', "concurrentMain", "commonMain"]) return
     languageSettings {
         optIn('kotlinx.cinterop.ExperimentalForeignApi')
         optIn('kotlin.experimental.ExperimentalNativeApi')
@@ -339,12 +351,6 @@ static void configureJvmForLincheck(task, additional = false) {
 task moreTest(dependsOn: [jvmStressTest, jvmLincheckTest, jvmLincheckTestAdditional])
 check.dependsOn moreTest
 
-def commonKoverExcludes =
-        ["kotlinx.coroutines.debug.*", // Tested by debug module
-         "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
-         "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
-         "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
-        ]
 
 kover {
     excludeTests {
@@ -363,9 +369,14 @@ koverReport {
         excludes {
             classes(
                     "kotlinx.coroutines.debug.*", // Tested by debug module
-                    "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt.*", // Deprecated
+                    "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt*", // Deprecated
                     "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
-                    "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher" // Deprecated
+                    "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher", // Deprecated
+                    "kotlinx.coroutines.flow.FlowKt__MigrationKt*", // Migrations
+                    "kotlinx.coroutines.flow.LintKt*", // Migrations
+                    "kotlinx.coroutines.internal.WeakMapCtorCache", // Fallback implementation that we never test
+                    "_COROUTINE._CREATION", // For IDE navigation
+                    "_COROUTINE._BOUNDARY", // For IDE navigation
             )
         }
     }

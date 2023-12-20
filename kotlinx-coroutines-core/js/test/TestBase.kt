@@ -77,6 +77,10 @@ public actual open class TestBase actual constructor() {
         finished = false
     }
 
+    actual fun println(message: Any?) {
+        kotlin.io.println(message)
+    }
+
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun runTest(
         expected: ((Throwable) -> Boolean)? = null,

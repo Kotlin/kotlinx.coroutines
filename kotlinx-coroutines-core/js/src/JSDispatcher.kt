@@ -4,50 +4,36 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import org.w3c.dom.*
-import kotlin.coroutines.*
 import kotlin.js.Promise
 
-private const val MAX_DELAY = Int.MAX_VALUE.toLong()
+public actual typealias W3CWindow = Window
 
-private fun delayToInt(timeMillis: Long): Int =
-    timeMillis.coerceIn(0, MAX_DELAY).toInt()
+internal actual fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int =
+    setTimeout(window, handler, timeout)
 
-internal sealed class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
-    inner class ScheduledMessageQueue : MessageQueue() {
-        internal val processQueue: dynamic = { process() }
+internal actual fun w3cSetTimeout(handler: () -> Unit, timeout: Int): Int =
+    setTimeout(handler, timeout)
 
-        override fun schedule() {
-            scheduleQueueProcessing()
-        }
+internal actual fun w3cClearTimeout(window: W3CWindow, handle: Int) =
+    window.clearTimeout(handle)
 
-        override fun reschedule() {
-            setTimeout(processQueue, 0)
-        }
+internal actual fun w3cClearTimeout(handle: Int) =
+    clearTimeout(handle)
+
+internal actual class ScheduledMessageQueue actual constructor(private val dispatcher: SetTimeoutBasedDispatcher) : MessageQueue() {
+    internal val processQueue: dynamic = { process() }
+
+    actual override fun schedule() {
+        dispatcher.scheduleQueueProcessing()
     }
 
-    internal val messageQueue = ScheduledMessageQueue()
-
-    abstract fun scheduleQueueProcessing()
-
-    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
-        parallelism.checkParallelism()
-        return this
+    actual override fun reschedule() {
+        setTimeout(processQueue, 0)
     }
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        messageQueue.enqueue(block)
-    }
-
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val handle = setTimeout({ block.run() }, delayToInt(timeMillis))
-        return ClearTimeout(handle)
-    }
-
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val handle = setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
-        continuation.invokeOnCancellation(handler = ClearTimeout(handle).asHandler)
+    internal actual fun setTimeout(timeout: Int) {
+        setTimeout(processQueue, timeout)
     }
 }
 
@@ -57,48 +43,7 @@ internal object NodeDispatcher : SetTimeoutBasedDispatcher() {
     }
 }
 
-internal object SetTimeoutDispatcher : SetTimeoutBasedDispatcher() {
-    override fun scheduleQueueProcessing() {
-        setTimeout(messageQueue.processQueue, 0)
-    }
-}
-
-private open class ClearTimeout(protected val handle: Int) : CancelHandler(), DisposableHandle {
-
-    override fun dispose() {
-        clearTimeout(handle)
-    }
-
-    override fun invoke(cause: Throwable?) {
-        dispose()
-    }
-
-    override fun toString(): String = "ClearTimeout[$handle]"
-}
-
-internal class WindowDispatcher(private val window: Window) : CoroutineDispatcher(), Delay {
-    private val queue = WindowMessageQueue(window)
-
-    override fun dispatch(context: CoroutineContext, block: Runnable) = queue.enqueue(block)
-
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val handle = window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
-        continuation.invokeOnCancellation(handler = WindowClearTimeout(handle).asHandler)
-    }
-
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val handle = window.setTimeout({ block.run() }, delayToInt(timeMillis))
-        return WindowClearTimeout(handle)
-    }
-
-    private inner class WindowClearTimeout(handle: Int) : ClearTimeout(handle) {
-        override fun dispose() {
-            window.clearTimeout(handle)
-        }
-    }
-}
-
-private class WindowMessageQueue(private val window: Window) : MessageQueue() {
+internal actual class WindowMessageQueue actual constructor(private val window: W3CWindow) : MessageQueue() {
     private val messageName = "dispatchCoroutine"
 
     init {
@@ -110,61 +55,20 @@ private class WindowMessageQueue(private val window: Window) : MessageQueue() {
         }, true)
     }
 
-    override fun schedule() {
+    actual override fun schedule() {
         Promise.resolve(Unit).then({ process() })
     }
 
-    override fun reschedule() {
+    actual override fun reschedule() {
         window.postMessage(messageName, "*")
-    }
-}
-
-/**
- * An abstraction over JS scheduling mechanism that leverages micro-batching of dispatched blocks without
- * paying the cost of JS callbacks scheduling on every dispatch.
- *
- * Queue uses two scheduling mechanisms:
- * 1) [schedule] is used to schedule the initial processing of the message queue.
- *    JS engine-specific microtask mechanism is used in order to boost performance on short runs and a dispatch batch
- * 2) [reschedule] is used to schedule processing of the queue after yield to the JS event loop.
- *    JS engine-specific macrotask mechanism is used not to starve animations and non-coroutines macrotasks.
- *
- * Yet there could be a long tail of "slow" reschedules, but it should be amortized by the queue size.
- */
-internal abstract class MessageQueue : MutableList<Runnable> by ArrayDeque() {
-    val yieldEvery = 16 // yield to JS macrotask event loop after this many processed messages
-    private var scheduled = false
-
-    abstract fun schedule()
-
-    abstract fun reschedule()
-
-    fun enqueue(element: Runnable) {
-        add(element)
-        if (!scheduled) {
-            scheduled = true
-            schedule()
-        }
-    }
-
-    fun process() {
-        try {
-            // limit number of processed messages
-            repeat(yieldEvery) {
-                val element = removeFirstOrNull() ?: return@process
-                element.run()
-            }
-        } finally {
-            if (isEmpty()) {
-                scheduled = false
-            } else {
-                reschedule()
-            }
-        }
     }
 }
 
 // We need to reference global setTimeout and clearTimeout so that it works on Node.JS as opposed to
 // using them via "window" (which only works in browser)
 private external fun setTimeout(handler: dynamic, timeout: Int = definedExternally): Int
+
 private external fun clearTimeout(handle: Int = definedExternally)
+
+private fun setTimeout(window: Window, handler: () -> Unit, timeout: Int): Int =
+    window.setTimeout(handler, timeout)
