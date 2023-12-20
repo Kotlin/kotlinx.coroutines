@@ -120,13 +120,20 @@ public actual open class LockFreeLinkedListNode {
     // ------ addLastXXX ------
 
     /**
-     * Adds last item to this list.
+     * Adds last item to this list. Returns `false` if the list is closed.
      */
-    public actual fun addLast(node: Node) {
+    public actual fun addLast(node: Node): Boolean {
         while (true) { // lock-free loop on prev.next
-            if (prevNode.addNext(node, this)) return
+            val currentPrev = prevNode
+            if (currentPrev is CLOSED) return false
+            if (currentPrev.addNext(node, this)) return true
         }
     }
+
+    /**
+     * Forbids adding new items to this list.
+     */
+    public actual fun close() { addLast(CLOSED()) }
 
     /**
      * Adds last item to this list atomically if the [condition] is true.
@@ -135,6 +142,7 @@ public actual open class LockFreeLinkedListNode {
         val condAdd = makeCondAddOp(node, condition)
         while (true) { // lock-free loop on prev.next
             val prev = prevNode // sentinel node is never removed, so prev is always defined
+            if (prev is CLOSED) return false
             when (prev.tryCondAddNext(node, this, condAdd)) {
                 SUCCESS -> return true
                 FAILURE -> return false
@@ -362,3 +370,6 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
         validateNode(prev, next as Node)
     }
 }
+
+// not private due to what seems to be a compiler bug
+internal class CLOSED: LockFreeLinkedListNode()
