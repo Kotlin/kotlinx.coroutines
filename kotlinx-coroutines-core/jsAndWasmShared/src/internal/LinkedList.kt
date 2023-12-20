@@ -14,13 +14,24 @@ public actual open class LockFreeLinkedListNode {
     inline actual val prevNode get() = _prev
     inline actual val isRemoved get() = _removed
 
-    @PublishedApi
-    internal fun addLast(node: Node) {
-        val prev = this._prev
-        node._next = this
-        node._prev = prev
-        prev._next = node
-        this._prev = node
+    public actual fun addLast(node: Node, allowedAfterPartialClosing: Boolean): Boolean = when (val prev = this._prev) {
+        is ListClosedForAll -> false
+        is ListClosedForSome -> allowedAfterPartialClosing && prev.addLast(node, allowedAfterPartialClosing)
+        else -> {
+            node._next = this
+            node._prev = prev
+            prev._next = node
+            this._prev = node
+            true
+        }
+    }
+
+    public actual fun closeForSome() {
+        addLast(ListClosedForSome(), allowedAfterPartialClosing = true)
+    }
+
+    public actual fun close() {
+        addLast(ListClosedForAll(), allowedAfterPartialClosing = false)
     }
 
     /*
@@ -30,10 +41,6 @@ public actual open class LockFreeLinkedListNode {
      * invokes handler on remove
      */
     public actual open fun remove(): Boolean {
-        return removeImpl()
-    }
-
-    private fun removeImpl(): Boolean {
         if (_removed) return false
         val prev = this._prev
         val next = this._next
@@ -45,13 +52,7 @@ public actual open class LockFreeLinkedListNode {
 
     public actual fun addOneIfEmpty(node: Node): Boolean {
         if (_next !== this) return false
-        addLast(node)
-        return true
-    }
-
-    public actual inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
-        if (!condition()) return false
-        addLast(node)
+        addLast(node, allowedAfterPartialClosing = false)
         return true
     }
 }
@@ -72,3 +73,7 @@ public actual open class LockFreeLinkedListHead : Node() {
     // just a defensive programming -- makes sure that list head sentinel is never removed
     public actual final override fun remove(): Nothing = throw UnsupportedOperationException()
 }
+
+private class ListClosedForSome: LockFreeLinkedListNode()
+
+private class ListClosedForAll: LockFreeLinkedListNode()
