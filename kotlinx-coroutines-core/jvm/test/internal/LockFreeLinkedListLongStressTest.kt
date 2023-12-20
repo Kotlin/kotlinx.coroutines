@@ -70,4 +70,16 @@ class LockFreeLinkedListLongStressTest : TestBase() {
         }
         require(!expected.hasNext())
     }
+
+    private fun LockFreeLinkedListHead.validate() {
+        var prev: LockFreeLinkedListNode = this
+        var cur: LockFreeLinkedListNode = next as LockFreeLinkedListNode
+        while (cur != this) {
+            val next = cur.nextNode
+            cur.validateNode(prev, next)
+            prev = cur
+            cur = next
+        }
+        validateNode(prev, next as LockFreeLinkedListNode)
+    }
 }

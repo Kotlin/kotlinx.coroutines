@@ -18,27 +18,6 @@ internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
 // -------- Operations on BroadcastChannel --------
 
 /**
- * Opens subscription to this [BroadcastChannel] and makes sure that the given [block] consumes all elements
- * from it by always invoking [cancel][ReceiveChannel.cancel] after the execution of the block.
- *
- * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
- * It is replaced with [SharedFlow][kotlinx.coroutines.flow.SharedFlow].
- *
- * Safe to remove in 1.9.0 as was inline before.
- */
-@ObsoleteCoroutinesApi
-@Suppress("DEPRECATION")
-@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
-public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
-    val channel = openSubscription()
-    try {
-        return channel.block()
-    } finally {
-        channel.cancel()
-    }
-}
-
-/**
  * This function is deprecated in the favour of [ReceiveChannel.receiveCatching].
  *
  * This function is considered error-prone for the following reasons;
@@ -117,19 +96,6 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
         add(it)
     }
 }
-
-/**
- * Subscribes to this [BroadcastChannel] and performs the specified action for each received element.
- *
- * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
- */
-@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
-@Suppress("DEPRECATION")
-public suspend inline fun <E> BroadcastChannel<E>.consumeEach(action: (E) -> Unit): Unit =
-    consume {
-        for (element in this) action(element)
-    }
-
 
 @PublishedApi
 internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {

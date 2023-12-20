@@ -60,6 +60,21 @@ class MutexTest : TestBase() {
     }
 
     @Test
+    fun testWithLockFailureUnlocksTheMutex() = runTest {
+        val mutex = Mutex()
+        assertFalse(mutex.isLocked)
+        try {
+            mutex.withLock {
+                expect(1)
+                throw TestException()
+            }
+        } catch (e: TestException) {
+            finish(2)
+        }
+        assertFalse(mutex.isLocked)
+    }
+
+    @Test
     fun testUnconfinedStackOverflow() {
         val waiters = 10000
         val mutex = Mutex(true)

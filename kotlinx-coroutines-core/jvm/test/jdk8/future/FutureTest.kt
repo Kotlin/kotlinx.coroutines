@@ -8,6 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import org.junit.*
 import org.junit.Test
+import java.lang.IllegalArgumentException
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
@@ -588,6 +589,13 @@ class FutureTest : TestBase() {
         withTimeout(60_000) {
             children.forEach { it.join() }
             assertEquals(count, completed.get())
+        }
+    }
+
+    @Test
+    fun testFailsIfLazy() {
+        assertFailsWith<IllegalArgumentException> {
+            GlobalScope.future<Unit>(start = CoroutineStart.LAZY) {  }
         }
     }
 }

@@ -265,7 +265,6 @@ public final class kotlinx/coroutines/CoroutineStart : java/lang/Enum {
 	public static final field LAZY Lkotlinx/coroutines/CoroutineStart;
 	public static final field UNDISPATCHED Lkotlinx/coroutines/CoroutineStart;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public final fun invoke (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)V
 	public final fun invoke (Lkotlin/jvm/functions/Function2;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)V
 	public final fun isLazy ()Z
 	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/CoroutineStart;

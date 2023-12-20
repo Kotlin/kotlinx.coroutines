@@ -184,5 +184,14 @@ class BufferTest : TestBase() {
             .toList()
         assertEquals(listOf(1, 2), result)
     }
+
+    @Test
+    fun testFailsOnIllegalArguments() {
+        val flow = emptyFlow<Int>()
+        assertFailsWith<IllegalArgumentException> { flow.buffer(capacity = -3) }
+        assertFailsWith<IllegalArgumentException> { flow.buffer(capacity = Int.MIN_VALUE) }
+        assertFailsWith<IllegalArgumentException> { flow.buffer(capacity = Channel.CONFLATED, onBufferOverflow = BufferOverflow.DROP_LATEST) }
+        assertFailsWith<IllegalArgumentException> { flow.buffer(capacity = Channel.CONFLATED, onBufferOverflow = BufferOverflow.DROP_OLDEST) }
+    }
 }
 
