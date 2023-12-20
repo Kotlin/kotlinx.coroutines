@@ -173,15 +173,13 @@ commonMain {
 }
 ```
 
-No more additional dependencies are needed, platform-specific artifacts will be resolved automatically via Gradle metadata available since Gradle 5.3.
-
 Platform-specific dependencies are recommended to be used only for non-multiplatform projects that are compiled only for target platform.
 
 #### JS
 
 Kotlin/JS version of `kotlinx.coroutines` is published as 
 [`kotlinx-coroutines-core-js`](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.8.0-RC)
-(follow the link to get the dependency declaration snippet) and as [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) NPM package. 
+(follow the link to get the dependency declaration snippet).
 
 #### Native
 
