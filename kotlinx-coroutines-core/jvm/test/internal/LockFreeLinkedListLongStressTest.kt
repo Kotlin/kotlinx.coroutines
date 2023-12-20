@@ -31,7 +31,7 @@ class LockFreeLinkedListLongStressTest : TestBase() {
         for (j in 0 until nAddThreads)
             threads += thread(start = false, name = "adder-$j") {
                 for (i in j until nAdded step nAddThreads) {
-                    list.addLast(IntNode(i))
+                    list.addLast(IntNode(i), allowedAfterPartialClosing = false)
                 }
                 println("${Thread.currentThread().name} completed")
                 workingAdders.decrementAndGet()
