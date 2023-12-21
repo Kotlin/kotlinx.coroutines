@@ -88,6 +88,10 @@ kotlin {
             api("org.jetbrains.kotlin:kotlin-test-junit:${version("kotlin")}")
             api("junit:junit:${version("junit")}")
         }
+        nativeMain.dependencies {
+            // workaround for #3968 until this is fixed on atomicfu's side
+            api("org.jetbrains.kotlinx:atomicfu:0.23.1")
+        }
         val jsAndWasmSharedMain by registering {
             dependsOn(commonMain.get())
         }
