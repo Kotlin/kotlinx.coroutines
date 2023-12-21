@@ -70,6 +70,35 @@ class SemaphoreTest : TestBase() {
     }
 
     @Test
+    fun withSemaphoreOnFailureTest() = runTest {
+        val semaphore = Semaphore(1)
+        assertEquals(1, semaphore.availablePermits)
+        try {
+            semaphore.withPermit {
+                assertEquals(0, semaphore.availablePermits)
+                throw TestException()
+            }
+        } catch (e: TestException) {
+            // Expected
+        }
+        assertEquals(1, semaphore.availablePermits)
+    }
+
+    @Test
+    fun withSemaphoreOnEarlyReturnTest() = runTest {
+        val semaphore = Semaphore(1)
+        assertEquals(1, semaphore.availablePermits)
+        suspend fun f() {
+            semaphore.withPermit {
+                assertEquals(0, semaphore.availablePermits)
+                return@f
+            }
+        }
+        f()
+        assertEquals(1, semaphore.availablePermits)
+    }
+
+    @Test
     fun fairnessTest() = runTest {
         val semaphore = Semaphore(1)
         semaphore.acquire()
