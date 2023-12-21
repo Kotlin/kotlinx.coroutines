@@ -1,36 +1,36 @@
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import java.net.*
 
 dependencies {
-    api project(':kotlinx-coroutines-reactive')
-    testImplementation project(':kotlinx-coroutines-reactive').sourceSets.test.output
-    testImplementation "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
-    api "io.reactivex.rxjava2:rxjava:$rxjava2_version"
+    api(project(":kotlinx-coroutines-reactive"))
+    testImplementation("org.reactivestreams:reactive-streams-tck:${version("reactive_streams")}")
+    api("io.reactivex.rxjava2:rxjava:${version("rxjava2")}")
 }
 
-tasks.withType(DokkaTaskPartial.class) {
+tasks.withType(DokkaTaskPartial::class) {
     dokkaSourceSets.configureEach {
         externalDocumentationLink {
-            url = new URL('http://reactivex.io/RxJava/2.x/javadoc/')
+            url = URL("http://reactivex.io/RxJava/2.x/javadoc/")
             packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
         }
     }
 }
 
-task testNG(type: Test) {
+val testNG by tasks.registering(Test::class) {
     useTestNG()
-    reports.html.destination = file("$buildDir/reports/testng")
-    include '**/*ReactiveStreamTckTest.*'
+    reports.html.outputLocation = file("$buildDir/reports/testng")
+    include("**/*ReactiveStreamTckTest.*")
     // Skip testNG when tests are filtered with --tests, otherwise it simply fails
     onlyIf {
         filter.includePatterns.isEmpty()
     }
     doFirst {
         // Classic gradle, nothing works without doFirst
-        println "TestNG tests: ($includes)"
+        println("TestNG tests: ($includes)")
     }
 }
 
-test {
+val test by tasks.getting(Test::class) {
     dependsOn(testNG)
-    reports.html.destination = file("$buildDir/reports/junit")
+    reports.html.outputLocation = file("$buildDir/reports/junit")
 }

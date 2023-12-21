@@ -1,13 +1,10 @@
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.dsl.*
+import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.konan.target.HostManager
 
-import static Projects.*
-
 buildscript {
-    ext.kotlin_version = CommunityProjectsBuild.getOverriddenKotlinVersion(rootProject)
-
-    if (CommunityProjectsBuild.shouldUseLocalMaven(rootProject)) {
+    if (shouldUseLocalMaven(rootProject)) {
         repositories {
             mavenLocal()
         }
@@ -15,74 +12,73 @@ buildscript {
 
     repositories {
         mavenCentral()
-        maven { url "https://plugins.gradle.org/m2/" }
-        CommunityProjectsBuild.addDevRepositoryIfEnabled(delegate, project)
+        maven(url = "https://plugins.gradle.org/m2/")
+        addDevRepositoryIfEnabled(this, project)
         mavenLocal()
     }
 
     dependencies {
         // Please ensure that atomicfu-gradle-plugin is added to the classpath first, do not change the order, for details see #3984.
         // The corresponding issue in kotlinx-atomicfu: https://github.com/Kotlin/kotlinx-atomicfu/issues/384
-        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicfu_version"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
-        classpath "org.jetbrains.kotlinx:kotlinx-knit:$knit_version"
-        classpath "org.jetbrains.kotlinx:binary-compatibility-validator:$binary_compatibility_validator_version"
-        classpath "ru.vyarus:gradle-animalsniffer-plugin:$animalsniffer_version" // Android API check
-        classpath "org.jetbrains.kotlin:atomicfu:$kotlin_version"
-        classpath "org.jetbrains.kotlinx:kover-gradle-plugin:$kover_version"
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${version("atomicfu")}")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${version("kotlin")}")
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:${version("dokka")}")
+        classpath("org.jetbrains.kotlinx:kotlinx-knit:${version("knit")}")
+        classpath("org.jetbrains.kotlinx:binary-compatibility-validator:${version("binary_compatibility_validator")}")
+        classpath("ru.vyarus:gradle-animalsniffer-plugin:${version("animalsniffer")}") // Android API check
+        classpath("org.jetbrains.kotlin:atomicfu:${version("kotlin")}")
+        classpath("org.jetbrains.kotlinx:kover-gradle-plugin:${version("kover")}")
 
         // JMH plugins
-        classpath "gradle.plugin.com.github.johnrengelman:shadow:$shadow_version"
+        classpath("gradle.plugin.com.github.johnrengelman:shadow:${version("shadow")}")
     }
 
-    CacheRedirector.configureBuildScript(buildscript, rootProject)
-}
-
-// todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
-def configureKotlinJvmPlatform(configuration) {
-    configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
+    with(CacheRedirector) { buildscript.configureBuildScript(rootProject) }
 }
 
 // Configure subprojects with Kotlin sources
-apply plugin: "configure-compilation-conventions"
+apply(plugin = "configure-compilation-conventions")
 
 allprojects {
     // the only place where HostManager could be instantiated
-    project.ext.hostManager = new HostManager()
-    def deployVersion = properties['DeployVersion']
+    project.ext["hostManager"] = HostManager()
+    val deployVersion = properties["DeployVersion"]
     if (deployVersion != null) version = deployVersion
 
-    if (CommunityProjectsBuild.isSnapshotTrainEnabled(rootProject)) {
-        def skipSnapshotChecks = rootProject.properties['skip_snapshot_checks'] != null
-        if (!skipSnapshotChecks && version != atomicfu_version) {
-            throw new IllegalStateException("Current deploy version is $version, but atomicfu version is not overridden ($atomicfu_version) for $it")
+    if (isSnapshotTrainEnabled(rootProject)) {
+        val skipSnapshotChecks = rootProject.properties["skip_snapshot_checks"] != null
+        if (!skipSnapshotChecks && version != version("atomicfu")) {
+            throw IllegalStateException("Current deploy version is $version, but atomicfu version is not overridden (${version("atomicfu")}) for $this")
         }
     }
 
-    if (CommunityProjectsBuild.shouldUseLocalMaven(rootProject)) {
+    if (shouldUseLocalMaven(rootProject)) {
         repositories {
             mavenLocal()
         }
     }
 
     // This project property is set during nightly stress test
-    def stressTest = project.properties['stressTest']
-
+    val stressTest = project.properties["stressTest"]
     // Copy it to all test tasks
-    tasks.withType(Test).configureEach {
-        systemProperty 'stressTest', stressTest
+    tasks.withType(Test::class).configureEach {
+        if (stressTest != null) {
+            systemProperty("stressTest", stressTest)
+        }
     }
 }
 
-apply plugin: "binary-compatibility-validator"
-apply plugin: "base"
-apply plugin: "kover-conventions"
+plugins {
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.13.2"
+}
+
+apply(plugin = "base")
+apply(plugin = "kover-conventions")
 
 apiValidation {
-    ignoredProjects += unpublished + ["kotlinx-coroutines-bom"]
-    if (CommunityProjectsBuild.isSnapshotTrainEnabled(rootProject)) {
-        ignoredProjects.add(coreModule)
+    ignoredProjects += unpublished + listOf("kotlinx-coroutines-bom")
+    if (isSnapshotTrainEnabled(rootProject)) {
+        ignoredProjects += coreModule
     }
     ignoredPackages += "kotlinx.coroutines.internal"
 }
@@ -96,69 +92,79 @@ allprojects {
          */
         google()
         mavenCentral()
-        CommunityProjectsBuild.addDevRepositoryIfEnabled(delegate, project)
+        addDevRepositoryIfEnabled(this, project)
     }
 }
 
 // needs to be before evaluationDependsOn due to weird Gradle ordering
-apply plugin: "animalsniffer-conventions"
+apply(plugin = "animalsniffer-conventions")
 
-configure(subprojects.findAll { !sourceless.contains(it.name) }) {
-    if (isMultiplatform(it)) {
-        apply plugin: 'kotlin-multiplatform'
-        apply plugin: "kotlin-multiplatform-conventions"
-    } else if (PlatformKt.platformOf(it) == "jvm") {
-        apply plugin: "kotlin-jvm-conventions"
+configure(subprojects.filter { !sourceless.contains(it.name) }) {
+    if (isMultiplatform) {
+        apply(plugin = "kotlin-multiplatform")
+        apply(plugin = "kotlin-multiplatform-conventions")
+    } else if (platformOf(this) == "jvm") {
+        apply(plugin = "kotlin-jvm-conventions")
     } else {
-        def platform = PlatformKt.platformOf(it)
+        val platform = platformOf(this)
         throw IllegalStateException("No configuration rules for $platform")
     }
 }
 
 // Add dependency to the core module in all the other subprojects.
-configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != coreModule }) {
+configure(subprojects.filter { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
-    if (isMultiplatform(it)) {
-        kotlin.sourceSets.commonMain.dependencies {
-            api project(":$coreModule")
-        }
-        kotlin.sourceSets.jvmTest.dependencies {
-            implementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+    val jvmTestDependency = project(":$coreModule")
+        .extensions.getByType(KotlinMultiplatformExtension::class)
+        .targets["jvm"].compilations["test"].output.allOutputs
+    if (isMultiplatform) {
+        configure<KotlinMultiplatformExtension> {
+            sourceSets {
+                commonMain {
+                    dependencies {
+                        api(project(":$coreModule"))
+                    }
+                }
+                jvmTest {
+                    dependencies {
+                        implementation(jvmTestDependency)
+                    }
+                }
+            }
         }
     } else {
         dependencies {
-            api project(":$coreModule")
+            add("api", project(":$coreModule"))
             // the only way IDEA can resolve test classes
-            testImplementation project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+            add("testImplementation", jvmTestDependency)
         }
     }
 }
 
-apply plugin: "bom-conventions"
-apply plugin: "java-modularity-conventions"
-apply plugin: "version-file-conventions"
+apply(plugin = "bom-conventions")
+apply(plugin = "java-modularity-conventions")
+apply(plugin = "version-file-conventions")
 
-CommunityProjectsBuild.configureCommunityBuildTweaks(rootProject)
+rootProject.configureCommunityBuildTweaks()
 
-apply plugin: "source-set-conventions"
-apply plugin: "dokka-conventions"
-apply plugin: "knit-conventions"
+apply(plugin = "source-set-conventions")
+apply(plugin = "dokka-conventions")
+apply(plugin = "knit-conventions")
 
 /*
  * TODO: core and non-core cannot be configured via 'configure(subprojects)'
  * because of 'afterEvaluate' issue. This one should be migrated to
  * `plugins { id("pub-conventions") }` eventually
  */
-configure(subprojects.findAll {
+configure(subprojects.filter {
     !unpublished.contains(it.name) && it.name != coreModule
 }) {
-    apply plugin: "pub-conventions"
+    apply(plugin = "pub-conventions")
 }
 
 AuxBuildConfiguration.configure(rootProject)
-PublishingKt.registerTopLevelDeployTask(rootProject)
+rootProject.registerTopLevelDeployTask()
 
 // Report Kotlin compiler version when building project
-println("Using Kotlin compiler version: $KotlinCompilerVersion.VERSION")
-
+println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
 

@@ -1,26 +1,29 @@
+import org.gradle.api.publish.maven.internal.publication.DefaultMavenPublication
+
 plugins {
-    id 'java-platform'
+    id("java-platform")
 }
 
-def name = project.name
+val name = project.name
 
 dependencies {
     constraints {
-        rootProject.subprojects.each {
-            if (Projects.unpublished.contains(it.name)) return
-            if (it.name == name) return
-            if (!it.plugins.hasPlugin('maven-publish')) return
+        rootProject.subprojects.forEach {
+            if (unpublished.contains(it.name)) return@forEach
+            if (it.name == name) return@forEach
+            if (!it.plugins.hasPlugin("maven-publish")) return@forEach
             evaluationDependsOn(it.path)
             it.publishing.publications.all {
-                if (it.artifactId.endsWith("-kotlinMultiplatform")) return
-                if (it.artifactId.endsWith("-metadata")) return
+                this as MavenPublication
+                if (artifactId.endsWith("-kotlinMultiplatform")) return@all
+                if (artifactId.endsWith("-metadata")) return@all
                 // Skip platform artifacts (like *-linuxx64, *-macosx64)
                 // It leads to inconsistent bom when publishing from different platforms
                 // (e.g. on linux it will include only linuxx64 artifacts and no macosx64)
                 // It shouldn't be a problem as usually consumers need to use generic *-native artifact
                 // Gradle will choose correct variant by using metadata attributes
-                if (it.artifacts.any { it.extension == 'klib' }) return
-                api(group: it.groupId, name: it.artifactId, version: it.version)
+                if (artifacts.any { it.extension == "klib" }) return@all
+                this@constraints.api(mapOf("group" to groupId, "name" to artifactId, "version" to version))
             }
         }
     }
@@ -28,15 +31,22 @@ dependencies {
 
 publishing {
     publications {
-        mavenBom(MavenPublication) {
-            from components.javaPlatform
+        val mavenBom by creating(MavenPublication::class) {
+            from(components["javaPlatform"])
         }
         // Disable metadata publication
-        it.each { pub ->
-            pub.moduleDescriptorGenerator = null
+        forEach { pub ->
+            pub as DefaultMavenPublication
+            pub.unsetModuleDescriptorGenerator()
             tasks.matching { it.name == "generateMetadataFileFor${pub.name.capitalize()}Publication" }.all {
                 onlyIf { false }
             }
         }
     }
+}
+
+fun DefaultMavenPublication.unsetModuleDescriptorGenerator() {
+    @Suppress("NULL_FOR_NONNULL_TYPE")
+    val generator: TaskProvider<Task> = null
+    setModuleDescriptorGenerator(generator)
 }
