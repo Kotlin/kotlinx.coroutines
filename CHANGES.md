@@ -1,5 +1,11 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.8.0-RC2
+
+* Fixed a bug introduced in 1.8.0-RC where `Mutex.onLock` would not unlock if a non-local return was performed (#3985).
+* Fixed a bug introduced in 1.8.0-RC where depending on kotlinx-coroutines in Native code failed with a compilation error `Could not find "org.jetbrains.kotlinx:atomicfu-cinterop-interop"` (#3968).
+* Small documentation fixes.
+
 ## Version 1.8.0-RC
 
 * Implement the library for the Web Assembly (Wasm) for JavaScript (#3713). Thanks @igoriakovlev!
