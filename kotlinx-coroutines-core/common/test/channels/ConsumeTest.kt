@@ -96,7 +96,7 @@ class ConsumeTest: TestBase() {
 
     /** Check that [BroadcastChannel.consume] does not suffer from KT-58685 */
     @OptIn(ObsoleteCoroutinesApi::class)
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     @Test
     fun testBroadcastChannelConsumeJsMiscompilation() = runTest {
         val channel = BroadcastChannel<Int>(1)
