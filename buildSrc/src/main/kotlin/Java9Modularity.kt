@@ -83,8 +83,8 @@ object Java9Modularity {
         }
 
         val processModuleInfoFile by tasks.registering(ProcessModuleInfoFile::class) {
-            moduleInfoFile.set(file("${target.name.ifEmpty { "." }}/src/module-info.java"))
-            processedModuleInfoFile.set(project.layout.buildDirectory.file("generated-sources/module-info-processor/module-info.java"))
+            moduleInfoFile = file("${target.name.ifEmpty { "." }}/src/module-info.java")
+            processedModuleInfoFile = project.layout.buildDirectory.file("generated-sources/module-info-processor/module-info.java")
         }
 
         val compileJavaModuleInfo = tasks.register("compileModuleInfoJava", JavaCompile::class.java) {
@@ -95,9 +95,9 @@ object Java9Modularity {
             val targetDir = compileKotlinTask.destinationDirectory.dir("../java9")
 
             // Use a Java 11 compiler for the module-info.
-            javaCompiler.set(javaToolchains.compilerFor {
-                languageVersion.set(JavaLanguageVersion.of(11))
-            })
+            javaCompiler = javaToolchains.compilerFor {
+                languageVersion = JavaLanguageVersion.of(11)
+            }
 
             // Always compile kotlin classes before the module descriptor.
             dependsOn(compileKotlinTask)
@@ -112,14 +112,14 @@ object Java9Modularity {
 
             // Set the task outputs and destination directory
             outputs.dir(targetDir)
-            destinationDirectory.set(targetDir)
+            destinationDirectory = targetDir
 
             // Configure JVM compatibility
             sourceCompatibility = JavaVersion.VERSION_1_9.toString()
             targetCompatibility = JavaVersion.VERSION_1_9.toString()
 
             // Set the Java release version.
-            options.release.set(9)
+            options.release = 9
 
             // Ignore warnings about using 'requires transitive' on automatic modules.
             // not needed when compiling with recent JDKs, e.g. 17
@@ -135,7 +135,7 @@ object Java9Modularity {
             // Use the classpath of the compileKotlinJvm task.
             // Also ensure that the module path is used instead of classpath.
             classpath = compileKotlinTask.libraries
-            modularity.inferModulePath.set(true)
+            modularity.inferModulePath = true
         }
 
         tasks.named<Jar>(target.artifactsTaskName) {

@@ -10,7 +10,7 @@ def name = project.name
 dependencies {
     constraints {
         rootProject.subprojects.each {
-            if (rootProject.ext.unpublished.contains(it.name)) return
+            if (Projects.unpublished.contains(it.name)) return
             if (it.name == name) return
             if (!it.plugins.hasPlugin('maven-publish')) return
             evaluationDependsOn(it.path)

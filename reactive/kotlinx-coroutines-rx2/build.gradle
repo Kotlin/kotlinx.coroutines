@@ -13,8 +13,8 @@ dependencies {
 tasks.withType(DokkaTaskPartial.class) {
     dokkaSourceSets.configureEach {
         externalDocumentationLink {
-            url.set(new URL('http://reactivex.io/RxJava/2.x/javadoc/'))
-            packageListUrl.set(projectDir.toPath().resolve("package.list").toUri().toURL())
+            url = new URL('http://reactivex.io/RxJava/2.x/javadoc/')
+            packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
         }
     }
 }

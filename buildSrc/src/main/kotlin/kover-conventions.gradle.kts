@@ -7,7 +7,7 @@ plugins {
     id("org.jetbrains.kotlinx.kover")
 }
 
-val notCovered = sourceless + internal + unpublished
+val notCovered = sourceless + unpublished
 
 val expectedCoverage = mutableMapOf(
     // These have lower coverage in general, it can be eventually fixed

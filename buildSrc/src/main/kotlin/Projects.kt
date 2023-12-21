@@ -2,23 +2,41 @@
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:JvmName("Projects")
-import org.gradle.api.*
 
-fun Project.version(target: String): String =
-    property("${target}_version") as String
+import org.gradle.api.*
+import org.gradle.api.tasks.*
+
+fun Project.version(target: String): String {
+    if (target == "kotlin") {
+        getOverriddenKotlinVersion(this)?.let { return it }
+    }
+    return property("${target}_version") as String
+}
+
+val Project.jdkToolchainVersion: Int get() = property("jdk_toolchain_version").toString().toInt()
+
+/**
+ * TODO: check if this is still relevant.
+ * It was introduced in <https://github.com/Kotlin/kotlinx.coroutines/pull/2389>, and the project for which this was
+ * done is already long finished.
+ */
+val Project.nativeTargetsAreEnabled: Boolean get() = rootProject.properties["disable_native_targets"] == null
+
+val Project.sourceSets: SourceSetContainer
+    get() = extensions.getByName("sourceSets") as SourceSetContainer
 
 val coreModule = "kotlinx-coroutines-core"
 val jdk8ObsoleteModule = "kotlinx-coroutines-jdk8"
 val testModule = "kotlinx-coroutines-test"
 
-val multiplatform = setOf(coreModule, testModule)
 // Not applicable for Kotlin plugin
 val sourceless = setOf("kotlinx.coroutines", "kotlinx-coroutines-bom")
-val internal = setOf("kotlinx.coroutines", "benchmarks")
-// Not published
-val unpublished = internal + setOf("example-frontend-js", "android-unit-tests")
 
-val Project.isMultiplatform: Boolean get() = name in multiplatform
+// Not published
+val unpublished = setOf("kotlinx.coroutines", "benchmarks", "android-unit-tests")
+
+val Project.isMultiplatform: Boolean get() = name in setOf(coreModule, testModule)
+val Project.isBom: Boolean get() = name == "kotlinx-coroutines-bom"
 
 // Projects that we do not check for Android API level 14 check due to various limitations
 val androidNonCompatibleProjects = setOf(

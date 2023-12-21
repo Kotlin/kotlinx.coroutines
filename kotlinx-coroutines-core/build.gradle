@@ -6,27 +6,14 @@ plugins {
     id 'org.jetbrains.kotlinx.benchmark' version '0.4.9'
 }
 
-apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: 'org.jetbrains.dokka'
 
 // apply plugin to use autocomplete for Kover DSL
 apply plugin: 'org.jetbrains.kotlinx.kover'
 
-apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
-apply from: rootProject.file("gradle/compile-common.gradle")
+apply plugin: 'pub-conventions'
 
-if (rootProject.ext.native_targets_enabled) {
-    apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
-}
-
-apply from: rootProject.file("gradle/compile-jsAndWasmShared-multiplatform.gradle")
-
-apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
-
-apply from: rootProject.file("gradle/compile-wasm-multiplatform.gradle")
-
-apply from: rootProject.file('gradle/dokka.gradle.kts')
-apply from: rootProject.file('gradle/publish.gradle')
+// TODO: rename `nativeDarwin` to `apple` to avoid defining it explicitly: https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template
 /* ==========================================================================
   Configure source sets structure for kotlinx-coroutines-core:
 
@@ -98,7 +85,7 @@ static boolean isNativeOther(String name) { return ["linux", "mingw", "androidNa
 
 defineSourceSet("concurrent", ["common"]) { it in ["jvm", "native"] }
 
-if (rootProject.ext.native_targets_enabled) {
+if (Projects.getNativeTargetsAreEnabled(project)) {
     defineSourceSet("nativeDarwin", ["native"]) { isNativeDarwin(it) }
     defineSourceSet("nativeOther", ["native"]) { isNativeOther(it) }
 }
@@ -153,10 +140,6 @@ kotlin {
      */
     if (!Idea.active) {
         jvmCoreMain.dependsOn(jvmMain)
-    }
-
-    sourceSets.forEach {
-        SourceSetsKt.configureMultiplatform(it)
     }
 
     jvm {
@@ -216,7 +199,7 @@ def configureNativeSourceSetPreset(name, preset) {
 }
 
 // :KLUDGE: Idea.active: Configure platform libraries for native source sets when working in IDEA
-if (Idea.active && rootProject.ext.native_targets_enabled) {
+if (Idea.active && Projects.getNativeTargetsAreEnabled(project)) {
     def manager = project.ext.hostManager
     def linuxPreset = kotlin.presets.linuxX64
     def macosPreset = kotlin.presets.macosX64
@@ -383,10 +366,15 @@ koverReport {
 }
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
-    classifier = 'tests'
+    archiveClassifier = 'tests'
     from(compileTestKotlinJvm.destinationDirectory)
 }
 
 artifacts {
     archives testsJar
+}
+
+// Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
+tasks.named("dokkaHtmlPartial") {
+    it.dependsOn("jvmJar")
 }

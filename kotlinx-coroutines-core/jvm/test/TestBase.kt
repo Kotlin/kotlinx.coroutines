@@ -181,6 +181,9 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
         if (actionIndex.get() != 0 && !finished.get()) {
             makeError("Expecting that 'finish(${actionIndex.get() + 1})' was invoked, but it was not")
         }
+        if (!disableOutCheck) { // Restore global System.out first
+            System.setOut(previousOut)
+        }
         // Shutdown all thread pools
         shutdownPoolsAfterTest()
         // Check that are now leftover threads
@@ -189,11 +192,8 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
         }.onFailure {
             setError(it)
         }
-        // Restore original uncaught exception handler
+        // Restore original uncaught exception handler after the main shutdown sequence
         Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler)
-        if (!disableOutCheck) {
-            System.setOut(previousOut)
-        }
         if (uncaughtExceptions.isNotEmpty()) {
             makeError("Expected no uncaught exceptions, but got $uncaughtExceptions")
         }

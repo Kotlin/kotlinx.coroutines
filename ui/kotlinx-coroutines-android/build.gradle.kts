@@ -28,24 +28,24 @@ dependencies {
 
 
     testImplementation("org.smali:baksmali:${version("baksmali")}")
-    "r8"("com.android.tools.build:builder:7.1.0-alpha01")
+    "r8"("com.android.tools.build:builder:8.1.0")
 }
 
-val optimizedDexDir = File(buildDir, "dex-optim/")
-val unOptimizedDexDir = File(buildDir, "dex-unoptim/")
+val optimizedDexDir = layout.buildDirectory.dir("dex-optim/")
+val unOptimizedDexDir = layout.buildDirectory.dir("dex-unoptim/")
 
-val optimizedDexFile = File(optimizedDexDir, "classes.dex")
-val unOptimizedDexFile = File(unOptimizedDexDir, "classes.dex")
+val optimizedDexFile = optimizedDexDir.map { it.dir("classes.dex") } .get().asFile
+val unOptimizedDexFile = unOptimizedDexDir.map { it.dir("classes.dex") }.get().asFile
 
 val runR8 by tasks.registering(RunR8::class) {
-    outputDex = optimizedDexDir
+    outputDex = optimizedDexDir.get().asFile
     inputConfig = file("testdata/r8-test-rules.pro")
 
     dependsOn("jar")
 }
 
 val runR8NoOptim by tasks.registering(RunR8::class) {
-    outputDex = unOptimizedDexDir
+    outputDex = unOptimizedDexDir.get().asFile
     inputConfig = file("testdata/r8-test-rules-no-optim.pro")
 
     dependsOn("jar")
@@ -85,11 +85,11 @@ open class RunR8 : JavaExec() {
     val inputConfigCommon: File = File("testdata/r8-test-common.pro")
 
     @InputFiles
-    val jarFile: File = project.tasks.named<Zip>("jar").get().archivePath
+    val jarFile: File = project.tasks.named<Zip>("jar").get().archiveFile.get().asFile
 
     init {
         classpath = project.configurations["r8"]
-        main = "com.android.tools.r8.R8"
+        mainClass = "com.android.tools.r8.R8"
     }
 
     override fun exec() {

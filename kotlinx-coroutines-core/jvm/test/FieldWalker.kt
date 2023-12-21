@@ -29,6 +29,7 @@ object FieldWalker {
             Any::class, String::class, Thread::class, Throwable::class, StackTraceElement::class,
             WeakReference::class, ReferenceQueue::class, AbstractMap::class, Enum::class,
             ReentrantLock::class, ReentrantReadWriteLock::class, SimpleDateFormat::class, ThreadPoolExecutor::class,
+            CountDownLatch::class,
         )
             .map { it.java }
             .associateWith { emptyList() }
@@ -162,7 +163,7 @@ object FieldWalker {
             }
             check(fields.isEmpty() || !type.name.startsWith("java.")) {
                 """
-                    Trying to walk trough JDK's '$type' will get into illegal reflective access on JDK 9+.
+                    Trying to walk through JDK's '$type' will get into illegal reflective access on JDK 9+.
                     Either modify your test to avoid usage of this class or update FieldWalker code to retrieve 
                     the captured state of this class without going through reflection (see how collections are handled).  
                 """.trimIndent()

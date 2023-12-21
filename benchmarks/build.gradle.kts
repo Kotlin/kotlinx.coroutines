@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("UnstableApiUsage")
 
-import me.champeau.jmh.*
 import org.jetbrains.kotlin.gradle.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.github.johnrengelman.shadow")
@@ -22,18 +22,18 @@ java {
 }
 
 tasks.named<KotlinCompile>("compileJmhKotlin") {
-    kotlinOptions {
-        jvmTarget = "1.8"
-        freeCompilerArgs += "-Xjvm-default=all"
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_1_8
+        freeCompilerArgs.add("-Xjvm-default=all")
     }
 }
 
 val jmhJarTask = tasks.named<Jar>("jmhJar") {
-    archiveBaseName by "benchmarks"
-    archiveClassifier by null
-    archiveVersion by null
+    archiveBaseName = "benchmarks"
+    archiveClassifier = null
+    archiveVersion = null
     archiveVersion.convention(null as String?)
-    destinationDirectory.set(file("$rootDir"))
+    destinationDirectory = rootDir
 }
 
 tasks {

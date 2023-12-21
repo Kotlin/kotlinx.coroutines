@@ -6,6 +6,10 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.artifacts.repositories.*
 import org.gradle.api.initialization.dsl.*
+import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.*
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.*
+import org.jetbrains.kotlin.gradle.targets.js.yarn.*
 import java.net.*
 
 /**
@@ -73,9 +77,9 @@ private fun URI.maybeRedirect(): URI? {
 }
 
 private fun URI.isCachedOrLocal() = scheme == "file" ||
-            host == "cache-redirector.jetbrains.com" ||
-            host == "teamcity.jetbrains.com" ||
-            host == "buildserver.labs.intellij.net"
+    host == "cache-redirector.jetbrains.com" ||
+    host == "teamcity.jetbrains.com" ||
+    host == "buildserver.labs.intellij.net"
 
 private fun Project.checkRedirectUrl(url: URI, containerName: String): URI {
     val redirected = url.maybeRedirect()
@@ -100,7 +104,22 @@ private fun Project.checkRedirect(repositories: RepositoryHandler, containerName
     }
 }
 
+private fun Project.configureYarnAndNodeRedirects() {
+    if (CacheRedirector.isEnabled) {
+        val yarnRootExtension = extensions.findByType<YarnRootExtension>()
+        if (yarnRootExtension != null) {
+            yarnRootExtension.downloadBaseUrl = CacheRedirector.maybeRedirect(yarnRootExtension.downloadBaseUrl)
+        }
+
+        val nodeJsExtension = rootProject.extensions.findByType<NodeJsRootExtension>()
+        if (nodeJsExtension != null) {
+            nodeJsExtension.nodeDownloadBaseUrl = CacheRedirector.maybeRedirect(nodeJsExtension.nodeDownloadBaseUrl)
+        }
+    }
+}
+
 // Used from Groovy scripts
+// TODO get rid of Groovy, come up with a proper convention for rootProject vs arbitrary project argument
 object CacheRedirector {
     /**
      * Substitutes repositories in buildScript { } block.
@@ -110,12 +129,34 @@ object CacheRedirector {
         rootProject.checkRedirect(repositories, "${rootProject.displayName} buildscript")
     }
 
+    @JvmStatic
+    fun configure(project: Project) {
+        project.checkRedirect(project.repositories, project.displayName)
+    }
+
     /**
-     * Substitutes repositories in a project.
+     * Configures JS-specific extensions to use
      */
     @JvmStatic
-    fun Project.configure() {
-        checkRedirect(repositories, displayName)
+    fun configureJsPackageManagers(project: Project) {
+        project.configureYarnAndNodeRedirects()
+    }
+
+    /**
+     * Temporary repositories to depend on until GC milestone 4 in KGP
+     * and stable Node release. Safe to remove when its removal does not break WASM tests.
+     */
+    @JvmStatic
+    fun configureWasmNodeRepositories(project: Project) {
+        val extension = project.extensions.findByType<NodeJsRootExtension>()
+        if (extension != null) {
+            extension.nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
+            extension.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+        }
+
+        project.tasks.withType<KotlinNpmInstallTask>().configureEach {
+            args.add("--ignore-engines")
+        }
     }
 
     @JvmStatic

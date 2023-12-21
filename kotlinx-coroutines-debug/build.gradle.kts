@@ -49,7 +49,7 @@ java {
 
 // This is required for BlockHound tests to work, see https://github.com/Kotlin/kotlinx.coroutines/issues/3701
 tasks.withType<Test>().configureEach {
-    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_13)) {
+    if (JavaVersion.toVersion(jdkToolchainVersion).isCompatibleWith(JavaVersion.VERSION_13)) {
         jvmArgs("-XX:+AllowRedefinitionToAddDeleteMethods")
     }
 }
@@ -66,9 +66,9 @@ val shadowJar by tasks.existing(ShadowJar::class) {
     artifact from the `jar` task and the one from `shadowJar`. Without this, Gradle complains that the artifact
     from the `jar` task is not present when the compilaton finishes, even if the file with this name exists. */
     archiveClassifier.convention(null as String?)
-    archiveClassifier.set(null as String?)
-    archiveBaseName.set(jar.flatMap { it.archiveBaseName })
-    archiveVersion.set(jar.flatMap { it.archiveVersion })
+    archiveClassifier = null
+    archiveBaseName = jar.flatMap { it.archiveBaseName }
+    archiveVersion = jar.flatMap { it.archiveVersion }
     manifest {
         attributes(
             mapOf(
