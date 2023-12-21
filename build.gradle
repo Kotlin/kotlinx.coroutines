@@ -43,11 +43,6 @@ buildscript {
     CacheRedirector.configureBuildScript(buildscript, rootProject)
 }
 
-// todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
-def configureKotlinJvmPlatform(configuration) {
-    configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-}
-
 // Configure subprojects with Kotlin sources
 apply plugin: "configure-compilation-conventions"
 

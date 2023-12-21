@@ -65,6 +65,6 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
-
+    implementation("org.jetbrains.kotlinx:kotlinx-benchmark-plugin:0.4.9")
     implementation("org.jetbrains.kotlinx:kotlinx-knit:${version("knit")}")
 }
