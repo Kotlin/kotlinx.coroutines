@@ -47,8 +47,6 @@ buildscript {
 apply plugin: "configure-compilation-conventions"
 
 allprojects {
-    // the only place where HostManager could be instantiated
-    project.ext.hostManager = new HostManager()
     def deployVersion = properties['DeployVersion']
     if (deployVersion != null) version = deployVersion
 

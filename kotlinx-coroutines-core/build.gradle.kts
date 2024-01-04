@@ -194,42 +194,6 @@ val compileKotlinMetadata by tasks.getting(KotlinCompile::class) {
     }
 }
 
-// :KLUDGE: Idea.active: This is needed to workaround resolve problems after importing this project to IDEA
-fun configureNativeSourceSetPreset(name: String, preset: KotlinNativeTargetWithHostTestsPreset) {
-    val hostMainCompilation = project.kotlin.targetFromPreset(preset).compilations.getByName("main")
-    // Look for platform libraries in "implementation" for default source set
-    val implementationConfiguration = configurations[hostMainCompilation.defaultSourceSet.implementationMetadataConfigurationName]
-    // Now find the libraries: Finds platform libs & stdlib, but platform declarations are still not resolved due to IDE bugs
-    val hostNativePlatformLibs = files(
-        provider {
-            implementationConfiguration.filter {
-                it.path.endsWith(".klib") || it.absolutePath.contains("klib${File.separator}platform") || it.absolutePath.contains("stdlib")
-            }
-        }
-    )
-    // Add all those dependencies
-    for (suffix in sourceSetSuffixes) {
-        kotlin.sourceSets.getByName(name + suffix) {
-            dependencies.add(implementationMetadataConfigurationName, hostNativePlatformLibs)
-        }
-    }
-}
-
-// :KLUDGE: Idea.active: Configure platform libraries for native source sets when working in IDEA
-if (Idea.active && project.nativeTargetsAreEnabled) {
-    val manager = project.ext["hostManager"] as HostManager
-    val linuxPreset = kotlin.presets.getByName("linuxX64", KotlinNativeTargetWithHostTestsPreset::class)
-    val macosPreset = kotlin.presets.getByName("macosX64", KotlinNativeTargetWithHostTestsPreset::class)
-    // linux should be always available (cross-compilation capable) -- use it as default
-    assert(manager.isEnabled(linuxPreset.konanTarget))
-    // use macOS libs for nativeDarwin if available
-    val macosAvailable = manager.isEnabled(macosPreset.konanTarget)
-    // configure source sets
-    configureNativeSourceSetPreset("native", linuxPreset)
-    configureNativeSourceSetPreset("nativeOther", linuxPreset)
-    configureNativeSourceSetPreset("nativeDarwin", if (macosAvailable) macosPreset else linuxPreset)
-}
-
 kotlin.sourceSets {
     val jvmMain by getting {
         dependencies {
