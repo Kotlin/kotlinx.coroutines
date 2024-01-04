@@ -71,31 +71,25 @@ However, when creating a new compilation, we have to take care of creating a def
 
 val sourceSetSuffixes = listOf("Main", "Test")
 
-fun defineSourceSet(newName: String, dependsOn: List<String>, includedInPred: (String) -> Boolean) {
+fun defineSourceSet(newName: String, dependsOn: List<String>, reverseDependencies: List<String>) {
     for (suffix in sourceSetSuffixes) {
         val newSS = kotlin.sourceSets.maybeCreate(newName + suffix)
         for (dep in dependsOn) {
             newSS.dependsOn(kotlin.sourceSets[dep + suffix])
         }
-        for (curSS in kotlin.sourceSets) {
-            val curName = curSS.name
-            if (curName.endsWith(suffix)) {
-                val prefix = curName.substring(0, curName.length - suffix.length)
-                if (includedInPred(prefix)) curSS.dependsOn(newSS)
-            }
+        for (revDep in reverseDependencies) {
+            kotlin.sourceSets[revDep + suffix].dependsOn(newSS)
         }
     }
 }
 
-fun isNativeDarwin(name: String): Boolean { return listOf("ios", "macos", "tvos", "watchos").any { name.startsWith(it) } }
+defineSourceSet("concurrent", listOf("common"), listOf("jvm", "native"))
 
-fun isNativeOther(name: String): Boolean { return listOf("linux", "mingw", "androidNative").any { name.startsWith(it) } }
-
-defineSourceSet("concurrent", listOf("common")) { it in listOf("jvm", "native") }
-
+// using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
 if (project.nativeTargetsAreEnabled) {
-    defineSourceSet("nativeDarwin", listOf("native")) { isNativeDarwin(it) }
-    defineSourceSet("nativeOther", listOf("native")) { isNativeOther(it) }
+    // TODO: 'nativeDarwin' behaves exactly like 'apple', we can remove it
+    defineSourceSet("nativeDarwin", listOf("native"), listOf("apple"))
+    defineSourceSet("nativeOther", listOf("native"), listOf("linux", "mingw", "androidNative"))
 }
 
 /* ========================================================================== */
