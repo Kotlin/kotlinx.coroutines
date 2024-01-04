@@ -121,9 +121,5 @@ tasks.named("jvmTest", Test::class) {
         showStandardStreams = true
         events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
     }
-
-    val stressTest = project.properties["stressTest"]
-    if (stressTest != null) {
-        systemProperty("stressTest", "stressTest")
-    }
+    project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
 }
