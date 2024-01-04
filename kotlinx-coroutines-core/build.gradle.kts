@@ -136,13 +136,9 @@ kotlin {
     }
 
     val jvmMain = sourceSets.jvmMain
-    val jvmCoreMain = sourceSets.create("jvmCoreMain")
-    val jdk8Main = sourceSets.create("jdk8Main")
-    jdk8Main.dependsOn(jvmMain.get())
-
     /**
      * See: https://youtrack.jetbrains.com/issue/KTIJ-25959
-     * The dependency from jvmCore to jvmMain is only for CLI builds and not intended for the IDE.
+     * The introduction of jvmCore is only for CLI builds and not intended for the IDE.
      * In the current setup there are two tooling unfriendly configurations used:
      * 1: - jvmMain, despite being a platform source set, is not a leaf (jvmCoreMain and jdk8Main dependOn it)
      * 2: - jvmMain effectively becomes a 'shared jvm' source set
@@ -150,13 +146,15 @@ kotlin {
      * Using this kludge here, will prevent issue 2 from being visible to the IDE.
      * Therefore jvmMain will resolve using the 'single' compilation it participates in (from the perspective of the IDE)
      */
-    if (!Idea.active) {
-        jvmCoreMain.dependsOn(jvmMain.get())
-    }
+    val jvmCoreMain = if (!Idea.active) sourceSets.create("jvmCoreMain") else null
+    val jdk8Main = sourceSets.create("jdk8Main")
+    jdk8Main.dependsOn(jvmMain.get())
+
+    jvmCoreMain?.dependsOn(jvmMain.get())
 
     jvm {
         val main = compilations.getByName("main")
-        main.source(jvmCoreMain)
+        jvmCoreMain?.let { main.source(it) }
         main.source(jdk8Main)
 
         /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
