@@ -4,7 +4,6 @@
 
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
-import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -68,27 +67,29 @@ However, when creating a new compilation, we have to take care of creating a def
 
 kotlin {
     sourceSets {
-        groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
-
         // using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
+        groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
         if (project.nativeTargetsAreEnabled) {
             // TODO: 'nativeDarwin' behaves exactly like 'apple', we can remove it
             groupSourceSets("nativeDarwin", listOf("apple"), listOf("native"))
             groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
         }
+        jvmMain {
+            dependencies {
+                compileOnly("com.google.android:annotations:4.1.1.4")
+            }
+        }
+        jvmTest {
+            dependencies {
+                api("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
+                api("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
+                implementation(project(":android-unit-tests"))
+                implementation("org.openjdk.jol:jol-core:0.16")
+            }
+        }
     }
-}
-
-/* ========================================================================== */
-
-
-/*
- * All platform plugins and configuration magic happens here instead of build.gradle
- * because JMV-only projects depend on core, thus core should always be initialized before configuration.
- */
-kotlin {
     /*
-     * Configure two test runs:
+     * Configure two test runs for Native:
      * 1) Main thread
      * 2) BG thread (required for Dispatchers.Main tests on Darwin)
      *
@@ -126,11 +127,12 @@ kotlin {
      * Using this kludge here, will prevent issue 2 from being visible to the IDE.
      * Therefore jvmMain will resolve using the 'single' compilation it participates in (from the perspective of the IDE)
      */
-    val jvmCoreMain = if (!Idea.active) sourceSets.create("jvmCoreMain") else null
-    val jdk8Main = sourceSets.create("jdk8Main")
-    jdk8Main.dependsOn(sourceSets.jvmMain.get())
-
-    jvmCoreMain?.dependsOn(sourceSets.jvmMain.get())
+    val jvmCoreMain = if (Idea.active) null else sourceSets.create("jvmCoreMain") {
+        dependsOn(sourceSets.jvmMain.get())
+    }
+    val jdk8Main = sourceSets.create("jdk8Main") {
+        dependsOn(sourceSets.jvmMain.get())
+    }
 
     jvm {
         compilations.named("main") {
@@ -156,42 +158,12 @@ benchmark {
     }
 }
 
-fun configureKotlinJvmPlatform(configuration: Configuration) {
-    configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-}
-
-// todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
-configurations {
-    configureKotlinJvmPlatform(kotlinCompilerPluginClasspath.get())
-}
-
 // Update module name for metadata artifact to avoid conflicts
 // see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
 val compileKotlinMetadata by tasks.getting(KotlinCompilationTask::class) {
     compilerOptions {
         freeCompilerArgs.addAll("-module-name", "kotlinx-coroutines-core-common")
     }
-}
-
-kotlin {
-
-    sourceSets {
-        val jvmMain by getting {
-            dependencies {
-                compileOnly("com.google.android:annotations:4.1.1.4")
-            }
-        }
-
-        val jvmTest by getting {
-            dependencies {
-                api("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
-                api("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
-                implementation(project(":android-unit-tests"))
-                implementation("org.openjdk.jol:jol-core:0.16")
-            }
-        }
-    }
-
 }
 
 val jvmTest by tasks.getting(Test::class) {
@@ -212,7 +184,7 @@ val jvmTest by tasks.getting(Test::class) {
     }
     if (Idea.active) {
         // Configure the IDEA runner for Lincheck
-        configureJvmForLincheck(this)
+        configureJvmForLincheck()
     }
 }
 
@@ -249,12 +221,12 @@ val jvmStressTest by tasks.registering(Test::class) {
     include("**/*StressTest.*")
     enableAssertions = true
     testLogging.showStandardStreams = true
-    systemProperty("kotlinx.coroutines.scheduler.keep.alive.sec", "100000") // any unpark problem hangs test
+    systemProperty("kotlinx.coroutines.scheduler.keep.alive.sec", 100000) // any unpark problem hangs test
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
-    systemProperty("kotlinx.coroutines.semaphore.segmentSize", "1")
-    systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", "10")
-    systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", "2")
-    systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", "1")
+    systemProperty("kotlinx.coroutines.semaphore.segmentSize", 1)
+    systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 10)
+    systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", 2)
+    systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", 1)
 }
 
 val jvmLincheckTest by tasks.registering(Test::class) {
@@ -264,7 +236,7 @@ val jvmLincheckTest by tasks.registering(Test::class) {
     include("**/*LincheckTest*")
     enableAssertions = true
     testLogging.showStandardStreams = true
-    configureJvmForLincheck(this)
+    configureJvmForLincheck()
 }
 
 // Additional Lincheck tests with `segmentSize = 2`.
@@ -279,22 +251,21 @@ val jvmLincheckTestAdditional by tasks.registering(Test::class) {
     include("**/Semaphore*LincheckTest*")
     enableAssertions = true
     testLogging.showStandardStreams = true
-    configureJvmForLincheck(this, true)
+    configureJvmForLincheck(segmentSize = 2)
 }
 
-fun configureJvmForLincheck(task: Test, additional: Boolean = false) {
-    task.minHeapSize = "1g"
-    task.maxHeapSize = "4g" // we may need more space for building an interleaving tree in the model checking mode
+fun Test.configureJvmForLincheck(segmentSize: Int = 1) {
+    minHeapSize = "1g"
+    maxHeapSize = "4g" // we may need more space for building an interleaving tree in the model checking mode
     // https://github.com/JetBrains/lincheck#java-9
-    task.jvmArgs = listOf("--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
+    jvmArgs = listOf("--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
         "--add-exports", "java.base/sun.security.action=ALL-UNNAMED",
         "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED") // in the model checking mode
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
-    val segmentSize = if (additional) "2" else "1"
-    task.systemProperty("kotlinx.coroutines.semaphore.segmentSize", segmentSize)
-    task.systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", "1") // better for the model checking mode
-    task.systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", segmentSize)
-    task.systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", "1")
+    systemProperty("kotlinx.coroutines.semaphore.segmentSize", segmentSize)
+    systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 1) // better for the model checking mode
+    systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", segmentSize)
+    systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", 1)
 }
 
 // Always check additional test sets
