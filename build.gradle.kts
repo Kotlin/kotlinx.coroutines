@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.gradle.kotlin.dsl.*
-import org.jetbrains.kotlin.konan.target.HostManager
 
 buildscript {
     if (shouldUseLocalMaven(rootProject)) {
@@ -40,8 +39,6 @@ buildscript {
 apply(plugin = "configure-compilation-conventions")
 
 allprojects {
-    // the only place where HostManager could be instantiated
-    project.ext["hostManager"] = HostManager()
     val deployVersion = properties["DeployVersion"]
     if (deployVersion != null) version = deployVersion
 

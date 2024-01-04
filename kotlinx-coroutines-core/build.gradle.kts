@@ -1,13 +1,9 @@
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.testing.*
-import org.jetbrains.kotlin.konan.target.*
-import java.io.*
 
 plugins {
     kotlin("multiplatform")
@@ -51,7 +47,7 @@ The overall structure is just a hack to support the scenario we are interested i
 
 For that, we have following compilations:
 * jvmMain compilation: [jvmCoreMain, jdk8Main]
-* jvmCore compilation:  [commonMain]
+* jvmCore compilation: [commonMain]
 * jdk8    compilation: [commonMain, jvmCoreMain]
 
 Theoretically, "jvmCore" could've been "jvmMain", it is not for technical reasons,
@@ -65,52 +61,38 @@ However, when creating a new compilation, we have to take care of creating a def
 """
  ========================================================================== */
 
-val sourceSetSuffixes = listOf("Main", "Test")
-
-fun defineSourceSet(newName: String, dependsOn: List<String>, includedInPred: (String) -> Boolean) {
-    for (suffix in sourceSetSuffixes) {
-        val newSS = kotlin.sourceSets.maybeCreate(newName + suffix)
-        for (dep in dependsOn) {
-            newSS.dependsOn(kotlin.sourceSets[dep + suffix])
+kotlin {
+    sourceSets {
+        // using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
+        groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
+        if (project.nativeTargetsAreEnabled) {
+            // TODO: 'nativeDarwin' behaves exactly like 'apple', we can remove it
+            groupSourceSets("nativeDarwin", listOf("apple"), listOf("native"))
+            groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
         }
-        for (curSS in kotlin.sourceSets) {
-            val curName = curSS.name
-            if (curName.endsWith(suffix)) {
-                val prefix = curName.substring(0, curName.length - suffix.length)
-                if (includedInPred(prefix)) curSS.dependsOn(newSS)
+        jvmMain {
+            dependencies {
+                compileOnly("com.google.android:annotations:4.1.1.4")
+            }
+        }
+        jvmTest {
+            dependencies {
+                api("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
+                api("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
+                implementation(project(":android-unit-tests"))
+                implementation("org.openjdk.jol:jol-core:0.16")
             }
         }
     }
-}
-
-fun isNativeDarwin(name: String): Boolean { return listOf("ios", "macos", "tvos", "watchos").any { name.startsWith(it) } }
-
-fun isNativeOther(name: String): Boolean { return listOf("linux", "mingw", "androidNative").any { name.startsWith(it) } }
-
-defineSourceSet("concurrent", listOf("common")) { it in listOf("jvm", "native") }
-
-if (project.nativeTargetsAreEnabled) {
-    defineSourceSet("nativeDarwin", listOf("native")) { isNativeDarwin(it) }
-    defineSourceSet("nativeOther", listOf("native")) { isNativeOther(it) }
-}
-
-/* ========================================================================== */
-
-
-/*
- * All platform plugins and configuration magic happens here instead of build.gradle
- * because JMV-only projects depend on core, thus core should always be initialized before configuration.
- */
-kotlin {
     /*
-     * Configure two test runs:
+     * Configure two test runs for Native:
      * 1) Main thread
      * 2) BG thread (required for Dispatchers.Main tests on Darwin)
      *
      * All new MM targets are build with optimize = true to have stress tests properly run.
      */
     targets.withType(KotlinNativeTargetWithTests::class).configureEach {
-        binaries.getTest("DEBUG").apply {
+        binaries.getTest(DEBUG).apply {
             optimized = true
         }
 
@@ -129,14 +111,9 @@ kotlin {
         }
     }
 
-    val jvmMain = sourceSets.jvmMain
-    val jvmCoreMain = sourceSets.create("jvmCoreMain")
-    val jdk8Main = sourceSets.create("jdk8Main")
-    jdk8Main.dependsOn(jvmMain.get())
-
     /**
      * See: https://youtrack.jetbrains.com/issue/KTIJ-25959
-     * The dependency from jvmCore to jvmMain is only for CLI builds and not intended for the IDE.
+     * The introduction of jvmCore is only for CLI builds and not intended for the IDE.
      * In the current setup there are two tooling unfriendly configurations used:
      * 1: - jvmMain, despite being a platform source set, is not a leaf (jvmCoreMain and jdk8Main dependOn it)
      * 2: - jvmMain effectively becomes a 'shared jvm' source set
@@ -144,19 +121,23 @@ kotlin {
      * Using this kludge here, will prevent issue 2 from being visible to the IDE.
      * Therefore jvmMain will resolve using the 'single' compilation it participates in (from the perspective of the IDE)
      */
-    if (!Idea.active) {
-        jvmCoreMain.dependsOn(jvmMain.get())
+    val jvmCoreMain = if (Idea.active) null else sourceSets.create("jvmCoreMain") {
+        dependsOn(sourceSets.jvmMain.get())
+    }
+    val jdk8Main = sourceSets.create("jdk8Main") {
+        dependsOn(sourceSets.jvmMain.get())
     }
 
     jvm {
-        val main = compilations.getByName("main")
-        main.source(jvmCoreMain)
-        main.source(jdk8Main)
+        compilations.named("main") {
+            jvmCoreMain?.let { source(it) }
+            source(jdk8Main)
+        }
 
         /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
         compilations.create("CoreMain") {
             /* jvmCore is automatically matched as 'defaultSourceSet' for the compilation, due to its name */
-            tasks.getByName("check").dependsOn(compileKotlinTaskProvider)
+            tasks.getByName("check").dependsOn(compileTaskProvider)
         }
 
         // For animal sniffer
@@ -171,82 +152,11 @@ benchmark {
     }
 }
 
-fun configureKotlinJvmPlatform(configuration: Configuration) {
-    configuration.attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-}
-
-// todo:KLUDGE: This is needed to workaround dependency resolution between Java and MPP modules
-configurations {
-    configureKotlinJvmPlatform(kotlinCompilerPluginClasspath.get())
-}
-
 // Update module name for metadata artifact to avoid conflicts
 // see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
-val compileKotlinMetadata by tasks.getting(KotlinCompile::class) {
-    kotlinOptions {
-        freeCompilerArgs = freeCompilerArgs + listOf("-module-name", "kotlinx-coroutines-core-common")
-    }
-}
-
-// :KLUDGE: Idea.active: This is needed to workaround resolve problems after importing this project to IDEA
-fun configureNativeSourceSetPreset(name: String, preset: KotlinNativeTargetWithHostTestsPreset) {
-    val hostMainCompilation = project.kotlin.targetFromPreset(preset).compilations.getByName("main")
-    // Look for platform libraries in "implementation" for default source set
-    val implementationConfiguration = configurations[hostMainCompilation.defaultSourceSet.implementationMetadataConfigurationName]
-    // Now find the libraries: Finds platform libs & stdlib, but platform declarations are still not resolved due to IDE bugs
-    val hostNativePlatformLibs = files(
-        provider {
-            implementationConfiguration.filter {
-                it.path.endsWith(".klib") || it.absolutePath.contains("klib${File.separator}platform") || it.absolutePath.contains("stdlib")
-            }
-        }
-    )
-    // Add all those dependencies
-    for (suffix in sourceSetSuffixes) {
-        kotlin.sourceSets.getByName(name + suffix) {
-            dependencies.add(implementationMetadataConfigurationName, hostNativePlatformLibs)
-        }
-    }
-}
-
-// :KLUDGE: Idea.active: Configure platform libraries for native source sets when working in IDEA
-if (Idea.active && project.nativeTargetsAreEnabled) {
-    val manager = project.ext["hostManager"] as HostManager
-    val linuxPreset = kotlin.presets.getByName("linuxX64", KotlinNativeTargetWithHostTestsPreset::class)
-    val macosPreset = kotlin.presets.getByName("macosX64", KotlinNativeTargetWithHostTestsPreset::class)
-    // linux should be always available (cross-compilation capable) -- use it as default
-    assert(manager.isEnabled(linuxPreset.konanTarget))
-    // use macOS libs for nativeDarwin if available
-    val macosAvailable = manager.isEnabled(macosPreset.konanTarget)
-    // configure source sets
-    configureNativeSourceSetPreset("native", linuxPreset)
-    configureNativeSourceSetPreset("nativeOther", linuxPreset)
-    configureNativeSourceSetPreset("nativeDarwin", if (macosAvailable) macosPreset else linuxPreset)
-}
-
-kotlin.sourceSets {
-    val jvmMain by getting {
-        dependencies {
-            compileOnly("com.google.android:annotations:4.1.1.4")
-        }
-    }
-
-    val jvmTest by getting {
-        dependencies {
-            api("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
-            api("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
-            implementation(project(":android-unit-tests"))
-            implementation("org.openjdk.jol:jol-core:0.16")
-        }
-    }
-}
-
-kotlin.sourceSets.configureEach {
-    // Do not apply 'ExperimentalForeignApi' where we have allWarningsAsErrors set
-    if (name in listOf("jvmMain", "jvmCoreMain", "jsMain", "wasmJsMain", "jsAndWasmSharedMain", "concurrentMain", "commonMain")) return@configureEach
-    languageSettings {
-        optIn("kotlinx.cinterop.ExperimentalForeignApi")
-        optIn("kotlin.experimental.ExperimentalNativeApi")
+val compileKotlinMetadata by tasks.getting(KotlinCompilationTask::class) {
+    compilerOptions {
+        freeCompilerArgs.addAll("-module-name", "kotlinx-coroutines-core-common")
     }
 }
 
@@ -268,7 +178,7 @@ val jvmTest by tasks.getting(Test::class) {
     }
     if (Idea.active) {
         // Configure the IDEA runner for Lincheck
-        configureJvmForLincheck(this)
+        configureJvmForLincheck()
     }
 }
 
@@ -305,12 +215,12 @@ val jvmStressTest by tasks.registering(Test::class) {
     include("**/*StressTest.*")
     enableAssertions = true
     testLogging.showStandardStreams = true
-    systemProperty("kotlinx.coroutines.scheduler.keep.alive.sec", "100000") // any unpark problem hangs test
+    systemProperty("kotlinx.coroutines.scheduler.keep.alive.sec", 100000) // any unpark problem hangs test
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
-    systemProperty("kotlinx.coroutines.semaphore.segmentSize", "1")
-    systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", "10")
-    systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", "2")
-    systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", "1")
+    systemProperty("kotlinx.coroutines.semaphore.segmentSize", 1)
+    systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 10)
+    systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", 2)
+    systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", 1)
 }
 
 val jvmLincheckTest by tasks.registering(Test::class) {
@@ -320,7 +230,7 @@ val jvmLincheckTest by tasks.registering(Test::class) {
     include("**/*LincheckTest*")
     enableAssertions = true
     testLogging.showStandardStreams = true
-    configureJvmForLincheck(this)
+    configureJvmForLincheck()
 }
 
 // Additional Lincheck tests with `segmentSize = 2`.
@@ -335,22 +245,21 @@ val jvmLincheckTestAdditional by tasks.registering(Test::class) {
     include("**/Semaphore*LincheckTest*")
     enableAssertions = true
     testLogging.showStandardStreams = true
-    configureJvmForLincheck(this, true)
+    configureJvmForLincheck(segmentSize = 2)
 }
 
-fun configureJvmForLincheck(task: Test, additional: Boolean = false) {
-    task.minHeapSize = "1g"
-    task.maxHeapSize = "4g" // we may need more space for building an interleaving tree in the model checking mode
+fun Test.configureJvmForLincheck(segmentSize: Int = 1) {
+    minHeapSize = "1g"
+    maxHeapSize = "4g" // we may need more space for building an interleaving tree in the model checking mode
     // https://github.com/JetBrains/lincheck#java-9
-    task.jvmArgs = listOf("--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
+    jvmArgs = listOf("--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
         "--add-exports", "java.base/sun.security.action=ALL-UNNAMED",
         "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED") // in the model checking mode
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
-    val segmentSize = if (additional) "2" else "1"
-    task.systemProperty("kotlinx.coroutines.semaphore.segmentSize", segmentSize)
-    task.systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", "1") // better for the model checking mode
-    task.systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", segmentSize)
-    task.systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", "1")
+    systemProperty("kotlinx.coroutines.semaphore.segmentSize", segmentSize)
+    systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 1) // better for the model checking mode
+    systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", segmentSize)
+    systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", 1)
 }
 
 // Always check additional test sets

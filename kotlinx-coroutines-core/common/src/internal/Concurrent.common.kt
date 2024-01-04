@@ -18,5 +18,4 @@ internal expect fun <E> identitySet(expectedSize: Int): MutableSet<E>
  */
 @OptionalExpectation
 @Target(AnnotationTarget.FIELD)
-@OptIn(ExperimentalMultiplatform::class)
 internal expect annotation class BenignDataRace()
