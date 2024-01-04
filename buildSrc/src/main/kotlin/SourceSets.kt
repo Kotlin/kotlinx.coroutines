@@ -1,7 +1,9 @@
 /*
  * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.plugin.*
+import org.gradle.kotlin.dsl.*
 
 fun KotlinSourceSet.configureDirectoryPaths() {
     if (project.isMultiplatform) {
@@ -26,5 +28,32 @@ fun KotlinSourceSet.configureDirectoryPaths() {
         }
     } else {
         throw IllegalArgumentException("Unclear how to configure source sets for ${project.name}")
+    }
+}
+
+/**
+ * Creates shared source sets for a group of source sets.
+ *
+ * [reverseDependencies] is a list of prefixes of names of source sets that depend on the new source set.
+ * [dependencies] is a list of prefixes of names of source sets that the new source set depends on.
+ * [groupName] is the prefix of the names of the new source sets.
+ *
+ * The suffixes of the source sets are "Main" and "Test".
+ */
+fun NamedDomainObjectContainer<KotlinSourceSet>.groupSourceSets(
+    groupName: String,
+    reverseDependencies: List<String>,
+    dependencies: List<String>
+) {
+    val sourceSetSuffixes = listOf("Main", "Test")
+    for (suffix in sourceSetSuffixes) {
+        register(groupName + suffix) {
+            for (dep in dependencies) {
+                dependsOn(get(dep + suffix))
+            }
+            for (revDep in reverseDependencies) {
+                get(revDep + suffix).dependsOn(this)
+            }
+        }
     }
 }

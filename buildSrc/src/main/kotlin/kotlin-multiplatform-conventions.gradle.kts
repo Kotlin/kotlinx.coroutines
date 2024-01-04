@@ -92,30 +92,20 @@ kotlin {
             // workaround for #3968 until this is fixed on atomicfu's side
             api("org.jetbrains.kotlinx:atomicfu:0.23.1")
         }
-        val jsAndWasmSharedMain by registering {
-            dependsOn(commonMain.get())
-        }
-        val jsAndWasmSharedTest by registering {
-            dependsOn(commonTest.get())
-        }
-        jsMain {
-            dependsOn(jsAndWasmSharedMain.get())
-        }
+        jsMain { }
         jsTest {
-            dependsOn(jsAndWasmSharedTest.get())
             dependencies {
                 api("org.jetbrains.kotlin:kotlin-test-js:${version("kotlin")}")
             }
         }
         val wasmJsMain by getting {
-            dependsOn(jsAndWasmSharedMain.get())
         }
         val wasmJsTest by getting {
-            dependsOn(jsAndWasmSharedTest.get())
             dependencies {
                 api("org.jetbrains.kotlin:kotlin-test-wasm-js:${version("kotlin")}")
             }
         }
+        groupSourceSets("jsAndWasmShared", listOf("js", "wasmJs"), listOf("common"))
     }
 }
 

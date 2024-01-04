@@ -69,27 +69,17 @@ However, when creating a new compilation, we have to take care of creating a def
 """
  ========================================================================== */
 
-val sourceSetSuffixes = listOf("Main", "Test")
+kotlin {
+    sourceSets {
+        groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
 
-fun defineSourceSet(newName: String, dependsOn: List<String>, reverseDependencies: List<String>) {
-    for (suffix in sourceSetSuffixes) {
-        val newSS = kotlin.sourceSets.maybeCreate(newName + suffix)
-        for (dep in dependsOn) {
-            newSS.dependsOn(kotlin.sourceSets[dep + suffix])
-        }
-        for (revDep in reverseDependencies) {
-            kotlin.sourceSets[revDep + suffix].dependsOn(newSS)
+        // using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
+        if (project.nativeTargetsAreEnabled) {
+            // TODO: 'nativeDarwin' behaves exactly like 'apple', we can remove it
+            groupSourceSets("nativeDarwin", listOf("apple"), listOf("native"))
+            groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
         }
     }
-}
-
-defineSourceSet("concurrent", listOf("common"), listOf("jvm", "native"))
-
-// using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
-if (project.nativeTargetsAreEnabled) {
-    // TODO: 'nativeDarwin' behaves exactly like 'apple', we can remove it
-    defineSourceSet("nativeDarwin", listOf("native"), listOf("apple"))
-    defineSourceSet("nativeOther", listOf("native"), listOf("linux", "mingw", "androidNative"))
 }
 
 /* ========================================================================== */
