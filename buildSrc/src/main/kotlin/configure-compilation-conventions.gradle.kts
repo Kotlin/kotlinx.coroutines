@@ -33,8 +33,24 @@ configure(subprojects) {
                     "-Xno-receiver-assertions"
                 )
             }
+            if (this@configureEach is KotlinNativeCompile) {
+                optIn.addAll(
+                    "kotlinx.cinterop.ExperimentalForeignApi",
+                    "kotlinx.cinterop.UnsafeNumber",
+                    "kotlin.experimental.ExperimentalNativeApi",
+                )
+            }
             freeCompilerArgs.addAll("-progressive", "-Xexpect-actual-classes")
-            optIn.addAll(optInAnnotations)
+            optIn.addAll(
+                "kotlin.RequiresOptIn",
+                "kotlin.experimental.ExperimentalTypeInference",
+                "kotlin.ExperimentalMultiplatform",
+                "kotlinx.coroutines.DelicateCoroutinesApi",
+                "kotlinx.coroutines.ExperimentalCoroutinesApi",
+                "kotlinx.coroutines.ObsoleteCoroutinesApi",
+                "kotlinx.coroutines.InternalCoroutinesApi",
+                "kotlinx.coroutines.FlowPreview"
+            )
         }
 
     }

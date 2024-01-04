@@ -111,7 +111,6 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * @param timeoutMillis [T] is the emitted value and the return value is timeout in milliseconds.
  */
 @FlowPreview
-@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
 @OverloadResolutionByLambdaReturnType
 public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
     debounceInternal(timeoutMillis)
@@ -196,7 +195,6 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
  */
 @FlowPreview
 @JvmName("debounceDuration")
-@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
 @OverloadResolutionByLambdaReturnType
 public fun <T> Flow<T>.debounce(timeout: (T) -> Duration): Flow<T> =
     debounceInternal { emittedItem ->

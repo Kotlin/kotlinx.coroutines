@@ -11,7 +11,6 @@ import kotlinx.atomicfu.locks.withLock as withLock2
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias ReentrantLock = kotlinx.atomicfu.locks.SynchronizedObject
 
-@OptIn(UnsafeNumber::class)
 internal actual inline fun <T> ReentrantLock.withLock(action: () -> T): T = this.withLock2(action)
 
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet()

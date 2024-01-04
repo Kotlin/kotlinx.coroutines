@@ -20,7 +20,6 @@ internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoro
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DarwinGlobalQueueDispatcher
 
 private object DarwinGlobalQueueDispatcher : CoroutineDispatcher() {
-    @OptIn(UnsafeNumber::class)
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         autoreleasepool {
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.convert(), 0u)) {
@@ -79,7 +78,6 @@ private val TIMER_DISPOSED = NativePtr.NULL.plus(1)
 private class Timer : DisposableHandle {
     private val ref = AtomicNativePtr(TIMER_NEW)
 
-    @OptIn(UnsafeNumber::class)
     fun start(timeMillis: Long, timerBlock: TimerBlock) {
         val fireDate = CFAbsoluteTimeGetCurrent() + timeMillis / 1000.0
         val timer = CFRunLoopTimerCreateWithHandler(null, fireDate, 0.0, 0u, 0, timerBlock)

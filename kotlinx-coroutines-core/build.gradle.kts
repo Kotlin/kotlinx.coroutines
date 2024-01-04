@@ -173,30 +173,25 @@ val compileKotlinMetadata by tasks.getting(KotlinCompilationTask::class) {
     }
 }
 
-kotlin.sourceSets {
-    val jvmMain by getting {
-        dependencies {
-            compileOnly("com.google.android:annotations:4.1.1.4")
+kotlin {
+
+    sourceSets {
+        val jvmMain by getting {
+            dependencies {
+                compileOnly("com.google.android:annotations:4.1.1.4")
+            }
+        }
+
+        val jvmTest by getting {
+            dependencies {
+                api("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
+                api("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
+                implementation(project(":android-unit-tests"))
+                implementation("org.openjdk.jol:jol-core:0.16")
+            }
         }
     }
 
-    val jvmTest by getting {
-        dependencies {
-            api("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
-            api("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
-            implementation(project(":android-unit-tests"))
-            implementation("org.openjdk.jol:jol-core:0.16")
-        }
-    }
-}
-
-kotlin.sourceSets.configureEach {
-    // Do not apply 'ExperimentalForeignApi' where we have allWarningsAsErrors set
-    if (name in listOf("jvmMain", "jvmCoreMain", "jsMain", "wasmJsMain", "jsAndWasmSharedMain", "concurrentMain", "commonMain")) return@configureEach
-    languageSettings {
-        optIn("kotlinx.cinterop.ExperimentalForeignApi")
-        optIn("kotlin.experimental.ExperimentalNativeApi")
-    }
 }
 
 val jvmTest by tasks.getting(Test::class) {
