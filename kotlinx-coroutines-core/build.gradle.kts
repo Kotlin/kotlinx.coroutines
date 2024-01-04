@@ -95,7 +95,7 @@ kotlin {
      * All new MM targets are build with optimize = true to have stress tests properly run.
      */
     targets.withType(KotlinNativeTargetWithTests::class).configureEach {
-        binaries.getTest("DEBUG").apply {
+        binaries.getTest(DEBUG).apply {
             optimized = true
             // Test for memory leaks using a special entry point that does not exit but returns from main
             freeCompilerArgs = freeCompilerArgs + listOf("-e", "kotlinx.coroutines.mainNoExit")
@@ -116,7 +116,6 @@ kotlin {
         }
     }
 
-    val jvmMain = sourceSets.jvmMain
     /**
      * See: https://youtrack.jetbrains.com/issue/KTIJ-25959
      * The introduction of jvmCore is only for CLI builds and not intended for the IDE.
@@ -129,19 +128,20 @@ kotlin {
      */
     val jvmCoreMain = if (!Idea.active) sourceSets.create("jvmCoreMain") else null
     val jdk8Main = sourceSets.create("jdk8Main")
-    jdk8Main.dependsOn(jvmMain.get())
+    jdk8Main.dependsOn(sourceSets.jvmMain.get())
 
-    jvmCoreMain?.dependsOn(jvmMain.get())
+    jvmCoreMain?.dependsOn(sourceSets.jvmMain.get())
 
     jvm {
-        val main = compilations.getByName("main")
-        jvmCoreMain?.let { main.source(it) }
-        main.source(jdk8Main)
+        compilations.named("main") {
+            jvmCoreMain?.let { source(it) }
+            source(jdk8Main)
+        }
 
         /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
         compilations.create("CoreMain") {
             /* jvmCore is automatically matched as 'defaultSourceSet' for the compilation, due to its name */
-            tasks.getByName("check").dependsOn(compileKotlinTaskProvider)
+            tasks.getByName("check").dependsOn(compileTaskProvider)
         }
 
         // For animal sniffer

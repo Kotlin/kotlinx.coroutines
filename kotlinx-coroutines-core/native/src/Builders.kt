@@ -6,7 +6,6 @@
 package kotlinx.coroutines
 
 import kotlinx.cinterop.*
-import platform.posix.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
