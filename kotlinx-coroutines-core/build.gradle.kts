@@ -4,14 +4,11 @@
 
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.testing.*
-import org.jetbrains.kotlin.konan.target.*
-import java.io.*
 
 plugins {
     kotlin("multiplatform")
@@ -170,9 +167,9 @@ configurations {
 
 // Update module name for metadata artifact to avoid conflicts
 // see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
-val compileKotlinMetadata by tasks.getting(KotlinCompile::class) {
-    kotlinOptions {
-        freeCompilerArgs = freeCompilerArgs + listOf("-module-name", "kotlinx-coroutines-core-common")
+val compileKotlinMetadata by tasks.getting(KotlinCompilationTask::class) {
+    compilerOptions {
+        freeCompilerArgs.addAll("-module-name", "kotlinx-coroutines-core-common")
     }
 }
 

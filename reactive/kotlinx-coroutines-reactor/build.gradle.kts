@@ -23,12 +23,10 @@ java {
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
         compilerOptions.jvmTarget = JvmTarget.JVM_1_8
     }
 
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
         compilerOptions.jvmTarget = JvmTarget.JVM_1_8
     }
 }

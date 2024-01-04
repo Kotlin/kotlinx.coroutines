@@ -15,12 +15,10 @@ java {
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "9"
         compilerOptions.jvmTarget = JvmTarget.JVM_9
     }
 
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "9"
         compilerOptions.jvmTarget = JvmTarget.JVM_9
     }
 }
