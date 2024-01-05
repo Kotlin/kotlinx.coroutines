@@ -4,17 +4,78 @@
 
 package kotlinx.coroutines.debugging
 
+
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
+import kotlin.coroutines.jvm.internal.CoroutineStackFrame
+import kotlinx.coroutines.internal.StackTraceElement
 import kotlin.coroutines.*
 
-@PublishedApi
-internal object DebugProbesImpl {
+public object DebugProbesImpl {
     private val delegate = DebugProbesImpl
 
     /**
      * Whether DebugProbes are installed.
      */
     public val isInstalled: Boolean = delegate.isInstalled
+    
+    /*
+     * This method optimises the number of packages sent by the IDEA debugger
+     * to a client VM to speed up fetching of coroutine information.
+     *
+     * The return value is an array of objects, which consists of four elements:
+     * 1) A string in a JSON format that stores information that is needed to display
+     *    every coroutine in the coroutine panel in the IDEA debugger.
+     * 2) An array of last observed threads.
+     * 3) An array of last observed frames.
+     * 4) An array of DebugCoroutineInfo.
+     *
+     * ### Implementation note
+     * For methods like `dumpCoroutinesInfo` JDWP provides `com.sun.jdi.ObjectReference`
+     * that does a roundtrip to client VM for *each* field or property read.
+     * To avoid that, we serialize most of the critical for UI data into a primitives
+     * to save an exponential number of roundtrips.
+     * 
+     * NOTE: Used in IDEA in CoroutinesInfoFromJsonAndReferencesProvider in priority to dumpCoroutinesInfo
+     * TODO: maybe should be renamed
+     */
+    public fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> = delegate.dumpCoroutinesInfoAsJsonAndReferences()
+
+    /**
+     * Get DebugCoroutineInfo for the given continuation.
+     * Goes up the continuation stack, till it reaches the completion of top level continuation which is an instance of CoroutineOwner.
+     * CoroutineOwner contains the coroutine information.
+     */
+    public fun getDebugCoroutineInfo(coroutineStackFrame: CoroutineStackFrame): DebugCoroutineInfo? {
+        var completion: CoroutineStackFrame? = coroutineStackFrame
+        while (completion != null) {
+            if (completion is DebugProbesImpl.CoroutineOwner<*>) {
+                completion.info.context?.let { context -> 
+                    return DebugCoroutineInfo((completion as DebugProbesImpl.CoroutineOwner<*>).info, context)
+                }
+            }
+            completion = completion.callerFrame
+        }
+        return null
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    public fun getContinuationStackWithSpilledVariables(coroutineStackFrame: CoroutineStackFrame): List<StackTraceFrame> {
+        // go up the stack, collect spilled variables via DebugMetadata
+        val debugMetadataClass = Class.forName("kotlin.coroutines.jvm.internal.DebugMetadataKt")
+        val baseContinuationImplClass = Class.forName("kotlin.coroutines.jvm.internal.BaseContinuationImpl")
+        val getSpilledVariables = debugMetadataClass.getDeclaredMethod("getSpilledVariableFieldMapping", baseContinuationImplClass)
+        val getStackTraceElement = debugMetadataClass.getDeclaredMethod("getStackTraceElement", baseContinuationImplClass)
+        
+        val continuationStack = mutableListOf<StackTraceFrame>()
+        var completion: CoroutineStackFrame? = coroutineStackFrame
+        while (completion != null) {
+            val spilledVariables: Array<String> = getSpilledVariables.invoke(null, coroutineStackFrame) as Array<String>
+            val stackTraceElement = getStackTraceElement.invoke(null, coroutineStackFrame) as StackTraceElement
+            continuationStack.add(StackTraceFrame(completion.callerFrame, stackTraceElement, spilledVariables))
+            completion = completion.callerFrame
+        }
+        return continuationStack
+    }
 
     /**
      * Whether to ignore coroutines whose context is [EmptyCoroutineContext].
@@ -47,43 +108,4 @@ internal object DebugProbesImpl {
      * `true` by default.
      */
     public var sanitizeStackTraces: Boolean = delegate.sanitizeStackTraces
-
-    /*
-     * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3. See KTIJ-24102
-     */
-    fun dumpCoroutinesInfo(): List<DebugCoroutineInfo> = TODO("Not implemented yet")
-    
-    //TODO: dumpDebuggerInfo(): List<DebuggerInfo>?
-
-    /*
-     * This method optimises the number of packages sent by the IDEA debugger
-     * to a client VM to speed up fetching of coroutine information.
-     *
-     * The return value is an array of objects, which consists of four elements:
-     * 1) A string in a JSON format that stores information that is needed to display
-     *    every coroutine in the coroutine panel in the IDEA debugger.
-     * 2) An array of last observed threads.
-     * 3) An array of last observed frames.
-     * 4) An array of DebugCoroutineInfo.
-     *
-     * ### Implementation note
-     * For methods like `dumpCoroutinesInfo` JDWP provides `com.sun.jdi.ObjectReference`
-     * that does a roundtrip to client VM for *each* field or property read.
-     * To avoid that, we serialize most of the critical for UI data into a primitives
-     * to save an exponential number of roundtrips.
-     * 
-     * Used in IDEA in CoroutinesInfoFromJsonAndReferencesProvider in priority to dumpCoroutinesInfo
-     */
-    public fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> = delegate.dumpCoroutinesInfoAsJsonAndReferences()
-    
-    // TODO: provide a proper way to extract DebugCoroutineInfo from coroutine Continuation
-    public fun <T> getCoroutineInfoFromCoroutineOwner(completion: Continuation<Any?>): DebugCoroutineInfo? {
-        // this completion is extracted by the debugger
-        // we extract the info field of the CoroutineOwner, though it's context could've been collected, then we return just null.
-        return (completion as? DebugProbesImpl.CoroutineOwner)?.info?.let { coroutineInfo ->
-            coroutineInfo.context?.let { coroutineContext ->  
-                DebugCoroutineInfo(coroutineInfo, coroutineContext)
-            }
-        }
-    }
 }
