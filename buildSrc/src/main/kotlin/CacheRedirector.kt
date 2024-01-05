@@ -107,13 +107,13 @@ private fun Project.checkRedirect(repositories: RepositoryHandler, containerName
 private fun Project.configureYarnAndNodeRedirects() {
     if (CacheRedirector.isEnabled) {
         val yarnRootExtension = extensions.findByType<YarnRootExtension>()
-        if (yarnRootExtension != null) {
-            yarnRootExtension.downloadBaseUrl = CacheRedirector.maybeRedirect(yarnRootExtension.downloadBaseUrl)
+        yarnRootExtension?.downloadBaseUrl?.let {
+            yarnRootExtension.downloadBaseUrl = CacheRedirector.maybeRedirect(it)
         }
 
         val nodeJsExtension = rootProject.extensions.findByType<NodeJsRootExtension>()
-        if (nodeJsExtension != null) {
-            nodeJsExtension.nodeDownloadBaseUrl = CacheRedirector.maybeRedirect(nodeJsExtension.nodeDownloadBaseUrl)
+        nodeJsExtension?.nodeDownloadBaseUrl?.let {
+            nodeJsExtension.nodeDownloadBaseUrl = CacheRedirector.maybeRedirect(it)
         }
     }
 }
