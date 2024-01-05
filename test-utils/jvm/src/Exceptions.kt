@@ -1,19 +1,19 @@
-package kotlinx.coroutines.exceptions
+package kotlinx.coroutines.testing.exceptions
 
 import kotlinx.coroutines.*
 import java.io.*
 import java.util.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-internal inline fun <reified T : Throwable> checkException(exception: Throwable): Boolean {
-    assertTrue(exception is T)
+inline fun <reified T : Throwable> checkException(exception: Throwable) {
+    assertIs<T>(exception)
     assertTrue(exception.suppressed.isEmpty())
     assertNull(exception.cause)
-    return true
 }
 
-internal fun checkCycles(t: Throwable) {
+fun checkCycles(t: Throwable) {
     val sw = StringWriter()
     t.printStackTrace(PrintWriter(sw))
     assertFalse(sw.toString().contains("CIRCULAR REFERENCE"))
@@ -28,10 +28,6 @@ class CapturingHandler : AbstractCoroutineContextElement(CoroutineExceptionHandl
         unhandled!!.add(exception)
     }
 
-    fun getExceptions(): List<Throwable> = synchronized(this) {
-        return unhandled!!.also { unhandled = null }
-    }
-
     fun getException(): Throwable = synchronized(this) {
         val size = unhandled!!.size
         assert(size == 1) { "Expected one unhandled exception, but have $size: $unhandled" }
@@ -39,7 +35,7 @@ class CapturingHandler : AbstractCoroutineContextElement(CoroutineExceptionHandl
     }
 }
 
-internal fun captureExceptionsRun(
+fun captureExceptionsRun(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> Unit
 ): Throwable {
@@ -48,11 +44,15 @@ internal fun captureExceptionsRun(
     return handler.getException()
 }
 
-internal fun captureMultipleExceptionsRun(
-    context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend CoroutineScope.() -> Unit
-): List<Throwable> {
+@OptIn(ExperimentalContracts::class)
+suspend inline fun <reified E: Throwable> assertCallsExceptionHandlerWith(
+    crossinline operation: suspend (CoroutineExceptionHandler) -> Unit): E {
+    contract {
+        callsInPlace(operation, InvocationKind.EXACTLY_ONCE)
+    }
     val handler = CapturingHandler()
-    runBlocking(context + handler, block = block)
-    return handler.getExceptions()
+    return withContext(handler) {
+        operation(handler)
+        assertIs<E>(handler.getException())
+    }
 }

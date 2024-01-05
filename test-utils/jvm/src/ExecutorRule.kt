@@ -1,8 +1,10 @@
-package kotlinx.coroutines
+package kotlinx.coroutines.testing
 
+import kotlinx.coroutines.*
 import org.junit.rules.*
 import org.junit.runner.*
 import org.junit.runners.model.*
+import java.lang.Runnable
 import java.util.concurrent.*
 import kotlin.coroutines.*
 

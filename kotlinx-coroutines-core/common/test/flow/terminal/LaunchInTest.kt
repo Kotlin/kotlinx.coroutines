@@ -1,5 +1,6 @@
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
@@ -15,7 +16,7 @@ class LaunchInTest : TestBase() {
             assertEquals(1, it)
             expect(2)
         }.onCompletion {
-            assertTrue(it is TestException)
+            assertIs<TestException>(it)
             expect(3)
         }.catch {
             assertTrue { it is TestException }

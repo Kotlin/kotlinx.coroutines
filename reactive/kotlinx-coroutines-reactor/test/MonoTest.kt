@@ -1,5 +1,6 @@
 package kotlinx.coroutines.reactor
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
@@ -49,7 +50,7 @@ class MonoTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            assertTrue(error is RuntimeException)
+            assertIs<RuntimeException>(error)
             assertEquals("OK", error.message)
         })
         expect(3)
@@ -233,7 +234,7 @@ class MonoTest : TestBase() {
             mono.awaitSingle()
             expectUnreached()
         } catch (e: TestException) {
-            assertTrue(e.suppressed[0] is TestException2)
+            assertIs<TestException2>(e.suppressed[0])
         }
     }
 
@@ -242,7 +243,7 @@ class MonoTest : TestBase() {
         expect(1)
         var subscription: Subscription? = null
         val handler = BiFunction<Throwable, Any?, Throwable> { t, _ ->
-            assertTrue(t is TestException)
+            assertIs<TestException>(t)
             expect(5)
             t
         }

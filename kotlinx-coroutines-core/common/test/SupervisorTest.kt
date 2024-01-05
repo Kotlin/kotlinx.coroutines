@@ -2,6 +2,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 class SupervisorTest : TestBase() {
@@ -169,7 +170,7 @@ class SupervisorTest : TestBase() {
             expectUnreached()
         } catch (e: CancellationException) {
             val cause = if (RECOVER_STACK_TRACES) e.cause?.cause!! else e.cause
-            assertTrue(cause is TestException1)
+            assertIs<TestException1>(cause)
             finish(3)
         }
     }

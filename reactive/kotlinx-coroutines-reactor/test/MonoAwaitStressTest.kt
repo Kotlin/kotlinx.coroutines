@@ -1,5 +1,6 @@
 package kotlinx.coroutines.reactor
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.Test
 import org.reactivestreams.*

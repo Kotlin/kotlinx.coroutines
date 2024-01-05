@@ -1,5 +1,6 @@
 package kotlinx.coroutines.android
 
+import kotlinx.coroutines.testing.*
 import android.os.*
 import kotlinx.coroutines.*
 import org.junit.Test

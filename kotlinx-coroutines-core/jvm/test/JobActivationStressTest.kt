@@ -1,5 +1,6 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -55,12 +56,12 @@ class JobActivationStressTest : TestBase() {
             joinAll(d, canceller, starter)
             if (wasStarted) {
                 val exception = d.getCompletionExceptionOrNull()
-                assertTrue(exception is TestException, "exception=$exception")
+                assertIs<TestException>(exception, "exception=$exception")
                 val cause = synchronized(causeHolder) {
                     while (causeHolder.cause == null) (causeHolder as Object).wait()
                     causeHolder.cause
                 }
-                assertTrue(cause is TestException, "cause=$cause")
+                assertIs<TestException>(cause, "cause=$cause")
             }
         }
     }

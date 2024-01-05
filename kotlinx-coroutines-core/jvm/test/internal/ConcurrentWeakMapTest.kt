@@ -1,5 +1,6 @@
 package kotlinx.coroutines.internal
 
+import kotlinx.coroutines.testing.*
 import junit.framework.Assert.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.*

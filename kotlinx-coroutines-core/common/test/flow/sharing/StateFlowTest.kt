@@ -1,5 +1,6 @@
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
@@ -141,7 +142,7 @@ class StateFlowTest : TestBase() {
                 }
             }
             .catch { e ->
-                assertTrue(e is TestException)
+                assertIs<TestException>(e)
                 expect(6)
             }
             .launchIn(this)

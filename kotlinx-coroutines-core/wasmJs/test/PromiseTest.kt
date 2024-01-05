@@ -1,5 +1,6 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlin.js.*
 import kotlin.test.*
 
@@ -26,7 +27,7 @@ class PromiseTest : TestBase() {
             deferred.await()
             expectUnreached()
         } catch (e: Throwable) {
-            assertTrue(e is TestException)
+            assertIs<TestException>(e)
             assertEquals("Rejected", e.message)
         }
     }

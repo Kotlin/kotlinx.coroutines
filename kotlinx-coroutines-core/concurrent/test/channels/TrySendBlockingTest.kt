@@ -1,5 +1,6 @@
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
@@ -26,7 +27,7 @@ class TrySendBlockingTest : TestBase() {
             val channel = Channel<Unit>().also { it.close() }
             channel.trySendBlocking(Unit)
                 .onSuccess { expectUnreached() }
-                .onFailure { assertTrue(it is ClosedSendChannelException) }
+                .onFailure { assertIs<ClosedSendChannelException>(it) }
                 .also { assertTrue { it.isClosed } }
         }
 
@@ -34,7 +35,7 @@ class TrySendBlockingTest : TestBase() {
             val channel = Channel<Unit>().also { it.close(TestException()) }
             channel.trySendBlocking(Unit)
                 .onSuccess { expectUnreached() }
-                .onFailure { assertTrue(it is TestException) }
+                .onFailure { assertIs<TestException>(it) }
                 .also { assertTrue { it.isClosed } }
         }
 
@@ -42,7 +43,7 @@ class TrySendBlockingTest : TestBase() {
             val channel = Channel<Unit>().also { it.cancel(TestCancellationException()) }
             channel.trySendBlocking(Unit)
                 .onSuccess { expectUnreached() }
-                .onFailure { assertTrue(it is TestCancellationException) }
+                .onFailure { assertIs<TestCancellationException>(it) }
                 .also { assertTrue { it.isClosed } }
         }
     }

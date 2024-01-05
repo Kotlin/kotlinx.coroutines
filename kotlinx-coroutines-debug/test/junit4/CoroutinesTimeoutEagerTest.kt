@@ -1,5 +1,6 @@
 package kotlinx.coroutines.debug.junit4
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.runners.model.*

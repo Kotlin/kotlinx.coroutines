@@ -1,5 +1,6 @@
 package kotlinx.coroutines.rx3
 
+import kotlinx.coroutines.testing.*
 import io.reactivex.rxjava3.core.*
 import io.reactivex.rxjava3.plugins.*
 import kotlinx.coroutines.*
@@ -44,7 +45,7 @@ class ObservableTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            assertTrue(error is RuntimeException)
+            assertIs<RuntimeException>(error)
             assertEquals("OK", error.message)
         })
         expect(3)

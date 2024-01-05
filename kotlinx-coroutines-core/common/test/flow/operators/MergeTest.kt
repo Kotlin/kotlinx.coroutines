@@ -1,5 +1,6 @@
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 import kotlinx.coroutines.flow.merge as originalMerge

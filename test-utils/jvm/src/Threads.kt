@@ -1,4 +1,7 @@
-package kotlinx.coroutines
+package kotlinx.coroutines.testing
+
+import kotlinx.coroutines.*
+import java.lang.Runnable
 
 private const val WAIT_LOST_THREADS = 10_000L // 10s
 private val ignoreLostThreads = mutableSetOf<String>()
@@ -31,6 +34,15 @@ fun List<Thread>.dumpThreads(header: String) {
         println()
     }
     println("===")
+}
+
+class PoolThread(
+    @JvmField val dispatcher: ExecutorCoroutineDispatcher, // for debugging & tests
+    target: Runnable, name: String
+) : Thread(target, name) {
+    init {
+        isDaemon = true
+    }
 }
 
 fun ExecutorCoroutineDispatcher.dumpThreads(header: String) =

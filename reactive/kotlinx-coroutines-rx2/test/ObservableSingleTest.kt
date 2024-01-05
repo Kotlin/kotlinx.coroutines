@@ -1,5 +1,6 @@
 package kotlinx.coroutines.rx2
 
+import kotlinx.coroutines.testing.*
 import io.reactivex.*
 import io.reactivex.disposables.*
 import kotlinx.coroutines.*
@@ -60,7 +61,7 @@ class ObservableSingleTest : TestBase() {
         }
 
         checkErroneous(observable) {
-            assertTrue(it is IllegalArgumentException)
+            assertIs<IllegalArgumentException>(it)
         }
     }
 
@@ -200,7 +201,7 @@ class ObservableSingleTest : TestBase() {
         }
 
         checkErroneous(observable) {
-            assertTrue(it is IllegalStateException)
+            assertIs<IllegalStateException>(it)
             assertEquals("OK", it.message)
         }
     }

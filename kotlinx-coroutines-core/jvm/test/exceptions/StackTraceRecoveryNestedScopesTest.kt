@@ -1,5 +1,6 @@
 package kotlinx.coroutines.exceptions
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import kotlin.coroutines.*
@@ -8,7 +9,7 @@ class StackTraceRecoveryNestedScopesTest : TestBase() {
 
     private val TEST_MACROS = "TEST_NAME"
 
-    private val expectedTrace = "kotlinx.coroutines.RecoverableTestException\n" +
+    private val expectedTrace = "kotlinx.coroutines.testing.RecoverableTestException\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.failure(StackTraceRecoveryNestedScopesTest.kt:9)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.access\$failure(StackTraceRecoveryNestedScopesTest.kt:7)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$createFailingAsync\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:12)\n" +
@@ -16,7 +17,7 @@ class StackTraceRecoveryNestedScopesTest : TestBase() {
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$callWithTimeout\$2.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:23)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$callCoroutineScope\$2.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:29)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$$TEST_MACROS\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:36)\n" +
-            "Caused by: kotlinx.coroutines.RecoverableTestException\n" +
+            "Caused by: kotlinx.coroutines.testing.RecoverableTestException\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.failure(StackTraceRecoveryNestedScopesTest.kt:9)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.access\$failure(StackTraceRecoveryNestedScopesTest.kt:7)\n" +
             "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$createFailingAsync\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:12)\n" +
@@ -78,7 +79,7 @@ class StackTraceRecoveryNestedScopesTest : TestBase() {
             deferred.await()
         } catch (e: Exception) {
             verifyStackTrace(e,
-                "kotlinx.coroutines.RecoverableTestException\n" +
+                "kotlinx.coroutines.testing.RecoverableTestException\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.failure(StackTraceRecoveryNestedScopesTest.kt:23)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.access\$failure(StackTraceRecoveryNestedScopesTest.kt:7)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$createFailingAsync\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:26)\n" +
@@ -88,7 +89,7 @@ class StackTraceRecoveryNestedScopesTest : TestBase() {
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$testAwaitNestedScopes\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:68)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.verifyAwait(StackTraceRecoveryNestedScopesTest.kt:76)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$testAwaitNestedScopes\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:71)\n" +
-                "Caused by: kotlinx.coroutines.RecoverableTestException\n" +
+                "Caused by: kotlinx.coroutines.testing.RecoverableTestException\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.failure(StackTraceRecoveryNestedScopesTest.kt:23)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest.access\$failure(StackTraceRecoveryNestedScopesTest.kt:7)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedScopesTest\$createFailingAsync\$1.invokeSuspend(StackTraceRecoveryNestedScopesTest.kt:26)\n" +

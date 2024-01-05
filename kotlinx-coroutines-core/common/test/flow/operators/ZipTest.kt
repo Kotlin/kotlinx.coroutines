@@ -1,25 +1,23 @@
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-/*
- * Replace:  { i, j -> i + j } -> ::sum as soon as KT-30991 is fixed
- */
 class ZipTest : TestBase() {
 
     @Test
     fun testZip() = runTest {
         val f1 = flowOf("a", "b", "c")
         val f2 = flowOf(1, 2, 3)
-        assertEquals(listOf("a1", "b2", "c3"), f1.zip(f2,  { i, j -> i + j }).toList())
+        assertEquals(listOf("a1", "b2", "c3"), f1.zip(f2, String::plus).toList())
     }
 
     @Test
     fun testUnevenZip() = runTest {
         val f1 = flowOf("a", "b", "c", "d", "e")
         val f2 = flowOf(1, 2, 3)
-        assertEquals(listOf("a1", "b2", "c3"), f1.zip(f2) { i, j -> i + j }.toList())
+        assertEquals(listOf("a1", "b2", "c3"), f1.zip(f2, String::plus).toList())
         assertEquals(listOf("a1", "b2", "c3"), f2.zip(f1) { i, j -> j + i }.toList())
     }
 
@@ -27,35 +25,35 @@ class ZipTest : TestBase() {
     fun testEmptyFlows() = runTest {
         val f1 = emptyFlow<String>()
         val f2 = emptyFlow<Int>()
-        assertEquals(emptyList(), f1.zip(f2,  { i, j -> i + j }).toList())
+        assertEquals(emptyList(), f1.zip(f2, String::plus).toList())
     }
 
     @Test
     fun testEmpty() = runTest {
         val f1 = emptyFlow<String>()
         val f2 = flowOf(1)
-        assertEquals(emptyList(), f1.zip(f2,  { i, j -> i + j }).toList())
+        assertEquals(emptyList(), f1.zip(f2, String::plus).toList())
     }
 
     @Test
     fun testEmptyOther() = runTest {
         val f1 = flowOf("a")
         val f2 = emptyFlow<Int>()
-        assertEquals(emptyList(), f1.zip(f2,  { i, j -> i + j }).toList())
+        assertEquals(emptyList(), f1.zip(f2, String::plus).toList())
     }
 
     @Test
     fun testNulls() = runTest {
         val f1 = flowOf("a", null, null, "d")
         val f2 = flowOf(1, 2, 3)
-        assertEquals(listOf("a1", "null2", "null3"), f1.zip(f2,  { i, j -> i + j }).toList())
+        assertEquals(listOf("a1", "null2", "null3"), f1.zip(f2, String?::plus).toList())
     }
 
     @Test
     fun testNullsOther() = runTest {
         val f1 = flowOf("a", "b", "c")
         val f2 = flowOf(1, null, null, 2)
-        assertEquals(listOf("a1", "bnull", "cnull"), f1.zip(f2,  { i, j -> i + j }).toList())
+        assertEquals(listOf("a1", "bnull", "cnull"), f1.zip(f2, String::plus).toList())
     }
 
     @Test
@@ -70,7 +68,7 @@ class ZipTest : TestBase() {
             emit("b")
             expectUnreached()
         }
-        assertEquals(listOf("1a", "2b"), f1.zip(f2) { s1, s2 -> s1 + s2 }.toList())
+        assertEquals(listOf("1a", "2b"), f1.zip(f2, String::plus).toList())
         finish(1)
     }
 
@@ -88,7 +86,7 @@ class ZipTest : TestBase() {
         }
 
         val f2 = flowOf("a", "b")
-        assertEquals(listOf("1a", "2b"), f1.zip(f2) { s1, s2 -> s1 + s2 }.toList())
+        assertEquals(listOf("1a", "2b"), f1.zip(f2, String::plus).toList())
         finish(2)
     }
 
@@ -108,7 +106,7 @@ class ZipTest : TestBase() {
             yield()
         }
 
-        assertEquals(listOf("a1", "b2"), f2.zip(f1) { s1, s2 -> s1 + s2 }.toList())
+        assertEquals(listOf("a1", "b2"), f2.zip(f1, String::plus).toList())
         finish(2)
     }
 
@@ -248,6 +246,6 @@ class ZipTest : TestBase() {
             yield()
         }
 
-        f1.zip(f2) { a, b -> a + b }.collect { }
+        f1.zip(f2, String::plus).collect { }
     }
 }

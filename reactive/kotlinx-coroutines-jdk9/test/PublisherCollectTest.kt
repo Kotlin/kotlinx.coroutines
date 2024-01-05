@@ -1,5 +1,6 @@
 package kotlinx.coroutines.jdk9
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.*
 import org.junit.Test

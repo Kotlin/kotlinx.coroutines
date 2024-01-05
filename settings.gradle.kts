@@ -25,6 +25,7 @@ build_snapshot_train = if (prop != null && prop != "") "true" else "false"
 // ---------------------------
 
 include("benchmarks")
+module("test-utils")
 
 include("kotlinx-coroutines-core")
 

@@ -1,6 +1,7 @@
 // This file was automatically generated from ${file.name} by Knit tool. Do not edit.
 package ${test.package}
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.guide.test.*
 import org.junit.Test
 

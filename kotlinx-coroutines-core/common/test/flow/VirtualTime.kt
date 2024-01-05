@@ -1,5 +1,6 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -79,6 +80,6 @@ public fun TestBase.withVirtualTime(block: suspend CoroutineScope.() -> Unit) = 
         // Create a platform-independent event loop
         val dispatcher = VirtualTimeDispatcher(this)
         withContext(dispatcher) { block() }
-        ensureFinished()
+        checkFinishCall(allowNotUsingExpect = false)
     }
 }

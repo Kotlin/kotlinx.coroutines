@@ -2,6 +2,7 @@
 
 package kotlinx.coroutines.selects
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
@@ -336,7 +337,7 @@ class SelectRendezvousChannelTest : TestBase() {
             channel.onReceiveCatching {
                 expect(5)
                 assertTrue(it.isClosed)
-                assertTrue(it.exceptionOrNull() is TestException)
+                assertIs<TestException>(it.exceptionOrNull())
             }
         }
 

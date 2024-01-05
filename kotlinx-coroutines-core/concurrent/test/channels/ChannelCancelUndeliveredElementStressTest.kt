@@ -1,5 +1,6 @@
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.testing.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
@@ -77,7 +78,7 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
                 }
             }
         } catch (e: Throwable) {
-            assertTrue(e is CancellationException) // the only exception possible in this test
+            assertIs<CancellationException>(e) // the only exception possible in this test
             dSendExceptionCnt++
             throw e
         }

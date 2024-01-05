@@ -1,5 +1,6 @@
 package kotlinx.coroutines.debug
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import kotlin.coroutines.*

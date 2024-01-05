@@ -1,5 +1,6 @@
 package kotlinx.coroutines.future
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.*
 import org.junit.*

@@ -1,6 +1,6 @@
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.testing.*
 import org.junit.Test
 import kotlin.test.*
 

@@ -1,5 +1,6 @@
 package kotlinx.coroutines.stream
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.junit.Test

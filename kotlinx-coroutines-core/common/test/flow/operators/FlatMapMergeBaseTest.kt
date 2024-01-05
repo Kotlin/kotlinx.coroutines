@@ -1,8 +1,9 @@
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
+import kotlin.test.assertFailsWith
 
 abstract class FlatMapMergeBaseTest : FlatMapBaseTest() {
     @Test

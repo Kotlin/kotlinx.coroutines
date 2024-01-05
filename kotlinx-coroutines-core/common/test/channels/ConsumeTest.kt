@@ -1,6 +1,7 @@
 @file:OptIn(DelicateCoroutinesApi::class)
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 

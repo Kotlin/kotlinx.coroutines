@@ -1,7 +1,9 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
+import kotlin.test.assertFailsWith
 
 @Suppress("DEPRECATION", "DEPRECATION_ERROR")
 class TestRunBlockingTest {

@@ -2,6 +2,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 class CompletableDeferredTest : TestBase() {
@@ -25,11 +26,11 @@ class CompletableDeferredTest : TestBase() {
     @Test
     fun testCompleteWithIncompleteResult() {
         val c = CompletableDeferred<DisposableHandle>()
-        assertEquals(true, c.complete(c.invokeOnCompletion {  }))
+        assertEquals(true, c.complete(c.invokeOnCompletion { }))
         checkCompleteOk(c)
-        assertEquals(false,  c.complete(c.invokeOnCompletion {  }))
+        assertEquals(false, c.complete(c.invokeOnCompletion { }))
         checkCompleteOk(c)
-        assertTrue(c.getCompleted() is Incomplete)
+        assertIs<Incomplete>(c.getCompleted())
     }
 
     private fun checkFresh(c: CompletableDeferred<*>) {
@@ -45,7 +46,7 @@ class CompletableDeferredTest : TestBase() {
         assertEquals(false, c.isActive)
         assertEquals(false, c.isCancelled)
         assertEquals(true, c.isCompleted)
-        assertTrue(c.getCancellationException() is JobCancellationException)
+        assertIs<JobCancellationException>(c.getCancellationException())
         assertNull(c.getCompletionExceptionOrNull())
     }
 
@@ -54,7 +55,7 @@ class CompletableDeferredTest : TestBase() {
         assertEquals(true, c.isCancelled)
         assertEquals(true, c.isCompleted)
         assertThrows<CancellationException> { c.getCompleted() }
-        assertTrue(c.getCompletionExceptionOrNull() is CancellationException)
+        assertIs<CancellationException>(c.getCompletionExceptionOrNull())
     }
 
     @Test
@@ -70,9 +71,9 @@ class CompletableDeferredTest : TestBase() {
         assertEquals(false, c.isActive)
         assertEquals(true, c.isCancelled)
         assertEquals(true, c.isCompleted)
-        assertTrue(c.getCancellationException() is JobCancellationException)
+        assertIs<JobCancellationException>(c.getCancellationException())
         assertThrows<TestException> { c.getCompleted() }
-        assertTrue(c.getCompletionExceptionOrNull() is TestException)
+        assertIs<TestException>(c.getCompletionExceptionOrNull())
     }
 
     @Test
@@ -107,7 +108,7 @@ class CompletableDeferredTest : TestBase() {
         assertEquals(true, c.isCancelled)
         assertEquals(true, c.isCompleted)
         assertThrows<CancellationException> { c.getCompleted() }
-        assertTrue(c.getCompletionExceptionOrNull() is CancellationException)
+        assertIs<CancellationException>(c.getCompletionExceptionOrNull())
     }
 
     @Test
@@ -208,7 +209,7 @@ class CompletableDeferredTest : TestBase() {
             block()
             fail("Should not complete normally")
         } catch (e: Throwable) {
-            assertTrue(e is T)
+            assertIs<T>(e)
         }
     }
 }

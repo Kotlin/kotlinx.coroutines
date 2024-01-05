@@ -1,5 +1,6 @@
 package kotlinx.coroutines.javafx
 
+import kotlinx.coroutines.testing.*
 import javafx.beans.property.SimpleIntegerProperty
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first

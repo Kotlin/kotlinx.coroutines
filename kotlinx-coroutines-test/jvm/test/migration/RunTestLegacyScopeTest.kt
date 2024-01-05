@@ -3,8 +3,10 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.test.assertFailsWith
 
 /** Copy of [RunTestTest], but for [TestCoroutineScope] */
 @Suppress("DEPRECATION")

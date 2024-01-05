@@ -1,5 +1,6 @@
 package kotlinx.coroutines.rx2
 
+import kotlinx.coroutines.testing.*
 import io.reactivex.exceptions.*
 import kotlinx.coroutines.*
 import org.junit.*
@@ -84,8 +85,8 @@ class ObservableExceptionHandlingTest : TestBase() {
             expect(1)
             val result = trySend(Unit)
             val exception = result.exceptionOrNull()
-            assertTrue(exception is UndeliverableException)
-            assertTrue(exception.cause is LinkageError)
+            assertIs<UndeliverableException>(exception)
+            assertIs<LinkageError>(exception.cause)
             assertTrue(isClosedForSend)
             expect(4)
             latch.countDown()

@@ -1,8 +1,8 @@
-kotlinx.coroutines.RecoverableTestException
+kotlinx.coroutines.testing.RecoverableTestException
 	at kotlinx.coroutines.channels.BufferedChannel.receive$suspendImpl(BufferedChannel.kt)
 	at kotlinx.coroutines.channels.BufferedChannel.receive(BufferedChannel.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$withContext$2.invokeSuspend(StackTraceRecoveryResumeModeTest.kt)
-Caused by: kotlinx.coroutines.RecoverableTestException
+Caused by: kotlinx.coroutines.testing.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testResumeModeFastPath(StackTraceRecoveryResumeModeTest.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.access$testResumeModeFastPath(StackTraceRecoveryResumeModeTest.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testUnconfined$1.invokeSuspend(StackTraceRecoveryResumeModeTest.kt)
