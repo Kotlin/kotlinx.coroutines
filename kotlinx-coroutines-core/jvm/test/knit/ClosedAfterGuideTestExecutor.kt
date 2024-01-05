@@ -13,15 +13,6 @@ internal fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
 internal fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher =
     ClosedAfterGuideTestDispatcher(nThreads, name)
 
-internal class PoolThread(
-    @JvmField val dispatcher: ExecutorCoroutineDispatcher, // for debugging & tests
-    target: Runnable, name: String
-) : Thread(target, name) {
-    init {
-        isDaemon = true
-    }
-}
-
 private class ClosedAfterGuideTestDispatcher(
     private val nThreads: Int,
     private val name: String

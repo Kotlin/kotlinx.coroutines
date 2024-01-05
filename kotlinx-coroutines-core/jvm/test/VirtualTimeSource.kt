@@ -13,14 +13,14 @@ private const val SHUTDOWN_TIMEOUT = 1000L
 internal inline fun withVirtualTimeSource(log: PrintStream? = null, block: () -> Unit) {
     DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT) // shutdown execution with old time source (in case it was working)
     val testTimeSource = VirtualTimeSource(log)
-    timeSource = testTimeSource
+    mockTimeSource(testTimeSource)
     DefaultExecutor.ensureStarted() // should start with new time source
     try {
         block()
     } finally {
         DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
         testTimeSource.shutdown()
-        timeSource = null // restore time source
+        mockTimeSource(null) // restore time source
     }
 }
 

@@ -112,33 +112,25 @@ configure(subprojects.filter { !sourceless.contains(it.name) }) {
     }
 }
 
+configure(subprojects.filter { !sourceless.contains(it.name) && it.name != testUtilsModule }) {
+    if (isMultiplatform) {
+        configure<KotlinMultiplatformExtension> {
+            sourceSets.commonTest.dependencies { implementation(project(":$testUtilsModule")) }
+        }
+    } else {
+        dependencies { add("testImplementation", project(":$testUtilsModule")) }
+    }
+}
+
 // Add dependency to the core module in all the other subprojects.
 configure(subprojects.filter { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
-    val jvmTestDependency = project(":$coreModule")
-        .extensions.getByType(KotlinMultiplatformExtension::class)
-        .targets["jvm"].compilations["test"].output.allOutputs
     if (isMultiplatform) {
         configure<KotlinMultiplatformExtension> {
-            sourceSets {
-                commonMain {
-                    dependencies {
-                        api(project(":$coreModule"))
-                    }
-                }
-                jvmTest {
-                    dependencies {
-                        implementation(jvmTestDependency)
-                    }
-                }
-            }
+            sourceSets.commonMain.dependencies { api(project(":$coreModule")) }
         }
     } else {
-        dependencies {
-            add("api", project(":$coreModule"))
-            // the only way IDEA can resolve test classes
-            add("testImplementation", jvmTestDependency)
-        }
+        dependencies { add("api", project(":$coreModule")) }
     }
 }
 

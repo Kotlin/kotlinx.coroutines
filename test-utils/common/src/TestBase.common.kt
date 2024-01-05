@@ -1,19 +1,74 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
-@file:Suppress("unused")
 
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
 
-public expect val isStressTest: Boolean
-public expect val stressTestMultiplier: Int
-public expect val stressTestMultiplierSqrt: Int
+/**
+ * The number of milliseconds that is sure not to pass [assertRunsFast].
+ */
+const val SLOW = 100_000L
+
+/**
+ * Asserts that a block completed within [timeout].
+ */
+inline fun <T> assertRunsFast(timeout: Duration, block: () -> T): T {
+    val result: T
+    val elapsed = TimeSource.Monotonic.measureTime { result = block() }
+    assertTrue("Should complete in $timeout, but took $elapsed") { elapsed < timeout }
+    return result
+}
+
+/**
+ * Asserts that a block completed within two seconds.
+ */
+inline fun <T> assertRunsFast(block: () -> T): T = assertRunsFast(2.seconds, block)
+
+/**
+ * A class inheriting from which allows to check the execution order inside tests.
+ *
+ * @see TestBase
+ */
+open class OrderedExecutionTestBase {
+    private val actionIndex = atomic(0)
+    private val finished = atomic(false)
+
+    /** Expect the next action to be [index] in order. */
+    protected fun expect(index: Int) {
+        val wasIndex = actionIndex.incrementAndGet()
+        check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
+    }
+
+    /** Expect this action to be final, with the given [index]. */
+    protected fun finish(index: Int) {
+        expect(index)
+        check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
+    }
+
+    @AfterTest
+    fun ensureFinishCalls() {
+        assertTrue(finished.value || actionIndex.value == 0, "Expected `finish` to be called")
+    }
+}
+
+fun <T> T.void() { }
+
+@OptionalExpectation
+expect annotation class NoJs()
+
+@OptionalExpectation
+expect annotation class NoNative()
+
+expect val isStressTest: Boolean
+expect val stressTestMultiplier: Int
+expect val stressTestMultiplierSqrt: Int
 
 /**
  * The result of a multiplatform asynchronous test.

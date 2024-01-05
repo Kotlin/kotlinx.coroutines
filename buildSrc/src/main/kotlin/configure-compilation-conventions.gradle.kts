@@ -20,7 +20,7 @@ configure(subprojects) {
                 apiVersion = it
                 versionsAreNotOverridden = false
             }
-            if (isMainTaskName && versionsAreNotOverridden) {
+            if (isMainTaskName && versionsAreNotOverridden && !unpublished.contains(project.name)) {
                 allWarningsAsErrors = true
                 freeCompilerArgs.add("-Xexplicit-api=strict")
             }

@@ -1,33 +1,38 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines
 
+import kotlin.test.*
 import kotlin.js.*
+
+actual typealias NoJs = Ignore
 
 public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 public actual val stressTestMultiplierSqrt: Int = 1
 
 @Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
-public actual typealias TestResult = Promise<Unit>
+public actual typealias TestResult = Promise<JsAny?>
 
 public actual val isNative = false
 
+@Suppress("NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS") // Counterpart for @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
 public actual open class TestBase actual constructor() {
     public actual val isBoundByJsTestTimeout = true
     private var actionIndex = 0
     private var finished = false
     private var error: Throwable? = null
-    private var lastTestPromise: Promise<*>? = null
+    private var lastTestPromise: Promise<JsAny?>? = null
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
      * complete successfully even if this exception is consumed somewhere in the test.
      */
-    public actual fun error(message: Any, cause: Throwable?): Nothing {
-        if (cause != null) console.log(cause)
+    @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+    public actual fun error(message: Any, cause: Throwable? = null): Nothing {
+        if (cause != null) println(cause)
         val exception = IllegalStateException(
             if (cause == null) message.toString() else "$message; caused by $cause")
         if (error == null) error = exception
@@ -37,7 +42,7 @@ public actual open class TestBase actual constructor() {
     private fun printError(message: String, cause: Throwable) {
         if (error == null) error = cause
         println("$message: $cause")
-        console.log(cause)
+        println(cause)
     }
 
     /**
@@ -75,10 +80,6 @@ public actual open class TestBase actual constructor() {
         check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
         actionIndex = 0
         finished = false
-    }
-
-    actual fun println(message: Any?) {
-        kotlin.io.println(message)
     }
 
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
@@ -120,13 +121,16 @@ public actual open class TestBase actual constructor() {
                 !unhandled[exCount - 1](e) ->
                     printError("Unhandled exception was unexpected: $e", e)
             }
-        }).catch { e ->
+        }).catch { jsE ->
+            val e = jsE.toThrowableOrNull() ?: error("Unexpected non-Kotlin exception $jsE")
             ex = e
             if (expected != null) {
                 if (!expected(e))
                     error("Unexpected exception", e)
             } else
                 throw e
+
+            null
         }.finally {
             if (ex == null && expected != null) error("Exception was expected but none produced")
             if (exCount < unhandled.size)
@@ -138,8 +142,5 @@ public actual open class TestBase actual constructor() {
         return result
     }
 }
-
-private fun <T> Promise<T>.finally(block: () -> Unit): Promise<T> =
-    then(onFulfilled = { value -> block(); value }, onRejected = { ex -> block(); throw ex })
 
 public actual val isJavaAndWindows: Boolean get() = false

@@ -37,6 +37,15 @@ fun List<Thread>.dumpThreads(header: String) {
     println("===")
 }
 
+class PoolThread(
+    @JvmField val dispatcher: ExecutorCoroutineDispatcher, // for debugging & tests
+    target: Runnable, name: String
+) : Thread(target, name) {
+    init {
+        isDaemon = true
+    }
+}
+
 fun ExecutorCoroutineDispatcher.dumpThreads(header: String) =
     currentThreads().filter { it is PoolThread && it.dispatcher == this@dumpThreads }.dumpThreads(header)
 

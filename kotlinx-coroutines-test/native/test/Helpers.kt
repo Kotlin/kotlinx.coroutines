@@ -3,8 +3,6 @@
  */
 package kotlinx.coroutines.test
 
-import kotlin.test.*
-
 actual fun testResultChain(block: () -> TestResult, after: (Result<Unit>) -> TestResult): TestResult {
     try {
         block()
@@ -13,5 +11,3 @@ actual fun testResultChain(block: () -> TestResult, after: (Result<Unit>) -> Tes
         after(Result.failure(e))
     }
 }
-
-actual typealias NoNative = Ignore

@@ -5,12 +5,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.js.dsl.*
 
-val experimentalAnnotations = listOf(
-    "kotlin.Experimental",
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "kotlinx.coroutines.InternalCoroutinesApi"
-)
-
 kotlin {
     targets.withType(KotlinNativeTargetWithTests::class.java).configureEach {
         binaries.getTest("DEBUG").apply {

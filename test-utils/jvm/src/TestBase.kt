@@ -1,19 +1,20 @@
 /*
- * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
-import org.junit.*
 import java.io.*
 import java.util.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-private val VERBOSE = systemProp("test.verbose", false)
+private val VERBOSE = try {
+    System.getProperty("test.verbose")?.toBoolean() ?: false
+} catch (e: SecurityException) {
+    false
+}
 
 /**
  * Is `true` when running in a nightly stress test mode.
@@ -158,7 +159,7 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
         else previousOut.println(message)
     }
 
-    @Before
+    @BeforeTest
     fun before() {
         initPoolsBeforeTest()
         threadsBefore = currentThreads()
@@ -174,7 +175,7 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
         }
     }
 
-    @After
+    @AfterTest
     fun onCompletion() {
         // onCompletion should not throw exceptions before it finishes all cleanup, so that other tests always
         // start in a clear, restored state
@@ -201,10 +202,12 @@ public actual open class TestBase(private var disableOutCheck: Boolean)  {
         error.get()?.let { throw it }
     }
 
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     fun initPoolsBeforeTest() {
         DefaultScheduler.usePrivateScheduler()
     }
 
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     fun shutdownPoolsAfterTest() {
         DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
         DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)

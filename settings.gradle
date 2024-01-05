@@ -27,6 +27,7 @@ ext.build_snapshot_train = prop != null && prop != ""
 // ---------------------------
 
 include('benchmarks')
+module('test-utils')
 
 include "kotlinx-coroutines-core"
 
