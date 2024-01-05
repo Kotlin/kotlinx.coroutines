@@ -35,8 +35,5 @@ internal actual class JobCancellationException public actual constructor(
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
 }
 
-@Suppress("NOTHING_TO_INLINE")
-internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) { /* empty */ }
-
 // For use in tests
 internal actual val RECOVER_STACK_TRACES: Boolean = false
