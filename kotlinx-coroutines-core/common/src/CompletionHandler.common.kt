@@ -1,7 +1,5 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
-
 /**
  * Handler for [Job.invokeOnCompletion] and [CancellableContinuation.invokeOnCancellation].
  *
@@ -21,23 +19,17 @@ import kotlinx.coroutines.internal.*
  */
 public typealias CompletionHandler = (cause: Throwable?) -> Unit
 
-// We want class that extends LockFreeLinkedListNode & CompletionHandler but we cannot do it on Kotlin/JS,
-// so this expect class provides us with the corresponding abstraction in a platform-agnostic way.
-internal expect abstract class CompletionHandlerBase() : LockFreeLinkedListNode {
-    abstract fun invoke(cause: Throwable?)
+@InternalCoroutinesApi
+public fun interface InternalCompletionHandler {
+    public fun invoke(cause: Throwable?)
+
+    public class UserSupplied(
+        private val handler: (cause: Throwable?) -> Unit
+    ) : InternalCompletionHandler {
+        override fun invoke(cause: Throwable?) {
+            handler(cause)
+        }
+    }
 }
 
-internal expect val CompletionHandlerBase.asHandler: CompletionHandler
-
-// More compact version of CompletionHandlerBase for CancellableContinuation with same workaround for JS
-internal expect abstract class CancelHandlerBase() {
-    abstract fun invoke(cause: Throwable?)
-}
-
-internal expect val CancelHandlerBase.asHandler: CompletionHandler
-
-// :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
-// because we play type tricks on Kotlin/JS and handler is not necessarily a function there
-internal expect fun CompletionHandler.invokeIt(cause: Throwable?)
-
-internal inline fun <reified T> CompletionHandler.isHandlerOf(): Boolean = this is T
+internal inline fun <reified T> InternalCompletionHandler.isHandlerOf(): Boolean = this is T

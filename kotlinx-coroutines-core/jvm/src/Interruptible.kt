@@ -59,7 +59,7 @@ private const val FINISHED = 1
 private const val INTERRUPTING = 2
 private const val INTERRUPTED = 3
 
-private class ThreadState(private val job: Job) : CompletionHandler {
+private class ThreadState(private val job: Job) : InternalCompletionHandler {
     /*
        === States ===
 

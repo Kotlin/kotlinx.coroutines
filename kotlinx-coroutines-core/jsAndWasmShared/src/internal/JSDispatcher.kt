@@ -46,7 +46,7 @@ internal abstract class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay 
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val handle = w3cSetTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
-        continuation.invokeOnCancellation(handler = ClearTimeout(handle).asHandler)
+        continuation.invokeOnCancellation(handler = ClearTimeout(handle))
     }
 }
 
@@ -57,7 +57,7 @@ internal class WindowDispatcher(private val window: W3CWindow) : CoroutineDispat
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val handle = w3cSetTimeout(window, { with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
-        continuation.invokeOnCancellation(handler = WindowClearTimeout(handle).asHandler)
+        continuation.invokeOnCancellation(handler = WindowClearTimeout(handle))
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {

@@ -99,7 +99,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = message)
-    override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler): DisposableHandle =
+    override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: InternalCompletionHandler): DisposableHandle =
         NonDisposableHandle
 
     /**

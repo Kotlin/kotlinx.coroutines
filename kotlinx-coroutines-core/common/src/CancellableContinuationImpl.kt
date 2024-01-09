@@ -234,12 +234,12 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
-    private fun callCancelHandler(handler: CompletionHandler, cause: Throwable?) =
+    private fun callCancelHandler(handler: InternalCompletionHandler, cause: Throwable?) =
         /*
         * :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
         * because we play type tricks on Kotlin/JS and handler is not necessarily a function there
         */
-        callCancelHandlerSafely { handler.invokeIt(cause) }
+        callCancelHandlerSafely { handler.invoke(cause) }
 
     fun callCancelHandler(handler: CancelHandler, cause: Throwable?) =
         callCancelHandlerSafely { handler.invoke(cause) }
@@ -343,7 +343,7 @@ internal open class CancellableContinuationImpl<in T>(
         // Install the handle
         val handle = parent.invokeOnCompletion(
             onCancelling = true,
-            handler = ChildContinuation(this).asHandler
+            handler = ChildContinuation(this)
         )
         _parentHandle.compareAndSet(null, handle)
         return handle
@@ -390,10 +390,12 @@ internal open class CancellableContinuationImpl<in T>(
         invokeOnCancellationImpl(segment)
     }
 
-    public override fun invokeOnCancellation(handler: CompletionHandler) {
-        val cancelHandler = makeCancelHandler(handler)
-        invokeOnCancellationImpl(cancelHandler)
-    }
+    public override fun invokeOnCancellation(handler: CompletionHandler) =
+        invokeOnCancellation(InvokeOnCancel(handler))
+
+    @InternalCoroutinesApi
+    override fun invokeOnCancellation(handler: CancelHandler) =
+        invokeOnCancellationImpl(handler)
 
     private fun invokeOnCancellationImpl(handler: Any) {
         assert { handler is CancelHandler || handler is Segment<*> }
@@ -460,9 +462,6 @@ internal open class CancellableContinuationImpl<in T>(
     private fun multipleHandlersError(handler: Any, state: Any?) {
         error("It's prohibited to register multiple handlers, tried to register $handler, already has $state")
     }
-
-    private fun makeCancelHandler(handler: CompletionHandler): CancelHandler =
-        if (handler is CancelHandler) handler else InvokeOnCancel(handler)
 
     private fun dispatchResume(mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
@@ -628,14 +627,17 @@ private object Active : NotCompleted {
  * Base class for all [CancellableContinuation.invokeOnCancellation] handlers to avoid an extra instance
  * on JVM, yet support JS where you cannot extend from a functional type.
  */
-internal abstract class CancelHandler : CancelHandlerBase(), NotCompleted
+@InternalCoroutinesApi
+public abstract class CancelHandler : NotCompleted {
+    public abstract fun invoke(cause: Throwable?)
+}
 
 // Wrapper for lambdas, for the performance sake CancelHandler can be subclassed directly
 private class InvokeOnCancel( // Clashes with InvokeOnCancellation
     private val handler: CompletionHandler
 ) : CancelHandler() {
     override fun invoke(cause: Throwable?) {
-        handler.invoke(cause)
+        handler(cause)
     }
     override fun toString() = "InvokeOnCancel[${handler.classSimpleName}@$hexAddress]"
 }
