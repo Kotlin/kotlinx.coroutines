@@ -20,23 +20,27 @@ public class DebugCoroutineInfo internal constructor(
 
     /**
      * Last observed state of the coroutine
+     * // TODO: should pass enum value
      */
+    @JvmField
     public val state: String = delegate.state
-    
-    /**
-     * Creation stacktrace of the coroutine.
-     */
-    public val creationStackTrace: List<StackTraceElement> = delegate.creationStackTrace
     
     /**
      * Last active thread used by a coroutine captured on its suspension or resumption point.
      */
+    @JvmField
     public val lastObservedThread: Thread? = delegate.lastObservedThread
 
     /**
      * Last observed coroutine frame captured on its suspension or resumption point.
      */
+    @JvmField
     public val lastObservedFrame: CoroutineStackFrame? = delegate.lastObservedFrame
+
+    /**
+     * Creation stacktrace of the coroutine.
+     */
+    public val creationStackTrace: List<StackTraceElement> = delegate.creationStackTrace
 
     /**
      * TODO: Note, this implementation is copied from kotlinx.coroutines.debug.internal.DebugProbesImpl
@@ -77,7 +81,6 @@ public class DebugCoroutineInfo internal constructor(
         }
         append('"')
     }
-
 
     /**
      * TODO: Note, this implementation is copied from kotlinx.coroutines.debug.internal.DebugProbesImpl

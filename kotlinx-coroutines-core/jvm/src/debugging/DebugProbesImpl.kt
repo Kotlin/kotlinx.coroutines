@@ -12,6 +12,10 @@ import kotlin.coroutines.*
 
 public object DebugProbesImpl {
     private val delegate = DebugProbesImpl
+    private val debugMetadataClass = Class.forName("kotlin.coroutines.jvm.internal.DebugMetadataKt")
+    private val baseContinuationImplClass = Class.forName("kotlin.coroutines.jvm.internal.BaseContinuationImpl")
+    private val getSpilledVariables = debugMetadataClass.getDeclaredMethod("getSpilledVariableFieldMapping", baseContinuationImplClass)
+    private val getStackTraceElement = debugMetadataClass.getDeclaredMethod("getStackTraceElement", baseContinuationImplClass)
 
     /**
      * Whether DebugProbes are installed.
@@ -36,7 +40,7 @@ public object DebugProbesImpl {
      * to save an exponential number of roundtrips.
      * 
      * NOTE: Used in IDEA in CoroutinesInfoFromJsonAndReferencesProvider in priority to dumpCoroutinesInfo
-     * TODO: maybe should be renamed
+     * TODO: should be renamed
      */
     public fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> = delegate.dumpCoroutinesInfoAsJsonAndReferences()
 
@@ -57,21 +61,22 @@ public object DebugProbesImpl {
         }
         return null
     }
-
+    
+    /**
+     * Gets the continuation stack of BaseContinuationImpl instances starting from the given [coroutineStackFrame] up to the parent continuation.
+     * Adds spilled variables for every frame that is an instance of BaseContinuationImpl.
+     */
     @Suppress("UNCHECKED_CAST")
     public fun getContinuationStackWithSpilledVariables(coroutineStackFrame: CoroutineStackFrame): List<StackTraceFrame> {
-        // go up the stack, collect spilled variables via DebugMetadata
-        val debugMetadataClass = Class.forName("kotlin.coroutines.jvm.internal.DebugMetadataKt")
-        val baseContinuationImplClass = Class.forName("kotlin.coroutines.jvm.internal.BaseContinuationImpl")
-        val getSpilledVariables = debugMetadataClass.getDeclaredMethod("getSpilledVariableFieldMapping", baseContinuationImplClass)
-        val getStackTraceElement = debugMetadataClass.getDeclaredMethod("getStackTraceElement", baseContinuationImplClass)
-        
         val continuationStack = mutableListOf<StackTraceFrame>()
         var completion: CoroutineStackFrame? = coroutineStackFrame
         while (completion != null) {
-            val spilledVariables: Array<String> = getSpilledVariables.invoke(null, coroutineStackFrame) as Array<String>
-            val stackTraceElement = getStackTraceElement.invoke(null, coroutineStackFrame) as StackTraceElement
-            continuationStack.add(StackTraceFrame(completion.callerFrame, stackTraceElement, spilledVariables))
+            // top-level completion reached, return the continuation stack
+            // Note: https://github.com/JetBrains/kotlin/blob/65244b4bea81f737466618927d4f3afe339cad0d/libraries/stdlib/jvm/src/kotlin/coroutines/jvm/internal/ContinuationImpl.kt#L45
+            if (!baseContinuationImplClass.isInstance(completion)) break
+            val spilledVariables: Array<String> = getSpilledVariables.invoke(null, completion) as Array<String>
+            val stackTraceElement = getStackTraceElement.invoke(null, completion) as StackTraceElement
+            continuationStack.add(StackTraceFrame(completion, stackTraceElement, spilledVariables))
             completion = completion.callerFrame
         }
         return continuationStack

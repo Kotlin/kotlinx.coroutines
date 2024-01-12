@@ -6,10 +6,12 @@ package kotlinx.coroutines.debugging
 
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 
+// TODO: rename to DebuggingCoroutineTraceFrame
 public class StackTraceFrame internal constructor(
     override val callerFrame: CoroutineStackFrame?,
-    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
-    @JvmField public val stackTraceElement: StackTraceElement,
+    @JvmField
+    public val stackTraceElement: StackTraceElement,
+    @JvmField
     public val spilledVariables: Array<String>
 ) : CoroutineStackFrame {
     override fun getStackTraceElement(): StackTraceElement = stackTraceElement
