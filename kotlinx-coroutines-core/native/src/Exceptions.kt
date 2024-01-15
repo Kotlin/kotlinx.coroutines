@@ -4,9 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.internal.SuppressSupportingThrowableImpl
-
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
  * It indicates _normal_ cancellation of a coroutine.
@@ -36,11 +33,6 @@ internal actual class JobCancellationException public actual constructor(
             other is JobCancellationException && other.message == message && other.job == job && other.cause == cause
     override fun hashCode(): Int =
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
-}
-
-@Suppress("NOTHING_TO_INLINE")
-internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) {
-    if (this is SuppressSupportingThrowableImpl) addSuppressed(other)
 }
 
 // For use in tests

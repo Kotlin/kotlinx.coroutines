@@ -68,7 +68,3 @@ internal actual class JobCancellationException public actual constructor(
     override fun hashCode(): Int =
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
 }
-
-@Suppress("NOTHING_TO_INLINE")
-internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) =
-    addSuppressed(other)

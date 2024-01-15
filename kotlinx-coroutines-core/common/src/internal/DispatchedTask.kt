@@ -139,7 +139,7 @@ internal abstract class DispatchedTask<in T> internal constructor(
     internal fun handleFatalException(exception: Throwable?, finallyException: Throwable?) {
         if (exception === null && finallyException === null) return
         if (exception !== null && finallyException !== null) {
-            exception.addSuppressedThrowable(finallyException)
+            exception.addSuppressed(finallyException)
         }
 
         val cause = exception ?: finallyException

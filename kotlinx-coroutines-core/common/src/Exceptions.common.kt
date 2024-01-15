@@ -26,6 +26,5 @@ internal expect class JobCancellationException(
 
 internal class CoroutinesInternalError(message: String, cause: Throwable) : Error(message, cause)
 
-internal expect fun Throwable.addSuppressedThrowable(other: Throwable)
 // For use in tests
 internal expect val RECOVER_STACK_TRACES: Boolean

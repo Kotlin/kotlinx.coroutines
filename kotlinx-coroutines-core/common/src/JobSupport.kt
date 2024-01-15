@@ -281,7 +281,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             val unwrapped = unwrap(exception)
             if (unwrapped !== rootCause && unwrapped !== unwrappedCause &&
                 unwrapped !is CancellationException && seenExceptions.add(unwrapped)) {
-                rootCause.addSuppressedThrowable(unwrapped)
+                rootCause.addSuppressed(unwrapped)
             }
         }
     }
@@ -369,7 +369,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             try {
                 node.invoke(cause)
             } catch (ex: Throwable) {
-                exception?.apply { addSuppressedThrowable(ex) } ?: run {
+                exception?.apply { addSuppressed(ex) } ?: run {
                     exception =  CompletionHandlerException("Exception in completion handler $node for $this", ex)
                 }
             }

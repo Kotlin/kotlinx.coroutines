@@ -56,7 +56,7 @@ internal fun consumesAll(vararg channels: ReceiveChannel<*>): CompletionHandler 
                 if (exception == null) {
                     exception = e
                 } else {
-                    exception.addSuppressedThrowable(e)
+                    exception.addSuppressed(e)
                 }
             }
         exception?.let { throw it }
