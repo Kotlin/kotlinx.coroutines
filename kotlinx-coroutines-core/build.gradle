@@ -108,8 +108,6 @@ kotlin {
     targets.withType(org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests.class).configureEach {
         binaries.getTest("DEBUG").with {
             optimized = true
-            // Test for memory leaks using a special entry point that does not exit but returns from main
-            freeCompilerArgs += ["-e", "kotlinx.coroutines.mainNoExit"]
         }
 
         binaries.test("workerTest", [DEBUG]) {

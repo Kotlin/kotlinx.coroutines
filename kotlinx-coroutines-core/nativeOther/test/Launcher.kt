@@ -16,8 +16,3 @@ fun mainBackground(args: Array<String>) {
         exitProcess(result)
     }.result // block main thread
 }
-
-// This is a separate entry point for tests with leak checker
-fun mainNoExit(args: Array<String>) {
-    testLauncherEntryPoint(args)
-}
