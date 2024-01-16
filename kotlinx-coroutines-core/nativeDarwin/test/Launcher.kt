@@ -20,9 +20,3 @@ fun mainBackground(args: Array<String>) {
     error("CFRunLoopRun should never return")
 }
 
-// This is a separate entry point for tests with leak checker
-fun mainNoExit(args: Array<String>) {
-    workerMain { // autoreleasepool to make sure interop objects are properly freed
-        testLauncherEntryPoint(args)
-    }
-}
