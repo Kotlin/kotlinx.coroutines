@@ -10,7 +10,6 @@ import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
 import java.lang.StackTraceElement
 import java.text.*
-import java.util.concurrent.locks.*
 import kotlin.collections.ArrayList
 import kotlin.concurrent.*
 import kotlin.coroutines.*
@@ -34,7 +33,7 @@ internal object DebugProbesImpl {
     /**
      * A thread local value that stores CoroutineId of the coroutine that is being executed on the thread.
      */
-    private val threadLocalCoroutineId: ThreadLocal<CoroutineId> = ThreadLocal()
+    private val threadLocalCoroutineId: ThreadLocal<Long> = ThreadLocal()
 
     /**
      * This function is used by debugger (just to test the solution for now).
@@ -51,7 +50,7 @@ internal object DebugProbesImpl {
      * The current coroutine id is saved in the breakpoint and 
      * debugger will only stop at the breakpoint if the coroutine with same id is running in the current thread.
      */
-    public fun getCurrentThreadCoroutineId(): Long = threadLocalCoroutineId.get().id
+    public val currentThreadCoroutineId: Long get() = threadLocalCoroutineId.get()
 
     /**
      * This internal method is used by the IDEA debugger under the JVM name
@@ -463,8 +462,7 @@ internal object DebugProbesImpl {
     
     private fun saveCoroutineIdToThreadLocal(frame: Continuation<*>) {
         frame.owner()?.info?.let { debugCoroutineInfo ->
-            val coroutineId = debugCoroutineInfo.context?.get(CoroutineId) ?: return
-            threadLocalCoroutineId.set(coroutineId)
+            threadLocalCoroutineId.set(debugCoroutineInfo.sequenceNumber)
         }
     }
 
