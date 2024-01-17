@@ -9,30 +9,36 @@ import kotlinx.coroutines.debug.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
 
+// TODO: do we want to reuse DebugCoroutineInfo? 
 public class DebugCoroutineInfo internal constructor(
     private val delegate: DebugCoroutineInfoImpl,
-    public val context: CoroutineContext
+    public val context: CoroutineContext // TODO: let's give out only necesssary fields
 ) { 
     /**
      * [Job] associated with a current coroutine or null.
+     * TODO: may be extracted from context
      */
     public val job: Job? get() = context[Job]
 
     /**
      * Last observed state of the coroutine
-     * // TODO: should pass enum value
+     * // TODO: should pass enum value { CREATED, SUSPENDED, RUNNING }
+     * TODO: can change
      */
     @JvmField
     public val state: String = delegate.state
     
     /**
      * Last active thread used by a coroutine captured on its suspension or resumption point.
+     * TODO: can change
      */
     @JvmField
     public val lastObservedThread: Thread? = delegate.lastObservedThread
 
     /**
      * Last observed coroutine frame captured on its suspension or resumption point.
+     * // TODO: do not need it. enhancedStackTrace returns the list with both plain and coroutine frames
+     *  TODO: can change
      */
     @JvmField
     public val lastObservedFrame: CoroutineStackFrame? = delegate.lastObservedFrame
@@ -41,7 +47,7 @@ public class DebugCoroutineInfo internal constructor(
      * Creation stacktrace of the coroutine.
      */
     public val creationStackTrace: List<StackTraceElement> = delegate.creationStackTrace
-
+    
     /**
      * TODO: Note, this implementation is copied from kotlinx.coroutines.debug.internal.DebugProbesImpl
      */

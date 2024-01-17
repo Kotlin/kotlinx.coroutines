@@ -10,9 +10,9 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 public class StackTraceFrame internal constructor(
     override val callerFrame: CoroutineStackFrame?,
     @JvmField
-    public val stackTraceElement: StackTraceElement,
-    @JvmField
-    public val spilledVariables: Array<String>
+    public val stackTraceElement: StackTraceElement?,
+    @JvmField // todo lazy { }, not a JvmField
+    public val spilledVariables: Array<String>?
 ) : CoroutineStackFrame {
-    override fun getStackTraceElement(): StackTraceElement = stackTraceElement
+    override fun getStackTraceElement(): StackTraceElement? = stackTraceElement
 }
