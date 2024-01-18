@@ -1,7 +1,3 @@
-/*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
 // Currently the compilation of the module-info fails for
 // kotlinx-coroutines-play-services because it depends on Android JAR's
 // which do not have an explicit module-info descriptor.

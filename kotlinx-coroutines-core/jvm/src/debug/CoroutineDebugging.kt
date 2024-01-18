@@ -1,7 +1,3 @@
-/*
- * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
-
 /* This package name is like this so that
 1) the artificial stack frames look pretty, and
 2) the IDE reliably navigates to this file. */
