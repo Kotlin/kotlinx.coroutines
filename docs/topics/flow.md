@@ -677,14 +677,16 @@ fun main() = runBlocking<Unit> {
   
 Notice how `flow { ... }` works in the background thread, while collection happens in the main thread:   
 
-<!--- TEST FLEXIBLE_THREAD
+```text
 [DefaultDispatcher-worker-1 @coroutine#2] Emitting 1
 [main @coroutine#1] Collected 1
 [DefaultDispatcher-worker-1 @coroutine#2] Emitting 2
 [main @coroutine#1] Collected 2
 [DefaultDispatcher-worker-1 @coroutine#2] Emitting 3
 [main @coroutine#1] Collected 3
--->
+```
+
+<!--- TEST FLEXIBLE_THREAD -->
 
 Another thing to observe here is that the [flowOn] operator has changed the default sequential nature of the flow.
 Now collection happens in one coroutine ("coroutine#1") and emission happens in another coroutine
