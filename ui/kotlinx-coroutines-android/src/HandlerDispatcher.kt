@@ -28,12 +28,12 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
      * ```
      * suspend fun updateUiElement(val text: String) {
      *   /*
-     *    * If it is known that updateUiElement can be invoked both from the Main thread and from other threads,
-     *    * `immediate` dispatcher is used as a performance optimization to avoid unnecessary dispatch.
+     *    - If it is known that updateUiElement can be invoked both from the Main thread and from other threads,
+     *    - `immediate` dispatcher is used as a performance optimization to avoid unnecessary dispatch.
      *    *
-     *    * In that case, when `updateUiElement` is invoked from the Main thread, `uiElement.text` will be
-     *    * invoked immediately without any dispatching, otherwise, the `Dispatchers.Main` dispatch cycle via
-     *    * `Handler.post` will be triggered.
+     *    - In that case, when `updateUiElement` is invoked from the Main thread, `uiElement.text` will be
+     *    - invoked immediately without any dispatching, otherwise, the `Dispatchers.Main` dispatch cycle via
+     *    - `Handler.post` will be triggered.
      *    */
      *   withContext(Dispatchers.Main.immediate) {
      *     uiElement.text = text

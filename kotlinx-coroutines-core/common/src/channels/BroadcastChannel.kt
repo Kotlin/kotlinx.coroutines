@@ -55,11 +55,11 @@ public interface BroadcastChannel<E> : SendChannel<E> {
  *
  * The resulting channel type depends on the specified [capacity] parameter:
  *
- * * when `capacity` positive, but less than [UNLIMITED] -- creates `ArrayBroadcastChannel` with a buffer of given capacity.
+ * - when `capacity` positive, but less than [UNLIMITED] -- creates `ArrayBroadcastChannel` with a buffer of given capacity.
  *   **Note:** this channel looses all items that have been sent to it until the first subscriber appears;
- * * when `capacity` is [CONFLATED] -- creates [ConflatedBroadcastChannel] that conflates back-to-back sends;
- * * when `capacity` is [BUFFERED] -- creates `ArrayBroadcastChannel` with a default capacity.
- * * otherwise -- throws [IllegalArgumentException].
+ * - when `capacity` is [CONFLATED] -- creates [ConflatedBroadcastChannel] that conflates back-to-back sends;
+ * - when `capacity` is [BUFFERED] -- creates `ArrayBroadcastChannel` with a default capacity.
+ * - otherwise -- throws [IllegalArgumentException].
  *
  * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
  * It is replaced with [SharedFlow][kotlinx.coroutines.flow.SharedFlow] and [StateFlow][kotlinx.coroutines.flow.StateFlow].

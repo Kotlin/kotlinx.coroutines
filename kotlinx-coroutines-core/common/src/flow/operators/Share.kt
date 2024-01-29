@@ -20,17 +20,17 @@ import kotlin.jvm.*
  * The starting of the sharing coroutine is controlled by the [started] parameter. The following options
  * are supported.
  *
- * * [Eagerly][SharingStarted.Eagerly] &mdash; the upstream flow is started even before the first subscriber appears. Note
+ * - [Eagerly][SharingStarted.Eagerly] &mdash; the upstream flow is started even before the first subscriber appears. Note
  *   that in this case all values emitted by the upstream beyond the most recent values as specified by
  *   [replay] parameter **will be immediately discarded**.
- * * [Lazily][SharingStarted.Lazily] &mdash; starts the upstream flow after the first subscriber appears, which guarantees
+ * - [Lazily][SharingStarted.Lazily] &mdash; starts the upstream flow after the first subscriber appears, which guarantees
  *   that this first subscriber gets all the emitted values, while subsequent subscribers are only guaranteed to
  *   get the most recent [replay] values. The upstream flow continues to be active even when all subscribers
  *   disappear, but only the most recent [replay] values are cached without subscribers.
- * * [WhileSubscribed()][SharingStarted.WhileSubscribed] &mdash; starts the upstream flow when the first subscriber
+ * - [WhileSubscribed()][SharingStarted.WhileSubscribed] &mdash; starts the upstream flow when the first subscriber
  *   appears, immediately stops when the last subscriber disappears, keeping the replay cache forever.
  *   It has additional optional configuration parameters as explained in its documentation.
- * * A custom strategy can be supplied by implementing the [SharingStarted] interface.
+ * - A custom strategy can be supplied by implementing the [SharingStarted] interface.
  *
  * The `shareIn` operator is useful in situations when there is a _cold_ flow that is expensive to create and/or
  * to maintain, but there are multiple subscribers that need to collect its values. For example, consider a
@@ -107,12 +107,12 @@ import kotlin.jvm.*
  * This default buffering can be overridden with an explicit buffer configuration by preceding the `shareIn` call
  * with [buffer] or [conflate], for example:
  *
- * * `buffer(0).shareIn(scope, started, 0)` &mdash; overrides the default buffer size and creates a [SharedFlow] without a buffer.
+ * - `buffer(0).shareIn(scope, started, 0)` &mdash; overrides the default buffer size and creates a [SharedFlow] without a buffer.
  *   Effectively, it configures sequential processing between the upstream emitter and subscribers,
  *   as the emitter is suspended until all subscribers process the value. Note, that the value is still immediately
  *   discarded when there are no subscribers.
- * * `buffer(b).shareIn(scope, started, r)` &mdash; creates a [SharedFlow] with `replay = r` and `extraBufferCapacity = b`.
- * * `conflate().shareIn(scope, started, r)` &mdash; creates a [SharedFlow] with `replay = r`, `onBufferOverflow = DROP_OLDEST`,
+ * - `buffer(b).shareIn(scope, started, r)` &mdash; creates a [SharedFlow] with `replay = r` and `extraBufferCapacity = b`.
+ * - `conflate().shareIn(scope, started, r)` &mdash; creates a [SharedFlow] with `replay = r`, `onBufferOverflow = DROP_OLDEST`,
  *   and `extraBufferCapacity = 1` when `replay == 0` to support this strategy.
  *
  * ### Operator fusion
@@ -197,9 +197,9 @@ private fun <T> CoroutineScope.launchSharing(
     /*
      * Conditional start: in the case when sharing and subscribing happens in the same dispatcher, we want to
      * have the following invariants preserved:
-     * * Delayed sharing strategies have a chance to immediately observe consecutive subscriptions.
+     * - Delayed sharing strategies have a chance to immediately observe consecutive subscriptions.
      *   E.g. in the cases like `flow.shareIn(...); flow.take(1)` we want sharing strategy to see the initial subscription
-     * * Eager sharing does not start immediately, so the subscribers have actual chance to subscribe _prior_ to sharing.
+     * - Eager sharing does not start immediately, so the subscribers have actual chance to subscribe _prior_ to sharing.
      */
     val start = if (started == SharingStarted.Eagerly) CoroutineStart.DEFAULT else CoroutineStart.UNDISPATCHED
     return launch(context, start = start) { // the single coroutine to rule the sharing

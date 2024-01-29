@@ -15,17 +15,17 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * A test result.
  *
- * * On JVM and Native, this resolves to [Unit], representing the fact that tests are run in a blocking manner on these
+ * - On JVM and Native, this resolves to [Unit], representing the fact that tests are run in a blocking manner on these
  *   platforms: a call to a function returning a [TestResult] will simply execute the test inside it.
- * * On JS, this is a `Promise`, which reflects the fact that the test-running function does not wait for a test to
+ * - On JS, this is a `Promise`, which reflects the fact that the test-running function does not wait for a test to
  *   finish. The JS test frameworks typically support returning `Promise` from a test and will correctly handle it.
  *
  * Because of the behavior on JS, extra care must be taken when writing multiplatform tests to avoid losing test errors:
- * * Don't do anything after running the functions returning a [TestResult]. On JS, this code will execute *before* the
+ * - Don't do anything after running the functions returning a [TestResult]. On JS, this code will execute *before* the
  *   test finishes.
- * * As a corollary, don't run functions returning a [TestResult] more than once per test. The only valid thing to do
+ * - As a corollary, don't run functions returning a [TestResult] more than once per test. The only valid thing to do
  *   with a [TestResult] is to immediately `return` it from a test.
- * * Don't nest functions returning a [TestResult].
+ * - Don't nest functions returning a [TestResult].
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 public expect class TestResult
@@ -462,11 +462,11 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
      * 1. Try running the work that the scheduler knows about, both background and foreground.
      *
      * 2. Wait until we run out of foreground work to do. This could mean one of the following:
-     *    * The main coroutine is already completed. This is checked separately; then we leave the procedure.
-     *    * It's switched to another dispatcher that doesn't know about the [TestCoroutineScheduler].
-     *    * Generally, it's waiting for something external (like a network request, or just an arbitrary callback).
-     *    * The test simply hanged.
-     *    * The main coroutine is waiting for some background work.
+     *    - The main coroutine is already completed. This is checked separately; then we leave the procedure.
+     *    - It's switched to another dispatcher that doesn't know about the [TestCoroutineScheduler].
+     *    - Generally, it's waiting for something external (like a network request, or just an arbitrary callback).
+     *    - The test simply hanged.
+     *    - The main coroutine is waiting for some background work.
      *
      * 3. We await progress from things that are not the code under test:
      *    the background work that the scheduler knows about, the external callbacks,

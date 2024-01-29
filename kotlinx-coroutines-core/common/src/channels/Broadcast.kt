@@ -74,10 +74,10 @@ public fun <E> ReceiveChannel<E>.broadcast(
  * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter:
- * * when `capacity` is positive (1 by default), but less than [UNLIMITED] -- uses [BroadcastChannel] with a buffer of given capacity,
- * * when `capacity` is [CONFLATED] -- uses [ConflatedBroadcastChannel] that conflates back-to-back sends;
+ * - when `capacity` is positive (1 by default), but less than [UNLIMITED] -- uses [BroadcastChannel] with a buffer of given capacity,
+ * - when `capacity` is [CONFLATED] -- uses [ConflatedBroadcastChannel] that conflates back-to-back sends;
  *   Note that resulting channel behaves like [ConflatedBroadcastChannel] but is not an instance of [ConflatedBroadcastChannel].
- * * otherwise -- throws [IllegalArgumentException].
+ * - otherwise -- throws [IllegalArgumentException].
  *
  * **Note:** By default, the coroutine does not start until the first subscriber appears via [BroadcastChannel.openSubscription]
  * as [start] parameter has a value of [CoroutineStart.LAZY] by default.

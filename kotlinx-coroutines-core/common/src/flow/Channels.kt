@@ -48,9 +48,9 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
  *
  * ### Cancellation semantics
  *
- * * Flow collectors are cancelled when the original channel is [closed][SendChannel.close] with an exception.
- * * Flow collectors complete normally when the original channel is [closed][SendChannel.close] normally.
- * * Failure or cancellation of the flow collector does not affect the channel.
+ * - Flow collectors are cancelled when the original channel is [closed][SendChannel.close] with an exception.
+ * - Flow collectors complete normally when the original channel is [closed][SendChannel.close] normally.
+ * - Failure or cancellation of the flow collector does not affect the channel.
  *
  * ### Operator fusion
  *
@@ -69,9 +69,9 @@ public fun <T> ReceiveChannel<T>.receiveAsFlow(): Flow<T> = ChannelAsFlow(this, 
  *
  * ### Cancellation semantics
  *
- * * Flow collector is cancelled when the original channel is [closed][SendChannel.close] with an exception.
- * * Flow collector completes normally when the original channel is [closed][SendChannel.close] normally.
- * * If the flow collector fails with an exception, the source channel is [cancelled][ReceiveChannel.cancel].
+ * - Flow collector is cancelled when the original channel is [closed][SendChannel.close] with an exception.
+ * - Flow collector completes normally when the original channel is [closed][SendChannel.close] normally.
+ * - If the flow collector fails with an exception, the source channel is [cancelled][ReceiveChannel.cancel].
  *
  * ### Operator fusion
  *
@@ -156,9 +156,9 @@ public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
  * This transformation is **stateful**, it launches a [produce] coroutine
  * that collects the given flow, and has the same behavior:
  *
- * * if collecting the flow throws, the channel will be closed with that exception
- * * if the [ReceiveChannel] is cancelled, the collection of the flow will be cancelled
- * * if collecting the flow completes normally, the [ReceiveChannel] will be closed normally
+ * - if collecting the flow throws, the channel will be closed with that exception
+ * - if the [ReceiveChannel] is cancelled, the collection of the flow will be cancelled
+ * - if collecting the flow completes normally, the [ReceiveChannel] will be closed normally
  *
  * A channel with [default][Channel.Factory.BUFFERED] buffer size is created.
  * Use [buffer] operator on the flow before calling `produceIn` to specify a value other than

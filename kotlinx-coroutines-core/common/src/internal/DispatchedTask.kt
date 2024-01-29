@@ -59,8 +59,8 @@ internal abstract class DispatchedTask<in T> internal constructor(
 
     /**
      * There are two implementations of `DispatchedTask`:
-     * * [DispatchedContinuation] keeps only simple values as successfully results.
-     * * [CancellableContinuationImpl] keeps additional data with values and overrides this method to unwrap it.
+     * - [DispatchedContinuation] keeps only simple values as successfully results.
+     * - [CancellableContinuationImpl] keeps additional data with values and overrides this method to unwrap it.
      */
     @Suppress("UNCHECKED_CAST")
     internal open fun <T> getSuccessfulResult(state: Any?): T =
@@ -68,9 +68,9 @@ internal abstract class DispatchedTask<in T> internal constructor(
 
     /**
      * There are two implementations of `DispatchedTask`:
-     * * [DispatchedContinuation] is just an intermediate storage that stores the exception that has its stack-trace
+     * - [DispatchedContinuation] is just an intermediate storage that stores the exception that has its stack-trace
      *   properly recovered and is ready to pass to the [delegate] continuation directly.
-     * * [CancellableContinuationImpl] stores raw cause of the failure in its state; when it needs to be dispatched
+     * - [CancellableContinuationImpl] stores raw cause of the failure in its state; when it needs to be dispatched
      *   its stack-trace has to be recovered, so it overrides this method for that purpose.
      */
     internal open fun getExceptionalResult(state: Any?): Throwable? =

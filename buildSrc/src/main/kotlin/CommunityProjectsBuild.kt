@@ -17,8 +17,8 @@ private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
  * are compatible with our libraries (aka "integration testing that substitutes lack of unit testing").
  *
  * When `build_snapshot_train` is set to true (and [isSnapshotTrainEnabled] returns `true`),
- * * `kotlin_version property` is overridden with `kotlin_snapshot_version` (see [getOverriddenKotlinVersion]),
- * * `atomicfu_version` is overwritten by TeamCity environment (AFU is built with snapshot and published to mavenLocal
+ * - `kotlin_version property` is overridden with `kotlin_snapshot_version` (see [getOverriddenKotlinVersion]),
+ * - `atomicfu_version` is overwritten by TeamCity environment (AFU is built with snapshot and published to mavenLocal
  *   as previous step or the snapshot build).
  * Additionally, mavenLocal and Sonatype snapshots are added to repository list and stress tests are disabled
  * (see [configureCommunityBuildTweaks]).

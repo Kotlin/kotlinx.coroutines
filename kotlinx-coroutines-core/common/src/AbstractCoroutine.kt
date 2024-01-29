@@ -16,10 +16,10 @@ import kotlin.coroutines.*
  *
  * The following methods are available for override:
  *
- * * [onStart] is invoked when the coroutine was created in non-active state and is being [started][Job.start].
- * * [onCancelling] is invoked as soon as the coroutine starts being cancelled for any reason (or completes).
- * * [onCompleted] is invoked when the coroutine completes with a value.
- * * [onCancelled] in invoked when the coroutine completes with an exception (cancelled).
+ * - [onStart] is invoked when the coroutine was created in non-active state and is being [started][Job.start].
+ * - [onCancelling] is invoked as soon as the coroutine starts being cancelled for any reason (or completes).
+ * - [onCompleted] is invoked when the coroutine completes with a value.
+ * - [onCancelled] in invoked when the coroutine completes with an exception (cancelled).
  *
  * @param parentContext the context of the parent coroutine.
  * @param initParentJob specifies whether the parent-child relationship should be instantiated directly
@@ -114,10 +114,10 @@ public abstract class AbstractCoroutine<in T>(
      * Starts this coroutine with the given code [block] and [start] strategy.
      * This function shall be invoked at most once on this coroutine.
      * 
-     * * [DEFAULT] uses [startCoroutineCancellable].
-     * * [ATOMIC] uses [startCoroutine].
-     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
-     * * [LAZY] does nothing.
+     * - [DEFAULT] uses [startCoroutineCancellable].
+     * - [ATOMIC] uses [startCoroutine].
+     * - [UNDISPATCHED] uses [startCoroutineUndispatched].
+     * - [LAZY] does nothing.
      */
     public fun <R> start(start: CoroutineStart, receiver: R, block: suspend R.() -> T) {
         start(block, receiver, this)

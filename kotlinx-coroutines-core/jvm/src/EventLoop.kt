@@ -29,9 +29,9 @@ internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.curr
  * Processes next event in the current thread's event loop.
  *
  * The result of this function is to be interpreted like this:
- * * `<= 0` -- there are potentially more events for immediate processing;
- * * `> 0` -- a number of nanoseconds to wait for the next scheduled event;
- * * [Long.MAX_VALUE] -- no more events or no thread-local event loop.
+ * - `<= 0` -- there are potentially more events for immediate processing;
+ * - `> 0` -- a number of nanoseconds to wait for the next scheduled event;
+ * - [Long.MAX_VALUE] -- no more events or no thread-local event loop.
  *
  * Sample usage of this function:
  *

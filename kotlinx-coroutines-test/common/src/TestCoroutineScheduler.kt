@@ -138,13 +138,13 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * scheduled tasks in the meantime.
      *
      * Breaking changes from [TestCoroutineDispatcher.advanceTimeBy]:
-     * * Intentionally doesn't return a `Long` value, as its use cases are unclear. We may restore it in the future;
+     * - Intentionally doesn't return a `Long` value, as its use cases are unclear. We may restore it in the future;
      *   please describe your use cases at [the issue tracker](https://github.com/Kotlin/kotlinx.coroutines/issues/).
      *   For now, it's possible to query [currentTime] before and after execution of this method, to the same effect.
-     * * It doesn't run the tasks that are scheduled at exactly [currentTime] + [delayTimeMillis]. For example,
+     * - It doesn't run the tasks that are scheduled at exactly [currentTime] + [delayTimeMillis]. For example,
      *   advancing the time by one millisecond used to run the tasks at the current millisecond *and* the next
      *   millisecond, but now will stop just before executing any task starting at the next millisecond.
-     * * Overflowing the target time used to lead to nothing being done, but will now run the tasks scheduled at up to
+     * - Overflowing the target time used to lead to nothing being done, but will now run the tasks scheduled at up to
      *   (but not including) [Long.MAX_VALUE].
      *
      * @throws IllegalArgumentException if passed a negative [delay][delayTimeMillis].

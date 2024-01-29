@@ -113,9 +113,9 @@ internal class WorkQueue {
      * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
      *
      * [StealingMode] controls what tasks to steal:
-     * * [STEAL_ANY] is default mode for scheduler, task from the head (in FIFO order) is stolen
-     * * [STEAL_BLOCKING_ONLY] is mode for stealing *an arbitrary* blocking task, which is used by the scheduler when helping in Dispatchers.IO mode
-     * * [STEAL_CPU_ONLY] is a kludge for `runSingleTaskFromCurrentSystemDispatcher`
+     * - [STEAL_ANY] is default mode for scheduler, task from the head (in FIFO order) is stolen
+     * - [STEAL_BLOCKING_ONLY] is mode for stealing *an arbitrary* blocking task, which is used by the scheduler when helping in Dispatchers.IO mode
+     * - [STEAL_CPU_ONLY] is a kludge for `runSingleTaskFromCurrentSystemDispatcher`
      */
     fun trySteal(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
         val task = when (stealingMode) {

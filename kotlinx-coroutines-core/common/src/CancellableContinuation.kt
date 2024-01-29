@@ -259,7 +259,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
  * it can be lost when the coroutine is cancelled. In order to ensure that the resource can be properly closed
  * in this case, the [CancellableContinuation] interface provides two functions.
  *
- * * [invokeOnCancellation][CancellableContinuation.invokeOnCancellation] installs a handler that is called
+ * - [invokeOnCancellation][CancellableContinuation.invokeOnCancellation] installs a handler that is called
  *   whenever a suspend coroutine is being cancelled. In addition to the example at the beginning, it can be
  *   used to ensure that a resource that was opened before the call to
  *   `suspendCancellableCoroutine` or in its body is closed in case of cancellation.
@@ -274,7 +274,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
  * }
  * ```
  *
- * * [resume(value) { ... }][CancellableContinuation.resume] method on a [CancellableContinuation] takes
+ * - [resume(value) { ... }][CancellableContinuation.resume] method on a [CancellableContinuation] takes
  *   an optional `onCancellation` block. It can be used when resuming with a resource that must be closed by
  *   the code that called the corresponding suspending function.
  *

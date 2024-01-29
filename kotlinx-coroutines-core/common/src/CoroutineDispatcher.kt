@@ -9,18 +9,18 @@ import kotlin.coroutines.*
  * The following standard implementations are provided by `kotlinx.coroutines` as properties on
  * the [Dispatchers] object:
  *
- * * [Dispatchers.Default] &mdash; is used by all standard builders if no dispatcher or any other [ContinuationInterceptor]
+ * - [Dispatchers.Default] &mdash; is used by all standard builders if no dispatcher or any other [ContinuationInterceptor]
  *   is specified in their context. It uses a common pool of shared background threads.
  *   This is an appropriate choice for compute-intensive coroutines that consume CPU resources.
- * * [Dispatchers.IO] &mdash; uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive _blocking_
+ * - [Dispatchers.IO] &mdash; uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive _blocking_
  *   operations (like file I/O and blocking socket I/O).
- * * [Dispatchers.Unconfined] &mdash; starts coroutine execution in the current call-frame until the first suspension,
+ * - [Dispatchers.Unconfined] &mdash; starts coroutine execution in the current call-frame until the first suspension,
  *   whereupon the coroutine builder function returns.
  *   The coroutine will later resume in whatever thread used by the
  *   corresponding suspending function, without confining it to any specific thread or pool.
  *   **The `Unconfined` dispatcher should not normally be used in code**.
- * * Private thread pools can be created with [newSingleThreadContext] and [newFixedThreadPoolContext].
- * * An arbitrary [Executor][java.util.concurrent.Executor] can be converted to a dispatcher with the [asCoroutineDispatcher] extension function.
+ * - Private thread pools can be created with [newSingleThreadContext] and [newFixedThreadPoolContext].
+ * - An arbitrary [Executor][java.util.concurrent.Executor] can be converted to a dispatcher with the [asCoroutineDispatcher] extension function.
  *
  * This class ensures that debugging facilities in [newCoroutineContext] function work properly.
  */
