@@ -13,7 +13,7 @@ import kotlin.coroutines.*
  *
  * Debug probes is a dynamic attach mechanism which installs multiple hooks into coroutines machinery.
  * It slows down all coroutine-related code, but in return provides diagnostic information, including
- * asynchronous stacktraces, coroutine dumps (similar to [ThreadMXBean.dumpAllThreads] and `jstack` via [DebugProbes.dumpCoroutines]
+ * asynchronous stacktraces, coroutine dumps (similar to [ThreadMXBean.dumpAllThreads] and `jstack`) via [DebugProbes.dumpCoroutines],
  * and programmatic introspection of all alive coroutines.
  * All introspecting methods throw [IllegalStateException] if debug probes were not installed.
  *
@@ -27,24 +27,24 @@ import kotlin.coroutines.*
  *
  * ### Overhead
  *
- *  - Every created coroutine is stored in a concurrent hash map and hash map is looked up and
+ *  - Every created coroutine is stored in a concurrent hash map, and the hash map is looked up in and
  *    updated on each suspension and resumption.
  *  - If [DebugProbes.enableCreationStackTraces] is enabled, stack trace of the current thread is captured on
  *    each created coroutine that is a rough equivalent of throwing an exception per each created coroutine.
  *
  * ### Internal machinery and classloading.
  *
- * Under the hood, debug probes replace internal `kotlin.coroutines.jvm.internal.DebugProbesKt` class with the following
+ * Under the hood, debug probes replace internal `kotlin.coroutines.jvm.internal.DebugProbesKt` class that has the following
  * empty static methods:
  *
  * - `probeCoroutineResumed` that is invoked on every [Continuation.resume].
  * - `probeCoroutineSuspended` that is invoked on every continuation suspension.
  * - `probeCoroutineCreated` that is invoked on every coroutine creation.
  *
- * with `kotlinx-coroutines`-specific class to keep track of all the coroutines machinery.
+ * with a `kotlinx-coroutines`-specific class to keep track of all the coroutines machinery.
  *
- * The new class is located in `kotlinx-coroutines-core` module meaning that all target application classes that use
- * coroutines and `suspend` functions have to be loaded by the classloader for which `kotlinx-coroutines-core` classes are avilable.
+ * The new class is located in the `kotlinx-coroutines-core` module, meaning that all target application classes that use
+ * coroutines and `suspend` functions have to be loaded by the classloader in which `kotlinx-coroutines-core` classes are available.
  */
 @ExperimentalCoroutinesApi
 public object DebugProbes {
