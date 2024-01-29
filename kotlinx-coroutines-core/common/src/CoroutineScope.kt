@@ -62,8 +62,8 @@ import kotlin.coroutines.intrinsics.*
  *     }
  *
  *     /*
- *      - Note: if this instance is destroyed or any of the launched coroutines
- *      - in this method throws an exception, then all nested coroutines are cancelled.
+ *      * Note: if this instance is destroyed or any of the launched coroutines
+ *      * in this method throws an exception, then all nested coroutines are cancelled.
  *      */
  *     fun showSomeData() = scope.launch { // launched in the main thread
  *        // ... here we can use suspending functions or coroutine builders with other dispatchers

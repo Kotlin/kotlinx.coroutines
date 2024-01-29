@@ -288,9 +288,9 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  *     }
  *     api.register(callback)
  *     /*
- *      - Suspends until either 'onCompleted'/'onApiError' from the callback is invoked
- *      - or flow collector is cancelled (e.g. by 'take(1)' or because a collector's coroutine was cancelled).
- *      - In both cases, callback will be properly unregistered.
+ *      * Suspends until either 'onCompleted'/'onApiError' from the callback is invoked
+ *      * or flow collector is cancelled (e.g. by 'take(1)' or because a collector's coroutine was cancelled).
+ *      * In both cases, callback will be properly unregistered.
  *      */
  *     awaitClose { api.unregister(callback) }
  * }
