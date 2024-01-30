@@ -45,21 +45,21 @@ import kotlin.coroutines.*
  *
  * There are the following basic ways to create a flow:
  *
- * * [flowOf(...)][flowOf] functions to create a flow from a fixed set of values.
- * * [asFlow()][asFlow] extension functions on various types to convert them into flows.
- * * [flow { ... }][flow] builder function to construct arbitrary flows from
+ * - [flowOf(...)][flowOf] functions to create a flow from a fixed set of values.
+ * - [asFlow()][asFlow] extension functions on various types to convert them into flows.
+ * - [flow { ... }][flow] builder function to construct arbitrary flows from
  *   sequential calls to [emit][FlowCollector.emit] function.
- * * [channelFlow { ... }][channelFlow] builder function to construct arbitrary flows from
+ * - [channelFlow { ... }][channelFlow] builder function to construct arbitrary flows from
  *   potentially concurrent calls to the [send][kotlinx.coroutines.channels.SendChannel.send] function.
- * * [MutableStateFlow] and [MutableSharedFlow] define the corresponding constructor functions to create
+ * - [MutableStateFlow] and [MutableSharedFlow] define the corresponding constructor functions to create
  *   a _hot_ flow that can be directly updated.
  *
  * ### Flow constraints
  *
  * All implementations of the `Flow` interface must adhere to two key properties described in detail below:
  *
- * * Context preservation.
- * * Exception transparency.
+ * - Context preservation.
+ * - Exception transparency.
  *
  * These properties ensure the ability to perform local reasoning about the code with flows and modularize the code
  * in such a way that upstream flow emitters can be developed separately from downstream flow collectors.

@@ -24,11 +24,11 @@ public interface TestCoroutineScope : CoroutineScope {
     /**
      * Called after the test completes.
      *
-     * * It checks that there were no uncaught exceptions caught by its [CoroutineExceptionHandler].
+     * - It checks that there were no uncaught exceptions caught by its [CoroutineExceptionHandler].
      *   If there were any, then the first one is thrown, whereas the rest are suppressed by it.
-     * * It runs the tasks pending in the scheduler at the current time. If there are any uncompleted tasks afterwards,
+     * - It runs the tasks pending in the scheduler at the current time. If there are any uncompleted tasks afterwards,
      *   it fails with [UncompletedCoroutinesError].
-     * * It checks whether some new child [Job]s were created but not completed since this [TestCoroutineScope] was
+     * - It checks whether some new child [Job]s were created but not completed since this [TestCoroutineScope] was
      *   created. If so, it fails with [UncompletedCoroutinesError].
      *
      * For backward compatibility, if the [CoroutineExceptionHandler] is an [UncaughtExceptionCaptor], its
@@ -151,20 +151,20 @@ public fun TestCoroutineScope(context: CoroutineContext = EmptyCoroutineContext)
  * for an instruction on how to update the code for the new API.
  *
  * It ensures that all the test module machinery is properly initialized.
- * * If [context] doesn't define a [TestCoroutineScheduler] for orchestrating the virtual time used for delay-skipping,
+ * - If [context] doesn't define a [TestCoroutineScheduler] for orchestrating the virtual time used for delay-skipping,
  *   a new one is created, unless either
  *   - a [TestDispatcher] is provided, in which case [TestDispatcher.scheduler] is used;
  *   - at the moment of the creation of the scope, [Dispatchers.Main] is delegated to a [TestDispatcher], in which case
  *     its [TestCoroutineScheduler] is used.
- * * If [context] doesn't have a [ContinuationInterceptor], a [StandardTestDispatcher] is created.
- * * A [CoroutineExceptionHandler] is created that makes [TestCoroutineScope.cleanupTestCoroutines] throw if there were
+ * - If [context] doesn't have a [ContinuationInterceptor], a [StandardTestDispatcher] is created.
+ * - A [CoroutineExceptionHandler] is created that makes [TestCoroutineScope.cleanupTestCoroutines] throw if there were
  *   any uncaught exceptions, or forwards the exceptions further in a platform-specific manner if the cleanup was
  *   already performed when an exception happened. Passing a [CoroutineExceptionHandler] is illegal, unless it's an
  *   [UncaughtExceptionCaptor], in which case the behavior is preserved for the time being for backward compatibility.
  *   If you need to have a specific [CoroutineExceptionHandler], please pass it to [launch] on an already-created
  *   [TestCoroutineScope] and share your use case at
  *   [our issue tracker](https://github.com/Kotlin/kotlinx.coroutines/issues).
- * * If [context] provides a [Job], that job is used for the new scope; otherwise, a [CompletableJob] is created.
+ * - If [context] provides a [Job], that job is used for the new scope; otherwise, a [CompletableJob] is created.
  *
  * @throws IllegalArgumentException if [context] has both [TestCoroutineScheduler] and a [TestDispatcher] linked to a
  * different scheduler.

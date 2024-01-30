@@ -54,9 +54,9 @@ public enum class SharingCommand {
  * [`command`][command] flow implementation function. Back-to-back emissions of the same command have no effect.
  * Only emission of a different command has effect:
  *
- * * [START][SharingCommand.START] &mdash; the upstream flow is started.
- * * [STOP][SharingCommand.STOP] &mdash; the upstream flow is stopped.
- * * [STOP_AND_RESET_REPLAY_CACHE][SharingCommand.STOP_AND_RESET_REPLAY_CACHE] &mdash;
+ * - [START][SharingCommand.START] &mdash; the upstream flow is started.
+ * - [STOP][SharingCommand.STOP] &mdash; the upstream flow is stopped.
+ * - [STOP_AND_RESET_REPLAY_CACHE][SharingCommand.STOP_AND_RESET_REPLAY_CACHE] &mdash;
  *   the upstream flow is stopped and the [SharedFlow.replayCache] is reset to its initial state.
  *   The [shareIn] operator calls [MutableSharedFlow.resetReplayCache];
  *   the [stateIn] operator resets the value to its original `initialValue`.
@@ -86,9 +86,9 @@ public fun interface SharingStarted {
          *
          * It has the following optional parameters:
          *
-         * * [stopTimeoutMillis] &mdash; configures a delay (in milliseconds) between the disappearance of the last
+         * - [stopTimeoutMillis] &mdash; configures a delay (in milliseconds) between the disappearance of the last
          *   subscriber and the stopping of the sharing coroutine. It defaults to zero (stop immediately).
-         * * [replayExpirationMillis] &mdash; configures a delay (in milliseconds) between the stopping of
+         * - [replayExpirationMillis] &mdash; configures a delay (in milliseconds) between the stopping of
          *   the sharing coroutine and the resetting of the replay cache (which makes the cache empty for the [shareIn] operator
          *   and resets the cached value to the original `initialValue` for the [stateIn] operator).
          *   It defaults to `Long.MAX_VALUE` (keep replay cache forever, never reset buffer).
@@ -119,9 +119,9 @@ public fun interface SharingStarted {
  *
  * It has the following optional parameters:
  *
- * * [stopTimeout] &mdash; configures a delay between the disappearance of the last
+ * - [stopTimeout] &mdash; configures a delay between the disappearance of the last
  *   subscriber and the stopping of the sharing coroutine. It defaults to zero (stop immediately).
- * * [replayExpiration] &mdash; configures a delay between the stopping of
+ * - [replayExpiration] &mdash; configures a delay between the stopping of
  *   the sharing coroutine and the resetting of the replay cache (which makes the cache empty for the [shareIn] operator
  *   and resets the cached value to the original `initialValue` for the [stateIn] operator).
  *   It defaults to [Duration.INFINITE] (keep replay cache forever, never reset buffer).

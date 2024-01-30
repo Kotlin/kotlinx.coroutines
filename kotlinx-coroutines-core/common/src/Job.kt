@@ -21,9 +21,9 @@ import kotlin.jvm.*
  *
  * The most basic instances of `Job` interface are created like this:
  *
- * * **Coroutine job** is created with [launch][CoroutineScope.launch] coroutine builder.
+ * - **Coroutine job** is created with [launch][CoroutineScope.launch] coroutine builder.
  *   It runs a specified block of code and completes on completion of this block.
- * * **[CompletableJob]** is created with a `Job()` factory function.
+ * - **[CompletableJob]** is created with a `Job()` factory function.
  *   It is completed by calling [CompletableJob.complete].
  *
  * Conceptually, an execution of a job does not produce a result value. Jobs are launched solely for their
@@ -216,11 +216,11 @@ public interface Job : CoroutineContext.Element {
      *
      * A parent-child relation has the following effect:
      *
-     * * Cancellation of parent with [cancel] or its exceptional completion (failure)
+     * - Cancellation of parent with [cancel] or its exceptional completion (failure)
      *   immediately cancels all its children.
-     * * Parent cannot complete until all its children are complete. Parent waits for all its children to
+     * - Parent cannot complete until all its children are complete. Parent waits for all its children to
      *   complete in _completing_ or _cancelling_ state.
-     * * Uncaught exception in a child, by default, cancels parent. This applies even to
+     * - Uncaught exception in a child, by default, cancels parent. This applies even to
      *   children created with [async][CoroutineScope.async] and other future-like
      *   coroutine builders, even though their exceptions are caught and are encapsulated in their result.
      *   This default behavior can be overridden with [SupervisorJob].
@@ -232,9 +232,9 @@ public interface Job : CoroutineContext.Element {
      * returns a handle that should be used to detach it.
      *
      * A parent-child relation has the following effect:
-     * * Cancellation of parent with [cancel] or its exceptional completion (failure)
+     * - Cancellation of parent with [cancel] or its exceptional completion (failure)
      *   immediately cancels all its children.
-     * * Parent cannot complete until all its children are complete. Parent waits for all its children to
+     * - Parent cannot complete until all its children are complete. Parent waits for all its children to
      *   complete in _completing_ or _cancelling_ states.
      *
      * **A child must store the resulting [ChildHandle] and [dispose][DisposableHandle.dispose] the attachment
@@ -290,10 +290,10 @@ public interface Job : CoroutineContext.Element {
      * job is complete.
      *
      * The meaning of `cause` that is passed to the handler:
-     * * Cause is `null` when the job has completed normally.
-     * * Cause is an instance of [CancellationException] when the job was cancelled _normally_.
+     * - Cause is `null` when the job has completed normally.
+     * - Cause is an instance of [CancellationException] when the job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
-     * * Otherwise, the job had _failed_.
+     * - Otherwise, the job had _failed_.
      *
      * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] the
      * registration of this handler and release its memory if its invocation is no longer needed.
@@ -316,10 +316,10 @@ public interface Job : CoroutineContext.Element {
      * Otherwise, handler will be invoked once when this job is cancelled or is complete.
      *
      * The meaning of `cause` that is passed to the handler:
-     * * Cause is `null` when the job has completed normally.
-     * * Cause is an instance of [CancellationException] when the job was cancelled _normally_.
+     * - Cause is `null` when the job has completed normally.
+     * - Cause is an instance of [CancellationException] when the job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
-     * * Otherwise, the job had _failed_.
+     * - Otherwise, the job had _failed_.
      *
      * Invocation of this handler on a transition to a _cancelling_ state
      * is controlled by [onCancelling] boolean parameter.

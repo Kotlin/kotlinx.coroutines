@@ -143,13 +143,13 @@ public interface SendChannel<in E> {
      * This method was deprecated in the favour of [trySend].
      * It has proven itself as the most error-prone method in Channel API:
      *
-     * * `Boolean` return type creates the false sense of security, implying that `false`
+     * - `Boolean` return type creates the false sense of security, implying that `false`
      *    is returned instead of throwing an exception.
-     * * It was used mostly from non-suspending APIs where CancellationException triggered
+     * - It was used mostly from non-suspending APIs where CancellationException triggered
      *   internal failures in the application (the most common source of bugs).
-     * * Due to signature and explicit `if (ch.offer(...))` checks it was easy to
+     * - Due to signature and explicit `if (ch.offer(...))` checks it was easy to
      *   oversee such error during code review.
-     * * Its name was not aligned with the rest of the API and tried to mimic Java's queue instead.
+     * - Its name was not aligned with the rest of the API and tried to mimic Java's queue instead.
      *
      * **NB** Automatic migration provides best-effort for the user experience, but requires removal
      * or adjusting of the code that relied on the exception handling.
@@ -310,11 +310,11 @@ public interface ReceiveChannel<out E> {
      * This method was deprecated in the favour of [tryReceive].
      * It has proven itself as error-prone method in Channel API:
      *
-     * * Nullable return type creates the false sense of security, implying that `null`
+     * - Nullable return type creates the false sense of security, implying that `null`
      *    is returned instead of throwing an exception.
-     * * It was used mostly from non-suspending APIs where CancellationException triggered
+     * - It was used mostly from non-suspending APIs where CancellationException triggered
      *   internal failures in the application (the most common source of bugs).
-     * * Its name was not aligned with the rest of the API and tried to mimic Java's queue instead.
+     * - Its name was not aligned with the rest of the API and tried to mimic Java's queue instead.
      *
      * See https://github.com/Kotlin/kotlinx.coroutines/issues/974 for more context.
      *
@@ -613,35 +613,35 @@ public interface ChannelIterator<out E> {
  * The `Channel(capacity)` factory function is used to create channels of different kinds depending on
  * the value of the `capacity` integer:
  *
- * * When `capacity` is 0 &mdash; it creates a _rendezvous_ channel.
+ * - When `capacity` is 0 &mdash; it creates a _rendezvous_ channel.
  *   This channel does not have any buffer at all. An element is transferred from the sender
  *   to the receiver only when [send] and [receive] invocations meet in time (rendezvous), so [send] suspends
  *   until another coroutine invokes [receive], and [receive] suspends until another coroutine invokes [send].
  *
- * * When `capacity` is [Channel.UNLIMITED] &mdash; it creates a channel with effectively unlimited buffer.
+ * - When `capacity` is [Channel.UNLIMITED] &mdash; it creates a channel with effectively unlimited buffer.
  *   This channel has a linked-list buffer of unlimited capacity (limited only by available memory).
  *   [Sending][send] to this channel never suspends, and [trySend] always succeeds.
  *
- * * When `capacity` is [Channel.CONFLATED] &mdash; it creates a _conflated_ channel
+ * - When `capacity` is [Channel.CONFLATED] &mdash; it creates a _conflated_ channel
  *   This channel buffers at most one element and conflates all subsequent `send` and `trySend` invocations,
  *   so that the receiver always gets the last element sent.
  *   Back-to-back sent elements are conflated &mdash; only the last sent element is received,
  *   while previously sent elements **are lost**.
  *   [Sending][send] to this channel never suspends, and [trySend] always succeeds.
  *
- * * When `capacity` is positive but less than [UNLIMITED] &mdash; it creates an array-based channel with the specified capacity.
+ * - When `capacity` is positive but less than [UNLIMITED] &mdash; it creates an array-based channel with the specified capacity.
  *   This channel has an array buffer of a fixed `capacity`.
  *   [Sending][send] suspends only when the buffer is full, and [receiving][receive] suspends only when the buffer is empty.
  *
  * Buffered channels can be configured with an additional [`onBufferOverflow`][BufferOverflow] parameter. It controls the behaviour
  * of the channel's [send][Channel.send] function on buffer overflow:
  *
- * * [SUSPEND][BufferOverflow.SUSPEND] &mdash; the default, suspend `send` on buffer overflow until there is
+ * - [SUSPEND][BufferOverflow.SUSPEND] &mdash; the default, suspend `send` on buffer overflow until there is
  *   free space in the buffer.
- * * [DROP_OLDEST][BufferOverflow.DROP_OLDEST] &mdash; do not suspend the `send`, add the latest value to the buffer,
+ * - [DROP_OLDEST][BufferOverflow.DROP_OLDEST] &mdash; do not suspend the `send`, add the latest value to the buffer,
  *   drop the oldest one from the buffer.
  *   A channel with `capacity = 1` and `onBufferOverflow = DROP_OLDEST` is a _conflated_ channel.
- * * [DROP_LATEST][BufferOverflow.DROP_LATEST] &mdash; do not suspend the `send`, drop the value that is being sent,
+ * - [DROP_LATEST][BufferOverflow.DROP_LATEST] &mdash; do not suspend the `send`, drop the value that is being sent,
  *   keep the buffer contents intact.
  *
  * A non-default `onBufferOverflow` implicitly creates a channel with at least one buffered element and
@@ -672,12 +672,12 @@ public interface ChannelIterator<out E> {
  * that was sent to the channel with the call to the [send][SendChannel.send] function but failed to be delivered,
  * which can happen in the following cases:
  *
- * * When [send][SendChannel.send] operation throws an exception because it was cancelled before it had a chance to actually
+ * - When [send][SendChannel.send] operation throws an exception because it was cancelled before it had a chance to actually
  *   send the element or because the channel was [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel].
- * * When [receive][ReceiveChannel.receive], [receiveOrNull][ReceiveChannel.receiveOrNull], or [hasNext][ChannelIterator.hasNext]
+ * - When [receive][ReceiveChannel.receive], [receiveOrNull][ReceiveChannel.receiveOrNull], or [hasNext][ChannelIterator.hasNext]
  *   operation throws an exception when it had retrieved the element from the
  *   channel but was cancelled before the code following the receive call resumed.
- * * The channel was [cancelled][ReceiveChannel.cancel], in which case `onUndeliveredElement` is called on every
+ * - The channel was [cancelled][ReceiveChannel.cancel], in which case `onUndeliveredElement` is called on every
  *   remaining element in the channel's buffer.
  *
  * Note, that `onUndeliveredElement` function is called synchronously in an arbitrary context. It should be fast, non-blocking,

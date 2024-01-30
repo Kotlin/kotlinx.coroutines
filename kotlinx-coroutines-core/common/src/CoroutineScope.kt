@@ -42,9 +42,9 @@ import kotlin.coroutines.intrinsics.*
  * responsible for launching child coroutines. The corresponding instance of `CoroutineScope` shall be created
  * with either `CoroutineScope()` or `MainScope()`:
  *
- * * `CoroutineScope()` uses the [context][CoroutineContext] provided to it as a parameter for its coroutines 
+ * - `CoroutineScope()` uses the [context][CoroutineContext] provided to it as a parameter for its coroutines 
  *   and adds a [Job] if one is not provided as part of the context.
- * * `MainScope()` uses [Dispatchers.Main] for its coroutines and has a [SupervisorJob].
+ * - `MainScope()` uses [Dispatchers.Main] for its coroutines and has a [SupervisorJob].
  *
  * **The key part of custom usage of `CoroutineScope` is cancelling it at the end of the lifecycle.**
  * The [CoroutineScope.cancel] extension function shall be used when the entity that was launching coroutines

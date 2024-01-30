@@ -7,10 +7,10 @@ import org.jetbrains.kotlinx.lincheck.annotations.*
 
 /**
  * Test that:
- * * All elements allocated in [OnDemandAllocatingPool] get returned when [close] is invoked.
- * * After reaching the maximum capacity, new elements are not added.
- * * After [close] is invoked, [OnDemandAllocatingPool.allocate] returns `false`.
- * * [OnDemandAllocatingPool.close] will return an empty list after the first invocation.
+ * - All elements allocated in [OnDemandAllocatingPool] get returned when [close] is invoked.
+ * - After reaching the maximum capacity, new elements are not added.
+ * - After [close] is invoked, [OnDemandAllocatingPool.allocate] returns `false`.
+ * - [OnDemandAllocatingPool.close] will return an empty list after the first invocation.
  */
 abstract class OnDemandAllocatingPoolLincheckTest(maxCapacity: Int) : AbstractLincheckTest() {
     private val counter = atomic(0)

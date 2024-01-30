@@ -10,12 +10,12 @@ import kotlin.time.*
  * A coroutine scope that for launching test coroutines.
  *
  * The scope provides the following functionality:
- * * The [coroutineContext] includes a [coroutine dispatcher][TestDispatcher] that supports delay-skipping, using
+ * - The [coroutineContext] includes a [coroutine dispatcher][TestDispatcher] that supports delay-skipping, using
  *   a [TestCoroutineScheduler] for orchestrating the virtual time.
  *   This scheduler is also available via the [testScheduler] property, and some helper extension
  *   methods are defined to more conveniently interact with it: see [TestScope.currentTime], [TestScope.runCurrent],
  *   [TestScope.advanceTimeBy], and [TestScope.advanceUntilIdle].
- * * When inside [runTest], uncaught exceptions from the child coroutines of this scope will be reported at the end of
+ * - When inside [runTest], uncaught exceptions from the child coroutines of this scope will be reported at the end of
  *   the test.
  *   It is invalid for child coroutines to throw uncaught exceptions when outside the call to [TestScope.runTest]:
  *   the only guarantee in this case is the best effort to deliver the exception.
@@ -25,16 +25,16 @@ import kotlin.time.*
  *
  * #### Differences from the deprecated [TestCoroutineScope]
  *
- * * This doesn't provide an equivalent of [TestCoroutineScope.cleanupTestCoroutines], and so can't be used as a
+ * - This doesn't provide an equivalent of [TestCoroutineScope.cleanupTestCoroutines], and so can't be used as a
  *   standalone mechanism for writing tests: it does require that [runTest] is eventually called.
  *   The reason for this is that a proper cleanup procedure that supports using non-test dispatchers and arbitrary
  *   coroutine suspensions would be equivalent to [runTest], but would also be more error-prone, due to the potential
  *   for forgetting to perform the cleanup.
- * * [TestCoroutineScope.advanceTimeBy] also calls [TestCoroutineScheduler.runCurrent] after advancing the virtual time.
- * * No support for dispatcher pausing, like [DelayController] allows. [TestCoroutineDispatcher], which supported
+ * - [TestCoroutineScope.advanceTimeBy] also calls [TestCoroutineScheduler.runCurrent] after advancing the virtual time.
+ * - No support for dispatcher pausing, like [DelayController] allows. [TestCoroutineDispatcher], which supported
  *   pausing, is deprecated; now, instead of pausing a dispatcher, one can use [withContext] to run a dispatcher that's
  *   paused by default, like [StandardTestDispatcher].
- * * No access to the list of unhandled exceptions.
+ * - No access to the list of unhandled exceptions.
  */
 public sealed interface TestScope : CoroutineScope {
     /**
@@ -138,20 +138,20 @@ public val TestScope.testTimeSource: TimeSource.WithComparableMarks get() = test
  * Creates a [TestScope].
  *
  * It ensures that all the test module machinery is properly initialized.
- * * If [context] doesn't provide a [TestCoroutineScheduler] for orchestrating the virtual time used for delay-skipping,
+ * - If [context] doesn't provide a [TestCoroutineScheduler] for orchestrating the virtual time used for delay-skipping,
  *   a new one is created, unless either
  *   - a [TestDispatcher] is provided, in which case [TestDispatcher.scheduler] is used;
  *   - at the moment of the creation of the scope, [Dispatchers.Main] is delegated to a [TestDispatcher], in which case
  *     its [TestCoroutineScheduler] is used.
- * * If [context] doesn't have a [TestDispatcher], a [StandardTestDispatcher] is created.
- * * A [CoroutineExceptionHandler] is created that makes [TestCoroutineScope.cleanupTestCoroutines] throw if there were
+ * - If [context] doesn't have a [TestDispatcher], a [StandardTestDispatcher] is created.
+ * - A [CoroutineExceptionHandler] is created that makes [TestCoroutineScope.cleanupTestCoroutines] throw if there were
  *   any uncaught exceptions, or forwards the exceptions further in a platform-specific manner if the cleanup was
  *   already performed when an exception happened. Passing a [CoroutineExceptionHandler] is illegal, unless it's an
  *   [UncaughtExceptionCaptor], in which case the behavior is preserved for the time being for backward compatibility.
  *   If you need to have a specific [CoroutineExceptionHandler], please pass it to [launch] on an already-created
  *   [TestCoroutineScope] and share your use case at
  *   [our issue tracker](https://github.com/Kotlin/kotlinx.coroutines/issues).
- * * If [context] provides a [Job], that job is used as a parent for the new scope.
+ * - If [context] provides a [Job], that job is used as a parent for the new scope.
  *
  * @throws IllegalArgumentException if [context] has both [TestCoroutineScheduler] and a [TestDispatcher] linked to a
  * different scheduler.

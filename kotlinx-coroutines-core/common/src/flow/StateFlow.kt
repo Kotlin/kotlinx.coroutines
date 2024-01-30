@@ -86,15 +86,15 @@ import kotlin.coroutines.*
  * and is designed to completely replace it.
  * It has the following important differences:
  *
- * * `StateFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows
+ * - `StateFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows
  *   for faster, garbage-free implementation, unlike `ConflatedBroadcastChannel` implementation that
  *   allocates objects on each emitted value.
- * * `StateFlow` always has a value which can be safely read at any time via [value] property.
+ * - `StateFlow` always has a value which can be safely read at any time via [value] property.
  *    Unlike `ConflatedBroadcastChannel`, there is no way to create a state flow without a value.
- * * `StateFlow` has a clear separation into a read-only `StateFlow` interface and a [MutableStateFlow].
- * * `StateFlow` conflation is based on equality like [distinctUntilChanged] operator,
+ * - `StateFlow` has a clear separation into a read-only `StateFlow` interface and a [MutableStateFlow].
+ * - `StateFlow` conflation is based on equality like [distinctUntilChanged] operator,
  *    unlike conflation in `ConflatedBroadcastChannel` that is based on reference identity.
- * * `StateFlow` cannot be closed like `ConflatedBroadcastChannel` and can never represent a failure.
+ * - `StateFlow` cannot be closed like `ConflatedBroadcastChannel` and can never represent a failure.
  *    All errors and completion signals should be explicitly _materialized_ if needed.
  *
  * `StateFlow` is designed to better cover typical use-cases of keeping track of state changes in time, taking
@@ -243,10 +243,10 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
     /**
      * Each slot can have one of the following states:
      *
-     * * `null` -- it is not used right now. Can [allocateLocked] to new collector.
-     * * `NONE` -- used by a collector, but neither suspended nor has pending value.
-     * * `PENDING` -- pending to process new value.
-     * * `CancellableContinuationImpl<Unit>` -- suspended waiting for new value.
+     * - `null` -- it is not used right now. Can [allocateLocked] to new collector.
+     * - `NONE` -- used by a collector, but neither suspended nor has pending value.
+     * - `PENDING` -- pending to process new value.
+     * - `CancellableContinuationImpl<Unit>` -- suspended waiting for new value.
      *
      * It is important that default `null` value is used, because there can be a race between allocation
      * of a new slot and trying to do [makePending] on this slot.

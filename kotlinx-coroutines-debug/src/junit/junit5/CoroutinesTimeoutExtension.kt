@@ -108,14 +108,14 @@ internal class CoroutinesTimeoutExtension internal constructor(
      * However, extension instances can be reused with different value stores, and value stores can be reused across
      * extension instances. This leads to a tricky scheme of performing [DebugProbes.uninstall]:
      *
-     * * If neither the ownership of this instance's [DebugProbes] was yet passed nor there is any cleanup procedure
+     * - If neither the ownership of this instance's [DebugProbes] was yet passed nor there is any cleanup procedure
      *   stored, it means that we can just store our cleanup procedure, passing the ownership.
-     * * If the ownership was not yet passed, but a cleanup procedure is already stored, we can't just replace it with
+     * - If the ownership was not yet passed, but a cleanup procedure is already stored, we can't just replace it with
      *   another one, as this would lead to imbalance between [DebugProbes.install] and [DebugProbes.uninstall].
      *   Instead, we know that this extension context will at least outlive this use of this instance, so some debug
      *   probes other than the ones from our constructor are already installed and won't be uninstalled during our
      *   operation. We simply uninstall the debug probes that were installed in our constructor.
-     * * If the ownership was passed, but the store is empty, it means that this test instance is reused and, possibly,
+     * - If the ownership was passed, but the store is empty, it means that this test instance is reused and, possibly,
      *   the debug probes installed in its constructor were already uninstalled. This means that we have to install them
      *   anew and store an uninstaller.
      */

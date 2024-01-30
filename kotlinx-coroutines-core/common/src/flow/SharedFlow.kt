@@ -85,11 +85,11 @@ import kotlin.jvm.*
  * and is designed to completely replace it.
  * It has the following important differences:
  *
- * * `SharedFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows
+ * - `SharedFlow` is simpler, because it does not have to implement all the [Channel] APIs, which allows
  *    for faster and simpler implementation.
- * * `SharedFlow` supports configurable replay and buffer overflow strategy.
- * * `SharedFlow` has a clear separation into a read-only `SharedFlow` interface and a [MutableSharedFlow].
- * * `SharedFlow` cannot be closed like `BroadcastChannel` and can never represent a failure.
+ * - `SharedFlow` supports configurable replay and buffer overflow strategy.
+ * - `SharedFlow` has a clear separation into a read-only `SharedFlow` interface and a [MutableSharedFlow].
+ * - `SharedFlow` cannot be closed like `BroadcastChannel` and can never represent a failure.
  *    All errors and completion signals should be explicitly _materialized_ if needed.
  *
  * To migrate [BroadcastChannel] usage to [SharedFlow], start by replacing usages of the `BroadcastChannel(capacity)`

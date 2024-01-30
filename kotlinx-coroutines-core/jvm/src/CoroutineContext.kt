@@ -38,12 +38,12 @@ private fun CoroutineContext.hasCopyableElements(): Boolean =
 /**
  * Folds two contexts properly applying [CopyableThreadContextElement] rules when necessary.
  * The rules are the following:
- * * If neither context has CTCE, the sum of two contexts is returned
- * * Every CTCE from the left-hand side context that does not have a matching (by key) element from right-hand side context
+ * - If neither context has CTCE, the sum of two contexts is returned
+ * - Every CTCE from the left-hand side context that does not have a matching (by key) element from right-hand side context
  *   is [copied][CopyableThreadContextElement.copyForChild] if [isNewCoroutine] is `true`.
- * * Every CTCE from the left-hand side context that has a matching element in the right-hand side context is [merged][CopyableThreadContextElement.mergeForChild]
- * * Every CTCE from the right-hand side context that hasn't been merged is copied
- * * Everything else is added to the resulting context as is.
+ * - Every CTCE from the left-hand side context that has a matching element in the right-hand side context is [merged][CopyableThreadContextElement.mergeForChild]
+ * - Every CTCE from the right-hand side context that hasn't been merged is copied
+ * - Everything else is added to the resulting context as is.
  */
 private fun foldCopies(originalContext: CoroutineContext, appendContext: CoroutineContext, isNewCoroutine: Boolean): CoroutineContext {
     // Do we have something to copy left-hand side?
@@ -191,8 +191,8 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
      * (You can read more about this effect as "GC nepotism").
      *
      * To avoid that, we attempt to narrow down the lifetime of this thread local as much as possible:
-     * * It's never accessed when we are sure there are no thread context elements
-     * * It's cleaned up via [ThreadLocal.remove] as soon as the coroutine is suspended or finished.
+     * - It's never accessed when we are sure there are no thread context elements
+     * - It's cleaned up via [ThreadLocal.remove] as soon as the coroutine is suspended or finished.
      */
     private val threadStateToRecover = ThreadLocal<Pair<CoroutineContext, Any?>>()
 

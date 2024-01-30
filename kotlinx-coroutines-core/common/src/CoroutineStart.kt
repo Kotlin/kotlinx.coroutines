@@ -9,10 +9,10 @@ import kotlin.coroutines.*
  * It is used in `start` parameter of [launch][CoroutineScope.launch], [async][CoroutineScope.async], and other coroutine builder functions.
  *
  * The summary of coroutine start options is:
- * * [DEFAULT] -- immediately schedules coroutine for execution according to its context;
- * * [LAZY] -- starts coroutine lazily, only when it is needed;
- * * [ATOMIC] -- atomically (in a non-cancellable way) schedules coroutine for execution according to its context;
- * * [UNDISPATCHED] -- immediately executes coroutine until its first suspension point _in the current thread_.
+ * - [DEFAULT] -- immediately schedules coroutine for execution according to its context;
+ * - [LAZY] -- starts coroutine lazily, only when it is needed;
+ * - [ATOMIC] -- atomically (in a non-cancellable way) schedules coroutine for execution according to its context;
+ * - [UNDISPATCHED] -- immediately executes coroutine until its first suspension point _in the current thread_.
  */
 public enum class CoroutineStart {
     /**
@@ -75,10 +75,10 @@ public enum class CoroutineStart {
     /**
      * Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.
      *
-     * * [DEFAULT] uses [startCoroutineCancellable].
-     * * [ATOMIC] uses [startCoroutine].
-     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
-     * * [LAZY] does nothing.
+     * - [DEFAULT] uses [startCoroutineCancellable].
+     * - [ATOMIC] uses [startCoroutine].
+     * - [UNDISPATCHED] uses [startCoroutineUndispatched].
+     * - [LAZY] does nothing.
      *
      * @suppress **This an internal API and should not be used from general code.**
      */

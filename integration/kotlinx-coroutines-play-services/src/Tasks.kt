@@ -44,8 +44,8 @@ public fun <T> Task<T>.asDeferred(): Deferred<T> = asDeferredImpl(null)
 /**
  * Converts this task to an instance of [Deferred] with a [CancellationTokenSource] to control cancellation.
  * The cancellation of this function is bi-directional:
- * * If the given task is cancelled, the resulting deferred will be cancelled.
- * * If the resulting deferred is cancelled, the provided [cancellationTokenSource] will be cancelled.
+ * - If the given task is cancelled, the resulting deferred will be cancelled.
+ * - If the resulting deferred is cancelled, the provided [cancellationTokenSource] will be cancelled.
  *
  * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported and
  * leads to an unspecified behaviour.
@@ -105,9 +105,9 @@ public suspend fun <T> Task<T>.await(): T = awaitImpl(null)
  * Awaits the completion of the task that is linked to the given [CancellationTokenSource] to control cancellation.
  *
  * This suspending function is cancellable and cancellation is bi-directional:
- * * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * - If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * cancels the [cancellationTokenSource] and throws a [CancellationException].
- * * If the task is cancelled, then this function will throw a [CancellationException].
+ * - If the task is cancelled, then this function will throw a [CancellationException].
  *
  * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported and
  * leads to an unspecified behaviour.

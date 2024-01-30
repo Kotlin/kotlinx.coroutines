@@ -15,8 +15,8 @@ import kotlin.random.*
  * over worker threads, including both CPU-intensive and blocking tasks, in the most efficient manner.
  *
  * Current scheduler implementation has two optimization targets:
- * * Efficiency in the face of communication patterns (e.g. actors communicating via channel)
- * * Dynamic resizing to support blocking calls without re-dispatching coroutine to separate "blocking" thread pool.
+ * - Efficiency in the face of communication patterns (e.g. actors communicating via channel)
+ * - Dynamic resizing to support blocking calls without re-dispatching coroutine to separate "blocking" thread pool.
  *
  * ### Structural overview
  *
@@ -384,8 +384,8 @@ internal class CoroutineScheduler(
      * If `true`, then  the task will be dispatched in a FIFO manner and no additional workers will be requested,
      * but only if the current thread is a corresponding worker thread.
      * Note that caller cannot be ensured that it is being executed on worker thread for the following reasons:
-     *   * [CoroutineStart.UNDISPATCHED]
-     *   * Concurrent [close] that effectively shutdowns the worker thread
+     *   - [CoroutineStart.UNDISPATCHED]
+     *   - Concurrent [close] that effectively shutdowns the worker thread
      */
     fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, tailDispatch: Boolean = false) {
         trackTask() // this is needed for virtual time support
@@ -922,8 +922,8 @@ internal class CoroutineScheduler(
             if (tryAcquireCpuPermit()) return findAnyTask(mayHaveLocalTasks)
             /*
              * If we can't acquire a CPU permit, attempt to find blocking task:
-             * * Check if our queue has one (maybe mixed in with CPU tasks)
-             * * Poll global and try steal
+             * - Check if our queue has one (maybe mixed in with CPU tasks)
+             * - Poll global and try steal
              */
             return findBlockingTask()
         }

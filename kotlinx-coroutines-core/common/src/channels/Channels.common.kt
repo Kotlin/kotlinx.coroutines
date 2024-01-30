@@ -18,9 +18,9 @@ internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
  * This function is deprecated in the favour of [ReceiveChannel.receiveCatching].
  *
  * This function is considered error-prone for the following reasons;
- * * Is throwing if the channel has failed even though its signature may suggest it returns 'null'
- * * It is easy to forget that exception handling still have to be explicit
- * * During code reviews and code reading, intentions of the code are frequently unclear:
+ * - Is throwing if the channel has failed even though its signature may suggest it returns 'null'
+ * - It is easy to forget that exception handling still have to be explicit
+ * - During code reviews and code reading, intentions of the code are frequently unclear:
  *   are potential exceptions ignored deliberately or not?
  *
  * @suppress doc

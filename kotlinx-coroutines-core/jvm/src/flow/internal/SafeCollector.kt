@@ -49,8 +49,8 @@ internal actual class SafeCollector<T> actual constructor(
 
     /*
      * This property is accessed in two places:
-     * * ContinuationImpl invokes this in its `releaseIntercepted` as `context[ContinuationInterceptor]!!`
-     * * When we are within a callee, it is used to create its continuation object with this collector as completion_
+     * - ContinuationImpl invokes this in its `releaseIntercepted` as `context[ContinuationInterceptor]!!`
+     * - When we are within a callee, it is used to create its continuation object with this collector as completion_
      */
     override val context: CoroutineContext
         get() = lastEmissionContext ?: EmptyCoroutineContext

@@ -17,8 +17,8 @@ import kotlin.jvm.*
  * A failure or cancellation of a child does not cause the supervisor job to fail and does not affect its other children,
  * so a supervisor can implement a custom policy for handling failures of its children:
  *
- * * A failure of a child job that was created using [launch][CoroutineScope.launch] can be handled via [CoroutineExceptionHandler] in the context.
- * * A failure of a child job that was created using [async][CoroutineScope.async] can be handled via [Deferred.await] on the resulting deferred value.
+ * - A failure of a child job that was created using [launch][CoroutineScope.launch] can be handled via [CoroutineExceptionHandler] in the context.
+ * - A failure of a child job that was created using [async][CoroutineScope.async] can be handled via [Deferred.await] on the resulting deferred value.
  *
  * If [parent] job is specified, then this supervisor job becomes a child job of its parent and is cancelled when its
  * parent fails or is cancelled. All this supervisor's children are cancelled in this case, too. The invocation of

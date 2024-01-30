@@ -31,11 +31,11 @@ internal val CONDITION_FALSE: Any = Symbol("CONDITION_FALSE")
  * the update of the next pointer. Removed nodes have their next pointer marked with [Removed] class.
  *
  * Important notes:
- * * There are no operations to add items to left side of the list, only to the end (right side), because we cannot
+ * - There are no operations to add items to left side of the list, only to the end (right side), because we cannot
  *   efficiently linearize them with atomic multi-step head-removal operations. In short,
  *   support for [describeRemoveFirst] operation precludes ability to add items at the beginning.
- * * Previous pointers are not marked for removal. We don't support linearizable backwards traversal.
- * * Remove-helping logic is simplified and consolidated in [correctPrev] method.
+ * - Previous pointers are not marked for removal. We don't support linearizable backwards traversal.
+ * - Remove-helping logic is simplified and consolidated in [correctPrev] method.
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
@@ -261,7 +261,7 @@ public actual open class LockFreeLinkedListNode {
      *
      * It returns `null` in two special cases:
      *
-     * * When this node is removed. In this case there is no need to waste time on corrections, because
+     * - When this node is removed. In this case there is no need to waste time on corrections, because
      *   remover of this node will ultimately call [correctPrev] on the next node and that will fix all
      *   the links from this node, too.
      */
