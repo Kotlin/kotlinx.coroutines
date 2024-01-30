@@ -65,12 +65,11 @@ public object DebugProbes {
 
     /**
      * Whether coroutine creation stack traces should be captured.
-     * When enabled, for each created coroutine a stack trace of the current
-     * thread is captured and attached to the coroutine.
+     * When enabled, for each created coroutine a stack trace of the current thread is captured and attached to the coroutine.
      * This option can be useful during local debug sessions, but is recommended
-     * to be disabled in production environments to avoid stack trace dumping overhead.
+     * to be disabled in production environments to avoid performance overhead of keeping debug probes enabled.
      *
-     * `true` by default.
+     * `false` by default.
      */
     public var enableCreationStackTraces: Boolean
         get() = DebugProbesImpl.enableCreationStackTraces

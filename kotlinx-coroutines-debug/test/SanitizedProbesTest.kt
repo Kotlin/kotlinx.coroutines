@@ -15,6 +15,7 @@ class SanitizedProbesTest : DebugTestBase() {
     override fun setUp() {
         super.setUp()
         DebugProbes.sanitizeStackTraces = true
+        DebugProbes.enableCreationStackTraces = true
     }
 
     @Test

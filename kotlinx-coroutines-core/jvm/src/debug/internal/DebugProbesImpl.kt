@@ -40,7 +40,7 @@ internal object DebugProbesImpl {
     private val sequenceNumber = atomic(0L)
 
     internal var sanitizeStackTraces: Boolean = true
-    internal var enableCreationStackTraces: Boolean = true
+    internal var enableCreationStackTraces: Boolean = false
     public var ignoreCoroutinesWithEmptyContext: Boolean = true
 
     /*
