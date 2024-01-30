@@ -1,10 +1,10 @@
 package kotlinx.coroutines.swing
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
 import javax.swing.*
-import kotlin.coroutines.*
 import kotlin.test.*
 
 class SwingTest : MainDispatcherTestBase.WithRealTimeDelay() {

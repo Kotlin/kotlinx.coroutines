@@ -1,5 +1,6 @@
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
@@ -7,28 +8,28 @@ import kotlin.test.*
 class ChannelFactoryTest : TestBase() {
     @Test
     fun testRendezvousChannel() {
-        assertTrue(Channel<Int>() is BufferedChannel)
-        assertTrue(Channel<Int>(0) is BufferedChannel)
+        assertIs<BufferedChannel<*>>(Channel<Int>())
+        assertIs<BufferedChannel<*>>(Channel<Int>(0))
     }
 
     @Test
     fun testUnlimitedChannel() {
-        assertTrue(Channel<Int>(Channel.UNLIMITED) is BufferedChannel)
-        assertTrue(Channel<Int>(Channel.UNLIMITED, BufferOverflow.DROP_OLDEST) is BufferedChannel)
-        assertTrue(Channel<Int>(Channel.UNLIMITED, BufferOverflow.DROP_LATEST) is BufferedChannel)
+        assertIs<BufferedChannel<*>>(Channel<Int>(Channel.UNLIMITED))
+        assertIs<BufferedChannel<*>>(Channel<Int>(Channel.UNLIMITED, BufferOverflow.DROP_OLDEST))
+        assertIs<BufferedChannel<*>>(Channel<Int>(Channel.UNLIMITED, BufferOverflow.DROP_LATEST))
     }
 
     @Test
     fun testConflatedChannel() {
-        assertTrue(Channel<Int>(Channel.CONFLATED) is ConflatedBufferedChannel)
-        assertTrue(Channel<Int>(1, BufferOverflow.DROP_OLDEST) is ConflatedBufferedChannel)
+        assertIs<ConflatedBufferedChannel<*>>(Channel<Int>(Channel.CONFLATED))
+        assertIs<ConflatedBufferedChannel<*>>(Channel<Int>(1, BufferOverflow.DROP_OLDEST))
     }
 
     @Test
     fun testBufferedChannel() {
-        assertTrue(Channel<Int>(1) is BufferedChannel)
-        assertTrue(Channel<Int>(1, BufferOverflow.DROP_LATEST) is ConflatedBufferedChannel)
-        assertTrue(Channel<Int>(10) is BufferedChannel)
+        assertIs<BufferedChannel<*>>(Channel<Int>(1))
+        assertIs<ConflatedBufferedChannel<*>>(Channel<Int>(1, BufferOverflow.DROP_LATEST))
+        assertIs<BufferedChannel<*>>(Channel<Int>(10))
     }
 
     @Test

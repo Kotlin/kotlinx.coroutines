@@ -1,5 +1,6 @@
 package kotlinx.coroutines.flow.operators
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.internal.*
@@ -240,7 +241,7 @@ class TimeoutTest : TestBase() {
         expect(1)
         val flow = emptyFlow<Int>().timeout(timeout)
         flow::collect.startCoroutine(NopCollector, Continuation(EmptyCoroutineContext) {
-            assertTrue(it.exceptionOrNull() is TimeoutCancellationException)
+            assertIs<TimeoutCancellationException>(it.exceptionOrNull())
             finish(2)
         })
     }

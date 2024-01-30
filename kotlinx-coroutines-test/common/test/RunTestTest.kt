@@ -3,8 +3,10 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.test.assertFailsWith
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 

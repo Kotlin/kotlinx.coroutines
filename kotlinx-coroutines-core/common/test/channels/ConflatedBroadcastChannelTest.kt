@@ -1,5 +1,6 @@
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
@@ -32,7 +33,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
     fun testBasicScenario() = runTest {
         expect(1)
         val broadcast = ConflatedBroadcastChannel<String>()
-        assertTrue(exceptionFrom { broadcast.value } is IllegalStateException)
+        assertIs<IllegalStateException>(exceptionFrom { broadcast.value })
         assertNull(broadcast.valueOrNull)
 
         launch(start = CoroutineStart.UNDISPATCHED) {
@@ -84,11 +85,11 @@ class ConflatedBroadcastChannelTest : TestBase() {
         yield() // to second receiver
         expect(18)
         broadcast.close()
-        assertTrue(exceptionFrom { broadcast.value } is IllegalStateException)
+        assertIs<IllegalStateException>(exceptionFrom { broadcast.value })
         assertNull(broadcast.valueOrNull)
         expect(19)
         yield() // to second receiver
-        assertTrue(exceptionFrom { broadcast.send("four") } is ClosedSendChannelException)
+        assertIs<ClosedSendChannelException>(exceptionFrom { broadcast.send("four") })
         finish(22)
     }
 
@@ -103,7 +104,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
             val sub = broadcast.openSubscription()
             assertEquals(1, sub.receive())
             expect(3)
-            assertTrue(exceptionFrom { sub.receive() } is ClosedReceiveChannelException) // suspends
+            assertIs<ClosedReceiveChannelException>(exceptionFrom { sub.receive() }) // suspends
             expect(6)
         }
         expect(4)

@@ -22,16 +22,8 @@ javafx {
 tasks {
     test {
         extensions.configure(org.javamodularity.moduleplugin.extensions.TestModuleOptions::class) {
-            addReads["kotlinx.coroutines.core"] = "junit,kotlin.test"
-            addReads["kotlinx.coroutines.javafx"] = "kotlin.test"
+            addReads["kotlinx.coroutines.javafx"] = "kotlin.test,test.utils.jvm"
+            addReads["test.utils.jvm"] = "junit,kotlin.test"
         }
-        jvmArgs = listOf(
-            "--patch-module",
-            "kotlinx.coroutines.core=${
-                project(":kotlinx-coroutines-core").tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>(
-                    "compileTestKotlinJvm"
-                ).get().destinationDirectory.get()
-            }"
-        )
     }
 }

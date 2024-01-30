@@ -1,6 +1,7 @@
 @file:OptIn(DelicateCoroutinesApi::class)
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
@@ -91,7 +92,6 @@ class ConsumeTest: TestBase() {
     }
 
     /** Check that [BroadcastChannel.consume] does not suffer from KT-58685 */
-    @OptIn(ObsoleteCoroutinesApi::class)
     @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     @Test
     fun testBroadcastChannelConsumeJsMiscompilation() = runTest {

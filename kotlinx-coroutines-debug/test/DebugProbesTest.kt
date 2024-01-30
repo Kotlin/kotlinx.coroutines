@@ -1,5 +1,6 @@
 package kotlinx.coroutines.debug
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -50,8 +51,8 @@ class DebugProbesTest : DebugTestBase() {
                         "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
                         "\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt)\n" +
                         "\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\n" +
-                        "\tat kotlinx.coroutines.TestBase.runTest(TestBase.kt)\n" +
-                        "\tat kotlinx.coroutines.TestBase.runTest\$default(TestBase.kt)\n" +
+                        "\tat kotlinx.coroutines.testing.TestBase.runTest(TestBase.kt)\n" +
+                        "\tat kotlinx.coroutines.testing.TestBase.runTest\$default(TestBase.kt)\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest.testAsyncWithProbes(DebugProbesTest.kt)",
                 "Caused by: java.util.concurrent.ExecutionException\n" +
                         "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt)\n" +

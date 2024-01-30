@@ -1,6 +1,8 @@
 package kotlinx.coroutines.exceptions
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.testing.exceptions.*
 import org.junit.Test
 import java.io.*
 import kotlin.test.*
@@ -57,7 +59,7 @@ class JobNestedExceptionsTest : TestBase() {
             finish(3)
         }
 
-        assertTrue(exception is IOException)
+        assertIs<IOException>(exception)
     }
 
     @Test
@@ -76,13 +78,13 @@ class JobNestedExceptionsTest : TestBase() {
             job.join()
             finish(5)
         }
-        assertTrue(exception is ArithmeticException, "Found $exception")
+        assertIs<ArithmeticException>(exception, "Found $exception")
         checkException<IOException>(exception.suppressed[0])
     }
 
     @Test
     fun testChildThrowsDuringCompletion() {
-        val exceptions = captureMultipleExceptionsRun {
+        val exception = captureExceptionsRun {
             expect(1)
             val job = launch(NonCancellable + CoroutineName("outer"), start = CoroutineStart.ATOMIC) {
                 expect(2)
@@ -104,12 +106,10 @@ class JobNestedExceptionsTest : TestBase() {
             finish(7)
         }
 
-        assertEquals(1, exceptions.size, "Found $exceptions")
-        val exception = exceptions[0]
-        assertTrue(exception is ArithmeticException, "Exception is $exception")
+        assertIs<ArithmeticException>(exception, "Exception is $exception")
         val suppressed = exception.suppressed
         val ioe = suppressed[0]
-        assertTrue(ioe is IOException)
+        assertIs<IOException>(ioe)
         checkException<NullPointerException>(ioe.suppressed[0])
         checkCycles(exception)
     }

@@ -1,5 +1,6 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.scheduling.*
 import org.junit.*
 import java.util.*

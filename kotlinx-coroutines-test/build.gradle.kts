@@ -1,10 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
-
-val experimentalAnnotations = listOf(
-    "kotlin.Experimental",
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "kotlinx.coroutines.InternalCoroutinesApi"
-)
+import org.jetbrains.kotlin.gradle.targets.js.dsl.*
 
 kotlin {
     targets.withType(KotlinNativeTargetWithTests::class.java).configureEach {
@@ -21,6 +16,7 @@ kotlin {
         }
     }
 
+    @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         nodejs {
             testTask {

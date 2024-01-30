@@ -1,7 +1,9 @@
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.testing.flow.*
 import org.junit.Test
 import kotlin.concurrent.*
 import kotlin.test.*

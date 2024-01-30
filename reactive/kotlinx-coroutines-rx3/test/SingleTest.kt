@@ -1,5 +1,6 @@
 package kotlinx.coroutines.rx3
 
+import kotlinx.coroutines.testing.*
 import io.reactivex.rxjava3.core.*
 import io.reactivex.rxjava3.disposables.*
 import io.reactivex.rxjava3.exceptions.*
@@ -46,7 +47,7 @@ class SingleTest : TestBase() {
             expectUnreached()
         }, { error ->
             expect(5)
-            assertTrue(error is RuntimeException)
+            assertIs<RuntimeException>(error)
             assertEquals("OK", error.message)
         })
         expect(3)
@@ -218,7 +219,7 @@ class SingleTest : TestBase() {
             single.await()
             expectUnreached()
         } catch (e: TestException) {
-            assertTrue(e.suppressed[0] is TestException2)
+            assertIs<TestException2>(e.suppressed[0])
         }
     }
 
@@ -243,7 +244,7 @@ class SingleTest : TestBase() {
     fun testFatalExceptionInSingle() = runTest {
         rxSingle(Dispatchers.Unconfined) {
             throw LinkageError()
-        }.subscribe { _, e -> assertTrue(e is LinkageError); expect(1) }
+        }.subscribe { _, e -> assertIs<LinkageError>(e); expect(1) }
 
         finish(2)
     }

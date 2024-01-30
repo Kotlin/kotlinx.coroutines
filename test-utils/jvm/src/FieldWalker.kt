@@ -1,4 +1,4 @@
-package kotlinx.coroutines
+package kotlinx.coroutines.testing
 
 import java.lang.ref.*
 import java.lang.reflect.*

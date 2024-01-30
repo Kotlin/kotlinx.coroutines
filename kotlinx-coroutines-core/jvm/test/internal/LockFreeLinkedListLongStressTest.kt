@@ -1,6 +1,7 @@
 package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.TestBase
+import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.testing.TestBase
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger

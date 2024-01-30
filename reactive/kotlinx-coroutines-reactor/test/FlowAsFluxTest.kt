@@ -1,5 +1,6 @@
 package kotlinx.coroutines.reactor
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.*

@@ -1,5 +1,6 @@
 package kotlinx.coroutines // Trick to make guide tests use these declarations with executors that can be closed on our side implicitly
 
+import kotlinx.coroutines.testing.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
@@ -8,15 +9,6 @@ internal fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
 
 internal fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher =
     ClosedAfterGuideTestDispatcher(nThreads, name)
-
-internal class PoolThread(
-    @JvmField val dispatcher: ExecutorCoroutineDispatcher, // for debugging & tests
-    target: Runnable, name: String
-) : Thread(target, name) {
-    init {
-        isDaemon = true
-    }
-}
 
 private class ClosedAfterGuideTestDispatcher(
     private val nThreads: Int,

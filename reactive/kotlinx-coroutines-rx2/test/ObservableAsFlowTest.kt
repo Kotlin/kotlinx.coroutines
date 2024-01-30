@@ -1,5 +1,6 @@
 package kotlinx.coroutines.rx2
 
+import kotlinx.coroutines.testing.*
 import io.reactivex.Observable
 import io.reactivex.ObservableSource
 import io.reactivex.Observer
@@ -8,6 +9,7 @@ import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.testing.flow.*
 import kotlin.test.*
 
 class ObservableAsFlowTest : TestBase() {

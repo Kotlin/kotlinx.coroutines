@@ -1,5 +1,6 @@
 package kotlinx.coroutines.test
 
+import kotlinx.coroutines.testing.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.test.*

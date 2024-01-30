@@ -1,5 +1,6 @@
 package kotlinx.coroutines.rx3
 
+import kotlinx.coroutines.testing.*
 import io.reactivex.rxjava3.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.consumeAsFlow

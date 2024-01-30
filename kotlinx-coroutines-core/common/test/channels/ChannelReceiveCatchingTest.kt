@@ -1,5 +1,6 @@
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
@@ -13,13 +14,13 @@ class ChannelReceiveCatchingTest : TestBase() {
         }
 
         val element = channel.receiveCatching()
-        assertTrue(element.getOrThrow() is TestException1)
-        assertTrue(element.getOrNull() is TestException1)
+        assertIs<TestException1>(element.getOrThrow())
+        assertIs<TestException1>(element.getOrNull())
 
         val closed = channel.receiveCatching()
         assertTrue(closed.isClosed)
         assertTrue(closed.isFailure)
-        assertTrue(closed.exceptionOrNull() is TestException2)
+        assertIs<TestException2>(closed.exceptionOrNull())
     }
 
     @Test
@@ -120,12 +121,12 @@ class ChannelReceiveCatchingTest : TestBase() {
         assertFalse(intResult.isClosed)
 
         val closeCauseResult = channel.receiveCatching()
-        assertTrue(closeCauseResult.getOrThrow().exceptionOrNull() is TestException1)
+        assertIs<TestException1>(closeCauseResult.getOrThrow().exceptionOrNull())
 
         val closeCause = channel.receiveCatching()
         assertTrue(closeCause.isClosed)
         assertTrue(closeCause.isFailure)
-        assertTrue(closeCause.exceptionOrNull() is TestException2)
+        assertIs<TestException2>(closeCause.exceptionOrNull())
     }
 
     @Test

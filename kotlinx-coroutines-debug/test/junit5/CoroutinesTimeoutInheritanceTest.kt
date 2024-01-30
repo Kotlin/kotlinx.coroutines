@@ -1,5 +1,6 @@
 package kotlinx.coroutines.debug.junit5
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.*
 

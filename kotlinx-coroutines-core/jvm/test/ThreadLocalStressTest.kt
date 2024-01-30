@@ -1,5 +1,6 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.sync.*
 import java.util.concurrent.*
 import kotlin.coroutines.*

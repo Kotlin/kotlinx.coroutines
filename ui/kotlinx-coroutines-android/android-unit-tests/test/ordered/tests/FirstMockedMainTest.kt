@@ -1,5 +1,6 @@
 package ordered.tests
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import org.junit.*

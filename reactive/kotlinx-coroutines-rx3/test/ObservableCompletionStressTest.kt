@@ -1,5 +1,6 @@
 package kotlinx.coroutines.rx3
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import java.util.*

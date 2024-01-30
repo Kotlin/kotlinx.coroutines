@@ -1,4 +1,4 @@
-kotlinx.coroutines.RecoverableTestException
+kotlinx.coroutines.testing.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testResumeModeFastPath(StackTraceRecoveryResumeModeTest.kt:61)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testNestedEventLoopChangedContext$1$1.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:54)
 	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
@@ -7,7 +7,7 @@ kotlinx.coroutines.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testResumeModeFastPath(StackTraceRecoveryResumeModeTest.kt:62)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testNestedEventLoopChangedContext$1$1.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:54)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testNestedEventLoopChangedContext$1.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:53)
-Caused by: kotlinx.coroutines.RecoverableTestException
+Caused by: kotlinx.coroutines.testing.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testResumeModeFastPath(StackTraceRecoveryResumeModeTest.kt:61)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testNestedEventLoopChangedContext$1$1.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:54)
 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)

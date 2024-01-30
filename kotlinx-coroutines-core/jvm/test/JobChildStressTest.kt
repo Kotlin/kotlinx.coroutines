@@ -1,5 +1,6 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -49,7 +50,7 @@ class JobChildStressTest : TestBase() {
             assertNull(unhandledException)
             if (wasLaunched) {
                 val exception = parent.getCompletionExceptionOrNull()
-                assertTrue(exception is TestException, "exception=$exception")
+                assertIs<TestException>(exception, "exception=$exception")
             }
         }
     }

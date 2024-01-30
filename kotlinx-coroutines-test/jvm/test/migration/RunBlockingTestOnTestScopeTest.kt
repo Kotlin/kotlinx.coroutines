@@ -3,7 +3,9 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
+import kotlin.test.assertFailsWith
 
 /** Copy of [RunTestTest], but for [runBlockingTestOnTestScope], where applicable. */
 @Suppress("DEPRECATION")

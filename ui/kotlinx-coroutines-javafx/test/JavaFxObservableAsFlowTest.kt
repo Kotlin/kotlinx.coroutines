@@ -1,7 +1,8 @@
 package kotlinx.coroutines.javafx
 
+import kotlinx.coroutines.testing.*
 import javafx.beans.property.SimpleIntegerProperty
-import kotlinx.coroutines.TestBase
+import kotlinx.coroutines.testing.TestBase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.junit.Before

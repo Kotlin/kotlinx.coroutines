@@ -2,6 +2,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 class JobTest : TestBase() {
@@ -102,8 +103,8 @@ class JobTest : TestBase() {
         val cancelResult = runCatching { job.cancel() }
         assertTrue(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
-        assertTrue(cancelResult.exceptionOrNull() is CompletionHandlerException)
-        assertTrue(cancelResult.exceptionOrNull()!!.cause is TestException)
+        assertIs<CompletionHandlerException>(cancelResult.exceptionOrNull())
+        assertIs<TestException>(cancelResult.exceptionOrNull()!!.cause)
     }
 
     @Test

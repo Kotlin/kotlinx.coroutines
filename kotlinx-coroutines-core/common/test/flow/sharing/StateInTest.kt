@@ -1,5 +1,6 @@
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
@@ -66,7 +67,7 @@ class StateInTest : TestBase() {
         sharingJob.join() // should complete sharing
         assertEquals("OK", shared.value) // value is still there
         if (failed) {
-            assertTrue(sharingJob.getCompletionExceptionOrNull() is TestException)
+            assertIs<TestException>(sharingJob.getCompletionExceptionOrNull())
         } else {
             assertNull(sharingJob.getCompletionExceptionOrNull())
         }

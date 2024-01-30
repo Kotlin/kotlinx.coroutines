@@ -1,5 +1,7 @@
 package kotlinx.coroutines.test
 
+import kotlinx.coroutines.*
+import kotlinx.coroutines.testing.*
 import org.junit.Test
 import kotlin.test.*
 

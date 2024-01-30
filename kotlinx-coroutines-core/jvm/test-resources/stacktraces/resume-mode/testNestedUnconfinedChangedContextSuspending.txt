@@ -1,4 +1,4 @@
-kotlinx.coroutines.RecoverableTestException
+kotlinx.coroutines.testing.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testResumeModeSuspending$2.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:128)
 	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$withContext$4.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:148)
@@ -6,6 +6,6 @@ kotlinx.coroutines.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testResumeModeSuspending(StackTraceRecoveryResumeModeTest.kt:130)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testNestedUnconfinedChangedContextSuspending$1$1.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:95)
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testNestedUnconfinedChangedContextSuspending$1.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:94)
-Caused by: kotlinx.coroutines.RecoverableTestException
+Caused by: kotlinx.coroutines.testing.RecoverableTestException
 	at kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest$testResumeModeSuspending$2.invokeSuspend(StackTraceRecoveryResumeModeTest.kt:128)
 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)

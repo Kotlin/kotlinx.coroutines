@@ -1,5 +1,6 @@
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
@@ -30,10 +31,10 @@ class OnCompletionTest : TestBase() {
             expect(1)
             throw TestException()
         }.onCompletion {
-            assertTrue(it is TestException)
+            assertIs<TestException>(it)
             expect(2)
         }.catch {
-            assertTrue(it is TestException)
+            assertIs<TestException>(it)
             expect(3)
         }.collect()
         finish(4)
@@ -47,13 +48,13 @@ class OnCompletionTest : TestBase() {
         }.onEach {
             expect(2)
         }.onCompletion {
-            assertTrue(it is TestException) // flow fails because of this exception
+            assertIs<TestException>(it) // flow fails because of this exception
             expect(4)
         }.onEach {
             expect(3)
             throw TestException()
         }.catch {
-            assertTrue(it is TestException)
+            assertIs<TestException>(it)
             expect(5)
         }.collect()
         finish(6)
@@ -62,16 +63,16 @@ class OnCompletionTest : TestBase() {
     @Test
     fun testMultipleOnCompletions() = runTest {
         flowOf(1).onCompletion {
-            assertTrue(it is TestException)
+            assertIs<TestException>(it)
             expect(2)
         }.onEach {
             expect(1)
             throw TestException()
         }.onCompletion {
-            assertTrue(it is TestException)
+            assertIs<TestException>(it)
             expect(3)
         }.catch {
-            assertTrue(it is TestException)
+            assertIs<TestException>(it)
             expect(4)
         }.collect()
         finish(5)
@@ -86,7 +87,7 @@ class OnCompletionTest : TestBase() {
             expect(2)
             throw TestException2()
         }.catch {
-            assertTrue(it is TestException2)
+            assertIs<TestException2>(it)
             expect(3)
         }.collect()
         finish(4)
@@ -105,7 +106,7 @@ class OnCompletionTest : TestBase() {
                 throw TestException()
             }
             .catch {
-                assertTrue(it is TestException)
+                assertIs<TestException>(it)
                 expect(3)
             }.collect()
         finish(4)
@@ -141,7 +142,7 @@ class OnCompletionTest : TestBase() {
                 }
                 .onCompletion { e ->
                     expect(8)
-                    assertTrue(e is TestException)
+                    assertIs<TestException>(e)
                     emit(TestData.Done(e)) // will fail
                 }.collect {
                     collected += it
@@ -168,7 +169,7 @@ class OnCompletionTest : TestBase() {
                     }
                     .onCompletion { e ->
                         expect(8)
-                        assertTrue(e is CancellationException)
+                        assertIs<CancellationException>(e)
                         try {
                             emit(TestData.Done(e))
                             expectUnreached()

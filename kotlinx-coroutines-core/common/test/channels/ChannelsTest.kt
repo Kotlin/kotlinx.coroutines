@@ -2,6 +2,7 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.math.*

@@ -3,6 +3,7 @@ package kotlinx.coroutines.knit
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
+import kotlinx.coroutines.testing.*
 import kotlinx.knit.test.*
 import java.util.concurrent.*
 import kotlin.test.*

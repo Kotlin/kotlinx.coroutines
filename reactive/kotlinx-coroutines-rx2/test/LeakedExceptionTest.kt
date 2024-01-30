@@ -1,5 +1,6 @@
 package kotlinx.coroutines.rx2
 
+import kotlinx.coroutines.testing.*
 import io.reactivex.*
 import io.reactivex.exceptions.*
 import kotlinx.coroutines.*

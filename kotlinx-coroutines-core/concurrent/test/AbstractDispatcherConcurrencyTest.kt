@@ -1,5 +1,6 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 

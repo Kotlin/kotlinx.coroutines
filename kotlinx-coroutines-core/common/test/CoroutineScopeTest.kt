@@ -2,6 +2,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*

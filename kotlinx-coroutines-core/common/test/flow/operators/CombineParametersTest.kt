@@ -1,5 +1,6 @@
 package kotlinx.coroutines.flow.operators
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
@@ -109,8 +110,7 @@ class CombineParametersTest : TestBase() {
     @Test
     fun testReified() = runTest {
         val value = combine(flowOf(1), flowOf(2)) { args: Array<Int> ->
-            @Suppress("USELESS_IS_CHECK")
-            assertTrue(args is Array<Int>)
+            assertIs<Array<Int>>(args)
             args[0] + args[1]
         }.single()
         assertEquals(3, value)
@@ -119,8 +119,7 @@ class CombineParametersTest : TestBase() {
     @Test
     fun testReifiedTransform() = runTest {
         val value = combineTransform(flowOf(1), flowOf(2)) { args: Array<Int> ->
-            @Suppress("USELESS_IS_CHECK")
-            assertTrue(args is Array<Int>)
+            assertIs<Array<Int>>(args)
             emit(args[0] + args[1])
         }.single()
         assertEquals(3, value)

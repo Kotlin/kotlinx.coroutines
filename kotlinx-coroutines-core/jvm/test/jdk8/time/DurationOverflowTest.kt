@@ -1,5 +1,6 @@
 package kotlinx.coroutines.time
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import org.junit.Test

@@ -1,5 +1,6 @@
 package kotlinx.coroutines.rx2
 
+import kotlinx.coroutines.testing.*
 import io.reactivex.*
 import io.reactivex.disposables.*
 import kotlinx.coroutines.*
@@ -37,7 +38,7 @@ class FlowAsObservableTest : TestBase() {
         expect(2)
         observable.subscribe({ expectUnreached() }, { error ->
             expect(4)
-            assertTrue(error is RuntimeException)
+            assertIs<RuntimeException>(error)
             assertEquals("OK", error.message)
         })
         finish(5)

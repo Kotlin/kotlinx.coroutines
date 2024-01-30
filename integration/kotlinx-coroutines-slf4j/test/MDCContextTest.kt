@@ -1,5 +1,6 @@
 package kotlinx.coroutines.slf4j
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test

@@ -1,5 +1,6 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*

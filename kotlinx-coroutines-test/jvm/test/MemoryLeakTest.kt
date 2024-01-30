@@ -1,5 +1,6 @@
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 class MemoryLeakTest {

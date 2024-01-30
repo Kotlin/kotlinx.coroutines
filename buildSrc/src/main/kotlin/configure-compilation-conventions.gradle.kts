@@ -19,26 +19,37 @@ configure(subprojects) {
                 apiVersion = it
                 versionsAreNotOverridden = false
             }
-            if (isMainTaskName && versionsAreNotOverridden) {
+            if (isMainTaskName && versionsAreNotOverridden && !unpublished.contains(project.name)) {
                 allWarningsAsErrors = true
                 freeCompilerArgs.add("-Xexplicit-api=strict")
             }
-
-            /*
-             * Coroutines do not interop with Java and these flags provide a significant
-             * (i.e. close to double-digit) reduction in both bytecode and optimized dex size
-             */
-            val bytecodeSizeReductionOptions =
-                if (this@configureEach is KotlinJvmCompile) listOf(
+            /* Coroutines do not interop with Java and these flags provide a significant
+             * (i.e. close to double-digit) reduction in both bytecode and optimized dex size */
+            if (this@configureEach is KotlinJvmCompile) {
+                freeCompilerArgs.addAll(
                     "-Xno-param-assertions",
                     "-Xno-call-assertions",
                     "-Xno-receiver-assertions"
-                ) else emptyList()
-
-            val newOptions = listOf(
-                "-progressive", "-Xexpect-actual-classes"
-            ) + bytecodeSizeReductionOptions + optInAnnotations.map { "-opt-in=$it" }
-            freeCompilerArgs.addAll(newOptions)
+                )
+            }
+            if (this@configureEach is KotlinNativeCompile) {
+                optIn.addAll(
+                    "kotlinx.cinterop.ExperimentalForeignApi",
+                    "kotlinx.cinterop.UnsafeNumber",
+                    "kotlin.experimental.ExperimentalNativeApi",
+                )
+            }
+            freeCompilerArgs.addAll("-progressive", "-Xexpect-actual-classes")
+            optIn.addAll(
+                "kotlin.experimental.ExperimentalTypeInference",
+                "kotlin.ExperimentalMultiplatform",
+                // our own opt-ins that we don't want to bother with in our own code:
+                "kotlinx.coroutines.DelicateCoroutinesApi",
+                "kotlinx.coroutines.ExperimentalCoroutinesApi",
+                "kotlinx.coroutines.ObsoleteCoroutinesApi",
+                "kotlinx.coroutines.InternalCoroutinesApi",
+                "kotlinx.coroutines.FlowPreview"
+            )
         }
 
     }
