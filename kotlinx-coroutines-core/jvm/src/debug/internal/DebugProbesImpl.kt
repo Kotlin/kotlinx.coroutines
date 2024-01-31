@@ -29,28 +29,49 @@ internal object DebugProbesImpl {
     private val capturedCoroutines: Set<CoroutineOwner<*>> get() = capturedCoroutinesMap.keys
 
     private val installations = atomic(0)
-    
-    /**
-     * A thread local value that stores CoroutineId of the coroutine that is being executed on the thread.
-     */
-    private val threadLocalCoroutineId: ThreadLocal<Long> = ThreadLocal()
 
     /**
-     * This function is used by debugger (just to test the solution for now).
-     *
-     * For every debug step inside the coroutine we need to determine whether 
+     * The current location in a coroutine that may be retrieved at a breakpoint.
+     */
+    // TODO: add tests
+    public val currentPosition: LocationInCoroutine 
+        get() = LocationInCoroutineImpl(
+            capturedCoroutines.asSequence().mapNotNull { owner ->
+                when {
+                    // a coroutine is completed
+                    owner.isFinished() -> null
+                    // a coroutine is executed in another thread
+                    owner.info.lastObservedThread != Thread.currentThread() -> null
+                    // an active coroutine that is being executed on the current thread
+                    else -> owner.info.sequenceNumber
+                }
+            }.toSet()
+        )
+
+    /**
+     * For every debug step inside the coroutine we need to determine whether
      * we are about to stop in the same coroutine we were on the previous step.
      * 
-     * Knowing the coroutine id that is currently running on the given thread allows 
-     * to avoid unrolling the continuation stack till the continuation corresponding to the frame from the previous step.
+     * [LocationInCoroutine] represents a location inside a coroutine body and introduces 
+     * [canRunTo] method which returns true if a step from the current location the given location is possible.
      * 
-     * Also, it will help for stepping into a non-suspend function from a suspend function,
-     * when the continuation is not passed to the function call.
+     * The step is possible if we stay in the same coroutine or we step in an undispatched coroutine.
+     * TODO: example
      * 
-     * The current coroutine id is saved in the breakpoint and 
-     * debugger will only stop at the breakpoint if the coroutine with same id is running in the current thread.
+     * The debugger can get the current location in a coroutine at the breakpoint and invoke [canRunTo] method to define whether we can run to another location.
      */
-    public val currentThreadCoroutineId: Long get() = threadLocalCoroutineId.get()
+    public sealed interface LocationInCoroutine {
+        public fun canRunTo(other: LocationInCoroutine): Boolean
+        public fun allCoroutines(): String
+    }
+
+    private class LocationInCoroutineImpl(private val coroutines: Set<Long>): LocationInCoroutine {
+        override fun canRunTo(other: LocationInCoroutine) =
+            other is LocationInCoroutineImpl && coroutines.intersect(other.coroutines).isNotEmpty()
+
+        override fun allCoroutines(): String =
+            coroutines.joinToString(", ")
+    }
 
     /**
      * This internal method is used by the IDEA debugger under the JVM name
@@ -447,7 +468,6 @@ internal object DebugProbesImpl {
 
     private fun updateState(frame: Continuation<*>, state: String) {
         if (!isInstalled) return
-        saveCoroutineIdToThreadLocal(frame)
         if (ignoreCoroutinesWithEmptyContext && frame.context === EmptyCoroutineContext) return // See ignoreCoroutinesWithEmptyContext
         if (state == RUNNING) {
             val stackFrame = frame as? CoroutineStackFrame ?: return
@@ -458,12 +478,6 @@ internal object DebugProbesImpl {
         // Find ArtificialStackFrame of the coroutine
         val owner = frame.owner() ?: return
         updateState(owner, frame, state)
-    }
-    
-    private fun saveCoroutineIdToThreadLocal(frame: Continuation<*>) {
-        frame.owner()?.info?.let { debugCoroutineInfo ->
-            threadLocalCoroutineId.set(debugCoroutineInfo.sequenceNumber)
-        }
     }
 
     // See comment to callerInfoCache
