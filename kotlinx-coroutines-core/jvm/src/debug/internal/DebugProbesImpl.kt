@@ -31,47 +31,40 @@ internal object DebugProbesImpl {
     private val installations = atomic(0)
 
     /**
-     * The current location in a coroutine that may be retrieved at a breakpoint.
+     * This API is used for stepping in the debugger.
+     * 
+     * A debug step from one location to the next location within a coroutine is allowed if 
+     * the same coroutine that was running at the previous location continues its execution at the next location.
+     * 
+     * We also allow to step into coroutines that started its execution in the current thread immediately without being dispatched.
+     * 
+     * [CoroutinesOnThread] captures a set of coroutines that were running on the current thread at a breakpoint, 
+     * and can determine whether we can step to the current location in code by checking if any of those captured coroutines 
+     * continue its execution at the current location.
      */
-    // TODO: add tests
-    public val currentPosition: LocationInCoroutine 
-        get() = LocationInCoroutineImpl(
-            capturedCoroutines.asSequence().mapNotNull { owner ->
-                when {
-                    // a coroutine is completed
-                    owner.isFinished() -> null
-                    // a coroutine is executed in another thread
-                    owner.info.lastObservedThread != Thread.currentThread() -> null
-                    // an active coroutine that is being executed on the current thread
-                    else -> owner.info.sequenceNumber
+    public class CoroutinesOnThread internal constructor(private val coroutinesAtPreviousLocation: Set<Long>) {
+        public fun canRunToCurrentLocation(): Boolean {
+            for (coroutine in capturedCoroutines) {
+                if (coroutine.isRunningOnCurrentThread() && coroutine.info.sequenceNumber in coroutinesAtPreviousLocation) {
+                    return true
                 }
-            }.toSet()
-        )
+            }
+            return false
+        }
+    }
 
     /**
-     * For every debug step inside the coroutine we need to determine whether
-     * we are about to stop in the same coroutine we were on the previous step.
-     * 
-     * [LocationInCoroutine] represents a location inside a coroutine body and introduces 
-     * [canRunTo] method which returns true if a step from the current location the given location is possible.
-     * 
-     * The step is possible if we stay in the same coroutine or we step in an undispatched coroutine.
-     * TODO: example
-     * 
-     * The debugger can get the current location in a coroutine at the breakpoint and invoke [canRunTo] method to define whether we can run to another location.
+     * Captures a set of coroutines that are running on the current thread.
      */
-    public sealed interface LocationInCoroutine {
-        public fun canRunTo(other: LocationInCoroutine): Boolean
-        public fun allCoroutines(): String
-    }
-
-    private class LocationInCoroutineImpl(private val coroutines: Set<Long>): LocationInCoroutine {
-        override fun canRunTo(other: LocationInCoroutine) =
-            other is LocationInCoroutineImpl && coroutines.intersect(other.coroutines).isNotEmpty()
-
-        override fun allCoroutines(): String =
-            coroutines.joinToString(", ")
-    }
+    public val coroutinesRunningOnCurrentThread: CoroutinesOnThread
+        get() = CoroutinesOnThread(
+            capturedCoroutines.mapNotNull { owner -> 
+                if (owner.isRunningOnCurrentThread()) owner.info.sequenceNumber else null
+            }.toSet()
+        )
+    
+    private fun CoroutineOwner<*>.isRunningOnCurrentThread(): Boolean = 
+        !isFinished() && info.lastObservedThread == Thread.currentThread()
 
     /**
      * This internal method is used by the IDEA debugger under the JVM name

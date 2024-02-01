@@ -946,7 +946,7 @@ public final class kotlinx/coroutines/debug/internal/DebugProbesImpl {
 	public final fun dumpDebuggerInfo ()Ljava/util/List;
 	public final fun enhanceStackTraceWithThreadDump (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;Ljava/util/List;)Ljava/util/List;
 	public final fun enhanceStackTraceWithThreadDumpAsJson (Lkotlinx/coroutines/debug/internal/DebugCoroutineInfo;)Ljava/lang/String;
-	public final fun getCurrentThreadCoroutineId ()J
+	public final fun getCoroutinesRunningOnCurrentThread ()Lkotlinx/coroutines/debug/internal/DebugProbesImpl$CoroutinesOnThread;
 	public final fun getIgnoreCoroutinesWithEmptyContext ()Z
 	public final fun isInstalled$kotlinx_coroutines_debug ()Z
 	public final fun setIgnoreCoroutinesWithEmptyContext (Z)V
@@ -959,6 +959,10 @@ public final class kotlinx/coroutines/debug/internal/DebugProbesImpl$CoroutineOw
 	public fun getStackTraceElement ()Ljava/lang/StackTraceElement;
 	public fun resumeWith (Ljava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/coroutines/debug/internal/DebugProbesImpl$CoroutinesOnThread {
+	public final fun canRunToCurrentLocation ()Z
 }
 
 public final class kotlinx/coroutines/debug/internal/DebuggerInfo : java/io/Serializable {
