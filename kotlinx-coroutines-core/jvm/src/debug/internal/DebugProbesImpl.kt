@@ -43,7 +43,8 @@ internal object DebugProbesImpl {
      * continue its execution at the current location.
      */
     public class CoroutinesOnThread internal constructor(private val coroutinesAtPreviousLocation: Set<Long>) {
-        public fun canRunToCurrentLocation(): Boolean {
+        public val canRunToCurrentLocation: Boolean 
+            get() {
             for (coroutine in capturedCoroutines) {
                 if (coroutine.isRunningOnCurrentThread() && coroutine.info.sequenceNumber in coroutinesAtPreviousLocation) {
                     return true
