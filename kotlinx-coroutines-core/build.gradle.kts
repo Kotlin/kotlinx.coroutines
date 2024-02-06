@@ -142,7 +142,7 @@ kotlin {
 
         // For animal sniffer
         withJava()
-        compilations.create("benchmark") { associateWith(compilations.getByName("main")) }
+        compilations.create("benchmark") { associateWith(this@jvm.compilations.getByName("main")) }
     }
 }
 
