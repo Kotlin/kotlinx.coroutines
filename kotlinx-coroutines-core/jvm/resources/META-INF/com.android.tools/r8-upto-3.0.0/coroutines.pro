@@ -6,5 +6,5 @@
 # classes mentioned in META-INF/services files, and explicitly -keeping them
 # disables these optimizations.
 # https://github.com/Kotlin/kotlinx.coroutines/issues/3111
--keep class kotlinx.coroutines.android.AndroidDispatcherFactory {*;}
--keep class kotlinx.coroutines.android.AndroidExceptionPreHandler {*;}
+-keep class * implements kotlinx.coroutines.internal.MainDispatcherFactory
+-keep class * implements kotlinx.coroutines.CoroutineExceptionHandler
