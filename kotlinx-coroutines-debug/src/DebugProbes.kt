@@ -5,7 +5,6 @@ package kotlinx.coroutines.debug
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.*
 import java.io.*
-import java.lang.management.*
 import kotlin.coroutines.*
 
 /**
