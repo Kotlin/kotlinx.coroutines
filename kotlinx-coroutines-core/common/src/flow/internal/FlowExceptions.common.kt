@@ -9,11 +9,11 @@ import kotlinx.coroutines.flow.*
  * This exception can be safely ignored by non-terminal flow operator if and only if it was caught by its owner
  * (see usages of [checkOwnership]).
  */
-internal expect class AbortFlowException(owner: FlowCollector<*>) : CancellationException {
-    public val owner: FlowCollector<*>
+internal expect class AbortFlowException(owner: Any) : CancellationException {
+    val owner: Any
 }
 
-internal fun AbortFlowException.checkOwnership(owner: FlowCollector<*>) {
+internal fun AbortFlowException.checkOwnership(owner: Any) {
     if (this.owner !== owner) throw this
 }
 
