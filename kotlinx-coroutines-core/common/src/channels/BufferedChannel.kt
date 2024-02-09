@@ -241,7 +241,7 @@ internal open class BufferedChannel<E>(
     /**
      * Abstract send implementation.
      */
-    protected inline fun <R> sendImpl(
+    private inline fun <R> sendImpl(
         /* The element to be sent. */
         element: E,
         /* The waiter to be stored in case of suspension,
@@ -349,6 +349,27 @@ internal open class BufferedChannel<E>(
             }
         }
     }
+
+    protected fun trySendDropOldest(element: E): ChannelResult<Unit> =
+        sendImpl( // <-- this is an inline function
+            element = element,
+            // Put the element into the logical buffer even
+            // if this channel is already full, the `onSuspend`
+            // callback below extract the first (oldest) element.
+            waiter = BUFFERED,
+            // Finish successfully when a rendezvous has happened
+            // or the element has been buffered.
+            onRendezvousOrBuffered = { return success(Unit) },
+            // In case the algorithm decided to suspend, the element
+            // was added to the buffer. However, as the buffer is now
+            // overflowed, the first (oldest) element has to be extracted.
+            onSuspend = { segm, i ->
+                dropFirstElementUntilTheSpecifiedCellIsInTheBuffer(segm.id * SEGMENT_SIZE + i)
+                return success(Unit)
+            },
+            // If the channel is closed, return the corresponding result.
+            onClosed = { return closed(sendException) }
+        )
 
     private inline fun sendImplOnNoWaiter(
         /* The working cell is specified by
@@ -1587,7 +1608,7 @@ internal open class BufferedChannel<E>(
          * It is nulled-out on both completion and cancellation paths that
          * could happen concurrently.
          */
-        @BenignDataRace
+        //@BenignDataRace
         private var continuation: CancellableContinuationImpl<Boolean>? = null
 
         // `hasNext()` is just a special receive operation.
