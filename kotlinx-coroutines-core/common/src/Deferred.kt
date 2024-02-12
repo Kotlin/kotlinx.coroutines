@@ -58,8 +58,8 @@ public interface Deferred<out T> : Job {
      * }
      * ```
      *
-     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
-     * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
+     * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
+     * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
      *
      * This function can be used in [select] invocations with an [onAwait] clause.
      * Use [isCompleted] to check for completion of this deferred value without waiting, and

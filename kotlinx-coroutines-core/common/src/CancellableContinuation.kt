@@ -238,25 +238,25 @@ public interface CancellableContinuation<in T> : Continuation<T> {
  *
  * This function provides **prompt cancellation guarantee**.
  * If the [Job] of the current coroutine was cancelled while this function was suspended it will not resume
- * successfully.
+ * successfully, even if [CancellableContinuation.resume] was already invoked.
  *
  * The cancellation of the coroutine's job is generally asynchronous with respect to the suspended coroutine.
- * The suspended coroutine is resumed with the call it to its [Continuation.resumeWith] member function or to
+ * The suspended coroutine is resumed with a call to its [Continuation.resumeWith] member function or to the
  * [resume][Continuation.resume] extension function.
  * However, when coroutine is resumed, it does not immediately start executing, but is passed to its
  * [CoroutineDispatcher] to schedule its execution when dispatcher's resources become available for execution.
- * The job's cancellation can happen both before, after, and concurrently with the call to `resume`. In any
- * case, prompt cancellation guarantees that the the coroutine will not resume its code successfully.
+ * The job's cancellation can happen before, after, and concurrently with the call to `resume`. In any
+ * case, prompt cancellation guarantees that the coroutine will not resume its code successfully.
  *
  * If the coroutine was resumed with an exception (for example, using [Continuation.resumeWithException] extension
- * function) and cancelled, then the resulting exception of the `suspendCancellableCoroutine` function is determined
- * by whichever action (exceptional resume or cancellation) that happened first.
+ * function) and cancelled, then the exception thrown by the `suspendCancellableCoroutine` function is determined
+ * by what happened first: exceptional resume or cancellation.
  *
  * ### Returning resources from a suspended coroutine
  *
- * As a result of a prompt cancellation guarantee, when a closeable resource
- * (like open file or a handle to another native resource) is returned from a suspended coroutine as a value
- * it can be lost when the coroutine is cancelled. In order to ensure that the resource can be properly closed
+ * As a result of the prompt cancellation guarantee, when a closeable resource
+ * (like open file or a handle to another native resource) is returned from a suspended coroutine as a value,
+ * it can be lost when the coroutine is cancelled. To ensure that the resource can be properly closed
  * in this case, the [CancellableContinuation] interface provides two functions.
  *
  * - [invokeOnCancellation][CancellableContinuation.invokeOnCancellation] installs a handler that is called

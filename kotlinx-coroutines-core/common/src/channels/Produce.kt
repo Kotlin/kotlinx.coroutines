@@ -22,9 +22,10 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  * Suspends the current coroutine until the channel is either [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel]
  * and invokes the given [block] before resuming the coroutine.
  *
- * This suspending function is cancellable.
- * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
- * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+ * suspending function is waiting, this function immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**: even if this function is ready to return, but was cancelled
+ * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  *
  * Note that when the producer channel is cancelled, this function resumes with a cancellation exception.
  * Therefore, in case of cancellation, no code after the call to this function will be executed.

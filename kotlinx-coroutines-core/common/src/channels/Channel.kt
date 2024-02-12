@@ -41,11 +41,12 @@ public interface SendChannel<in E> {
      * All elements sent over the channel are delivered in first-in first-out order. The sent element
      * will be delivered to receivers before the close token.
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
-     * function is suspended, this function immediately resumes with a [CancellationException].
-     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
-     * suspended, it will not resume successfully. The `send` call can send the element to the channel,
-     * but then throw [CancellationException], thus an exception should not be treated as a failure to deliver the element.
+     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+     * suspending function is waiting, this function immediately resumes with [CancellationException].
+     * There is a **prompt cancellation guarantee**: even if [send] managed to send the element, but was cancelled
+     * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+     *
+     * Because of the prompt cancellation guarantee, an exception does not always mean a failure to deliver the element.
      * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
      *
      * Note that this function does not check for cancellation when it is not suspended.
@@ -218,6 +219,15 @@ public interface ReceiveChannel<out E> {
      * but then throw [CancellationException], thus failing to deliver the element.
      * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
      *
+     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+     * suspending function is waiting, this function immediately resumes with [CancellationException].
+     * There is a **prompt cancellation guarantee**: even if [receive] managed to retrieve the element from the channel,
+     * but was cancelled while suspended, [CancellationException] will be thrown.
+     * See [suspendCancellableCoroutine] for low-level details.
+     *
+     * Because of the prompt cancellation guarantee, some values retrieved from the channel can become lost.
+     * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
+     *
      * Note that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
@@ -240,11 +250,13 @@ public interface ReceiveChannel<out E> {
      * or the close cause if the channel was closed. Closed cause may be `null` if the channel was closed normally.
      * The result cannot be [failed][ChannelResult.isFailure] without being [closed][ChannelResult.isClosed].
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
-     * function is suspended, this function immediately resumes with a [CancellationException].
-     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
-     * suspended, it will not resume successfully. The `receiveCatching` call can retrieve the element from the channel,
-     * but then throw [CancellationException], thus failing to deliver the element.
+     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+     * suspending function is waiting, this function immediately resumes with [CancellationException].
+     * There is a **prompt cancellation guarantee**: even if [receiveCatching] managed to retrieve the element from the
+     * channel, but was cancelled while suspended, [CancellationException] will be thrown.
+     * See [suspendCancellableCoroutine] for low-level details.
+     *
+     * Because of the prompt cancellation guarantee, some values retrieved from the channel can become lost.
      * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
      *
      * Note that this function does not check for cancellation when it is not suspended.
@@ -561,11 +573,13 @@ public interface ChannelIterator<out E> {
      * This function retrieves and removes an element from this channel for the subsequent invocation
      * of [next].
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
-     * function is suspended, this function immediately resumes with a [CancellationException].
-     * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
-     * suspended, it will not resume successfully. The `hasNext` call can retrieve the element from the channel,
-     * but then throw [CancellationException], thus failing to deliver the element.
+     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+     * suspending function is waiting, this function immediately resumes with [CancellationException].
+     * There is a **prompt cancellation guarantee**: even if [hasNext] retrieves the element from the channel during
+     * its operation, but was cancelled while suspended, [CancellationException] will be thrown.
+     * See [suspendCancellableCoroutine] for low-level details.
+     *
+     * Because of the prompt cancellation guarantee, some values retrieved from the channel can become lost.
      * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
      *
      * Note that this function does not check for cancellation when it is not suspended.
@@ -651,11 +665,10 @@ public interface ChannelIterator<out E> {
  * ### Prompt cancellation guarantee
  *
  * All suspending functions with channels provide **prompt cancellation guarantee**.
- * If the job was cancelled while send or receive function was suspended, it will not resume successfully,
- * but throws a [CancellationException].
- * With a single-threaded [dispatcher][CoroutineDispatcher] like [Dispatchers.Main] this gives a
- * guarantee that if a piece code running in this thread cancels a [Job], then a coroutine running this job cannot
- * resume successfully and continue to run, ensuring a prompt response to its cancellation.
+ * If the job was cancelled while send or receive function was suspended, it will not resume successfully, even if it
+ * already changed the channel's state, but throws a [CancellationException].
+ * With a single-threaded [dispatcher][CoroutineDispatcher] like [Dispatchers.Main], this gives a
+ * guarantee that the coroutine promptly reacts to the cancellation of its [Job] and does not resume its execution.
  *
  * > **Prompt cancellation guarantee** for channel operations was added since `kotlinx.coroutines` version `1.4.0`
  * > and had replaced a channel-specific atomic-cancellation that was not consistent with other suspending functions.
@@ -663,9 +676,9 @@ public interface ChannelIterator<out E> {
  *
  * ### Undelivered elements
  *
- * As a result of a prompt cancellation guarantee, when a closeable resource
- * (like open file or a handle to another native resource) is transferred via channel from one coroutine to another
- * it can fail to be delivered and will be lost if either send or receive operations are cancelled in transit.
+ * As a result of the prompt cancellation guarantee, when a closeable resource
+ * (like open file or a handle to another native resource) is transferred via a channel from one coroutine to another,
+ * it can fail to be delivered and will be lost if the receiving operation is cancelled in transit.
  *
  * A `Channel()` constructor function has an `onUndeliveredElement` optional parameter.
  * When `onUndeliveredElement` parameter is set, the corresponding function is called once for each element
