@@ -28,8 +28,47 @@ public typealias MDCContextMap = Map<String, String>?
  * using [MDC.put]. These updates are going to be lost on the next suspension and
  * reinstalled to the MDC context that was captured or explicitly specified in
  * [contextMap] when this object was created on the next resumption.
- * Use `withContext(MDCContext()) { ... }` to capture updated map of MDC keys and values
- * for the specified block of code.
+ *
+ * For example, the following code will not work as expected:
+ *
+ * ```
+ * launch(MDCContext()) {
+ *    MDC.put("key", "value") // This update will be lost
+ *    delay(100)
+ *    println(MDC.get("key")) // This will print null
+ * }
+ * ```
+ *
+ * Instead, you should use [withContext] to capture the updated MDC context:
+ *
+ * ```
+ * launch(MDCContext()) {
+ *     MDC.put("key", "value") // This update will be captured
+ *     withContext(MDCContext()) {
+ *         delay(100)
+ *         println(MDC.get("key")) // This will print "value"
+ *     }
+ * }
+ * ```
+ *
+ * There is no way to implicitly propagate MDC context updates from inside the coroutine to the outer scope.
+ * You have to capture the updated MDC context and restore it explicitly. For example:
+ *
+ * ```
+ * MDC.put("a", "b")
+ * val contextMap = withContext(MDCContext()) {
+ *     MDC.put("key", "value")
+ *     withContext(MDCContext()) {
+ *         MDC.put("key2", "value2")
+ *         withContext(MDCContext()) {
+ *             yield()
+ *             MDC.getCopyOfContextMap()
+ *         }
+ *     }
+ * }
+ * // contextMap contains: {"a"="b", "key"="value", "key2"="value2"}
+ * MDC.setContextMap(contextMap)
+ * ```
  *
  * @param contextMap the value of [MDC] context map.
  * Default value is the copy of the current thread's context map that is acquired via
