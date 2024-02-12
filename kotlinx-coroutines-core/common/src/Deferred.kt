@@ -33,24 +33,46 @@ import kotlinx.coroutines.selects.*
 public interface Deferred<out T> : Job {
 
     /**
-     * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
-     * returning the resulting value or throwing the corresponding exception if the deferred was cancelled.
+     * Awaits for completion of this value without blocking the thread and returns the resulting value or throws
+     * the exception if the deferred was cancelled.
      *
-     * This suspending function is cancellable.
-     * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-     * immediately resumes with [CancellationException].
+     * Unless the calling coroutine is cancelled, [await] will return the same result on each invocation:
+     * if the [Deferred] completed successfully, [await] will return the same value every time;
+     * if the [Deferred] completed exceptionally, [await] will rethrow the same exception.
+     *
+     * This suspending function is itself cancellable: if the [Job] of the current coroutine is cancelled or completed
+     * while this suspending function is waiting, this function immediately resumes with [CancellationException].
+     *
+     * This means that [await] can throw [CancellationException] in two cases:
+     * - if the coroutine in which [await] was called got cancelled,
+     * - or if the [Deferred] itself got completed with a [CancellationException].
+     *
+     * In both cases, the [CancellationException] will cancel the coroutine calling [await], unless it's caught.
+     * The following idiom may be helpful to avoid this:
+     * ```
+     * try {
+     *    deferred.await()
+     * } catch (e: CancellationException) {
+     *    currentCoroutineContext().ensureActive() // throws if the current coroutine was cancelled
+     *    processException(e) // if this line executes, the exception is the result of `await` itself
+     * }
+     * ```
+     *
      * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
      * suspended, it will not resume successfully. See [suspendCancellableCoroutine] documentation for low-level details.
      *
-     * This function can be used in [select] invocation with [onAwait] clause.
-     * Use [isCompleted] to check for completion of this deferred value without waiting.
+     * This function can be used in [select] invocations with an [onAwait] clause.
+     * Use [isCompleted] to check for completion of this deferred value without waiting, and
+     * [join] to wait for completion without returning the result.
      */
     public suspend fun await(): T
 
     /**
-     * Clause for [select] expression of [await] suspending function that selects with the deferred value when it is
-     * resolved. The [select] invocation fails if the deferred value completes exceptionally (either fails or
-     * it cancelled).
+     * Clause using the [await] suspending function as a [select] clause.
+     * It selects with the deferred value when the [Deferred] completes.
+     * If [Deferred] completes with an exception, the whole the [select] invocation fails with the same exception.
+     * Note that, if [Deferred] completed with a [CancellationException], throwing it may have unintended
+     * consequences. See [await] for details.
      */
     public val onAwait: SelectClause1<T>
 

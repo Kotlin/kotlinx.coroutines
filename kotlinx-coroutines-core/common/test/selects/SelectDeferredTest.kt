@@ -5,6 +5,7 @@ package kotlinx.coroutines.selects
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 class SelectDeferredTest : TestBase() {
     @Test
@@ -112,6 +113,23 @@ class SelectDeferredTest : TestBase() {
         }
         assertEquals("OK", res)
         finish(9)
+    }
+
+    /**
+     * Tests that completing a [Deferred] with an exception will cause the [select] that uses [Deferred.onAwait]
+     * to throw the same exception.
+     */
+    @Test
+    fun testSelectFailure() = runTest {
+        val d = CompletableDeferred<Nothing>()
+        d.completeExceptionally(TestException())
+        val d2 = CompletableDeferred(42)
+        assertFailsWith<TestException> {
+            select {
+                d.onAwait { expectUnreached() }
+                d2.onAwait { 4 }
+            }
+        }
     }
 
     @Test
