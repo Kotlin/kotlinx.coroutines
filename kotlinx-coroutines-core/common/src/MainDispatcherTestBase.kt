@@ -1,6 +1,8 @@
 /*
- * Copyright 2016-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE", "NO_EXPLICIT_RETURN_TYPE_IN_API_MODE")
 
 package kotlinx.coroutines
 
@@ -129,7 +131,7 @@ abstract class MainDispatcherTestBase: TestBase() {
     fun testFailureInMainScope() = runTestOrSkip {
         var exception: Throwable? = null
         withMainScope {
-            launch(CoroutineExceptionHandler { ctx, e -> exception = e }) {
+            launch(CoroutineExceptionHandler { _, e -> exception = e }) {
                 checkIsMainThread()
                 throw TestException()
             }.join()

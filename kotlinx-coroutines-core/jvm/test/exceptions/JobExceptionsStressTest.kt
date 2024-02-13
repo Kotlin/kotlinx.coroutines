@@ -12,7 +12,7 @@ import kotlin.test.*
 
 class JobExceptionsStressTest : TestBase() {
 
-    private val executor = newFixedThreadPoolContext(5, "JobExceptionsStressTest")
+    private val executor = newFixedThreadPoolContextForTests(5, "JobExceptionsStressTest")
 
     @After
     fun tearDown() {

@@ -32,7 +32,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
     private val iterationDurationMs = 100L
     private val testIterations = 20 * stressTestMultiplier // 2 sec
 
-    private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
+    private val dispatcher = newFixedThreadPoolContextForTests(2, "ChannelAtomicCancelStressTest")
     private val scope = CoroutineScope(dispatcher)
 
     private val channel = kind.create<Data> { it.failedToDeliver() }

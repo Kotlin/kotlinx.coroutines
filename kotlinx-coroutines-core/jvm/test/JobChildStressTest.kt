@@ -11,7 +11,7 @@ import kotlin.test.*
 
 class JobChildStressTest : TestBase() {
     private val N_ITERATIONS = 10_000 * stressTestMultiplier
-    private val pool = newFixedThreadPoolContext(3, "JobChildStressTest")
+    private val pool = newFixedThreadPoolContextForTests(3, "JobChildStressTest")
 
     @After
     fun tearDown() {

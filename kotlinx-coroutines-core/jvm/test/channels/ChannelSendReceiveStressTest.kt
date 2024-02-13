@@ -47,7 +47,7 @@ class ChannelSendReceiveStressTest(
     private val receivedBy = IntArray(nReceivers)
 
     private val pool =
-        newFixedThreadPoolContext(nSenders + nReceivers, "ChannelSendReceiveStressTest")
+        newFixedThreadPoolContextForTests(nSenders + nReceivers, "ChannelSendReceiveStressTest")
 
     @After
     fun tearDown() {

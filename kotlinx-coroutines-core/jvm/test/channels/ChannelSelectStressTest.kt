@@ -14,7 +14,7 @@ import kotlin.test.*
 
 class ChannelSelectStressTest : TestBase() {
     private val pairedCoroutines = 3
-    private val dispatcher = newFixedThreadPoolContext(pairedCoroutines * 2, "ChannelSelectStressTest")
+    private val dispatcher = newFixedThreadPoolContextForTests(pairedCoroutines * 2, "ChannelSelectStressTest")
     private val elementsToSend = 20_000 * Long.SIZE_BITS * stressTestMultiplier
     private val sent = atomic(0)
     private val received = atomic(0)

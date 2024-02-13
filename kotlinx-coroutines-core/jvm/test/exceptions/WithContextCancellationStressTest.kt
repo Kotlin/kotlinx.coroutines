@@ -15,7 +15,7 @@ import kotlin.time.Duration.Companion.minutes
 class WithContextCancellationStressTest : TestBase() {
 
     private val timeoutAfter = 1.minutes
-    private val pool = newFixedThreadPoolContext(3, "WithContextCancellationStressTest")
+    private val pool = newFixedThreadPoolContextForTests(3, "WithContextCancellationStressTest")
 
     @After
     fun tearDown() {

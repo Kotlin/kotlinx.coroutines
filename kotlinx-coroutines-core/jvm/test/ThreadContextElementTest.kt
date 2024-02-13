@@ -126,7 +126,7 @@ class ThreadContextElementTest : TestBase() {
 
     @Test
     fun testCopyableThreadContextElementImplementsWriteVisibility() = runTest {
-        newFixedThreadPoolContext(nThreads = 4, name = "withContext").use {
+        newFixedThreadPoolContextForTests(nThreads = 4, name = "withContext").use {
             withContext(it + CopyForChildCoroutineElement(MyData())) {
                 val forBlockData = MyData()
                 myThreadLocal.setForBlock(forBlockData) {

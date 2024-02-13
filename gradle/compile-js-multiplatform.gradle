@@ -14,6 +14,9 @@ kotlin {
     sourceSets {
         jsMain {
             dependsOn(jsAndWasmSharedMain)
+            dependencies {
+                implementation "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
+            }
         }
         jsTest {
             dependsOn(jsAndWasmSharedTest)

@@ -7,7 +7,9 @@ module kotlinx.coroutines.core {
 
     // these are used by kotlinx.coroutines.debug.AgentPremain
     requires static java.instrument; // contains java.lang.instrument.*
-    requires static jdk.unsupported; // contains sun.misc.Signal
+    requires static jdk.unsupported;
+    requires junit;
+    requires kotlin.test; // contains sun.misc.Signal
 
     exports kotlinx.coroutines;
     exports kotlinx.coroutines.channels;

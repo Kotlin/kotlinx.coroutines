@@ -29,7 +29,7 @@ class BroadcastChannelMultiReceiveStressTest(
     private val nSeconds = 3 * stressTestMultiplier
 
     private val broadcast = kind.create<Long>()
-    private val pool = newFixedThreadPoolContext(nReceivers + 1, "BroadcastChannelMultiReceiveStressTest")
+    private val pool = newFixedThreadPoolContextForTests(nReceivers + 1, "BroadcastChannelMultiReceiveStressTest")
 
     private val sentTotal = AtomicLong()
     private val receivedTotal = AtomicLong()

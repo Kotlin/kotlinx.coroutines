@@ -159,6 +159,22 @@ kotlin {
         SourceSetsKt.configureMultiplatform(it)
     }
 
+    sourceSets {
+        commonMain.dependencies {
+            api "org.jetbrains.kotlin:kotlin-test-common:$kotlin_version"
+            api "org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version"
+        }
+
+        jvmMain.dependencies {
+            api "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+            // Workaround to make addSuppressed work in tests
+            api "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+            api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+            api "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+            api "junit:junit:$junit_version"
+        }
+    }
+
     jvm {
         def main = compilations.main
         main.source(jvmCoreMain)

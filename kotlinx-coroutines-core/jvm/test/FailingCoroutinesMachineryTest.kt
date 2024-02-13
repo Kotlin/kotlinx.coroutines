@@ -34,7 +34,7 @@ class FailingCoroutinesMachineryTest(
     private var caught: Throwable? = null
     private val latch = CountDownLatch(1)
     private var exceptionHandler = CoroutineExceptionHandler { _, t -> caught = t; latch.countDown() }
-    private val lazyOuterDispatcher = lazy { newFixedThreadPoolContext(1, "") }
+    private val lazyOuterDispatcher = lazy { newFixedThreadPoolContextForTests(1, "") }
 
     private object FailingUpdate : ThreadContextElement<Unit> {
         private object Key : CoroutineContext.Key<MyElement>

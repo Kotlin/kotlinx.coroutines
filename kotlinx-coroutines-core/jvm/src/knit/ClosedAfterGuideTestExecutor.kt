@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package kotlinx.coroutines // Trick to make guide tests use these declarations with executors that can be closed on our side implicitly
@@ -8,9 +8,9 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-internal fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher = ClosedAfterGuideTestDispatcher(1, name)
+internal fun newSingleThreadContextForTests(name: String): ExecutorCoroutineDispatcher = ClosedAfterGuideTestDispatcher(1, name)
 
-internal fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher =
+internal fun newFixedThreadPoolContextForTests(nThreads: Int, name: String): ExecutorCoroutineDispatcher =
     ClosedAfterGuideTestDispatcher(nThreads, name)
 
 internal class PoolThread(

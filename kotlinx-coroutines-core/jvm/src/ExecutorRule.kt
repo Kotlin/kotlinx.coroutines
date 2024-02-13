@@ -2,6 +2,8 @@
  * Copyright 2016-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE", "NO_EXPLICIT_RETURN_TYPE_IN_API_MODE")
+
 package kotlinx.coroutines
 
 import org.junit.rules.*
@@ -20,7 +22,7 @@ class ExecutorRule(private val numberOfThreads: Int) : TestRule, ExecutorCorouti
         return object : Statement() {
             override fun evaluate() {
                 val threadPrefix = description.className.substringAfterLast(".") + "#" + description.methodName
-                _executor = newFixedThreadPoolContext(numberOfThreads, threadPrefix)
+                _executor = newFixedThreadPoolContextForTests(numberOfThreads, threadPrefix)
                 ignoreLostThreads(threadPrefix)
                 try {
                     return base.evaluate()

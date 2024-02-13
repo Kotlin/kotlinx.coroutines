@@ -11,7 +11,7 @@ import kotlin.test.*
 
 class UnconfinedConcurrentStressTest : TestBase() {
     private val threads = 4
-    private val executor = newFixedThreadPoolContext(threads, "UnconfinedConcurrentStressTest")
+    private val executor = newFixedThreadPoolContextForTests(threads, "UnconfinedConcurrentStressTest")
     private val threadLocal = ThreadLocal<Int>()
 
     @After

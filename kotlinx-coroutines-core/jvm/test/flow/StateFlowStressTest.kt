@@ -19,7 +19,7 @@ class StateFlowStressTest : TestBase() {
     }
 
     fun stress(nEmitters: Int, nCollectors: Int) = runTest {
-        pool = newFixedThreadPoolContext(nEmitters + nCollectors, "StateFlowStressTest")
+        pool = newFixedThreadPoolContextForTests(nEmitters + nCollectors, "StateFlowStressTest")
         val collected = Array(nCollectors) { LongArray(nEmitters) }
         val collectors = launch {
             repeat(nCollectors) { collector ->

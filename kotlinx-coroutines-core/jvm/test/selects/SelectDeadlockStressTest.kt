@@ -15,7 +15,7 @@ import kotlin.test.*
  * don't deadlock. See https://github.com/Kotlin/kotlinx.coroutines/issues/504
  */
 class SelectDeadlockStressTest : TestBase() {
-    private val pool = newFixedThreadPoolContext(2, "SelectDeadlockStressTest")
+    private val pool = newFixedThreadPoolContextForTests(2, "SelectDeadlockStressTest")
     private val nSeconds = 3 * stressTestMultiplier
 
     @After

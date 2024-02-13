@@ -13,7 +13,7 @@ import kotlin.test.*
 class ThreadLocalTest : TestBase() {
     private val stringThreadLocal = ThreadLocal<String?>()
     private val intThreadLocal = ThreadLocal<Int?>()
-    private val executor = newFixedThreadPoolContext(1, "threadLocalTest")
+    private val executor = newFixedThreadPoolContextForTests(1, "threadLocalTest")
 
     @After
     fun tearDown() {

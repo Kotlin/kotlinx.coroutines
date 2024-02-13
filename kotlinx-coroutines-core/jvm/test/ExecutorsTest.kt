@@ -26,7 +26,7 @@ class ExecutorsTest : TestBase() {
 
     @Test
     fun testFixedThreadPool() {
-        val context = newFixedThreadPoolContext(2, "TestPool")
+        val context = newFixedThreadPoolContextForTests(2, "TestPool")
         runBlocking(context) {
             checkThreadName("TestPool")
             delay(10)
