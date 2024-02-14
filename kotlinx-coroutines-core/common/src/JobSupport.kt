@@ -443,11 +443,21 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     protected val completionCauseHandled: Boolean
         get() = state.let { it is CompletedExceptionally && it.handled }
 
-    @Suppress("OverridingDeprecatedMember")
     public final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
-        invokeOnCompletion(onCancelling = false, invokeImmediately = true, handler = InternalCompletionHandler.UserSupplied(handler))
+        invokeOnCompletionInternal(
+            onCancelling = false,
+            invokeImmediately = true,
+            handler = InternalCompletionHandler.UserSupplied(handler)
+        )
 
-    public final override fun invokeOnCompletion(
+    public final override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler): DisposableHandle =
+        invokeOnCompletionInternal(
+            onCancelling = onCancelling,
+            invokeImmediately = invokeImmediately,
+            handler = InternalCompletionHandler.UserSupplied(handler)
+        )
+
+    internal fun invokeOnCompletionInternal(
         onCancelling: Boolean,
         invokeImmediately: Boolean,
         handler: InternalCompletionHandler

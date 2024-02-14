@@ -87,7 +87,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
         }
     }
 
-    private inner class DisposeHandlersOnCancel(private val nodes: Array<AwaitAllNode>) : CancelHandler() {
+    private inner class DisposeHandlersOnCancel(private val nodes: Array<AwaitAllNode>) : CancelHandler {
         fun disposeAll() {
             nodes.forEach { it.handle.dispose() }
         }

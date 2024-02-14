@@ -147,9 +147,6 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      */
     public fun invokeOnCancellation(handler: CompletionHandler)
 
-    @InternalCoroutinesApi
-    public fun invokeOnCancellation(handler: CancelHandler)
-
     /**
      * Resumes this continuation with the specified [value] in the invoker thread without going through
      * the [dispatch][CoroutineDispatcher.dispatch] function of the [CoroutineDispatcher] in the [context].
@@ -202,6 +199,11 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      */
     @ExperimentalCoroutinesApi // since 1.2.0
     public fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?)
+}
+
+internal fun <T> CancellableContinuation<T>.invokeOnCancellation(handler: CancelHandler) = when (this) {
+    is CancellableContinuationImpl -> invokeOnCancellationInternal(handler)
+    else -> invokeOnCancellation(handler::invoke)
 }
 
 /**
@@ -378,7 +380,7 @@ internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): 
 public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle): Unit =
     invokeOnCancellation(handler = DisposeOnCancel(handle))
 
-private class DisposeOnCancel(private val handle: DisposableHandle) : CancelHandler() {
+private class DisposeOnCancel(private val handle: DisposableHandle) : CancelHandler {
     override fun invoke(cause: Throwable?) = handle.dispose()
     override fun toString(): String = "DisposeOnCancel[$handle]"
 }

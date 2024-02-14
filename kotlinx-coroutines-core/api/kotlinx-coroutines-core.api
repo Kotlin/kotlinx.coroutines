@@ -30,17 +30,11 @@ public final class kotlinx/coroutines/BuildersKt {
 	public static final fun withContext (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public abstract class kotlinx/coroutines/CancelHandler : kotlinx/coroutines/NotCompleted {
-	public fun <init> ()V
-	public abstract fun invoke (Ljava/lang/Throwable;)V
-}
-
 public abstract interface class kotlinx/coroutines/CancellableContinuation : kotlin/coroutines/Continuation {
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun completeResume (Ljava/lang/Object;)V
 	public abstract fun initCancellability ()V
 	public abstract fun invokeOnCancellation (Lkotlin/jvm/functions/Function1;)V
-	public abstract fun invokeOnCancellation (Lkotlinx/coroutines/CancelHandler;)V
 	public abstract fun isActive ()Z
 	public abstract fun isCancelled ()Z
 	public abstract fun isCompleted ()Z
@@ -70,7 +64,6 @@ public class kotlinx/coroutines/CancellableContinuationImpl : kotlinx/coroutines
 	public fun getStackTraceElement ()Ljava/lang/StackTraceElement;
 	public fun initCancellability ()V
 	public fun invokeOnCancellation (Lkotlin/jvm/functions/Function1;)V
-	public fun invokeOnCancellation (Lkotlinx/coroutines/CancelHandler;)V
 	public fun invokeOnCancellation (Lkotlinx/coroutines/internal/Segment;I)V
 	public fun isActive ()Z
 	public fun isCancelled ()Z
@@ -393,15 +386,6 @@ public final class kotlinx/coroutines/GlobalScope : kotlinx/coroutines/Coroutine
 	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
 }
 
-public abstract interface class kotlinx/coroutines/InternalCompletionHandler {
-	public abstract fun invoke (Ljava/lang/Throwable;)V
-}
-
-public final class kotlinx/coroutines/InternalCompletionHandler$UserSupplied : kotlinx/coroutines/InternalCompletionHandler {
-	public fun <init> (Lkotlin/jvm/functions/Function1;)V
-	public fun invoke (Ljava/lang/Throwable;)V
-}
-
 public abstract interface annotation class kotlinx/coroutines/InternalCoroutinesApi : java/lang/annotation/Annotation {
 }
 
@@ -421,7 +405,7 @@ public abstract interface class kotlinx/coroutines/Job : kotlin/coroutines/Corou
 	public abstract fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
 	public abstract fun getParent ()Lkotlinx/coroutines/Job;
 	public abstract fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
-	public abstract fun invokeOnCompletion (ZZLkotlinx/coroutines/InternalCompletionHandler;)Lkotlinx/coroutines/DisposableHandle;
+	public abstract fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public abstract fun isActive ()Z
 	public abstract fun isCancelled ()Z
 	public abstract fun isCompleted ()Z
@@ -436,7 +420,7 @@ public final class kotlinx/coroutines/Job$DefaultImpls {
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/Job;Ljava/util/concurrent/CancellationException;ILjava/lang/Object;)V
 	public static fun fold (Lkotlinx/coroutines/Job;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static fun get (Lkotlinx/coroutines/Job;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
-	public static synthetic fun invokeOnCompletion$default (Lkotlinx/coroutines/Job;ZZLkotlinx/coroutines/InternalCompletionHandler;ILjava/lang/Object;)Lkotlinx/coroutines/DisposableHandle;
+	public static synthetic fun invokeOnCompletion$default (Lkotlinx/coroutines/Job;ZZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/DisposableHandle;
 	public static fun minusKey (Lkotlinx/coroutines/Job;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
 	public static fun plus (Lkotlinx/coroutines/Job;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
 	public static fun plus (Lkotlinx/coroutines/Job;Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
@@ -509,7 +493,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	protected fun handleJobException (Ljava/lang/Throwable;)Z
 	protected final fun initParentJob (Lkotlinx/coroutines/Job;)V
 	public final fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
-	public final fun invokeOnCompletion (ZZLkotlinx/coroutines/InternalCompletionHandler;)Lkotlinx/coroutines/DisposableHandle;
+	public final fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public fun isActive ()Z
 	public final fun isCancelled ()Z
 	public final fun isCompleted ()Z
@@ -549,7 +533,7 @@ public final class kotlinx/coroutines/NonCancellable : kotlin/coroutines/Abstrac
 	public fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
 	public fun getParent ()Lkotlinx/coroutines/Job;
 	public fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
-	public fun invokeOnCompletion (ZZLkotlinx/coroutines/InternalCompletionHandler;)Lkotlinx/coroutines/DisposableHandle;
+	public fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
 	public fun isActive ()Z
 	public fun isCancelled ()Z
 	public fun isCompleted ()Z

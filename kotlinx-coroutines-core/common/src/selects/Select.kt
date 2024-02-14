@@ -239,7 +239,7 @@ internal interface SelectInstanceInternal<R>: SelectInstance<R>, Waiter
 @PublishedApi
 internal open class SelectImplementation<R>(
     override val context: CoroutineContext
-) : CancelHandler(), SelectBuilder<R>, SelectInstanceInternal<R> {
+) : CancelHandler, SelectBuilder<R>, SelectInstanceInternal<R> {
 
     /**
      * Essentially, the `select` operation is split into three phases: REGISTRATION, WAITING, and COMPLETION.

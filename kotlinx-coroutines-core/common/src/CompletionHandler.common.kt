@@ -20,10 +20,10 @@ package kotlinx.coroutines
 public typealias CompletionHandler = (cause: Throwable?) -> Unit
 
 @InternalCoroutinesApi
-public fun interface InternalCompletionHandler {
-    public fun invoke(cause: Throwable?)
+internal fun interface InternalCompletionHandler {
+    fun invoke(cause: Throwable?)
 
-    public class UserSupplied(
+    class UserSupplied(
         private val handler: (cause: Throwable?) -> Unit
     ) : InternalCompletionHandler {
         override fun invoke(cause: Throwable?) {

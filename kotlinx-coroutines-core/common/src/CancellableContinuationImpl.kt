@@ -394,7 +394,7 @@ internal open class CancellableContinuationImpl<in T>(
         invokeOnCancellation(InvokeOnCancel(handler))
 
     @InternalCoroutinesApi
-    override fun invokeOnCancellation(handler: CancelHandler) =
+    internal fun invokeOnCancellationInternal(handler: CancelHandler) =
         invokeOnCancellationImpl(handler)
 
     private fun invokeOnCancellationImpl(handler: Any) {
@@ -628,14 +628,14 @@ private object Active : NotCompleted {
  * on JVM, yet support JS where you cannot extend from a functional type.
  */
 @InternalCoroutinesApi
-public abstract class CancelHandler : NotCompleted {
+internal interface CancelHandler : NotCompleted {
     public abstract fun invoke(cause: Throwable?)
 }
 
 // Wrapper for lambdas, for the performance sake CancelHandler can be subclassed directly
 private class InvokeOnCancel( // Clashes with InvokeOnCancellation
     private val handler: CompletionHandler
-) : CancelHandler() {
+) : CancelHandler {
     override fun invoke(cause: Throwable?) {
         handler(cause)
     }

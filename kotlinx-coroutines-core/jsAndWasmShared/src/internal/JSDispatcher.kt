@@ -78,7 +78,7 @@ internal object SetTimeoutDispatcher : SetTimeoutBasedDispatcher() {
     }
 }
 
-private open class ClearTimeout(protected val handle: Int) : CancelHandler(), DisposableHandle {
+private open class ClearTimeout(protected val handle: Int) : CancelHandler, DisposableHandle {
     override fun dispose() {
         w3cClearTimeout(handle)
     }
