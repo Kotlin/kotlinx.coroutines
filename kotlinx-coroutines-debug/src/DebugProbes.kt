@@ -67,7 +67,7 @@ public object DebugProbes {
      * Whether coroutine creation stack traces should be captured.
      * When enabled, for each created coroutine a stack trace of the current thread is captured and attached to the coroutine.
      * This option can be useful during local debug sessions, but is recommended
-     * to be disabled in production environments to avoid performance overhead of keeping debug probes enabled.
+     * to be disabled in production environments to avoid performance overhead of capturing real stacktraces.
      *
      * `false` by default.
      */
