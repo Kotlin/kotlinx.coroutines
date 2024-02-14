@@ -124,7 +124,7 @@ internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: sus
                     flow.collect { value ->
                         withContextUndispatched(scopeContext, Unit, cnt) {
                             val otherValue = second.receiveCatching().getOrElse {
-                                throw it ?:AbortFlowException(collectJob)
+                                throw it ?: AbortFlowException(collectJob)
                             }
                             emit(transform(value, NULL.unbox(otherValue)))
                         }

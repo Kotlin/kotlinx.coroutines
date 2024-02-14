@@ -357,7 +357,31 @@ class OnCompletionTest : TestBase() {
             }
             .first()
 
-        finish(7)
+        // `take` doesn't eat the exception thrown by another `take`:
+        flowOf(1, 2, 3)
+            .take(2)
+            .onCompletion {
+                expect(8)
+                assertNotNull(it)
+            }
+            .take(1)
+            .collect {
+                expect(7)
+            }
+
+        // `zip` doesn't eat the exception thrown by another `zip`:
+        flowOf(1, 2, 3)
+            .zip(flowOf(4, 5)) { a, b -> a + b }
+            .onCompletion {
+                expect(10)
+                assertNotNull(it)
+            }
+            .zip(flowOf(6)) { a, b -> a + b }
+            .collect {
+                expect(9)
+            }
+
+        finish(11)
     }
 
     /**
