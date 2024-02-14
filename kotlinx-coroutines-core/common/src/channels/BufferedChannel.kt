@@ -1608,7 +1608,7 @@ internal open class BufferedChannel<E>(
          * It is nulled-out on both completion and cancellation paths that
          * could happen concurrently.
          */
-        //@BenignDataRace
+        @BenignDataRace
         private var continuation: CancellableContinuationImpl<Boolean>? = null
 
         // `hasNext()` is just a special receive operation.
