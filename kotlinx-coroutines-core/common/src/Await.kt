@@ -11,7 +11,7 @@ import kotlin.coroutines.*
  * This function is **not** equivalent to `deferreds.map { it.await() }` which fails only when it sequentially
  * gets to wait for the failing deferred, while this `awaitAll` fails immediately as soon as any of the deferreds fail.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
  * suspending function is waiting, this function immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
@@ -27,7 +27,7 @@ public suspend fun <T> awaitAll(vararg deferreds: Deferred<T>): List<T> =
  * This function is **not** equivalent to `this.map { it.await() }` which fails only when it sequentially
  * gets to wait for the failing deferred, while this `awaitAll` fails immediately as soon as any of the deferreds fail.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
  * suspending function is waiting, this function immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
@@ -39,7 +39,7 @@ public suspend fun <T> Collection<Deferred<T>>.awaitAll(): List<T> =
  * Suspends current coroutine until all given jobs are complete.
  * This method is semantically equivalent to joining all given jobs one by one with `jobs.forEach { it.join() }`.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
  * suspending function is waiting, this function immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
@@ -50,7 +50,7 @@ public suspend fun joinAll(vararg jobs: Job): Unit = jobs.forEach { it.join() }
  * Suspends current coroutine until all given jobs are complete.
  * This method is semantically equivalent to joining all given jobs one by one with `forEach { it.join() }`.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
  * suspending function is waiting, this function immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.

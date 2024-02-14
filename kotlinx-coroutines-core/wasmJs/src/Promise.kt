@@ -66,7 +66,7 @@ public fun <T> Promise<JsAny?>.asDeferred(): Deferred<T> {
 /**
  * Awaits for completion of the promise without blocking.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
  * suspending function is waiting on the promise, this function immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.

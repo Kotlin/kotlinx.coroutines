@@ -41,7 +41,7 @@ public interface SendChannel<in E> {
      * All elements sent over the channel are delivered in first-in first-out order. The sent element
      * will be delivered to receivers before the close token.
      *
-     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
      * suspending function is waiting, this function immediately resumes with [CancellationException].
      * There is a **prompt cancellation guarantee**: even if [send] managed to send the element, but was cancelled
      * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
@@ -212,14 +212,14 @@ public interface ReceiveChannel<out E> {
      * If the channel was closed because of an exception, it is called a _failed_ channel and this function
      * will throw the original [close][SendChannel.close] cause exception.
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled while this
      * function is suspended, this function immediately resumes with a [CancellationException].
      * There is a **prompt cancellation guarantee**. If the job was cancelled while this function was
      * suspended, it will not resume successfully. The `receive` call can retrieve the element from the channel,
      * but then throw [CancellationException], thus failing to deliver the element.
      * See "Undelivered elements" section in [Channel] documentation for details on handling undelivered elements.
      *
-     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
      * suspending function is waiting, this function immediately resumes with [CancellationException].
      * There is a **prompt cancellation guarantee**: even if [receive] managed to retrieve the element from the channel,
      * but was cancelled while suspended, [CancellationException] will be thrown.
@@ -250,7 +250,7 @@ public interface ReceiveChannel<out E> {
      * or the close cause if the channel was closed. Closed cause may be `null` if the channel was closed normally.
      * The result cannot be [failed][ChannelResult.isFailure] without being [closed][ChannelResult.isClosed].
      *
-     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
      * suspending function is waiting, this function immediately resumes with [CancellationException].
      * There is a **prompt cancellation guarantee**: even if [receiveCatching] managed to retrieve the element from the
      * channel, but was cancelled while suspended, [CancellationException] will be thrown.
@@ -573,7 +573,7 @@ public interface ChannelIterator<out E> {
      * This function retrieves and removes an element from this channel for the subsequent invocation
      * of [next].
      *
-     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
      * suspending function is waiting, this function immediately resumes with [CancellationException].
      * There is a **prompt cancellation guarantee**: even if [hasNext] retrieves the element from the channel during
      * its operation, but was cancelled while suspended, [CancellationException] will be thrown.

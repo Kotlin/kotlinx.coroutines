@@ -146,7 +146,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
  * Awaits for completion of [CompletionStage] without blocking a thread.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
  *
  * This method is intended to be used with one-shot futures, so on coroutine cancellation the [CompletableFuture] that

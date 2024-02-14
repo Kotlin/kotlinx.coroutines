@@ -7,7 +7,7 @@ import kotlin.coroutines.intrinsics.*
  * Yields the thread (or thread pool) of the current coroutine dispatcher
  * to other coroutines on the same dispatcher to run if possible.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while
  * [yield] is invoked or while waiting for dispatch, it immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.

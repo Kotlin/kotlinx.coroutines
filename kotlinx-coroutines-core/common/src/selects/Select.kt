@@ -38,7 +38,7 @@ import kotlin.jvm.*
  * | [ReceiveChannel] | [receiveCatching][ReceiveChannel.receiveCatching] | [onReceiveCatching][ReceiveChannel.onReceiveCatching]
  * | none             | [delay]                                           | [onTimeout][SelectBuilder.onTimeout]
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled or completed while this
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
  * suspending function is waiting, this function immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
