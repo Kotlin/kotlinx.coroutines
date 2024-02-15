@@ -17,7 +17,7 @@ internal class CoroutinesTimeoutException(val timeoutMs: Long): Exception("test 
  * Additionally, it installs [DebugProbes] and dumps all coroutines at the moment of the timeout. It also cancels
  * coroutines on timeout if [cancelOnTimeout] set to `true`.
  * [enableCoroutineCreationStackTraces] controls the corresponding [DebugProbes.enableCreationStackTraces] property
- * and can be optionally disabled to speed-up tests if creation stack traces are not needed.
+ * and can be optionally enabled if the creation stack traces are necessary.
  *
  * Beware that if several tests that use this extension set [enableCoroutineCreationStackTraces] to different values and
  * execute in parallel, the behavior is ill-defined. In order to avoid conflicts between different instances of this
@@ -51,7 +51,7 @@ internal class CoroutinesTimeoutException(val timeoutMs: Long): Exception("test 
  * */
 // NB: the constructor is not private so that JUnit is able to call it via reflection.
 internal class CoroutinesTimeoutExtension internal constructor(
-    private val enableCoroutineCreationStackTraces: Boolean = true,
+    private val enableCoroutineCreationStackTraces: Boolean = false,
     private val timeoutMs: Long? = null,
     private val cancelOnTimeout: Boolean? = null): InvocationInterceptor
 {
