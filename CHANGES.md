@@ -1,5 +1,28 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.8.0
+
+* Implement the library for the Web Assembly (Wasm) for JavaScript (#3713). Thanks @igoriakovlev!
+* Major Kotlin version update: was 1.8.20, became 1.9.21.
+* On Android, ensure that `Dispatchers.Main != Dispatchers.Main.immediate` (#3545, #3963).
+* Fixed a bug that caused `Flow` operators that limit cancel the upstream flow to forget that they were already finished if there is another such operator upstream (#4035, #4038)
+* `kotlinx-coroutines-debug` is published with the correct Java 9 module info (#3944).
+* `kotlinx-coroutines-debug` no longer requires manually setting `DebugProbes.enableCoroutineCreationStackTraces` to `false`, it's the default (#3783).
+* `kotlinx-coroutines-test`: set the default timeout of `runTest` to 60 seconds, added the ability to configure it on the JVM with the `kotlinx.coroutines.test.default_timeout=10s` (#3800).
+* `kotlinx-coroutines-test`: fixed a bug that could lead to not all uncaught exceptions being reported after some tests failed (#3800).
+* `delay(Duration)` rounds nanoseconds up to whole milliseconds and not down (#3920). Thanks @kevincianfarini!
+* `Dispatchers.Default` and the default thread for background work are guaranteed to use the same context classloader as the object containing it them (#3832).
+* It is guaranteed that by the time `SharedFlow.collect` suspends for the first time, it's registered as a subscriber for that `SharedFlow` (#3885). Before, it was also true, but not documented.
+* Atomicfu version is updated to 0.23.1, and Kotlin/Native atomic transformations are enabled, reducing the footprint of coroutine-heavy code (#3954).
+* Added a workaround for miscompilation of `withLock` on JS (#3881). Thanks @CLOVIS-AI!
+* Small tweaks and documentation fixes.
+
+### Changelog relative to version 1.8.0-RC2
+
+* `kotlinx-coroutines-debug` no longer requires manually setting `DebugProbes.enableCoroutineCreationStackTraces` to `false`, it's the default (#3783).
+* Fixed a bug that caused `Flow` operators that limit cancel the upstream flow to forget that they were already finished if there is another such operator upstream (#4035, #4038)
+* Small documentation fixes.
+
 ## Version 1.8.0-RC2
 
 * Fixed a bug introduced in 1.8.0-RC where `Mutex.onLock` would not unlock if a non-local return was performed (#3985).
@@ -10,7 +33,7 @@
 
 * Implement the library for the Web Assembly (Wasm) for JavaScript (#3713). Thanks @igoriakovlev!
 * On Android, ensure that `Dispatchers.Main != Dispatchers.Main.immediate` (#3545, #3963).
-* `kotlinx-coroutines-debug` is published with the incorrect Java 9 module info (#3944).
+* `kotlinx-coroutines-debug` is published with the correct Java 9 module info (#3944).
 * Major Kotlin version update: was 1.8.20, became 1.9.21.
 * `kotlinx-coroutines-test`: set the default timeout of `runTest` to 60 seconds, added the ability to configure it on the JVM with the `kotlinx.coroutines.test.default_timeout=10s` (#3800).
 * `kotlinx-coroutines-test`: fixed a bug that could lead to not all uncaught exceptions being reported after some tests failed (#3800).
