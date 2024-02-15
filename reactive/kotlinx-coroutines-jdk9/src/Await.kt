@@ -10,7 +10,7 @@ import kotlinx.coroutines.reactive.*
  * the publisher has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately cancels its [Flow.Subscription] and resumes with [CancellationException].
  *
  * @throws NoSuchElementException if the publisher does not emit any value
@@ -24,7 +24,7 @@ public suspend fun <T> Flow.Publisher<T>.awaitFirst(): T =
  * exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately cancels its [Flow.Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Flow.Publisher<T>.awaitFirstOrDefault(default: T): T =
@@ -35,7 +35,7 @@ public suspend fun <T> Flow.Publisher<T>.awaitFirstOrDefault(default: T): T =
  * and returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately cancels its [Flow.Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Flow.Publisher<T>.awaitFirstOrNull(): T? =
@@ -47,7 +47,7 @@ public suspend fun <T> Flow.Publisher<T>.awaitFirstOrNull(): T? =
  * corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately cancels its [Flow.Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Flow.Publisher<T>.awaitFirstOrElse(defaultValue: () -> T): T =
@@ -58,7 +58,7 @@ public suspend fun <T> Flow.Publisher<T>.awaitFirstOrElse(defaultValue: () -> T)
  * returns the resulting value, or, if this publisher has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately cancels its [Flow.Subscription] and resumes with [CancellationException].
  *
  * @throws NoSuchElementException if the publisher does not emit any value
@@ -71,7 +71,7 @@ public suspend fun <T> Flow.Publisher<T>.awaitLast(): T =
  * if this publisher has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately cancels its [Flow.Subscription] and resumes with [CancellationException].
  *
  * @throws NoSuchElementException if the publisher does not emit any value

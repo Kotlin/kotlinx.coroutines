@@ -10,8 +10,22 @@ import kotlin.coroutines.*
 
 /**
  * Runs a new coroutine and **blocks** the current thread _interruptibly_ until its completion.
- * This function should not be used from a coroutine. It is designed to bridge regular blocking code
- * to libraries that are written in suspending style, to be used in `main` functions and in tests.
+ *
+ * It is designed to bridge regular blocking code to libraries that are written in suspending style, to be used in
+ * `main` functions and in tests.
+ *
+ * Calling [runBlocking] from a suspend function is redundant.
+ * For example, the following code is incorrect:
+ * ```
+ * suspend fun loadConfiguration() {
+ *     // DO NOT DO THIS:
+ *     val data = runBlocking { // <- redundant and blocks the thread, do not do that
+ *         fetchConfigurationData() // suspending function
+ *     }
+ * ```
+ *
+ * Here, instead of releasing the thread on which `loadConfiguration` runs if `fetchConfigurationData` suspends, it will
+ * block, potentially leading to thread starvation issues.
  *
  * The default [CoroutineDispatcher] for this builder is an internal implementation of event loop that processes continuations
  * in this blocked thread until the completion of this coroutine.

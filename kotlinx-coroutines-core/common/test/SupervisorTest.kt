@@ -83,10 +83,12 @@ class SupervisorTest : TestBase() {
 
     @Test
     fun testThrowingSupervisorScope() = runTest {
+        var childJob: Job? = null
+        var supervisorJob: Job? = null
         try {
             expect(1)
             supervisorScope {
-                async {
+                childJob = async {
                     try {
                         delay(Long.MAX_VALUE)
                     } finally {
@@ -96,9 +98,13 @@ class SupervisorTest : TestBase() {
 
                 expect(2)
                 yield()
+                supervisorJob = coroutineContext.job
                 throw TestException2()
             }
         } catch (e: Throwable) {
+            assertIs<TestException2>(e)
+            assertTrue(childJob!!.isCancelled)
+            assertTrue(supervisorJob!!.isCancelled)
             finish(4)
         }
     }
@@ -153,6 +159,31 @@ class SupervisorTest : TestBase() {
         } catch (e: TestException1) {
             finish(5)
         }
+    }
+
+    /**
+     * Tests that [supervisorScope] cancels all its children when the current coroutine is cancelled.
+     */
+    @Test
+    fun testSupervisorScopeExternalCancellation() = runTest {
+        var childJob: Job? = null
+        val job = launch {
+            supervisorScope {
+                childJob = launch(start = CoroutineStart.UNDISPATCHED) {
+                    try {
+                        delay(Long.MAX_VALUE)
+                    } finally {
+                        expect(2)
+                    }
+                }
+            }
+        }
+        while (childJob == null) yield()
+        expect(1)
+        job.cancel()
+        assertTrue(childJob!!.isCancelled)
+        job.join()
+        finish(3)
     }
 
     @Test

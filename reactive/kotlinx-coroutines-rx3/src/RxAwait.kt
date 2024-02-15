@@ -14,7 +14,7 @@ import kotlin.coroutines.*
  * Awaits for completion of this completable without blocking the thread.
  * Returns `Unit`, or throws the corresponding exception if this completable produces an error.
  *
- * This suspending function is cancellable. If the [Job] of the invoking coroutine is cancelled or completed while this
+ * This suspending function is cancellable. If the [Job] of the invoking coroutine is cancelled while this
  * suspending function is suspended, this function immediately resumes with [CancellationException] and disposes of its
  * subscription.
  */
@@ -34,7 +34,7 @@ public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine
  * [MaybeSource] produces an error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this
  * function immediately resumes with [CancellationException] and disposes of its subscription.
  */
 public suspend fun <T> MaybeSource<T & Any>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
@@ -51,7 +51,7 @@ public suspend fun <T> MaybeSource<T & Any>.awaitSingleOrNull(): T? = suspendCan
  * Returns the resulting value, or throws if either no value is produced or this [MaybeSource] produces an error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this
  * function immediately resumes with [CancellationException] and disposes of its subscription.
  *
  * @throws NoSuchElementException if no elements were produced by this [MaybeSource].
@@ -64,7 +64,7 @@ public suspend fun <T> MaybeSource<T & Any>.awaitSingle(): T = awaitSingleOrNull
  * maybe had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
  * ### Deprecation
@@ -87,7 +87,7 @@ public suspend fun <T> MaybeSource<T & Any>.await(): T? = awaitSingleOrNull()
  * maybe had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
  * ### Deprecation
@@ -111,7 +111,7 @@ public suspend fun <T> MaybeSource<T & Any>.awaitOrDefault(default: T): T = awai
  * Returns the resulting value, or throws the corresponding exception if this response produces an error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately disposes of its subscription and resumes with [CancellationException].
  */
 public suspend fun <T> SingleSource<T & Any>.await(): T = suspendCancellableCoroutine { cont ->
@@ -129,7 +129,7 @@ public suspend fun <T> SingleSource<T & Any>.await(): T = suspendCancellableCoro
  * if the observable has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately disposes of its subscription and resumes with [CancellationException].
  *
  * @throws NoSuchElementException if the observable does not emit any value
@@ -143,7 +143,7 @@ public suspend fun <T> ObservableSource<T & Any>.awaitFirst(): T = awaitOne(Mode
  * corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately disposes of its subscription and resumes with [CancellationException].
  */
 @Suppress("UNCHECKED_CAST")
@@ -156,7 +156,7 @@ public suspend fun <T> ObservableSource<T & Any>.awaitFirstOrDefault(default: T)
  * exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately disposes of its subscription and resumes with [CancellationException].
  */
 public suspend fun <T> ObservableSource<T & Any>.awaitFirstOrNull(): T? = awaitOne(Mode.FIRST_OR_DEFAULT)
@@ -167,7 +167,7 @@ public suspend fun <T> ObservableSource<T & Any>.awaitFirstOrNull(): T? = awaitO
  * the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately disposes of its subscription and resumes with [CancellationException].
  */
 public suspend fun <T> ObservableSource<T & Any>.awaitFirstOrElse(defaultValue: () -> T): T =
@@ -178,7 +178,7 @@ public suspend fun <T> ObservableSource<T & Any>.awaitFirstOrElse(defaultValue: 
  * returns the resulting value, or, if this observable has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately disposes of its subscription and resumes with [CancellationException].
  *
  * @throws NoSuchElementException if the observable does not emit any value
@@ -191,7 +191,7 @@ public suspend fun <T> ObservableSource<T & Any>.awaitLast(): T = awaitOne(Mode.
  * if this observable has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately disposes of its subscription and resumes with [CancellationException].
  *
  * @throws NoSuchElementException if the observable does not emit any value

@@ -94,7 +94,7 @@ private fun <T> Task<T>.asDeferredImpl(cancellationTokenSource: CancellationToke
  * Awaits the completion of the task without blocking a thread.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException].
  *
  * For bi-directional cancellation, an overload that accepts [CancellationTokenSource] can be used.
@@ -105,7 +105,7 @@ public suspend fun <T> Task<T>.await(): T = awaitImpl(null)
  * Awaits the completion of the task that is linked to the given [CancellationTokenSource] to control cancellation.
  *
  * This suspending function is cancellable and cancellation is bi-directional:
- * - If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * - If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
  * cancels the [cancellationTokenSource] and throws a [CancellationException].
  * - If the task is cancelled, then this function will throw a [CancellationException].
  *

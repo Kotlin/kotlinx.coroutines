@@ -36,7 +36,7 @@ public fun <T> mono(
  * `null` is returned.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately cancels its [Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
@@ -68,7 +68,7 @@ public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCorou
  * if this Mono has produced an error, throws the corresponding exception.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled or completed while the suspending function is waiting, this
+ * If the [Job] of the current coroutine is cancelled while the suspending function is waiting, this
  * function immediately cancels its [Subscription] and resumes with [CancellationException].
  *
  * @throws NoSuchElementException if the Mono does not emit any value
