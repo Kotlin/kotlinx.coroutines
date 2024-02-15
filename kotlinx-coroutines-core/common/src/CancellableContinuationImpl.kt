@@ -390,12 +390,9 @@ internal open class CancellableContinuationImpl<in T>(
         invokeOnCancellationImpl(segment)
     }
 
-    public override fun invokeOnCancellation(handler: CompletionHandler) =
-        invokeOnCancellation(InvokeOnCancel(handler))
+    override fun invokeOnCancellation(handler: CompletionHandler) = invokeOnCancellation(CancelHandler.UserSupplied(handler))
 
-    @InternalCoroutinesApi
-    internal fun invokeOnCancellationInternal(handler: CancelHandler) =
-        invokeOnCancellationImpl(handler)
+    internal fun invokeOnCancellationInternal(handler: CancelHandler) = invokeOnCancellationImpl(handler)
 
     private fun invokeOnCancellationImpl(handler: Any) {
         assert { handler is CancelHandler || handler is Segment<*> }
@@ -624,22 +621,40 @@ private object Active : NotCompleted {
 }
 
 /**
- * Base class for all [CancellableContinuation.invokeOnCancellation] handlers to avoid an extra instance
- * on JVM, yet support JS where you cannot extend from a functional type.
+ * Essentially the same as just a function from `Throwable?` to `Unit`.
+ * The only thing implementors can do is call [invoke].
+ * The reason this abstraction exists is to allow providing a readable [toString] in the list of completion handlers
+ * as seen from the debugger.
+ * Use [UserSupplied] to create an instance from a lambda.
+ * We can't avoid defining a separate type, because on JS, you can't inherit from a function type.
+ *
+ * @see InternalCompletionHandler for a very similar interface, but used for handling completion and not cancellation.
  */
-@InternalCoroutinesApi
-internal interface CancelHandler : NotCompleted {
-    public abstract fun invoke(cause: Throwable?)
-}
+internal interface CancelHandler: NotCompleted {
+    /**
+     * Signal cancellation.
+     *
+     * This function:
+     * - Does not throw any exceptions.
+     *   Violating this rule in an implementation leads to [handleUncaughtCoroutineException] being called with a
+     *   [CompletionHandlerException] wrapping the thrown exception.
+     * - Is fast, non-blocking, and thread-safe.
+     * - Can be invoked concurrently with the surrounding code.
+     * - Can be invoked from any context.
+     */
+    fun invoke(cause: Throwable?)
 
-// Wrapper for lambdas, for the performance sake CancelHandler can be subclassed directly
-private class InvokeOnCancel( // Clashes with InvokeOnCancellation
-    private val handler: CompletionHandler
-) : CancelHandler {
-    override fun invoke(cause: Throwable?) {
-        handler(cause)
+    /**
+     * A lambda passed from outside the coroutine machinery.
+     *
+     * See the requirements for [CancelHandler.invoke] when implementing this function.
+     */
+    class UserSupplied(private val handler: (cause: Throwable?) -> Unit) : CancelHandler {
+        /** @suppress */
+        override fun invoke(cause: Throwable?) { handler(cause) }
+
+        override fun toString() = "CancelHandler.UserSupplied[${handler.classSimpleName}@$hexAddress]"
     }
-    override fun toString() = "InvokeOnCancel[${handler.classSimpleName}@$hexAddress]"
 }
 
 // Completed with additional metadata

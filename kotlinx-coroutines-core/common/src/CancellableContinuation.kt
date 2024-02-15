@@ -122,28 +122,27 @@ public interface CancellableContinuation<in T> : Continuation<T> {
 
     /**
      * Registers a [handler] to be **synchronously** invoked on [cancellation][cancel] (regular or exceptional) of this continuation.
-     * When the continuation is already cancelled, the handler is immediately invoked
-     * with the cancellation exception. Otherwise, the handler will be invoked as soon as this
-     * continuation is cancelled.
+     * When the continuation is already cancelled, the handler is immediately invoked with the cancellation exception.
+     * Otherwise, the handler will be invoked as soon as this continuation is cancelled.
      *
      * The installed [handler] should not throw any exceptions.
      * If it does, they will get caught, wrapped into a [CompletionHandlerException] and
      * processed as an uncaught exception in the context of the current coroutine
      * (see [CoroutineExceptionHandler]).
      *
-     * At most one [handler] can be installed on a continuation. Attempt to call `invokeOnCancellation` second
-     * time produces [IllegalStateException].
+     * At most one [handler] can be installed on a continuation.
+     * Attempting to call `invokeOnCancellation` a second time produces an [IllegalStateException].
      *
      * This handler is also called when this continuation [resumes][Continuation.resume] normally (with a value) and then
      * is cancelled while waiting to be dispatched. More generally speaking, this handler is called whenever
      * the caller of [suspendCancellableCoroutine] is getting a [CancellationException].
      *
-     * A typical example for `invokeOnCancellation` usage is given in
+     * A typical example of `invokeOnCancellation` usage is given in
      * the documentation for the [suspendCancellableCoroutine] function.
      *
-     * **Note**: Implementation of `CompletionHandler` must be fast, non-blocking, and thread-safe.
-     * This `handler` can be invoked concurrently with the surrounding code.
-     * There is no guarantee on the execution context in which the `handler` will be invoked.
+     * **Note**: Implementations of [CompletionHandler] must be fast, non-blocking, and thread-safe.
+     * This [handler] can be invoked concurrently with the surrounding code.
+     * There is no guarantee on the execution context in which the [handler] will be invoked.
      */
     public fun invokeOnCancellation(handler: CompletionHandler)
 
@@ -201,6 +200,10 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?)
 }
 
+/**
+ * A version of `invokeOnCancellation` that accepts a class as a handler instead of a lambda, but identical otherwise.
+ * This allows providing a custom [toString] instance that will look better during debugging.
+ */
 internal fun <T> CancellableContinuation<T>.invokeOnCancellation(handler: CancelHandler) = when (this) {
     is CancellableContinuationImpl -> invokeOnCancellationInternal(handler)
     else -> invokeOnCancellation(handler::invoke)
