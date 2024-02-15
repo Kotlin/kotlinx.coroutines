@@ -308,4 +308,90 @@ class OnCompletionTest : TestBase() {
             .take(1)
             .collect()
     }
+
+    /**
+     * Tests that the operators that are used to limit the flow (like [take] and [zip]) faithfully propagate the
+     * cancellation exception to the original owner.
+     */
+    @Test
+    fun testOnCompletionBetweenLimitingOperators() = runTest {
+        // `zip` doesn't eat the exception thrown by `take`:
+        flowOf(1, 2, 3)
+            .zip(flowOf(4, 5)) { a, b -> a + b }
+            .onCompletion {
+                expect(2)
+                assertNotNull(it)
+            }
+            .take(1)
+            .collect {
+                expect(1)
+            }
+
+        // `take` doesn't eat the exception thrown by `zip`:
+        flowOf(1, 2, 3)
+            .take(2)
+            .onCompletion {
+                expect(4)
+                assertNotNull(it)
+            }
+            .zip(flowOf(4)) { a, b -> a + b }
+            .collect {
+                expect(3)
+            }
+
+        // `take` doesn't eat the exception thrown by `first`:
+        flowOf(1, 2, 3)
+            .take(2)
+            .onCompletion {
+                expect(5)
+                assertNotNull(it)
+            }
+            .first()
+
+        // `zip` doesn't eat the exception thrown by `first`:
+        flowOf(1, 2, 3)
+            .zip(flowOf(4, 5)) { a, b -> a + b }
+            .onCompletion {
+                expect(6)
+                assertNotNull(it)
+            }
+            .first()
+
+        // `take` doesn't eat the exception thrown by another `take`:
+        flowOf(1, 2, 3)
+            .take(2)
+            .onCompletion {
+                expect(8)
+                assertNotNull(it)
+            }
+            .take(1)
+            .collect {
+                expect(7)
+            }
+
+        // `zip` doesn't eat the exception thrown by another `zip`:
+        flowOf(1, 2, 3)
+            .zip(flowOf(4, 5)) { a, b -> a + b }
+            .onCompletion {
+                expect(10)
+                assertNotNull(it)
+            }
+            .zip(flowOf(6)) { a, b -> a + b }
+            .collect {
+                expect(9)
+            }
+
+        finish(11)
+    }
+
+    /**
+     * Tests that emitting new elements after completion doesn't overwrite the old elements.
+     */
+    @Test
+    fun testEmittingElementsAfterCancellation() = runTest {
+        assertEquals(1, flowOf(1, 2, 3)
+            .take(100)
+            .onCompletion { emit(4) }
+            .first())
+    }
 }

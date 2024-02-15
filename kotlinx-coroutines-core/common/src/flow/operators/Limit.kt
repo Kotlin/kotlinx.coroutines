@@ -46,6 +46,7 @@ public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
 public fun <T> Flow<T>.take(count: Int): Flow<T> {
     require(count > 0) { "Requested element count $count should be positive" }
     return flow {
+        val ownershipMarker = Any()
         var consumed = 0
         try {
             collect { value ->
@@ -56,18 +57,18 @@ public fun <T> Flow<T>.take(count: Int): Flow<T> {
                 if (++consumed < count) {
                     return@collect emit(value)
                 } else {
-                    return@collect emitAbort(value)
+                    return@collect emitAbort(value, ownershipMarker)
                 }
             }
         } catch (e: AbortFlowException) {
-            e.checkOwnership(owner = this)
+            e.checkOwnership(owner = ownershipMarker)
         }
     }
 }
 
-private suspend fun <T> FlowCollector<T>.emitAbort(value: T) {
+private suspend fun <T> FlowCollector<T>.emitAbort(value: T, ownershipMarker: Any) {
     emit(value)
-    throw AbortFlowException(this)
+    throw AbortFlowException(ownershipMarker)
 }
 
 /**
