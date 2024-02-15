@@ -70,8 +70,8 @@ When used as Java agent, `"kotlinx.coroutines.debug.enable.creation.stack.trace"
 
 It is possible to run an application in production environments with debug probes in order to monitor its 
 state and improve its observability. 
-For that, it is strongly recommended to switch off [DebugProbes.enableCreationStackTraces] property to significantly 
-reduce the overhead of debug probes and make it insignificant.
+For that, it is strongly recommended not to enable [DebugProbes.enableCreationStackTraces], as enabling it makes
+the performance overhead of the debug probes non-negligible.
 With creation stack-traces disabled, the typical overhead of enabled debug probes is a single-digit percentage of the total
 application throughput.
 
