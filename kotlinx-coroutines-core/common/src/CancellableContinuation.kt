@@ -206,7 +206,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
  */
 internal fun <T> CancellableContinuation<T>.invokeOnCancellation(handler: CancelHandler) = when (this) {
     is CancellableContinuationImpl -> invokeOnCancellationInternal(handler)
-    else -> invokeOnCancellation(handler::invoke)
+    else -> throw UnsupportedOperationException("third-party implementation of CancellableContinuation is not supported")
 }
 
 /**
