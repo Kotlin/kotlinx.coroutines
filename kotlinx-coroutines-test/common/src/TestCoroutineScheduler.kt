@@ -219,7 +219,6 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /**
      * Returns the [TimeSource] representation of the virtual time of this scheduler.
      */
-    @ExperimentalTime
     public val timeSource: TimeSource.WithComparableMarks = object : AbstractLongTimeSource(DurationUnit.MILLISECONDS) {
         override fun read(): Long = currentTime
     }

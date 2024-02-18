@@ -11,7 +11,6 @@ import kotlin.test.*
 import kotlin.time.*
 import kotlin.time.TimeSource
 
-@OptIn(ExperimentalTime::class)
 class SharingStressTest : TestBase() {
     private val testDuration = 1000L * stressTestMultiplier
     private val nSubscribers = 5
