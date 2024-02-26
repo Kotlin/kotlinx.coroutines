@@ -630,7 +630,7 @@ private object Active : NotCompleted {
  *
  * @see InternalCompletionHandler for a very similar interface, but used for handling completion and not cancellation.
  */
-internal interface CancelHandler: NotCompleted {
+internal interface CancelHandler : NotCompleted {
     /**
      * Signal cancellation.
      *
