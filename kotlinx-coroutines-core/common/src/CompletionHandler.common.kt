@@ -3,15 +3,11 @@ package kotlinx.coroutines
 /**
  * Handler for [Job.invokeOnCompletion] and [CancellableContinuation.invokeOnCancellation].
  *
- * The installed handler should not throw any exceptions.
- * If it does, they will get caught, wrapped into [CompletionHandlerException], and rethrown, potentially crashing
- * unrelated code.
- *
  * The meaning of `cause` that is passed to the handler is:
- * - It is `null` if the job has completed normally.
- * - It is an instance of [CancellationException] if the job was cancelled _normally_.
+ * - It is `null` if the job has completed normally or the continuation was cancelled without a `cause`.
+ * - It is an instance of [CancellationException] if the job or the continuation was cancelled _normally_.
  *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
- * - Otherwise, the job had _failed_.
+ * - Otherwise, the job or the continuation had _failed_.
  *
  * A function used for this should not throw any exceptions.
  * If it does, they will get caught, wrapped into [CompletionHandlerException], and then either
@@ -42,7 +38,7 @@ public typealias CompletionHandler = (cause: Throwable?) -> Unit
  */
 internal interface InternalCompletionHandler {
     /**
-     * Signal completion.
+     * Signals completion.
      *
      * This function:
      * - Does not throw any exceptions.
@@ -52,6 +48,12 @@ internal interface InternalCompletionHandler {
      * - Is fast, non-blocking, and thread-safe.
      * - Can be invoked concurrently with the surrounding code.
      * - Can be invoked from any context.
+     *
+     * The meaning of `cause` that is passed to the handler is:
+     * - It is `null` if the job has completed normally.
+     * - It is an instance of [CancellationException] if the job was cancelled _normally_.
+     *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
+     * - Otherwise, the job had _failed_.
      */
     fun invoke(cause: Throwable?)
 

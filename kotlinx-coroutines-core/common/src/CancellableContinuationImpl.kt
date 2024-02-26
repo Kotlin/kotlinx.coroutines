@@ -632,7 +632,7 @@ private object Active : NotCompleted {
  */
 internal interface CancelHandler : NotCompleted {
     /**
-     * Signal cancellation.
+     * Signals cancellation.
      *
      * This function:
      * - Does not throw any exceptions.
@@ -641,6 +641,12 @@ internal interface CancelHandler : NotCompleted {
      * - Is fast, non-blocking, and thread-safe.
      * - Can be invoked concurrently with the surrounding code.
      * - Can be invoked from any context.
+     *
+     * The meaning of `cause` that is passed to the handler is:
+     * - It is `null` if the continuation was cancelled directly via [CancellableContinuation.cancel] without a `cause`.
+     * - It is an instance of [CancellationException] if the continuation was _normally_ cancelled from the outside.
+     *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
+     * - Otherwise, the continuation had cancelled with an _error_.
      */
     fun invoke(cause: Throwable?)
 
