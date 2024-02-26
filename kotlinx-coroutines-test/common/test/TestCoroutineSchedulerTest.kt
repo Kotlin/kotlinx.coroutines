@@ -310,7 +310,6 @@ class TestCoroutineSchedulerTest {
     }
 
     @Test
-    @ExperimentalTime
     fun testAdvanceTimeSource() = runTest {
         val expected = 1.seconds
         val before = testTimeSource.markNow()

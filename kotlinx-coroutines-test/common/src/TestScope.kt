@@ -131,7 +131,6 @@ public fun TestScope.advanceTimeBy(delayTime: Duration): Unit = testScheduler.ad
  * @see TestCoroutineScheduler.timeSource
  */
 @ExperimentalCoroutinesApi
-@ExperimentalTime
 public val TestScope.testTimeSource: TimeSource.WithComparableMarks get() = testScheduler.timeSource
 
 /**
