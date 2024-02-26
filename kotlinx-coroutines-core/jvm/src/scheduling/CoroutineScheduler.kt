@@ -8,7 +8,6 @@ import java.util.concurrent.*
 import java.util.concurrent.locks.*
 import kotlin.jvm.internal.Ref.ObjectRef
 import kotlin.math.*
-import kotlin.random.*
 
 /**
  * Coroutine scheduler (pool of shared threads) which primary target is to distribute dispatched coroutines
@@ -658,11 +657,21 @@ internal class CoroutineScheduler(
         var nextParkedWorker: Any? = NOT_IN_STACK
 
         /*
-         * The delay until at least one task in other worker queues will  become stealable.
+         * The delay until at least one task in other worker queues will become stealable.
          */
         private var minDelayUntilStealableTaskNs = 0L
 
-        private var rngState = Random.nextInt()
+        /**
+         * The state of embedded Marsaglia xorshift random number generator, used for work-stealing purposes.
+         * It is initialized with a seed.
+         */
+        private var rngState: Int = run {
+            // This could've been Random.nextInt(), but we are shaving an extra initialization cost, see #4051
+            val seed = System.nanoTime().toInt()
+            // rngState shouldn't be zero, as required for the xorshift algorithm
+            if (seed != 0) return@run seed
+            42
+        }
 
         /**
          * Tries to acquire CPU token if worker doesn't have one
