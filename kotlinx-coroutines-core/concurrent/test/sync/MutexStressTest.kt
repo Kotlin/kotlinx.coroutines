@@ -8,7 +8,7 @@ import kotlin.test.*
 
 class MutexStressTest : TestBase() {
 
-    private val n = (if (isNative) 1_000 else 10_000) * stressTestMultiplier
+    private val n = 1000 * stressTestMultiplier // It mostly stresses K/N as JVM Mutex is tested by lincheck
 
     @Test
     fun testDefaultDispatcher() = runTest { testBody(Dispatchers.Default) }
