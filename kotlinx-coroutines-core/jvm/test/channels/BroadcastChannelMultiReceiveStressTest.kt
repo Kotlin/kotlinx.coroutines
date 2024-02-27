@@ -161,6 +161,6 @@ class BroadcastChannelMultiReceiveStressTest(
     @Suppress("UNUSED_PARAMETER")
     private fun println(debugMessage: String) {
         // Uncomment for local debugging
-        // kotlin.io.println(debugMessage)
+        //println(debugMessage as Any?)
     }
 }
