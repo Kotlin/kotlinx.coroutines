@@ -234,12 +234,12 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
-    private fun callCancelHandler(handler: CompletionHandler, cause: Throwable?) =
+    private fun callCancelHandler(handler: InternalCompletionHandler, cause: Throwable?) =
         /*
         * :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
         * because we play type tricks on Kotlin/JS and handler is not necessarily a function there
         */
-        callCancelHandlerSafely { handler.invokeIt(cause) }
+        callCancelHandlerSafely { handler.invoke(cause) }
 
     fun callCancelHandler(handler: CancelHandler, cause: Throwable?) =
         callCancelHandlerSafely { handler.invoke(cause) }
@@ -343,7 +343,7 @@ internal open class CancellableContinuationImpl<in T>(
         // Install the handle
         val handle = parent.invokeOnCompletion(
             onCancelling = true,
-            handler = ChildContinuation(this).asHandler
+            handler = ChildContinuation(this)
         )
         _parentHandle.compareAndSet(null, handle)
         return handle
@@ -390,10 +390,9 @@ internal open class CancellableContinuationImpl<in T>(
         invokeOnCancellationImpl(segment)
     }
 
-    public override fun invokeOnCancellation(handler: CompletionHandler) {
-        val cancelHandler = makeCancelHandler(handler)
-        invokeOnCancellationImpl(cancelHandler)
-    }
+    override fun invokeOnCancellation(handler: CompletionHandler) = invokeOnCancellation(CancelHandler.UserSupplied(handler))
+
+    internal fun invokeOnCancellationInternal(handler: CancelHandler) = invokeOnCancellationImpl(handler)
 
     private fun invokeOnCancellationImpl(handler: Any) {
         assert { handler is CancelHandler || handler is Segment<*> }
@@ -460,9 +459,6 @@ internal open class CancellableContinuationImpl<in T>(
     private fun multipleHandlersError(handler: Any, state: Any?) {
         error("It's prohibited to register multiple handlers, tried to register $handler, already has $state")
     }
-
-    private fun makeCancelHandler(handler: CompletionHandler): CancelHandler =
-        if (handler is CancelHandler) handler else InvokeOnCancel(handler)
 
     private fun dispatchResume(mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
@@ -625,19 +621,46 @@ private object Active : NotCompleted {
 }
 
 /**
- * Base class for all [CancellableContinuation.invokeOnCancellation] handlers to avoid an extra instance
- * on JVM, yet support JS where you cannot extend from a functional type.
+ * Essentially the same as just a function from `Throwable?` to `Unit`.
+ * The only thing implementors can do is call [invoke].
+ * The reason this abstraction exists is to allow providing a readable [toString] in the list of completion handlers
+ * as seen from the debugger.
+ * Use [UserSupplied] to create an instance from a lambda.
+ * We can't avoid defining a separate type, because on JS, you can't inherit from a function type.
+ *
+ * @see InternalCompletionHandler for a very similar interface, but used for handling completion and not cancellation.
  */
-internal abstract class CancelHandler : CancelHandlerBase(), NotCompleted
+internal interface CancelHandler : NotCompleted {
+    /**
+     * Signals cancellation.
+     *
+     * This function:
+     * - Does not throw any exceptions.
+     *   Violating this rule in an implementation leads to [handleUncaughtCoroutineException] being called with a
+     *   [CompletionHandlerException] wrapping the thrown exception.
+     * - Is fast, non-blocking, and thread-safe.
+     * - Can be invoked concurrently with the surrounding code.
+     * - Can be invoked from any context.
+     *
+     * The meaning of `cause` that is passed to the handler is:
+     * - It is `null` if the continuation was cancelled directly via [CancellableContinuation.cancel] without a `cause`.
+     * - It is an instance of [CancellationException] if the continuation was _normally_ cancelled from the outside.
+     *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
+     * - Otherwise, the continuation had cancelled with an _error_.
+     */
+    fun invoke(cause: Throwable?)
 
-// Wrapper for lambdas, for the performance sake CancelHandler can be subclassed directly
-private class InvokeOnCancel( // Clashes with InvokeOnCancellation
-    private val handler: CompletionHandler
-) : CancelHandler() {
-    override fun invoke(cause: Throwable?) {
-        handler.invoke(cause)
+    /**
+     * A lambda passed from outside the coroutine machinery.
+     *
+     * See the requirements for [CancelHandler.invoke] when implementing this function.
+     */
+    class UserSupplied(private val handler: (cause: Throwable?) -> Unit) : CancelHandler {
+        /** @suppress */
+        override fun invoke(cause: Throwable?) { handler(cause) }
+
+        override fun toString() = "CancelHandler.UserSupplied[${handler.classSimpleName}@$hexAddress]"
     }
-    override fun toString() = "InvokeOnCancel[${handler.classSimpleName}@$hexAddress]"
 }
 
 // Completed with additional metadata

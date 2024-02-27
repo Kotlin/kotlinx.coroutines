@@ -67,7 +67,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
             val deferred = deferreds[i]
             deferred.start() // To properly await lazily started deferreds
             AwaitAllNode(cont).apply {
-                handle = deferred.invokeOnCompletion(asHandler)
+                handle = deferred.invokeOnCompletion(handler = this)
             }
         }
         val disposer = DisposeHandlersOnCancel(nodes)
@@ -79,11 +79,11 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
             // it is already complete while handlers were being installed -- dispose them all
             disposer.disposeAll()
         } else {
-            cont.invokeOnCancellation(handler = disposer.asHandler)
+            cont.invokeOnCancellation(handler = disposer)
         }
     }
 
-    private inner class DisposeHandlersOnCancel(private val nodes: Array<AwaitAllNode>) : CancelHandler() {
+    private inner class DisposeHandlersOnCancel(private val nodes: Array<AwaitAllNode>) : CancelHandler {
         fun disposeAll() {
             nodes.forEach { it.handle.dispose() }
         }

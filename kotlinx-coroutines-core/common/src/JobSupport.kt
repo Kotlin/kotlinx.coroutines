@@ -443,14 +443,24 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     protected val completionCauseHandled: Boolean
         get() = state.let { it is CompletedExceptionally && it.handled }
 
-    @Suppress("OverridingDeprecatedMember")
     public final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
-        invokeOnCompletion(onCancelling = false, invokeImmediately = true, handler = handler)
+        invokeOnCompletionInternal(
+            onCancelling = false,
+            invokeImmediately = true,
+            handler = InternalCompletionHandler.UserSupplied(handler)
+        )
 
-    public final override fun invokeOnCompletion(
+    public final override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler): DisposableHandle =
+        invokeOnCompletionInternal(
+            onCancelling = onCancelling,
+            invokeImmediately = invokeImmediately,
+            handler = InternalCompletionHandler.UserSupplied(handler)
+        )
+
+    internal fun invokeOnCompletionInternal(
         onCancelling: Boolean,
         invokeImmediately: Boolean,
-        handler: CompletionHandler
+        handler: InternalCompletionHandler
     ): DisposableHandle {
         // Create node upfront -- for common cases it just initializes JobNode.job field,
         // for user-defined handlers it allocates a JobNode object that we might not need, but this is Ok.
@@ -477,7 +487,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                                 rootCause = state.rootCause // != null if cancelling job
                                 // We add node to the list in two cases --- either the job is not being cancelled
                                 // or we are adding a child to a coroutine that is not completing yet
-                                if (rootCause == null || handler.isHandlerOf<ChildHandleNode>() && !state.isCompleting) {
+                                if (rootCause == null || handler is ChildHandleNode && !state.isCompleting) {
                                     // Note: add node the list while holding lock on state (make sure it cannot change)
                                     if (!addLastAtomic(state, list, node)) return@loopOnState // retry
                                     // just return node if we don't have to invoke handler (not cancelling yet)
@@ -489,7 +499,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                         }
                         if (rootCause != null) {
                             // Note: attachChild uses invokeImmediately, so it gets invoked when adding to cancelled job
-                            if (invokeImmediately) handler.invokeIt(rootCause)
+                            if (invokeImmediately) handler.invoke(rootCause)
                             return handle
                         } else {
                             if (addLastAtomic(state, list, node)) return node
@@ -499,14 +509,14 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 else -> { // is complete
                     // :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
                     // because we play type tricks on Kotlin/JS and handler is not necessarily a function there
-                    if (invokeImmediately) handler.invokeIt((state as? CompletedExceptionally)?.cause)
+                    if (invokeImmediately) handler.invoke((state as? CompletedExceptionally)?.cause)
                     return NonDisposableHandle
                 }
             }
         }
     }
 
-    private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode {
+    private fun makeNode(handler: InternalCompletionHandler, onCancelling: Boolean): JobNode {
         val node = if (onCancelling) {
             (handler as? JobCancellingNode)
                 ?: InvokeOnCancelling(handler)
@@ -555,7 +565,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private suspend fun joinSuspend() = suspendCancellableCoroutine<Unit> { cont ->
         // We have to invoke join() handler only on cancellation, on completion we will be resumed regularly without handlers
-        cont.disposeOnCancellation(invokeOnCompletion(handler = ResumeOnCompletion(cont).asHandler))
+        cont.disposeOnCancellation(invokeOnCompletion(handler = ResumeOnCompletion(cont)))
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -571,7 +581,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             select.selectInRegistrationPhase(Unit)
             return
         }
-        val disposableHandle = invokeOnCompletion(SelectOnJoinCompletionHandler(select).asHandler)
+        val disposableHandle = invokeOnCompletion(handler = SelectOnJoinCompletionHandler(select))
         select.disposeOnCompletion(disposableHandle)
     }
 
@@ -918,7 +928,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private tailrec fun tryWaitForChild(state: Finishing, child: ChildHandleNode, proposedUpdate: Any?): Boolean {
         val handle = child.childJob.invokeOnCompletion(
             invokeImmediately = false,
-            handler = ChildCompletion(this, state, child, proposedUpdate).asHandler
+            handler = ChildCompletion(this, state, child, proposedUpdate)
         )
         if (handle !== NonDisposableHandle) return true // child is not complete and we've started waiting for it
         val nextChild = child.nextChild() ?: return false
@@ -968,7 +978,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * If child is attached when the job is already being cancelled, such child will receive immediate notification on
          * cancellation, but parent *will* wait for that child before completion and will handle its exception.
          */
-        return invokeOnCompletion(onCancelling = true, handler = ChildHandleNode(child).asHandler) as ChildHandle
+        return invokeOnCompletion(onCancelling = true, handler = ChildHandleNode(child)) as ChildHandle
     }
 
     /**
@@ -1231,7 +1241,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val cont = AwaitContinuation(uCont.intercepted(), this)
         // we are mimicking suspendCancellableCoroutine here and call initCancellability, too.
         cont.initCancellability()
-        cont.disposeOnCancellation(invokeOnCompletion(ResumeAwaitOnCompletion(cont).asHandler))
+        cont.disposeOnCancellation(invokeOnCompletion(handler = ResumeAwaitOnCompletion(cont)))
         cont.getResult()
     }
 
@@ -1253,7 +1263,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             }
             if (startInternal(state) >= 0) break // break unless needs to retry
         }
-        val disposableHandle = invokeOnCompletion(SelectOnAwaitCompletionHandler(select).asHandler)
+        val disposableHandle = invokeOnCompletion(handler = SelectOnAwaitCompletionHandler(select))
         select.disposeOnCompletion(disposableHandle)
     }
 
@@ -1338,7 +1348,7 @@ internal interface Incomplete {
     val list: NodeList? // is null only for Empty and JobNode incomplete state objects
 }
 
-internal abstract class JobNode : CompletionHandlerBase(), DisposableHandle, Incomplete {
+internal abstract class JobNode : LockFreeLinkedListNode(), InternalCompletionHandler, DisposableHandle, Incomplete {
     /**
      * Initialized by [JobSupport.makeNode].
      */
@@ -1377,7 +1387,7 @@ internal class InactiveNodeList(
 }
 
 private class InvokeOnCompletion(
-    private val handler: CompletionHandler
+    private val handler: InternalCompletionHandler
 ) : JobNode()  {
     override fun invoke(cause: Throwable?) = handler.invoke(cause)
 }
@@ -1420,7 +1430,7 @@ internal class DisposeOnCompletion(
 internal abstract class JobCancellingNode : JobNode()
 
 private class InvokeOnCancelling(
-    private val handler: CompletionHandler
+    private val handler: InternalCompletionHandler
 ) : JobCancellingNode()  {
     // delegate handler shall be invoked at most once, so here is an additional flag
     private val _invoked = atomic(0) // todo: replace with atomic boolean after migration to recent atomicFu

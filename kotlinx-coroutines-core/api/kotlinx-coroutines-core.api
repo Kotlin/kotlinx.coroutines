@@ -87,7 +87,6 @@ public final class kotlinx/coroutines/CancellableContinuationKt {
 public final class kotlinx/coroutines/ChildContinuation {
 	public final field child Lkotlinx/coroutines/CancellableContinuationImpl;
 	public fun <init> (Lkotlinx/coroutines/CancellableContinuationImpl;)V
-	public synthetic fun invoke (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun invoke (Ljava/lang/Throwable;)V
 }
 
@@ -1332,12 +1331,11 @@ public abstract interface class kotlinx/coroutines/selects/SelectClause1 : kotli
 public abstract interface class kotlinx/coroutines/selects/SelectClause2 : kotlinx/coroutines/selects/SelectClause {
 }
 
-public class kotlinx/coroutines/selects/SelectImplementation : kotlinx/coroutines/selects/SelectBuilder, kotlinx/coroutines/selects/SelectInstanceInternal {
+public class kotlinx/coroutines/selects/SelectImplementation : kotlinx/coroutines/CancelHandler, kotlinx/coroutines/selects/SelectBuilder, kotlinx/coroutines/selects/SelectInstanceInternal {
 	public fun <init> (Lkotlin/coroutines/CoroutineContext;)V
 	public fun disposeOnCompletion (Lkotlinx/coroutines/DisposableHandle;)V
 	public fun doSelect (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getContext ()Lkotlin/coroutines/CoroutineContext;
-	public synthetic fun invoke (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun invoke (Ljava/lang/Throwable;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause0;Lkotlin/jvm/functions/Function1;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V
