@@ -10,6 +10,9 @@ internal actual typealias ReentrantLock = java.util.concurrent.locks.ReentrantLo
 
 internal actual inline fun <T> ReentrantLock.withLock(action: () -> T) = this.withLockJvm(action)
 
+@Suppress("ACTUAL_WITHOUT_EXPECT") // Visibility
+internal actual typealias AtomicReference<T> = java.util.concurrent.atomic.AtomicReference<T>
+
 @Suppress("NOTHING_TO_INLINE") // So that R8 can completely remove ConcurrentKt class
 internal actual inline fun <E> identitySet(expectedSize: Int): MutableSet<E> =
     Collections.newSetFromMap(IdentityHashMap(expectedSize))
