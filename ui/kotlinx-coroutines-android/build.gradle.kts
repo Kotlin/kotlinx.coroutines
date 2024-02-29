@@ -1,5 +1,3 @@
-import kotlinx.kover.api.*
-
 configurations {
     create("r8")
 }

@@ -99,11 +99,13 @@ configurations {
     }
 }
 
-koverReport {
-    filters {
-        excludes {
-            // Never used, safety mechanism
-            classes("kotlinx.coroutines.debug.internal.NoOpProbesKt")
+kover {
+    reports {
+        filters {
+            excludes {
+                // Never used, safety mechanism
+                classes("kotlinx.coroutines.debug.internal.NoOpProbesKt")
+            }
         }
     }
 }
