@@ -21,7 +21,7 @@ internal expect fun <E> identitySet(expectedSize: Int): MutableSet<E>
 internal expect annotation class BenignDataRace()
 
 // Used **only** as a workaround for #3820 in StateFlow. Do not use anywhere else
-internal expect class AtomicReference<T>(value: T) {
+internal expect class WorkaroundAtomicReference<T>(value: T) {
     public fun get(): T
     public fun set(value: T)
     public fun getAndSet(value: T): T
@@ -29,11 +29,11 @@ internal expect class AtomicReference<T>(value: T) {
 }
 
 @Suppress("UNUSED_PARAMETER", "EXTENSION_SHADOWED_BY_MEMBER")
-internal var <T> AtomicReference<T>.value: T
+internal var <T> WorkaroundAtomicReference<T>.value: T
     get() = this.get()
     set(value) = this.set(value)
 
-internal inline fun <T> AtomicReference<T>.loop(action: AtomicReference<T>.(value: T) -> Unit) {
+internal inline fun <T> WorkaroundAtomicReference<T>.loop(action: WorkaroundAtomicReference<T>.(value: T) -> Unit) {
     while (true) {
         action(value)
     }

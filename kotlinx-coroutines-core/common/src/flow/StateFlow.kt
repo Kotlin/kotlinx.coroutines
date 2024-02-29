@@ -257,7 +257,7 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
      * Depending on the fix rollout on Android, it will be removed in 1.9.0 or 2.0.0.
      * See https://issuetracker.google.com/issues/325123736
      */
-    private val _state = AtomicReference<Any?>(null)
+    private val _state = WorkaroundAtomicReference<Any?>(null)
 
     override fun allocateLocked(flow: StateFlowImpl<*>): Boolean {
         // No need for atomic check & update here, since allocated happens under StateFlow lock
