@@ -272,31 +272,31 @@ val check by tasks.getting {
 }
 
 kover {
-    excludeTests {
-        // Always disabled, lincheck doesn't really support coverage
-        tasks("jvmLincheckTest")
+    currentProject {
+        instrumentation {
+            // Always disabled, lincheck doesn't really support coverage
+            disabledForTestTasks.addAll("jvmLincheckTest")
+
+            // lincheck has NPE error on `ManagedStrategyStateHolder` class
+            excludedClasses.addAll("org.jetbrains.kotlinx.lincheck.*")
+        }
     }
 
-    excludeInstrumentation {
-        // lincheck has NPE error on `ManagedStrategyStateHolder` class
-        classes("org.jetbrains.kotlinx.lincheck.*")
-    }
-}
-
-koverReport {
-    filters {
-        excludes {
-            classes(
-                "kotlinx.coroutines.debug.*", // Tested by debug module
-                "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt*", // Deprecated
-                "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
-                "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher", // Deprecated
-                "kotlinx.coroutines.flow.FlowKt__MigrationKt*", // Migrations
-                "kotlinx.coroutines.flow.LintKt*", // Migrations
-                "kotlinx.coroutines.internal.WeakMapCtorCache", // Fallback implementation that we never test
-                "_COROUTINE._CREATION", // For IDE navigation
-                "_COROUTINE._BOUNDARY", // For IDE navigation
-            )
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "kotlinx.coroutines.debug.*", // Tested by debug module
+                    "kotlinx.coroutines.channels.ChannelsKt__DeprecatedKt*", // Deprecated
+                    "kotlinx.coroutines.scheduling.LimitingDispatcher", // Deprecated
+                    "kotlinx.coroutines.scheduling.ExperimentalCoroutineDispatcher", // Deprecated
+                    "kotlinx.coroutines.flow.FlowKt__MigrationKt*", // Migrations
+                    "kotlinx.coroutines.flow.LintKt*", // Migrations
+                    "kotlinx.coroutines.internal.WeakMapCtorCache", // Fallback implementation that we never test
+                    "_COROUTINE._CREATION", // For IDE navigation
+                    "_COROUTINE._BOUNDARY", // For IDE navigation
+                )
+            }
         }
     }
 }

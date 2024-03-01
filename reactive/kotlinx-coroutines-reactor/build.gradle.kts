@@ -32,13 +32,15 @@ externalDocumentationLink(
 )
 
 
-koverReport {
-    filters {
-        excludes {
-            classes(
-                "kotlinx.coroutines.reactor.FlowKt", // Deprecated
-                "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
-            )
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "kotlinx.coroutines.reactor.FlowKt", // Deprecated
+                    "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
+                )
+            }
         }
     }
 }
