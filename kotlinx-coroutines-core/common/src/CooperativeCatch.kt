@@ -28,7 +28,6 @@ public inline fun <T, R> T.cooperativeCatch(block: T.() -> R): Result<R> {
  * See [map] for an alternative that rethrows all exceptions from `transform` function.
  */
 public inline fun <R, T> Result<T>.cooperativeMap(transform: (value: T) -> R): Result<R> {
-    mapCatching(transform)
     return getOrNull()?.let {
         cooperativeCatch { transform(it) }
     } ?: Result.failure(exceptionOrNull() ?: error("Unreachable state"))
