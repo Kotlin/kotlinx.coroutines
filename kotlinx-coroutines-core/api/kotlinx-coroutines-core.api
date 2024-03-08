@@ -147,6 +147,11 @@ public final class kotlinx/coroutines/CompletionHandlerException : java/lang/Run
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 }
 
+public final class kotlinx/coroutines/CooperativeCatchKt {
+	public static final fun cooperativeCatch (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static final fun cooperativeMap (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+}
+
 public abstract interface class kotlinx/coroutines/CopyableThreadContextElement : kotlinx/coroutines/ThreadContextElement {
 	public abstract fun copyForChild ()Lkotlinx/coroutines/CopyableThreadContextElement;
 	public abstract fun mergeForChild (Lkotlin/coroutines/CoroutineContext$Element;)Lkotlin/coroutines/CoroutineContext;
