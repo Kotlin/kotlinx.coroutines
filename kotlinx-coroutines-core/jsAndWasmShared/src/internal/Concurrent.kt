@@ -11,3 +11,25 @@ internal class NoOpLock {
 
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet(expectedSize)
 
+internal actual class WorkaroundAtomicReference<T> actual constructor(private var value: T) {
+
+    public actual fun get(): T = value
+
+    public actual fun set(value: T) {
+        this.value = value
+    }
+
+    public actual fun getAndSet(value: T): T {
+        val prev = this.value
+        this.value = value
+        return prev
+    }
+
+    public actual fun compareAndSet(expected: T, value: T): Boolean {
+        if (this.value === expected) {
+            this.value = value
+            return true
+        }
+        return false
+    }
+}
