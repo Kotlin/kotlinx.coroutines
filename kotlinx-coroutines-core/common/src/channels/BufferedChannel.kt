@@ -350,6 +350,8 @@ internal open class BufferedChannel<E>(
         }
     }
 
+    // Note: this function is temporarily moved from ConflatedBufferedChannel to BufferedChannel class, because of this issue: KT-65554. 
+    // For now, an inline function, which invokes atomic operations, may only be called within a parent class.
     protected fun trySendDropOldest(element: E): ChannelResult<Unit> =
         sendImpl( // <-- this is an inline function
             element = element,
