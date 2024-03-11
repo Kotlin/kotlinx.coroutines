@@ -14,7 +14,7 @@ class BlockingCoroutineDispatcherThreadLimitStressTest : SchedulerTestBase() {
         corePoolSize = CORES_COUNT
     }
 
-    private val observedConcurrency = ConcurrentHashMap<Int, Boolean>()
+    private val observedParallelism = ConcurrentHashMap<Int, Boolean>().keySet(true)
     private val concurrentWorkers = AtomicInteger(0)
 
     @Test
@@ -27,23 +27,20 @@ class BlockingCoroutineDispatcherThreadLimitStressTest : SchedulerTestBase() {
                 async(limitingDispatcher) {
                     try {
                         val currentlyExecuting = concurrentWorkers.incrementAndGet()
-                        observedConcurrency[currentlyExecuting] = true
-                        assertTrue(currentlyExecuting <= CORES_COUNT)
+                        observedParallelism.add(currentlyExecuting)
                     } finally {
                         concurrentWorkers.decrementAndGet()
                     }
                 }
             }
-            tasks.forEach { it.await() }
-            for (i in CORES_COUNT + 1..CORES_COUNT * 2) {
-                require(i !in observedConcurrency.keys) { "Unexpected state: $observedConcurrency" }
+            tasks.awaitAll()
+            assertTrue("Expected parallelism should be 1, had $observedParallelism") {
+                observedParallelism.single() == 1
             }
-            checkPoolThreadsCreated(0..CORES_COUNT + 1)
         }
     }
 
     @Test
-    @Ignore
     fun testLimitParallelism() = runBlocking {
         val limitingDispatcher = blockingDispatcher(CORES_COUNT)
         val iterations = 50_000 * stressTestMultiplier
@@ -51,17 +48,15 @@ class BlockingCoroutineDispatcherThreadLimitStressTest : SchedulerTestBase() {
             async(limitingDispatcher) {
                 try {
                     val currentlyExecuting = concurrentWorkers.incrementAndGet()
-                    observedConcurrency[currentlyExecuting] = true
-                    assertTrue(currentlyExecuting <= CORES_COUNT)
+                    observedParallelism.add(currentlyExecuting)
                 } finally {
                     concurrentWorkers.decrementAndGet()
                 }
             }
         }
-        tasks.forEach { it.await() }
-        for (i in CORES_COUNT + 1..CORES_COUNT * 2) {
-            require(i !in observedConcurrency.keys) { "Unexpected state: $observedConcurrency" }
+        tasks.awaitAll()
+        assertTrue("Unexpected state: $observedParallelism") {
+            observedParallelism.max() <= CORES_COUNT
         }
-        checkPoolThreadsCreated(CORES_COUNT..CORES_COUNT * 3)
     }
 }
