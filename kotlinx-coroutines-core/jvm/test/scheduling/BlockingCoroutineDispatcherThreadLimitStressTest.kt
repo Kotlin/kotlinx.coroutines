@@ -34,9 +34,7 @@ class BlockingCoroutineDispatcherThreadLimitStressTest : SchedulerTestBase() {
                 }
             }
             tasks.awaitAll()
-            assertTrue("Expected parallelism should be 1, had $observedParallelism") {
-                observedParallelism.single() == 1
-            }
+            assertEquals(1, observedParallelism.single(), "Expected parallelism should be 1, had $observedParallelism")
         }
     }
 
@@ -55,8 +53,6 @@ class BlockingCoroutineDispatcherThreadLimitStressTest : SchedulerTestBase() {
             }
         }
         tasks.awaitAll()
-        assertTrue("Unexpected state: $observedParallelism") {
-            observedParallelism.max() <= CORES_COUNT
-        }
+        assertTrue(observedParallelism.max() <= CORES_COUNT, "Unexpected state: $observedParallelism")
     }
 }
