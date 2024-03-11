@@ -1,5 +1,12 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.8.1-Beta
+
+* Remove the `@ExperimentalTime` annotation from usages of `TimeSource` (#4046). Thanks, @hfhbd!
+* Attempt a workaround for an Android bug that caused an occasional `NullPointerException` when setting the `StateFlow` value on old Android devices (#3820).
+* No longer use `kotlin.random.Random` as part of `Dispatchers.Default` and `Dispatchers.IO` initialization (#4051).
+* Small tweaks.
+
 ## Version 1.8.0
 
 * Implement the library for the Web Assembly (Wasm) for JavaScript (#3713). Thanks @igoriakovlev!
