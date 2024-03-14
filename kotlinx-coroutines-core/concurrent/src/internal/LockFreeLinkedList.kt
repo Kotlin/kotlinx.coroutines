@@ -80,13 +80,12 @@ public actual open class LockFreeLinkedListNode {
     /**
      * Adds last item to this list. Returns `false` if the list is closed.
      */
-    public actual fun addLast(node: Node, allowedAfterPartialClosing: Boolean): Boolean {
+    public actual fun addLast(node: Node, clearanceLevel: Int): Boolean {
         while (true) { // lock-free loop on prev.next
             val currentPrev = prevNode
             return when {
-                currentPrev is ListClosedForAll -> false
-                currentPrev is ListClosedForSome ->
-                    allowedAfterPartialClosing && currentPrev.addLast(node, allowedAfterPartialClosing)
+                currentPrev is ListClosed ->
+                    currentPrev.maxForbidden < clearanceLevel && currentPrev.addLast(node, clearanceLevel)
                 currentPrev.addNext(node, this) -> true
                 else -> continue
             }
@@ -94,14 +93,9 @@ public actual open class LockFreeLinkedListNode {
     }
 
     /**
-     * Forbids adding some of the new items to this list.
-     */
-    public actual fun closeForSome() { addLast(ListClosedForSome(), allowedAfterPartialClosing = false) }
-
-    /**
      * Forbids adding new items to this list.
      */
-    public actual fun close() { addLast(ListClosedForAll(), allowedAfterPartialClosing = true) }
+    public actual fun close(maxForbidden: Int) { addLast(ListClosed(maxForbidden), maxForbidden) }
 
     /**
      * Given:
@@ -289,6 +283,4 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     override val isRemoved: Boolean get() = false
 }
 
-private class ListClosedForSome: LockFreeLinkedListNode()
-
-private class ListClosedForAll: LockFreeLinkedListNode()
+private class ListClosed(val maxForbidden: Int): LockFreeLinkedListNode()

@@ -7,11 +7,14 @@ public expect open class LockFreeLinkedListNode() {
     public val isRemoved: Boolean
     public val nextNode: LockFreeLinkedListNode
     public val prevNode: LockFreeLinkedListNode
-    public fun addLast(node: LockFreeLinkedListNode, allowedAfterPartialClosing: Boolean): Boolean
+    public fun addLast(node: LockFreeLinkedListNode, clearanceLevel: Int): Boolean
     public fun addOneIfEmpty(node: LockFreeLinkedListNode): Boolean
     public open fun remove(): Boolean
-    public fun close()
-    public fun closeForSome()
+
+    /**
+     * Closes the list for [maxForbidden] and all numbers below.
+     */
+    public fun close(maxForbidden: Int)
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
