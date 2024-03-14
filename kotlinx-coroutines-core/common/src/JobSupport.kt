@@ -899,6 +899,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val child = firstChild(state)
         if (child != null && tryWaitForChild(finishing, child, proposedUpdate))
             return COMPLETING_WAITING_CHILDREN
+        list.close(LIST_CHILD_PERMISSION)
+        val anotherChild = firstChild(state)
+        if (anotherChild != null && tryWaitForChild(finishing, anotherChild, proposedUpdate))
+            return COMPLETING_WAITING_CHILDREN
         // otherwise -- we have not children left (all were already cancelled?)
         return finalizeFinishingState(finishing, proposedUpdate)
     }
@@ -928,7 +932,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val waitChild = lastChild.nextChild()
         // try wait for next child
         if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate)) return // waiting for next child
-        // no more children to wait -- try update state
+        // no more children to wait -- stop accepting children
+        state.list.close(LIST_CHILD_PERMISSION)
+        // did any children get added?
+        val waitChildAgain = lastChild.nextChild()
+        // try wait for next child
+        if (waitChildAgain != null && tryWaitForChild(state, waitChildAgain, proposedUpdate)) return // waiting for next child
+        // no more children, now we are sure; try to update the state
         val finalState = finalizeFinishingState(state, proposedUpdate)
         afterCompletion(finalState)
     }
@@ -968,41 +978,45 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val node = ChildHandleNode(child).also { it.job = this }
         val added = tryPutNodeIntoList(node) { state, list ->
             if (state is Finishing) {
-                val rootCause: Throwable
+                val rootCause: Throwable?
                 val handle: ChildHandle
                 synchronized(state) {
                     // check if we are installing cancellation handler on job that is being cancelled
-                    val maybeRootCause = state.rootCause // != null if cancelling job
+                    rootCause = state.rootCause // != null if cancelling job
                     // We add the node to the list in two cases --- either the job is not being cancelled,
                     // or we are adding a child to a coroutine that is not completing yet
-                    if (maybeRootCause == null || !state.isCompleting) {
+                    if (rootCause == null || !state.isCompleting) {
                         // Note: add node the list while holding lock on state (make sure it cannot change)
-                        if (!list.addLast(node, LIST_MAX_PERMISSION))
-                            return@tryPutNodeIntoList false // retry
+                        handle = if (list.addLast(node, LIST_CHILD_PERMISSION)) {
+                            node
+                        } else {
+                            NonDisposableHandle
+                        }
                         // just return the node if we don't have to invoke the handler (not cancelling yet)
-                        rootCause = maybeRootCause ?: return@tryPutNodeIntoList true
                         // otherwise handler is invoked immediately out of the synchronized section & handle returned
-                        handle = node
                     } else {
-                        rootCause = maybeRootCause
                         handle = NonDisposableHandle
                     }
                 }
                 node.invoke(rootCause)
                 return handle
-            } else list.addLast(node, LIST_MAX_PERMISSION).also { success ->
-                if (success) {
-                    /** Handling the following case:
-                     * - A child requested to be added to the list;
-                     * - We checked the state and saw that it wasn't `Finishing`;
-                     * - Then, the job got cancelled and notified everyone about it;
-                     * - Only then did we add the child to the list
-                     * - and ended up here.
-                     */
-                    val latestState = this@JobSupport.state
-                    if (latestState is Finishing) {
-                        synchronized(latestState) { latestState.rootCause }?.let { node.invoke(it) }
+            } else {
+                list.addLast(node, LIST_CHILD_PERMISSION).also { success ->
+                    if (success) {
+                        /** Handling the following case:
+                         * - A child requested to be added to the list;
+                         * - We checked the state and saw that it wasn't `Finishing`;
+                         * - Then, the job got cancelled and notified everyone about it;
+                         * - Only then did we add the child to the list
+                         * - and ended up here.
+                         */
+                        val latestState = this@JobSupport.state
+                        if (latestState is Finishing) {
+                            synchronized(latestState) { latestState.rootCause }?.let { node.invoke(it) }
+                        }
                     }
+                    // if we didn't add the node to the list, we'll loop and notice
+                    // either `Finishing` or the final state, so no spin loop here
                 }
             }
         }
@@ -1340,6 +1354,7 @@ private val EMPTY_NEW = Empty(false)
 private val EMPTY_ACTIVE = Empty(true)
 
 private const val LIST_MAX_PERMISSION = Int.MAX_VALUE
+private const val LIST_CHILD_PERMISSION = 1
 private const val LIST_CANCELLATION_PERMISSION = 0
 
 private class Empty(override val isActive: Boolean) : Incomplete {

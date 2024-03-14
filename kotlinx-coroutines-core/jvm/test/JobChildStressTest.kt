@@ -4,6 +4,7 @@ import kotlinx.coroutines.testing.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
+import java.util.concurrent.atomic.*
 import kotlin.test.*
 
 class JobChildStressTest : TestBase() {
@@ -51,6 +52,32 @@ class JobChildStressTest : TestBase() {
             if (wasLaunched) {
                 val exception = parent.getCompletionExceptionOrNull()
                 assertIs<TestException>(exception, "exception=$exception")
+            }
+        }
+    }
+
+    @Test
+    fun testFailingChildIsAddedWhenJobFinalizesItsState() {
+        // All exceptions should get aggregated here
+        repeat(N_ITERATIONS) {
+            runBlocking {
+                val rogueJob = AtomicReference<Job?>()
+                val deferred = CompletableDeferred<Unit>()
+                launch(pool + deferred) {
+                    deferred.complete(Unit) // Transition deferred into "completing" state waiting for current child
+                    // **Asynchronously** submit task that launches a child so it races with completion
+                    pool.executor.execute {
+                        rogueJob.set(launch(pool + deferred) {
+                            throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
+                        })
+                    }
+                }
+
+                deferred.join()
+                val rogue = rogueJob.get()
+                if (rogue?.isActive == true) {
+                    throw TestException("Rogue job $rogue with parent " + rogue.parent + " and children list: " + rogue.parent?.children?.toList())
+                }
             }
         }
     }
