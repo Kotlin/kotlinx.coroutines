@@ -14,9 +14,8 @@ public actual open class LockFreeLinkedListNode {
     inline actual val prevNode get() = _prev
     inline actual val isRemoved get() = _removed
 
-    public actual fun addLast(node: Node, allowedAfterPartialClosing: Boolean): Boolean = when (val prev = this._prev) {
-        is ListClosedForAll -> false
-        is ListClosedForSome -> allowedAfterPartialClosing && prev.addLast(node, allowedAfterPartialClosing)
+    public actual fun addLast(node: Node, clearanceLevel: Int): Boolean = when (val prev = this._prev) {
+        is ListClosed -> prev.maxForbidden < clearanceLevel && prev.addLast(node, clearanceLevel)
         else -> {
             node._next = this
             node._prev = prev
@@ -26,12 +25,8 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
-    public actual fun closeForSome() {
-        addLast(ListClosedForSome(), allowedAfterPartialClosing = true)
-    }
-
-    public actual fun close() {
-        addLast(ListClosedForAll(), allowedAfterPartialClosing = false)
+    public actual fun close(maxForbidden: Int) {
+        addLast(ListClosed(maxForbidden), maxForbidden)
     }
 
     /*
@@ -52,7 +47,7 @@ public actual open class LockFreeLinkedListNode {
 
     public actual fun addOneIfEmpty(node: Node): Boolean {
         if (_next !== this) return false
-        addLast(node, allowedAfterPartialClosing = false)
+        addLast(node, Int.MIN_VALUE)
         return true
     }
 }
@@ -74,6 +69,4 @@ public actual open class LockFreeLinkedListHead : Node() {
     public actual final override fun remove(): Nothing = throw UnsupportedOperationException()
 }
 
-private class ListClosedForSome: LockFreeLinkedListNode()
-
-private class ListClosedForAll: LockFreeLinkedListNode()
+private class ListClosed(val maxForbidden: Int): LockFreeLinkedListNode()
