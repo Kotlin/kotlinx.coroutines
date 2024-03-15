@@ -879,7 +879,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             if (finishing.isCompleting) return COMPLETING_ALREADY
             // mark as completing
             finishing.isCompleting = true
-            // if we need to promote to finishing then atomically do it here.
+            // if we need to promote to finishing, then atomically do it here.
             // We do it as early is possible while still holding the lock. This ensures that we cancelImpl asap
             // (if somebody else is faster) and we synchronize all the threads on this finishing lock asap.
             if (finishing !== state) {
@@ -893,7 +893,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             // If it just becomes cancelling --> must process cancelling notifications
             notifyRootCause = finishing.rootCause.takeIf { !wasCancelling }
         }
-        // process cancelling notification here -- it cancels all the children _before_ we start to to wait them (sic!!!)
+        // process cancelling notification here -- it cancels all the children _before_ we start to wait them (sic!!!)
         notifyRootCause?.let { notifyCancelling(list, it) }
         // now wait for children
         val child = firstChild(state)
@@ -976,47 +976,39 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * but the parent *will* wait for that child before completion and will handle its exception.
          */
         val node = ChildHandleNode(child).also { it.job = this }
-        val added = tryPutNodeIntoList(node) { state, list ->
-            if (state is Finishing) {
-                val rootCause: Throwable?
-                val handle: ChildHandle
-                synchronized(state) {
-                    // check if we are installing cancellation handler on job that is being cancelled
-                    rootCause = state.rootCause // != null if cancelling job
-                    // We add the node to the list in two cases --- either the job is not being cancelled,
-                    // or we are adding a child to a coroutine that is not completing yet
-                    if (rootCause == null || !state.isCompleting) {
-                        // Note: add node the list while holding lock on state (make sure it cannot change)
-                        handle = if (list.addLast(node, LIST_CHILD_PERMISSION)) {
-                            node
-                        } else {
-                            NonDisposableHandle
-                        }
-                        // just return the node if we don't have to invoke the handler (not cancelling yet)
-                        // otherwise handler is invoked immediately out of the synchronized section & handle returned
-                    } else {
-                        handle = NonDisposableHandle
+        val added = tryPutNodeIntoList(node) { _, list ->
+            // First, try to add a child along the cancellation handlers
+            val addedBeforeCancellation = list.addLast(node, LIST_CANCELLATION_PERMISSION)
+            if (addedBeforeCancellation) {
+                // The child managed to be added before the parent started to cancel or complete. Success.
+                true
+            } else {
+                // Either cancellation or completion already happened, the child was not added.
+                // Now we need to try adding it for completion.
+                val addedBeforeCompletion = list.addLast(node, LIST_CHILD_PERMISSION)
+                // Whether or not we managed to add the child before the parent completed, we need to investigate:
+                // why didn't we manage to add it before cancellation?
+                // If it's because cancellation happened in the meantime, we need to notify the child.
+                // We check the latest state because the original state with which we started may not have had
+                // the information about the cancellation yet.
+                val rootCause = when (val latestState = this.state) {
+                    is Finishing -> {
+                        // The state is still incomplete, so we need to notify the child about the completion cause.
+                        synchronized(latestState) { latestState.rootCause }
+                    }
+                    else -> {
+                        // Since the list is already closed for `onCancelling`, the job is either Finishing or
+                        // already completed. We need to notify the child about the completion cause.
+                        assert { latestState !is Incomplete }
+                        (latestState as? CompletedExceptionally)?.cause
                     }
                 }
-                node.invoke(rootCause)
-                return handle
-            } else {
-                list.addLast(node, LIST_CHILD_PERMISSION).also { success ->
-                    if (success) {
-                        /** Handling the following case:
-                         * - A child requested to be added to the list;
-                         * - We checked the state and saw that it wasn't `Finishing`;
-                         * - Then, the job got cancelled and notified everyone about it;
-                         * - Only then did we add the child to the list
-                         * - and ended up here.
-                         */
-                        val latestState = this@JobSupport.state
-                        if (latestState is Finishing) {
-                            synchronized(latestState) { latestState.rootCause }?.let { node.invoke(it) }
-                        }
-                    }
-                    // if we didn't add the node to the list, we'll loop and notice
-                    // either `Finishing` or the final state, so no spin loop here
+                if (addedBeforeCompletion) {
+                    if (rootCause != null) node.invoke(rootCause)
+                    true
+                } else {
+                    node.invoke(rootCause)
+                    return NonDisposableHandle
                 }
             }
         }
