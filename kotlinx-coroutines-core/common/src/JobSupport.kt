@@ -476,7 +476,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                  * to check for an exception, but that logic would need to manually handle the final state, which is
                  * less straightforward.
                  */
-                val rootCause = (state as? Finishing)?.let { synchronized(it) { it.rootCause } }
+                val rootCause = (state as? Finishing)?.rootCause
                 if (rootCause == null) {
                     /**
                      * There is no known root cause yet, so we can add the node to the list of state handlers.
@@ -906,7 +906,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // atomically transition to finishing & completing state
         val finishing = state as? Finishing ?: Finishing(list, false, null)
         // must synchronize updates to finishing state
-        var notifyRootCause: Throwable? = null
+        val notifyRootCause: Throwable?
         synchronized(finishing) {
             // check if this state is already completing
             if (finishing.isCompleting) return COMPLETING_ALREADY
@@ -1035,7 +1035,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 val rootCause = when (val latestState = this.state) {
                     is Finishing -> {
                         // The state is still incomplete, so we need to notify the child about the completion cause.
-                        synchronized(latestState) { latestState.rootCause }
+                        latestState.rootCause
                     }
                     else -> {
                         /** Since the list is already closed for [onCancelling], the job is either Finishing or
