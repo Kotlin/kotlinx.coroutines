@@ -466,14 +466,47 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // for user-defined handlers it allocates a JobNode object that we might not need, but this is Ok.
         val added = tryPutNodeIntoList(node) { state, list ->
             if (node.onCancelling) {
+                /**
+                 * We are querying whether the job was already cancelled when we entered this block.
+                 * We can't naively attempt to add the node to the list, because a lot of time could pass between
+                 * notifying the cancellation handlers (and thus closing the list, forcing us to retry)
+                 * and reaching a final state.
+                 *
+                 * Alternatively, we could also try to add the node to the list first and then read the latest state
+                 * to check for an exception, but that logic would need to manually handle the final state, which is
+                 * less straightforward.
+                 */
                 val rootCause = (state as? Finishing)?.let { synchronized(it) { it.rootCause } }
                 if (rootCause == null) {
+                    /**
+                     * There is no known root cause yet, so we can add the node to the list of state handlers.
+                     *
+                     * If this call fails, because of the bitmask, this means one of the two happened:
+                     * - [notifyCancelling] was already called.
+                     *   This means that the job is already being cancelled: otherwise, with what exception would we
+                     *   notify the handler?
+                     *   So, we can retry the operation: either the state is already final, or the `rootCause` check
+                     *   above will give a different result.
+                     * - [notifyCompletion] was already called.
+                     *   This means that the job is already complete.
+                     *   We can retry the operation and will observe the final state.
+                     */
                     list.addLast(node, LIST_CANCELLATION_PERMISSION or LIST_ON_COMPLETION_PERMISSION)
                 } else {
+                    /**
+                     * The root cause is known, so we can invoke the handler immediately and avoid adding it.
+                     */
                     if (invokeImmediately) node.invoke(rootCause)
                     return NonDisposableHandle
                 }
             } else {
+                /**
+                 * The non-[onCancelling]-handlers are interested in completions only, so it's safe to add them at
+                 * any time before [notifyCompletion] is called (which closes the list).
+                 *
+                 * If the list *is* closed, on a retry, we'll observe the final state, as [notifyCompletion] is only
+                 * called after the state transition.
+                 */
                 list.addLast(node, LIST_ON_COMPLETION_PERMISSION)
             }
         }
@@ -969,7 +1002,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * Note: This function attaches a special ChildHandleNode node object. This node object
          * is handled in a special way on completion on the coroutine (we wait for all of them) and also
          * can't be added simply with `invokeOnCompletionInternal` -- we add this node to the list even
-         * if the job is already cancelling. For cancelling state, the child is attached under state lock.
+         * if the job is already cancelling.
          * It's required to properly await all children before completion and provide a linearizable hierarchy view:
          * If the child is attached when the job is already being cancelled, such a child will receive
          * an immediate notification on cancellation,
@@ -986,39 +1019,54 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 // The child managed to be added before the parent started to cancel or complete. Success.
                 true
             } else {
-                // Either cancellation or completion already happened, the child was not added.
-                // Now we need to try adding it for completion.
+                /* Either cancellation or completion already happened, the child was not added.
+                 * Now we need to try adding it just for completion. */
                 val addedBeforeCompletion = list.addLast(
                     node,
                     LIST_CHILD_PERMISSION or LIST_ON_COMPLETION_PERMISSION
                 )
-                // Whether or not we managed to add the child before the parent completed, we need to investigate:
-                // why didn't we manage to add it before cancellation?
-                // If it's because cancellation happened in the meantime, we need to notify the child.
-                // We check the latest state because the original state with which we started may not have had
-                // the information about the cancellation yet.
+                /*
+                 * Whether or not we managed to add the child before the parent completed, we need to investigate:
+                 * why didn't we manage to add it before cancellation?
+                 * If it's because cancellation happened in the meantime, we need to notify the child about it.
+                 * We check the latest state because the original state with which we started may not have had
+                 * the information about the cancellation yet.
+                 */
                 val rootCause = when (val latestState = this.state) {
                     is Finishing -> {
                         // The state is still incomplete, so we need to notify the child about the completion cause.
                         synchronized(latestState) { latestState.rootCause }
                     }
                     else -> {
-                        // Since the list is already closed for `onCancelling`, the job is either Finishing or
-                        // already completed. We need to notify the child about the completion cause.
+                        /** Since the list is already closed for [onCancelling], the job is either Finishing or
+                         * already completed. We need to notify the child about the completion cause. */
                         assert { latestState !is Incomplete }
                         (latestState as? CompletedExceptionally)?.cause
                     }
                 }
+                /**
+                 * We must cancel the child if the parent was cancelled already, even if we successfully attached,
+                 * as this child didn't make it before [notifyCancelling] and won't be notified that it should be
+                 * cancelled.
+                 *
+                 * And if the parent wasn't cancelled and the previous [LockFreeLinkedListNode.addLast] failed because
+                 * the job is in its final state already, we won't be able to attach anyway, so we must just invoke
+                 * the handler and return.
+                 */
+                node.invoke(rootCause)
                 if (addedBeforeCompletion) {
-                    if (rootCause != null) node.invoke(rootCause)
+                    /** The root cause can't be null: since the earlier addition to the list failed, this means that
+                     * the job was already cancelled or completed. */
+                    assert { rootCause != null }
                     true
                 } else {
-                    node.invoke(rootCause)
+                    /** No sense in retrying: we know it won't succeed, and we already invoked the handler. */
                     return NonDisposableHandle
                 }
             }
         }
         if (added) return node
+        /** We can only end up here if [tryPutNodeIntoList] detected a final state. */
         node.invoke((state as? CompletedExceptionally)?.cause)
         return NonDisposableHandle
     }
