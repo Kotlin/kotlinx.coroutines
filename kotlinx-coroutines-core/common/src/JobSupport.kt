@@ -929,11 +929,11 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // process cancelling notification here -- it cancels all the children _before_ we start to wait them (sic!!!)
         notifyRootCause?.let { notifyCancelling(list, it) }
         // now wait for children
-        val child = firstChild(state)
+        val child = list.nextChild()
         if (child != null && tryWaitForChild(finishing, child, proposedUpdate))
             return COMPLETING_WAITING_CHILDREN
         list.close(LIST_CHILD_PERMISSION)
-        val anotherChild = firstChild(state)
+        val anotherChild = list.nextChild()
         if (anotherChild != null && tryWaitForChild(finishing, anotherChild, proposedUpdate))
             return COMPLETING_WAITING_CHILDREN
         // otherwise -- we have not children left (all were already cancelled?)
@@ -942,9 +942,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private val Any?.exceptionOrNull: Throwable?
         get() = (this as? CompletedExceptionally)?.cause
-
-    private fun firstChild(state: Incomplete) =
-        state as? ChildHandleNode ?: state.list?.nextChild()
 
     // return false when there is no more incomplete children to wait
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
