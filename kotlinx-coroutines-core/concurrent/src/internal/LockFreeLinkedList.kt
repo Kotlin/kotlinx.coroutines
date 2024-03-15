@@ -80,12 +80,13 @@ public actual open class LockFreeLinkedListNode {
     /**
      * Adds last item to this list. Returns `false` if the list is closed.
      */
-    public actual fun addLast(node: Node, clearanceLevel: Int): Boolean {
+    public actual fun addLast(node: Node, permissionsBitmask: Int): Boolean {
         while (true) { // lock-free loop on prev.next
             val currentPrev = prevNode
             return when {
                 currentPrev is ListClosed ->
-                    currentPrev.maxForbidden < clearanceLevel && currentPrev.addLast(node, clearanceLevel)
+                    currentPrev.forbiddenElementsBitmask and permissionsBitmask == 0 &&
+                        currentPrev.addLast(node, permissionsBitmask)
                 currentPrev.addNext(node, this) -> true
                 else -> continue
             }
@@ -95,7 +96,9 @@ public actual open class LockFreeLinkedListNode {
     /**
      * Forbids adding new items to this list.
      */
-    public actual fun close(maxForbidden: Int) { addLast(ListClosed(maxForbidden), maxForbidden) }
+    public actual fun close(forbiddenElementsBit: Int) {
+        addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
+    }
 
     /**
      * Given:
@@ -283,4 +286,4 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     override val isRemoved: Boolean get() = false
 }
 
-private class ListClosed(val maxForbidden: Int): LockFreeLinkedListNode()
+private class ListClosed(val forbiddenElementsBitmask: Int): LockFreeLinkedListNode()

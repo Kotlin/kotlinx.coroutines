@@ -7,14 +7,15 @@ public expect open class LockFreeLinkedListNode() {
     public val isRemoved: Boolean
     public val nextNode: LockFreeLinkedListNode
     public val prevNode: LockFreeLinkedListNode
-    public fun addLast(node: LockFreeLinkedListNode, clearanceLevel: Int): Boolean
+    public fun addLast(node: LockFreeLinkedListNode, permissionsBitmask: Int): Boolean
     public fun addOneIfEmpty(node: LockFreeLinkedListNode): Boolean
     public open fun remove(): Boolean
 
     /**
-     * Closes the list for [maxForbidden] and all numbers below.
+     * Closes the list for anything that requests the permission [forbiddenElementsBit].
+     * Only a single permission can be forbidden at a time, but this isn't checked.
      */
-    public fun close(maxForbidden: Int)
+    public fun close(forbiddenElementsBit: Int)
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */

@@ -352,7 +352,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     private fun NodeList.notifyCompletion(cause: Throwable?) {
-        close(LIST_MAX_PERMISSION)
+        close(LIST_ON_COMPLETION_PERMISSION)
         notifyHandlers(this, cause) { true }
     }
 
@@ -468,13 +468,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             if (node.onCancelling) {
                 val rootCause = (state as? Finishing)?.let { synchronized(it) { it.rootCause } }
                 if (rootCause == null) {
-                    list.addLast(node, LIST_CANCELLATION_PERMISSION)
+                    list.addLast(node, LIST_CANCELLATION_PERMISSION or LIST_ON_COMPLETION_PERMISSION)
                 } else {
                     if (invokeImmediately) node.invoke(rootCause)
                     return NonDisposableHandle
                 }
             } else {
-                list.addLast(node, LIST_MAX_PERMISSION)
+                list.addLast(node, LIST_ON_COMPLETION_PERMISSION)
             }
         }
         when {
@@ -978,14 +978,20 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val node = ChildHandleNode(child).also { it.job = this }
         val added = tryPutNodeIntoList(node) { _, list ->
             // First, try to add a child along the cancellation handlers
-            val addedBeforeCancellation = list.addLast(node, LIST_CANCELLATION_PERMISSION)
+            val addedBeforeCancellation = list.addLast(
+                node,
+                LIST_ON_COMPLETION_PERMISSION or LIST_CHILD_PERMISSION or LIST_CANCELLATION_PERMISSION
+            )
             if (addedBeforeCancellation) {
                 // The child managed to be added before the parent started to cancel or complete. Success.
                 true
             } else {
                 // Either cancellation or completion already happened, the child was not added.
                 // Now we need to try adding it for completion.
-                val addedBeforeCompletion = list.addLast(node, LIST_CHILD_PERMISSION)
+                val addedBeforeCompletion = list.addLast(
+                    node,
+                    LIST_CHILD_PERMISSION or LIST_ON_COMPLETION_PERMISSION
+                )
                 // Whether or not we managed to add the child before the parent completed, we need to investigate:
                 // why didn't we manage to add it before cancellation?
                 // If it's because cancellation happened in the meantime, we need to notify the child.
@@ -1345,9 +1351,10 @@ private val SEALED = Symbol("SEALED")
 private val EMPTY_NEW = Empty(false)
 private val EMPTY_ACTIVE = Empty(true)
 
-private const val LIST_MAX_PERMISSION = Int.MAX_VALUE
-private const val LIST_CHILD_PERMISSION = 1
-private const val LIST_CANCELLATION_PERMISSION = 0
+// bit mask
+private const val LIST_ON_COMPLETION_PERMISSION = 1
+private const val LIST_CHILD_PERMISSION = 2
+private const val LIST_CANCELLATION_PERMISSION = 4
 
 private class Empty(override val isActive: Boolean) : Incomplete {
     override val list: NodeList? get() = null
