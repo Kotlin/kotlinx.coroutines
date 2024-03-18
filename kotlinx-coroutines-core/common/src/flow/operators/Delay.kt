@@ -394,6 +394,7 @@ private fun <T> Flow<T>.timeoutInternal(
             value.onSuccess {
                 downStream.emit(it)
             }.onClosed {
+                it?.let { throw it }
                 return@onReceiveCatching false
             }
             return@onReceiveCatching true
