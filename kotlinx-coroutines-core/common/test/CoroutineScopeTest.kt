@@ -248,6 +248,17 @@ class CoroutineScopeTest : TestBase() {
     }
 
     @Test
+    fun testLaunchContainsDefaultDispatcher() = runTest {
+        val scopeWithoutDispatcher = CoroutineScope(coroutineContext.minusKey(ContinuationInterceptor))
+        scopeWithoutDispatcher.launch(Dispatchers.Default) {
+            assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+        }.join()
+        scopeWithoutDispatcher.launch {
+            assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+        }.join()
+    }
+
+    @Test
     fun testNewCoroutineContextDispatcher() {
         fun newContextDispatcher(c1: CoroutineContext, c2: CoroutineContext) =
             ContextScope(c1).newCoroutineContext(c2)[ContinuationInterceptor]
