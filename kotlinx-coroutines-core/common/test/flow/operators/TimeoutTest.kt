@@ -237,6 +237,17 @@ class TimeoutTest : TestBase() {
         testImmediateTimeout(-1.seconds)
     }
 
+    @Test
+    fun testClosing() = runTest {
+        assertFailsWith<TestException> {
+            channelFlow<Int> { close(TestException()) }
+                .timeout(Duration.INFINITE)
+                .collect {
+                    expectUnreached()
+                }
+        }
+    }
+
     private fun testImmediateTimeout(timeout: Duration) {
         expect(1)
         val flow = emptyFlow<Int>().timeout(timeout)
