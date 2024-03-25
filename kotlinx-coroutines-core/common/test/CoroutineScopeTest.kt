@@ -248,6 +248,31 @@ class CoroutineScopeTest : TestBase() {
     }
 
     @Test
+    fun testLaunchContainsDefaultDispatcher() = runTest {
+        val scopeWithoutDispatcher = CoroutineScope(coroutineContext.minusKey(ContinuationInterceptor))
+        scopeWithoutDispatcher.launch(Dispatchers.Default) {
+            assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+        }.join()
+        scopeWithoutDispatcher.launch {
+            assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+        }.join()
+    }
+
+    @Test
+    fun testNewCoroutineContextDispatcher() {
+        fun newContextDispatcher(c1: CoroutineContext, c2: CoroutineContext) =
+            ContextScope(c1).newCoroutineContext(c2)[ContinuationInterceptor]
+
+        assertSame(Dispatchers.Default, newContextDispatcher(EmptyCoroutineContext, EmptyCoroutineContext))
+        assertSame(Dispatchers.Default, newContextDispatcher(EmptyCoroutineContext, Dispatchers.Default))
+        assertSame(Dispatchers.Default, newContextDispatcher(Dispatchers.Default, EmptyCoroutineContext))
+        assertSame(Dispatchers.Default, newContextDispatcher(Dispatchers.Default, Dispatchers.Default))
+        assertSame(Dispatchers.Default, newContextDispatcher(Dispatchers.Unconfined, Dispatchers.Default))
+        assertSame(Dispatchers.Unconfined, newContextDispatcher(Dispatchers.Default, Dispatchers.Unconfined))
+        assertSame(Dispatchers.Unconfined, newContextDispatcher(Dispatchers.Unconfined, Dispatchers.Unconfined))
+    }
+
+    @Test
     fun testScopePlusContext() {
         assertSame(EmptyCoroutineContext, scopePlusContext(EmptyCoroutineContext, EmptyCoroutineContext))
         assertSame(Dispatchers.Default, scopePlusContext(EmptyCoroutineContext, Dispatchers.Default))

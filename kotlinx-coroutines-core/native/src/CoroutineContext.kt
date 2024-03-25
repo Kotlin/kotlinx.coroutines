@@ -31,8 +31,8 @@ internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
-    return if (combined !== DefaultDelay && combined[ContinuationInterceptor] == null)
-        combined + (DefaultDelay as CoroutineContext.Element) else combined
+    return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
+        combined + Dispatchers.Default else combined
 }
 
 public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
