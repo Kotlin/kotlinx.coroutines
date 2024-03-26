@@ -6,7 +6,6 @@ import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
 import java.lang.StackTraceElement
 import java.text.*
-import java.util.concurrent.locks.*
 import kotlin.collections.ArrayList
 import kotlin.concurrent.*
 import kotlin.coroutines.*
@@ -26,6 +25,43 @@ internal object DebugProbesImpl {
     private val capturedCoroutines: Set<CoroutineOwner<*>> get() = capturedCoroutinesMap.keys
 
     private val installations = atomic(0)
+
+    /**
+     * This API is used for stepping in the debugger.
+     * 
+     * A debug step from one location to the next location within a coroutine is allowed if 
+     * the same coroutine that was running at the previous location continues its execution at the next location.
+     * 
+     * We also allow to step into coroutines that started its execution in the current thread immediately without being dispatched.
+     * 
+     * [CoroutinesOnThread] captures a set of coroutines that were running on the current thread at a breakpoint, 
+     * and can determine whether we can step to the current location in code by checking if any of those captured coroutines 
+     * continue its execution at the current location.
+     */
+    public class CoroutinesOnThread internal constructor(private val coroutinesAtPreviousLocation: Set<Long>) {
+        public val canRunToCurrentLocation: Boolean 
+            get() {
+            for (coroutine in capturedCoroutines) {
+                if (coroutine.isRunningOnCurrentThread() && coroutine.info.sequenceNumber in coroutinesAtPreviousLocation) {
+                    return true
+                }
+            }
+            return false
+        }
+    }
+
+    /**
+     * Captures a set of coroutines that are running on the current thread.
+     */
+    public val coroutinesRunningOnCurrentThread: CoroutinesOnThread
+        get() = CoroutinesOnThread(
+            capturedCoroutines.mapNotNull { owner -> 
+                if (owner.isRunningOnCurrentThread()) owner.info.sequenceNumber else null
+            }.toSet()
+        )
+    
+    private fun CoroutineOwner<*>.isRunningOnCurrentThread(): Boolean = 
+        !isFinished() && info.lastObservedThread == Thread.currentThread()
 
     /**
      * This internal method is used by the IDEA debugger under the JVM name
