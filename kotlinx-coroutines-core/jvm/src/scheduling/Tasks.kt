@@ -19,6 +19,11 @@ internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
     "kotlinx.coroutines.scheduler.resolution.ns", 100000L
 )
 
+@JvmField
+internal val RUN_BLOCKING_CPU_REACQUIRE_PARK_NS = systemProp(
+    "kotlinx.coroutines.scheduler.runBlocking.cpu.reacquire.ns", 250L * 1000 * 1000
+)
+
 /**
  * The maximum number of threads allocated for CPU-bound tasks at the default set of dispatchers.
  *

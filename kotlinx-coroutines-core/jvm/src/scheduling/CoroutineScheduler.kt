@@ -690,6 +690,52 @@ internal class CoroutineScheduler(
             return hadCpu
         }
 
+        /** only for [runBlocking] */
+        fun releaseCpu(): Boolean {
+            assert { state == WorkerState.CPU_ACQUIRED || state == WorkerState.BLOCKING }
+            return tryReleaseCpu(WorkerState.BLOCKING).also { released ->
+                if (released) incrementBlockingTasks()
+            }
+        }
+
+        /** only for [runBlocking] */
+        fun reacquireCpu() {
+            assert { state == WorkerState.BLOCKING }
+            decrementBlockingTasks()
+            if (tryAcquireCpuPermit()) return
+            class CpuPermitTransfer {
+                private val status = atomic(false)
+                fun check(): Boolean = status.value
+                fun complete(): Boolean = status.compareAndSet(false, true)
+            }
+            val permitTransfer = CpuPermitTransfer()
+            val blockedWorker = this@Worker
+            scheduler.dispatch(Runnable {
+                // this code runs in a different worker thread that holds a CPU token
+                val cpuHolder = currentThread() as Worker
+                assert { cpuHolder.state == WorkerState.CPU_ACQUIRED }
+                if (permitTransfer.complete()) {
+                    cpuHolder.state = WorkerState.BLOCKING
+                    LockSupport.unpark(blockedWorker)
+                }
+            }, taskContext = NonBlockingContext)
+            while (true) {
+                if (permitTransfer.check()) {
+                    state = WorkerState.CPU_ACQUIRED
+                    break
+                }
+                if (tryAcquireCpuPermit()) {
+                    if (!permitTransfer.complete()) {
+                        // race: transfer was completed by another thread
+                        releaseCpuPermit()
+                    }
+                    assert { state == WorkerState.CPU_ACQUIRED }
+                    break
+                }
+                LockSupport.parkNanos(RUN_BLOCKING_CPU_REACQUIRE_PARK_NS)
+            }
+        }
+
         override fun run() = runWorker()
 
         @JvmField

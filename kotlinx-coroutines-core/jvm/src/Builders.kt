@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.scheduling.*
+import kotlinx.coroutines.scheduling.CoroutineScheduler
 import java.util.concurrent.locks.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
@@ -86,6 +88,7 @@ private class BlockingCoroutine<T>(
     @Suppress("UNCHECKED_CAST")
     fun joinBlocking(): T {
         registerTimeLoopThread()
+        var cpuPermitReleased: Boolean? = null
         try {
             eventLoop?.incrementUseCount()
             try {
@@ -95,6 +98,10 @@ private class BlockingCoroutine<T>(
                     val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                     // note: process next even may loose unpark flag, so check if completed before parking
                     if (isCompleted) break
+                    if (parkNanos > 0 && cpuPermitReleased == null) {
+                        val worker = Thread.currentThread() as? CoroutineScheduler.Worker
+                        cpuPermitReleased = worker?.releaseCpu() ?: false
+                    }
                     parkNanos(this, parkNanos)
                 }
             } finally { // paranoia
@@ -102,6 +109,9 @@ private class BlockingCoroutine<T>(
             }
         } finally { // paranoia
             unregisterTimeLoopThread()
+            if (cpuPermitReleased == true) {
+                (Thread.currentThread() as CoroutineScheduler.Worker).reacquireCpu()
+            }
         }
         // now return result
         val state = this.state.unboxState()
