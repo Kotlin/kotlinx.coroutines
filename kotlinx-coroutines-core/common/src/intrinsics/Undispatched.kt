@@ -9,9 +9,12 @@ import kotlin.coroutines.intrinsics.*
  * Use this function to restart a coroutine directly from inside of [suspendCoroutine],
  * when the code is already in the context of this coroutine.
  * It does not use [ContinuationInterceptor] and does not update the context of the current thread.
+ *
+ * Used only for tests.
  */
 internal fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Continuation<T>) {
     startDirect(completion) { actualCompletion ->
+        probeCoroutineResumed(actualCompletion)
         startCoroutineUninterceptedOrReturn(actualCompletion)
     }
 }
@@ -24,6 +27,7 @@ internal fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Conti
 internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
     startDirect(completion) { actualCompletion ->
         withCoroutineContext(completion.context, null) {
+            probeCoroutineResumed(actualCompletion)
             startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
         }
     }
