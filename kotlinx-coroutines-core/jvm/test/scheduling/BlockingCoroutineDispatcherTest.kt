@@ -172,7 +172,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
     }
 
     @Test
-    fun testNoCpuStarvationWithDeepRunBlocking() {
+    fun testNoCpuStarvationRunBlockingOnDefaultDispatcherThread() {
         val maxDepth = CORES_COUNT * 3 + 3
         fun body(depth: Int) {
             if (depth == maxDepth) return
