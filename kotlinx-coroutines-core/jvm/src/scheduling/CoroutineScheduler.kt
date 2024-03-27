@@ -690,7 +690,7 @@ internal class CoroutineScheduler(
             return hadCpu
         }
 
-        /** only for [runBlocking] */
+        /** only for [withoutCpuPermit] */
         fun releaseCpu(): Boolean {
             assert { state == WorkerState.CPU_ACQUIRED || state == WorkerState.BLOCKING }
             return tryReleaseCpu(WorkerState.BLOCKING).also { released ->
@@ -698,7 +698,7 @@ internal class CoroutineScheduler(
             }
         }
 
-        /** only for [runBlocking] */
+        /** only for [withoutCpuPermit] */
         fun reacquireCpu() {
             assert { state == WorkerState.BLOCKING }
             decrementBlockingTasks()
@@ -732,7 +732,7 @@ internal class CoroutineScheduler(
                     assert { state == WorkerState.CPU_ACQUIRED }
                     break
                 }
-                LockSupport.parkNanos(RUN_BLOCKING_CPU_REACQUIRE_PARK_NS)
+                LockSupport.parkNanos(CPU_REACQUIRE_PARK_NS)
             }
         }
 
@@ -1085,3 +1085,22 @@ internal fun isSchedulerWorker(thread: Thread) = thread is CoroutineScheduler.Wo
 @JvmName("mayNotBlock")
 internal fun mayNotBlock(thread: Thread) = thread is CoroutineScheduler.Worker &&
     thread.state == CoroutineScheduler.WorkerState.CPU_ACQUIRED
+
+/**
+ * Emulates dispatch to [UnlimitedIoScheduler] in a blocking context.
+ */
+internal fun withUnlimitedIOScheduler(blocking: () -> Unit) {
+    withoutCpuPermit {
+        blocking()
+    }
+}
+
+private fun withoutCpuPermit(body: () -> Unit) {
+    val worker = Thread.currentThread() as? CoroutineScheduler.Worker ?: return body()
+    val releasedPermit = worker.releaseCpu()
+    try {
+        return body()
+    } finally {
+        if (releasedPermit) worker.reacquireCpu()
+    }
+}

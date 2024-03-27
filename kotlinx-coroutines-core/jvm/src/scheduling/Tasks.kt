@@ -20,8 +20,8 @@ internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
 )
 
 @JvmField
-internal val RUN_BLOCKING_CPU_REACQUIRE_PARK_NS = systemProp(
-    "kotlinx.coroutines.scheduler.runBlocking.cpu.reacquire.ns", 250L * 1000 * 1000
+internal val CPU_REACQUIRE_PARK_NS = systemProp(
+    "kotlinx.coroutines.scheduler.cpu.reacquire.ns", 250L * 1000 * 1000
 )
 
 /**
