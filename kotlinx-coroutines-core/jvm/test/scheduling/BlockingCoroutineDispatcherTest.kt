@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.rules.*
 import java.util.concurrent.*
+import java.util.concurrent.atomic.*
 
 class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
@@ -185,5 +186,34 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
         body(1)
         checkPoolThreadsCreated(maxDepth..maxDepth + 1)
+    }
+
+    @Test
+    fun testNoStarvationOfLimitedDispatcherWithRunBlocking() {
+        val taskCount = 5
+        val dispatcher = blockingDispatcher(2)
+        val barrier = CompletableDeferred<Unit>()
+        val count = AtomicInteger(0)
+        fun blockingCode() {
+            runBlocking {
+                count.incrementAndGet()
+                barrier.await()
+                count.decrementAndGet()
+            }
+        }
+        runBlocking {
+            repeat(taskCount) {
+                launch(dispatcher) {
+                    blockingCode()
+                }
+            }
+            while (count.get() != taskCount) {
+                Thread.sleep(1)
+            }
+            barrier.complete(Unit)
+            while (count.get() != 0) {
+                Thread.sleep(1)
+            }
+        }
     }
 }

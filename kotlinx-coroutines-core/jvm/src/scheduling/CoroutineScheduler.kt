@@ -703,37 +703,18 @@ internal class CoroutineScheduler(
             assert { state == WorkerState.BLOCKING }
             decrementBlockingTasks()
             if (tryAcquireCpuPermit()) return
-            class CpuPermitTransfer {
-                private val status = atomic(false)
-                fun check(): Boolean = status.value
-                fun complete(): Boolean = status.compareAndSet(false, true)
-            }
-            val permitTransfer = CpuPermitTransfer()
-            val blockedWorker = this@Worker
-            scheduler.dispatch(Runnable {
+            val permitTransfer = PermitTransfer()
+            scheduler.dispatch(permitTransfer.releaseFun {
                 // this code runs in a different worker thread that holds a CPU token
                 val cpuHolder = currentThread() as Worker
                 assert { cpuHolder.state == WorkerState.CPU_ACQUIRED }
-                if (permitTransfer.complete()) {
-                    cpuHolder.state = WorkerState.BLOCKING
-                    LockSupport.unpark(blockedWorker)
-                }
+                cpuHolder.state = WorkerState.BLOCKING
             }, taskContext = NonBlockingContext)
-            while (true) {
-                if (permitTransfer.check()) {
-                    state = WorkerState.CPU_ACQUIRED
-                    break
-                }
-                if (tryAcquireCpuPermit()) {
-                    if (!permitTransfer.complete()) {
-                        // race: transfer was completed by another thread
-                        releaseCpuPermit()
-                    }
-                    assert { state == WorkerState.CPU_ACQUIRED }
-                    break
-                }
-                LockSupport.parkNanos(CPU_REACQUIRE_PARK_NS)
-            }
+            permitTransfer.acquire(
+                tryAllocatePermit = this@CoroutineScheduler::tryAcquireCpuPermit,
+                deallocatePermit = ::releaseCpuPermit
+            )
+            state = WorkerState.CPU_ACQUIRED
         }
 
         override fun run() = runWorker()
@@ -841,13 +822,19 @@ internal class CoroutineScheduler(
 
         private fun inStack(): Boolean = nextParkedWorker !== NOT_IN_STACK
 
+        private var currentTask: Task? = null
+
         private fun executeTask(task: Task) {
             val taskMode = task.mode
             idleReset(taskMode)
             beforeTask(taskMode)
+            currentTask = task
             runSafely(task)
+            currentTask = null
             afterTask(taskMode)
         }
+
+        internal fun getCurrentTaskImpl(): TaskImpl? = currentTask as? TaskImpl
 
         private fun beforeTask(taskMode: Int) {
             if (taskMode == TASK_NON_BLOCKING) return
@@ -1091,7 +1078,9 @@ internal fun mayNotBlock(thread: Thread) = thread is CoroutineScheduler.Worker &
  */
 internal fun withUnlimitedIOScheduler(blocking: () -> Unit) {
     withoutCpuPermit {
-        blocking()
+        withTaskBlockingDispatch {
+            blocking()
+        }
     }
 }
 
@@ -1102,5 +1091,16 @@ private fun withoutCpuPermit(body: () -> Unit) {
         return body()
     } finally {
         if (releasedPermit) worker.reacquireCpu()
+    }
+}
+
+private fun withTaskBlockingDispatch(body: () -> Unit) {
+    val worker = Thread.currentThread() as? CoroutineScheduler.Worker ?: return body()
+    val dispatchAware = worker.getCurrentTaskImpl()?.block as? BlockingDispatchAware ?: return body()
+    dispatchAware.beforeDispatchElsewhere()
+    try {
+        return body()
+    } finally {
+        dispatchAware.afterDispatchBack()
     }
 }

@@ -103,12 +103,14 @@ internal class LimitedDispatcher(
      * actual tasks are done, nothing prevents the user from closing the dispatcher and making it incorrect to
      * perform any more dispatches.
      */
-    private inner class Worker(private var currentTask: Runnable) : Runnable {
+    private inner class Worker(private var currentTask: Runnable) : Runnable, BlockingDispatchAware {
         override fun run() {
             var fairnessCounter = 0
             while (true) {
                 try {
                     currentTask.run()
+                } catch (e: WorkerPermitTransferCompleted) {
+                    return
                 } catch (e: Throwable) {
                     handleCoroutineException(EmptyCoroutineContext, e)
                 }
@@ -122,7 +124,29 @@ internal class LimitedDispatcher(
                 }
             }
         }
+
+        override fun beforeDispatchElsewhere() {
+            // compensate while we are blocked
+            val newWorker = Worker(Runnable {})
+            dispatcher.dispatch(this@LimitedDispatcher, newWorker)
+        }
+
+        override fun afterDispatchBack() {
+            if (tryAllocateWorker()) return
+            val permitTransfer = PermitTransfer()
+            queue.addLast(
+                permitTransfer.releaseFun { throw WorkerPermitTransferCompleted }
+                    .let { Runnable { it() } }
+            )
+            permitTransfer.acquire(
+                tryAllocatePermit = ::tryAllocateWorker,
+                deallocatePermit = { runningWorkers.decrementAndGet() }
+            )
+        }
+
     }
+
+    private object WorkerPermitTransferCompleted : Throwable()
 }
 
 // Save a few bytecode ops
