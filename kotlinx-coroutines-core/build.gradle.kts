@@ -164,13 +164,6 @@ val jvmTest by tasks.getting(Test::class) {
     minHeapSize = "1g"
     maxHeapSize = "1g"
     enableAssertions = true
-    if (!Idea.active) {
-        // We should not set this security manager when `jvmTest`
-        // is invoked by IntelliJ IDEA since we need to pass
-        // system properties for Lincheck and stress tests.
-        // TODO Remove once IDEA is smart enough to select between `jvmTest`/`jvmStressTest`/`jvmLincheckTest` #KTIJ-599
-        systemProperty("java.security.manager", "kotlinx.coroutines.TestSecurityManager")
-    }
     // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
     if (!Idea.active && rootProject.properties["stress"] == null) {
         exclude("**/*LincheckTest*")
