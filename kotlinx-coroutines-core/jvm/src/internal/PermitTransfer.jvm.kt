@@ -29,9 +29,7 @@ internal actual class PermitTransfer {
                 }
                 return
             }
-            LockSupport.parkNanos(
-                PERMIT_ACQUIRE_PARK_NS // todo: not sure if it's needed at all, I mean that it is < Long.MAX_VALUE, but at least this way it's safer
-            )
+            LockSupport.park()
         }
     }
 }

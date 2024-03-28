@@ -3,11 +3,6 @@ package kotlinx.coroutines.internal
 import kotlinx.atomicfu.*
 import kotlin.jvm.*
 
-@JvmField
-internal val PERMIT_ACQUIRE_PARK_NS = systemProp(
-    "kotlinx.coroutines.permit.acquire.ns", 250L * 1000 * 1000 // 250ms
-)
-
 internal class PermitTransferStatus {
     private val status = atomic(false)
     fun check(): Boolean = status.value
