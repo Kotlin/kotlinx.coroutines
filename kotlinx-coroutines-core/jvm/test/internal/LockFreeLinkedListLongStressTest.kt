@@ -1,6 +1,5 @@
 package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.testing.TestBase
 import org.junit.Test
 import java.util.*
@@ -31,7 +30,7 @@ class LockFreeLinkedListLongStressTest : TestBase() {
         for (j in 0 until nAddThreads)
             threads += thread(start = false, name = "adder-$j") {
                 for (i in j until nAdded step nAddThreads) {
-                    list.addLast(IntNode(i))
+                    list.addLast(IntNode(i), Int.MAX_VALUE)
                 }
                 println("${Thread.currentThread().name} completed")
                 workingAdders.decrementAndGet()

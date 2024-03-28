@@ -175,6 +175,20 @@ class JobTest : TestBase() {
     }
 
     @Test
+    fun testInvokeOnCancellingFiringOnNormalExit() = runTest {
+        val job = launch {
+            expect(2)
+        }
+        job.invokeOnCompletion(onCancelling = true) {
+            assertNull(it)
+            expect(3)
+        }
+        expect(1)
+        job.join()
+        finish(4)
+    }
+
+    @Test
     fun testOverriddenParent() = runTest {
         val parent = Job()
         val deferred = launch(parent, CoroutineStart.ATOMIC) {

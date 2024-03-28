@@ -672,3 +672,9 @@ public object NonDisposableHandle : DisposableHandle, ChildHandle {
      */
     override fun toString(): String = "NonDisposableHandle"
 }
+
+private class DisposeOnCompletion(
+    private val handle: DisposableHandle
+) : JobNode() {
+    override fun invoke(cause: Throwable?) = handle.dispose()
+}

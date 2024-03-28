@@ -22,12 +22,20 @@ public open class LinkedListNode : DisposableHandle {
     public inline val prevNode get() = _prev
     public inline val isRemoved get() = _removed
 
-    public fun addLast(node: Node) {
-        val prev = this._prev
-        node._next = this
-        node._prev = prev
-        prev._next = node
-        this._prev = node
+    public fun addLast(node: Node, permissionsBitmask: Int): Boolean = when (val prev = this._prev) {
+        is ListClosed ->
+            prev.forbiddenElementsBitmask and permissionsBitmask == 0 && prev.addLast(node, permissionsBitmask)
+        else -> {
+            node._next = this
+            node._prev = prev
+            prev._next = node
+            this._prev = node
+            true
+        }
+    }
+
+    public fun close(forbiddenElementsBit: Int) {
+        addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
     }
 
     /*
@@ -37,15 +45,6 @@ public open class LinkedListNode : DisposableHandle {
      * invokes handler on remove
      */
     public open fun remove(): Boolean {
-        return removeImpl()
-    }
-
-    override fun dispose() {
-        remove()
-    }
-
-    @PublishedApi
-    internal fun removeImpl(): Boolean {
         if (_removed) return false
         val prev = this._prev
         val next = this._next
@@ -55,42 +54,14 @@ public open class LinkedListNode : DisposableHandle {
         return true
     }
 
+    override fun dispose() {
+        remove()
+    }
+
     public fun addOneIfEmpty(node: Node): Boolean {
         if (_next !== this) return false
-        addLast(node)
+        addLast(node, Int.MIN_VALUE)
         return true
-    }
-
-    public inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
-        if (!condition()) return false
-        addLast(node)
-        return true
-    }
-
-    public inline fun addLastIfPrev(node: Node, predicate: (Node) -> Boolean): Boolean {
-        if (!predicate(_prev)) return false
-        addLast(node)
-        return true
-    }
-
-    public inline fun addLastIfPrevAndIf(
-        node: Node,
-        predicate: (Node) -> Boolean, // prev node predicate
-        crossinline condition: () -> Boolean // atomically checked condition
-    ): Boolean {
-        if (!predicate(_prev)) return false
-        if (!condition()) return false
-        addLast(node)
-        return true
-    }
-
-    public fun helpRemove() {} // No concurrency on JS -> no removal
-
-    public fun removeFirstOrNull(): Node? {
-        val next = _next
-        if (next === this) return null
-        check(next.removeImpl()) { "Should remove" }
-        return next
     }
 }
 
@@ -112,3 +83,5 @@ public open class LinkedListHead : LinkedListNode() {
     // just a defensive programming -- makes sure that list head sentinel is never removed
     public final override fun remove(): Nothing = throw UnsupportedOperationException()
 }
+
+private class ListClosed(val forbiddenElementsBitmask: Int): LinkedListNode()

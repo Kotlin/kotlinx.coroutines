@@ -30,6 +30,9 @@ class JobHandlersUpgradeStressTest : TestBase() {
         val state = atomic(0)
     }
 
+    /**
+     * Tests handlers not being invoked more than once.
+     */
     @Test
     fun testStress() {
         println("--- JobHandlersUpgradeStressTest")

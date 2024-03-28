@@ -8,18 +8,6 @@ import kotlin.jvm.*
 
 private typealias Node = LockFreeLinkedListNode
 
-@PublishedApi
-internal const val UNDECIDED: Int = 0
-
-@PublishedApi
-internal const val SUCCESS: Int = 1
-
-@PublishedApi
-internal const val FAILURE: Int = 2
-
-@PublishedApi
-internal val CONDITION_FALSE: Any = Symbol("CONDITION_FALSE")
-
 /**
  * Doubly-linked concurrent list node with remove support.
  * Based on paper
@@ -49,37 +37,10 @@ public actual open class LockFreeLinkedListNode {
     private fun removed(): Removed =
         _removedRef.value ?: Removed(this).also { _removedRef.lazySet(it) }
 
-    @PublishedApi
-    internal abstract class CondAddOp(
-        @JvmField val newNode: Node
-    ) : AtomicOp<Node>() {
-        @JvmField var oldNext: Node? = null
-
-        override fun complete(affected: Node, failure: Any?) {
-            val success = failure == null
-            val update = if (success) newNode else oldNext
-            if (update != null && affected._next.compareAndSet( this, update)) {
-                // only the thread the makes this update actually finishes add operation
-                if (success) newNode.finishAdd(oldNext!!)
-            }
-        }
-    }
-
-    @PublishedApi
-    internal inline fun makeCondAddOp(node: Node, crossinline condition: () -> Boolean): CondAddOp =
-        object : CondAddOp(node) {
-            override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
-        }
-
     public actual open val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed
-    public val next: Any get() {
-        _next.loop { next ->
-            if (next !is OpDescriptor) return next
-            next.perform(this)
-        }
-    }
+    public val next: Any get() = _next.value
 
     // LINEARIZABLE. Returns next non-removed Node
     public actual val nextNode: Node get() =
@@ -91,7 +52,7 @@ public actual open class LockFreeLinkedListNode {
     // prev.next correction, which does not provide linearizable backwards iteration, but can be used to
     // resume forward iteration when current node was removed.
     public actual val prevNode: Node
-        get() = correctPrev(null) ?: findPrevNonRemoved(_prev.value)
+        get() = correctPrev() ?: findPrevNonRemoved(_prev.value)
 
     private tailrec fun findPrevNonRemoved(current: Node): Node {
         if (!current.isRemoved) return current
@@ -117,29 +78,27 @@ public actual open class LockFreeLinkedListNode {
     // ------ addLastXXX ------
 
     /**
-     * Adds last item to this list.
+     * Adds last item to this list. Returns `false` if the list is closed.
      */
-    public actual fun addLast(node: Node) {
+    public actual fun addLast(node: Node, permissionsBitmask: Int): Boolean {
         while (true) { // lock-free loop on prev.next
-            if (prevNode.addNext(node, this)) return
-        }
-    }
-
-    /**
-     * Adds last item to this list atomically if the [condition] is true.
-     */
-    public actual inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
-        val condAdd = makeCondAddOp(node, condition)
-        while (true) { // lock-free loop on prev.next
-            val prev = prevNode // sentinel node is never removed, so prev is always defined
-            when (prev.tryCondAddNext(node, this, condAdd)) {
-                SUCCESS -> return true
-                FAILURE -> return false
+            val currentPrev = prevNode
+            return when {
+                currentPrev is ListClosed ->
+                    currentPrev.forbiddenElementsBitmask and permissionsBitmask == 0 &&
+                        currentPrev.addLast(node, permissionsBitmask)
+                currentPrev.addNext(node, this) -> true
+                else -> continue
             }
         }
     }
 
-    // ------ addXXX util ------
+    /**
+     * Forbids adding new items to this list.
+     */
+    public actual fun close(forbiddenElementsBit: Int) {
+        addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
+    }
 
     /**
      * Given:
@@ -174,17 +133,6 @@ public actual open class LockFreeLinkedListNode {
         return true
     }
 
-    // returns UNDECIDED, SUCCESS or FAILURE
-    @PublishedApi
-    internal fun tryCondAddNext(node: Node, next: Node, condAdd: CondAddOp): Int {
-        node._prev.lazySet(this)
-        node._next.lazySet(next)
-        condAdd.oldNext = next
-        if (!_next.compareAndSet(next, condAdd)) return UNDECIDED
-        // added operation successfully (linearized) -- complete it & fixup the list
-        return if (condAdd.perform(this) == null) SUCCESS else FAILURE
-    }
-
     // ------ removeXXX ------
 
     /**
@@ -207,7 +155,7 @@ public actual open class LockFreeLinkedListNode {
             val removed = (next as Node).removed()
             if (_next.compareAndSet(next, removed)) {
                 // was removed successfully (linearized remove) -- fixup the list
-                next.correctPrev(null)
+                next.correctPrev()
                 return null
             }
         }
@@ -247,13 +195,11 @@ public actual open class LockFreeLinkedListNode {
             if (next._prev.compareAndSet(nextPrev, this)) {
                 // This newly added node could have been removed, and the above CAS would have added it physically again.
                 // Let us double-check for this situation and correct if needed
-                if (isRemoved) next.correctPrev(null)
+                if (isRemoved) next.correctPrev()
                 return
             }
         }
     }
-
-    protected open fun nextIfRemoved(): Node? = (next as? Removed)?.ref
 
     /**
      * Returns the corrected value of the previous node while also correcting the `prev` pointer
@@ -265,7 +211,7 @@ public actual open class LockFreeLinkedListNode {
      *   remover of this node will ultimately call [correctPrev] on the next node and that will fix all
      *   the links from this node, too.
      */
-    private tailrec fun correctPrev(op: OpDescriptor?): Node? {
+    private tailrec fun correctPrev(): Node? {
         val oldPrev = _prev.value
         var prev: Node = oldPrev
         var last: Node? = null // will be set so that last.next === prev
@@ -278,22 +224,17 @@ public actual open class LockFreeLinkedListNode {
                     // otherwise need to update prev
                     if (!this._prev.compareAndSet(oldPrev, prev)) {
                         // Note: retry from scratch on failure to update prev
-                        return correctPrev(op)
+                        return correctPrev()
                     }
                     return prev // return the correct prev
                 }
                 // slow path when we need to help remove operations
                 this.isRemoved -> return null // nothing to do, this node was removed, bail out asap to save time
-                prevNext === op -> return prev // part of the same op -- don't recurse, didn't correct prev
-                prevNext is OpDescriptor -> { // help & retry
-                    prevNext.perform(prev)
-                    return correctPrev(op) // retry from scratch
-                }
                 prevNext is Removed -> {
                     if (last !== null) {
                         // newly added (prev) node is already removed, correct last.next around it
                         if (!last._next.compareAndSet(prev, prevNext.ref)) {
-                            return correctPrev(op) // retry from scratch on failure to update next
+                            return correctPrev() // retry from scratch on failure to update next
                         }
                         prev = last
                         last = null
@@ -345,6 +286,6 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
 
     // optimization: because head is never removed, we don't have to read _next.value to check these:
     override val isRemoved: Boolean get() = false
-
-    override fun nextIfRemoved(): Node? = null
 }
+
+private class ListClosed(val forbiddenElementsBitmask: Int): LockFreeLinkedListNode()
