@@ -1580,8 +1580,8 @@ internal open class BufferedChannel<E>(
      * [CancellableContinuation] and [SelectInstance].
      *
      * Roughly, [hasNext] is a [receive] sibling, while [next] simply
-     * returns the already retrieved element. From the implementation
-     * side, [receiveResult] stores the element retrieved by [hasNext]
+     * returns the already retrieved element and [hasNext] being idempotent.
+     * From the implementation side, [receiveResult] stores the element retrieved by [hasNext]
      * (or a special [CHANNEL_CLOSED] token if the channel is closed).
      *
      * The [invoke] function is a [CancelHandler] implementation,
@@ -1614,8 +1614,10 @@ internal open class BufferedChannel<E>(
         private var continuation: CancellableContinuationImpl<Boolean>? = null
 
         // `hasNext()` is just a special receive operation.
-        override suspend fun hasNext(): Boolean =
-            receiveImpl( // <-- this is an inline function
+        override suspend fun hasNext(): Boolean {
+            return if (this.receiveResult != NO_RECEIVE_RESULT && this.receiveResult != CHANNEL_CLOSED) {
+                true
+            } else receiveImpl( // <-- this is an inline function
                 // Do not create a continuation until it is required;
                 // it is created later via [onNoWaiterSuspend], if needed.
                 waiter = null,
@@ -1636,6 +1638,7 @@ internal open class BufferedChannel<E>(
                 // The tail-call optimization is applied here.
                 onNoWaiterSuspend = { segm, i, r -> return hasNextOnNoWaiterSuspend(segm, i, r) }
             )
+        }
 
         private fun onClosedHasNext(): Boolean {
             this.receiveResult = CHANNEL_CLOSED
