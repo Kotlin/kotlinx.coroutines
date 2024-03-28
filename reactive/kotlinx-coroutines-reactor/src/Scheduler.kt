@@ -47,6 +47,4 @@ public class SchedulerCoroutineDispatcher(
 }
 
 private fun Disposable.asDisposableHandle(): DisposableHandle =
-    object : DisposableHandle {
-        override fun dispose() = this@asDisposableHandle.dispose()
-    }
+    DisposableHandle { this@asDisposableHandle.dispose() }

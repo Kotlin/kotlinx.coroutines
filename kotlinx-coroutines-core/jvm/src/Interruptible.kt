@@ -59,7 +59,7 @@ private const val FINISHED = 1
 private const val INTERRUPTING = 2
 private const val INTERRUPTED = 3
 
-private class ThreadState(private val job: Job) : InternalCompletionHandler {
+private class ThreadState(private val innerJob: Job) : JobCancellingNode() {
     /*
        === States ===
 
@@ -96,7 +96,7 @@ private class ThreadState(private val job: Job) : InternalCompletionHandler {
     private var cancelHandle: DisposableHandle? = null
 
     fun setup() {
-        cancelHandle = job.invokeOnCompletion(onCancelling = true, invokeImmediately = true, handler = this)
+        cancelHandle = innerJob.invokeOnCompletion(onCancelling = true, invokeImmediately = true, handler = this)
         // Either we successfully stored it or it was immediately cancelled
         _state.loop { state ->
             when (state) {

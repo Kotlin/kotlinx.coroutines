@@ -358,7 +358,7 @@ public interface Job : CoroutineContext.Element {
 internal fun Job.invokeOnCompletion(
     onCancelling: Boolean = false,
     invokeImmediately: Boolean = true,
-    handler: InternalCompletionHandler
+    handler: JobNode
 ): DisposableHandle = when (this) {
     is JobSupport -> invokeOnCompletionInternal(onCancelling, invokeImmediately, handler)
     else -> invokeOnCompletion(onCancelling, invokeImmediately, handler::invoke)
