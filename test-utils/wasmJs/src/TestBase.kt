@@ -6,7 +6,7 @@ import kotlinx.coroutines.*
 
 actual val VERBOSE = false
 
-actual typealias NoJs = Ignore
+actual typealias NoWasmJs = Ignore
 
 actual val isStressTest: Boolean = false
 actual val stressTestMultiplier: Int = 1

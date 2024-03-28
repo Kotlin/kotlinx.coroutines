@@ -48,6 +48,11 @@ kotlin {
                 implementation kotlin('test-wasm-js')
             }
         }
+        wasmWasiTest {
+            dependencies {
+                implementation kotlin('test-wasm-wasi')
+            }
+        }
         jvmTest {
             dependencies {
                 implementation kotlin('test')

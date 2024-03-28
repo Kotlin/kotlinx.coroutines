@@ -40,16 +40,27 @@ fun KotlinSourceSet.configureDirectoryPaths() {
 fun NamedDomainObjectContainer<KotlinSourceSet>.groupSourceSets(
     groupName: String,
     reverseDependencies: List<String>,
-    dependencies: List<String>
+    dependencies: List<String>,
+    alreadyExist: Boolean = false
 ) {
+    fun KotlinSourceSet.configureSourceSet(suffix: String) {
+        for (dep in dependencies) {
+            dependsOn(get(dep + suffix))
+        }
+        for (revDep in reverseDependencies) {
+            get(revDep + suffix).dependsOn(this)
+        }
+    }
+
     val sourceSetSuffixes = listOf("Main", "Test")
     for (suffix in sourceSetSuffixes) {
-        register(groupName + suffix) {
-            for (dep in dependencies) {
-                dependsOn(get(dep + suffix))
+        if (alreadyExist) {
+            getByName(groupName + suffix) {
+                configureSourceSet(suffix)
             }
-            for (revDep in reverseDependencies) {
-                get(revDep + suffix).dependsOn(this)
+        } else {
+            register(groupName + suffix) {
+                configureSourceSet(suffix)
             }
         }
     }

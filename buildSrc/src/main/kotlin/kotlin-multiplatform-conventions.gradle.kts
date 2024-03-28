@@ -63,6 +63,18 @@ kotlin {
             api("org.jetbrains.kotlinx:atomicfu-wasm-js:${version("atomicfu")}")
         }
     }
+    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    wasmWasi {
+        nodejs()
+        compilations["main"]?.dependencies {
+            api("org.jetbrains.kotlinx:atomicfu-wasm-wasi:${version("atomicfu")}")
+        }
+        compilations.configureEach {
+            compilerOptions.configure {
+                optIn.add("kotlin.wasm.internal.InternalWasmApi")
+            }
+        }
+    }
     applyDefaultHierarchyTemplate()
     sourceSets {
         commonTest {
@@ -101,13 +113,25 @@ kotlin {
                 api("org.jetbrains.kotlin:kotlin-test-wasm-js:${version("kotlin")}")
             }
         }
-        groupSourceSets("jsAndWasmShared", listOf("js", "wasmJs"), listOf("common"))
+        val wasmWasiMain by getting {
+        }
+        val wasmWasiTest by getting {
+            dependencies {
+                api("org.jetbrains.kotlin:kotlin-test-wasm-wasi:${version("kotlin")}")
+            }
+        }
+        groupSourceSets("jsAndWasmShared", listOf("wasmWasi"), listOf("common"))
+        groupSourceSets("jsAndWasmJsShared", listOf("js", "wasmJs"), listOf("jsAndWasmShared"))
+        groupSourceSets("jsAndWasmShared", listOf("jsAndWasmJsShared"), emptyList(), alreadyExist = true)
     }
 }
 
-// Disable intermediate sourceSet compilation because we do not need js-wasmJs artifact
+// Disable intermediate sourceSet compilation because we do not need js-wasm common artifact
 tasks.configureEach {
     if (name == "compileJsAndWasmSharedMainKotlinMetadata") {
+        enabled = false
+    }
+    if (name == "compileJsAndWasmJsSharedMainKotlinMetadata") {
         enabled = false
     }
 }
