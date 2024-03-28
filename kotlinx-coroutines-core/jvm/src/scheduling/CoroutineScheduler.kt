@@ -834,7 +834,7 @@ internal class CoroutineScheduler(
             afterTask(taskMode)
         }
 
-        internal fun getCurrentTaskImpl(): TaskImpl? = currentTask as? TaskImpl
+        internal fun getCurrentTask(): Task? = currentTask
 
         private fun beforeTask(taskMode: Int) {
             if (taskMode == TASK_NON_BLOCKING) return
@@ -1096,7 +1096,7 @@ private fun withoutCpuPermit(body: () -> Unit) {
 
 private fun withTaskBlockingDispatch(body: () -> Unit) {
     val worker = Thread.currentThread() as? CoroutineScheduler.Worker ?: return body()
-    val dispatchAware = worker.getCurrentTaskImpl()?.block as? BlockingDispatchAware ?: return body()
+    val dispatchAware = (worker.getCurrentTask() as? TaskImpl)?.block as? BlockingDispatchAware ?: return body()
     dispatchAware.beforeDispatchElsewhere()
     try {
         return body()

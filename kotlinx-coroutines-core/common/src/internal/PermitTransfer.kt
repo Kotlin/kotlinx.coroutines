@@ -1,7 +1,6 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
-import kotlin.jvm.*
 
 internal class PermitTransferStatus {
     private val status = atomic(false)
