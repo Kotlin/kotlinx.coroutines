@@ -694,7 +694,10 @@ internal class CoroutineScheduler(
         fun releaseCpu(): Boolean {
             assert { state == WorkerState.CPU_ACQUIRED || state == WorkerState.BLOCKING }
             return tryReleaseCpu(WorkerState.BLOCKING).also { released ->
-                if (released) incrementBlockingTasks()
+                if (released) {
+                    val state = incrementBlockingTasks()
+                    signalBlockingWork(state, false)
+                }
             }
         }
 
