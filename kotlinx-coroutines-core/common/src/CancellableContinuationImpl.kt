@@ -234,13 +234,6 @@ internal open class CancellableContinuationImpl<in T>(
         }
     }
 
-    private fun callCancelHandler(handler: InternalCompletionHandler, cause: Throwable?) =
-        /*
-        * :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
-        * because we play type tricks on Kotlin/JS and handler is not necessarily a function there
-        */
-        callCancelHandlerSafely { handler.invoke(cause) }
-
     fun callCancelHandler(handler: CancelHandler, cause: Throwable?) =
         callCancelHandlerSafely { handler.invoke(cause) }
 
@@ -627,8 +620,6 @@ private object Active : NotCompleted {
  * as seen from the debugger.
  * Use [UserSupplied] to create an instance from a lambda.
  * We can't avoid defining a separate type, because on JS, you can't inherit from a function type.
- *
- * @see InternalCompletionHandler for a very similar interface, but used for handling completion and not cancellation.
  */
 internal interface CancelHandler : NotCompleted {
     /**

@@ -2,8 +2,6 @@
 
 package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.*
-
 private typealias Node = LinkedListNode
 
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -13,7 +11,7 @@ public actual typealias LockFreeLinkedListNode = LinkedListNode
 public actual typealias LockFreeLinkedListHead = LinkedListHead
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public open class LinkedListNode : DisposableHandle {
+public open class LinkedListNode {
     @PublishedApi internal var _next = this
     @PublishedApi internal var _prev = this
     @PublishedApi internal var _removed: Boolean = false
@@ -38,10 +36,6 @@ public open class LinkedListNode : DisposableHandle {
      */
     public open fun remove(): Boolean {
         return removeImpl()
-    }
-
-    override fun dispose() {
-        remove()
     }
 
     @PublishedApi
