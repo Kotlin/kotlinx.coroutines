@@ -787,7 +787,20 @@ internal class CoroutineScheduler(
              */
             while (inStack() && workerCtl.value == PARKED) { // Prevent spurious wakeups
                 if (isTerminated || state == WorkerState.TERMINATED) break
-                tryReleaseCpu(WorkerState.PARKING)
+                val hadCpu = tryReleaseCpu(WorkerState.PARKING)
+                if (hadCpu && !globalCpuQueue.isEmpty) {
+                    /*
+                     * Prevents the following race: consider corePoolSize = 1
+                     * - T_CPU holds the only CPU permit, scans the tasks, doesn't find anything, places itself on a stack
+                     * - T_CPU scans again, doesn't find anything again, suspends at tryPark()
+                     * - T_B (or several workers in BLOCKING mode) also put themselves on the stack, on top of the T_CPU
+                     * - T* (not a worker) dispatches CPU tasks, wakes up T_B
+                     * - T_B can't acquire a CPU permit, scans blocking queue, doesn't find anything, parks
+                     * - T_CPU releases the CPU permit, parks
+                     * - there are tasks in the CPU queue, but all workers are parked, so the scheduler won't make progress until there is another dispatch
+                     */
+                    break
+                }
                 interrupted() // Cleanup interruptions
                 park()
             }
