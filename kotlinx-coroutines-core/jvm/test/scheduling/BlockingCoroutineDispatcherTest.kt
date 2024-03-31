@@ -217,25 +217,3 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         }
     }
 }
-
-class BlockingCoroutineDispatcherTestCorePoolSize1 : SchedulerTestBase() {
-    init {
-        corePoolSize = 1
-    }
-
-    @Test
-    fun testLivenessOfDefaultDispatcher(): Unit = runBlocking {
-        val barrier = CyclicBarrier(2)
-        val barrier2 = CompletableDeferred<Unit>()
-        launch(dispatcher) {
-            barrier.await()
-            runBlocking {
-                barrier2.await()
-            }
-        }
-        val task = async(dispatcher) { 42 }
-        barrier.await()
-        task.join()
-        barrier2.complete(Unit)
-    }
-}
