@@ -29,7 +29,7 @@ internal actual class PermitTransfer {
                 }
                 return
             }
-            LockSupport.park()
+            LockSupport.park(this)
         }
     }
 }
