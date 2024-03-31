@@ -19,7 +19,6 @@ internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
     "kotlinx.coroutines.scheduler.resolution.ns", 100000L
 )
 
-
 /**
  * The maximum number of threads allocated for CPU-bound tasks at the default set of dispatchers.
  *
