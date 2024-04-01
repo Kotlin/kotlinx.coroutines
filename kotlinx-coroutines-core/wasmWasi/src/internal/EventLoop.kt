@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.*
 import kotlin.math.min
 import kotlin.wasm.WasmImport
 import kotlin.wasm.unsafe.MemoryAllocator
@@ -35,7 +34,7 @@ internal class Event internal constructor(internal var callback: (() -> Unit)?, 
 
 private var currentCycleEvents = mutableListOf<Event>()
 private var nextCycleEvents = mutableListOf<Event>()
-private var thrownExceptions = mutableListOf<Throwable>()
+private var thrownException: Throwable? = null
 private var nextCycleNearestEventAbsoluteTime: Long = Long.MAX_VALUE
 private var nextCycleContainTimedEvent = false
 
@@ -107,12 +106,21 @@ private fun sleepAndGetTime(
     return currentTime
 }
 
+private fun addThrownedException(e: Throwable) {
+    val headException = thrownException
+    if (headException != null) {
+        headException.addSuppressed(e)
+    } else {
+        thrownException = e
+    }
+}
+
 private fun runEventCycleSimple() {
     for (currentEvent in currentCycleEvents) {
         try {
             currentEvent.callback?.invoke()
         } catch (e: Throwable) {
-            thrownExceptions.add(e)
+            addThrownedException(e)
         }
     }
 }
@@ -125,7 +133,7 @@ private fun runEventCycle(currentTime: Long) {
             try {
                 callback()
             } catch (e: Throwable) {
-                thrownExceptions.add(e)
+                addThrownedException(e)
             }
         } else {
             nextCycleEvents.add(currentEvent)
@@ -169,10 +177,10 @@ internal fun runEventLoop() {
         }
     }
 
-    if (thrownExceptions.isNotEmpty()) {
-        val exceptionToThrow = thrownExceptions.singleOrNull() ?: EventLoopException(thrownExceptions.toList())
-        thrownExceptions.clear()
-        throw exceptionToThrow
+    val suppressedException = thrownException
+    if (suppressedException != null) {
+        thrownException = null
+        throw suppressedException
     }
 }
 
