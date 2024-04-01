@@ -132,7 +132,7 @@ private fun runEventCycle(currentTime: Long) {
         } else {
             nextCycleEvents.add(currentEvent)
             nextCycleNearestEventAbsoluteTime = min(eventAbsoluteTime, nextCycleNearestEventAbsoluteTime)
-            nextCycleContainTimedEvent = eventAbsoluteTime > 0
+            nextCycleContainTimedEvent = nextCycleContainTimedEvent || eventAbsoluteTime > 0
         }
     }
 }
