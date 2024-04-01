@@ -1,3 +1,5 @@
+@file:OptIn(UnsafeWasmMemoryApi::class)
+
 package kotlinx.coroutines.internal
 
 import kotlin.math.min
@@ -34,7 +36,6 @@ private var thrownException: Throwable? = null
 private var nextCycleNearestEventAbsoluteTime: Long = Long.MAX_VALUE
 private var nextCycleContainTimedEvent = false
 
-@OptIn(UnsafeWasmMemoryApi::class)
 private fun initializeSubscriptionPtr(allocator: MemoryAllocator): Pointer {
     val ptrToSubscription = allocator.allocate(48)
     //userdata
@@ -53,7 +54,6 @@ private fun initializeSubscriptionPtr(allocator: MemoryAllocator): Pointer {
     return ptrToSubscription
 }
 
-@OptIn(UnsafeWasmMemoryApi::class)
 private fun clockTimeGet(ptrTo8Bytes: Pointer): Long {
     val returnCode = wasiRawClockTimeGet(
         clockId = CLOCKID_MONOTONIC,
@@ -64,7 +64,6 @@ private fun clockTimeGet(ptrTo8Bytes: Pointer): Long {
     return ptrTo8Bytes.loadLong()
 }
 
-@OptIn(UnsafeWasmMemoryApi::class)
 private fun sleep(timeout: Long, ptrTo32Bytes: Pointer, ptrTo8Bytes: Pointer, ptrToSubscription: Pointer) {
     //__wasi_timestamp_t timeout;
     (ptrToSubscription + 24).storeLong(timeout)
@@ -79,7 +78,6 @@ private fun sleep(timeout: Long, ptrTo32Bytes: Pointer, ptrTo8Bytes: Pointer, pt
     check(returnCode == 0)
 }
 
-@OptIn(UnsafeWasmMemoryApi::class)
 private fun sleepAndGetTime(
     absoluteTime: Long,
     ptrTo32Bytes: Pointer,
@@ -139,7 +137,6 @@ private fun runEventCycle(currentTime: Long) {
     }
 }
 
-@OptIn(UnsafeWasmMemoryApi::class)
 internal fun runEventLoop() {
     if (nextCycleEvents.isEmpty()) return
 
@@ -181,7 +178,6 @@ internal fun runEventLoop() {
 }
 
 /* Register new event with specified timeout in nanoseconds */
-@OptIn(UnsafeWasmMemoryApi::class)
 internal fun registerEvent(timeout: Long, callback: () -> Unit): Event {
     if (kotlin.wasm.internal.onExportedFunctionExit == null) {
         kotlin.wasm.internal.onExportedFunctionExit = ::runEventLoop
