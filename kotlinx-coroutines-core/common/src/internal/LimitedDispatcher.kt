@@ -110,7 +110,7 @@ internal class LimitedDispatcher(
                 try {
                     currentTask.run()
                 } catch (e: WorkerPermitTransferCompleted) {
-                    return
+                    if (!tryAllocateWorker()) return
                 } catch (e: Throwable) {
                     handleCoroutineException(EmptyCoroutineContext, e)
                 }
@@ -126,12 +126,14 @@ internal class LimitedDispatcher(
         }
 
         override fun beforeDispatchElsewhere() {
-            // compensate while we are blocked
+            // compensate while we are blocked and consider that we gave away our permit to a new worker
             val newWorker = Worker(Runnable {})
             dispatcher.dispatch(this@LimitedDispatcher, newWorker)
+            (currentTask as? BlockingDispatchAware)?.beforeDispatchElsewhere()
         }
 
         override fun afterDispatchBack() {
+            (currentTask as? BlockingDispatchAware)?.afterDispatchBack()
             if (tryAllocateWorker()) return
             val permitTransfer = PermitTransfer()
             queue.addLast(
