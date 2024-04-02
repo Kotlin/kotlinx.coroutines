@@ -20,6 +20,6 @@ internal object WasiDispatcher: CoroutineDispatcher(), Delay {
         val event = registerEvent(delayToNanos(timeMillis)) {
             with(continuation) { resumeUndispatched(Unit) }
         }
-        continuation.invokeOnCancellation(handler = { event.dispose() })
+        continuation.disposeOnCancellation(event)
     }
 }
