@@ -77,7 +77,7 @@ class DispatcherGuideTest {
             "[main @main#1] Started main coroutine",
             "[main @v1coroutine#2] Computing v1",
             "[main @v2coroutine#3] Computing v2",
-            "[main @main#1] The answer for v1 / v2 = 42"
+            "[main @main#1] The answer for v1 * v2 = 42"
         )
     }
 
