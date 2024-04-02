@@ -120,9 +120,8 @@ kotlin {
                 api("org.jetbrains.kotlin:kotlin-test-wasm-wasi:${version("kotlin")}")
             }
         }
-        groupSourceSets("jsAndWasmShared", listOf("wasmWasi"), listOf("common"))
-        groupSourceSets("jsAndWasmJsShared", listOf("js", "wasmJs"), listOf("jsAndWasmShared"))
-        groupSourceSets("jsAndWasmShared", listOf("jsAndWasmJsShared"), emptyList(), alreadyExist = true)
+        groupSourceSets("jsAndWasmJsShared", listOf("js", "wasmJs"), emptyList())
+        groupSourceSets("jsAndWasmShared", listOf("jsAndWasmJsShared", "wasmWasi"), listOf("common"))
     }
 }
 
