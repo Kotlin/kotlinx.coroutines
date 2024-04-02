@@ -2,6 +2,7 @@
 
 package kotlinx.coroutines.internal
 
+import kotlinx.coroutines.*
 import kotlin.math.min
 import kotlin.wasm.WasmImport
 import kotlin.wasm.unsafe.MemoryAllocator
@@ -17,16 +18,16 @@ private external fun wasiRawClockTimeGet(clockId: Int, precision: Long, resultPt
 
 private const val CLOCKID_MONOTONIC = 1
 
-internal class Event internal constructor(internal var callback: (() -> Unit)?, internal val absoluteTimeout: Long) {
-    fun cancel() {
+private class Event(var callback: (() -> Unit)?, val absoluteTimeout: Long): DisposableHandle {
+    companion object {
+        fun createCancelled(): Event = Event(null, 0)
+    }
+
+    override fun dispose() {
         if (callback == null) return
         callback = null
         nextCycleNearestEventAbsoluteTime = 0
         nextCycleContainTimedEvent = true
-    }
-
-    companion object {
-        fun createCancelled(): Event = Event(null, 0)
     }
 }
 
@@ -178,7 +179,7 @@ internal fun runEventLoop() {
 }
 
 /* Register new event with specified timeout in nanoseconds */
-internal fun registerEvent(timeout: Long, callback: () -> Unit): Event {
+internal fun registerEvent(timeout: Long, callback: () -> Unit): DisposableHandle {
     if (kotlin.wasm.internal.onExportedFunctionExit == null) {
         kotlin.wasm.internal.onExportedFunctionExit = ::runEventLoop
     }

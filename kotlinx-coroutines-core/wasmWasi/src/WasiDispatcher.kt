@@ -13,15 +13,13 @@ internal object WasiDispatcher: CoroutineDispatcher(), Delay {
         registerEvent(0) { block.run() }
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val event = registerEvent(delayToNanos(timeMillis)) { block.run() }
-        return DisposableHandle { event.cancel() }
-    }
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        registerEvent(delayToNanos(timeMillis)) { block.run() }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val event = registerEvent(delayToNanos(timeMillis)) {
             with(continuation) { resumeUndispatched(Unit) }
         }
-        continuation.invokeOnCancellation(handler = { event.cancel() })
+        continuation.invokeOnCancellation(handler = { event.dispose() })
     }
 }
