@@ -4,10 +4,6 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
-import org.junit.runner.*
-import org.junit.runners.*
-import java.util.LinkedList
-import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 

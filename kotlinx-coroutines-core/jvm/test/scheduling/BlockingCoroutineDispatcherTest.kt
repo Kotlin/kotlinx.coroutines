@@ -1,10 +1,10 @@
 package kotlinx.coroutines.scheduling
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.rules.*
 import java.util.concurrent.*
-import java.util.concurrent.atomic.*
 
 class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
@@ -170,50 +170,5 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
     @Test(expected = IllegalArgumentException::class)
     fun testZeroParallelism() {
         blockingDispatcher(0)
-    }
-
-    @Test
-    fun testNoCpuStarvationRunBlockingOnDefaultDispatcherThread() {
-        val maxDepth = CORES_COUNT * 3 + 3
-        fun body(depth: Int) {
-            if (depth == maxDepth) return
-            runBlocking(dispatcher) {
-                launch(dispatcher) {
-                    body(depth + 1)
-                }
-            }
-        }
-
-        body(1)
-        checkPoolThreadsCreated(maxDepth..maxDepth + 1)
-    }
-
-    @Test
-    fun testNoStarvationOfLimitedDispatcherWithRunBlocking() {
-        val taskCount = 5
-        val dispatcher = blockingDispatcher(2)
-        val barrier = CompletableDeferred<Unit>()
-        val count = AtomicInteger(0)
-        fun blockingCode() {
-            runBlocking {
-                count.incrementAndGet()
-                barrier.await()
-                count.decrementAndGet()
-            }
-        }
-        runBlocking {
-            repeat(taskCount) {
-                launch(dispatcher) {
-                    blockingCode()
-                }
-            }
-            while (count.get() != taskCount) {
-                Thread.sleep(1)
-            }
-            barrier.complete(Unit)
-            while (count.get() != 0) {
-                Thread.sleep(1)
-            }
-        }
     }
 }
