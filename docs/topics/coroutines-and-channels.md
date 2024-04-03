@@ -92,8 +92,8 @@ This API is used by the `loadContributorsBlocking()` function to fetch the list 
 
     ```kotlin
     fun loadContributorsBlocking(
-    service: GitHubService,
-    req: RequestData
+        service: GitHubService,
+        req: RequestData
     ): List<User> {
         val repos = service
             .getOrgReposCall(req.org)   // #1
