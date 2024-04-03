@@ -80,6 +80,7 @@ public annotation class ObsoleteCoroutinesApi
  * `kotlinx.coroutines`, because their signatures and semantics will change between future releases without any
  * warnings and without providing any migration aids.
  */
+@MustBeDocumented
 @Retention(value = AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPEALIAS, AnnotationTarget.PROPERTY)
 @RequiresOptIn(
