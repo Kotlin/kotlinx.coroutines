@@ -106,6 +106,26 @@ class CoroutinesDumpTest : DebugTestBase() {
         }
     }
 
+    /**
+     * Tests that a coroutine started with [CoroutineStart.UNDISPATCHED] is considered running.
+     */
+    @Test
+    fun testUndispatchedCoroutineIsRunning() = runBlocking {
+        val job = launch(Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) { // or launch(Dispatchers.Unconfined)
+            verifyDump(
+                "Coroutine \"coroutine#1\":StandaloneCoroutine{Active}@1e4a7dd4, state: RUNNING\n",
+                ignoredCoroutine = "BlockingCoroutine"
+            )
+            delay(Long.MAX_VALUE)
+        }
+        verifyDump(
+            "Coroutine \"coroutine#1\":StandaloneCoroutine{Active}@1e4a7dd4, state: SUSPENDED\n",
+            ignoredCoroutine = "BlockingCoroutine"
+        ) {
+            job.cancel()
+        }
+    }
+
     @Test
     fun testCreationStackTrace() = runBlocking {
         val deferred = async(Dispatchers.IO) {
