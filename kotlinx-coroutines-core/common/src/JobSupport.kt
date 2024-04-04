@@ -1441,9 +1441,9 @@ private class InvokeOnCancelling(
     private val handler: CompletionHandler
 ) : JobCancellingNode()  {
     // delegate handler shall be invoked at most once, so here is an additional flag
-    private val _invoked = atomic(0) // todo: replace with atomic boolean after migration to recent atomicFu
+    private val _invoked = atomic(false)
     override fun invoke(cause: Throwable?) {
-        if (_invoked.compareAndSet(0, 1)) handler.invoke(cause)
+        if (_invoked.compareAndSet(expect = false, update = true)) handler.invoke(cause)
     }
 }
 
