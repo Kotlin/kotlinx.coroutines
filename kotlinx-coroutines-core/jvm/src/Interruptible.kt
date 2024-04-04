@@ -42,8 +42,8 @@ public suspend fun <T> runInterruptible(
 
 private fun <T> runInterruptibleInExpectedContext(coroutineContext: CoroutineContext, block: () -> T): T {
     try {
-        val threadState = ThreadState(coroutineContext.job)
-        threadState.setup()
+        val threadState = ThreadState()
+        threadState.setup(coroutineContext.job)
         try {
             return block()
         } finally {
@@ -59,7 +59,7 @@ private const val FINISHED = 1
 private const val INTERRUPTING = 2
 private const val INTERRUPTED = 3
 
-private class ThreadState(private val innerJob: Job) : JobCancellingNode() {
+private class ThreadState : JobCancellingNode() {
     /*
        === States ===
 
@@ -95,8 +95,8 @@ private class ThreadState(private val innerJob: Job) : JobCancellingNode() {
     // Registered cancellation handler
     private var cancelHandle: DisposableHandle? = null
 
-    fun setup() {
-        cancelHandle = innerJob.invokeOnCompletion(onCancelling = true, invokeImmediately = true, handler = this)
+    fun setup(job: Job) {
+        cancelHandle = job.invokeOnCompletion(onCancelling = true, invokeImmediately = true, handler = this)
         // Either we successfully stored it or it was immediately cancelled
         _state.loop { state ->
             when (state) {
