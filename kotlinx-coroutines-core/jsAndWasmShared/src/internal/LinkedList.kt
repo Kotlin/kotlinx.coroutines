@@ -2,25 +2,20 @@
 
 package kotlinx.coroutines.internal
 
-private typealias Node = LinkedListNode
+private typealias Node = LockFreeLinkedListNode
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public actual typealias LockFreeLinkedListNode = LinkedListNode
-
-/** @suppress **This is unstable API and it is subject to change.** */
-public actual typealias LockFreeLinkedListHead = LinkedListHead
-
-/** @suppress **This is unstable API and it is subject to change.** */
-public open class LinkedListNode {
+public actual open class LockFreeLinkedListNode {
     @PublishedApi internal var _next = this
     @PublishedApi internal var _prev = this
     @PublishedApi internal var _removed: Boolean = false
 
-    public inline val nextNode get() = _next
-    public inline val prevNode get() = _prev
-    public inline val isRemoved get() = _removed
+    public actual inline val nextNode get() = _next
+    inline actual val prevNode get() = _prev
+    inline actual val isRemoved get() = _removed
 
-    public fun addLast(node: Node) {
+    @PublishedApi
+    internal fun addLast(node: Node) {
         val prev = this._prev
         node._next = this
         node._prev = prev
@@ -34,12 +29,11 @@ public open class LinkedListNode {
      * I.g. `LockFreeLinkedListHead` throws, while `SendElementWithUndeliveredHandler`
      * invokes handler on remove
      */
-    public open fun remove(): Boolean {
+    public actual open fun remove(): Boolean {
         return removeImpl()
     }
 
-    @PublishedApi
-    internal fun removeImpl(): Boolean {
+    private fun removeImpl(): Boolean {
         if (_removed) return false
         val prev = this._prev
         val next = this._next
@@ -49,53 +43,25 @@ public open class LinkedListNode {
         return true
     }
 
-    public fun addOneIfEmpty(node: Node): Boolean {
+    public actual fun addOneIfEmpty(node: Node): Boolean {
         if (_next !== this) return false
         addLast(node)
         return true
     }
 
-    public inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
+    public actual inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
         if (!condition()) return false
         addLast(node)
         return true
-    }
-
-    public inline fun addLastIfPrev(node: Node, predicate: (Node) -> Boolean): Boolean {
-        if (!predicate(_prev)) return false
-        addLast(node)
-        return true
-    }
-
-    public inline fun addLastIfPrevAndIf(
-        node: Node,
-        predicate: (Node) -> Boolean, // prev node predicate
-        crossinline condition: () -> Boolean // atomically checked condition
-    ): Boolean {
-        if (!predicate(_prev)) return false
-        if (!condition()) return false
-        addLast(node)
-        return true
-    }
-
-    public fun helpRemove() {} // No concurrency on JS -> no removal
-
-    public fun removeFirstOrNull(): Node? {
-        val next = _next
-        if (next === this) return null
-        check(next.removeImpl()) { "Should remove" }
-        return next
     }
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public open class LinkedListHead : LinkedListNode() {
-    public val isEmpty get() = _next === this
-
+public actual open class LockFreeLinkedListHead : Node() {
     /**
      * Iterates over all elements in this list of a specified type.
      */
-    public inline fun <reified T : Node> forEach(block: (T) -> Unit) {
+    public actual inline fun <reified T : Node> forEach(block: (T) -> Unit) {
         var cur: Node = _next
         while (cur != this) {
             if (cur is T) block(cur)
@@ -104,5 +70,5 @@ public open class LinkedListHead : LinkedListNode() {
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    public final override fun remove(): Nothing = throw UnsupportedOperationException()
+    public actual final override fun remove(): Nothing = throw UnsupportedOperationException()
 }

@@ -117,15 +117,6 @@ public actual open class LockFreeLinkedListNode {
     // ------ addLastXXX ------
 
     /**
-     * Adds last item to this list.
-     */
-    public actual fun addLast(node: Node) {
-        while (true) { // lock-free loop on prev.next
-            if (prevNode.addNext(node, this)) return
-        }
-    }
-
-    /**
      * Adds last item to this list atomically if the [condition] is true.
      */
     public actual inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
@@ -327,8 +318,6 @@ private class Removed(@JvmField val ref: Node) {
  * @suppress **This is unstable API and it is subject to change.**
  */
 public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
-    public actual val isEmpty: Boolean get() = next === this
-
     /**
      * Iterates over all elements in this list of a specified type.
      */
