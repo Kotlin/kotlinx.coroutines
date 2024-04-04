@@ -1362,6 +1362,9 @@ internal abstract class JobNode : LockFreeLinkedListNode(), DisposableHandle, In
      * - It is an instance of [CancellationException] if the job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
      * - Otherwise, the job had _failed_.
+     *
+     * [CompletionHandler] is the user-visible interface for supplying custom implementations of [invoke]
+     * (see [InvokeOnCompletion] and [InvokeOnCancelling]).
      */
     abstract fun invoke(cause: Throwable?)
 }
