@@ -1339,7 +1339,7 @@ internal interface Incomplete {
 
 internal abstract class JobNode : LockFreeLinkedListNode(), DisposableHandle, Incomplete {
     /**
-     * Initialized by [JobSupport.makeNode].
+     * Initialized by [JobSupport.invokeOnCompletionInternal].
      */
     lateinit var job: JobSupport
     override val isActive: Boolean get() = true
