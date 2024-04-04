@@ -36,6 +36,8 @@ private class CancelFutureOnCompletion(
         // interruption flag and it will cause spurious failures elsewhere
         if (cause != null) future.cancel(false)
     }
+
+    override val onCancelling = false
 }
 
 private class CancelFutureOnCancel(private val future: Future<*>) : CancelHandler {

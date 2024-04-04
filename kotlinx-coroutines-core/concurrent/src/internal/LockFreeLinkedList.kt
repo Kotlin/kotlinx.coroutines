@@ -318,10 +318,10 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     /**
      * Iterates over all elements in this list of a specified type.
      */
-    public actual inline fun <reified T : Node> forEach(block: (T) -> Unit) {
+    public actual inline fun forEach(block: (Node) -> Unit) {
         var cur: Node = next as Node
         while (cur != this) {
-            if (cur is T) block(cur)
+            block(cur)
             cur = cur.nextNode
         }
     }

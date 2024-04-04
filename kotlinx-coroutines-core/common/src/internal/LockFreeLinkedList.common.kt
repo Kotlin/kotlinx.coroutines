@@ -20,6 +20,6 @@ internal fun LockFreeLinkedListNode.addLast(node: LockFreeLinkedListNode) = addL
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public expect open class LockFreeLinkedListHead() : LockFreeLinkedListNode {
-    public inline fun <reified T : LockFreeLinkedListNode> forEach(block: (T) -> Unit)
+    public inline fun forEach(block: (LockFreeLinkedListNode) -> Unit)
     public final override fun remove(): Nothing
 }

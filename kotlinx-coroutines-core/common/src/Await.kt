@@ -114,5 +114,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
                 // Note that all deferreds are complete here, so we don't need to dispose their nodes
             }
         }
+
+        override val onCancelling = false
     }
 }

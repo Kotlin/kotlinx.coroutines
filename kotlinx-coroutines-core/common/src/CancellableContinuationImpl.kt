@@ -334,10 +334,7 @@ internal open class CancellableContinuationImpl<in T>(
     private fun installParentHandle(): DisposableHandle? {
         val parent = context[Job] ?: return null // don't do anything without a parent
         // Install the handle
-        val handle = parent.invokeOnCompletion(
-            onCancelling = true,
-            handler = ChildContinuation(this)
-        )
+        val handle = parent.invokeOnCompletion(handler = ChildContinuation(this))
         _parentHandle.compareAndSet(null, handle)
         return handle
     }
@@ -673,8 +670,10 @@ private data class CompletedContinuation(
 // Same as ChildHandleNode, but for cancellable continuation
 private class ChildContinuation(
     @JvmField val child: CancellableContinuationImpl<*>
-) : JobCancellingNode() {
+) : JobNode() {
     override fun invoke(cause: Throwable?) {
         child.parentCancelled(child.getContinuationCancellationCause(job))
     }
+
+    override val onCancelling = true
 }

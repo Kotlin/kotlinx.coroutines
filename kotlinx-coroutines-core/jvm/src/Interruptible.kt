@@ -59,7 +59,7 @@ private const val FINISHED = 1
 private const val INTERRUPTING = 2
 private const val INTERRUPTED = 3
 
-private class ThreadState : JobCancellingNode() {
+private class ThreadState : JobNode() {
     /*
        === States ===
 
@@ -96,7 +96,7 @@ private class ThreadState : JobCancellingNode() {
     private var cancelHandle: DisposableHandle? = null
 
     fun setup(job: Job) {
-        cancelHandle = job.invokeOnCompletion(onCancelling = true, invokeImmediately = true, handler = this)
+        cancelHandle = job.invokeOnCompletion(handler = this)
         // Either we successfully stored it or it was immediately cancelled
         _state.loop { state ->
             when (state) {
@@ -153,6 +153,8 @@ private class ThreadState : JobCancellingNode() {
             }
         }
     }
+
+    override val onCancelling = true
 
     private fun invalidState(state: Int): Nothing = error("Illegal state $state")
 }

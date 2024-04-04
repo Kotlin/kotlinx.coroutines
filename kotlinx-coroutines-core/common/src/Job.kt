@@ -340,10 +340,6 @@ public interface Job : CoroutineContext.Element {
  * If the handler would have been invoked earlier if it was registered at that time, then it is invoked immediately,
  * unless [invokeImmediately] is set to `false`.
  *
- * The handler is scheduled to be invoked once the job is cancelled or is complete.
- * This behavior can be changed by setting the [onCancelling] parameter to `true`.
- * In this case, the handler is invoked as soon as the job becomes _cancelling_ instead.
- *
  * The meaning of `cause` that is passed to the handler is:
  * - It is `null` if the job has completed normally.
  * - It is an instance of [CancellationException] if the job was cancelled _normally_.
@@ -356,12 +352,11 @@ public interface Job : CoroutineContext.Element {
  * all the handlers are released when this job completes.
  */
 internal fun Job.invokeOnCompletion(
-    onCancelling: Boolean = false,
     invokeImmediately: Boolean = true,
-    handler: JobNode
+    handler: JobNode,
 ): DisposableHandle = when (this) {
-    is JobSupport -> invokeOnCompletionInternal(onCancelling, invokeImmediately, handler)
-    else -> invokeOnCompletion(onCancelling, invokeImmediately, handler::invoke)
+    is JobSupport -> invokeOnCompletionInternal(invokeImmediately, handler)
+    else -> invokeOnCompletion(handler.onCancelling, invokeImmediately, handler::invoke)
 }
 
 /**
@@ -677,4 +672,6 @@ private class DisposeOnCompletion(
     private val handle: DisposableHandle
 ) : JobNode() {
     override fun invoke(cause: Throwable?) = handle.dispose()
+
+    override val onCancelling = false
 }

@@ -35,7 +35,7 @@ class LinkedListTest {
         val n = expected.size
         val actual = IntArray(n)
         var index = 0
-        list.forEach<IntNode> { actual[index++] = it.i }
+        list.forEach { if (it is IntNode) actual[index++] = it.i }
         assertEquals(n, index)
         for (i in 0 until n) assertEquals(expected[i], actual[i], "item i")
     }

@@ -41,8 +41,8 @@ class LockFreeLinkedListLongStressTest : TestBase() {
                 val rnd = Random()
                 do {
                     val lastTurn = workingAdders.get() == 0
-                    list.forEach<IntNode> { node ->
-                        if (shallRemove(node.i) && (lastTurn || rnd.nextDouble() < removeProbability))
+                    list.forEach { node ->
+                        if (node is IntNode && shallRemove(node.i) && (lastTurn || rnd.nextDouble() < removeProbability))
                             node.remove()
                     }
                 } while (!lastTurn)
@@ -62,8 +62,8 @@ class LockFreeLinkedListLongStressTest : TestBase() {
                 if (!shallRemove(i))
                     yield(i)
         }
-        list.forEach<IntNode> { node ->
-            require(node.i == expected.next())
+        list.forEach { node ->
+            require(node !is IntNode || node.i == expected.next())
         }
         require(!expected.hasNext())
     }
