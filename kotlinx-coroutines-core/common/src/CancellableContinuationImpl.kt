@@ -678,3 +678,12 @@ private data class CompletedContinuation(
         onCancellation?.let { cont.callOnCancellation(it, cause) }
     }
 }
+
+// Same as ChildHandleNode, but for cancellable continuation
+private class ChildContinuation(
+    @JvmField val child: CancellableContinuationImpl<*>
+) : JobCancellingNode() {
+    override fun invoke(cause: Throwable?) {
+        child.parentCancelled(child.getContinuationCancellationCause(job))
+    }
+}

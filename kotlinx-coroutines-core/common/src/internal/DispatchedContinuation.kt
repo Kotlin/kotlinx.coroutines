@@ -9,10 +9,8 @@ private val UNDEFINED = Symbol("UNDEFINED")
 @JvmField
 internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
 
-@PublishedApi
 internal class DispatchedContinuation<in T>(
     @JvmField internal val dispatcher: CoroutineDispatcher,
-    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     @JvmField val continuation: Continuation<T>
 ) : DispatchedTask<T>(MODE_UNINITIALIZED), CoroutineStackFrame, Continuation<T> by continuation {
     @JvmField
