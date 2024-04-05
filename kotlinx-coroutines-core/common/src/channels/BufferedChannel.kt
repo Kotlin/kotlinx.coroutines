@@ -2925,7 +2925,7 @@ private fun <T> CancellableContinuation<T>.tryResume0(
     value: T,
     onCancellation: ((cause: Throwable) -> Unit)? = null
 ): Boolean =
-    tryResume(value, null, onCancellation).let { token ->
+    tryResume(value, null, onCancellation?.let { { throwable, _ -> onCancellation(throwable) } }).let { token ->
         if (token != null) {
             completeResume(token)
             true

@@ -248,9 +248,9 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         @JvmField
         val owner: Any?
     ) : CancellableContinuation<Unit> by cont, Waiter by cont {
-        override fun tryResume(value: Unit, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any? {
+        override fun <R: Unit> tryResume(value: R, idempotent: Any?, onCancellation: ((cause: Throwable, value: R) -> Unit)?): Any? {
             assert { this@MutexImpl.owner.value === NO_OWNER }
-            val token = cont.tryResume(value, idempotent) {
+            val token = cont.tryResume(value, idempotent) { _, _ ->
                 assert { this@MutexImpl.owner.value.let { it === NO_OWNER ||it === owner } }
                 this@MutexImpl.owner.value = owner
                 unlock(owner)
@@ -262,7 +262,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
             return token
         }
 
-        override fun resume(value: Unit, onCancellation: ((cause: Throwable) -> Unit)?) {
+        override fun <R: Unit> resume(value: R, onCancellation: ((cause: Throwable, value: R) -> Unit)?) {
             assert { this@MutexImpl.owner.value === NO_OWNER }
             this@MutexImpl.owner.value = owner
             cont.resume(value) { unlock(owner) }

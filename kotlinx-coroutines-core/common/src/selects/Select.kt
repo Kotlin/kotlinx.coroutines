@@ -844,7 +844,7 @@ internal open class SelectImplementation<R>(
 }
 
 private fun CancellableContinuation<Unit>.tryResume(onCancellation: ((cause: Throwable) -> Unit)?): Boolean {
-    val token = tryResume(Unit, null, onCancellation) ?: return false
+    val token = tryResume(Unit, null, onCancellation?.let { { throwable, _ -> onCancellation(throwable) } }) ?: return false
     completeResume(token)
     return true
 }

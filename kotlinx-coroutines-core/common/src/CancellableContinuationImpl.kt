@@ -356,7 +356,7 @@ internal open class CancellableContinuationImpl<in T>(
     override fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?) =
         resumeImpl(value, resumeMode, onCancellation?.let { { cause, _ -> onCancellation(cause) } })
 
-    internal fun <R> resume(value: R, onCancellation: ((cause: Throwable, value: R) -> Unit)) =
+    override fun <R: T> resume(value: R, onCancellation: ((cause: Throwable, value: R) -> Unit)?) =
         resumeImpl(value, resumeMode, onCancellation)
 
     /**
@@ -563,10 +563,7 @@ internal open class CancellableContinuationImpl<in T>(
     override fun tryResume(value: T, idempotent: Any?): Any? =
         tryResumeImpl(value, idempotent, onCancellation = null)
 
-    override fun tryResume(value: T, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any? =
-        tryResumeImpl(value, idempotent, onCancellation?.let { { cause, _ -> onCancellation(cause) } })
-
-    fun <R> tryResume(value: R, idempotent: Any?, onCancellation: ((cause: Throwable, value: R) -> Unit)?): Any? =
+    override fun <R: T> tryResume(value: R, idempotent: Any?, onCancellation: ((cause: Throwable, value: R) -> Unit)?): Any? =
         tryResumeImpl(value, idempotent, onCancellation)
 
     override fun tryResumeWithException(exception: Throwable): Any? =

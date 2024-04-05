@@ -146,7 +146,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
     private val _availablePermits = atomic(permits - acquiredPermits)
     override val availablePermits: Int get() = max(_availablePermits.value, 0)
 
-    private val onCancellationRelease = { _: Throwable -> release() }
+    private val onCancellationRelease = { _: Throwable, _: Unit -> release() }
 
     override fun tryAcquire(): Boolean {
         while (true) {

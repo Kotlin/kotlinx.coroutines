@@ -83,7 +83,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * @suppress  **This is unstable API and it is subject to change.**
      */
     @InternalCoroutinesApi
-    public fun tryResume(value: T, idempotent: Any?, onCancellation: ((cause: Throwable) -> Unit)?): Any?
+    public fun <R: T> tryResume(value: R, idempotent: Any?, onCancellation: ((cause: Throwable, value: R) -> Unit)?): Any?
 
     /**
      * Tries to resume this continuation with the specified [exception] and returns a non-null object token if successful,
@@ -198,16 +198,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      */
     @ExperimentalCoroutinesApi // since 1.2.0
     public fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?)
-}
 
-public fun <T> CancellableContinuation<T>.resume(value: T, onCancellation: (cause: Throwable, value: T) -> Unit): Unit = when (this) {
-    is CancellableContinuationImpl -> resume(value, onCancellation)
-    else -> throw UnsupportedOperationException("third-party implementation of CancellableContinuation is not supported")
-}
-
-public fun <T> CancellableContinuation<T>.tryResume(value: T, idempotent: Any?, onCancellation: ((cause: Throwable, value: T) -> Unit)?): Any? = when (this) {
-    is CancellableContinuationImpl -> tryResume(value, idempotent, onCancellation)
-    else -> throw UnsupportedOperationException("third-party implementation of CancellableContinuation is not supported")
+    public fun <R: T> resume(value: R, onCancellation: ((cause: Throwable, value: R) -> Unit)?)
 }
 
 /**
