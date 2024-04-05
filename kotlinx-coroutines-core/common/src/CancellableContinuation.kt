@@ -200,6 +200,16 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?)
 }
 
+public fun <T> CancellableContinuation<T>.resume(value: T, onCancellation: (cause: Throwable, value: T) -> Unit): Unit = when (this) {
+    is CancellableContinuationImpl -> resume(value, onCancellation)
+    else -> throw UnsupportedOperationException("third-party implementation of CancellableContinuation is not supported")
+}
+
+public fun <T> CancellableContinuation<T>.tryResume(value: T, idempotent: Any?, onCancellation: ((cause: Throwable, value: T) -> Unit)?): Any? = when (this) {
+    is CancellableContinuationImpl -> tryResume(value, idempotent, onCancellation)
+    else -> throw UnsupportedOperationException("third-party implementation of CancellableContinuation is not supported")
+}
+
 /**
  * A version of `invokeOnCancellation` that accepts a class as a handler instead of a lambda, but identical otherwise.
  * This allows providing a custom [toString] instance that will look better during debugging.
