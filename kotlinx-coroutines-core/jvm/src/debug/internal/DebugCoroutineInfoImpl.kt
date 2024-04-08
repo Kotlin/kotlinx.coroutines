@@ -30,8 +30,10 @@ internal class DebugCoroutineInfoImpl internal constructor(
      */
     private val _context = WeakReference(context)
     public val context: CoroutineContext? // can be null when the coroutine was already garbage-collected
+        // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
         get() = _context.get()
 
+    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
 
     /**

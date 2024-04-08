@@ -214,16 +214,13 @@ private const val SUSPENDED = 1
 private const val RESUMED = 2
 
 // Used by withContext when context dispatcher changes
-@PublishedApi
-internal class DispatchedCoroutine<in T> internal constructor(
+internal class DispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(context, uCont) {
     // this is copy-and-paste of a decision state machine inside AbstractionContinuation
     // todo: we may some-how abstract it via inline class
-    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
-    @JvmField
-    public val _decision = atomic(UNDECIDED)
+    private val _decision = atomic(UNDECIDED)
 
     private fun trySuspend(): Boolean {
         _decision.loop { decision ->
