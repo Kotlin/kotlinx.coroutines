@@ -43,10 +43,8 @@ internal const val MODE_UNINITIALIZED = -1
 internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE || this == MODE_CANCELLABLE_REUSABLE
 internal val Int.isReusableMode get() = this == MODE_CANCELLABLE_REUSABLE
 
-@PublishedApi
 internal abstract class DispatchedTask<in T> internal constructor(
-    // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
-    @JvmField public var resumeMode: Int
+    @JvmField var resumeMode: Int
 ) : SchedulerTask() {
     internal abstract val delegate: Continuation<T>
 
