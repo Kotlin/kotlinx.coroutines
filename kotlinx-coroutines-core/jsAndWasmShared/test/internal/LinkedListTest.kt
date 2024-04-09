@@ -20,14 +20,13 @@ class LinkedListTest {
         assertContents(list, 1, 2, 3)
         val n4 = IntNode(4).apply { list.addLast(this, Int.MAX_VALUE) }
         assertContents(list, 1, 2, 3, 4)
-        assertTrue(n1.remove())
+        n1.remove()
         assertContents(list, 2, 3, 4)
-        assertTrue(n3.remove())
+        n3.remove()
         assertContents(list, 2, 4)
-        assertTrue(n4.remove())
+        n4.remove()
         assertContents(list, 2)
-        assertTrue(n2.remove())
-        assertFalse(n2.remove())
+        n2.remove()
         assertContents(list)
     }
 

@@ -559,11 +559,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private fun promoteSingleToNodeList(state: JobNode) {
         // try to promote it to list (SINGLE+ state)
-        state.addOneIfEmpty(NodeList())
-        // it must be in SINGLE+ state or state has changed (node could have need removed from state)
-        val list = state.nextNode // either our NodeList or somebody else won the race, updated state
-        // just attempt converting it to list if state is still the same, then we'll continue lock-free loop
-        _state.compareAndSet(state, list)
+        _state.compareAndSet(state, state.attachToList(NodeList()))
     }
 
     public final override suspend fun join() {
@@ -951,7 +947,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             handler = ChildCompletion(this, state, child, proposedUpdate)
         )
         if (handle !== NonDisposableHandle) return true // child is not complete and we've started waiting for it
-        val nextChild = child.nextChild() ?: return false
+        val nextChild = state.list.nextChild(startAfter = child) ?: return false
         return tryWaitForChild(state, nextChild, proposedUpdate)
     }
 
@@ -959,13 +955,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private fun continueCompleting(state: Finishing, lastChild: ChildHandleNode, proposedUpdate: Any?) {
         assert { this.state === state } // consistency check -- it cannot change while we are waiting for children
         // figure out if we need to wait for next child
-        val waitChild = lastChild.nextChild()
+        val waitChild = state.list.nextChild(startAfter = lastChild)
         // try wait for next child
         if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate)) return // waiting for next child
         // no more children to wait -- stop accepting children
         state.list.close(LIST_CHILD_PERMISSION)
         // did any children get added?
-        val waitChildAgain = lastChild.nextChild()
+        val waitChildAgain = state.list.nextChild(startAfter = lastChild)
         // try wait for next child
         if (waitChildAgain != null && tryWaitForChild(state, waitChildAgain, proposedUpdate)) return // waiting for next child
         // no more children, now we are sure; try to update the state
@@ -973,15 +969,11 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         afterCompletion(finalState)
     }
 
-    private fun LockFreeLinkedListNode.nextChild(): ChildHandleNode? {
-        var cur = this
-        while (cur.isRemoved) cur = cur.prevNode // rollback to prev non-removed (or list head)
-        while (true) {
-            cur = cur.nextNode
-            if (cur.isRemoved) continue
-            if (cur is ChildHandleNode) return cur
-            if (cur is NodeList) return null // checked all -- no more children
+    private fun NodeList.nextChild(startAfter: LockFreeLinkedListNode? = null): ChildHandleNode? {
+        forEach(startAfter) {
+            if (it is ChildHandleNode) return it
         }
+        return null
     }
 
     public final override val children: Sequence<Job> get() = sequence {
@@ -1046,7 +1038,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                  * as this child didn't make it before [notifyCancelling] and won't be notified that it should be
                  * cancelled.
                  *
-                 * And if the parent wasn't cancelled and the previous [LockFreeLinkedListNode.addLast] failed because
+                 * And if the parent wasn't cancelled and the previous [LockFreeLinkedListHead.addLast] failed because
                  * the job is in its final state already, we won't be able to attach anyway, so we must just invoke
                  * the handler and return.
                  */

@@ -37,13 +37,13 @@ public actual open class LockFreeLinkedListNode {
     private fun removed(): Removed =
         _removedRef.value ?: Removed(this).also { _removedRef.lazySet(it) }
 
-    public actual open val isRemoved: Boolean get() = next is Removed
+    public open val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed
     public val next: Any get() = _next.value
 
     // LINEARIZABLE. Returns next non-removed Node
-    public actual val nextNode: Node get() =
+    val nextNode: Node get() =
         next.let { (it as? Removed)?.ref ?: it as Node } // unwraps the `next` node
 
     // LINEARIZABLE WHEN THIS NODE IS NOT REMOVED:
@@ -51,7 +51,7 @@ public actual open class LockFreeLinkedListNode {
     // NOTE: if this node is removed, then returns non-removed previous node without applying
     // prev.next correction, which does not provide linearizable backwards iteration, but can be used to
     // resume forward iteration when current node was removed.
-    public actual val prevNode: Node
+    public val prevNode: Node
         get() = correctPrev() ?: findPrevNonRemoved(_prev.value)
 
     private tailrec fun findPrevNonRemoved(current: Node): Node {
@@ -61,16 +61,16 @@ public actual open class LockFreeLinkedListNode {
 
     // ------ addOneIfEmpty ------
 
-    public actual fun addOneIfEmpty(node: Node): Boolean {
-        node._prev.lazySet(this)
-        node._next.lazySet(this)
+    public actual fun attachToList(node: LockFreeLinkedListHead): Node {
+        (node as Node)._prev.lazySet(this)
+        (node as Node)._next.lazySet(this)
         while (true) {
             val next = next
-            if (next !== this) return false // this is not an empty list!
+            if (next !== this) return nextNode // this is not an empty list!
             if (_next.compareAndSet(this, node)) {
                 // added successfully (linearized add) -- fixup the list
-                node.finishAdd(this)
-                return true
+                (node as Node).finishAdd(this)
+                return node
             }
         }
     }
@@ -80,7 +80,7 @@ public actual open class LockFreeLinkedListNode {
     /**
      * Adds last item to this list. Returns `false` if the list is closed.
      */
-    public actual fun addLast(node: Node, permissionsBitmask: Int): Boolean {
+    fun addLast(node: Node, permissionsBitmask: Int): Boolean {
         while (true) { // lock-free loop on prev.next
             val currentPrev = prevNode
             return when {
@@ -91,13 +91,6 @@ public actual open class LockFreeLinkedListNode {
                 else -> continue
             }
         }
-    }
-
-    /**
-     * Forbids adding new items to this list.
-     */
-    public actual fun close(forbiddenElementsBit: Int) {
-        addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
     }
 
     /**
@@ -142,8 +135,9 @@ public actual open class LockFreeLinkedListNode {
      * **Note**: Invocation of this operation does not guarantee that remove was actually complete if result was `false`.
      * In particular, invoking [nextNode].[prevNode] might still return this node even though it is "already removed".
      */
-    public actual open fun remove(): Boolean =
-        removeOrNext() == null
+    public actual open fun remove() {
+        removeOrNext()
+    }
 
     // returns null if removed successfully or next node if this node is already removed
     @PublishedApi
@@ -271,19 +265,30 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     /**
      * Iterates over all elements in this list of a specified type.
      */
-    public actual inline fun forEach(block: (Node) -> Unit) {
-        var cur: Node = next as Node
-        while (cur != this) {
-            block(cur)
+    public actual inline fun forEach(startAfter: LockFreeLinkedListNode?, block: (Node) -> Unit) {
+        var cur: Node = startAfter ?: this
+        while (cur.isRemoved) cur = cur.prevNode // rollback to prev non-removed (or list head)
+        cur = cur.nextNode
+        while (cur !== this) {
+            if (!cur.isRemoved) {
+                block(cur)
+            }
             cur = cur.nextNode
         }
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    public actual final override fun remove(): Nothing = error("head cannot be removed")
+    public final override fun remove(): Nothing = error("head cannot be removed")
 
     // optimization: because head is never removed, we don't have to read _next.value to check these:
     override val isRemoved: Boolean get() = false
+
+    /**
+     * Forbids adding new items to this list.
+     */
+    public actual fun close(forbiddenElementsBit: Int) {
+        addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
+    }
 }
 
 private class ListClosed(val forbiddenElementsBitmask: Int): LockFreeLinkedListNode()
