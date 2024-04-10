@@ -55,6 +55,8 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
+    // Force ASM version, otherwise the one from animalsniffer wins (which is too low for BCV)
+    implementation("org.ow2.asm:asm:9.6")
     implementation("ru.vyarus:gradle-animalsniffer-plugin:${version("animalsniffer")}") // Android API check
     implementation("org.jetbrains.kotlinx:kover-gradle-plugin:${version("kover")}") {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")

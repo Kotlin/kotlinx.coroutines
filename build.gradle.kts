@@ -78,6 +78,10 @@ apiValidation {
         ignoredProjects += coreModule
     }
     ignoredPackages += "kotlinx.coroutines.internal"
+    @OptIn(kotlinx.validation.ExperimentalBCVApi::class)
+    klib {
+        enabled = true
+    }
 }
 
 // Configure repositories
