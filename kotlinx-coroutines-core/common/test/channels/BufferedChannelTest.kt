@@ -6,7 +6,7 @@ import kotlin.test.*
 
 class BufferedChannelTest : TestBase() {
     @Test
-    fun testIterHasNextIsIdempotant() = runTest {
+    fun testIteratorHasNextIsIdempotent() = runTest {
         val q = Channel<Int>()
         check(q.isEmpty)
         val iter = q.iterator()
