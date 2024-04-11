@@ -11,38 +11,10 @@ import kotlin.jvm.*
 /** @suppress **This is unstable API and it is subject to change.** */
 internal open class LockFreeLinkedListNode {
     /**
-     * Try putting this node into a list.
-     *
-     * Returns:
-     * - The new head of the list if the operation succeeded.
-     * - The head of the list if someone else concurrently added this node to the list,
-     *   but no other modifications to the list were made.
+     * The default value of 0 means that either the node is not in any list or [LockFreeLinkedListHead.addLast] wasn't
+     * yet called on it.
      */
-    fun attachToList(head: LockFreeLinkedListHead): LockFreeLinkedListHead {
-        val newAddress = head.addLastWithoutModifying(this, permissionsBitmask = 0)
-        assert { newAddress != null }
-        return if (_address.compareAndSet(null, newAddress)) {
-            head
-        } else {
-            _address.value!!.segment.head
-        }
-    }
-
-    /**
-     * Remove this node from the list.
-     */
-    open fun remove() {
-        _address.value?.let {
-            val segment = it.segment
-            segment.clearSlot(it.index)
-        }
-    }
-
-    private val _address = atomic<Address?>(null)
-
-    val address: Address get() = _address.value!!
-
-    internal fun trySetAddress(address: Address) = this._address.compareAndSet(null, address)
+    var address: Long = 0
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -66,13 +38,13 @@ internal open class LockFreeLinkedListHead: LockFreeLinkedListSegment(
      */
     inline fun forEach(
         forbidBitmask: Byte = 0,
-        startAfter: LockFreeLinkedListNode? = null,
-        block: (LockFreeLinkedListNode) -> Unit
+        startInSegment: LockFreeLinkedListSegment? = null,
+        startAfterIndex: Int? = null,
+        block: (LockFreeLinkedListNode, LockFreeLinkedListSegment, Int) -> Unit
     ) {
         forbiddenBits.update { it or forbidBitmask.toInt() }
-        val startAddress = startAfter?.address
-        var segment: LockFreeLinkedListSegment? = startAddress?.segment ?: head
-        var startIndex: Int = startAddress?.index?.let { it + 1 } ?: 0
+        var segment: LockFreeLinkedListSegment? = startInSegment ?: this
+        var startIndex: Int = startAfterIndex?.let { it + 1 } ?: 0
         while (segment != null) {
             segment.forEach(forbidBitmask = forbidBitmask, startIndex = startIndex, block = block)
             segment = segment.next
@@ -85,9 +57,7 @@ internal open class LockFreeLinkedListHead: LockFreeLinkedListSegment(
      * and then sets the [node]'s address to the new address.
      */
     fun addLast(node: LockFreeLinkedListNode, permissionsBitmask: Byte): Boolean {
-        val address = addLastWithoutModifying(node, permissionsBitmask) ?: return false
-        val success = node.trySetAddress(address)
-        assert { success }
+        node.address = addLastWithoutModifying(node, permissionsBitmask) ?: return false
         return true
     }
 
@@ -95,7 +65,7 @@ internal open class LockFreeLinkedListHead: LockFreeLinkedListSegment(
      * Adds the [node] to the end of the list if every bit in [permissionsBitmask] is still allowed in the list.
      * As opposed to [addLast], doesn't modify the [node]'s address.
      */
-    fun addLastWithoutModifying(node: LockFreeLinkedListNode, permissionsBitmask: Byte): Address? {
+    fun addLastWithoutModifying(node: LockFreeLinkedListNode, permissionsBitmask: Byte): Long? {
         /** First, avoid modifying the list at all if it was already closed for elements like ours. */
         if (permissionsBitmask and forbiddenBits.value.toByte() != 0.toByte()) return null
         /** Obtain the place from which the desired segment will certainly be reachable. */
@@ -115,13 +85,21 @@ internal open class LockFreeLinkedListHead: LockFreeLinkedListSegment(
          * to observe the new segment and either break the cell where [node] wants to arrive or process the [node].
          * In any case, we have linearizable behavior. */
         return if (segment.tryAdd(node, permissionsBitmask = permissionsBitmask, indexInSegment = indexInSegment)) {
-            Address(segment, indexInSegment)
+            index
         } else {
             null
         }
     }
 
-    override val head: LockFreeLinkedListHead get() = this
+    fun remove(node: LockFreeLinkedListNode) {
+        val address = node.address
+        val id = address / SEGMENT_SIZE
+        var segment: LockFreeLinkedListSegment = this
+        while (segment.id < id) { segment = segment.next!! }
+        if (segment.id == id) {
+            segment.clearSlot((address % SEGMENT_SIZE).toInt(), node)
+        }
+    }
 }
 
 internal open class LockFreeLinkedListSegment(
@@ -135,15 +113,15 @@ internal open class LockFreeLinkedListSegment(
 
     override val numberOfSlots: Int get() = SEGMENT_SIZE
 
-    fun clearSlot(index: Int) {
-        cells[index].value = null
-        onSlotCleaned()
+    fun clearSlot(index: Int, node: LockFreeLinkedListNode) {
+        if (cells[index].compareAndSet(node, null))
+            onSlotCleaned()
     }
 
-    inline fun forEach(forbidBitmask: Byte, startIndex: Int, block: (LockFreeLinkedListNode) -> Unit) {
+    inline fun forEach(forbidBitmask: Byte, startIndex: Int, block: (LockFreeLinkedListNode, LockFreeLinkedListSegment, Int) -> Unit) {
         for (i in startIndex until SEGMENT_SIZE) {
             val node = breakCellOrGetValue(forbidBitmask, i)
-            if (node != null) block(node)
+            if (node != null) block(node, this, i)
         }
     }
     
@@ -183,11 +161,7 @@ internal open class LockFreeLinkedListSegment(
     override fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext) {
         throw UnsupportedOperationException("Cancellation is not supported on LockFreeLinkedList")
     }
-
-    open val head: LockFreeLinkedListHead get() = prev!!.head
 }
-
-internal class Address(@JvmField val segment: LockFreeLinkedListSegment, @JvmField val index: Int)
 
 private fun createSegment(id: Long, prev: LockFreeLinkedListSegment): LockFreeLinkedListSegment =
     LockFreeLinkedListSegment(

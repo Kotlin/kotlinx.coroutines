@@ -357,7 +357,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private fun notifyHandlers(list: NodeList, permissionBitmask: Byte, cause: Throwable?, predicate: (JobNode) -> Boolean) {
         var exception: Throwable? = null
-        list.forEach(forbidBitmask = permissionBitmask) { node ->
+        list.forEach(forbidBitmask = permissionBitmask) { node, _, _ ->
             if (node is JobNode && predicate(node)) {
                 try {
                     node.invoke(cause)
@@ -558,7 +558,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private fun promoteSingleToNodeList(state: JobNode) {
         // try to promote it to list (SINGLE+ state)
-        _state.compareAndSet(state, state.attachToList(NodeList()))
+        val list = NodeList()
+        val address = list.addLastWithoutModifying(state, permissionsBitmask = 0)
+        assert { address == 0L }
+        _state.compareAndSet(state, list)
     }
 
     public final override suspend fun join() {
@@ -621,7 +624,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 }
                 is Incomplete -> { // may have a list of completion handlers
                     // remove node from the list if there is a list
-                    if (state.list != null) node.remove()
+                    state.list?.remove(node)
                     return
                 }
                 else -> return // it is complete and does not have any completion handlers
@@ -932,39 +935,52 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private val Any?.exceptionOrNull: Throwable?
         get() = (this as? CompletedExceptionally)?.cause
 
-    private fun shouldWaitForChildren(state: Finishing, proposedUpdate: Any?, suggestedStart: ChildHandleNode? = null): Boolean {
+    private fun shouldWaitForChildren(
+        state: Finishing,
+        proposedUpdate: Any?,
+        suggestedStartSegment: LockFreeLinkedListSegment? = null,
+        suggestedStartIndex: Int? = null
+    ): Boolean {
         val list = state.list
-        fun tryFindChildren(suggestedStart: ChildHandleNode?, closeList: Boolean): Boolean {
-            var startAfter: ChildHandleNode? = suggestedStart
+        fun tryFindChildren(
+            closeList: Boolean,
+            suggestedStartSegment: LockFreeLinkedListSegment? = null,
+            suggestedStartIndex: Int? = null,
+        ): Boolean {
+            var startSegment = suggestedStartSegment
+            var startIndex = suggestedStartIndex
             while (true) {
                 val child = run {
-                    list.forEach(forbidBitmask = if (closeList) LIST_CHILD_PERMISSION else 0, startAfter = startAfter) {
-                        if (it is ChildHandleNode) return@run it
+                    list.forEach(forbidBitmask = if (closeList) LIST_CHILD_PERMISSION else 0, startInSegment = startSegment, startAfterIndex = startIndex) { node, segment, indexInSegment ->
+                        if (node is ChildHandleNode) {
+                            startSegment = segment
+                            startIndex = indexInSegment
+                            return@run node
+                        }
                     }
                     null
                 } ?: break
                 val handle = child.childJob.invokeOnCompletion(
                     invokeImmediately = false,
-                    handler = ChildCompletion(this, state, child, proposedUpdate)
+                    handler = ChildCompletion(this, state, startSegment!!, startIndex!!, proposedUpdate)
                 )
                 if (handle !== NonDisposableHandle) return true // child is not complete and we've started waiting for it
-                startAfter = child
             }
             return false
         }
         // Look for children that are currently in the list after the suggested start node.
-        if (tryFindChildren(suggestedStart = suggestedStart, closeList = false)) return true
+        if (tryFindChildren(suggestedStartSegment = suggestedStartSegment, suggestedStartIndex = suggestedStartIndex, closeList = false)) return true
         // We didn't find anyone in the list after the suggested start node. Let's check the beginning now.
-        if (suggestedStart != null && tryFindChildren(suggestedStart = null, closeList = false)) return true
+        if (suggestedStartSegment != null && tryFindChildren(closeList = false)) return true
         // Now we know that, at the moment this function started, there were no more children.
         // We can close the list for the new children, and if we still don't find any, we can be sure there are none.
-        return tryFindChildren(suggestedStart = null, closeList = true)
+        return tryFindChildren(closeList = true)
     }
 
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
-    private fun continueCompleting(state: Finishing, lastChild: ChildHandleNode, proposedUpdate: Any?) {
+    private fun continueCompleting(state: Finishing, proposedUpdate: Any?, lastSegment: LockFreeLinkedListSegment, lastIndexInSegment: Int) {
         assert { this.state === state } // consistency check -- it cannot change while we are waiting for children
-        if (shouldWaitForChildren(state, proposedUpdate, suggestedStart = lastChild)) return // waiting for the next child
+        if (shouldWaitForChildren(state, proposedUpdate, suggestedStartSegment = lastSegment, suggestedStartIndex = lastIndexInSegment)) return // waiting for the next child
         // no more children, now we are sure; try to update the state
         val finalState = finalizeFinishingState(state, proposedUpdate)
         afterCompletion(finalState)
@@ -974,7 +990,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         when (val state = this@JobSupport.state) {
             is ChildHandleNode -> yield(state.childJob)
             is Incomplete -> state.list?.let { list ->
-                list.forEach { if (it is ChildHandleNode) yield(it.childJob) }
+                list.forEach { it, _, _ -> if (it is ChildHandleNode) yield(it.childJob) }
             }
         }
     }
@@ -1232,11 +1248,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private class ChildCompletion(
         private val parent: JobSupport,
         private val state: Finishing,
-        private val child: ChildHandleNode,
+        private val segment: LockFreeLinkedListSegment,
+        private val indexInSegment: Int,
         private val proposedUpdate: Any?
     ) : JobNode() {
         override fun invoke(cause: Throwable?) {
-            parent.continueCompleting(state, child, proposedUpdate)
+            parent.continueCompleting(state, proposedUpdate, lastSegment = segment, lastIndexInSegment = indexInSegment)
         }
         override val onCancelling: Boolean get() = false
     }
@@ -1477,7 +1494,7 @@ internal class NodeList : LockFreeLinkedListHead(), Incomplete {
         append(state)
         append("}[")
         var first = true
-        this@NodeList.forEach { node ->
+        this@NodeList.forEach { node, _, _ ->
             if (node is JobNode) {
                 if (first) first = false else append(", ")
                 append(node)
