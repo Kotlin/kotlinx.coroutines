@@ -7,6 +7,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.experimental.*
 import kotlin.js.*
 import kotlin.jvm.*
 
@@ -319,8 +320,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private fun notifyCancelling(list: NodeList, cause: Throwable) {
         // first cancel our own children
         onCancelling(cause)
-        list.close(LIST_CANCELLATION_PERMISSION)
-        notifyHandlers(list, cause) { it.onCancelling }
+        notifyHandlers(list, LIST_CANCELLATION_PERMISSION, cause) { it.onCancelling }
         // then cancel parent
         cancelParent(cause) // tentative cancellation -- does not matter if there is no parent
     }
@@ -352,13 +352,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     private fun NodeList.notifyCompletion(cause: Throwable?) {
-        close(LIST_ON_COMPLETION_PERMISSION)
-        notifyHandlers(this, cause) { true }
+        notifyHandlers(this, LIST_ON_COMPLETION_PERMISSION, cause) { true }
     }
 
-    private inline fun notifyHandlers(list: NodeList, cause: Throwable?, predicate: (JobNode) -> Boolean) {
+    private fun notifyHandlers(list: NodeList, permissionBitmask: Byte, cause: Throwable?, predicate: (JobNode) -> Boolean) {
         var exception: Throwable? = null
-        list.forEach { node ->
+        list.forEach(forbidBitmask = permissionBitmask) { node ->
             if (node is JobNode && predicate(node)) {
                 try {
                     node.invoke(cause)
@@ -925,12 +924,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // process cancelling notification here -- it cancels all the children _before_ we start to wait them (sic!!!)
         notifyRootCause?.let { notifyCancelling(list, it) }
         // now wait for children
-        val child = list.nextChild()
-        if (child != null && tryWaitForChild(finishing, child, proposedUpdate))
+        val child = list.nextChild(closeList = false)
+        if (child != null && tryWaitForChild(finishing, child, proposedUpdate, closeList = false))
             return COMPLETING_WAITING_CHILDREN
-        list.close(LIST_CHILD_PERMISSION)
-        val anotherChild = list.nextChild()
-        if (anotherChild != null && tryWaitForChild(finishing, anotherChild, proposedUpdate))
+        // Looks like we don't have to wait for any more children.
+        val anotherChild = list.nextChild(closeList = true)
+        if (anotherChild != null && tryWaitForChild(finishing, anotherChild, proposedUpdate, closeList = true))
             return COMPLETING_WAITING_CHILDREN
         // otherwise -- we have not children left (all were already cancelled?)
         return finalizeFinishingState(finishing, proposedUpdate)
@@ -941,36 +940,34 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // return false when there is no more incomplete children to wait
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
-    private tailrec fun tryWaitForChild(state: Finishing, child: ChildHandleNode, proposedUpdate: Any?): Boolean {
+    private tailrec fun tryWaitForChild(state: Finishing, child: ChildHandleNode, proposedUpdate: Any?, closeList: Boolean): Boolean {
         val handle = child.childJob.invokeOnCompletion(
             invokeImmediately = false,
             handler = ChildCompletion(this, state, child, proposedUpdate)
         )
         if (handle !== NonDisposableHandle) return true // child is not complete and we've started waiting for it
-        val nextChild = state.list.nextChild(startAfter = child) ?: return false
-        return tryWaitForChild(state, nextChild, proposedUpdate)
+        val nextChild = state.list.nextChild(startAfter = child, closeList = closeList) ?: return false
+        return tryWaitForChild(state, nextChild, proposedUpdate, closeList = closeList)
     }
 
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
     private fun continueCompleting(state: Finishing, lastChild: ChildHandleNode, proposedUpdate: Any?) {
         assert { this.state === state } // consistency check -- it cannot change while we are waiting for children
         // figure out if we need to wait for next child
-        val waitChild = state.list.nextChild(startAfter = lastChild)
+        val waitChild = state.list.nextChild(startAfter = lastChild, closeList = false)
         // try wait for next child
-        if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate)) return // waiting for next child
-        // no more children to wait -- stop accepting children
-        state.list.close(LIST_CHILD_PERMISSION)
-        // did any children get added?
-        val waitChildAgain = state.list.nextChild(startAfter = lastChild)
+        if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate, closeList = false)) return // waiting for next child
+        // no more children to wait -- stop accepting children.
+        val waitChildAgain = state.list.nextChild(startAfter = lastChild, closeList = true)
         // try wait for next child
-        if (waitChildAgain != null && tryWaitForChild(state, waitChildAgain, proposedUpdate)) return // waiting for next child
+        if (waitChildAgain != null && tryWaitForChild(state, waitChildAgain, proposedUpdate, closeList = true)) return // waiting for next child
         // no more children, now we are sure; try to update the state
         val finalState = finalizeFinishingState(state, proposedUpdate)
         afterCompletion(finalState)
     }
 
-    private fun NodeList.nextChild(startAfter: LockFreeLinkedListNode? = null): ChildHandleNode? {
-        forEach(startAfter) {
+    private fun NodeList.nextChild(closeList: Boolean, startAfter: LockFreeLinkedListNode? = null): ChildHandleNode? {
+        forEach(forbidBitmask = if (closeList) LIST_CHILD_PERMISSION else 0, startAfter = startAfter) {
             if (it is ChildHandleNode) return it
         }
         return null
@@ -1389,9 +1386,9 @@ private val EMPTY_NEW = Empty(false)
 private val EMPTY_ACTIVE = Empty(true)
 
 // bit mask
-private const val LIST_ON_COMPLETION_PERMISSION = 1
-private const val LIST_CHILD_PERMISSION = 2
-private const val LIST_CANCELLATION_PERMISSION = 4
+private const val LIST_ON_COMPLETION_PERMISSION = 1.toByte()
+private const val LIST_CHILD_PERMISSION = 2.toByte()
+private const val LIST_CANCELLATION_PERMISSION = 4.toByte()
 
 private class Empty(override val isActive: Boolean) : Incomplete {
     override val list: NodeList? get() = null
