@@ -502,7 +502,7 @@ class Activity {
     // to be continued ...
 ```
 
-Now, we can launch coroutines in the scope of this `Activity` using the defined `scope`.
+Now, we can launch coroutines in the scope of this `Activity` using the defined `mainScope`.
 For the demo, we launch ten coroutines that delay for a different time:
 
 ```kotlin
