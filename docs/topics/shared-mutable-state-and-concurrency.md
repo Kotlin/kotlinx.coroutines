@@ -2,14 +2,11 @@
 
 [//]: # (title: Shared mutable state and concurrency)
 
-Coroutines can be executed parallelly using a multi-threaded dispatcher like the [Dispatchers.Default]. It presents
-all the usual parallelism problems. The main problem being synchronization of access to **shared mutable state**. 
-Some solutions to this problem in the land of coroutines are similar to the solutions in the multi-threaded world, 
-but others are unique.
+Coroutines can be executed parallelly using a multi-threaded dispatcher like the `Dispatchers.Default`. It presents all the usual parallelism problems. Here, the main problem is the synchronization of access to a shared mutable state. Some solutions to this problem in the land of coroutines are similar to the solutions in the multi-threaded world, but others are unique.
 
 ## The problem
 
-Let us launch a hundred coroutines all doing the same action a thousand times. 
+Let us launch a hundred coroutines which are all doing the same action a thousand times. 
 We'll also measure their completion time for further comparisons:
 
 ```kotlin
