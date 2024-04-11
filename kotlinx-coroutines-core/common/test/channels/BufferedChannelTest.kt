@@ -6,6 +6,40 @@ import kotlin.test.*
 
 class BufferedChannelTest : TestBase() {
     @Test
+    fun testIteratorHasNextIsIdempotent() = runTest {
+        val q = Channel<Int>()
+        check(q.isEmpty)
+        val iter = q.iterator()
+        expect(1)
+        val sender = launch {
+            expect(4)
+            q.send(1) // sent
+            expect(10)
+            q.close()
+            expect(11)
+        }
+        expect(2)
+        val receiver = launch {
+            expect(5)
+            check(iter.hasNext())
+            expect(6)
+            check(iter.hasNext())
+            expect(7)
+            check(iter.hasNext())
+            expect(8)
+            check(iter.next() == 1)
+            expect(9)
+            check(!iter.hasNext())
+            expect(12)
+        }
+        expect(3)
+        sender.join()
+        receiver.join()
+        check(q.isClosedForReceive)
+        finish(13)
+    }
+
+    @Test
     fun testSimple() = runTest {
         val q = Channel<Int>(1)
         check(q.isEmpty)
