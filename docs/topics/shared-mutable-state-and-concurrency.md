@@ -2,7 +2,10 @@
 
 [//]: # (title: Shared mutable state and concurrency)
 
-Coroutines can be executed parallelly using a multi-threaded dispatcher like the `Dispatchers.Default`. It presents all the usual parallelism problems. Here, the main problem is the synchronization of access to a shared mutable state. Some solutions to this problem in the land of coroutines are similar to the solutions in the multi-threaded world, but others are unique.
+Coroutines can be executed parallelly using a multi-threaded dispatcher like the `Dispatchers.Default`. It presents all
+the usual parallelism problems. Here, the main problem is the synchronization of access to a **shared mutable state**. Some
+solutions to this problem in the land of coroutines which is similar to the solutions in the multi-threaded world, but others
+are unique.
 
 ## The problem
 
