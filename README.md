@@ -1,4 +1,14 @@
-# kotlinx.coroutines 
+# kotlinx.coroutines with IntelliJ patches
+
+This repository is a fork of the original [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) library that includes
+several patches (see [IntelliJ-patches.md](IntelliJ-patches.md)).
+
+**Important:** 
+- Only JVM build target is fully supported and used
+
+Release instructions are [here](RELEASE.md).
+
+---
 
 [![Kotlin Stable](https://kotl.in/badges/stable.svg)](https://kotlinlang.org/docs/components-stability.html)
 [![JetBrains official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)

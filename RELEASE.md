@@ -1,3 +1,25 @@
+# com.intellij.platform:kotlinx-coroutines-* release
+
+```
+# update branches
+# git remote add upstream https://github.com/Kotlin/kotlinx.coroutines.git 
+git checkout master
+git fetch upstream
+git fetch origin
+
+# prepare new master with patches
+git reset --hard upstream/master
+git rebase intellij/patch-base
+git rebase intellij/whatever-patches-we-have, see IntelliJ-patches.md for the list of branches
+
+# Remember to change the version in `gradle.properties` to something like `1.8.4-intellij-SNAPSHOT`
+# commit version change
+
+git push origin master --force
+```
+
+---
+
 # kotlinx.coroutines release checklist
 
 To release a new `<version>` of `kotlinx-coroutines`:
