@@ -1615,7 +1615,7 @@ internal open class BufferedChannel<E>(
 
         // `hasNext()` is just a special receive operation.
         override suspend fun hasNext(): Boolean {
-            return if (this.receiveResult != NO_RECEIVE_RESULT && this.receiveResult != CHANNEL_CLOSED) {
+            return if (this.receiveResult !== NO_RECEIVE_RESULT && this.receiveResult !== CHANNEL_CLOSED) {
                 true
             } else receiveImpl( // <-- this is an inline function
                 // Do not create a continuation until it is required;
