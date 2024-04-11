@@ -46,20 +46,18 @@ internal open class LockFreeLinkedListNode {
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
-internal open class LockFreeLinkedListHead {
-    private val head = LockFreeLinkedListSegment(
-        id = 0,
-        prev = null,
-        pointers = 2,
-        head = this,
-    )
-    private val tail = atomic(head)
+internal open class LockFreeLinkedListHead: LockFreeLinkedListSegment(
+    id = 0,
+    prev = null,
+    pointers = 2,
+) {
+    private val tail = atomic<LockFreeLinkedListSegment>(this)
     private val nextElement = atomic(0L)
 
     /**
      * The list of bits that are forbidden from entering the list.
      *
-     * TODO: we can store this in the extra bits in [head], there's enough space for that there, and it's never removed.
+     * TODO: we can store this in `cleanedAndPointers`, there's enough space for that there.
      */
     private val forbiddenBits: AtomicInt = atomic(0)
 
@@ -122,17 +120,14 @@ internal open class LockFreeLinkedListHead {
             null
         }
     }
+
+    override val head: LockFreeLinkedListHead get() = this
 }
 
 internal open class LockFreeLinkedListSegment(
     id: Long,
     prev: LockFreeLinkedListSegment?,
     pointers: Int,
-    /** Used only during promoting of a single node to a list to ensure wait-freedom of the promotion operation.
-     * Without this, promotion can't be implemented without a (possibly bounded) spin loop: once the node is committed
-     * to be part of some list, the other threads can't do anything until that one thread sets the state to be the
-     * head of the list. */
-    @JvmField val head: LockFreeLinkedListHead,
 ) : Segment<LockFreeLinkedListSegment>(id = id, prev = prev, pointers = pointers)
 {
     /** Each cell is a [LockFreeLinkedListNode], a [BrokenForSomeElements], or `null`. */
@@ -188,6 +183,8 @@ internal open class LockFreeLinkedListSegment(
     override fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext) {
         throw UnsupportedOperationException("Cancellation is not supported on LockFreeLinkedList")
     }
+
+    open val head: LockFreeLinkedListHead get() = prev!!.head
 }
 
 internal class Address(@JvmField val segment: LockFreeLinkedListSegment, @JvmField val index: Int)
@@ -197,7 +194,6 @@ private fun createSegment(id: Long, prev: LockFreeLinkedListSegment): LockFreeLi
         id = id,
         prev = prev,
         pointers = 0,
-        head = prev.head
     )
 
 private const val SEGMENT_SIZE = 8
