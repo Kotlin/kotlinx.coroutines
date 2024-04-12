@@ -49,6 +49,11 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
         if (parallelism >= MAX_POOL_SIZE) return this
         return super.limitedParallelism(parallelism)
     }
+
+    // This name only leaks to user code as part of .limitedParallelism machinery
+    override fun toString(): String {
+        return "Dispatchers.IO"
+    }
 }
 
 // Dispatchers.IO
