@@ -19,7 +19,8 @@ fun main() = runBlocking {
 //sampleStart
     val channel = Channel<Int>()
     launch {
-        // this might be heavy CPU-consuming computation or async logic, we'll just send five squares
+        // this might be heavy CPU-consuming computation or async logic, 
+        // we'll just send five squares
         for (x in 1..5) channel.send(x * x)
     }
     // here we print five received integers:
@@ -103,12 +104,12 @@ and an extension function [consumeEach], that replaces a `for` loop on the consu
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
+//sampleStart
 fun CoroutineScope.produceSquares(): ReceiveChannel<Int> = produce {
     for (x in 1..5) send(x * x)
 }
 
 fun main() = runBlocking {
-//sampleStart
     val squares = produceSquares()
     squares.consumeEach { println(it) }
     println("Done!")
