@@ -107,7 +107,7 @@ on Kotlin/JS. The main differences are the following:
 
 * **The calls to `delay` are automatically skipped**, preserving the relative execution order of the tasks. This way,
   it's possible to make tests finish more-or-less immediately.
-* **The execution times out after 10 seconds**, cancelling the test coroutine to prevent tests from hanging forever 
+* **The execution times out after 60 seconds**, cancelling the test coroutine to prevent tests from hanging forever 
   and eating up the CI resources.
 * **Controlling the virtual time**: in case just skipping delays is not sufficient, it's possible to more carefully
   guide the execution, advancing the virtual time by a duration, draining the queue of the awaiting tasks, or running
@@ -119,7 +119,7 @@ on Kotlin/JS. The main differences are the following:
 
 ## Timeout
 
-Test automatically time out after 10 seconds. For example, this test will fail with a timeout exception:
+Test automatically time out after 60 seconds. For example, this test will fail with a timeout exception:
 
 ```kotlin
 @Test
@@ -128,7 +128,7 @@ fun testHanging() = runTest {
 }
 ```
 
-In case the test is expected to take longer than 10 seconds, the timeout can be increased by passing the `timeout`
+In case the test is expected to take longer than 60 seconds, the timeout can be increased by passing the `timeout`
 parameter:
 
 ```kotlin
