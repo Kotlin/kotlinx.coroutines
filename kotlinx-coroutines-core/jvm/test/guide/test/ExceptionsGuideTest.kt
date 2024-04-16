@@ -9,7 +9,7 @@ class ExceptionsGuideTest {
     fun testExampleExceptions01() {
         test("ExampleExceptions01") { kotlinx.coroutines.guide.exampleExceptions01.main() }.verifyExceptions(
             "Throwing exception from launch",
-            "Exception in thread \"DefaultDispatcher-worker-2 @coroutine#2\" java.lang.IndexOutOfBoundsException",
+            "Exception in thread \"DefaultDispatcher-worker-1 @coroutine#2\" java.lang.IndexOutOfBoundsException",
             "Joined failed job",
             "Throwing exception from async",
             "Caught ArithmeticException"
