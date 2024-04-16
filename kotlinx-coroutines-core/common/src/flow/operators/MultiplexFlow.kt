@@ -34,18 +34,16 @@ public fun <K, V> MultiplexFlow(
 /**
  * Allows multiplexing multiple subscriptions to a single [Flow].
  *
- * This is useful when the source allows only a single subscription, but the data is needed by
- * multiple users.
+ * This is useful when the source allows only a single subscription, but the data is needed by multiple users.
  */
 public class MultiplexFlow<K, V> internal constructor(private val multiplexer: Multiplexer<K, V>) {
     /**
-     * Returns a [Flow] that emits [V] for the requested [K]s, based on the map provided by
-     * `getAll`.
+     * Returns a [Flow] that emits [V] for the requested [K]s, based on the map provided by `getAll`.
      */
     public operator fun get(vararg keys: K): Flow<V> = flow {
         val subscriptions = multiplexer.incrementUsage(*keys)
         try {
-            subscriptions.filterKeys { it in keys }.values.map { it.values }.merge().collectWhile {
+            subscriptions.filterKeys { it in keys }.values.map { it.data }.merge().collectWhile {
                 when (it) {
                     is Multiplexer.Value -> emit(it.value)
                     is Multiplexer.Error -> throw it.error
@@ -67,7 +65,7 @@ internal class Multiplexer<K, V>(
     private val onBufferOverflow: BufferOverflow,
 ) {
     /** Current collected flows in [MultiplexFlow.get]. */
-    internal val subscriptions = MutableStateFlow(mapOf<K, ValuesAndUsers<V>>())
+    internal val subscriptions = MutableStateFlow(mapOf<K, DataAndUsers<V>>())
 
     /** Last [subscriptions] keys, to know what changed. */
     private var lastUsedKeys = setOf<K>()
@@ -83,7 +81,7 @@ internal class Multiplexer<K, V>(
                     val usedKeys = current.usedKeys()
                     if (replay > 0 && usedKeys == lastUsedKeys) return@collect
                     lastFlowsProcessor?.cancel()
-                    for ((values, _) in current.values) values.resetReplayCache()
+                    for ((data, _) in current.values) data.resetReplayCache()
                     if (usedKeys.isEmpty()) {
                         lastUsedKeys = usedKeys
                         return@collect
@@ -95,14 +93,14 @@ internal class Multiplexer<K, V>(
                 }
             } finally {
                 lastFlowsProcessor?.cancel()
-                for ((values, _) in subscriptions.value.values) values.emit(Finish())
+                for ((data, _) in subscriptions.value.values) data.emit(Finish())
             }
         }
     }
 
     internal suspend fun incrementUsage(vararg keys: K) = subscriptions.updateAndGet { previous ->
         previous + keys.associateWith {
-            (previous[it] ?: ValuesAndUsers(mutableSharedFlow())) + currentCoroutineContext()
+            (previous[it] ?: DataAndUsers(mutableSharedFlow())) + currentCoroutineContext()
         }
     }
 
@@ -125,7 +123,7 @@ internal class Multiplexer<K, V>(
         throw e
     } catch (e: Throwable) {
         // Failed to get, rolling back.
-        rollbackSubscriptions(lastUsedKeys, e)
+        rollbackSubscriptions(current = keys, target = lastUsedKeys, cause = e)
         lastUsedKeys = if (lastUsedKeys.isEmpty()) {
             keys // Forcing a change to clear the subscription.
         } else {
@@ -134,55 +132,52 @@ internal class Multiplexer<K, V>(
         null
     }
 
-    /** Processes the flow returned by [getAll], updating [values] of each entry. */
+    /** Processes the flow returned by [getAll], updating [DataAndUsers.data] of each entry. */
     private suspend fun processFlow(keys: Set<K>, flow: Flow<Map<K, V>>) {
         try {
             flow.collect { allValues: Map<K, V> ->
                 for ((key, value) in allValues) {
                     if (key !in keys) continue // Ignoring keys that weren't subscribed.
-                    subscriptions.value[key]!!.values.emit(Value(value))
+                    subscriptions.value[key]!!.data.emit(Value(value))
                 }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
             // Failed to collect, cancelling everything.
-            rollbackSubscriptions(setOf(), e)
+            rollbackSubscriptions(current = keys, target = setOf(), cause = e)
             return
         }
-        for ((values, _) in subscriptions.value.values) values.emit(Finish())
+        // Collection finished normally, emitting Finish.
+        for ((data, _) in subscriptions.value.values) data.emit(Finish())
     }
 
     /**
-     * Rollbacks to `to` by removing the extras from [subscriptions] and setting the [values] of the
-     * removed keys to the error provided in the `cause`.
+     * Rollbacks to [target] by removing the extras from [subscriptions] and setting the [DataAndUsers.data] of the removed keys to the error provided in the [cause].
      */
-    private suspend fun rollbackSubscriptions(target: Set<K>, cause: Throwable) {
-        // Filter only data types in previous.
-        val previous = subscriptions.getAndUpdate { previous ->
-            previous.mapValues { (key: K, valuesAndUsers: ValuesAndUsers<V>) ->
-                if (key in target) {
-                    valuesAndUsers
+    private suspend fun rollbackSubscriptions(current: Set<K>, target: Set<K>, cause: Throwable) {
+        val toRemove = target - current
+        // Clearing the users of the keys to remove and emitting an error.
+        subscriptions.update { previous ->
+            previous.mapValues { (key: K, dataAndUsers: DataAndUsers<V>) ->
+                if (key in toRemove) {
+                    dataAndUsers.copy(users = setOf()).also { it.data.emit(Error(cause)) }
                 } else {
-                    valuesAndUsers.copy(users = setOf())
+                    dataAndUsers
                 }
             }
         }
-        // If they weren't, set their state the error.
-        for (key in previous.usedKeys() - target) {
-            subscriptions.value[key]!!.values.emit(Error(cause))
-        }
     }
 
-    private fun Map<K, ValuesAndUsers<V>>.usedKeys(): Set<K> = filterValues { it.users.isNotEmpty() }.keys
+    private fun Map<K, DataAndUsers<V>>.usedKeys(): Set<K> = filterValues { it.users.isNotEmpty() }.keys
 
-    internal data class ValuesAndUsers<V>(
-        val values: MutableSharedFlow<Emitted<V>>,
+    internal data class DataAndUsers<V>(
+        val data: MutableSharedFlow<Emitted<V>>,
         val users: Set<CoroutineContext> = setOf(),
     ) {
-        operator fun plus(user: CoroutineContext) = copy(values = values, users = users + user)
+        operator fun plus(user: CoroutineContext) = copy(data = data, users = users + user)
 
-        operator fun minus(user: CoroutineContext) = copy(values = values, users = users - user)
+        operator fun minus(user: CoroutineContext) = copy(data = data, users = users - user)
     }
 
     internal sealed interface Emitted<V>
