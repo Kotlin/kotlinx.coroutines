@@ -141,11 +141,6 @@ fun testTakingALongTime() = runTest(timeout = 30.seconds) {
     assertEquals(3, result)
 }
 ```
- 
-Additionally, setting the `kotlinx.coroutines.test.default_timeout` system property on the
-JVM to any string that can be parsed using [Duration.parse] (like `1m`, `30s` or `1500ms`) will change the default
-timeout to that value for all tests whose [timeout] is not set explicitly; setting it to anything else will throw an
-exception every time [runTest] is invoked.
 
 ## Delay-skipping
 
