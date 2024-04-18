@@ -92,10 +92,6 @@ kotlin {
      * All new MM targets are build with optimize = true to have stress tests properly run.
      */
     targets.withType(KotlinNativeTargetWithTests::class).configureEach {
-        binaries.getTest(DEBUG).apply {
-            optimized = true
-        }
-
         binaries.test("workerTest", listOf(DEBUG)) {
             val thisTest = this
             optimized = true
