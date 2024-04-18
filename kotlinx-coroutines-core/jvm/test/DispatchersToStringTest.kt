@@ -18,5 +18,10 @@ class DispatchersToStringTest {
         assertEquals("Dispatchers.Default.limitedParallelism(2)", Dispatchers.Default.limitedParallelism(2).toString())
         // Not overridden at all, limited parallelism returns `this`
         assertEquals("DefaultExecutor", (DefaultDelay as CoroutineDispatcher).limitedParallelism(42).toString())
+
+        assertEquals("filesDispatcher", Dispatchers.IO.limitedParallelism(1, "filesDispatcher").toString())
+        assertEquals("json", Dispatchers.Default.limitedParallelism(2, "json").toString())
+        // Not overridden at all, limited parallelism returns `this`
+        assertEquals("DefaultExecutor", (DefaultDelay as CoroutineDispatcher).limitedParallelism(42, "ignored").toString())
     }
 }

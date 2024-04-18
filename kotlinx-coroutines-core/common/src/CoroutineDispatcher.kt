@@ -105,7 +105,7 @@ public abstract class CoroutineDispatcher :
      * is established between them:
      *
      * ```
-     * val confined = Dispatchers.Default.limitedParallelism(1)
+     * val confined = Dispatchers.Default.limitedParallelism(1, "incrementDispatcher")
      * var counter = 0
      *
      * // Invoked from arbitrary coroutines
@@ -135,14 +135,22 @@ public abstract class CoroutineDispatcher :
      * Implementations of this method are allowed to return `this` if the current dispatcher already satisfies the parallelism requirement.
      * For example, `Dispatchers.Main.limitedParallelism(1)` returns `Dispatchers.Main`, because the main dispatcher is already single-threaded.
      *
+     * @param name optional name for the resulting dispatcher string representation if a new dispatcher was created
      * @throws IllegalArgumentException if the given [parallelism] is non-positive
      * @throws UnsupportedOperationException if the current dispatcher does not support limited parallelism views
      */
     @ExperimentalCoroutinesApi
-    public open fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+    public open fun limitedParallelism(parallelism: Int, name: String? = null): CoroutineDispatcher {
         parallelism.checkParallelism()
-        return LimitedDispatcher(this, parallelism)
+        return LimitedDispatcher(this, parallelism, name)
     }
+
+    // Was experimental since 1.6.0, deprecated since 1.8.x
+    @Deprecated("Deprecated for good. Override 'limitedParallelism(parallelism: Int, name: String?)' instead",
+        level = DeprecationLevel.HIDDEN,
+        replaceWith = ReplaceWith("limitedParallelism(parallelism, null)")
+    )
+    public open fun limitedParallelism(parallelism: Int): CoroutineDispatcher = limitedParallelism(parallelism, null)
 
     /**
      * Requests execution of a runnable [block].

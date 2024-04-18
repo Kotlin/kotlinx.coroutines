@@ -28,9 +28,9 @@ internal object DefaultIoScheduler : CoroutineDispatcher() {
     private val io = unlimitedPool.limitedParallelism(64) // Default JVM size
 
     @ExperimentalCoroutinesApi
-    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+    override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         // See documentation to Dispatchers.IO for the rationale
-        return unlimitedPool.limitedParallelism(parallelism)
+        return unlimitedPool.limitedParallelism(parallelism, name)
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {

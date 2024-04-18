@@ -49,7 +49,7 @@ public abstract class MainCoroutineDispatcher : CoroutineDispatcher() {
      */
     override fun toString(): String = toStringInternalImpl() ?: "$classSimpleName@$hexAddress"
 
-    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+    override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
         // MainCoroutineDispatcher is single-threaded -- short-circuit any attempts to limit it
         return this
