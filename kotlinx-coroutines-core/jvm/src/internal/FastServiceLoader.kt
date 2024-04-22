@@ -35,7 +35,7 @@ internal object FastServiceLoader {
      * If lookups are successful, we return resultinAg instances because we know that
      * `MainDispatcherFactory` API is internal and this is the only possible classes of `MainDispatcherFactory` Service on Android.
      *
-     * Such intricate dance is required to avoid calls to `ServiceLoader.load` for multiple reasons:
+     * Such an intricate dance is required to avoid calls to `ServiceLoader.load` for multiple reasons:
      * 1) It eliminates disk lookup on potentially slow devices on the Main thread.
      * 2) Various Android toolchain versions by various vendors don't tend to handle ServiceLoader calls properly.
      *    Sometimes META-INF is removed from the resulting APK, sometimes class names are mangled, etc.
@@ -51,9 +51,21 @@ internal object FastServiceLoader {
             return load(clz, clz.classLoader)
         }
 
+        /*
+         * If `ANDROID_DETECTED` is true, it is still possible to have `AndroidDispatcherFactory` missing.
+         * The most notable case of it is firebase-sdk that repackages some Android classes but can be used from an arbitrary
+         * K/JVM application.
+         * See also #3914.
+         */
         return try {
             val result = ArrayList<MainDispatcherFactory>(2)
-            createInstanceOf(clz, "kotlinx.coroutines.android.AndroidDispatcherFactory")?.apply { result.add(this) }
+            val mainFactory = createInstanceOf(clz, "kotlinx.coroutines.android.AndroidDispatcherFactory")
+            if (mainFactory == null) {
+                // Fallback to regular service loading
+                return load(clz, clz.classLoader)
+            }
+            result.add(mainFactory)
+            // Also search for test-module factory
             createInstanceOf(clz, "kotlinx.coroutines.test.internal.TestMainDispatcherFactory")?.apply { result.add(this) }
             result
         } catch (e: Throwable) {
