@@ -73,7 +73,7 @@ Caught ArithmeticException
 It is possible to customize the default behavior of printing **uncaught** exceptions to the console.
 [CoroutineExceptionHandler] context element on a _root_ coroutine can be used as a generic `catch` block for
 this root coroutine and all its children where custom exception handling may take place.
-It is similar to [`Thread.uncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.UncaughtExceptionHandler.html).
+It is similar to [`Thread.uncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setUncaughtExceptionHandler-java.lang.Thread.UncaughtExceptionHandler-).
 You cannot recover from the exception in the `CoroutineExceptionHandler`. The coroutine had already completed
 with the corresponding exception when the handler is called. Normally, the handler is used to
 log the exception, show some kind of error message, terminate, and/or restart the application.
