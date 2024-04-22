@@ -11,6 +11,8 @@ import kotlin.coroutines.*
  * If there is [CoroutineExceptionHandler] in the context, then it is used. If it throws an exception during handling
  * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and
  * [Thread.uncaughtExceptionHandler] are invoked.
+ *
+ * @suppress **This is internal API and it is subject to change.**
  */
 @InternalCoroutinesApi
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {

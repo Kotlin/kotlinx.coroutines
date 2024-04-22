@@ -475,6 +475,9 @@ public value class ChannelResult<out T>
         override fun toString(): String = "Closed($cause)"
     }
 
+    /**
+     * @suppress **This is internal API and it is subject to change.**
+     */
     @InternalCoroutinesApi
     public companion object {
         private val failed = Failed()
