@@ -113,11 +113,11 @@ class ChannelsGuideTest {
     fun testExampleChannel10() {
         test("ExampleChannel10") { kotlinx.coroutines.guide.exampleChannel10.main() }.verifyLines(
             "Initial element is available immediately: kotlin.Unit",
-            "Next element is not ready in 50 ms: null",
-            "Next element is ready in 100 ms: kotlin.Unit",
-            "Consumer pauses for 150ms",
+            "Next element is not ready in 100 ms: null",
+            "Next element is ready in 200 ms: kotlin.Unit",
+            "Consumer pauses for 300ms",
             "Next element is available immediately after large consumer delay: kotlin.Unit",
-            "Next element is ready in 50ms after consumer pause in 150ms: kotlin.Unit"
+            "Next element is ready in 100ms after consumer pause in 300ms: kotlin.Unit"
         )
     }
 }
