@@ -154,7 +154,7 @@ private class ThreadState : JobNode() {
         }
     }
 
-    override val onCancelling = true
+    override val onCancelling get() = true
 
     private fun invalidState(state: Int): Nothing = error("Illegal state $state")
 }

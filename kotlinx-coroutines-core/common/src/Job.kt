@@ -673,5 +673,5 @@ private class DisposeOnCompletion(
 ) : JobNode() {
     override fun invoke(cause: Throwable?) = handle.dispose()
 
-    override val onCancelling = false
+    override val onCancelling get() = false
 }
