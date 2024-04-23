@@ -115,6 +115,6 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
             }
         }
 
-        override val onCancelling = false
+        override val onCancelling get() = false
     }
 }
