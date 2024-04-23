@@ -59,6 +59,7 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
 }
 
 // Dispatchers.IO
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor {
 
     private val default = UnlimitedIoScheduler.limitedParallelism(
@@ -95,6 +96,7 @@ internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor {
 }
 
 // Instantiated in tests so we can test it in isolation
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal open class SchedulerCoroutineDispatcher(
     private val corePoolSize: Int = CORE_POOL_SIZE,
     private val maxPoolSize: Int = MAX_POOL_SIZE,

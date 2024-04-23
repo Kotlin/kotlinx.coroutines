@@ -259,6 +259,7 @@ public fun <T> Flow<T>.cancellable(): Flow<T> =
 /**
  * Internal marker for flows that are [cancellable].
  */
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal interface CancellableFlow<out T> : Flow<T>
 
 /**

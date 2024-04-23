@@ -3,6 +3,7 @@
 
 package kotlinx.coroutines.flow
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
 
@@ -58,6 +59,7 @@ private fun <T> Flow<T>.distinctUntilChangedBy(
     else -> DistinctFlowImpl(this, keySelector, areEquivalent)
 }
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private class DistinctFlowImpl<T>(
     private val upstream: Flow<T>,
     @JvmField val keySelector: (T) -> Any?,

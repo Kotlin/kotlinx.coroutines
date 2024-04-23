@@ -41,6 +41,7 @@ public fun <T> CoroutineScope.future(
     return future
 }
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private class CompletableFutureCoroutine<T>(
     context: CoroutineContext,
     private val future: CompletableFuture<T>

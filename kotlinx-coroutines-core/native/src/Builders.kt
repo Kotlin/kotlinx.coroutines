@@ -102,6 +102,7 @@ private object ThreadLocalKeepAlive {
     }
 }
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val eventLoop: EventLoop?

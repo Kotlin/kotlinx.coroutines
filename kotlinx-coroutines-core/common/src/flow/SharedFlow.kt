@@ -119,6 +119,7 @@ import kotlin.jvm.*
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableSharedFlow(replay, ...)` constructor function to create an implementation.
  */
+@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 public interface SharedFlow<out T> : Flow<T> {
     /**
      * A snapshot of the replay cache.
@@ -170,6 +171,7 @@ public interface SharedFlow<out T> : Flow<T> {
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableSharedFlow(...)` constructor function to create an implementation.
  */
+@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     /**
      * Emits a [value] to this shared flow, suspending on buffer overflow.
@@ -309,6 +311,7 @@ internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
     }
 }
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal open class SharedFlowImpl<T>(
     private val replay: Int,
     private val bufferCapacity: Int,

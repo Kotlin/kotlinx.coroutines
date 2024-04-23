@@ -34,6 +34,7 @@ internal class ChannelFlowTransformLatest<T, R>(
     }
 }
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal class ChannelFlowMerge<T>(
     private val flow: Flow<Flow<T>>,
     private val concurrency: Int,
@@ -73,6 +74,7 @@ internal class ChannelFlowMerge<T>(
     override fun additionalToStringProps(): String = "concurrency=$concurrency"
 }
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal class ChannelLimitedFlowMerge<T>(
     private val flows: Iterable<Flow<T>>,
     context: CoroutineContext = EmptyCoroutineContext,

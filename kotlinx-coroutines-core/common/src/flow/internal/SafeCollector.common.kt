@@ -100,6 +100,7 @@ internal tailrec fun Job?.transitiveCoroutineParent(collectJob: Job?): Job? {
  * An analogue of the [flow] builder that does not check the context of execution of the resulting flow.
  * Used in our own operators where we trust the context of invocations.
  */
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 @PublishedApi
 internal inline fun <T> unsafeFlow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
     return object : Flow<T> {

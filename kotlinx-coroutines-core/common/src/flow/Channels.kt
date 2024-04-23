@@ -87,6 +87,7 @@ public fun <T> ReceiveChannel<T>.consumeAsFlow(): Flow<T> = ChannelAsFlow(this, 
  * However, additional [buffer] calls cause a separate buffering channel to be created and that is where
  * the context might play a role, because it is used by the producing coroutine.
  */
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private class ChannelAsFlow<T>(
     private val channel: ReceiveChannel<T>,
     private val consume: Boolean,

@@ -8,6 +8,7 @@ import kotlin.jvm.*
 /**
  * This is a coroutine instance that is created by [coroutineScope] builder.
  */
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal open class ScopeCoroutine<in T>(
     context: CoroutineContext,
     @JvmField val uCont: Continuation<T> // unintercepted continuation

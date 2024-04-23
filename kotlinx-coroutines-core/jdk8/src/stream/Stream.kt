@@ -12,6 +12,7 @@ import java.util.stream.*
  */
 public fun <T> Stream<T>.consumeAsFlow(): Flow<T> = StreamFlow(this)
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private class StreamFlow<T>(private val stream: Stream<T>) : Flow<T> {
     private val consumed = atomic(false)
 

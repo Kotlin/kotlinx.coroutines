@@ -88,6 +88,7 @@ public fun <T> CoroutineScope.async(
     return coroutine
 }
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 private open class DeferredCoroutine<T>(
     parentContext: CoroutineContext,
@@ -182,6 +183,7 @@ public suspend inline operator fun <T> CoroutineDispatcher.invoke(
 
 // --------------- implementation ---------------
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private open class StandaloneCoroutine(
     parentContext: CoroutineContext,
     active: Boolean

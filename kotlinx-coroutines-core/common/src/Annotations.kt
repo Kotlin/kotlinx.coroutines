@@ -90,3 +90,15 @@ public annotation class ObsoleteCoroutinesApi
             "so stable API could be provided instead"
 )
 public annotation class InternalCoroutinesApi
+
+/**
+ * Marks declarations that cannot be safely inherited from.
+ */
+@Target(AnnotationTarget.CLASS)
+@RequiresOptIn(
+    level = RequiresOptIn.Level.WARNING, message =
+    "This is a kotlinx.coroutines API that is not intended to be inherited from. " +
+        "Either new methods may be added in the future, which would break the inheritance, " +
+        "or correctly inheriting from it requires fulfilling contracts that may change in the future."
+)
+public annotation class BrittleForInheritanceCoroutinesApi

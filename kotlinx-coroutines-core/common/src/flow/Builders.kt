@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> = SafeFlow(block)
 
 // Named anonymous object
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : AbstractFlow<T>() {
     override suspend fun collectSafely(collector: FlowCollector<T>) {
         collector.block()
@@ -137,6 +138,7 @@ public fun <T> flowOf(value: T): Flow<T> = flow {
  */
 public fun <T> emptyFlow(): Flow<T> = EmptyFlow
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private object EmptyFlow : Flow<Nothing> {
     override suspend fun collect(collector: FlowCollector<Nothing>) = Unit
 }
@@ -303,6 +305,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
 public fun <T> callbackFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(block)
 
 // ChannelFlow implementation that is the first in the chain of flow operations and introduces (builds) a flow
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private open class ChannelFlowBuilder<T>(
     private val block: suspend ProducerScope<T>.() -> Unit,
     context: CoroutineContext = EmptyCoroutineContext,

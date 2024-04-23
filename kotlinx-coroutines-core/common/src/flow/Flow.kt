@@ -173,6 +173,7 @@ import kotlin.coroutines.*
  * These implementations ensure that the context preservation property is not violated, and prevent most
  * of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.
  */
+@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 public interface Flow<out T> {
 
     /**
@@ -218,6 +219,7 @@ public interface Flow<out T> {
  * ```
  */
 @ExperimentalCoroutinesApi
+@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
     public final override suspend fun collect(collector: FlowCollector<T>) {

@@ -17,6 +17,7 @@ import kotlin.coroutines.*
  * It should be removed after Ktor 3.0.0 (EOL of Ktor 1.x) around 2022.
  */
 @PublishedApi
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal open class ExperimentalCoroutineDispatcher(
     private val corePoolSize: Int,
     private val maxPoolSize: Int,
@@ -104,6 +105,7 @@ internal open class ExperimentalCoroutineDispatcher(
     private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
 }
 
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private class LimitingDispatcher(
     private val dispatcher: ExperimentalCoroutineDispatcher,
     private val parallelism: Int,
