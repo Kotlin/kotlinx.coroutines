@@ -37,7 +37,7 @@ private class CancelFutureOnCompletion(
         if (cause != null) future.cancel(false)
     }
 
-    override val onCancelling = false
+    override val onCancelling get() = false
 }
 
 private class CancelFutureOnCancel(private val future: Future<*>) : CancelHandler {

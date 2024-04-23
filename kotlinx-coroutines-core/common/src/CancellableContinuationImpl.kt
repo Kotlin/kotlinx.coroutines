@@ -675,5 +675,5 @@ private class ChildContinuation(
         child.parentCancelled(child.getContinuationCancellationCause(job))
     }
 
-    override val onCancelling = true
+    override val onCancelling get() = true
 }

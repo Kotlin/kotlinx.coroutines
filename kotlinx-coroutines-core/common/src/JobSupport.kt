@@ -577,7 +577,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         override fun invoke(cause: Throwable?) {
             select.trySelect(this@JobSupport, Unit)
         }
-        override val onCancelling: Boolean = false
+        override val onCancelling: Boolean get() = false
     }
 
     /**
@@ -1410,14 +1410,14 @@ private class InvokeOnCompletion(
     private val handler: CompletionHandler
 ) : JobNode()  {
     override fun invoke(cause: Throwable?) = handler.invoke(cause)
-    override val onCancelling = false
+    override val onCancelling get() = false
 }
 
 private class ResumeOnCompletion(
     private val continuation: Continuation<Unit>
 ) : JobNode() {
     override fun invoke(cause: Throwable?) = continuation.resume(Unit)
-    override val onCancelling = false
+    override val onCancelling get() = false
 }
 
 private class ResumeAwaitOnCompletion<T>(
@@ -1435,7 +1435,7 @@ private class ResumeAwaitOnCompletion<T>(
             continuation.resume(state.unboxState() as T)
         }
     }
-    override val onCancelling = false
+    override val onCancelling get() = false
 }
 
 // -------- invokeOnCancellation nodes
@@ -1448,7 +1448,7 @@ private class InvokeOnCancelling(
     override fun invoke(cause: Throwable?) {
         if (_invoked.compareAndSet(expect = false, update = true)) handler.invoke(cause)
     }
-    override val onCancelling = true
+    override val onCancelling get() = true
 }
 
 private class ChildHandleNode(
@@ -1457,5 +1457,5 @@ private class ChildHandleNode(
     override val parent: Job get() = job
     override fun invoke(cause: Throwable?) = childJob.parentCancelled(job)
     override fun childCancelled(cause: Throwable): Boolean = job.childCancelled(cause)
-    override val onCancelling: Boolean = true
+    override val onCancelling: Boolean get() = true
 }
