@@ -19,7 +19,7 @@ import kotlin.jvm.*
  * associated native resources (threads or native workers). It should not be allocated in place,
  * should be closed at the end of its lifecycle, and has non-trivial memory and CPU footprint.
  * If you do not need a separate thread pool, but only have to limit effective parallelism of the dispatcher,
- * it is recommended to use [CoroutineDispatcher.limitedParallelism] instead.
+ * it is recommended to use `Dispatchers.IO.limitedParallelism(1)` or `Dispatchers.Default.limitedParallelism(1)` instead.
  *
  * If you need a completely separate thread pool with scheduling policy that is based on the standard
  * JDK executors, use the following expression:
@@ -48,7 +48,7 @@ public fun newSingleThreadContext(name: String): CloseableCoroutineDispatcher =
  * associated native resources (threads or native workers). It should not be allocated in place,
  * should be closed at the end of its lifecycle, and has non-trivial memory and CPU footprint.
  * If you do not need a separate thread pool, but only have to limit effective parallelism of the dispatcher,
- * it is recommended to use [CoroutineDispatcher.limitedParallelism] instead.
+ * it is recommended to use `Dispatchers.IO.limitedParallelism(nThreads)` or `Dispatchers.Default.limitedParallelism(nThreads)` instead.
  *
  * If you need a completely separate thread pool with scheduling policy that is based on the standard
  * JDK executors, use the following expression:

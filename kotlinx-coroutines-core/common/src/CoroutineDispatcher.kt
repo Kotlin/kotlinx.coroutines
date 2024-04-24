@@ -69,7 +69,7 @@ public abstract class CoroutineDispatcher :
      * no more than [parallelism] coroutines are executed at the same time.
      *
      * This method does not impose restrictions on the number of views or the total sum of parallelism values,
-     * each view controls its own parallelism independently with the guarantee that effective parallelism
+     * each view controls its own parallelism independently with the guarantee that the effective parallelism
      * of all views cannot exceed the actual parallelism of the original dispatcher.
      *
      * The resulting dispatcher does not guarantee that the coroutines will always be dispatched on the same
@@ -94,7 +94,7 @@ public abstract class CoroutineDispatcher :
      * and at most 4 threads can exist in the system.
      *
      * Note that this example was structured in such a way that it illustrates the parallelism guarantees.
-     * In practice, it is usually better to use [Dispatchers.IO] or [Dispatchers.Default] instead of creating a
+     * In practice, it is usually better to use `Dispatchers.IO` or [Dispatchers.Default] instead of creating a
      * `backgroundDispatcher`.
      *
      * ### `limitedParallelism(1)` pattern
@@ -120,6 +120,8 @@ public abstract class CoroutineDispatcher :
      *
      * `Dispatcher.IO` is considered _elastic_ for the purposes of limited parallelism -- the sum of
      * views is not restricted by the capacity of `Dispatchers.IO`.
+     * It means that it is safe to replace `newFixedThreadPoolContext(nThreads)` with
+     * `Dispatchers.IO.limitedParallelism(nThreads)` w.r.t. available number of threads.
      * See `Dispatchers.IO` documentation for more details.
      *
      * ### Restrictions and implementation details
