@@ -757,6 +757,9 @@ final value class <#A: out kotlin/Any?> kotlinx.coroutines.channels/ChannelResul
     final val isSuccess // kotlinx.coroutines.channels/ChannelResult.isSuccess|{}isSuccess[0]
         final fun <get-isSuccess>(): kotlin/Boolean // kotlinx.coroutines.channels/ChannelResult.isSuccess.<get-isSuccess>|<get-isSuccess>(){}[0]
 }
+open annotation class kotlinx.coroutines/BrittleForInheritanceCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/BrittleForInheritanceCoroutinesApi|null[0]
+    constructor <init>() // kotlinx.coroutines/BrittleForInheritanceCoroutinesApi.<init>|<init>(){}[0]
+}
 open annotation class kotlinx.coroutines/DelicateCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/DelicateCoroutinesApi|null[0]
     constructor <init>() // kotlinx.coroutines/DelicateCoroutinesApi.<init>|<init>(){}[0]
 }

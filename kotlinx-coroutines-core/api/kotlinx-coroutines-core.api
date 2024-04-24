@@ -19,6 +19,9 @@ public final class kotlinx/coroutines/AwaitKt {
 	public static final fun joinAll ([Lkotlinx/coroutines/Job;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public abstract interface annotation class kotlinx/coroutines/BrittleForInheritanceCoroutinesApi : java/lang/annotation/Annotation {
+}
+
 public final class kotlinx/coroutines/BuildersKt {
 	public static final fun async (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Deferred;
 	public static synthetic fun async$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Deferred;
