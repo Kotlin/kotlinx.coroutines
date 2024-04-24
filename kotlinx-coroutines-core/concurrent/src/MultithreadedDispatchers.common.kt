@@ -59,4 +59,5 @@ public fun newSingleThreadContext(name: String): CloseableCoroutineDispatcher =
  * @param name the base name of the created threads.
  */
 @ExperimentalCoroutinesApi
+@DelicateCoroutinesApi
 public expect fun newFixedThreadPoolContext(nThreads: Int, name: String): CloseableCoroutineDispatcher
