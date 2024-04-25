@@ -132,8 +132,8 @@ public abstract class CoroutineDispatcher :
      * For direct dispatchers, it is recommended to override this method
      * and provide a domain-specific implementation or to throw an [UnsupportedOperationException].
      *
-     * Implementations of this method are allowed to return `this` if the current dispatchercan satisfy the requested parallelism,
-     * for example when the maximal parallelsm provided by the dispatcher is less than the requested one.
+     * Implementations of this method are allowed to return `this` if the current dispatcher can satisfy the requested parallelism,
+     * for example when the maximal parallelism provided by the dispatcher is less than the requested one.
      *
      * @throws IllegalArgumentException if the given [parallelism] is non-positive
      * @throws UnsupportedOperationException if the current dispatcher does not support limited parallelism views
