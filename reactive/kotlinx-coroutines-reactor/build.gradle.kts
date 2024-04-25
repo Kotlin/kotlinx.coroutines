@@ -5,10 +5,8 @@ plugins {
     id("org.jetbrains.kotlinx.kover")
 }
 
-val reactorVersion = version("reactor")
-
 dependencies {
-    api("io.projectreactor:reactor-core:$reactorVersion")
+    api("io.projectreactor:reactor-core:${version("reactor")}")
     api(project(":kotlinx-coroutines-reactive"))
 }
 
@@ -27,8 +25,10 @@ tasks {
     }
 }
 
+// the version of the docs can be different from the version of the Reactor
+// library itself: https://github.com/reactor/reactor-core/issues/3794
 externalDocumentationLink(
-    url = "https://projectreactor.io/docs/core/$reactorVersion/api/"
+    url = "https://projectreactor.io/docs/core/${version("reactor_docs")}/api/"
 )
 
 
