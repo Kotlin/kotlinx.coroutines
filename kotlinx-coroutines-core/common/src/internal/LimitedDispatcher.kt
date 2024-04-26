@@ -95,6 +95,8 @@ internal class LimitedDispatcher(
         }
     }
 
+    override fun toString() = "$dispatcher.limitedParallelism($parallelism)"
+
     /**
      * A worker that polls the queue and runs tasks until there are no more of them.
      *
@@ -125,5 +127,4 @@ internal class LimitedDispatcher(
     }
 }
 
-// Save a few bytecode ops
 internal fun Int.checkParallelism() = require(this >= 1) { "Expected positive parallelism level, but got $this" }
