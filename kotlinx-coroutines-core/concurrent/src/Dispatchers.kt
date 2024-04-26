@@ -26,6 +26,15 @@ package kotlinx.coroutines
  * the system may have up to `64 + 100 + 60` threads dedicated to blocking tasks during peak loads,
  * but during its steady state there is only a small number of threads shared
  * among `Dispatchers.IO`, `myMysqlDbDispatcher` and `myMongoDbDispatcher`
+ *
+ * It is recommended to replace manually created thread-backed executors with `Dispatchers.IO.limitedParallelism` instead:
+ * ```
+ * // Requires manual closing, allocates resources for all threads
+ * val databasePoolDispatcher = newFixedThreadPoolContext(128)
+ *
+ * // Provides the same number of threads as a resource but shares and caches them internally
+ * val databasePoolDispatcher = Dispatchers.IO.limitedParallelism(128)
+ * ```
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public expect val Dispatchers.IO: CoroutineDispatcher

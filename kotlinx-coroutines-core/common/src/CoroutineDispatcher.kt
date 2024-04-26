@@ -65,14 +65,66 @@ public abstract class CoroutineDispatcher :
 
     /**
      * Creates a view of the current dispatcher that limits the parallelism to the given [value][parallelism].
-     * The resulting view uses the original dispatcher for execution, but with the guarantee that
+     * The resulting view uses the original dispatcher for execution but with the guarantee that
      * no more than [parallelism] coroutines are executed at the same time.
      *
      * This method does not impose restrictions on the number of views or the total sum of parallelism values,
      * each view controls its own parallelism independently with the guarantee that the effective parallelism
      * of all views cannot exceed the actual parallelism of the original dispatcher.
      *
-     * ### Limitations
+     * The resulting dispatcher does not guarantee that the coroutines will always be dispatched on the same
+     * subset of threads, it only guarantees that at most [parallelism] coroutines are executed at the same time,
+     * and reuses threads from the original dispatchers.
+     * It does not constitute a resource -- it is a _view_ of the underlying dispatcher that can be thrown away
+     * and is not required to be closed.
+     *
+     * ### Example of usage
+     * ```
+     * // Background dispatcher for the application
+     * val dispatcher = newFixedThreadPoolContext(4, "App Background")
+     * // At most 2 threads will be processing images as it is really slow and CPU-intensive
+     * val imageProcessingDispatcher = dispatcher.limitedParallelism(2)
+     * // At most 3 threads will be processing JSON to avoid image processing starvation
+     * val jsonProcessingDispatcher = dispatcher.limitedParallelism(3)
+     * // At most 1 thread will be doing IO
+     * val fileWriterDispatcher = dispatcher.limitedParallelism(1)
+     * ```
+     * Note how in this example the application has an executor with 4 threads, but the total sum of all limits
+     * is 6. Still, at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism,
+     * and at most 4 threads can exist in the system.
+     *
+     * Note that this example was structured in such a way that it illustrates the parallelism guarantees.
+     * In practice, it is usually better to use `Dispatchers.IO` or [Dispatchers.Default] instead of creating a
+     * `backgroundDispatcher`.
+     *
+     * ### `limitedParallelism(1)` pattern
+     *
+     * One of the common patterns is confining the execution of specific tasks to a sequential execution in background
+     * with `limitedParallelism(1)` invocation.
+     * For that purpose, the implementation guarantees that tasks are executed sequentially and that a happens-before relation
+     * is established between them:
+     *
+     * ```
+     * val confined = Dispatchers.Default.limitedParallelism(1)
+     * var counter = 0
+     *
+     * // Invoked from arbitrary coroutines
+     * launch(confined) {
+     *     // This increment is sequential and race-free
+     *     ++counter
+     * }
+     * ```
+     * Note that there is no guarantee that the underlying system thread will always be the same.
+     *
+     * ### Dispatchers.IO
+     *
+     * `Dispatcher.IO` is considered _elastic_ for the purposes of limited parallelism -- the sum of
+     * views is not restricted by the capacity of `Dispatchers.IO`.
+     * It means that it is safe to replace `newFixedThreadPoolContext(nThreads)` with
+     * `Dispatchers.IO.limitedParallelism(nThreads)` w.r.t. available number of threads.
+     * See `Dispatchers.IO` documentation for more details.
+     *
+     * ### Restrictions and implementation details
      *
      * The default implementation of `limitedParallelism` does not support direct dispatchers,
      * such as executing the given runnable in place during [dispatch] calls.
@@ -80,22 +132,11 @@ public abstract class CoroutineDispatcher :
      * For direct dispatchers, it is recommended to override this method
      * and provide a domain-specific implementation or to throw an [UnsupportedOperationException].
      *
-     * ### Example of usage
-     * ```
-     * private val backgroundDispatcher = newFixedThreadPoolContext(4, "App Background")
-     * // At most 2 threads will be processing images as it is really slow and CPU-intensive
-     * private val imageProcessingDispatcher = backgroundDispatcher.limitedParallelism(2)
-     * // At most 3 threads will be processing JSON to avoid image processing starvation
-     * private val jsonProcessingDispatcher = backgroundDispatcher.limitedParallelism(3)
-     * // At most 1 thread will be doing IO
-     * private val fileWriterDispatcher = backgroundDispatcher.limitedParallelism(1)
-     * ```
-     * Note how in this example the application has an executor with 4 threads, but the total sum of all limits
-     * is 6. Still, at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism.
+     * Implementations of this method are allowed to return `this` if the current dispatcher already satisfies the parallelism requirement.
+     * For example, `Dispatchers.Main.limitedParallelism(1)` returns `Dispatchers.Main`, because the main dispatcher is already single-threaded.
      *
-     * Note that this example was structured in such a way that it illustrates the parallelism guarantees.
-     * In practice, it is usually better to use [Dispatchers.IO] or [Dispatchers.Default] instead of creating a
-     * `backgroundDispatcher`. It is both possible and advised to call `limitedParallelism` on them.
+     * @throws IllegalArgumentException if the given [parallelism] is non-positive
+     * @throws UnsupportedOperationException if the current dispatcher does not support limited parallelism views
      */
     @ExperimentalCoroutinesApi
     public open fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
