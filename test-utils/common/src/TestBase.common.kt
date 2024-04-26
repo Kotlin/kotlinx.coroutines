@@ -252,6 +252,7 @@ public class TestRuntimeException(message: String? = null, private val data: Any
 public class RecoverableTestException(message: String? = null) : RuntimeException(message)
 public class RecoverableTestCancellationException(message: String? = null) : CancellationException(message)
 
+// Erases identity and equality checks for tests
 public fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
     val dispatcher = context[ContinuationInterceptor] as CoroutineDispatcher
     return object : CoroutineDispatcher() {

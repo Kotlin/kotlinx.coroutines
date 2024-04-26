@@ -113,7 +113,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
 
     final override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
-        return this
+        return namedOrThis(name) // Single-threaded, short-circuit
     }
 
     open fun shutdown() {}

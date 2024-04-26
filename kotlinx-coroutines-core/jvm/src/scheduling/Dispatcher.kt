@@ -14,7 +14,9 @@ internal object DefaultScheduler : SchedulerCoroutineDispatcher(
     @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
-        if (parallelism >= CORE_POOL_SIZE) return this
+        if (parallelism >= CORE_POOL_SIZE) {
+            return namedOrThis(name)
+        }
         return super.limitedParallelism(parallelism, name)
     }
 
@@ -46,7 +48,9 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
     @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
-        if (parallelism >= MAX_POOL_SIZE) return this
+        if (parallelism >= MAX_POOL_SIZE) {
+            return namedOrThis(name)
+        }
         return super.limitedParallelism(parallelism, name)
     }
 

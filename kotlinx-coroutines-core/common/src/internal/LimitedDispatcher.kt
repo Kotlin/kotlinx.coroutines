@@ -37,7 +37,7 @@ internal class LimitedDispatcher(
     @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
-        if (parallelism >= this.parallelism) return this
+        if (parallelism >= this.parallelism) return namedOrThis(name)
         return super.limitedParallelism(parallelism, name)
     }
 
@@ -129,3 +129,8 @@ internal class LimitedDispatcher(
 }
 
 internal fun Int.checkParallelism() = require(this >= 1) { "Expected positive parallelism level, but got $this" }
+
+internal fun CoroutineDispatcher.namedOrThis(name: String?): CoroutineDispatcher {
+    if (name != null) return NamedDispatcher(this, name)
+    return this
+}
