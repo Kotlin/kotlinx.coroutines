@@ -91,7 +91,7 @@ private class MissingMainCoroutineDispatcher(
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
         missing()
 
-    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher =
+    override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher =
         missing()
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =

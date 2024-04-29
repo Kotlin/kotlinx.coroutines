@@ -30,9 +30,9 @@ internal abstract class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay 
 
     abstract fun scheduleQueueProcessing()
 
-    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+    override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
-        return this
+        return namedOrThis(name)
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
