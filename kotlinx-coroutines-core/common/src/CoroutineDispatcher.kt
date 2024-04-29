@@ -83,11 +83,11 @@ public abstract class CoroutineDispatcher :
      * // Background dispatcher for the application
      * val dispatcher = newFixedThreadPoolContext(4, "App Background")
      * // At most 2 threads will be processing images as it is really slow and CPU-intensive
-     * val imageProcessingDispatcher = dispatcher.limitedParallelism(2)
+     * val imageProcessingDispatcher = dispatcher.limitedParallelism(2, "Image processor")
      * // At most 3 threads will be processing JSON to avoid image processing starvation
-     * val jsonProcessingDispatcher = dispatcher.limitedParallelism(3)
+     * val jsonProcessingDispatcher = dispatcher.limitedParallelism(3, "Json processor")
      * // At most 1 thread will be doing IO
-     * val fileWriterDispatcher = dispatcher.limitedParallelism(1)
+     * val fileWriterDispatcher = dispatcher.limitedParallelism(1, "File writer")
      * ```
      * Note how in this example the application has an executor with 4 threads, but the total sum of all limits
      * is 6. Still, at most 4 coroutines can be executed simultaneously as each view limits only its own parallelism,
@@ -105,7 +105,7 @@ public abstract class CoroutineDispatcher :
      * is established between them:
      *
      * ```
-     * val confined = Dispatchers.Default.limitedParallelism(1)
+     * val confined = Dispatchers.Default.limitedParallelism(1, "incrementDispatcher")
      * var counter = 0
      *
      * // Invoked from arbitrary coroutines
@@ -135,14 +135,23 @@ public abstract class CoroutineDispatcher :
      * Implementations of this method are allowed to return `this` if the current dispatcher already satisfies the parallelism requirement.
      * For example, `Dispatchers.Main.limitedParallelism(1)` returns `Dispatchers.Main`, because the main dispatcher is already single-threaded.
      *
+     * @param name optional name for the resulting dispatcher string representation if a new dispatcher was created.
+     *        Implementations are free to ignore this parameter.
      * @throws IllegalArgumentException if the given [parallelism] is non-positive
      * @throws UnsupportedOperationException if the current dispatcher does not support limited parallelism views
      */
     @ExperimentalCoroutinesApi
-    public open fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+    public open fun limitedParallelism(parallelism: Int, name: String? = null): CoroutineDispatcher {
         parallelism.checkParallelism()
-        return LimitedDispatcher(this, parallelism)
+        return LimitedDispatcher(this, parallelism, name)
     }
+
+    // Was experimental since 1.6.0, deprecated since 1.8.x
+    @Deprecated("Deprecated for good. Override 'limitedParallelism(parallelism: Int, name: String?)' instead",
+        level = DeprecationLevel.HIDDEN,
+        replaceWith = ReplaceWith("limitedParallelism(parallelism, null)")
+    )
+    public open fun limitedParallelism(parallelism: Int): CoroutineDispatcher = limitedParallelism(parallelism, null)
 
     /**
      * Requests execution of a runnable [block].

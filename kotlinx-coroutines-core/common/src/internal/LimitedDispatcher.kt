@@ -21,7 +21,8 @@ import kotlin.coroutines.*
  */
 internal class LimitedDispatcher(
     private val dispatcher: CoroutineDispatcher,
-    private val parallelism: Int
+    private val parallelism: Int,
+    private val name: String?
 ) : CoroutineDispatcher(), Delay by (dispatcher as? Delay ?: DefaultDelay) {
 
     // Atomic is necessary here for the sake of K/N memory ordering,
@@ -34,10 +35,10 @@ internal class LimitedDispatcher(
     private val workerAllocationLock = SynchronizedObject()
 
     @ExperimentalCoroutinesApi
-    override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
+    override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
-        if (parallelism >= this.parallelism) return this
-        return super.limitedParallelism(parallelism)
+        if (parallelism >= this.parallelism) return namedOrThis(name)
+        return super.limitedParallelism(parallelism, name)
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
@@ -95,7 +96,7 @@ internal class LimitedDispatcher(
         }
     }
 
-    override fun toString() = "$dispatcher.limitedParallelism($parallelism)"
+    override fun toString() = name ?: "$dispatcher.limitedParallelism($parallelism)"
 
     /**
      * A worker that polls the queue and runs tasks until there are no more of them.
@@ -128,3 +129,8 @@ internal class LimitedDispatcher(
 }
 
 internal fun Int.checkParallelism() = require(this >= 1) { "Expected positive parallelism level, but got $this" }
+
+internal fun CoroutineDispatcher.namedOrThis(name: String?): CoroutineDispatcher {
+    if (name != null) return NamedDispatcher(this, name)
+    return this
+}
