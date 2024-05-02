@@ -84,4 +84,15 @@ class PromiseTest : TestBase() {
             null
         }
     }
+
+    @Test
+    fun testAwaitPromiseRejectedFromJs() = GlobalScope.promise {
+        lateinit var r: (JsAny) -> Unit
+        val toAwait = Promise<JsAny?> { _, reject -> r = reject }
+        val throwable = async(start = CoroutineStart.UNDISPATCHED) {
+            assertFails { toAwait.await<JsAny?>() }
+        }
+        r("Rejected".toJsString())
+        assertContains(throwable.await().message ?: "", "Rejected")
+    }
 }
