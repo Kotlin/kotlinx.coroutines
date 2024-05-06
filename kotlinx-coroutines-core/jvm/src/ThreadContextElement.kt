@@ -200,10 +200,10 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
  * ...
  * println(myThreadLocal.get()) // Prints "null"
  * launch(Dispatchers.Default + myThreadLocal.asContextElement(value = "foo")) {
- *   println(myThreadLocal.get()) // Prints "foo"
- *   withContext(Dispatchers.Main) {
- *     println(myThreadLocal.get()) // Prints "foo", but it's on UI thread
- *   }
+ *     println(myThreadLocal.get()) // Prints "foo"
+ *     withContext(Dispatchers.Main) {
+ *         println(myThreadLocal.get()) // Prints "foo", but it's on UI thread
+ *     }
  * }
  * println(myThreadLocal.get()) // Prints "null"
  * ```
@@ -213,8 +213,8 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
  * ```
  * myThreadLocal.set("main")
  * withContext(Dispatchers.Main) {
- *   println(myThreadLocal.get()) // Prints "main"
- *   myThreadLocal.set("UI")
+ *     println(myThreadLocal.get()) // Prints "main"
+ *     myThreadLocal.set("UI")
  * }
  * println(myThreadLocal.get()) // Prints "main", not "UI"
  * ```
@@ -231,13 +231,13 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
  * val tl = ThreadLocal.withInitial { "initial" }
  *
  * runBlocking {
- *   println(tl.get()) // Will print "initial"
- *   // Change context
- *   withContext(tl.asContextElement("modified")) {
- *     println(tl.get()) // Will print "modified"
- *   }
- *   // Context is changed again
- *    println(tl.get()) // <- WARN: can print either "modified" or "initial"
+ *     println(tl.get()) // Will print "initial"
+ *     // Change context
+ *     withContext(tl.asContextElement("modified")) {
+ *         println(tl.get()) // Will print "modified"
+ *     }
+ *     // Context is changed again
+ *     println(tl.get()) // <- WARN: can print either "modified" or "initial"
  * }
  * ```
  * to fix this behaviour use `runBlocking(tl.asContextElement())`
@@ -252,10 +252,10 @@ public fun <T> ThreadLocal<T>.asContextElement(value: T = get()): ThreadContextE
  * Example of usage:
  * ```
  * suspend fun processRequest() {
- *   if (traceCurrentRequestThreadLocal.isPresent()) { // Probabilistic tracing
- *      // Do some heavy-weight tracing
- *   }
- *   // Process request regularly
+ *     if (traceCurrentRequestThreadLocal.isPresent()) { // Probabilistic tracing
+ *         // Do some heavy-weight tracing
+ *     }
+ *     // Process request regularly
  * }
  * ```
  */
@@ -269,13 +269,13 @@ public suspend inline fun ThreadLocal<*>.isPresent(): Boolean = coroutineContext
  * E.g. one may use the following method to enforce proper use of the thread locals with coroutines:
  * ```
  * public suspend inline fun <T> ThreadLocal<T>.getSafely(): T {
- *   ensurePresent()
- *   return get()
+ *     ensurePresent()
+ *     return get()
  * }
  *
  * // Usage
  * withContext(...) {
- *   val value = threadLocal.getSafely() // Fail-fast in case of improper context
+ *     val value = threadLocal.getSafely() // Fail-fast in case of improper context
  * }
  * ```
  */
