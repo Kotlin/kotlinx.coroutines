@@ -116,12 +116,12 @@ public interface SendChannel<in E> {
      * ```
      * val events = Channel<Event>(UNLIMITED)
      * callbackBasedApi.registerCallback { event ->
-     *   events.trySend(event)
-     *       .onClosed { /* channel is already closed, but the callback hasn't stopped yet */ }
+     *     events.trySend(event)
+     *         .onClosed { /* channel is already closed, but the callback hasn't stopped yet */ }
      * }
      *
      * val uiUpdater = uiScope.launch(Dispatchers.Main) {
-     *    events.consume { /* handle events */ }
+     *     events.consume { /* handle events */ }
      * }
      * // Stop the callback after the channel is closed or cancelled
      * events.invokeOnClose { callbackBasedApi.stop() }
@@ -145,7 +145,7 @@ public interface SendChannel<in E> {
      * It has proven itself as the most error-prone method in Channel API:
      *
      * - `Boolean` return type creates the false sense of security, implying that `false`
-     *    is returned instead of throwing an exception.
+     *   is returned instead of throwing an exception.
      * - It was used mostly from non-suspending APIs where CancellationException triggered
      *   internal failures in the application (the most common source of bugs).
      * - Due to signature and explicit `if (ch.offer(...))` checks it was easy to
@@ -323,7 +323,7 @@ public interface ReceiveChannel<out E> {
      * It has proven itself as error-prone method in Channel API:
      *
      * - Nullable return type creates the false sense of security, implying that `null`
-     *    is returned instead of throwing an exception.
+     *   is returned instead of throwing an exception.
      * - It was used mostly from non-suspending APIs where CancellationException triggered
      *   internal failures in the application (the most common source of bugs).
      * - Its name was not aligned with the rest of the API and tried to mimic Java's queue instead.

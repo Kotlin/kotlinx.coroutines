@@ -92,11 +92,11 @@ public fun <T> Iterable<Flow<T>>.merge(): Flow<T> {
     /*
      * This is a fuseable implementation of the following operator:
      * channelFlow {
-     *    forEach { flow ->
-     *        launch {
-     *            flow.collect { send(it) }
-     *        }
-     *    }
+     *     forEach { flow ->
+     *         launch {
+     *             flow.collect { send(it) }
+     *         }
+     *     }
      * }
      */
     return ChannelLimitedFlowMerge(this)

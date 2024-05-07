@@ -13,11 +13,11 @@ internal expect fun assert(value: () -> Boolean)
  * ```
  * class BadResponseCodeException(val responseCode: Int) : Exception(), CopyableThrowable<BadResponseCodeException> {
  *
- *  override fun createCopy(): BadResponseCodeException {
- *    val result = BadResponseCodeException(responseCode)
- *    result.initCause(this)
- *    return result
- *  }
+ *     override fun createCopy(): BadResponseCodeException {
+ *         val result = BadResponseCodeException(responseCode)
+ *         result.initCause(this)
+ *         return result
+ *     }
  * ```
  *
  * Copy mechanism is used only on JVM, but it might be convenient to implement it in common exceptions,

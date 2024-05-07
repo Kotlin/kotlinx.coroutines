@@ -366,7 +366,7 @@ internal open class CancellableContinuationImpl<in T>(
      *
      * ```
      * invokeOnCancellation { cause ->
-     *   segment.onCancellation(index, cause)
+     *     segment.onCancellation(index, cause)
      * }
      * ```
      */

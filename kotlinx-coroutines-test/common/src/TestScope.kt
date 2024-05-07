@@ -63,16 +63,16 @@ public sealed interface TestScope : CoroutineScope {
      * ```
      * @Test
      * fun testExampleBackgroundJob() = runTest {
-     *   val channel = Channel<Int>()
-     *   backgroundScope.launch {
-     *     var i = 0
-     *     while (true) {
-     *       channel.send(i++)
+     *     val channel = Channel<Int>()
+     *     backgroundScope.launch {
+     *         var i = 0
+     *         while (true) {
+     *             channel.send(i++)
+     *         }
      *     }
-     *   }
-     *   repeat(100) {
-     *     assertEquals(it, channel.receive())
-     *   }
+     *     repeat(100) {
+     *         assertEquals(it, channel.receive())
+     *     }
      * }
      * ```
      */
