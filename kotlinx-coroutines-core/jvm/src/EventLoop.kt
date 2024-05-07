@@ -59,11 +59,11 @@ internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit
  *
  * ### Invariants
  *
- *  - When invoked from [Dispatchers.Default] **thread** (even if the actual context is different dispatcher,
- *    [CoroutineDispatcher.limitedParallelism] or any in-place wrapper), it runs an arbitrary task that ended
- *    up being scheduled to [Dispatchers.Default] or its counterpart. Tasks scheduled to [Dispatchers.IO]
- *    **are not** executed[1].
- *  - When invoked from [Dispatchers.IO] thread, the same rules apply, but for blocking tasks only.
+ * - When invoked from [Dispatchers.Default] **thread** (even if the actual context is different dispatcher,
+ *   [CoroutineDispatcher.limitedParallelism] or any in-place wrapper), it runs an arbitrary task that ended
+ *   up being scheduled to [Dispatchers.Default] or its counterpart. Tasks scheduled to [Dispatchers.IO]
+ *   **are not** executed[1].
+ * - When invoked from [Dispatchers.IO] thread, the same rules apply, but for blocking tasks only.
  *
  * [1] -- this is purely technical limitation: the scheduler does not have "notify me when CPU token is available" API,
  * and we cannot leave this method without leaving thread in its original state.

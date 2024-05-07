@@ -33,9 +33,9 @@ public typealias MDCContextMap = Map<String, String>?
  *
  * ```
  * launch(MDCContext()) {
- *    MDC.put("key", "value") // This update will be lost
- *    delay(100)
- *    println(MDC.get("key")) // This will print null
+ *     MDC.put("key", "value") // This update will be lost
+ *     delay(100)
+ *     println(MDC.get("key")) // This will print null
  * }
  * ```
  *

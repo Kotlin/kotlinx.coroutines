@@ -525,7 +525,7 @@ internal open class SelectImplementation<R>(
      *
      * ```
      * disposeOnCompletion {
-     *   segment.onCancellation(index, null)
+     *     segment.onCancellation(index, null)
      * }
      * ```
      */

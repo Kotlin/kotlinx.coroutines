@@ -26,7 +26,7 @@ import reactor.util.context.*
  *
  * // Now add ReactorContext
  * withContext(Context.of("answer", "42").asCoroutineContext()) {
- *    flux.awaitFirst() // Will print "Context{'key'='value'}"
+ *     flux.awaitFirst() // Will print "Context{'key'='value'}"
  * }
  * ```
  *

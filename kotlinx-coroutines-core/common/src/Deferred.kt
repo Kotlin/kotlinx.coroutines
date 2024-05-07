@@ -51,10 +51,10 @@ public interface Deferred<out T> : Job {
      * The following idiom may be helpful to avoid this:
      * ```
      * try {
-     *    deferred.await()
+     *     deferred.await()
      * } catch (e: CancellationException) {
-     *    currentCoroutineContext().ensureActive() // throws if the current coroutine was cancelled
-     *    processException(e) // if this line executes, the exception is the result of `await` itself
+     *     currentCoroutineContext().ensureActive() // throws if the current coroutine was cancelled
+     *     processException(e) // if this line executes, the exception is the result of `await` itself
      * }
      * ```
      *

@@ -274,11 +274,11 @@ internal fun <T> CancellableContinuation<T>.invokeOnCancellation(handler: Cancel
  *
  * ```
  * suspendCancellableCoroutine { continuation ->
- *    val resource = openResource() // Opens some resource
- *    continuation.invokeOnCancellation {
- *        resource.close() // Ensures the resource is closed on cancellation
- *    }
- *    // ...
+ *     val resource = openResource() // Opens some resource
+ *     continuation.invokeOnCancellation {
+ *         resource.close() // Ensures the resource is closed on cancellation
+ *     }
+ *     // ...
  * }
  * ```
  *

@@ -102,13 +102,13 @@ import kotlin.coroutines.*
  *
  * ```
  * val myFlow = flow {
- *    // GlobalScope.launch { // is prohibited
- *    // launch(Dispatchers.IO) { // is prohibited
- *    // withContext(CoroutineName("myFlow")) { // is prohibited
- *    emit(1) // OK
- *    coroutineScope {
- *        emit(2) // OK -- still the same coroutine
- *    }
+ *     // GlobalScope.launch { // is prohibited
+ *     // launch(Dispatchers.IO) { // is prohibited
+ *     // withContext(CoroutineName("myFlow")) { // is prohibited
+ *     emit(1) // OK
+ *     coroutineScope {
+ *         emit(2) // OK -- still the same coroutine
+ *     }
  * }
  * ```
  *
@@ -119,11 +119,11 @@ import kotlin.coroutines.*
  *
  * If you are looking for performance and are sure that no concurrent emits and context jumps will happen,
  * the [flow] builder can be used alongside a [coroutineScope] or [supervisorScope] instead:
- *  - Scoped primitive should be used to provide a [CoroutineScope].
- *  - Changing the context of emission is prohibited, no matter whether it is `withContext(ctx)` or
- *    a builder argument (e.g. `launch(ctx)`).
- *  - Collecting another flow from a separate context is allowed, but it has the same effect as
- *    applying the [flowOn] operator to that flow, which is more efficient.
+ * - Scoped primitive should be used to provide a [CoroutineScope].
+ * - Changing the context of emission is prohibited, no matter whether it is `withContext(ctx)` or
+ *   a builder argument (e.g. `launch(ctx)`).
+ * - Collecting another flow from a separate context is allowed, but it has the same effect as
+ *   applying the [flowOn] operator to that flow, which is more efficient.
  *
  * ### Exception transparency
  *
