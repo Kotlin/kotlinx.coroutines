@@ -50,9 +50,10 @@ fun MavenPom.configureMavenCentralMetadata(project: Project) {
  */
 private val spacePublicationEnabled = System.getenv("libs.space.pub")?.equals("true") ?: false
 
-fun mavenRepositoryUri(): URI {
+fun Project.mavenRepositoryUri(): URI {
     if (spacePublicationEnabled) {
-        return URI("https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven")
+        val spaceRepoUrl = getSensitiveProperty("libs.space.url")
+        return URI(spaceRepoUrl ?: "https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven")
     }
 
     val repositoryId: String? = System.getenv("libs.repository.id")
@@ -65,7 +66,7 @@ fun mavenRepositoryUri(): URI {
 
 fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
     rh.maven {
-        url = mavenRepositoryUri()
+        url = project.mavenRepositoryUri()
         credentials {
             if (spacePublicationEnabled) {
                 // Configure space credentials
