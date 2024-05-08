@@ -48,7 +48,8 @@ fun MavenPom.configureMavenCentralMetadata(project: Project) {
  * dev build into 'https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven' Maven repository.
  * In order to use it, pass the corresponding ENV to the TC 'Deploy' task.
  */
-private val spacePublicationEnabled = System.getenv("libs.space.pub")?.equals("true") ?: false
+private val Project.spacePublicationEnabled: Boolean
+    get() = getSensitiveProperty("libs.space.pub")?.equals("true") ?: false
 
 fun Project.mavenRepositoryUri(): URI {
     if (spacePublicationEnabled) {
@@ -68,7 +69,7 @@ fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
     rh.maven {
         url = project.mavenRepositoryUri()
         credentials {
-            if (spacePublicationEnabled) {
+            if (project.spacePublicationEnabled) {
                 // Configure space credentials
                 username = project.getSensitiveProperty("libs.space.user")
                 password = project.getSensitiveProperty("libs.space.password")
