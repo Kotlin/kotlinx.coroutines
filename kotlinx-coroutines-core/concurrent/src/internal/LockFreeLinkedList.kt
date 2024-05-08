@@ -286,4 +286,4 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     override val isRemoved: Boolean get() = false
 }
 
-private class ListClosed(val forbiddenElementsBitmask: Int): LockFreeLinkedListNode()
+private class ListClosed(@JvmField val forbiddenElementsBitmask: Int): LockFreeLinkedListNode()
