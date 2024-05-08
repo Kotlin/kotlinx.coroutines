@@ -346,7 +346,7 @@ public final class kotlinx/coroutines/ExceptionsKt {
 	public static final fun CancellationException (Ljava/lang/String;Ljava/lang/Throwable;)Ljava/util/concurrent/CancellationException;
 }
 
-public abstract class kotlinx/coroutines/ExecutorCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, java/io/Closeable {
+public abstract class kotlinx/coroutines/ExecutorCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, java/lang/AutoCloseable {
 	public static final field Key Lkotlinx/coroutines/ExecutorCoroutineDispatcher$Key;
 	public fun <init> ()V
 	public abstract fun close ()V

@@ -10,8 +10,9 @@ package kotlinx.coroutines
  * **The `CloseableCoroutineDispatcher` class is not stable for inheritance in 3rd party libraries**, as new methods
  * might be added to this interface in the future, but is stable for use.
  */
+@OptIn(ExperimentalStdlibApi::class)
 @ExperimentalCoroutinesApi
-public expect abstract class CloseableCoroutineDispatcher() : CoroutineDispatcher {
+public expect abstract class CloseableCoroutineDispatcher() : CoroutineDispatcher, AutoCloseable {
 
     /**
      * Initiate the closing sequence of the coroutine dispatcher.
@@ -20,5 +21,5 @@ public expect abstract class CloseableCoroutineDispatcher() : CoroutineDispatche
      *
      * Invocations of `close` are idempotent and thread-safe.
      */
-    public abstract fun close()
+    public abstract override fun close()
 }

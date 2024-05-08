@@ -45,7 +45,7 @@ abstract class <#A: kotlin/Any?> kotlinx.coroutines.flow/AbstractFlow : kotlinx.
     constructor <init>() // kotlinx.coroutines.flow/AbstractFlow.<init>|<init>(){}[0]
     final suspend fun collect(kotlinx.coroutines.flow/FlowCollector<#A>) // kotlinx.coroutines.flow/AbstractFlow.collect|collect(kotlinx.coroutines.flow.FlowCollector<1:0>){}[0]
 }
-abstract class kotlinx.coroutines/CloseableCoroutineDispatcher : kotlinx.coroutines/CoroutineDispatcher { // kotlinx.coroutines/CloseableCoroutineDispatcher|null[0]
+abstract class kotlinx.coroutines/CloseableCoroutineDispatcher : kotlin/AutoCloseable, kotlinx.coroutines/CoroutineDispatcher { // kotlinx.coroutines/CloseableCoroutineDispatcher|null[0]
     abstract fun close() // kotlinx.coroutines/CloseableCoroutineDispatcher.close|close(){}[0]
     constructor <init>() // kotlinx.coroutines/CloseableCoroutineDispatcher.<init>|<init>(){}[0]
 }
