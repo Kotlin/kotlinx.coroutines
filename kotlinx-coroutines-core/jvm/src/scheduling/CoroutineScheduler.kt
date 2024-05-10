@@ -713,7 +713,8 @@ internal class CoroutineScheduler(
                 // this code runs in a different worker thread that holds a CPU token
                 val cpuHolder = currentThread() as Worker
                 assert { cpuHolder.state == WorkerState.CPU_ACQUIRED }
-                cpuHolder.giveAwayLocalTasks() // TODO probably we can move CPU tasks straight into acquiring worker's local queue
+                val releasedTasks = cpuHolder.giveAwayLocalTasks()
+                if (releasedTasks) signalCpuWork()
                 cpuHolder.state = WorkerState.BLOCKING
             }, taskContext = NonBlockingContext)
             permitTransfer.acquire(
@@ -724,14 +725,18 @@ internal class CoroutineScheduler(
             decrementBlockingTasks()
         }
 
-        fun giveAwayLocalTasks() {
+        fun giveAwayLocalTasks(): Boolean {
+            // probably the right way would be to signalCpuWork() on each task, but it should be fine without it
+            var givenAwayAny: Boolean = false
             stolenTask.element?.let { task ->
                 addToGlobalQueue(task)
                 stolenTask.element = null
+                givenAwayAny = true
             }
             while (true) {
-                val task = localQueue.poll() ?: return
+                val task = localQueue.poll() ?: return givenAwayAny
                 addToGlobalQueue(task)
+                givenAwayAny = true
             }
         }
 
