@@ -10,18 +10,16 @@ import kotlin.test.*
 class ChunkedTest : TestBase() {
 
     @Test
-    fun testChunked() {
+    fun testChunked() = runTest {
         doTest(flowOf(1, 2, 3, 4, 5), 2, listOf(listOf(1, 2), listOf(3, 4), listOf(5)))
         doTest(flowOf(1, 2, 3, 4, 5), 3, listOf(listOf(1, 2, 3), listOf(4, 5)))
         doTest(flowOf(1, 2, 3, 4), 2, listOf(listOf(1, 2), listOf(3, 4)))
         doTest(flowOf(1), 3, listOf(listOf(1)))
     }
 
-    private fun <T> doTest(flow: Flow<T>, chunkSize: Int, expected: List<List<T>>) {
-        runTest {
-            assertEquals(expected, flow.chunked(chunkSize).toList())
-            assertEquals(flow.toList().chunked(chunkSize), flow.chunked(chunkSize).toList())
-        }
+    private suspend fun <T> doTest(flow: Flow<T>, chunkSize: Int, expected: List<List<T>>) {
+        assertEquals(expected, flow.chunked(chunkSize).toList())
+        assertEquals(flow.toList().chunked(chunkSize), flow.chunked(chunkSize).toList())
     }
 
     @Test
