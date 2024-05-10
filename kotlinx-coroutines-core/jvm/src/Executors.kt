@@ -13,7 +13,7 @@ import kotlin.coroutines.*
  * This class is generally used as a bridge between coroutine-based API and
  * asynchronous API that requires an instance of the [Executor].
  */
-public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), AutoCloseable {
+public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closeable, AutoCloseable {
     /** @suppress */
     @ExperimentalStdlibApi
     public companion object Key : AbstractCoroutineContextKey<CoroutineDispatcher, ExecutorCoroutineDispatcher>(
