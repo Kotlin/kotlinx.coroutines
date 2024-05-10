@@ -929,10 +929,15 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // process cancelling notification here -- it cancels all the children _before_ we start to wait them (sic!!!)
         notifyRootCause?.let { notifyCancelling(list, it) }
         // now wait for children
+        // we can't close the list yet: while there are active children, adding new ones is still allowed.
         val child = list.nextChild()
         if (child != null && tryWaitForChild(finishing, child, proposedUpdate))
             return COMPLETING_WAITING_CHILDREN
+        // turns out, there are no children to await, so we close the list.
         list.close(LIST_CHILD_PERMISSION)
+        // some children could have sneaked into the list, so we try waiting for them again.
+        // it would be more correct to re-open the list (otherwise, we get non-linearizable behavior),
+        // but it's too difficult with the current lock-free list implementation.
         val anotherChild = list.nextChild()
         if (anotherChild != null && tryWaitForChild(finishing, anotherChild, proposedUpdate))
             return COMPLETING_WAITING_CHILDREN
@@ -958,16 +963,21 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
     private fun continueCompleting(state: Finishing, lastChild: ChildHandleNode, proposedUpdate: Any?) {
         assert { this.state === state } // consistency check -- it cannot change while we are waiting for children
-        // figure out if we need to wait for next child
+        // figure out if we need to wait for the next child
         val waitChild = lastChild.nextChild()
-        // try wait for next child
+        // try to wait for the next child
         if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate)) return // waiting for next child
-        // no more children to wait -- stop accepting children
+        // no more children to await, so *maybe* we can complete the job; for that, we stop accepting new children.
         state.list.close(LIST_CHILD_PERMISSION)
-        // did any children get added?
+        // did any new children sneak in?
         val waitChildAgain = lastChild.nextChild()
-        // try wait for next child
-        if (waitChildAgain != null && tryWaitForChild(state, waitChildAgain, proposedUpdate)) return // waiting for next child
+        if (waitChildAgain != null && tryWaitForChild(state, waitChildAgain, proposedUpdate)) {
+            // yes, so now we have to wait for them!
+            // ideally, we should re-open the list,
+            // but it's too difficult with the current lock-free list implementation,
+            // so we'll live with non-linearizable behavior for now.
+            return
+        }
         // no more children, now we are sure; try to update the state
         val finalState = finalizeFinishingState(state, proposedUpdate)
         afterCompletion(finalState)
