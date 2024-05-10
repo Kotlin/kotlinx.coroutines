@@ -91,7 +91,10 @@ This API is used by the `loadContributorsBlocking()` function to fetch the list 
 1. Open `src/tasks/Request1Blocking.kt` to see its implementation:
 
     ```kotlin
-    fun loadContributorsBlocking(service: GitHubService, req: RequestData): List<User> {
+    fun loadContributorsBlocking(
+        service: GitHubService,
+        req: RequestData
+    ): List<User> {
         val repos = service
             .getOrgReposCall(req.org)   // #1
             .execute()                  // #2
@@ -328,7 +331,8 @@ fun loadContributorsCallbacks(
 * The logic for handling the responses is extracted into callbacks: the corresponding lambdas start at lines `#1` and `#2`.
 
 However, the provided solution doesn't work. If you run the program and load contributors by choosing the _CALLBACKS_
-option, you'll see that nothing is shown. However, the tests that immediately return the result pass.
+option, you'll see that nothing is shown. However, the test from `Request3CallbacksKtTest` immediately returns the result 
+that it successfully passed.
 
 Think about why the given code doesn't work as expected and try to fix it, or see the solutions below.
 
@@ -1206,8 +1210,8 @@ When the channel is full, the next `send` call on it is suspended until more fre
    <def title="Rendezvous channel">
        <p>The "Rendezvous" channel is a channel without a buffer, the same as a buffered channel with zero size.
 One of the functions (<code>send()</code> or <code>receive()</code>) is always suspended until the other is called. </p>
-       <p>If the <code>send()</code> function is called and there's no suspended <code>receive</code> call ready to process the element, then <code>send()</code>
-is suspended. Similarly, if the <code>receive</code> function is called and the channel is empty or, in other words, there's no
+       <p>If the <code>send()</code> function is called and there's no suspended <code>receive()</code> call ready to process the element, then <code>send()</code>
+is suspended. Similarly, if the <code>receive()</code> function is called and the channel is empty or, in other words, there's no
 suspended <code>send()</code> call ready to send the element, the <code>receive()</code> call is suspended. </p>
        <p>The "rendezvous" name ("a meeting at an agreed time and place") refers to the fact that <code>send()</code> and <code>receive()</code>
 should "meet on time".</p>
