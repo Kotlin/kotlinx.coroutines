@@ -161,9 +161,6 @@ public fun <T> Flow<T>.chunked(size: Int): Flow<List<T>> {
                 result = null
             }
         }
-        val acc = result ?: return@flow
-        if (acc.isNotEmpty()) {
-            emit(acc)
-        }
+        result?.let { emit(it) }
     }
 }
