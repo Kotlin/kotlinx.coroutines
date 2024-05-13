@@ -968,6 +968,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // try to wait for the next child
         if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate)) return // waiting for next child
         // no more children to await, so *maybe* we can complete the job; for that, we stop accepting new children.
+        // potentially, the list can be closed for children more than once: if we detect that there are no more
+        // children, attempt to close the list, and then new children sneak in, this whole logic will be
+        // repeated, including closing the list.
         state.list.close(LIST_CHILD_PERMISSION)
         // did any new children sneak in?
         val waitChildAgain = lastChild.nextChild()
