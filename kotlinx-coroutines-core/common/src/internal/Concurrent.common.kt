@@ -21,11 +21,11 @@ internal expect fun <E> identitySet(expectedSize: Int): MutableSet<E>
 internal expect annotation class BenignDataRace()
 
 // Used **only** as a workaround for #3820 in StateFlow. Do not use anywhere else
-internal expect class WorkaroundAtomicReference<T>(value: T) {
-    public fun get(): T
-    public fun set(value: T)
-    public fun getAndSet(value: T): T
-    public fun compareAndSet(expected: T, value: T): Boolean
+internal expect class WorkaroundAtomicReference<V>(value: V) {
+    public fun get(): V
+    public fun set(value: V)
+    public fun getAndSet(value: V): V
+    public fun compareAndSet(expected: V, value: V): Boolean
 }
 
 @Suppress("UNUSED_PARAMETER", "EXTENSION_SHADOWED_BY_MEMBER")

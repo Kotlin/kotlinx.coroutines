@@ -1,15 +1,17 @@
 package kotlinx.coroutines.test
+
 import kotlinx.coroutines.*
-import kotlin.js.*
+import kotlinx.coroutines.test.internal.*
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
-public actual typealias TestResult = Promise<Unit>
+public actual typealias TestResult = JsPromiseInterfaceForTesting
 
-internal actual fun systemPropertyImpl(name: String): String? = null
 
+@Suppress("CAST_NEVER_SUCCEEDS")
 internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() -> Unit): TestResult =
     GlobalScope.promise {
         testProcedure()
-    }
+    } as JsPromiseInterfaceForTesting
 
 internal actual fun dumpCoroutines() { }
+
+internal actual fun systemPropertyImpl(name: String): String? = null
