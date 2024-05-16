@@ -279,7 +279,8 @@ internal class CoroutineScheduler(
 
     private inline fun createdWorkers(state: Long): Int = (state and CREATED_MASK).toInt()
     private inline fun blockingTasks(state: Long): Int = (state and BLOCKING_MASK shr BLOCKING_SHIFT).toInt()
-    inline fun availableCpuPermits(state: Long): Int = (state and CPU_PERMITS_MASK shr CPU_PERMITS_SHIFT).toInt()
+    private inline fun availableCpuPermits(state: Long): Int = (state and CPU_PERMITS_MASK shr CPU_PERMITS_SHIFT).toInt()
+    private inline fun cpuWorkers(state: Long): Int = (createdWorkers(state) - blockingTasks(state)).coerceAtLeast(0)
 
     // Guarded by synchronization
     private inline fun incrementCreatedWorkers(): Int = createdWorkers(controlState.incrementAndGet())
@@ -440,9 +441,7 @@ internal class CoroutineScheduler(
     }
 
     private fun tryCreateWorker(state: Long = controlState.value): Boolean {
-        val created = createdWorkers(state)
-        val blocking = blockingTasks(state)
-        val cpuWorkers = (created - blocking).coerceAtLeast(0)
+        val cpuWorkers = cpuWorkers(state)
         /*
          * We check how many threads are there to handle non-blocking work,
          * and create one more if we have not enough of them.
@@ -478,8 +477,7 @@ internal class CoroutineScheduler(
             if (isTerminated) return -1
             val state = controlState.value
             val created = createdWorkers(state)
-            val blocking = blockingTasks(state)
-            val cpuWorkers = (created - blocking).coerceAtLeast(0)
+            val cpuWorkers = cpuWorkers(state)
             // Double check for overprovision
             if (cpuWorkers >= corePoolSize) return 0
             if (created >= maxPoolSize) return 0
