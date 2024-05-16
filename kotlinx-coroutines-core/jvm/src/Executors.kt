@@ -14,6 +14,7 @@ import kotlin.AutoCloseable
  * This class is generally used as a bridge between coroutine-based API and
  * asynchronous API that requires an instance of the [Executor].
  */
+@OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 public abstract class ExecutorCoroutineDispatcher : CoroutineDispatcher(), Closeable, AutoCloseable {
     /** @suppress */

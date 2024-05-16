@@ -41,6 +41,7 @@ import kotlin.coroutines.intrinsics.*
  *    +-----------+
  * ```
  */
+@OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 public interface CancellableContinuation<in T> : Continuation<T> {
     /**

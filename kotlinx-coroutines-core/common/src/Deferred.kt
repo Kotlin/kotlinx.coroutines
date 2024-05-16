@@ -27,6 +27,7 @@ import kotlinx.coroutines.selects.*
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(markerClass = BrittleForInheritanceCoroutinesApi::class)
 public interface Deferred<out T> : Job {
 

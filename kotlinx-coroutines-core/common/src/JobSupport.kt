@@ -19,6 +19,7 @@ import kotlin.jvm.*
  * @param active when `true` the job is created in _active_ state, when `false` in _new_ state. See [Job] for details.
  * @suppress **This is unstable API and it is subject to change.**
  */
+@OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
 public open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob {

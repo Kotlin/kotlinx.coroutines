@@ -119,6 +119,7 @@ import kotlin.jvm.*
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableSharedFlow(replay, ...)` constructor function to create an implementation.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 public interface SharedFlow<out T> : Flow<T> {
     /**
@@ -171,6 +172,7 @@ public interface SharedFlow<out T> : Flow<T> {
  * might be added to this interface in the future, but is stable for use.
  * Use the `MutableSharedFlow(...)` constructor function to create an implementation.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
     /**

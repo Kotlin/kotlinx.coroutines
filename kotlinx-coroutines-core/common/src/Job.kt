@@ -100,6 +100,7 @@ import kotlin.jvm.*
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(markerClass = BrittleForInheritanceCoroutinesApi::class)
 public interface Job : CoroutineContext.Element {
     /**
@@ -398,6 +399,7 @@ public fun interface DisposableHandle {
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@OptIn(ExperimentalSubclassOptIn::class)
 @InternalCoroutinesApi
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
 @SubclassOptInRequired(markerClass = BrittleForInheritanceCoroutinesApi::class)
@@ -418,6 +420,7 @@ public interface ChildJob : Job {
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@OptIn(ExperimentalSubclassOptIn::class)
 @InternalCoroutinesApi
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
 @SubclassOptInRequired(markerClass = BrittleForInheritanceCoroutinesApi::class)
