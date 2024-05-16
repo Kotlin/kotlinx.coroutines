@@ -12,8 +12,14 @@ actual val isStressTest: Boolean = false
 actual val stressTestMultiplier: Int = 1
 actual val stressTestMultiplierSqrt: Int = 1
 
-@Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE")
-actual typealias TestResult = Promise<JsAny?>
+@JsName("Promise")
+external class MyPromise : JsAny {
+    fun then(onFulfilled: ((JsAny?) -> Unit), onRejected: ((JsAny) -> Unit)): MyPromise
+    fun then(onFulfilled: ((JsAny?) -> Unit)): MyPromise
+}
+
+/** Always a `Promise<Unit>` */
+public actual typealias TestResult = MyPromise
 
 internal actual fun lastResortReportException(error: Throwable) {
     println(error)
@@ -87,7 +93,7 @@ actual open class TestBase(
             checkFinishCall()
         }
         lastTestPromise = result
-        return result
+        return result.unsafeCast()
     }
 }
 

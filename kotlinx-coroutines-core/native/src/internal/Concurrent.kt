@@ -14,17 +14,17 @@ internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet(
 @Suppress("ACTUAL_WITHOUT_EXPECT") // This suppress can be removed in 2.0: KT-59355
 internal actual typealias BenignDataRace = kotlin.concurrent.Volatile
 
-internal actual class WorkaroundAtomicReference<T> actual constructor(value: T) {
+internal actual class WorkaroundAtomicReference<V> actual constructor(value: V) {
 
-    private val nativeAtomic = kotlin.concurrent.AtomicReference<T>(value)
+    private val nativeAtomic = kotlin.concurrent.AtomicReference<V>(value)
 
-    public actual fun get(): T = nativeAtomic.value
+    public actual fun get(): V= nativeAtomic.value
 
-    public actual fun set(value: T) {
+    public actual fun set(value: V) {
         nativeAtomic.value = value
     }
 
-    public actual fun getAndSet(value: T): T = nativeAtomic.getAndSet(value)
+    public actual fun getAndSet(value: V): V = nativeAtomic.getAndSet(value)
 
-    public actual fun compareAndSet(expected: T, value: T): Boolean = nativeAtomic.compareAndSet(expected, value)
+    public actual fun compareAndSet(expected: V, value: V): Boolean = nativeAtomic.compareAndSet(expected, value)
 }
