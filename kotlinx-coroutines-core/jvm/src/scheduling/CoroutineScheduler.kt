@@ -806,11 +806,15 @@ internal class CoroutineScheduler(
 
         private fun inStack(): Boolean = nextParkedWorker !== NOT_IN_STACK
 
+        private var currentTask: Task? = null
+
         private fun executeTask(task: Task) {
             val taskMode = task.mode
             idleReset(taskMode)
             beforeTask(taskMode)
+            currentTask = task
             runSafely(task)
+            currentTask = null
             afterTask(taskMode)
         }
 
