@@ -75,9 +75,18 @@ abstract class SchedulerTestBase : TestBase() {
         blockingDispatcher(1000)
     }
 
+    protected var softBlockingDispatcher = lazy {
+        softBlockingDispatcher(1000)
+    }
+
     protected fun blockingDispatcher(parallelism: Int): CoroutineDispatcher {
         val intitialize = dispatcher
         return _dispatcher!!.blocking(parallelism)
+    }
+
+    protected fun softBlockingDispatcher(parallelism: Int): CoroutineDispatcher {
+        val intitialize = dispatcher
+        return _dispatcher!!.softBlocking(parallelism)
     }
 
     protected fun view(parallelism: Int): CoroutineDispatcher {
@@ -107,4 +116,22 @@ internal fun SchedulerCoroutineDispatcher.blocking(parallelism: Int = 16): Corou
             this@blocking.dispatchWithContext(block, BlockingContext, false)
         }
     }.limitedParallelism(parallelism)
+}
+
+internal fun SchedulerCoroutineDispatcher.softBlocking(parallelism: Int = 16): CoroutineDispatcher {
+    return object : CoroutineDispatcher(), SoftLimitedParallelism {
+
+        @InternalCoroutinesApi
+        override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+            this@softBlocking.dispatchWithContext(block, BlockingContext, true)
+        }
+
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            this@softBlocking.dispatchWithContext(block, BlockingContext, false)
+        }
+
+        override fun softLimitedParallelism(parallelism: Int): CoroutineDispatcher {
+            return this@softBlocking.softLimitedParallelism(parallelism)
+        }
+    }.softLimitedParallelism(parallelism)
 }
