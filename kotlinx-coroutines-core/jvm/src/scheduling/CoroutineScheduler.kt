@@ -11,6 +11,18 @@ import kotlin.math.*
 import kotlin.random.*
 
 /**
+ * ## IntelliJ-patch
+ *
+ * Number of CPU workers may temporarily exceed `corePoolSize` now due to [parallelism compensation][withCompensatedParallelism] capability.
+ * CPU workers try to process decompensation requests after each task completion and upon CPU permit release ([Worker.tryDecompensateCpu]).
+ *
+ * If there are many consecutive invocations of [withCompensatedParallelism] (such as in [runBlocking]), then
+ * [Worker.increaseParallelismAndLimit] and [Worker.decreaseParallelismLimit] have a chance to negate each other, meaning
+ * that [Worker.increaseParallelismAndLimit] may drop one decompensation request from previous [Worker.decreaseParallelismLimit]
+ * so that the compensating CPU worker doesn't have to release its CPU permit and reacquire it back.
+ *
+ * ## Coroutine scheduler
+ *
  * Coroutine scheduler (pool of shared threads) which primary target is to distribute dispatched coroutines
  * over worker threads, including both CPU-intensive and blocking tasks, in the most efficient manner.
  *
@@ -274,6 +286,12 @@ internal class CoroutineScheduler(
      */
     private val controlState = atomic(corePoolSize.toLong() shl CPU_PERMITS_SHIFT)
 
+    /**
+     * Number of compensated cpu permits that are expected to be released back ("decompensated") by the workers holding the CPU permits.
+     * @see [Worker.tryDecompensateCpu]
+     */
+    private val cpuDecompensationRequests = atomic(0)
+
     private val createdWorkers: Int inline get() = (controlState.value and CREATED_MASK).toInt()
     private val availableCpuPermits: Int inline get() = availableCpuPermits(controlState.value)
 
@@ -300,6 +318,13 @@ internal class CoroutineScheduler(
     }
 
     private inline fun releaseCpuPermit() = controlState.addAndGet(1L shl CPU_PERMITS_SHIFT)
+
+    private fun tryDecrementDecompensationRequests(): Boolean {
+        val requests = cpuDecompensationRequests.value
+        if (requests == 0) return false
+        assert { requests > 0 }
+        return cpuDecompensationRequests.compareAndSet(requests, requests - 1)
+    }
 
     // This is used a "stop signal" for close and shutdown functions
     private val _isTerminated = atomic(false)
@@ -589,7 +614,7 @@ internal class CoroutineScheduler(
         }
     }
 
-    internal inner class Worker private constructor() : Thread() {
+    internal inner class Worker private constructor() : Thread(), ParallelismCompensation {
         init {
             isDaemon = true
             /*
@@ -683,9 +708,43 @@ internal class CoroutineScheduler(
         fun tryReleaseCpu(newState: WorkerState): Boolean {
             val previousState = state
             val hadCpu = previousState == WorkerState.CPU_ACQUIRED
-            if (hadCpu) releaseCpuPermit()
+            if (hadCpu) {
+                val decompensated = tryDecompensateCpu()
+                if (!decompensated) {
+                    releaseCpuPermit()
+                }
+            }
             if (previousState != newState) state = newState
             return hadCpu
+        }
+
+        /**
+         * Only called by a worker with a CPU permit
+         * Returns whether the CPU permit was given up
+         */
+        private fun tryDecompensateCpu(): Boolean {
+            var decompensationRequests = cpuDecompensationRequests.value // expected to have non-zero value rarely
+            if (decompensationRequests == 0) {
+                return false
+            }
+
+            assert { state == WorkerState.CPU_ACQUIRED }
+            while (decompensationRequests > 0) {
+                if (!cpuDecompensationRequests.compareAndSet(decompensationRequests, decompensationRequests - 1)) {
+                    // contention detected, break
+                    // we only need to bring `cpuDecompensationRequests` to 0 eventually, so it's fine not to get in that state right now
+                    break
+                }
+                // formally we need to return the permit to the scheduler and then delete it from there, but instead we can just do the following
+                if (this@CoroutineScheduler.tryAcquireCpuPermit()) {
+                    // pretend that we gave up the permit and deleted it, and then took another one from the scheduler
+                    decompensationRequests--
+                } else {
+                    // virtually deleted the permit we had
+                    return true
+                }
+            }
+            return false
         }
 
         override fun run() = runWorker()
@@ -827,7 +886,12 @@ internal class CoroutineScheduler(
         }
 
         private fun afterTask(taskMode: Int) {
-            if (taskMode == TASK_NON_BLOCKING) return
+            if (taskMode == TASK_NON_BLOCKING) {
+                if (tryDecompensateCpu()) {
+                    state = WorkerState.DORMANT
+                }
+                return
+            }
             decrementBlockingTasks()
             val currentState = state
             // Shutdown sequence of blocking dispatcher
@@ -1009,6 +1073,38 @@ internal class CoroutineScheduler(
             }
             minDelayUntilStealableTaskNs = if (minDelay != Long.MAX_VALUE) minDelay else 0
             return null
+        }
+
+        override fun increaseParallelismAndLimit() {
+            assert { currentTask != null }
+            if (state == WorkerState.CPU_ACQUIRED) {
+                // corePoolSize is used as an immutable value in the scheduler, making it mutable may introduce many
+                // hard-to-notice concurrency issues. Instead, let's increase the core pool size effectively by
+                // increasing the number of blocking tasks and the available cpu permits. The increase in the number
+                // of blocking tasks will make the scheduler treat the current worker as a non-CPU one.
+                incrementBlockingTasks()
+                if (tryDecrementDecompensationRequests()) {
+                    // instead of increasing the parallelism limit, we removed a request to decrease it
+                } else {
+                    releaseCpuPermit()
+                }
+                signalCpuWork()
+            }
+            val taskParallelismCompensation = (currentTask as? TaskImpl)?.block as? ParallelismCompensation
+            taskParallelismCompensation?.increaseParallelismAndLimit()
+        }
+
+        override fun decreaseParallelismLimit() {
+            assert { currentTask != null }
+            try {
+                val taskParallelismCompensation = (currentTask as? TaskImpl)?.block as? ParallelismCompensation
+                taskParallelismCompensation?.decreaseParallelismLimit()
+            } finally {
+                if (state == WorkerState.CPU_ACQUIRED) {
+                    decrementBlockingTasks()
+                    cpuDecompensationRequests.incrementAndGet()
+                }
+            }
         }
     }
 
