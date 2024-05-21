@@ -14,13 +14,20 @@ public actual open class LockFreeLinkedListNode {
     inline actual val prevNode get() = _prev
     inline actual val isRemoved get() = _removed
 
-    @PublishedApi
-    internal fun addLast(node: Node) {
-        val prev = this._prev
-        node._next = this
-        node._prev = prev
-        prev._next = node
-        this._prev = node
+    public actual fun addLast(node: Node, permissionsBitmask: Int): Boolean = when (val prev = this._prev) {
+        is ListClosed ->
+            prev.forbiddenElementsBitmask and permissionsBitmask == 0 && prev.addLast(node, permissionsBitmask)
+        else -> {
+            node._next = this
+            node._prev = prev
+            prev._next = node
+            this._prev = node
+            true
+        }
+    }
+
+    public actual fun close(forbiddenElementsBit: Int) {
+        addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
     }
 
     /*
@@ -30,10 +37,6 @@ public actual open class LockFreeLinkedListNode {
      * invokes handler on remove
      */
     public actual open fun remove(): Boolean {
-        return removeImpl()
-    }
-
-    private fun removeImpl(): Boolean {
         if (_removed) return false
         val prev = this._prev
         val next = this._next
@@ -45,13 +48,7 @@ public actual open class LockFreeLinkedListNode {
 
     public actual fun addOneIfEmpty(node: Node): Boolean {
         if (_next !== this) return false
-        addLast(node)
-        return true
-    }
-
-    public actual inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
-        if (!condition()) return false
-        addLast(node)
+        addLast(node, Int.MIN_VALUE)
         return true
     }
 }
@@ -72,3 +69,5 @@ public actual open class LockFreeLinkedListHead : Node() {
     // just a defensive programming -- makes sure that list head sentinel is never removed
     public actual final override fun remove(): Nothing = throw UnsupportedOperationException()
 }
+
+private class ListClosed(val forbiddenElementsBitmask: Int): LockFreeLinkedListNode()

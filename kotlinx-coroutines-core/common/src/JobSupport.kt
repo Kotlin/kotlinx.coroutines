@@ -159,12 +159,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * If final state of the job is [Incomplete], then it is boxed into [IncompleteStateBox]
      * and should be [unboxed][unboxState] before returning to user code.
      */
-    internal val state: Any? get() {
-        _state.loop { state -> // helper loop on state (complete in-progress atomic operations)
-            if (state !is OpDescriptor) return state
-            state.perform(this)
-        }
-    }
+    internal val state: Any? get() = _state.value
 
     /**
      * @suppress **This is unstable API and it is subject to change.**
@@ -324,6 +319,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private fun notifyCancelling(list: NodeList, cause: Throwable) {
         // first cancel our own children
         onCancelling(cause)
+        list.close(LIST_CANCELLATION_PERMISSION)
         notifyHandlers(list, cause) { it.onCancelling }
         // then cancel parent
         cancelParent(cause) // tentative cancellation -- does not matter if there is no parent
@@ -355,8 +351,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         return parent.childCancelled(cause) || isCancellation
     }
 
-    private fun NodeList.notifyCompletion(cause: Throwable?) =
+    private fun NodeList.notifyCompletion(cause: Throwable?) {
+        close(LIST_ON_COMPLETION_PERMISSION)
         notifyHandlers(this, cause) { true }
+    }
 
     private inline fun notifyHandlers(list: NodeList, cause: Throwable?, predicate: (JobNode) -> Boolean) {
         var exception: Throwable? = null
@@ -464,59 +462,93 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         node: JobNode
     ): DisposableHandle {
         node.job = this
+        // Create node upfront -- for common cases it just initializes JobNode.job field,
+        // for user-defined handlers it allocates a JobNode object that we might not need, but this is Ok.
+        val added = tryPutNodeIntoList(node) { state, list ->
+            if (node.onCancelling) {
+                /**
+                 * We are querying whether the job was already cancelled when we entered this block.
+                 * We can't naively attempt to add the node to the list, because a lot of time could pass between
+                 * notifying the cancellation handlers (and thus closing the list, forcing us to retry)
+                 * and reaching a final state.
+                 *
+                 * Alternatively, we could also try to add the node to the list first and then read the latest state
+                 * to check for an exception, but that logic would need to manually handle the final state, which is
+                 * less straightforward.
+                 */
+                val rootCause = (state as? Finishing)?.rootCause
+                if (rootCause == null) {
+                    /**
+                     * There is no known root cause yet, so we can add the node to the list of state handlers.
+                     *
+                     * If this call fails, because of the bitmask, this means one of the two happened:
+                     * - [notifyCancelling] was already called.
+                     *   This means that the job is already being cancelled: otherwise, with what exception would we
+                     *   notify the handler?
+                     *   So, we can retry the operation: either the state is already final, or the `rootCause` check
+                     *   above will give a different result.
+                     * - [notifyCompletion] was already called.
+                     *   This means that the job is already complete.
+                     *   We can retry the operation and will observe the final state.
+                     */
+                    list.addLast(node, LIST_CANCELLATION_PERMISSION or LIST_ON_COMPLETION_PERMISSION)
+                } else {
+                    /**
+                     * The root cause is known, so we can invoke the handler immediately and avoid adding it.
+                     */
+                    if (invokeImmediately) node.invoke(rootCause)
+                    return NonDisposableHandle
+                }
+            } else {
+                /**
+                 * The non-[onCancelling]-handlers are interested in completions only, so it's safe to add them at
+                 * any time before [notifyCompletion] is called (which closes the list).
+                 *
+                 * If the list *is* closed, on a retry, we'll observe the final state, as [notifyCompletion] is only
+                 * called after the state transition.
+                 */
+                list.addLast(node, LIST_ON_COMPLETION_PERMISSION)
+            }
+        }
+        when {
+            added -> return node
+            invokeImmediately -> node.invoke((state as? CompletedExceptionally)?.cause)
+        }
+        return NonDisposableHandle
+    }
+
+    /**
+     * Puts [node] into the current state's list of completion handlers.
+     *
+     * Returns `false` if the state is already complete and doesn't accept new handlers.
+     * Returns `true` if the handler was successfully added to the list.
+     *
+     * [tryAdd] is invoked when the state is [Incomplete] and the list is not `null`, to decide on the specific
+     * behavior in this case. It must return
+     * - `true` if the element was successfully added to the list
+     * - `false` if the operation needs to be retried
+     */
+    private inline fun tryPutNodeIntoList(
+        node: JobNode,
+        tryAdd: (Incomplete, NodeList) -> Boolean
+    ): Boolean {
         loopOnState { state ->
             when (state) {
                 is Empty -> { // EMPTY_X state -- no completion handlers
                     if (state.isActive) {
-                        // try move to SINGLE state
-                        if (_state.compareAndSet(state, node)) return node
+                        // try to move to the SINGLE state
+                        if (_state.compareAndSet(state, node)) return true
                     } else
                         promoteEmptyToNodeList(state) // that way we can add listener for non-active coroutine
                 }
-                is Incomplete -> {
-                    val list = state.list
-                    if (list == null) { // SINGLE/SINGLE+
-                        promoteSingleToNodeList(state as JobNode)
-                    } else {
-                        var rootCause: Throwable? = null
-                        var handle: DisposableHandle = NonDisposableHandle
-                        if (node.onCancelling && state is Finishing) {
-                            synchronized(state) {
-                                // check if we are installing cancellation handler on job that is being cancelled
-                                rootCause = state.rootCause // != null if cancelling job
-                                // We add node to the list in two cases --- either the job is not being cancelled
-                                // or we are adding a child to a coroutine that is not completing yet
-                                if (rootCause == null || node is ChildHandleNode && !state.isCompleting) {
-                                    // Note: add node the list while holding lock on state (make sure it cannot change)
-                                    if (!addLastAtomic(state, list, node)) return@loopOnState // retry
-                                    // just return node if we don't have to invoke handler (not cancelling yet)
-                                    if (rootCause == null) return node
-                                    // otherwise handler is invoked immediately out of the synchronized section & handle returned
-                                    handle = node
-                                }
-                            }
-                        }
-                        if (rootCause != null) {
-                            // Note: attachChild uses invokeImmediately, so it gets invoked when adding to cancelled job
-                            if (invokeImmediately) node.invoke(rootCause)
-                            return handle
-                        } else {
-                            if (addLastAtomic(state, list, node)) return node
-                        }
-                    }
+                is Incomplete -> when (val list = state.list) {
+                    null -> promoteSingleToNodeList(state as JobNode)
+                    else -> if (tryAdd(state, list)) return true
                 }
-                else -> { // is complete
-                    // :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
-                    // because we play type tricks on Kotlin/JS and handler is not necessarily a function there
-                    if (invokeImmediately) node.invoke((state as? CompletedExceptionally)?.cause)
-                    return NonDisposableHandle
-                }
+                else -> return false
             }
         }
     }
-
-    private fun addLastAtomic(expect: Any, list: NodeList, node: JobNode) =
-        list.addLastIf(node) { this.state === expect }
 
     private fun promoteEmptyToNodeList(state: Empty) {
         // try to promote it to LIST state with the corresponding state
@@ -874,13 +906,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // atomically transition to finishing & completing state
         val finishing = state as? Finishing ?: Finishing(list, false, null)
         // must synchronize updates to finishing state
-        var notifyRootCause: Throwable? = null
+        val notifyRootCause: Throwable?
         synchronized(finishing) {
             // check if this state is already completing
             if (finishing.isCompleting) return COMPLETING_ALREADY
             // mark as completing
             finishing.isCompleting = true
-            // if we need to promote to finishing then atomically do it here.
+            // if we need to promote to finishing, then atomically do it here.
             // We do it as early is possible while still holding the lock. This ensures that we cancelImpl asap
             // (if somebody else is faster) and we synchronize all the threads on this finishing lock asap.
             if (finishing !== state) {
@@ -894,11 +926,20 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             // If it just becomes cancelling --> must process cancelling notifications
             notifyRootCause = finishing.rootCause.takeIf { !wasCancelling }
         }
-        // process cancelling notification here -- it cancels all the children _before_ we start to to wait them (sic!!!)
+        // process cancelling notification here -- it cancels all the children _before_ we start to wait them (sic!!!)
         notifyRootCause?.let { notifyCancelling(list, it) }
         // now wait for children
-        val child = firstChild(state)
+        // we can't close the list yet: while there are active children, adding new ones is still allowed.
+        val child = list.nextChild()
         if (child != null && tryWaitForChild(finishing, child, proposedUpdate))
+            return COMPLETING_WAITING_CHILDREN
+        // turns out, there are no children to await, so we close the list.
+        list.close(LIST_CHILD_PERMISSION)
+        // some children could have sneaked into the list, so we try waiting for them again.
+        // it would be more correct to re-open the list (otherwise, we get non-linearizable behavior),
+        // but it's too difficult with the current lock-free list implementation.
+        val anotherChild = list.nextChild()
+        if (anotherChild != null && tryWaitForChild(finishing, anotherChild, proposedUpdate))
             return COMPLETING_WAITING_CHILDREN
         // otherwise -- we have not children left (all were already cancelled?)
         return finalizeFinishingState(finishing, proposedUpdate)
@@ -906,9 +947,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private val Any?.exceptionOrNull: Throwable?
         get() = (this as? CompletedExceptionally)?.cause
-
-    private fun firstChild(state: Incomplete) =
-        state as? ChildHandleNode ?: state.list?.nextChild()
 
     // return false when there is no more incomplete children to wait
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
@@ -925,11 +963,25 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
     private fun continueCompleting(state: Finishing, lastChild: ChildHandleNode, proposedUpdate: Any?) {
         assert { this.state === state } // consistency check -- it cannot change while we are waiting for children
-        // figure out if we need to wait for next child
+        // figure out if we need to wait for the next child
         val waitChild = lastChild.nextChild()
-        // try wait for next child
+        // try to wait for the next child
         if (waitChild != null && tryWaitForChild(state, waitChild, proposedUpdate)) return // waiting for next child
-        // no more children to wait -- try update state
+        // no more children to await, so *maybe* we can complete the job; for that, we stop accepting new children.
+        // potentially, the list can be closed for children more than once: if we detect that there are no more
+        // children, attempt to close the list, and then new children sneak in, this whole logic will be
+        // repeated, including closing the list.
+        state.list.close(LIST_CHILD_PERMISSION)
+        // did any new children sneak in?
+        val waitChildAgain = lastChild.nextChild()
+        if (waitChildAgain != null && tryWaitForChild(state, waitChildAgain, proposedUpdate)) {
+            // yes, so now we have to wait for them!
+            // ideally, we should re-open the list,
+            // but it's too difficult with the current lock-free list implementation,
+            // so we'll live with non-linearizable behavior for now.
+            return
+        }
+        // no more children, now we are sure; try to update the state
         val finalState = finalizeFinishingState(state, proposedUpdate)
         afterCompletion(finalState)
     }
@@ -958,14 +1010,75 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     public final override fun attachChild(child: ChildJob): ChildHandle {
         /*
          * Note: This function attaches a special ChildHandleNode node object. This node object
-         * is handled in a special way on completion on the coroutine (we wait for all of them) and
-         * is handled specially by invokeOnCompletion itself -- it adds this node to the list even
-         * if the job is already cancelling. For cancelling state child is attached under state lock.
-         * It's required to properly wait all children before completion and provide linearizable hierarchy view:
-         * If child is attached when the job is already being cancelled, such child will receive immediate notification on
-         * cancellation, but parent *will* wait for that child before completion and will handle its exception.
+         * is handled in a special way on completion on the coroutine (we wait for all of them) and also
+         * can't be added simply with `invokeOnCompletionInternal` -- we add this node to the list even
+         * if the job is already cancelling.
+         * It's required to properly await all children before completion and provide a linearizable hierarchy view:
+         * If the child is attached when the job is already being cancelled, such a child will receive
+         * an immediate notification on cancellation,
+         * but the parent *will* wait for that child before completion and will handle its exception.
          */
-        return invokeOnCompletion(handler = ChildHandleNode(child)) as ChildHandle
+        val node = ChildHandleNode(child).also { it.job = this }
+        val added = tryPutNodeIntoList(node) { _, list ->
+            // First, try to add a child along the cancellation handlers
+            val addedBeforeCancellation = list.addLast(
+                node,
+                LIST_ON_COMPLETION_PERMISSION or LIST_CHILD_PERMISSION or LIST_CANCELLATION_PERMISSION
+            )
+            if (addedBeforeCancellation) {
+                // The child managed to be added before the parent started to cancel or complete. Success.
+                true
+            } else {
+                /* Either cancellation or completion already happened, the child was not added.
+                 * Now we need to try adding it just for completion. */
+                val addedBeforeCompletion = list.addLast(
+                    node,
+                    LIST_CHILD_PERMISSION or LIST_ON_COMPLETION_PERMISSION
+                )
+                /*
+                 * Whether or not we managed to add the child before the parent completed, we need to investigate:
+                 * why didn't we manage to add it before cancellation?
+                 * If it's because cancellation happened in the meantime, we need to notify the child about it.
+                 * We check the latest state because the original state with which we started may not have had
+                 * the information about the cancellation yet.
+                 */
+                val rootCause = when (val latestState = this.state) {
+                    is Finishing -> {
+                        // The state is still incomplete, so we need to notify the child about the completion cause.
+                        latestState.rootCause
+                    }
+                    else -> {
+                        /** Since the list is already closed for [onCancelling], the job is either Finishing or
+                         * already completed. We need to notify the child about the completion cause. */
+                        assert { latestState !is Incomplete }
+                        (latestState as? CompletedExceptionally)?.cause
+                    }
+                }
+                /**
+                 * We must cancel the child if the parent was cancelled already, even if we successfully attached,
+                 * as this child didn't make it before [notifyCancelling] and won't be notified that it should be
+                 * cancelled.
+                 *
+                 * And if the parent wasn't cancelled and the previous [LockFreeLinkedListNode.addLast] failed because
+                 * the job is in its final state already, we won't be able to attach anyway, so we must just invoke
+                 * the handler and return.
+                 */
+                node.invoke(rootCause)
+                if (addedBeforeCompletion) {
+                    /** The root cause can't be null: since the earlier addition to the list failed, this means that
+                     * the job was already cancelled or completed. */
+                    assert { rootCause != null }
+                    true
+                } else {
+                    /** No sense in retrying: we know it won't succeed, and we already invoked the handler. */
+                    return NonDisposableHandle
+                }
+            }
+        }
+        if (added) return node
+        /** We can only end up here if [tryPutNodeIntoList] detected a final state. */
+        node.invoke((state as? CompletedExceptionally)?.cause)
+        return NonDisposableHandle
     }
 
     /**
@@ -1295,6 +1408,11 @@ private const val TRUE = 1
 private val SEALED = Symbol("SEALED")
 private val EMPTY_NEW = Empty(false)
 private val EMPTY_ACTIVE = Empty(true)
+
+// bit mask
+private const val LIST_ON_COMPLETION_PERMISSION = 1
+private const val LIST_CHILD_PERMISSION = 2
+private const val LIST_CANCELLATION_PERMISSION = 4
 
 private class Empty(override val isActive: Boolean) : Incomplete {
     override val list: NodeList? get() = null

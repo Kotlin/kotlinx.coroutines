@@ -8,18 +8,6 @@ import kotlin.jvm.*
 
 private typealias Node = LockFreeLinkedListNode
 
-@PublishedApi
-internal const val UNDECIDED: Int = 0
-
-@PublishedApi
-internal const val SUCCESS: Int = 1
-
-@PublishedApi
-internal const val FAILURE: Int = 2
-
-@PublishedApi
-internal val CONDITION_FALSE: Any = Symbol("CONDITION_FALSE")
-
 /**
  * Doubly-linked concurrent list node with remove support.
  * Based on paper
@@ -49,37 +37,10 @@ public actual open class LockFreeLinkedListNode {
     private fun removed(): Removed =
         _removedRef.value ?: Removed(this).also { _removedRef.lazySet(it) }
 
-    @PublishedApi
-    internal abstract class CondAddOp(
-        @JvmField val newNode: Node
-    ) : AtomicOp<Node>() {
-        @JvmField var oldNext: Node? = null
-
-        override fun complete(affected: Node, failure: Any?) {
-            val success = failure == null
-            val update = if (success) newNode else oldNext
-            if (update != null && affected._next.compareAndSet( this, update)) {
-                // only the thread the makes this update actually finishes add operation
-                if (success) newNode.finishAdd(oldNext!!)
-            }
-        }
-    }
-
-    @PublishedApi
-    internal inline fun makeCondAddOp(node: Node, crossinline condition: () -> Boolean): CondAddOp =
-        object : CondAddOp(node) {
-            override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
-        }
-
     public actual open val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed
-    public val next: Any get() {
-        _next.loop { next ->
-            if (next !is OpDescriptor) return next
-            next.perform(this)
-        }
-    }
+    public val next: Any get() = _next.value
 
     // LINEARIZABLE. Returns next non-removed Node
     public actual val nextNode: Node get() =
@@ -117,20 +78,27 @@ public actual open class LockFreeLinkedListNode {
     // ------ addLastXXX ------
 
     /**
-     * Adds last item to this list atomically if the [condition] is true.
+     * Adds last item to this list. Returns `false` if the list is closed.
      */
-    public actual inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
-        val condAdd = makeCondAddOp(node, condition)
+    public actual fun addLast(node: Node, permissionsBitmask: Int): Boolean {
         while (true) { // lock-free loop on prev.next
-            val prev = prevNode // sentinel node is never removed, so prev is always defined
-            when (prev.tryCondAddNext(node, this, condAdd)) {
-                SUCCESS -> return true
-                FAILURE -> return false
+            val currentPrev = prevNode
+            return when {
+                currentPrev is ListClosed ->
+                    currentPrev.forbiddenElementsBitmask and permissionsBitmask == 0 &&
+                        currentPrev.addLast(node, permissionsBitmask)
+                currentPrev.addNext(node, this) -> true
+                else -> continue
             }
         }
     }
 
-    // ------ addXXX util ------
+    /**
+     * Forbids adding new items to this list.
+     */
+    public actual fun close(forbiddenElementsBit: Int) {
+        addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
+    }
 
     /**
      * Given:
@@ -163,17 +131,6 @@ public actual open class LockFreeLinkedListNode {
         // added successfully (linearized add) -- fixup the list
         node.finishAdd(next)
         return true
-    }
-
-    // returns UNDECIDED, SUCCESS or FAILURE
-    @PublishedApi
-    internal fun tryCondAddNext(node: Node, next: Node, condAdd: CondAddOp): Int {
-        node._prev.lazySet(this)
-        node._next.lazySet(next)
-        condAdd.oldNext = next
-        if (!_next.compareAndSet(next, condAdd)) return UNDECIDED
-        // added operation successfully (linearized) -- complete it & fixup the list
-        return if (condAdd.perform(this) == null) SUCCESS else FAILURE
     }
 
     // ------ removeXXX ------
@@ -273,10 +230,6 @@ public actual open class LockFreeLinkedListNode {
                 }
                 // slow path when we need to help remove operations
                 this.isRemoved -> return null // nothing to do, this node was removed, bail out asap to save time
-                prevNext is OpDescriptor -> { // help & retry
-                    prevNext.perform(prev)
-                    return correctPrev() // retry from scratch
-                }
                 prevNext is Removed -> {
                     if (last !== null) {
                         // newly added (prev) node is already removed, correct last.next around it
@@ -332,3 +285,5 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     // optimization: because head is never removed, we don't have to read _next.value to check these:
     override val isRemoved: Boolean get() = false
 }
+
+private class ListClosed(@JvmField val forbiddenElementsBitmask: Int): LockFreeLinkedListNode()

@@ -12,13 +12,13 @@ class LinkedListTest {
     fun testSimpleAddLastRemove() {
         val list = LockFreeLinkedListHead()
         assertContents(list)
-        val n1 = IntNode(1).apply { list.addLast(this) }
+        val n1 = IntNode(1).apply { list.addLast(this, Int.MAX_VALUE) }
         assertContents(list, 1)
-        val n2 = IntNode(2).apply { list.addLast(this) }
+        val n2 = IntNode(2).apply { list.addLast(this, Int.MAX_VALUE) }
         assertContents(list, 1, 2)
-        val n3 = IntNode(3).apply { list.addLast(this) }
+        val n3 = IntNode(3).apply { list.addLast(this, Int.MAX_VALUE) }
         assertContents(list, 1, 2, 3)
-        val n4 = IntNode(4).apply { list.addLast(this) }
+        val n4 = IntNode(4).apply { list.addLast(this, Int.MAX_VALUE) }
         assertContents(list, 1, 2, 3, 4)
         assertTrue(n1.remove())
         assertContents(list, 2, 3, 4)
