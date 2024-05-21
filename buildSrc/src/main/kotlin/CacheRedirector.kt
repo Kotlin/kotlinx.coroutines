@@ -138,23 +138,6 @@ object CacheRedirector {
         project.configureYarnAndNodeRedirects()
     }
 
-    /**
-     * Temporary repositories to depend on until GC milestone 4 in KGP
-     * and stable Node release. Safe to remove when its removal does not break WASM tests.
-     */
-    @JvmStatic
-    fun configureWasmNodeRepositories(project: Project) {
-        val extension = project.extensions.findByType<NodeJsRootExtension>()
-        if (extension != null) {
-            extension.nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
-            extension.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
-        }
-
-        project.tasks.withType<KotlinNpmInstallTask>().configureEach {
-            args.add("--ignore-engines")
-        }
-    }
-
     @JvmStatic
     fun maybeRedirect(url: String): String {
         if (!cacheRedirectorEnabled) return url
