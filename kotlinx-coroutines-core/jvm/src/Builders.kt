@@ -69,7 +69,6 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
     return coroutine.joinBlocking()
 }
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val blockedThread: Thread,

@@ -97,8 +97,19 @@ public annotation class InternalCoroutinesApi
 @Target(AnnotationTarget.CLASS)
 @RequiresOptIn(
     level = RequiresOptIn.Level.WARNING, message =
-    "This is a kotlinx.coroutines API that is not intended to be inherited from. " +
+    "Inheriting from this kotlinx.coroutines API is unstable. " +
         "Either new methods may be added in the future, which would break the inheritance, " +
         "or correctly inheriting from it requires fulfilling contracts that may change in the future."
 )
 public annotation class BrittleForInheritanceCoroutinesApi
+
+/**
+ * Marks declarations that cannot be safely inherited from.
+ */
+@Target(AnnotationTarget.CLASS)
+@RequiresOptIn(
+    level = RequiresOptIn.Level.WARNING, message =
+    "This is a kotlinx.coroutines API that is not intended to be inherited from, " +
+        "as the library may handle predefined instances of this in a special manner."
+)
+public annotation class UnsuitableForInheritanceCoroutinesApi

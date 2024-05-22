@@ -304,7 +304,6 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
 public fun <T> callbackFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(block)
 
 // ChannelFlow implementation that is the first in the chain of flow operations and introduces (builds) a flow
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private open class ChannelFlowBuilder<T>(
     private val block: suspend ProducerScope<T>.() -> Unit,
     context: CoroutineContext = EmptyCoroutineContext,

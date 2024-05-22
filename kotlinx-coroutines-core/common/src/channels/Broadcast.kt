@@ -127,7 +127,6 @@ public fun <E> CoroutineScope.broadcast(
     return coroutine
 }
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
 private open class BroadcastCoroutine<E>(
     parentContext: CoroutineContext,
     protected val _channel: BroadcastChannel<E>,

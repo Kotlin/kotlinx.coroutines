@@ -3,7 +3,6 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal open class ChannelCoroutine<E>(
     parentContext: CoroutineContext,
     protected val _channel: Channel<E>,

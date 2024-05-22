@@ -16,8 +16,7 @@ internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 @InternalCoroutinesApi
 public interface FusibleFlow<T> : Flow<T> {
     /**
@@ -40,8 +39,6 @@ public interface FusibleFlow<T> : Flow<T> {
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
 @InternalCoroutinesApi
 public abstract class ChannelFlow<T>(
     // upstream context
@@ -137,7 +134,6 @@ public abstract class ChannelFlow<T>(
 }
 
 // ChannelFlow implementation that operates on another flow before it
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
 internal abstract class ChannelFlowOperator<S, T>(
     @JvmField protected val flow: Flow<S>,
     context: CoroutineContext,

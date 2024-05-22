@@ -30,8 +30,7 @@ import kotlin.coroutines.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(UnsuitableForInheritanceCoroutinesApi::class)
 @InternalCoroutinesApi
 public abstract class AbstractCoroutine<in T>(
     parentContext: CoroutineContext,

@@ -17,7 +17,7 @@ import kotlinx.coroutines.selects.*
  * be safely invoked from concurrent coroutines without external synchronization.
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(markerClass = BrittleForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(markerClass = UnsuitableForInheritanceCoroutinesApi::class)
 public interface CompletableDeferred<T> : Deferred<T> {
     /**
      * Completes this deferred value with a given [value]. The result is `true` if this deferred was
@@ -72,7 +72,7 @@ public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = Completab
 /**
  * Concrete implementation of [CompletableDeferred].
  */
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(UnsuitableForInheritanceCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 private class CompletableDeferredImpl<T>(
     parent: Job?
