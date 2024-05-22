@@ -605,6 +605,9 @@ public final class kotlinx/coroutines/TimeoutKt {
 	public static final fun withTimeoutOrNull-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public abstract interface annotation class kotlinx/coroutines/UnsuitableForInheritanceCoroutinesApi : java/lang/annotation/Annotation {
+}
+
 public final class kotlinx/coroutines/YieldContext : kotlin/coroutines/AbstractCoroutineContextElement {
 	public static final field Key Lkotlinx/coroutines/YieldContext$Key;
 	public field dispatcherWasUnconfined Z
