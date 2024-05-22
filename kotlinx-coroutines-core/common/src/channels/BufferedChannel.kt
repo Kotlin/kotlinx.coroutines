@@ -658,7 +658,7 @@ internal open class BufferedChannel<E>(
         }
         is ReceiveCatching<*> -> {
             this as ReceiveCatching<E>
-            cont.tryResume0(success(element), onUndeliveredElement?.bindCancellationFun(element, cont.context))
+            cont.tryResume0(success(element), onUndeliveredElement?.bindCancellationFunResult(cont.context))
         }
         is BufferedChannel<*>.BufferedChannelIterator -> {
             this as BufferedChannel<E>.BufferedChannelIterator
@@ -666,7 +666,7 @@ internal open class BufferedChannel<E>(
         }
         is CancellableContinuation<*> -> { // `receive()`
             this as CancellableContinuation<E>
-            tryResume0(element, onUndeliveredElement?.bindCancellationFun(element, context))
+            tryResume0(element, onUndeliveredElement?.bindCancellationFun(context))
         }
         else -> error("Unexpected receiver type: $this")
     }
@@ -728,7 +728,7 @@ internal open class BufferedChannel<E>(
             // not dispatched yet. In case `onUndeliveredElement` is
             // specified, we need to invoke it in the latter case.
             onElementRetrieved = { element ->
-                val onCancellation = onUndeliveredElement?.bindCancellationFun(element, cont.context)
+                val onCancellation = onUndeliveredElement?.bindCancellationFun(cont.context)
                 cont.resume(element, onCancellation)
             },
             onClosed = { onClosedReceiveOnNoWaiterSuspend(cont) },
@@ -772,7 +772,7 @@ internal open class BufferedChannel<E>(
             segment, index, r,
             waiter = waiter,
             onElementRetrieved = { element ->
-                cont.resume(success(element), onUndeliveredElement?.bindCancellationFun(element, cont.context))
+                cont.resume(success(element), onUndeliveredElement?.bindCancellationFunResult(cont.context))
             },
             onClosed = { onClosedReceiveCatchingOnNoWaiterSuspend(cont) }
         )
@@ -2923,14 +2923,24 @@ private val EXPAND_BUFFER_COMPLETION_WAIT_ITERATIONS = systemProp("kotlinx.corou
  */
 private fun <T> CancellableContinuation<T>.tryResume0(
     value: T,
-    onCancellation: ((cause: Throwable) -> Unit)? = null
+    onCancellation: ((cause: Throwable, value: T) -> Unit)? = null
 ): Boolean =
-    tryResume(value, null, onCancellation?.let { { throwable, _ -> onCancellation(throwable) } }).let { token ->
+    tryResume(value, null, onCancellation).let { token ->
         if (token != null) {
             completeResume(token)
             true
         } else false
     }
+
+private fun <E> OnUndeliveredElement<E>.bindCancellationFunResult(context: CoroutineContext): (Throwable, ChannelResult<E>) -> Unit =
+    { _: Throwable, element: ChannelResult<E> -> callUndeliveredElement(element.getOrNull()!!, context) }
+
+private fun <E> OnUndeliveredElement<E>.bindCancellationFun(element: E, context: CoroutineContext):
+        (Throwable, Any?) -> Unit =
+    { _: Throwable, _ -> callUndeliveredElement(element, context) }
+
+private fun <E> OnUndeliveredElement<E>.bindCancellationFun(context: CoroutineContext): (Throwable, E) -> Unit =
+    { _: Throwable, element: E -> callUndeliveredElement(element, context) }
 
 /*
   If the channel is rendezvous or unlimited, the `bufferEnd` counter

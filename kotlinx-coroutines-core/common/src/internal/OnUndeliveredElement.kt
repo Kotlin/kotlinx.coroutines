@@ -29,9 +29,6 @@ internal fun <E> OnUndeliveredElement<E>.callUndeliveredElement(element: E, cont
     }
 }
 
-internal fun <E> OnUndeliveredElement<E>.bindCancellationFun(element: E, context: CoroutineContext): (Throwable) -> Unit =
-    { _: Throwable -> callUndeliveredElement(element, context) }
-
 /**
  * Internal exception that is thrown when [OnUndeliveredElement] handler in
  * a [kotlinx.coroutines.channels.Channel] throws an exception.
