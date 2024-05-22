@@ -219,9 +219,8 @@ public interface Flow<out T> {
  * }
  * ```
  */
-@OptIn(ExperimentalSubclassOptIn::class)
 @ExperimentalCoroutinesApi
-@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(BrittleForInheritanceCoroutinesApi::class)
 public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
     public final override suspend fun collect(collector: FlowCollector<T>) {
