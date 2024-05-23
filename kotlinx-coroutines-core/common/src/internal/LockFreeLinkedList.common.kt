@@ -34,7 +34,7 @@ internal open class LockFreeLinkedListHead: LockFreeLinkedListSegment(
     private val forbiddenBits: AtomicInt = atomic(0)
 
     /**
-     * Iterates over all non-removed elements in this list, skipping every node until (and including) [startAfter].
+     * Iterates over all non-removed elements in this list, skipping every node until (and including) [startAfterIndex].
      */
     inline fun forEach(
         forbidBitmask: Byte = 0,
@@ -172,8 +172,7 @@ private fun createSegment(id: Long, prev: LockFreeLinkedListSegment): LockFreeLi
 
 private const val SEGMENT_SIZE = 8
 
-@JvmInline
-private value class BrokenForSomeElements private constructor(val forbiddenBits: Byte) {
+private class BrokenForSomeElements private constructor(val forbiddenBits: Byte) {
     companion object {
         fun fromBitmask(forbiddenBits: Byte): BrokenForSomeElements? = when (forbiddenBits) {
             0.toByte() -> null // no one is forbidden
