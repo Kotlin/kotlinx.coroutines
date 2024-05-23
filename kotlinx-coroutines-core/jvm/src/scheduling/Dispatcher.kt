@@ -32,7 +32,7 @@ internal object DefaultScheduler : SchedulerCoroutineDispatcher(
 }
 
 // The unlimited instance of Dispatchers.IO that utilizes all the threads CoroutineScheduler provides
-private object UnlimitedIoScheduler : CoroutineDispatcher() {
+private object UnlimitedIoScheduler : CoroutineDispatcher(), SoftLimitedParallelism {
 
     @InternalCoroutinesApi
     override fun dispatchYield(context: CoroutineContext, block: Runnable) {
@@ -49,12 +49,18 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
         if (parallelism >= MAX_POOL_SIZE) return this
         return super.limitedParallelism(parallelism)
     }
+
+    override fun softLimitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        if (parallelism >= MAX_POOL_SIZE) return this
+        return SoftLimitedDispatcher(this, parallelism)
+    }
 }
 
 // Dispatchers.IO
-internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor {
+internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor, SoftLimitedParallelism {
 
-    private val default = UnlimitedIoScheduler.limitedParallelism(
+    private val default = UnlimitedIoScheduler.softLimitedParallelism(
         systemProp(
             IO_PARALLELISM_PROPERTY_NAME,
             64.coerceAtLeast(AVAILABLE_PROCESSORS)
@@ -70,6 +76,10 @@ internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor {
     override fun limitedParallelism(parallelism: Int): CoroutineDispatcher {
         // See documentation to Dispatchers.IO for the rationale
         return UnlimitedIoScheduler.limitedParallelism(parallelism)
+    }
+
+    override fun softLimitedParallelism(parallelism: Int): CoroutineDispatcher {
+        return UnlimitedIoScheduler.softLimitedParallelism(parallelism)
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
@@ -94,7 +104,7 @@ internal open class SchedulerCoroutineDispatcher(
     private val maxPoolSize: Int = MAX_POOL_SIZE,
     private val idleWorkerKeepAliveNs: Long = IDLE_WORKER_KEEP_ALIVE_NS,
     private val schedulerName: String = "CoroutineScheduler",
-) : ExecutorCoroutineDispatcher() {
+) : ExecutorCoroutineDispatcher(), SoftLimitedParallelism {
 
     override val executor: Executor
         get() = coroutineScheduler
@@ -133,4 +143,10 @@ internal open class SchedulerCoroutineDispatcher(
 
     // for tests only
     internal fun restore() = usePrivateScheduler() // recreate scheduler
+
+    override fun softLimitedParallelism(parallelism: Int): CoroutineDispatcher {
+        parallelism.checkParallelism()
+        if (parallelism >= corePoolSize) return this
+        return SoftLimitedDispatcher(this, parallelism)
+    }
 }
