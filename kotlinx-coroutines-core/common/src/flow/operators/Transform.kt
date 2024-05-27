@@ -129,3 +129,38 @@ public fun <T> Flow<T>.runningReduce(operation: suspend (accumulator: T, value: 
         emit(accumulator as T)
     }
 }
+
+/**
+ * Splits the given flow into a flow of non-overlapping lists each not exceeding the given [size] but never empty.
+ * The last emitted list may have fewer elements than the given size.
+ *
+ * Example of usage:
+ * ```
+ * flowOf("a", "b", "c", "d", "e")
+ *     .chunked(2) // ["a", "b"], ["c", "d"], ["e"]
+ *     .map { it.joinToString(separator = "") }
+ *     .collect {
+ *         println(it) // Prints "ab", "cd", e"
+ *     }
+ * ```
+ *
+ * @throws IllegalArgumentException if [size] is not positive.
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Flow<T>.chunked(size: Int): Flow<List<T>> {
+    require(size >= 1) { "Expected positive chunk size, but got $size" }
+    return flow {
+        var result: ArrayList<T>? = null // Do not preallocate anything
+        collect { value ->
+            // Allocate if needed
+            val acc = result ?: ArrayList<T>(size).also { result = it }
+            acc.add(value)
+            if (acc.size == size) {
+                emit(acc)
+                // Cleanup, but don't allocate -- it might've been the case this is the last element
+                result = null
+            }
+        }
+        result?.let { emit(it) }
+    }
+}
