@@ -69,10 +69,8 @@ public interface Mutex {
      * Additional parameter for the clause in the `owner` (see [lock]) and when the clause is selected
      * the reference to this mutex is passed into the corresponding block.
      */
-    @Deprecated(
-        level = DeprecationLevel.WARNING, message = "Mutex.onLock deprecated without replacement. " +
-            "For additional details please refer to #2794"
-    ) // WARNING since 1.6.0
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Mutex.onLock deprecated without replacement. " +
+        "For additional details please refer to #2794") // WARNING since 1.6.0
     public val onLock: SelectClause2<Any?, Mutex>
 
     /**
@@ -143,9 +141,8 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
             { unlock(owner) }
         }
 
-    override val isLocked: Boolean
-        get() =
-            availablePermits == 0
+    override val isLocked: Boolean get() =
+        availablePermits == 0
 
     override fun holdsLock(owner: Any): Boolean = holdsLockImpl(owner) == HOLDS_LOCK_YES
 
@@ -224,13 +221,12 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     }
 
     @Suppress("UNCHECKED_CAST", "OverridingDeprecatedMember", "OVERRIDE_DEPRECATION")
-    override val onLock: SelectClause2<Any?, Mutex>
-        get() = SelectClause2Impl(
-            clauseObject = this,
-            regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
-            processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
-            onCancellationConstructor = onSelectCancellationUnlockConstructor
-        )
+    override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
+        clauseObject = this,
+        regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
+        processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
+        onCancellationConstructor = onSelectCancellationUnlockConstructor
+    )
 
     protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
         if (owner != null && holdsLock(owner)) {
