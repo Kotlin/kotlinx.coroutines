@@ -1,13 +1,9 @@
 package kotlinx.coroutines.channels
 
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.BufferOverflow.*
-import kotlinx.coroutines.channels.ChannelResult.Companion.closed
 import kotlinx.coroutines.channels.ChannelResult.Companion.success
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.internal.OnUndeliveredElement
 import kotlinx.coroutines.selects.*
-import kotlin.coroutines.*
 
 /**
  * This is a special [BufferedChannel] extension that supports [DROP_OLDEST] and [DROP_LATEST]
