@@ -140,7 +140,6 @@ private class MultiWorkerDispatcher(
         }
     }
 
-    @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
         if (parallelism >= workersCount) {

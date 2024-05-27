@@ -8,7 +8,6 @@ import kotlin.jvm.*
  */
 internal object Unconfined : CoroutineDispatcher() {
 
-    @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         throw UnsupportedOperationException("limitedParallelism is not supported for Dispatchers.Unconfined")
     }

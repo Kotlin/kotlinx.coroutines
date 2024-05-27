@@ -140,7 +140,6 @@ public abstract class CoroutineDispatcher :
      * @throws IllegalArgumentException if the given [parallelism] is non-positive
      * @throws UnsupportedOperationException if the current dispatcher does not support limited parallelism views
      */
-    @ExperimentalCoroutinesApi
     public open fun limitedParallelism(parallelism: Int, name: String? = null): CoroutineDispatcher {
         parallelism.checkParallelism()
         return LimitedDispatcher(this, parallelism, name)
