@@ -243,9 +243,13 @@ internal open class CancellableContinuationImpl<in T>(
         callCancelHandlerSafely { segment.onCancellation(index, cause, context) }
     }
 
-    fun <R> callOnCancellation(onCancellation: (cause: Throwable, value: R) -> Unit, cause: Throwable, value: R) {
+    fun <R> callOnCancellation(
+        onCancellation: (cause: Throwable, value: R, context: CoroutineContext) -> Unit,
+        cause: Throwable,
+        value: R
+    ) {
         try {
-            onCancellation.invoke(cause, value)
+            onCancellation.invoke(cause, value, context)
         } catch (ex: Throwable) {
             // Handler should never fail, if it does -- it is an unhandled exception
             handleCoroutineException(
@@ -353,10 +357,14 @@ internal open class CancellableContinuationImpl<in T>(
     override fun resumeWith(result: Result<T>) =
         resumeImpl(result.toState(this), resumeMode)
 
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?) =
-        resumeImpl(value, resumeMode, onCancellation?.let { { cause, _ -> onCancellation(cause) } })
+        resumeImpl(value, resumeMode, onCancellation?.let { { cause, _, _ -> onCancellation(cause) } })
 
-    override fun <R: T> resume(value: R, onCancellation: ((cause: Throwable, value: R) -> Unit)?) =
+    override fun <R : T> resume(
+        value: R,
+        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?
+    ) =
         resumeImpl(value, resumeMode, onCancellation)
 
     /**
@@ -383,7 +391,8 @@ internal open class CancellableContinuationImpl<in T>(
         invokeOnCancellationImpl(segment)
     }
 
-    override fun invokeOnCancellation(handler: CompletionHandler) = invokeOnCancellation(CancelHandler.UserSupplied(handler))
+    override fun invokeOnCancellation(handler: CompletionHandler) =
+        invokeOnCancellation(CancelHandler.UserSupplied(handler))
 
     internal fun invokeOnCancellationInternal(handler: CancelHandler) = invokeOnCancellationImpl(handler)
 
@@ -418,6 +427,7 @@ internal open class CancellableContinuationImpl<in T>(
                     }
                     return
                 }
+
                 is CompletedContinuation<*> -> {
                     /*
                      * Continuation was already completed, and might already have cancel handler.
@@ -463,7 +473,7 @@ internal open class CancellableContinuationImpl<in T>(
         state: NotCompleted,
         proposedUpdate: R,
         resumeMode: Int,
-        onCancellation: ((cause: Throwable, value: R) -> Unit)?,
+        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?,
         idempotent: Any?
     ): Any? = when {
         proposedUpdate is CompletedExceptionally -> {
@@ -482,7 +492,7 @@ internal open class CancellableContinuationImpl<in T>(
     internal fun <R> resumeImpl(
         proposedUpdate: R,
         resumeMode: Int,
-        onCancellation: ((cause: Throwable, value: R) -> Unit)? = null
+        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)? = null
     ) {
         _state.loop { state ->
             when (state) {
@@ -493,6 +503,7 @@ internal open class CancellableContinuationImpl<in T>(
                     dispatchResume(resumeMode) // dispatch resume, but it might get cancelled in process
                     return // done
                 }
+
                 is CancelledContinuation -> {
                     /*
                      * If continuation was cancelled, then resume attempt must be ignored,
@@ -517,7 +528,7 @@ internal open class CancellableContinuationImpl<in T>(
     private fun <R> tryResumeImpl(
         proposedUpdate: R,
         idempotent: Any?,
-        onCancellation: ((cause: Throwable, value: R) -> Unit)?
+        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?
     ): Symbol? {
         _state.loop { state ->
             when (state) {
@@ -563,7 +574,11 @@ internal open class CancellableContinuationImpl<in T>(
     override fun tryResume(value: T, idempotent: Any?): Any? =
         tryResumeImpl(value, idempotent, onCancellation = null)
 
-    override fun <R: T> tryResume(value: R, idempotent: Any?, onCancellation: ((cause: Throwable, value: R) -> Unit)?): Any? =
+    override fun <R : T> tryResume(
+        value: R,
+        idempotent: Any?,
+        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?
+    ): Any? =
         tryResumeImpl(value, idempotent, onCancellation)
 
     override fun tryResumeWithException(exception: Throwable): Any? =
@@ -657,8 +672,10 @@ internal interface CancelHandler : NotCompleted {
 // Completed with additional metadata
 private data class CompletedContinuation<R>(
     @JvmField val result: R,
-    @JvmField val cancelHandler: CancelHandler? = null, // installed via invokeOnCancellation
-    @JvmField val onCancellation: ((cause: Throwable, value: R) -> Unit)? = null, // installed via resume block
+    // installed via `invokeOnCancellation`
+    @JvmField val cancelHandler: CancelHandler? = null,
+    // installed via the `resume` block
+    @JvmField val onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)? = null,
     @JvmField val idempotentResume: Any? = null,
     @JvmField val cancelCause: Throwable? = null
 ) {

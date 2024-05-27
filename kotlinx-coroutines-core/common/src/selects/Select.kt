@@ -105,7 +105,8 @@ public sealed interface SelectBuilder<in R> {
     @LowPriorityInOverloadResolution
     @Deprecated(
         message = "Replaced with the same extension function",
-        level = DeprecationLevel.ERROR, replaceWith = ReplaceWith(expression = "onTimeout", imports = ["kotlinx.coroutines.selects.onTimeout"])
+        level = DeprecationLevel.ERROR,
+        replaceWith = ReplaceWith(expression = "onTimeout", imports = ["kotlinx.coroutines.selects.onTimeout"])
     ) // Since 1.7.0, was experimental
     public fun onTimeout(timeMillis: Long, block: suspend () -> R): Unit = onTimeout(timeMillis, block)
 }
@@ -171,6 +172,7 @@ internal class SelectClause0Impl(
 ) : SelectClause0 {
     override val processResFunc: ProcessResultFunction = DUMMY_PROCESS_RESULT_FUNCTION
 }
+
 private val DUMMY_PROCESS_RESULT_FUNCTION: ProcessResultFunction = { _, _, _ -> null }
 
 /**
@@ -234,7 +236,8 @@ public sealed interface SelectInstance<in R> {
      */
     public fun selectInRegistrationPhase(internalResult: Any?)
 }
-internal interface SelectInstanceInternal<R>: SelectInstance<R>, Waiter
+
+internal interface SelectInstanceInternal<R> : SelectInstance<R>, Waiter
 
 @PublishedApi
 internal open class SelectImplementation<R>(
@@ -346,6 +349,7 @@ internal open class SelectImplementation<R>(
      * The state of this `select` operation. See the description above for details.
      */
     private val state = atomic<Any>(STATE_REG)
+
     /**
      * Returns `true` if this `select` instance is in the REGISTRATION phase;
      * otherwise, returns `false`.
@@ -354,12 +358,14 @@ internal open class SelectImplementation<R>(
         get() = state.value.let {
             it === STATE_REG || it is List<*>
         }
+
     /**
      * Returns `true` if this `select` is already selected;
      * thus, other parties are bound to fail when making a rendezvous with it.
      */
     private val isSelected
         get() = state.value is SelectImplementation<*>.ClauseData
+
     /**
      * Returns `true` if this `select` is cancelled.
      */
@@ -447,8 +453,10 @@ internal open class SelectImplementation<R>(
 
     override fun SelectClause0.invoke(block: suspend () -> R) =
         ClauseData(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_0, block, onCancellationConstructor).register()
+
     override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) =
         ClauseData(clauseObject, regFunc, processResFunc, null, block, onCancellationConstructor).register()
+
     override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) =
         ClauseData(clauseObject, regFunc, processResFunc, param, block, onCancellationConstructor).register()
 
@@ -549,7 +557,7 @@ internal open class SelectImplementation<R>(
      * this function performs registration of such clauses. After that, it atomically stores
      * the continuation into the [state] field if there is no more clause to be re-registered.
      */
-    private suspend fun waitUntilSelected() = suspendCancellableCoroutine<Unit> sc@ { cont ->
+    private suspend fun waitUntilSelected() = suspendCancellableCoroutine<Unit> sc@{ cont ->
         // Update the state.
         state.loop { curState ->
             when {
@@ -762,7 +770,7 @@ internal open class SelectImplementation<R>(
 
     /**
      * Each `select` clause is internally represented with a [ClauseData] instance.
-      */
+     */
     internal inner class ClauseData(
         @JvmField val clauseObject: Any, // the object of this `select` clause: Channel, Mutex, Job, ...
         private val regFunc: RegistrationFunction,
@@ -771,8 +779,10 @@ internal open class SelectImplementation<R>(
         private val block: Any, // the user-specified block, which should be called if this clause becomes selected
         @JvmField val onCancellationConstructor: OnCancellationConstructor?
     ) {
-        @JvmField var disposableHandleOrSegment: Any? = null
-        @JvmField var indexInSegment: Int = -1
+        @JvmField
+        var disposableHandleOrSegment: Any? = null
+        @JvmField
+        var indexInSegment: Int = -1
 
         /**
          * Tries to register the specified [select] instance in [clauseObject] and check
@@ -844,7 +854,8 @@ internal open class SelectImplementation<R>(
 }
 
 private fun CancellableContinuation<Unit>.tryResume(onCancellation: ((cause: Throwable) -> Unit)?): Boolean {
-    val token = tryResume(Unit, null, onCancellation?.let { { throwable, _ -> onCancellation(throwable) } }) ?: return false
+    val token =
+        tryResume(Unit, null, onCancellation?.let { { throwable, _, _ -> onCancellation(throwable) } }) ?: return false
     completeResume(token)
     return true
 }
@@ -854,6 +865,7 @@ private const val TRY_SELECT_SUCCESSFUL = 0
 private const val TRY_SELECT_REREGISTER = 1
 private const val TRY_SELECT_CANCELLED = 2
 private const val TRY_SELECT_ALREADY_SELECTED = 3
+
 // trySelectDetailed(..) results.
 internal enum class TrySelectDetailedResult {
     SUCCESSFUL, REREGISTER, CANCELLED, ALREADY_SELECTED
@@ -870,9 +882,11 @@ private fun TrySelectDetailedResult(trySelectInternalResult: Int): TrySelectDeta
 private val STATE_REG = Symbol("STATE_REG")
 private val STATE_COMPLETED = Symbol("STATE_COMPLETED")
 private val STATE_CANCELLED = Symbol("STATE_CANCELLED")
+
 // As the selection result is nullable, we use this special
 // marker for the absence of result.
 private val NO_RESULT = Symbol("NO_RESULT")
+
 // We use this marker parameter objects to distinguish
 // SelectClause[0,1,2] and invoke the user-specified block correctly.
 internal val PARAM_CLAUSE_0 = Symbol("PARAM_CLAUSE_0")

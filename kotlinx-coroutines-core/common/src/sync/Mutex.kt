@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.jvm.*
 
 /**
@@ -68,8 +69,10 @@ public interface Mutex {
      * Additional parameter for the clause in the `owner` (see [lock]) and when the clause is selected
      * the reference to this mutex is passed into the corresponding block.
      */
-    @Deprecated(level = DeprecationLevel.WARNING, message = "Mutex.onLock deprecated without replacement. " +
-        "For additional details please refer to #2794") // WARNING since 1.6.0
+    @Deprecated(
+        level = DeprecationLevel.WARNING, message = "Mutex.onLock deprecated without replacement. " +
+            "For additional details please refer to #2794"
+    ) // WARNING since 1.6.0
     public val onLock: SelectClause2<Any?, Mutex>
 
     /**
@@ -140,8 +143,9 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
             { unlock(owner) }
         }
 
-    override val isLocked: Boolean get() =
-        availablePermits == 0
+    override val isLocked: Boolean
+        get() =
+            availablePermits == 0
 
     override fun holdsLock(owner: Any): Boolean = holdsLockImpl(owner) == HOLDS_LOCK_YES
 
@@ -220,12 +224,13 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
     }
 
     @Suppress("UNCHECKED_CAST", "OverridingDeprecatedMember", "OVERRIDE_DEPRECATION")
-    override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
-        clauseObject = this,
-        regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
-        processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
-        onCancellationConstructor = onSelectCancellationUnlockConstructor
-    )
+    override val onLock: SelectClause2<Any?, Mutex>
+        get() = SelectClause2Impl(
+            clauseObject = this,
+            regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
+            processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
+            onCancellationConstructor = onSelectCancellationUnlockConstructor
+        )
 
     protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
         if (owner != null && holdsLock(owner)) {
@@ -248,10 +253,14 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         @JvmField
         val owner: Any?
     ) : CancellableContinuation<Unit> by cont, Waiter by cont {
-        override fun <R: Unit> tryResume(value: R, idempotent: Any?, onCancellation: ((cause: Throwable, value: R) -> Unit)?): Any? {
+        override fun <R : Unit> tryResume(
+            value: R,
+            idempotent: Any?,
+            onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?
+        ): Any? {
             assert { this@MutexImpl.owner.value === NO_OWNER }
-            val token = cont.tryResume(value, idempotent) { _, _ ->
-                assert { this@MutexImpl.owner.value.let { it === NO_OWNER ||it === owner } }
+            val token = cont.tryResume(value, idempotent) { _, _, _ ->
+                assert { this@MutexImpl.owner.value.let { it === NO_OWNER || it === owner } }
                 this@MutexImpl.owner.value = owner
                 unlock(owner)
             }
@@ -262,7 +271,10 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
             return token
         }
 
-        override fun <R: Unit> resume(value: R, onCancellation: ((cause: Throwable, value: R) -> Unit)?) {
+        override fun <R : Unit> resume(
+            value: R,
+            onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?
+        ) {
             assert { this@MutexImpl.owner.value === NO_OWNER }
             this@MutexImpl.owner.value = owner
             cont.resume(value) { unlock(owner) }
