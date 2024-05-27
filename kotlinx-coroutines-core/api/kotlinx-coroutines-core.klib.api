@@ -757,14 +757,14 @@ final value class <#A: out kotlin/Any?> kotlinx.coroutines.channels/ChannelResul
     final val isSuccess // kotlinx.coroutines.channels/ChannelResult.isSuccess|{}isSuccess[0]
         final fun <get-isSuccess>(): kotlin/Boolean // kotlinx.coroutines.channels/ChannelResult.isSuccess.<get-isSuccess>|<get-isSuccess>(){}[0]
 }
-open annotation class kotlinx.coroutines/BrittleForInheritanceCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/BrittleForInheritanceCoroutinesApi|null[0]
-    constructor <init>() // kotlinx.coroutines/BrittleForInheritanceCoroutinesApi.<init>|<init>(){}[0]
-}
 open annotation class kotlinx.coroutines/DelicateCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/DelicateCoroutinesApi|null[0]
     constructor <init>() // kotlinx.coroutines/DelicateCoroutinesApi.<init>|<init>(){}[0]
 }
 open annotation class kotlinx.coroutines/ExperimentalCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/ExperimentalCoroutinesApi|null[0]
     constructor <init>() // kotlinx.coroutines/ExperimentalCoroutinesApi.<init>|<init>(){}[0]
+}
+open annotation class kotlinx.coroutines/ExperimentalForInheritanceCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/ExperimentalForInheritanceCoroutinesApi|null[0]
+    constructor <init>() // kotlinx.coroutines/ExperimentalForInheritanceCoroutinesApi.<init>|<init>(){}[0]
 }
 open annotation class kotlinx.coroutines/FlowPreview : kotlin/Annotation { // kotlinx.coroutines/FlowPreview|null[0]
     constructor <init>() // kotlinx.coroutines/FlowPreview.<init>|<init>(){}[0]
@@ -772,11 +772,11 @@ open annotation class kotlinx.coroutines/FlowPreview : kotlin/Annotation { // ko
 open annotation class kotlinx.coroutines/InternalCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/InternalCoroutinesApi|null[0]
     constructor <init>() // kotlinx.coroutines/InternalCoroutinesApi.<init>|<init>(){}[0]
 }
+open annotation class kotlinx.coroutines/InternalForInheritanceCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/InternalForInheritanceCoroutinesApi|null[0]
+    constructor <init>() // kotlinx.coroutines/InternalForInheritanceCoroutinesApi.<init>|<init>(){}[0]
+}
 open annotation class kotlinx.coroutines/ObsoleteCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/ObsoleteCoroutinesApi|null[0]
     constructor <init>() // kotlinx.coroutines/ObsoleteCoroutinesApi.<init>|<init>(){}[0]
-}
-open annotation class kotlinx.coroutines/UnsuitableForInheritanceCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/UnsuitableForInheritanceCoroutinesApi|null[0]
-    constructor <init>() // kotlinx.coroutines/UnsuitableForInheritanceCoroutinesApi.<init>|<init>(){}[0]
 }
 open class <#A: in kotlin/Any?> kotlinx.coroutines/CancellableContinuationImpl : kotlinx.coroutines.internal/CoroutineStackFrame, kotlinx.coroutines/CancellableContinuation<#A>, kotlinx.coroutines/DispatchedTask<#A>, kotlinx.coroutines/Waiter { // kotlinx.coroutines/CancellableContinuationImpl|null[0]
     constructor <init>(kotlin.coroutines/Continuation<#A>, kotlin/Int) // kotlinx.coroutines/CancellableContinuationImpl.<init>|<init>(kotlin.coroutines.Continuation<1:0>;kotlin.Int){}[0]
