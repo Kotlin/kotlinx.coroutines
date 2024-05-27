@@ -111,7 +111,8 @@ public annotation class ExperimentalForInheritanceCoroutinesApi
     level = RequiresOptIn.Level.WARNING, message =
     "This is a kotlinx.coroutines API that is not intended to be inherited from, " +
         "as the library may handle predefined instances of this in a special manner. " +
+        "This will be an error in a future release. " +
         "If you need to inherit from this, please describe your use case in " +
-        "https://github.com/Kotlin/kotlinx.coroutines/issues, so that we can provide a stable API for inheritance."
+        "https://github.com/Kotlin/kotlinx.coroutines/issues, so that we can provide a stable API for inheritance. "
 )
 public annotation class InternalForInheritanceCoroutinesApi
