@@ -158,7 +158,8 @@ public typealias ProcessResultFunction = (clauseObject: Any, param: Any?, clause
  * as [SelectInstance.selectInRegistrationPhase] can be called when the coroutine is already cancelled.
  */
 @InternalCoroutinesApi
-public typealias OnCancellationConstructor = (select: SelectInstance<*>, param: Any?, internalResult: Any?) -> (Throwable) -> Unit
+public typealias OnCancellationConstructor = (select: SelectInstance<*>, param: Any?, internalResult: Any?) ->
+    (Throwable, Any?, CoroutineContext) -> Unit
 
 /**
  * Clause for [select] expression without additional parameters that does not select any value.
@@ -853,9 +854,11 @@ internal open class SelectImplementation<R>(
     }
 }
 
-private fun CancellableContinuation<Unit>.tryResume(onCancellation: ((cause: Throwable) -> Unit)?): Boolean {
+private fun CancellableContinuation<Unit>.tryResume(
+    onCancellation: ((cause: Throwable, value: Any?, context: CoroutineContext) -> Unit)?
+): Boolean {
     val token =
-        tryResume(Unit, null, onCancellation?.let { { throwable, _, _ -> onCancellation(throwable) } }) ?: return false
+        tryResume(Unit, null, onCancellation) ?: return false
     completeResume(token)
     return true
 }

@@ -138,7 +138,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
 
     private val onSelectCancellationUnlockConstructor: OnCancellationConstructor =
         { _: SelectInstance<*>, owner: Any?, _: Any? ->
-            { unlock(owner) }
+            { _, _, _ -> unlock(owner) }
         }
 
     override val isLocked: Boolean get() =

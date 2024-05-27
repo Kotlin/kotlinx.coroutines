@@ -1560,7 +1560,9 @@ internal open class BufferedChannel<E>(
     @Suppress("UNCHECKED_CAST")
     private val onUndeliveredElementReceiveCancellationConstructor: OnCancellationConstructor? = onUndeliveredElement?.let {
         { select: SelectInstance<*>, _: Any?, element: Any? ->
-            { if (element !== CHANNEL_CLOSED) onUndeliveredElement.callUndeliveredElement(element as E, select.context) }
+            { _, _, _ ->
+                if (element !== CHANNEL_CLOSED) onUndeliveredElement.callUndeliveredElement(element as E, select.context)
+            }
         }
     }
 
