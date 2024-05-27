@@ -2,9 +2,10 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
-import java.io.*
+import java.io.Closeable
 import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlin.AutoCloseable
 
 /**
  * [CoroutineDispatcher] that has underlying [Executor] for dispatching tasks.
@@ -13,7 +14,7 @@ import kotlin.coroutines.*
  * This class is generally used as a bridge between coroutine-based API and
  * asynchronous API that requires an instance of the [Executor].
  */
-public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closeable {
+public abstract class ExecutorCoroutineDispatcher : CoroutineDispatcher(), Closeable, AutoCloseable {
     /** @suppress */
     @ExperimentalStdlibApi
     public companion object Key : AbstractCoroutineContextKey<CoroutineDispatcher, ExecutorCoroutineDispatcher>(
