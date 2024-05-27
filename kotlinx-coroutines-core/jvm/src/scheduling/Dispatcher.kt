@@ -11,7 +11,6 @@ internal object DefaultScheduler : SchedulerCoroutineDispatcher(
     IDLE_WORKER_KEEP_ALIVE_NS, DEFAULT_SCHEDULER_NAME
 ) {
 
-    @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
         if (parallelism >= CORE_POOL_SIZE) {
@@ -45,7 +44,6 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
         DefaultScheduler.dispatchWithContext(block, BlockingContext, false)
     }
 
-    @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
         if (parallelism >= MAX_POOL_SIZE) {
@@ -75,7 +73,6 @@ internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor {
 
     override fun execute(command: java.lang.Runnable) = dispatch(EmptyCoroutineContext, command)
 
-    @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         // See documentation to Dispatchers.IO for the rationale
         return UnlimitedIoScheduler.limitedParallelism(parallelism, name)

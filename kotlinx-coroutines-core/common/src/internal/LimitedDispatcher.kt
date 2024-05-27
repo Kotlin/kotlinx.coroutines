@@ -34,7 +34,6 @@ internal class LimitedDispatcher(
     // A separate object that we can synchronize on for K/N
     private val workerAllocationLock = SynchronizedObject()
 
-    @ExperimentalCoroutinesApi
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
         if (parallelism >= this.parallelism) return namedOrThis(name)
