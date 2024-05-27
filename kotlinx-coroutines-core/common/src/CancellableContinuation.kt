@@ -200,7 +200,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * collector (like file handles, sockets, etc.) and need to be closed explicitly:
      *
      * ```
-     * continuation.resume(resourceToResumeWith) { cause, resourceToClose, context ->
+     * continuation.resume(resourceToResumeWith) { _, resourceToClose, _ ->
      *     resourceToClose.close()
      * }
      * ```
