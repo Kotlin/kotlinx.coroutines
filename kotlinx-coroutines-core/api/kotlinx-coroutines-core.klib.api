@@ -904,7 +904,7 @@ sealed interface kotlinx.coroutines.selects/SelectClause { // kotlinx.coroutines
     abstract val clauseObject // kotlinx.coroutines.selects/SelectClause.clauseObject|{}clauseObject[0]
         abstract fun <get-clauseObject>(): kotlin/Any // kotlinx.coroutines.selects/SelectClause.clauseObject.<get-clauseObject>|<get-clauseObject>(){}[0]
     abstract val onCancellationConstructor // kotlinx.coroutines.selects/SelectClause.onCancellationConstructor|{}onCancellationConstructor[0]
-        abstract fun <get-onCancellationConstructor>(): kotlin/Function3<kotlinx.coroutines.selects/SelectInstance<*>, kotlin/Any?, kotlin/Any?, kotlin/Function1<kotlin/Throwable, kotlin/Unit>>? // kotlinx.coroutines.selects/SelectClause.onCancellationConstructor.<get-onCancellationConstructor>|<get-onCancellationConstructor>(){}[0]
+        abstract fun <get-onCancellationConstructor>(): kotlin/Function3<kotlinx.coroutines.selects/SelectInstance<*>, kotlin/Any?, kotlin/Any?, kotlin/Function3<kotlin/Throwable, kotlin/Any?, kotlin.coroutines/CoroutineContext, kotlin/Unit>>? // kotlinx.coroutines.selects/SelectClause.onCancellationConstructor.<get-onCancellationConstructor>|<get-onCancellationConstructor>(){}[0]
     abstract val processResFunc // kotlinx.coroutines.selects/SelectClause.processResFunc|{}processResFunc[0]
         abstract fun <get-processResFunc>(): kotlin/Function3<kotlin/Any, kotlin/Any?, kotlin/Any?, kotlin/Any?> // kotlinx.coroutines.selects/SelectClause.processResFunc.<get-processResFunc>|<get-processResFunc>(){}[0]
     abstract val regFunc // kotlinx.coroutines.selects/SelectClause.regFunc|{}regFunc[0]
