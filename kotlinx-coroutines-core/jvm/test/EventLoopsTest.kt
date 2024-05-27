@@ -126,6 +126,21 @@ class EventLoopsTest : TestBase() {
         finish(4)
     }
 
+    /**
+     * Tests that, when delayed tasks are due on an event loop, they will execute earlier than the newly-scheduled
+     * non-delayed tasks.
+     */
+    @Test
+    fun testPendingDelayedBeingDueEarlier() = runTest {
+        launch(start = CoroutineStart.UNDISPATCHED) {
+            delay(1)
+            expect(1)
+        }
+        Thread.sleep(100)
+        yield()
+        finish(2)
+    }
+
     class EventSync {
         private val waitingThread = atomic<Thread?>(null)
         private val fired = atomic(false)

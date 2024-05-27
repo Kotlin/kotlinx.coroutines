@@ -256,21 +256,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         // unconfined events take priority
         if (processUnconfinedEvent()) return 0
         // queue all delayed tasks that are due to be executed
-        val delayed = _delayed.value
-        if (delayed != null && !delayed.isEmpty) {
-            val now = nanoTime()
-            while (true) {
-                // make sure that moving from delayed to queue removes from delayed only after it is added to queue
-                // to make sure that 'isEmpty' and `nextTime` that check both of them
-                // do not transiently report that both delayed and queue are empty during move
-                delayed.removeFirstIf {
-                    if (it.timeToExecute(now)) {
-                        enqueueImpl(it)
-                    } else
-                        false
-                } ?: break // quit loop when nothing more to remove or enqueueImpl returns false on "isComplete"
-            }
-        }
+        enqueueDelayedTasks()
         // then process one event from queue
         val task = dequeue()
         if (task != null) {
@@ -283,6 +269,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
     final override fun dispatch(context: CoroutineContext, block: Runnable) = enqueue(block)
 
     open fun enqueue(task: Runnable) {
+        // are there some delayed tasks that should execute before this one? If so, move them to the queue first.
+        enqueueDelayedTasks()
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
@@ -332,6 +320,25 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
                     queue === CLOSED_EMPTY -> return null
                     else -> if (_queue.compareAndSet(queue, null)) return queue as Runnable
                 }
+            }
+        }
+    }
+
+    /** Move all delayed tasks that are due to the main queue. */
+    private fun enqueueDelayedTasks() {
+        val delayed = _delayed.value
+        if (delayed != null && !delayed.isEmpty) {
+            val now = nanoTime()
+            while (true) {
+                // make sure that moving from delayed to queue removes from delayed only after it is added to queue
+                // to make sure that 'isEmpty' and `nextTime` that check both of them
+                // do not transiently report that both delayed and queue are empty during move
+                delayed.removeFirstIf {
+                    if (it.timeToExecute(now)) {
+                        enqueueImpl(it)
+                    } else
+                        false
+                } ?: break // quit loop when nothing more to remove or enqueueImpl returns false on "isComplete"
             }
         }
     }
