@@ -9,7 +9,7 @@ package kotlinx.coroutines
  */
 @OptIn(ExperimentalSubclassOptIn::class)
 @ExperimentalCoroutinesApi
-@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
 public expect abstract class CloseableCoroutineDispatcher() : CoroutineDispatcher, AutoCloseable {
 
     /**

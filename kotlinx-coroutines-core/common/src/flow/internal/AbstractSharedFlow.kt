@@ -114,7 +114,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
  *
  * To avoid that (especially in a more complex scenarios), we do not conflate subscription updates.
  */
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class SubscriptionCountStateFlow(initialValue: Int) : StateFlow<Int>,
     SharedFlowImpl<Int>(1, Int.MAX_VALUE, BufferOverflow.DROP_OLDEST)
 {

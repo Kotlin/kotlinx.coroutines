@@ -363,7 +363,7 @@ public fun <T> MutableSharedFlow<T>.asSharedFlow(): SharedFlow<T> =
 public fun <T> MutableStateFlow<T>.asStateFlow(): StateFlow<T> =
     ReadonlyStateFlow(this, null)
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class ReadonlySharedFlow<T>(
     flow: SharedFlow<T>,
     @Suppress("unused")
@@ -373,7 +373,7 @@ private class ReadonlySharedFlow<T>(
         fuseSharedFlow(context, capacity, onBufferOverflow)
 }
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class ReadonlyStateFlow<T>(
     flow: StateFlow<T>,
     @Suppress("unused")
@@ -399,7 +399,7 @@ private class ReadonlyStateFlow<T>(
 public fun <T> SharedFlow<T>.onSubscription(action: suspend FlowCollector<T>.() -> Unit): SharedFlow<T> =
     SubscribedSharedFlow(this, action)
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class SubscribedSharedFlow<T>(
     private val sharedFlow: SharedFlow<T>,
     private val action: suspend FlowCollector<T>.() -> Unit

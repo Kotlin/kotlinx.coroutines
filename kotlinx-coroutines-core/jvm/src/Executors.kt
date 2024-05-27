@@ -15,7 +15,7 @@ import kotlin.AutoCloseable
  * asynchronous API that requires an instance of the [Executor].
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
 public abstract class ExecutorCoroutineDispatcher : CoroutineDispatcher(), Closeable, AutoCloseable {
     /** @suppress */
     @ExperimentalStdlibApi
@@ -118,7 +118,7 @@ private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) 
     override fun toString(): String = dispatcher.toString()
 }
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcher(), Delay {
 
     /*

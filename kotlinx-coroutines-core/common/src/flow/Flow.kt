@@ -174,7 +174,7 @@ import kotlin.coroutines.*
  * of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
 public interface Flow<out T> {
 
     /**
@@ -220,7 +220,7 @@ public interface Flow<out T> {
  * ```
  */
 @ExperimentalCoroutinesApi
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
     public final override suspend fun collect(collector: FlowCollector<T>) {

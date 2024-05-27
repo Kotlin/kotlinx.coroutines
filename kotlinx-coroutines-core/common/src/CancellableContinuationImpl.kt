@@ -25,7 +25,7 @@ internal val RESUME_TOKEN = Symbol("RESUME_TOKEN")
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
-@OptIn(UnsuitableForInheritanceCoroutinesApi::class)
+@OptIn(InternalForInheritanceCoroutinesApi::class)
 @PublishedApi
 internal open class CancellableContinuationImpl<in T>(
     final override val delegate: Continuation<T>,

@@ -101,7 +101,7 @@ import kotlin.jvm.*
  * be safely invoked from concurrent coroutines without external synchronization.
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(markerClass = UnsuitableForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(markerClass = InternalForInheritanceCoroutinesApi::class)
 public interface Job : CoroutineContext.Element {
     /**
      * Key for [Job] instance in the coroutine context.
@@ -401,7 +401,7 @@ public fun interface DisposableHandle {
  */
 @InternalCoroutinesApi
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
-@OptIn(UnsuitableForInheritanceCoroutinesApi::class)
+@OptIn(InternalForInheritanceCoroutinesApi::class)
 public interface ChildJob : Job {
     /**
      * Parent is cancelling its child by invoking this method.
@@ -421,7 +421,7 @@ public interface ChildJob : Job {
  */
 @InternalCoroutinesApi
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
-@OptIn(UnsuitableForInheritanceCoroutinesApi::class)
+@OptIn(InternalForInheritanceCoroutinesApi::class)
 public interface ParentJob : Job {
     /**
      * Child job is using this method to learn its cancellation cause when the parent cancels it with [ChildJob.parentCancelled].

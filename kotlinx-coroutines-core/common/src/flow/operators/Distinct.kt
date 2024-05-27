@@ -59,7 +59,7 @@ private fun <T> Flow<T>.distinctUntilChangedBy(
     else -> DistinctFlowImpl(this, keySelector, areEquivalent)
 }
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class DistinctFlowImpl<T>(
     private val upstream: Flow<T>,
     @JvmField val keySelector: (T) -> Any?,

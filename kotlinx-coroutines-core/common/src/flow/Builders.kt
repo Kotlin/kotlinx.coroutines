@@ -137,7 +137,7 @@ public fun <T> flowOf(value: T): Flow<T> = flow {
  */
 public fun <T> emptyFlow(): Flow<T> = EmptyFlow
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private object EmptyFlow : Flow<Nothing> {
     override suspend fun collect(collector: FlowCollector<Nothing>) = Unit
 }

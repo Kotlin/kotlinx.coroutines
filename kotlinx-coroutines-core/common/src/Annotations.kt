@@ -101,7 +101,7 @@ public annotation class InternalCoroutinesApi
         "Either new methods may be added in the future, which would break the inheritance, " +
         "or correctly inheriting from it requires fulfilling contracts that may change in the future."
 )
-public annotation class BrittleForInheritanceCoroutinesApi
+public annotation class ExperimentalForInheritanceCoroutinesApi
 
 /**
  * Marks declarations that cannot be safely inherited from.
@@ -110,6 +110,8 @@ public annotation class BrittleForInheritanceCoroutinesApi
 @RequiresOptIn(
     level = RequiresOptIn.Level.WARNING, message =
     "This is a kotlinx.coroutines API that is not intended to be inherited from, " +
-        "as the library may handle predefined instances of this in a special manner."
+        "as the library may handle predefined instances of this in a special manner. " +
+        "If you need to inherit from this, please describe your use case in " +
+        "https://github.com/Kotlin/kotlinx.coroutines/issues, so that we can provide a stable API for inheritance."
 )
-public annotation class UnsuitableForInheritanceCoroutinesApi
+public annotation class InternalForInheritanceCoroutinesApi

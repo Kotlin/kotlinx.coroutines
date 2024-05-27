@@ -131,7 +131,7 @@ import kotlin.coroutines.*
  * Use the `MutableStateFlow(value)` constructor function to create an implementation.
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
 public interface StateFlow<out T> : SharedFlow<T> {
     /**
      * The current value of this state flow.
@@ -154,7 +154,7 @@ public interface StateFlow<out T> : SharedFlow<T> {
  * Use the `MutableStateFlow()` constructor function to create an implementation.
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(BrittleForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
 public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
     /**
      * The current value of this state flow.
@@ -309,7 +309,7 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
     }
 }
 
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class StateFlowImpl<T>(
     initialState: Any // T | NULL
 ) : AbstractSharedFlow<StateFlowSlot>(), MutableStateFlow<T>, CancellableFlow<T>, FusibleFlow<T> {

@@ -16,7 +16,7 @@ internal fun <T> Flow<T>.asChannelFlow(): ChannelFlow<T> =
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@OptIn(BrittleForInheritanceCoroutinesApi::class)
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 @InternalCoroutinesApi
 public interface FusibleFlow<T> : Flow<T> {
     /**
