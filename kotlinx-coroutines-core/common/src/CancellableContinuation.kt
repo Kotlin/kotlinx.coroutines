@@ -131,7 +131,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Otherwise, the handler will be invoked as soon as this continuation is cancelled.
      *
      * The installed [handler] should not throw any exceptions.
-     * If it does, they will get caught, wrapped into a [CompletionHandlerException] and
+     * If it does, they will get caught, wrapped into a `CompletionHandlerException` and
      * processed as an uncaught exception in the context of the current coroutine
      * (see [CoroutineExceptionHandler]).
      *
@@ -192,7 +192,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      *   this value.
      *
      * The installed [onCancellation] handler should not throw any exceptions.
-     * If it does, they will get caught, wrapped into a [CompletionHandlerException], and
+     * If it does, they will get caught, wrapped into a `CompletionHandlerException`, and
      * processed as an uncaught exception in the context of the current coroutine
      * (see [CoroutineExceptionHandler]).
      *
