@@ -176,7 +176,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     /** @suppress */
     @Deprecated(
         "Use the overload that also accepts the `value` and the coroutine context in lambda",
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("resume(value) { cause, _, _ -> onCancellation(cause) }")
     ) // warning since 1.9.0, was experimental
     public fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?)
 
