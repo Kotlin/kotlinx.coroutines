@@ -2761,6 +2761,34 @@ internal open class BufferedChannel<E>(
             segment = segment.next!!
         }
     }
+
+    private fun OnUndeliveredElement<E>.bindCancellationFunResult() = ::onCancellationChannelResultImplDoNotCall
+
+    /**
+     * Do not call directly. Go through [bindCancellationFunResult] to ensure the callback isn't null.
+     * [bindCancellationFunResult] could have just returned a lambda as well, but there would be a risk of that
+     * lambda capturing the environment.
+     */
+    private fun onCancellationChannelResultImplDoNotCall(
+        cause: Throwable, element: ChannelResult<E>, context: CoroutineContext
+    ) {
+        onUndeliveredElement!!.callUndeliveredElement(element.getOrNull()!!, context)
+    }
+
+    private fun OnUndeliveredElement<E>.bindCancellationFun(element: E):
+            (Throwable, Any?, CoroutineContext) -> Unit =
+        { _: Throwable, _, context: CoroutineContext -> callUndeliveredElement(element, context) }
+
+    private fun OnUndeliveredElement<E>.bindCancellationFun() = ::onCancellationImplDoNotCall
+
+    /**
+     * Do not call directly. Go through [bindCancellationFun] to ensure the callback isn't null.
+     * [bindCancellationFun] could have just returned a lambda as well, but there would be a risk of that
+     * lambda capturing the environment.
+     */
+    private fun onCancellationImplDoNotCall(cause: Throwable, element: E, context: CoroutineContext) {
+        onUndeliveredElement!!.callUndeliveredElement(element, context)
+    }
 }
 
 /**
@@ -2928,16 +2956,6 @@ private fun <T> CancellableContinuation<T>.tryResume0(
             true
         } else false
     }
-
-private fun <E> OnUndeliveredElement<E>.bindCancellationFunResult(): (Throwable, ChannelResult<E>, CoroutineContext) -> Unit =
-    { _: Throwable, element: ChannelResult<E>, context: CoroutineContext -> callUndeliveredElement(element.getOrNull()!!, context) }
-
-private fun <E> OnUndeliveredElement<E>.bindCancellationFun(element: E):
-        (Throwable, Any?, CoroutineContext) -> Unit =
-    { _: Throwable, _, context: CoroutineContext -> callUndeliveredElement(element, context) }
-
-private fun <E> OnUndeliveredElement<E>.bindCancellationFun(): (Throwable, E, CoroutineContext) -> Unit =
-    { _: Throwable, element: E, context: CoroutineContext -> callUndeliveredElement(element, context) }
 
 /*
   If the channel is rendezvous or unlimited, the `bufferEnd` counter
