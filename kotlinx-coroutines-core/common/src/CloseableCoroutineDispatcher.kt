@@ -7,9 +7,7 @@ package kotlinx.coroutines
  * Examples of closeable dispatchers are dispatchers backed by `java.lang.Executor` and
  * by `kotlin.native.Worker`.
  */
-@OptIn(ExperimentalSubclassOptIn::class)
 @ExperimentalCoroutinesApi
-@SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
 public expect abstract class CloseableCoroutineDispatcher() : CoroutineDispatcher, AutoCloseable {
 
     /**

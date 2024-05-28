@@ -15,7 +15,6 @@ import kotlin.AutoCloseable
  * asynchronous API that requires an instance of the [Executor].
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
 public abstract class ExecutorCoroutineDispatcher : CoroutineDispatcher(), Closeable, AutoCloseable {
     /** @suppress */
     @ExperimentalStdlibApi
