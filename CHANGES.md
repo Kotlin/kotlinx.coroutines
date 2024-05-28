@@ -1,5 +1,23 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.9.0-RC
+
+* Kotlin was updated to 2.0 (#4137).
+* Introduced the `Flow<T>.chunked(size: Int): Flow<List<T>>` operator that groups emitted values into groups of the given size (#1290).
+* Closeable dispatchers are instances of `AutoCloseable` now (#4123).
+* `limitedParallelism` now optionally accepts the name of the dispatcher view for easier debugging (#4023).
+* Marked the classes and interfaces that are not supposed to be inherited from with the new `InternalForInheritanceCoroutinesApi` opt-in (#3770).
+* Marked the classes and interfaces inheriting from which is not stable with the new `ExperimentalForInheritanceCoroutinesApi` opt-in (#3770).
+* Wasm/WASI target support (#4064). Thanks, @igoriakovlev!
+* Promoted `CoroutineDispatcher.limitedParallelism` to stable (#3864).
+* Promoted `CancellableContinuation.resume` with an `onCancellation` lambda to stable, providing extra arguments to the lambda (#4088).
+* Ensured a more intuitive ordering of tasks in `runBlocking` (#4134).
+* Simplified the internal implementation of `Job` (#4053).
+* Fixed a bug that prevented non-Android `Dispatchers.Main` from initializing when the Firebase dependency is used (#3914).
+* Calling `hasNext` on a `Channel`'s iterator is idempotent (#4065). Thanks, @gitpaxultek!
+* `CoroutineScope()` created without an explicit dispatcher uses `Dispatchers.Default` on Native (#4074). Thanks, @whyoleg!
+* Small tweaks and documentation fixes.
+
 ## Version 1.8.1
 
 * Remove the `@ExperimentalTime` annotation from usages of `TimeSource` (#4046). Thanks, @hfhbd!
