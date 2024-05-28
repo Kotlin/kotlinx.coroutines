@@ -1,5 +1,5 @@
 // Klib ABI Dump
-// Targets: [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, js, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, wasmJs, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
+// Targets: [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, js, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, wasmJs, wasmWasi, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
 // Alias: native => [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
 // Rendering settings:
 // - Signature version: 2
@@ -48,15 +48,15 @@ sealed interface kotlinx.coroutines.test/TestScope : kotlinx.coroutines/Coroutin
     abstract val testScheduler // kotlinx.coroutines.test/TestScope.testScheduler|{}testScheduler[0]
         abstract fun <get-testScheduler>(): kotlinx.coroutines.test/TestCoroutineScheduler // kotlinx.coroutines.test/TestScope.testScheduler.<get-testScheduler>|<get-testScheduler>(){}[0]
 }
-// Targets: [native]
+// Targets: [native, wasmWasi]
 final fun (kotlinx.coroutines.test/TestScope).kotlinx.coroutines.test/runTest(kotlin.time/Duration = ..., kotlin.coroutines/SuspendFunction1<kotlinx.coroutines.test/TestScope, kotlin/Unit>) // kotlinx.coroutines.test/runTest|runTest@kotlinx.coroutines.test.TestScope(kotlin.time.Duration;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.test.TestScope,kotlin.Unit>){}[0]
-// Targets: [native]
+// Targets: [native, wasmWasi]
 final fun (kotlinx.coroutines.test/TestScope).kotlinx.coroutines.test/runTest(kotlin/Long, kotlin.coroutines/SuspendFunction1<kotlinx.coroutines.test/TestScope, kotlin/Unit>) // kotlinx.coroutines.test/runTest|runTest@kotlinx.coroutines.test.TestScope(kotlin.Long;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.test.TestScope,kotlin.Unit>){}[0]
-// Targets: [native]
+// Targets: [native, wasmWasi]
 final fun (kotlinx.coroutines.test/TestScope).kotlinx.coroutines.test/runTestLegacy(kotlin/Long, kotlin.coroutines/SuspendFunction1<kotlinx.coroutines.test/TestScope, kotlin/Unit>, kotlin/Int, kotlin/Any?) // kotlinx.coroutines.test/runTestLegacy|runTestLegacy@kotlinx.coroutines.test.TestScope(kotlin.Long;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.test.TestScope,kotlin.Unit>;kotlin.Int;kotlin.Any?){}[0]
-// Targets: [native]
+// Targets: [native, wasmWasi]
 final fun kotlinx.coroutines.test/runTest(kotlin.coroutines/CoroutineContext = ..., kotlin.time/Duration = ..., kotlin.coroutines/SuspendFunction1<kotlinx.coroutines.test/TestScope, kotlin/Unit>) // kotlinx.coroutines.test/runTest|runTest(kotlin.coroutines.CoroutineContext;kotlin.time.Duration;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.test.TestScope,kotlin.Unit>){}[0]
-// Targets: [native]
+// Targets: [native, wasmWasi]
 final fun kotlinx.coroutines.test/runTest(kotlin.coroutines/CoroutineContext = ..., kotlin/Long, kotlin.coroutines/SuspendFunction1<kotlinx.coroutines.test/TestScope, kotlin/Unit>) // kotlinx.coroutines.test/runTest|runTest(kotlin.coroutines.CoroutineContext;kotlin.Long;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.test.TestScope,kotlin.Unit>){}[0]
 // Targets: [js, wasmJs]
 final class kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting { // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting|null[0]

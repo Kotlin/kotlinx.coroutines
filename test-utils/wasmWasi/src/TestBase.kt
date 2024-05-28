@@ -2,23 +2,28 @@ package kotlinx.coroutines.testing
 
 import kotlin.test.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 
 actual val VERBOSE = false
 
-actual typealias NoNative = Ignore
+actual typealias NoWasmWasi = Ignore
 
-public actual val isStressTest: Boolean = false
-public actual val stressTestMultiplier: Int = 1
-public actual val stressTestMultiplierSqrt: Int = 1
+actual val isStressTest: Boolean = false
+actual val stressTestMultiplier: Int = 1
+actual val stressTestMultiplierSqrt: Int = 1
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
-public actual typealias TestResult = Unit
+actual typealias TestResult = Unit
 
 internal actual fun lastResortReportException(error: Throwable) {
     println(error)
 }
 
-public actual open class TestBase actual constructor(): OrderedExecutionTestBase(), ErrorCatching by ErrorCatching.Impl() {
+actual open class TestBase(
+    private val errorCatching: ErrorCatching.Impl
+): OrderedExecutionTestBase(), ErrorCatching by errorCatching {
+
+    actual constructor(): this(errorCatching = ErrorCatching.Impl())
+
     actual fun println(message: Any?) {
         kotlin.io.println(message)
     }
@@ -31,7 +36,7 @@ public actual open class TestBase actual constructor(): OrderedExecutionTestBase
         var exCount = 0
         var ex: Throwable? = null
         try {
-            runBlocking(block = block, context = CoroutineExceptionHandler { _, e ->
+            runTestCoroutine(block = block, context = CoroutineExceptionHandler { _, e ->
                 if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
                 exCount++
                 when {
@@ -49,17 +54,17 @@ public actual open class TestBase actual constructor(): OrderedExecutionTestBase
             } else
                 throw e
         } finally {
-            if (ex == null && expected != null) error("Exception was expected but none produced")
+            if (ex == null && expected != null) kotlin.error("Exception was expected but none produced")
         }
         if (exCount < unhandled.size)
-            error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
+            kotlin.error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
 }
 
-public actual val isNative = true
+actual val isNative = false
 
-public actual val isBoundByJsTestTimeout = false
+actual val isBoundByJsTestTimeout = true
 
-public actual val isJavaAndWindows: Boolean get() = false
+actual val isJavaAndWindows: Boolean get() = false
 
-actual val usesSharedEventLoop: Boolean = false
+actual val usesSharedEventLoop: Boolean = true

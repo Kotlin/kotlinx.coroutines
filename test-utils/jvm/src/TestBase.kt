@@ -186,3 +186,5 @@ actual val isBoundByJsTestTimeout = false
  * which makes such tests flaky.
  */
 actual val isJavaAndWindows: Boolean = System.getProperty("os.name")!!.contains("Windows")
+
+actual val usesSharedEventLoop: Boolean = false

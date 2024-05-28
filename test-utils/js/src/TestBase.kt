@@ -102,3 +102,5 @@ actual val isNative = false
 actual val isBoundByJsTestTimeout = true
 
 actual val isJavaAndWindows: Boolean get() = false
+
+actual val usesSharedEventLoop: Boolean = false

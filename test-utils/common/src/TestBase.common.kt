@@ -206,6 +206,12 @@ expect annotation class NoJs()
 @OptionalExpectation
 expect annotation class NoNative()
 
+@OptionalExpectation
+expect annotation class NoWasmJs()
+
+@OptionalExpectation
+expect annotation class NoWasmWasi()
+
 expect val isStressTest: Boolean
 expect val stressTestMultiplier: Int
 expect val stressTestMultiplierSqrt: Int
@@ -286,3 +292,8 @@ public expect val isNative: Boolean
  * and run such tests only on JVM and K/N.
  */
 public expect val isBoundByJsTestTimeout: Boolean
+
+/**
+ * `true` if this platform has the same event loop for `DefaultExecutor` and [Dispatchers.Unconfined]
+ */
+public expect val usesSharedEventLoop: Boolean

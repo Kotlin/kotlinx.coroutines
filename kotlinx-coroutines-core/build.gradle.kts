@@ -18,10 +18,13 @@ apply(plugin = "pub-conventions")
   Configure source sets structure for kotlinx-coroutines-core:
 
      TARGETS                            SOURCE SETS
-     -------         ----------------------------------------------
-     wasmJs \----------> jsAndWasmShared --------------------+
-     js     /                                                |
-                                                             V
+     ------------------------------------------------------------
+     wasmJs \------> jsAndWasmJsShared ----+
+     js     /                              |
+                                           V
+     wasmWasi --------------------> jsAndWasmShared ----------+
+                                                              |
+                                                              V
      jvmCore\ --------> jvm ---------> concurrent -------> common
      jdk8   /                           ^
                                         |
