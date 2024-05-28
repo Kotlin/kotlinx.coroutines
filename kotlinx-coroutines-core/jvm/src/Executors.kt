@@ -14,7 +14,6 @@ import kotlin.AutoCloseable
  * This class is generally used as a bridge between coroutine-based API and
  * asynchronous API that requires an instance of the [Executor].
  */
-@OptIn(ExperimentalSubclassOptIn::class)
 public abstract class ExecutorCoroutineDispatcher : CoroutineDispatcher(), Closeable, AutoCloseable {
     /** @suppress */
     @ExperimentalStdlibApi
@@ -117,7 +116,6 @@ private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) 
     override fun toString(): String = dispatcher.toString()
 }
 
-@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcher(), Delay {
 
     /*
