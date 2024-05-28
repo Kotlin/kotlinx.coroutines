@@ -764,11 +764,17 @@ open annotation class kotlinx.coroutines/DelicateCoroutinesApi : kotlin/Annotati
 open annotation class kotlinx.coroutines/ExperimentalCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/ExperimentalCoroutinesApi|null[0]
     constructor <init>() // kotlinx.coroutines/ExperimentalCoroutinesApi.<init>|<init>(){}[0]
 }
+open annotation class kotlinx.coroutines/ExperimentalForInheritanceCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/ExperimentalForInheritanceCoroutinesApi|null[0]
+    constructor <init>() // kotlinx.coroutines/ExperimentalForInheritanceCoroutinesApi.<init>|<init>(){}[0]
+}
 open annotation class kotlinx.coroutines/FlowPreview : kotlin/Annotation { // kotlinx.coroutines/FlowPreview|null[0]
     constructor <init>() // kotlinx.coroutines/FlowPreview.<init>|<init>(){}[0]
 }
 open annotation class kotlinx.coroutines/InternalCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/InternalCoroutinesApi|null[0]
     constructor <init>() // kotlinx.coroutines/InternalCoroutinesApi.<init>|<init>(){}[0]
+}
+open annotation class kotlinx.coroutines/InternalForInheritanceCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/InternalForInheritanceCoroutinesApi|null[0]
+    constructor <init>() // kotlinx.coroutines/InternalForInheritanceCoroutinesApi.<init>|<init>(){}[0]
 }
 open annotation class kotlinx.coroutines/ObsoleteCoroutinesApi : kotlin/Annotation { // kotlinx.coroutines/ObsoleteCoroutinesApi|null[0]
     constructor <init>() // kotlinx.coroutines/ObsoleteCoroutinesApi.<init>|<init>(){}[0]

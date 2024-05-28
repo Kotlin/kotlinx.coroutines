@@ -41,6 +41,8 @@ import kotlin.coroutines.intrinsics.*
  *    +-----------+
  * ```
  */
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalForInheritanceCoroutinesApi::class)
 public interface CancellableContinuation<in T> : Continuation<T> {
     /**
      * Returns `true` when this continuation is active -- it has not completed or cancelled yet.

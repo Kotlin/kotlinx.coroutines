@@ -10,6 +10,8 @@ package kotlinx.coroutines
  * **The `CompletableJob` interface is not stable for inheritance in 3rd party libraries**,
  * as new methods might be added to this interface in the future, but is stable for use.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(markerClass = InternalForInheritanceCoroutinesApi::class)
 public interface CompletableJob : Job {
     /**
      * Completes this job. The result is `true` if this job was completed as a result of this invocation and

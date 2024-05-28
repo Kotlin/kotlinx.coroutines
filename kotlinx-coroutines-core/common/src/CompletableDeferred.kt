@@ -15,10 +15,9 @@ import kotlinx.coroutines.selects.*
  *
  * All functions on this interface are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
- *
- * **The `CompletableDeferred` interface is not stable for inheritance in 3rd party libraries**,
- * as new methods might be added to this interface in the future, but is stable for use.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(markerClass = InternalForInheritanceCoroutinesApi::class)
 public interface CompletableDeferred<T> : Deferred<T> {
     /**
      * Completes this deferred value with a given [value]. The result is `true` if this deferred was
@@ -73,6 +72,7 @@ public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = Completab
 /**
  * Concrete implementation of [CompletableDeferred].
  */
+@OptIn(InternalForInheritanceCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 private class CompletableDeferredImpl<T>(
     parent: Job?

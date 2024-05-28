@@ -367,6 +367,9 @@ public final class kotlinx/coroutines/ExecutorsKt {
 public abstract interface annotation class kotlinx/coroutines/ExperimentalCoroutinesApi : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class kotlinx/coroutines/ExperimentalForInheritanceCoroutinesApi : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class kotlinx/coroutines/FlowPreview : java/lang/annotation/Annotation {
 }
 
@@ -376,6 +379,9 @@ public final class kotlinx/coroutines/GlobalScope : kotlinx/coroutines/Coroutine
 }
 
 public abstract interface annotation class kotlinx/coroutines/InternalCoroutinesApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class kotlinx/coroutines/InternalForInheritanceCoroutinesApi : java/lang/annotation/Annotation {
 }
 
 public final class kotlinx/coroutines/InterruptibleKt {

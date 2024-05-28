@@ -243,6 +243,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 
         return this
     }
 
+    @OptIn(InternalForInheritanceCoroutinesApi::class)
     private inner class CancellableContinuationWithOwner(
         @JvmField
         val cont: CancellableContinuationImpl<Unit>,

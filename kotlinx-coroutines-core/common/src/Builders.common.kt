@@ -88,6 +88,7 @@ public fun <T> CoroutineScope.async(
     return coroutine
 }
 
+@OptIn(InternalForInheritanceCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 private open class DeferredCoroutine<T>(
     parentContext: CoroutineContext,
