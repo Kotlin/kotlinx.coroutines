@@ -65,7 +65,7 @@ General-purpose coroutine builders, contexts, and helper functions.
 
 # Package kotlinx.coroutines.sync
 
-Synchronization primitives (mutex).
+Synchronization primitives (mutex and semaphore).
 
 # Package kotlinx.coroutines.channels
 
@@ -73,15 +73,27 @@ Channels &mdash; non-blocking primitives for communicating a stream of elements 
 
 # Package kotlinx.coroutines.flow
 
-Flow &mdash; asynchronous cold stream of elements.
+Flow &mdash; asynchronous cold and hot streams of elements.
 
 # Package kotlinx.coroutines.selects
 
-Select expression to perform multiple suspending operations simultaneously until one of them succeeds.
+Select &mdash; expressions that perform multiple suspending operations simultaneously until one of them succeeds.
 
 # Package kotlinx.coroutines.intrinsics
 
 Low-level primitives for finer-grained control of coroutines.
+
+# Package kotlinx.coroutines.future
+
+[JDK 8's `Future`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html) support.
+
+# Package kotlinx.coroutines.stream
+
+[JDK 8's `Stream`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html) support.
+
+# Package kotlinx.coroutines.time
+
+[JDK 8's `Duration`](https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html) support via additional overloads for existing time-based operators.
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
