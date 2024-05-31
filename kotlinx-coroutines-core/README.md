@@ -13,10 +13,12 @@ Coroutine builder functions:
 
 Coroutine dispatchers implementing [CoroutineDispatcher]:
  
-| **Name**                                                            | **Description**
-| ------------------------------------------------------------------- | ---------------
-| [Dispatchers.Default][kotlinx.coroutines.Dispatchers.Default]       | Confines coroutine execution to a shared pool of background threads
-| [Dispatchers.Unconfined][kotlinx.coroutines.Dispatchers.Unconfined] | Does not confine coroutine execution in any way
+| **Name**                                                                                            | **Description**
+| --------------------------------------------------------------------------------------------------- | ---------------
+| [Dispatchers.Main][kotlinx.coroutines.Dispatchers.Main]                                             | Confines coroutine execution to the UI thread
+| [Dispatchers.Default][kotlinx.coroutines.Dispatchers.Default]                                       | Confines coroutine execution to a shared pool of background threads
+| [Dispatchers.Unconfined][kotlinx.coroutines.Dispatchers.Unconfined]                                 | Does not confine coroutine execution in any way
+| [CoroutineDispatcher.limitedParallelism][kotlinx.coroutines.CoroutineDispatcher.limitedParallelism] | Creates a view of the given dispatcher, limiting the number of tasks executing in parallel
 
 More context elements:
 
@@ -29,8 +31,10 @@ Synchronization primitives for coroutines:
 
 | **Name**                                        | **Suspending functions**                                                                                            | **Description**
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------
-| [Mutex][kotlinx.coroutines.sync.Mutex]          | [lock][kotlinx.coroutines.sync.Mutex.lock]                                                                          | Mutual exclusion 
+| [Mutex][kotlinx.coroutines.sync.Mutex]          | [lock][kotlinx.coroutines.sync.Mutex.lock]                                                                          | Mutual exclusion
+| [Semaphore][kotlinx.coroutines.sync.Semaphore]  | [acquire][kotlinx.coroutines.sync.Mutex.acquire]                                                                    | Limiting the maximum concurrency
 | [Channel][kotlinx.coroutines.channels.Channel]  | [send][kotlinx.coroutines.channels.SendChannel.send], [receive][kotlinx.coroutines.channels.ReceiveChannel.receive] | Communication channel (aka queue or exchanger)
+| [Flow][kotlinx.coroutines.flow.Flow]            | [collect][kotlinx.coroutines.flow.Flow.collect]                                                                     | Asynchronous stream of values
 
 Top-level suspending functions:
 
@@ -45,10 +49,27 @@ Top-level suspending functions:
 | [joinAll][kotlinx.coroutines.joinAll]                     | Joins on all given jobs
 
 Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
-helper function. [NonCancellable] job object is provided to suppress cancellation with 
+helper function.
+The [NonCancellable] job object is provided to suppress cancellation inside the
 `withContext(NonCancellable) {...}` block of code.
 
-[Select][kotlinx.coroutines.selects.select] expression waits for the result of multiple suspending functions simultaneously:
+Ways to construct asynchronous streams of values:
+
+| **Name**                                                              | **Type** | **Description**
+| --------------------------------------------------------------------- | -------- | ---------------
+| [flow][kotlinx.coroutines.flow.flow]                                  | cold     | Runs a generator-style block of code that emits values
+| [flowOf][kotlinx.coroutines.flow.flowOf]                              | cold     | Emits the values passed as arguments
+| [channelFlow][kotlinx.coroutines.flow.channelFlow]                    | cold     | Runs the given code, providing a channel sending to which means emitting from the flow
+| [callbackFlow][kotlinx.coroutines.flow.callbackFlow]                  | cold     | Allows transforming a callback-based API into a flow
+| [ReceiveChannel.consumeAsFlow][kotlinx.coroutines.flow.consumeAsFlow] | hot      | Transforms a channel into a flow, emitting all of the received values to a single subscriber
+| [ReceiveChannel.receiveAsFlow][kotlinx.coroutines.flow.receiveAsFlow] | hot      | Transforms a channel into a flow, distributing the received values among its subscribers
+| [MutableSharedFlow][kotlinx.coroutines.flow.MutableSharedFlow]        | hot      | Allows emitting each value to arbitrarily many subscribers at once
+| [MutableStateFlow][kotlinx.coroutines.flow.MutableStateFlow]          | hot      | Represents mutable state as a flow
+
+A *cold* stream is some process of generating values, and this process is performed separately for each subscriber.
+A *hot* stream uses the same source of values independently of whether there are subscribers.
+
+A [select][kotlinx.coroutines.selects.select] expression waits for the result of multiple suspending functions simultaneously:
 
 | **Receiver**                                                 | **Suspending function**                                         | **Select clause**                                                 | **Non-suspending version**
 | ------------------------------------------------------------ | --------------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------
@@ -105,8 +126,10 @@ Low-level primitives for finer-grained control of coroutines.
 [kotlinx.coroutines.Deferred]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html
 [kotlinx.coroutines.runBlocking]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [CoroutineDispatcher]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html
+[kotlinx.coroutines.Dispatchers.Main]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
 [kotlinx.coroutines.Dispatchers.Default]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 [kotlinx.coroutines.Dispatchers.Unconfined]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html
+[kotlinx.coroutines.CoroutineDispatcher.limitedParallelism]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/limited-parallelism.html
 [kotlinx.coroutines.NonCancellable]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-non-cancellable/index.html
 [kotlinx.coroutines.CoroutineExceptionHandler]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/index.html
 [kotlinx.coroutines.delay]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
@@ -128,6 +151,7 @@ Low-level primitives for finer-grained control of coroutines.
 
 [kotlinx.coroutines.sync.Mutex]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/index.html
 [kotlinx.coroutines.sync.Mutex.lock]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/lock.html
+[kotlinx.coroutines.sync.Semaphore]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-semaphore/index.html
 
 <!--- INDEX kotlinx.coroutines.channels -->
 
