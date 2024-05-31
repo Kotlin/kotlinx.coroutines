@@ -3,6 +3,7 @@ package kotlinx.coroutines.internal
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
+/** @suppress **This is internal API and it is subject to change.** */
 @InternalCoroutinesApi
 public fun runTestCoroutine(context: CoroutineContext, block: suspend CoroutineScope.() -> Unit) {
     val newContext = GlobalScope.newCoroutineContext(context)
