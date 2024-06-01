@@ -29,7 +29,7 @@ public enum class CoroutineStart {
      * Note that [Dispatchers.Unconfined] always returns `false` from its [CoroutineDispatcher.isDispatchNeeded]
      * function, so starting a coroutine with [Dispatchers.Unconfined] by [DEFAULT] is the same as using [UNDISPATCHED].
      *
-     * If coroutine [Job] is cancelled before it even had a chance to start executing, then it will not start its
+     * If the coroutine's [Job] is cancelled before it even had a chance to start executing, then it will not start its
      * execution at all, but will complete with an exception.
      */
     DEFAULT,
@@ -37,11 +37,26 @@ public enum class CoroutineStart {
     /**
      * Starts the coroutine lazily, only when it is needed.
      *
-     * See the documentation for the corresponding coroutine builders for details
-     * (like [launch][CoroutineScope.launch] and [async][CoroutineScope.async]).
+     * Starting a coroutine with [LAZY] only creates the coroutine, but does not schedule it for execution.
+     * When the completion of the coroutine is first awaited
+     * (for example, via [Job.join]) or explicitly [started][Job.start],
+     * the dispatch procedure described in [DEFAULT] happens in the thread that does it.
      *
-     * If coroutine [Job] is cancelled before it even had a chance to start executing, then it will not start its
+     * The details of what counts as waiting can be found in the documentation of the corresponding coroutine builders
+     * like [launch][CoroutineScope.launch] and [async][CoroutineScope.async].
+     *
+     * If the coroutine's [Job] is cancelled before it even had a chance to start executing, then it will not start its
      * execution at all, but will complete with an exception.
+     *
+     * **Pitfall**: launching a coroutine with [LAZY] without awaiting or cancelling it at any point means that it will
+     * never be completed, leading to deadlocks and resource leaks.
+     * For example, the following code will deadlock, since [coroutineScope] waits for all of its child coroutines to
+     * complete:
+     * ```
+     * coroutineScope {
+     *     launch(start = CoroutineStart.LAZY) { }
+     * }
+     * ```
      */
     LAZY,
 
