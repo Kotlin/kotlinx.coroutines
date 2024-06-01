@@ -1,6 +1,5 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.CoroutineStart.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 
