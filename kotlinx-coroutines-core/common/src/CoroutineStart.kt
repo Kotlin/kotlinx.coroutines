@@ -6,17 +6,19 @@ import kotlin.coroutines.*
 /**
  * Defines start options for coroutines builders.
  *
- * It is used in `start` parameter of [launch][CoroutineScope.launch], [async][CoroutineScope.async], and other coroutine builder functions.
+ * It is used in the `start` parameter of coroutine builder functions like
+ * [launch][CoroutineScope.launch] and [async][CoroutineScope.async]
+ * to describe when and how the coroutine should be dispatched initially.
  *
  * This parameter only affects how the coroutine behaves until it reaches the first suspension point.
  * After that, cancellability and dispatching depend on the implementation details of the invoked suspending functions.
  * Use [suspendCancellableCoroutine] to implement custom cancellable suspending functions.
  *
  * The summary of coroutine start options is:
- * - [DEFAULT] -- immediately schedules coroutine for execution according to its context;
- * - [LAZY] -- starts coroutine lazily, only when it is needed;
- * - [ATOMIC] -- atomically (in a non-cancellable way) schedules coroutine for execution according to its context;
- * - [UNDISPATCHED] -- immediately executes coroutine until its first suspension point _in the current thread_.
+ * - [DEFAULT] immediately schedules the coroutine for execution according to its context;
+ * - [LAZY] starts coroutine lazily, only when it is needed;
+ * - [ATOMIC] atomically (in a non-cancellable way) schedules the coroutine for execution according to its context;
+ * - [UNDISPATCHED] immediately executes the coroutine until its first suspension point _in the current thread_.
  */
 public enum class CoroutineStart {
     /**
