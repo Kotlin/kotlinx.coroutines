@@ -97,13 +97,13 @@ public enum class CoroutineStart {
      * Starting a coroutine with [LAZY] only creates the coroutine, but does not schedule it for execution.
      * When the completion of the coroutine is first awaited
      * (for example, via [Job.join]) or explicitly [started][Job.start],
-     * the dispatch procedure described in [DEFAULT] happens in the thread that does it.
+     * the dispatch procedure described in [DEFAULT] happens in the thread that did it.
      *
      * The details of what counts as waiting can be found in the documentation of the corresponding coroutine builders
      * like [launch][CoroutineScope.launch] and [async][CoroutineScope.async].
      *
-     * If the coroutine's [Job] is cancelled before it even had a chance to start executing, then it will not start its
-     * execution at all, but will complete with an exception.
+     * If the coroutine's [Job] is cancelled before it started executing, then it will not start its
+     * execution at all, and will instead complete with an exception.
      *
      * **Pitfall**: launching a coroutine with [LAZY] without awaiting or cancelling it at any point means that it will
      * never be completed, leading to deadlocks and resource leaks.
@@ -112,6 +112,39 @@ public enum class CoroutineStart {
      * ```
      * coroutineScope {
      *     launch(start = CoroutineStart.LAZY) { }
+     * }
+     * ```
+     *
+     * Examples:
+     *
+     * ```
+     * // Example of lazily starting a new coroutine that goes through a dispatch
+     * runBlocking {
+     *     println("1. About to start a new coroutine.")
+     *     // Create a job to execute on `Dispatchers.Default` later.
+     *     val job = launch(Dispatchers.Default, start = CoroutineStart.LAZY) {
+     *         println("3. Only now does the coroutine start.")
+     *     }
+     *     delay(10.milliseconds) // try to give the coroutine some time to run
+     *     println("2. The coroutine still has not started. Now, we await it.")
+     *     job.join()
+     * }
+     * ```
+     *
+     * ```
+     * // Example of lazily starting a new coroutine that doesn't go through a dispatch initially
+     * runBlocking {
+     *     println("1. About to lazily start a new coroutine.")
+     *     // Create a job to execute on `Dispatchers.Unconfined` later.
+     *     val lazyJob = launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+     *         println("3. The coroutine starts on the thread that called `join`.")
+     *     }
+     *     // We start the job on another thread for illustrative purposes
+     *     launch(Dispatchers.Default) {
+     *         println("2. We start the lazyJob.")
+     *         job.start() // runs lazyJob's code in-place
+     *         println("4. Only now does the `start` call return.")
+     *     }
      * }
      * ```
      */
