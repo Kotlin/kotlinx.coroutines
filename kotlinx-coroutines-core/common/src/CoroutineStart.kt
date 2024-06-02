@@ -211,17 +211,70 @@ public enum class CoroutineStart {
     ATOMIC,
 
     /**
-     * Immediately executes the coroutine until its first suspension point _in the current thread_ similarly to
-     * the coroutine being started using [Dispatchers.Unconfined]. However, when the coroutine is resumed from suspension
-     * it is dispatched according to the [CoroutineDispatcher] in its context.
+     * Immediately executes the coroutine until its first suspension point _in the current thread_.
      *
-     * This is similar to [ATOMIC] in the sense that coroutine starts executing even if it was already cancelled,
-     * but the difference is that it starts executing in the same thread.
+     * Starting a coroutine using [UNDISPATCHED] is similar to using [Dispatchers.Unconfined] with [DEFAULT], except:
+     * - Resumptions from later suspensions will properly use the actual dispatcher from the coroutine's context.
+     *   Only the code until the first suspension point will be executed immediately.
+     * - Even if the coroutine was cancelled already, its code will still start to be executed, similar to [ATOMIC].
      *
-     * ### Unconfined event loop
+     * **Pitfall**: unlike [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate], nested undispatched
+     * coroutines do not form an event loop that otherwise prevents potential stack overflow in case of unlimited
+     * nesting.
      *
-     * Unlike [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate], nested undispatched coroutines do not form
-     * an event loop that otherwise prevents potential stack overflow in case of unlimited nesting.
+     * ```
+     * // Constant usage of stack space
+     * fun CoroutineScope.factorialWithUnconfined(n: Int): Deferred<Int> =
+     *     async(Dispatchers.Unconfined) {
+     *         if (n > 0) {
+     *             n * factorialWithUnconfined(n - 1).await()
+     *         } else {
+     *             1 // replace with `error()` to see the stacktrace
+     *         }
+     *     }
+     *
+     * // Linearly increasing usage of stack space
+     * fun CoroutineScope.factorialWithUndispatched(n: Int): Deferred<Int> =
+     *     async(start = CoroutineStart.UNDISPATCHED) {
+     *         if (n > 0) {
+     *             n * factorialWithUndispatched(n - 1).await()
+     *         } else {
+     *             1 // replace with `error()` to see the stacktrace
+     *         }
+     *     }
+     * ```
+     *
+     * Calling `factorialWithUnconfined` from this example will result in a constant-size stack,
+     * whereas `factorialWithUndispatched` will lead to `n` recursively nested calls,
+     * resulting in a stack overflow for large values of `n`.
+     *
+     * Example of using [UNDISPATCHED]:
+     *
+     * ```
+     * runBlocking {
+     *     println("1. About to start a new coroutine.")
+     *     val job = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+     *         println("2. The coroutine is immediately started in the same thread.")
+     *         delay(10.milliseconds)
+     *         println("4. The execution continues in a Dispatchers.Default thread.")
+     *     }
+     *     println("3. Execution of the outer coroutine only continues later.")
+     * }
+     * ```
+     *
+     * ```
+     * // Cancellation does not prevent the coroutine from being started
+     * runBlocking {
+     *     println("1. First, we cancel this scope.")
+     *     cancel()
+     *     println("2. Now, we start a new UNDISPATCHED child.")
+     *     launch(start = CoroutineStart.UNDISPATCHED) {
+     *         check(!isActive) // the child is already cancelled
+     *         println("3. We entered the coroutine despite being cancelled.")
+     *     }
+     *     println("4. Execution of the outer coroutine only continues later.")
+     * }
+     * ```
      */
     UNDISPATCHED;
 
