@@ -22,17 +22,72 @@ import kotlin.coroutines.*
  */
 public enum class CoroutineStart {
     /**
-     * Default -- immediately schedules the coroutine for execution according to its context.
+     * Immediately schedules the coroutine for execution according to its context. This is usually the default option.
      *
-     * If the [CoroutineDispatcher] of the coroutine context returns `true` from [CoroutineDispatcher.isDispatchNeeded]
-     * function as most dispatchers do, then the coroutine code is dispatched for execution later, while the code that
-     * invoked the coroutine builder continues execution.
+     * The behavior of [DEFAULT] depends on the result of [CoroutineDispatcher.isDispatchNeeded] in
+     * the context of the started coroutine.
+     * - In the typical case where a dispatch is needed, the coroutine is dispatched for execution on that dispatcher.
+     *   It may take a while for the dispatcher to start the task; the thread that invoked the coroutine builder
+     *   does not wait for the task to start and instead continues its execution.
+     * - If no dispatch is needed (which is the case for [Dispatchers.Main.immediate][MainCoroutineDispatcher.immediate]
+     *   when already on the main thread and for [Dispatchers.Unconfined]),
+     *   the task is executed immediately in the same thread that invoked the coroutine builder,
+     *   similarly to [UNDISPATCHED].
      *
-     * Note that [Dispatchers.Unconfined] always returns `false` from its [CoroutineDispatcher.isDispatchNeeded]
-     * function, so starting a coroutine with [Dispatchers.Unconfined] by [DEFAULT] is the same as using [UNDISPATCHED].
+     * If the coroutine's [Job] is cancelled before it started executing, then it will not start its
+     * execution at all, and will instead complete with an exception.
      *
-     * If the coroutine's [Job] is cancelled before it even had a chance to start executing, then it will not start its
-     * execution at all, but will complete with an exception.
+     * Comparisons with the other options:
+     * - [LAZY] delays the moment of the initial dispatch until the completion of the coroutine is awaited.
+     * - [ATOMIC] prevents the coroutine from being cancelled before its first suspension point.
+     * - [UNDISPATCHED] always executes the coroutine until the first suspension immediately in the same thread
+     *   (as if [CoroutineDispatcher.isDispatchNeeded] returned `false`),
+     *   and also, like [ATOMIC], it ensures that the coroutine cannot be cancelled before it starts executing.
+     *
+     * Examples:
+     *
+     * ```
+     * // Example of starting a new coroutine that goes through a dispatch
+     * runBlocking {
+     *     println("1. About to start a new coroutine.")
+     *     // Dispatch the job to execute later.
+     *     // The parent coroutine's dispatcher is inherited by default.
+     *     // In this case, it's the single thread backing `runBlocking`.
+     *     val job = launch {
+     *         println("3. When the thread is available, we start the coroutine")
+     *     }
+     *     println("2. The thread keeps doing other work after launching the coroutine")
+     * }
+     * ```
+     *
+     * ```
+     * // Example of starting a new coroutine that doesn't go through a dispatch initially
+     * runBlocking {
+     *     println("1. About to start a coroutine not needing a dispatch.")
+     *     // Dispatch the job to execute.
+     *     // `Dispatchers.Unconfined` is explicitly chosen.
+     *     val job = launch(Dispatchers.Unconfined) {
+     *         println("2. The body will be executed immediately")
+     *         delay(50.milliseconds) // give up the thread to the outer coroutine
+     *         println("4. When the thread is next available, this coroutine proceeds further")
+     *     }
+     *     println("3. After the initial suspension, the thread does other work.")
+     * }
+     * ```
+     *
+     * ```
+     * // Example of cancelling coroutines before they start executing.
+     * runBlocking {
+     *     launch { // dispatches the job to execute on this thread later
+     *         println("This code will never execute")
+     *     }
+     *     cancel() // cancels the current coroutine scope and its children
+     *     launch(Dispatchers.Unconfined) {
+     *         println("This code will never execute")
+     *     }
+     *     println("This code will execute.")
+     * }
+     * ```
      */
     DEFAULT,
 
