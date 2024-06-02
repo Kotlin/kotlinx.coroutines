@@ -115,7 +115,7 @@ public enum class CoroutineStart {
      * }
      * ```
      *
-     * Examples:
+     * Behavior of [LAZY] can be described with the following examples:
      *
      * ```
      * // Example of lazily starting a new coroutine that goes through a dispatch
@@ -160,7 +160,46 @@ public enum class CoroutineStart {
      * The difference is that, instead of immediately starting them on the same thread,
      * [ATOMIC] performs the full dispatch procedure just as [DEFAULT] does.
      *
+     * Because of this, we can use [ATOMIC] in cases where we want to be certain that some code eventually runs
+     * and uses a specific dispatcher to do that.
+     *
      * Example:
+     * ```
+     * val N_PERMITS = 3
+     * val semaphore = Semaphore(N_PERMITS)
+     * try {
+     *     repeat(100) {
+     *         semaphore.acquire()
+     *         if (it != 7) {
+     *             println("Scheduling $it...")
+     *         } else {
+     *             // "randomly" cancel the whole procedure
+     *             cancel()
+     *         }
+     *         launch(Dispatchers.Default, start = CoroutineStart.ATOMIC) {
+     *             println("Entered $it")
+     *             try {
+     *                 println("Performing the procedure $it")
+     *                 delay(10.milliseconds)
+     *                 println("Done with the procedure $it")
+     *             } finally {
+     *                 semaphore.release()
+     *             }
+     *         }
+     *     }
+     * } finally {
+     *     withContext(NonCancellable) {
+     *         repeat(N_PERMITS) { semaphore.acquire() }
+     *         println("All permits were successfully returned!")
+     *     }
+     * }
+     * ```
+     *
+     * Here, we used [ATOMIC] to ensure that a semaphore that was acquired outside of the coroutine does get released
+     * even if cancellation happens between `acquire()` and `launch`.
+     * As a result, the semaphore will eventually regain all three permits.
+     *
+     * Behavior of [ATOMIC] can be described with the following examples:
      *
      * ```
      * // Example of cancelling atomically started coroutines
@@ -218,6 +257,49 @@ public enum class CoroutineStart {
      *   Only the code until the first suspension point will be executed immediately.
      * - Even if the coroutine was cancelled already, its code will still start to be executed, similar to [ATOMIC].
      *
+     * This set of behaviors makes [UNDISPATCHED] well-suited for cases where the coroutine has a distinct
+     * initialization phase whose side effects we want to rely on later.
+     *
+     * Example:
+     * ```
+     * runBlocking {
+     *     val channel = Channel<Int>(Channel.RENDEZVOUS)
+     *     var subscribers = 0
+     *     fun CoroutineScope.awaitTickNumber(desiredTickNumber: Int) {
+     *         launch(start = CoroutineStart.UNDISPATCHED) {
+     *             ++subscribers
+     *             try {
+     *                 for (tickNumber in channel) {
+     *                     if (tickNumber >= desiredTickNumber) {
+     *                         println("Tick number $desiredTickNumber reached")
+     *                         break
+     *                     }
+     *                 }
+     *             } finally {
+     *                 --subscribers
+     *             }
+     *         }
+     *     }
+     *     for (subscriberIndex in 1..10) {
+     *         awaitTickNumber(10 + subscriberIndex * 3)
+     *     }
+     *     // Send the current tick number every 10 milliseconds
+     *     // while there are subscribers
+     *     var i = 0
+     *     // Because of UNDISPATCHED,
+     *     // we know that the subscribers are already initialized,
+     *     // so this number is non-zero initially.
+     *     while (subscribers > 0) {
+     *         channel.trySend(++i)
+     *         delay(10.milliseconds)
+     *     }
+     * }
+     * ```
+     *
+     * Here, we implement a publisher-subscriber interaction, where [UNDISPATCHED] ensures that the
+     * subscribers do get registered before the publisher first checks if it can stop emitting values due to
+     * the lack of subscribers.
+     *
      * **Pitfall**: unlike [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate], nested undispatched
      * coroutines do not form an event loop that otherwise prevents potential stack overflow in case of unlimited
      * nesting.
@@ -248,7 +330,7 @@ public enum class CoroutineStart {
      * whereas `factorialWithUndispatched` will lead to `n` recursively nested calls,
      * resulting in a stack overflow for large values of `n`.
      *
-     * Example of using [UNDISPATCHED]:
+     * Behavior of [UNDISPATCHED] can be described with the following examples:
      *
      * ```
      * runBlocking {
