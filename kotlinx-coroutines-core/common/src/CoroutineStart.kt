@@ -152,9 +152,42 @@ public enum class CoroutineStart {
 
     /**
      * Atomically (i.e., in a non-cancellable way) schedules the coroutine for execution according to its context.
-     * This is similar to [DEFAULT], but the coroutine cannot be cancelled before it starts executing.
      *
-     * The coroutine started with [ATOMIC] is guaranteed to start execution even if its [Job] was cancelled.
+     * This is similar to [DEFAULT], but the coroutine is guaranteed to start executing even if it was cancelled.
+     * This only affects the initial portion of the code: on subsequent suspensions, cancellation will work as usual.
+     *
+     * [UNDISPATCHED] also ensures that coroutines will be started in any case.
+     * The difference is that, instead of immediately starting them on the same thread,
+     * [ATOMIC] performs the full dispatch procedure just as [DEFAULT] does.
+     *
+     * Example:
+     *
+     * ```
+     * // Example of cancelling atomically started coroutines
+     * runBlocking {
+     *     println("1. Atomically starting a coroutine that goes through a dispatch.")
+     *     launch(start = CoroutineStart.ATOMIC) {
+     *         check(!isActive) // attempting to suspend will throw
+     *         println("4. A coroutine that went through a dispatch also starts.")
+     *         try {
+     *             delay(10.milliseconds)
+     *             println("This code will never run.")
+     *         } catch (e: CancellationException) {
+     *             println("5. Cancellation at later points still works.")
+     *             throw e
+     *         }
+     *     }
+     *     println("2. Cancelling this coroutine and all of its children.")
+     *     cancel()
+     *     launch(Dispatchers.Unconfined, start = CoroutineStart.ATOMIC) {
+     *         check(!isActive) // attempting to suspend will throw
+     *         println("3. An undispatched coroutine starts.")
+     *     }
+     *     ensureActive() // we can even crash the current coroutine.
+     * }
+     *
+     * ```
+     *
      * This [CoroutineStart] option can be used to ensure resources' disposal in case of cancellation.
      * For example, this `producer` guarantees that the `channel` will be eventually closed,
      * even if the coroutine scope is cancelled before `producer` is called:
