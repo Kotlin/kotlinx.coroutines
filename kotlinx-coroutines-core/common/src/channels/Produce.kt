@@ -19,17 +19,20 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
 }
 
 /**
- * Suspends the current coroutine until the channel is either [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel]
- * and invokes the given [block] before resuming the coroutine.
+ * Suspends the current coroutine until the channel is either
+ * [closed][SendChannel.close] or [cancelled][ReceiveChannel.cancel].
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
- * suspending function is waiting, this function immediately resumes with [CancellationException].
+ * The given [block] will be executed unconditionally before this function returns.
+ * `awaitClose { cleanup() }` is a convenient shorthand for the often useful form
+ * `try { awaitClose() } finally { cleanup() }`.
+ *
+ * This function can only be invoked directly inside the same coroutine that is its receiver.
+ * Specifying the receiver of [awaitClose] explicitly is most probably a mistake.
+ *
+ * This suspending function is cancellable: if the [Job] of the current coroutine is [cancelled][CoroutineScope.cancel]
+ * while this suspending function is waiting, this function immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**: even if this function is ready to return, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
- *
- * Note that when the producer channel is cancelled, this function resumes with a cancellation exception.
- * Therefore, in case of cancellation, no code after the call to this function will be executed.
- * That's why this function takes a lambda parameter.
  *
  * Example of usage:
  * ```
@@ -38,6 +41,14 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  *     awaitClose { disposable.dispose() }
  * }
  * ```
+ *
+ * **Pitfall**: when used in [produce], if the channel is [cancelled][ReceiveChannel.cancel], [awaitClose] can either
+ * return normally or throw a [CancellationException] due to a race condition.
+ * The reason is that, for [produce], cancelling the channel and cancelling the coroutine of the [ProducerScope] is
+ * done simultaneously.
+ *
+ * @throws IllegalStateException if invoked from outside the [ProducerScope] (by leaking `this` outside the producer
+ * coroutine).
  */
 public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
     check(kotlin.coroutines.coroutineContext[Job] === this) { "awaitClose() can only be invoked from the producer context" }
