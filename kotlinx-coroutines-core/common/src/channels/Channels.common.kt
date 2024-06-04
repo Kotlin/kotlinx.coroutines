@@ -49,10 +49,44 @@ public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
 }
 
 /**
- * Makes sure that the given [block] consumes all elements from the given channel
- * by always invoking [cancel][ReceiveChannel.cancel] after the execution of the block.
+ * Executes the [block] and then [cancels][ReceiveChannel.cancel] the channel,
+ * ensuring that all the elements that were sent are processed by either [block] or [ReceiveChannel.cancel].
  *
- * The operation is _terminal_.
+ * It is guaranteed that, after invoking this operation, the channel will be [cancelled][ReceiveChannel.cancel], so
+ * the operation is _terminal_.
+ * If the [block] finishes with an exception, that exception will be used for cancelling the channel.
+ *
+ * This function is useful for building more complex terminal operators while ensuring that no elements will be lost.
+ * Example:
+ *
+ * ```
+ * suspend fun <E> ReceiveChannel<E>.consumeFirst(): E =
+ *     consume { return receive() }
+ * fun Int.cleanup() { println("cleaning up $this") }
+ * val channel = Channel<Int>(10, onUndeliveredElement = Int::cleanup)
+ * // Launch a procedure that creates values
+ * launch(Dispatchers.Default) {
+ *     repeat(10) {
+ *         val sendResult = channel.trySend(it)
+ *         if (sendResult.isFailure) {
+ *             print("in the producer: ")
+ *             it.cleanup()
+ *         }
+ *         yield()
+ *     }
+ * }
+ * // Grab the first value and discard everything else
+ * launch(Dispatchers.Default) {
+ *     val firstElement = channel.consumeFirst()
+ *     println("received $firstElement")
+ * }
+ * ```
+ *
+ * In this example, all ten values created by the producer coroutine will be processed: one by `consumeFirst`,
+ * and the other ones by `Int.cleanup`, invoked either by [ReceiveChannel.cancel] inside [consume] or by the
+ * producer itself when it observes failure.
+ * In any case, exactly nine elements will go through a cleanup in this example.
+ * If `consumeFirst` is implemented as `for (e in this) { return e }` instead, the cleanup does not happen.
  */
 public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
     contract {
@@ -70,12 +104,50 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
 }
 
 /**
- * Performs the given [action] for each received element and [cancels][ReceiveChannel.cancel]
- * the channel after the execution of the block.
- * If you need to iterate over the channel without consuming it, a regular `for` loop should be used instead.
+ * Performs the given [action] for each received element and [cancels][ReceiveChannel.cancel] the channel afterward.
+ *
+ * This function stops processing elements when the channel is closed,
+ * the coroutine in which the collection is performed gets cancelled,
+ * or an early return from [action] happens.
+ * Throwing an exception from [action] will attempt to close the channel using the thrown exception.
+ *
+ * When the channel does not need to be closed after iterating over its elements,
+ * a regular `for` loop (`for (element in channel)`) should be used instead.
  *
  * The operation is _terminal_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
+ *
+ * This function is useful in cases when this channel is only expected to have a single consumer that decides when
+ * the producer may stop and ensures that the elements that were sent do get processed.
+ * Example:
+ *
+ * ```
+ * fun Int.cleanup() { println("cleaning up $this") }
+ * val channel = Channel<Int>(1, onUndeliveredElement = Int::cleanup)
+ * // Launch several procedures that create values
+ * repeat(5) {
+ *     launch(Dispatchers.Default) {
+ *         while (true) {
+ *             val x = Random.nextInt(40, 50)
+ *             println("Generating $x")
+ *             channel.send(x)
+ *         }
+ *     }
+ * }
+ * // Launch the exclusive consumer
+ * launch(Dispatchers.Default) {
+ *     channel.consumeEach {
+ *         if (it == 42) {
+ *             println("Found the answer")
+ *             return@launch
+ *         } else it.cleanup()
+ *     }
+ * }
+ * ```
+ *
+ * In this example, all ten values created by the producer coroutines will be processed:
+ * while the single consumer is active, it will receive all the elements, but once it exits,
+ * the values that can no longer be delivered will be passed to the `Int.cleanup` handler.
  */
 public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit): Unit =
     consume {
@@ -83,10 +155,28 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
     }
 
 /**
- * Returns a [List] containing all elements.
+ * Returns a [List] containing all the elements sent to this channel, preserving their order.
+ *
+ * This function will attempt to receive elements and put them into the list until the channel is
+ * [closed][SendChannel.close].
+ * Calling [toList] without closing the channel is always incorrect:
+ * - It will suspend indefinitely if the channel is not closed, but no new elements arrive.
+ * - If new elements do arrive and the channel is not eventually closed, [toList] will use more and more memory
+ *   until exhausting it.
  *
  * The operation is _terminal_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
+ *
+ * Example:
+ * ```
+ * val values = listOf(1, 5, 2, 9, 3, 3, 1)
+ * val channel = Channel<Int>()
+ * GlobalScope.launch {
+ *     values.forEach { channel.send(it) }
+ *     channel.close()
+ * }
+ * check(channel.toList() == values)
+ * ```
  */
 public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
     consumeEach {
