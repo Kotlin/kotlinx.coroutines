@@ -107,7 +107,8 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
  * Performs the given [action] for each received element and [cancels][ReceiveChannel.cancel] the channel afterward.
  *
  * This function stops processing elements when the channel is closed,
- * the coroutine in which the collection is performed gets cancelled,
+ * the coroutine in which the collection is performed gets cancelled and there are no readily available elements in the
+ * channel's buffer,
  * or an early return from [action] happens.
  * Throwing an exception from [action] will attempt to close the channel using the thrown exception.
  *
