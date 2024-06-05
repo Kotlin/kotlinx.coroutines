@@ -95,6 +95,15 @@ class ChannelsTest: TestBase() {
 
     }
 
+    @Test
+    fun testToListOnFailedChannel() = runTest {
+        val channel = Channel<Int>()
+        channel.close(TestException())
+        assertFailsWith<TestException> {
+            channel.toList()
+        }
+    }
+
     private fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
         GlobalScope.produce(context) {
             for (element in this@asReceiveChannel)

@@ -121,6 +121,15 @@ class ConsumeTest: TestBase() {
         assertEquals(listOf(3), undeliveredElements)
     }
 
+    @Test
+    fun testConsumeEachThrowingOnChannelClosing() = runTest {
+        val channel = Channel<Int>()
+        channel.close(TestException())
+        assertFailsWith<TestException> {
+            channel.consumeEach { fail("unreached") }
+        }
+    }
+
     /** Check that [BroadcastChannel.consume] does not suffer from KT-58685 */
     @Suppress("DEPRECATION", "DEPRECATION_ERROR")
     @Test

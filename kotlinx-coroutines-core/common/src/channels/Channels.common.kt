@@ -106,11 +106,12 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
 /**
  * Performs the given [action] for each received element and [cancels][ReceiveChannel.cancel] the channel afterward.
  *
- * This function stops processing elements when the channel is closed,
+ * This function stops processing elements when the channel is [closed][SendChannel.close],
  * the coroutine in which the collection is performed gets cancelled and there are no readily available elements in the
  * channel's buffer,
  * or an early return from [action] happens.
- * Throwing an exception from [action] will attempt to close the channel using the thrown exception.
+ * If the [action] finishes with an exception, that exception will be used for cancelling the channel and rethrown.
+ * If the channel is [closed][SendChannel.close] with a cause, this cause will be rethrown from [consumeEach].
  *
  * When the channel does not need to be closed after iterating over its elements,
  * a regular `for` loop (`for (element in channel)`) should be used instead.
@@ -164,6 +165,8 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
  * - It will suspend indefinitely if the channel is not closed, but no new elements arrive.
  * - If new elements do arrive and the channel is not eventually closed, [toList] will use more and more memory
  *   until exhausting it.
+ *
+ * If the channel is [closed][SendChannel.close] with a cause, [toList] will rethrow that cause.
  *
  * The operation is _terminal_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
