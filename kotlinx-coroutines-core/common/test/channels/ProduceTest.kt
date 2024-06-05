@@ -114,6 +114,36 @@ class ProduceTest : TestBase() {
     }
 
     @Test
+    fun testAwaitCloseOnlyAllowedOnce() = runTest {
+        expect(1)
+        val c = produce<Int> {
+            try {
+                awaitClose()
+            } catch (e: CancellationException) {
+                assertFailsWith<IllegalStateException> {
+                    awaitClose()
+                }
+                finish(2)
+                throw e
+            }
+        }
+        yield() // let the `produce` procedure run
+        c.cancel()
+    }
+
+    @Test
+    fun testInvokeOnCloseWithAwaitClose() = runTest {
+        expect(1)
+        produce<Int> {
+            invokeOnClose { }
+            assertFailsWith<IllegalStateException> {
+                awaitClose()
+            }
+            finish(2)
+        }
+    }
+
+    @Test
     fun testAwaitConsumerCancellation() = runTest {
         val parent = Job()
         val channel = produce<Int>(parent) {

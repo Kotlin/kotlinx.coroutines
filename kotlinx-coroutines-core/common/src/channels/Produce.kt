@@ -42,6 +42,12 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  * }
  * ```
  *
+ * Internally, [awaitClose] is implemented using [SendChannel.invokeOnClose].
+ * Currently, every channel can have at most one [SendChannel.invokeOnClose] handler.
+ * This means that calling [awaitClose] several times in a row or combining it with other [SendChannel.invokeOnClose]
+ * invocations is prohibited.
+ * An [IllegalStateException] will be thrown if this rule is broken.
+ *
  * **Pitfall**: when used in [produce], if the channel is [cancelled][ReceiveChannel.cancel], [awaitClose] can either
  * return normally or throw a [CancellationException] due to a race condition.
  * The reason is that, for [produce], cancelling the channel and cancelling the coroutine of the [ProducerScope] is
@@ -49,6 +55,7 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  *
  * @throws IllegalStateException if invoked from outside the [ProducerScope] (by leaking `this` outside the producer
  * coroutine).
+ * @throws IllegalStateException if this channel already has a [SendChannel.invokeOnClose] handler registered.
  */
 public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
     check(kotlin.coroutines.coroutineContext[Job] === this) { "awaitClose() can only be invoked from the producer context" }
