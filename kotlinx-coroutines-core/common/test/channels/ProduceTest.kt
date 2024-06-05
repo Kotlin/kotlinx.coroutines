@@ -178,6 +178,19 @@ class ProduceTest : TestBase() {
         finish(3)
     }
 
+    @Test
+    fun testUncaughtExceptionsInProduce() = runTest(
+        unhandled = listOf({ it is TestException })
+    ) {
+        val c = produce<Int> {
+            launch(SupervisorJob()) {
+                throw TestException()
+            }.join()
+            send(3)
+        }
+        assertEquals(3, c.receive())
+    }
+
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
         val source = Channel<Int>()
         expect(1)

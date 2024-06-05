@@ -79,7 +79,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * The parent job is inherited from the [CoroutineScope] as well, but it can also be overridden
  * with a corresponding [context] element.
  *
- * Any uncaught exception in this coroutine will close the channel with this exception as the cause and
+ * If this coroutine finishes with an exception, it will close the channel with that exception as the cause and
  * the resulting channel will become _failed_, so that any attempt to receive from it thereafter will throw an exception.
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter.
