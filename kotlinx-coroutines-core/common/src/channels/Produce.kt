@@ -76,10 +76,11 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * object can be used to [receive][ReceiveChannel.receive] elements produced by this coroutine.
  *
  * The scope of the coroutine contains the [ProducerScope] interface, which implements
- * both [CoroutineScope] and [SendChannel], so that the coroutine can invoke
- * [send][SendChannel.send] directly. The channel is [closed][SendChannel.close]
- * when the coroutine completes.
- * The running coroutine is cancelled when its receive channel is [cancelled][ReceiveChannel.cancel].
+ * both [CoroutineScope] and [SendChannel], so that the coroutine can invoke [send][SendChannel.send] directly.
+ * The channel is [closed][SendChannel.close] when the coroutine completes.
+ * The running coroutine is cancelled when the channel is [cancelled][ReceiveChannel.cancel].
+ * When the coroutine is cancelled, however, the channel does not automatically close until the coroutine completes,
+ * so it is possible to keep sending elements while handling coroutine cancellation.
  *
  * The coroutine context is inherited from this [CoroutineScope]. Additional context elements can be specified with the [context] argument.
  * If the context does not have any dispatcher or other [ContinuationInterceptor], then [Dispatchers.Default] is used.

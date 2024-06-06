@@ -221,6 +221,19 @@ class ProduceTest : TestBase() {
         assertEquals(3, c.receive())
     }
 
+    @Test
+    fun testCancellingProduceCoroutineButNotChannel() = runTest {
+        val c = produce<Int>(Job(), capacity = Channel.UNLIMITED) {
+            launch { throw TestException() }
+            try {
+                yield()
+            } finally {
+                repeat(10) { trySend(it) }
+            }
+        }
+        repeat(10) { assertEquals(it, c.receive()) }
+    }
+
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
         val source = Channel<Int>()
         expect(1)
