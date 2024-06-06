@@ -234,6 +234,18 @@ class ProduceTest : TestBase() {
         repeat(10) { assertEquals(it, c.receive()) }
     }
 
+    @Test
+    fun testReceivingValuesAfterFailingTheCoroutine() = runTest {
+        val c = produce<Int>(SupervisorJob(), capacity = Channel.UNLIMITED) {
+            repeat(5) { send(it) }
+            throw TestException()
+        }
+        yield()
+        assertTrue((c as Job).isCancelled)
+        repeat(5) { assertEquals(it, c.receive()) }
+        assertFailsWith<TestException> { c.receive() }
+    }
+
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
         val source = Channel<Int>()
         expect(1)

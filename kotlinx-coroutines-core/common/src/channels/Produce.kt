@@ -88,7 +88,8 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * with a corresponding [context] element.
  *
  * If this coroutine finishes with an exception, it will close the channel with that exception as the cause and
- * the resulting channel will become _failed_, so that any attempt to receive from it thereafter will throw an exception.
+ * the resulting channel will become _failed_, so any attempt to receive from it after all the existing elements are
+ * processed will throw an exception.
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter.
  * See the [Channel] interface documentation for details.
