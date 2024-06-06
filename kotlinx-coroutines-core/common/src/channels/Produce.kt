@@ -105,7 +105,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
 @ExperimentalCoroutinesApi
 public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
-    capacity: Int = 0,
+    capacity: Int = Channel.RENDEZVOUS,
     @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> =
     produce(context, capacity, BufferOverflow.SUSPEND, CoroutineStart.DEFAULT, onCompletion = null, block = block)
