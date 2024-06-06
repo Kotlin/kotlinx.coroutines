@@ -236,14 +236,34 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testReceivingValuesAfterFailingTheCoroutine() = runTest {
-        val c = produce<Int>(SupervisorJob(), capacity = Channel.UNLIMITED) {
+        val produceJob = Job()
+        val c = produce<Int>(produceJob, capacity = Channel.UNLIMITED) {
             repeat(5) { send(it) }
             throw TestException()
         }
-        yield()
-        assertTrue((c as Job).isCancelled)
+        produceJob.join()
+        assertTrue(produceJob.isCancelled)
         repeat(5) { assertEquals(it, c.receive()) }
         assertFailsWith<TestException> { c.receive() }
+    }
+
+    @Test
+    fun testSilentKillerInProduce() = runTest {
+        val parentScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val channel = parentScope.produce<Int>(capacity = Channel.UNLIMITED) {
+            repeat(5) {
+                send(it)
+            }
+            parentScope.cancel()
+            // suspending after this point would fail, but sending succeeds
+            send(-1)
+        }
+        launch {
+            for (c in channel) {
+                println(c) // 0, 1, 2, 3, 4, -1
+            } // throws an exception after reaching -1
+            fail("unreached")
+        }
     }
 
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
