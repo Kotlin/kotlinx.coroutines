@@ -1,7 +1,4 @@
-import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.*
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 configure(subprojects) {
     val project = this
@@ -39,17 +36,7 @@ configure(subprojects) {
                     "kotlin.experimental.ExperimentalNativeApi",
                 )
             }
-            freeCompilerArgs.addAll("-progressive", "-Xexpect-actual-classes")
-            optIn.addAll(
-                "kotlin.experimental.ExperimentalTypeInference",
-                "kotlin.ExperimentalMultiplatform",
-                // our own opt-ins that we don't want to bother with in our own code:
-                "kotlinx.coroutines.DelicateCoroutinesApi",
-                "kotlinx.coroutines.ExperimentalCoroutinesApi",
-                "kotlinx.coroutines.ObsoleteCoroutinesApi",
-                "kotlinx.coroutines.InternalCoroutinesApi",
-                "kotlinx.coroutines.FlowPreview"
-            )
+            configureGlobalKotlinArgumentsAndOptIns()
         }
 
     }
