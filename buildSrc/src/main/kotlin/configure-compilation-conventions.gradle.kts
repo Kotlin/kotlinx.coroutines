@@ -36,7 +36,6 @@ configure(subprojects) {
                     "kotlin.experimental.ExperimentalNativeApi",
                 )
             }
-            configureGlobalKotlinArgumentsAndOptIns()
         }
 
     }

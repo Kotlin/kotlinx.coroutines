@@ -127,6 +127,8 @@ kotlin {
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
     compilerOptions {
         configureGlobalKotlinArgumentsAndOptIns()
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+        optIn.add("kotlin.ExperimentalMultiplatform")
     }
 }
 
