@@ -1,7 +1,7 @@
-package kotlinx.coroutines
+package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
-import kotlinx.coroutines.scheduling.*
+import kotlinx.coroutines.*
 import org.junit.*
 import java.util.*
 import java.util.concurrent.*

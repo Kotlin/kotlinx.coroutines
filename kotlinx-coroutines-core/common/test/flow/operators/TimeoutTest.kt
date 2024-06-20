@@ -1,8 +1,7 @@
-package kotlinx.coroutines.flow.operators
+package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.coroutines.*
 import kotlin.test.*

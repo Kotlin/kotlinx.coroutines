@@ -1,8 +1,7 @@
-package channels
+package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 import org.junit.Test
 
 class ChannelMemoryLeakStressTest : TestBase()  {
