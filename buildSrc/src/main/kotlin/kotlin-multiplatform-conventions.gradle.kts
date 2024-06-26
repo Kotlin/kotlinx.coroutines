@@ -123,6 +123,13 @@ kotlin {
         groupSourceSets("jsAndWasmJsShared", listOf("js", "wasmJs"), emptyList())
         groupSourceSets("jsAndWasmShared", listOf("jsAndWasmJsShared", "wasmWasi"), listOf("common"))
     }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+        configureGlobalKotlinArgumentsAndOptIns()
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+        optIn.add("kotlin.ExperimentalMultiplatform")
+    }
 }
 
 // Disable intermediate sourceSet compilation because we do not need js-wasm common artifact
