@@ -1,9 +1,8 @@
 @file:Suppress("UNCHECKED_CAST")
-package kotlinx.coroutines.flow.operators
+package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import kotlin.test.*
 import kotlinx.coroutines.flow.combine as combineOriginal
 import kotlinx.coroutines.flow.combineTransform as combineTransformOriginal

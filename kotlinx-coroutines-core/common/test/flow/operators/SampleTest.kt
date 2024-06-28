@@ -1,9 +1,8 @@
-package kotlinx.coroutines.flow.operators
+package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
 import kotlin.test.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
