@@ -10,13 +10,14 @@ import kotlin.coroutines.*
  * [launch][CoroutineScope.launch] and [async][CoroutineScope.async]
  * to describe when and how the coroutine should be dispatched initially.
  *
- * This parameter only affects how the coroutine behaves until it reaches the first suspension point.
+ * This parameter only affects how the coroutine behaves until the code of its body starts executing.
  * After that, cancellability and dispatching depend on the implementation details of the invoked suspending functions.
  *
  * The summary of coroutine start options is:
- * - [DEFAULT] immediately schedules the coroutine for execution according to its context;
- * - [LAZY] starts coroutine lazily, only when its result is needed;
- * - [ATOMIC] atomically (in a non-cancellable way) schedules the coroutine for execution according to its context;
+ * - [DEFAULT] immediately schedules the coroutine for execution according to its context.
+ * - [LAZY] delays the moment of the initial dispatch until the result of the coroutine is awaited.
+ * - [ATOMIC] prevents the coroutine from being cancelled before it starts, ensuring that its code will start
+ *   executing in any case.
  * - [UNDISPATCHED] immediately executes the coroutine until its first suspension point _in the current thread_.
  */
 public enum class CoroutineStart {
@@ -34,14 +35,7 @@ public enum class CoroutineStart {
      *   similarly to [UNDISPATCHED].
      *
      * If the coroutine's [Job] is cancelled before it started executing, then it will not start its
-     * execution at all, and will be considered [cancelled][Job.isCancelled].
-     *
-     * Comparisons with the other options:
-     * - [LAZY] delays the moment of the initial dispatch until the completion of the coroutine is awaited.
-     * - [ATOMIC] prevents the coroutine from being cancelled before its first suspension point.
-     * - [UNDISPATCHED] always executes the coroutine until the first suspension immediately in the same thread
-     *   (as if [CoroutineDispatcher.isDispatchNeeded] returned `false`),
-     *   and also, like [ATOMIC], it ensures that the coroutine cannot be cancelled before it starts executing.
+     * execution at all and will be considered [cancelled][Job.isCancelled].
      *
      * Examples:
      *
@@ -52,7 +46,7 @@ public enum class CoroutineStart {
      *     // Dispatch the job to execute later.
      *     // The parent coroutine's dispatcher is inherited by default.
      *     // In this case, it's the single thread backing `runBlocking`.
-     *     val job = launch {
+     *     val job = launch { // CoroutineStart.DEFAULT is the launch's default start mode
      *         println("3. When the thread is available, we start the coroutine")
      *     }
      *     println("2. The thread keeps doing other work after launching the coroutine")
@@ -65,7 +59,7 @@ public enum class CoroutineStart {
      *     println("1. About to start a coroutine not needing a dispatch.")
      *     // Dispatch the job to execute.
      *     // `Dispatchers.Unconfined` is explicitly chosen.
-     *     val job = launch(Dispatchers.Unconfined) {
+     *     val job = launch(Dispatchers.Unconfined) { // CoroutineStart.DEFAULT is the launch's default start mode
      *         println("2. The body will be executed immediately")
      *         delay(50.milliseconds) // give up the thread to the outer coroutine
      *         println("4. When the thread is next available, this coroutine proceeds further")
@@ -77,7 +71,8 @@ public enum class CoroutineStart {
      * ```
      * // Example of cancelling coroutines before they start executing.
      * runBlocking {
-     *     launch { // dispatches the job to execute on this thread later
+     *     // dispatch the job to execute on this thread later
+     *     launch { // CoroutineStart.DEFAULT is the launch's default start mode
      *         println("This code will never execute")
      *     }
      *     cancel() // cancels the current coroutine scope and its children
@@ -102,7 +97,7 @@ public enum class CoroutineStart {
      * like [launch][CoroutineScope.launch] and [async][CoroutineScope.async].
      *
      * If the coroutine's [Job] is cancelled before it started executing, then it will not start its
-     * execution at all, and will instead complete with an exception.
+     * execution at all and will be considered [cancelled][Job.isCancelled].
      *
      * **Pitfall**: launching a coroutine with [LAZY] without awaiting or cancelling it at any point means that it will
      * never be completed, leading to deadlocks and resource leaks.
@@ -153,9 +148,10 @@ public enum class CoroutineStart {
      * Atomically (i.e., in a non-cancellable way) schedules the coroutine for execution according to its context.
      *
      * This is similar to [DEFAULT], but the coroutine is guaranteed to start executing even if it was cancelled.
-     * This only affects the initial portion of the code: on subsequent suspensions, cancellation will work as usual.
+     * This only affects the behavior until the body of the coroutine starts executing;
+     * inside the body, cancellation will work as usual.
      *
-     * [UNDISPATCHED] also ensures that coroutines will be started in any case.
+     * Like [ATOMIC], [UNDISPATCHED], too, ensures that coroutines will be started in any case.
      * The difference is that, instead of immediately starting them on the same thread,
      * [ATOMIC] performs the full dispatch procedure just as [DEFAULT] does.
      *
@@ -178,8 +174,9 @@ public enum class CoroutineStart {
      *         launch(Dispatchers.Default, start = CoroutineStart.ATOMIC) {
      *             println("Entered $it")
      *             try {
+     *                 // this `try` block will be entered in any case because of ATOMIC
      *                 println("Performing the procedure $it")
-     *                 delay(10.milliseconds)
+     *                 delay(10.milliseconds) // may throw due to cancellation
      *                 println("Done with the procedure $it")
      *             } finally {
      *                 semaphore.release()
@@ -223,21 +220,6 @@ public enum class CoroutineStart {
      *     }
      *     ensureActive() // we can even crash the current coroutine.
      * }
-     *
-     * ```
-     *
-     * This [CoroutineStart] option can be used to ensure resources' disposal in case of cancellation.
-     * For example, this `producer` guarantees that the `channel` will be eventually closed,
-     * even if the coroutine scope is cancelled before `producer` is called:
-     * ```
-     * fun CoroutineScope.producer(channel: SendChannel<Int>) =
-     *     launch(start = CoroutineStart.ATOMIC) {
-     *         try {
-     *             // produce elements
-     *         } finally {
-     *             channel.close()
-     *         }
-     *     }
      * ```
      *
      * This is a **delicate** API. The coroutine starts execution even if its [Job] is cancelled before starting.
