@@ -12,11 +12,10 @@ import kotlin.coroutines.*
  *
  * This parameter only affects how the coroutine behaves until it reaches the first suspension point.
  * After that, cancellability and dispatching depend on the implementation details of the invoked suspending functions.
- * Use [suspendCancellableCoroutine] to implement custom cancellable suspending functions.
  *
  * The summary of coroutine start options is:
  * - [DEFAULT] immediately schedules the coroutine for execution according to its context;
- * - [LAZY] starts coroutine lazily, only when it is needed;
+ * - [LAZY] starts coroutine lazily, only when its result is needed;
  * - [ATOMIC] atomically (in a non-cancellable way) schedules the coroutine for execution according to its context;
  * - [UNDISPATCHED] immediately executes the coroutine until its first suspension point _in the current thread_.
  */
@@ -35,7 +34,7 @@ public enum class CoroutineStart {
      *   similarly to [UNDISPATCHED].
      *
      * If the coroutine's [Job] is cancelled before it started executing, then it will not start its
-     * execution at all, and will instead complete with an exception.
+     * execution at all, and will be considered [cancelled][Job.isCancelled].
      *
      * Comparisons with the other options:
      * - [LAZY] delays the moment of the initial dispatch until the completion of the coroutine is awaited.
@@ -126,7 +125,7 @@ public enum class CoroutineStart {
      *         println("3. Only now does the coroutine start.")
      *     }
      *     delay(10.milliseconds) // try to give the coroutine some time to run
-     *     println("2. The coroutine still has not started. Now, we await it.")
+     *     println("2. The coroutine still has not started. Now, we join it.")
      *     job.join()
      * }
      * ```
