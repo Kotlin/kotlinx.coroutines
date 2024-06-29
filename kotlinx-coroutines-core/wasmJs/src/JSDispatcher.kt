@@ -1,9 +1,8 @@
 package kotlinx.coroutines
 
-import org.w3c.dom.Window
 import kotlin.js.*
 
-public actual typealias W3CWindow = Window
+public actual abstract external class W3CWindow
 
 internal actual fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int =
     setTimeout(window, handler, timeout)
@@ -12,7 +11,7 @@ internal actual fun w3cSetTimeout(handler: () -> Unit, timeout: Int): Int =
     setTimeout(handler, timeout)
 
 internal actual fun w3cClearTimeout(window: W3CWindow, handle: Int) =
-    window.clearTimeout(handle)
+    clearTimeout(handle)
 
 internal actual fun w3cClearTimeout(handle: Int) =
     clearTimeout(handle)
@@ -40,7 +39,7 @@ internal class NodeDispatcher(private val process: JsProcess) : SetTimeoutBasedD
 }
 
 @Suppress("UNUSED_PARAMETER")
-private fun subscribeToWindowMessages(window: Window, process: () -> Unit): Unit = js("""{
+private fun subscribeToWindowMessages(window: W3CWindow, process: () -> Unit): Unit = js("""{
     const handler = (event) => {
         if (event.source == window && event.data == 'dispatchCoroutine') {
             event.stopPropagation();
@@ -51,7 +50,7 @@ private fun subscribeToWindowMessages(window: Window, process: () -> Unit): Unit
 }""")
 
 @Suppress("UNUSED_PARAMETER")
-private fun createRescheduleMessagePoster(window: Window): () -> Unit =
+private fun createRescheduleMessagePoster(window: W3CWindow): () -> Unit =
     js("() => window.postMessage('dispatchCoroutine', '*')")
 
 @Suppress("UNUSED_PARAMETER")
@@ -84,5 +83,6 @@ private fun clearTimeout(handle: Int): Unit =
     js("{ if (typeof clearTimeout !== 'undefined') clearTimeout(handle); }")
 
 @Suppress("UNUSED_PARAMETER")
-private fun setTimeout(window: Window, handler: () -> Unit, timeout: Int): Int =
+private fun setTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int =
     js("window.setTimeout(handler, timeout)")
+
