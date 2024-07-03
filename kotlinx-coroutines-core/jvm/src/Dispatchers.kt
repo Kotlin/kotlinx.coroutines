@@ -62,7 +62,7 @@ public actual object Dispatchers {
      * during operations over IO dispatcher.
      */
     @JvmStatic
-    public val IO: CoroutineDispatcher = DefaultIoScheduler
+    public val IO: CoroutineDispatcher get() = DefaultIoScheduler
 
     /**
      * Shuts down built-in dispatchers, such as [Default] and [IO],
