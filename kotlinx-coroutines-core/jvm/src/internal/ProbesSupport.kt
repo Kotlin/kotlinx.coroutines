@@ -8,5 +8,5 @@ internal actual inline fun <T> probeCoroutineCreated(completion: Continuation<T>
     kotlin.coroutines.jvm.internal.probeCoroutineCreated(completion)
 
 internal actual inline fun <T> probeCoroutineResumed(completion: Continuation<T>) {
-    kotlinx.coroutines.debug.internal.probeCoroutineResumed(completion)
+    kotlin.coroutines.jvm.internal.probeCoroutineResumed(completion)
 }
