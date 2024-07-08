@@ -87,6 +87,7 @@ private fun <T> Task<T>.asDeferredImpl(cancellationTokenSource: CancellationToke
         }
     }
     // Prevent casting to CompletableDeferred and manual completion.
+    @OptIn(InternalForInheritanceCoroutinesApi::class)
     return object : Deferred<T> by deferred {}
 }
 

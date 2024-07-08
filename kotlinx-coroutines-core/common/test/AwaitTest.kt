@@ -353,6 +353,7 @@ class AwaitTest : TestBase() {
     fun testAwaitAllDelegates() = runTest {
         expect(1)
         val deferred = CompletableDeferred<String>()
+        @OptIn(InternalForInheritanceCoroutinesApi::class)
         val delegate = object : Deferred<String> by deferred {}
         launch {
             expect(3)
@@ -367,6 +368,7 @@ class AwaitTest : TestBase() {
     fun testCancelAwaitAllDelegate() = runTest {
         expect(1)
         val deferred = CompletableDeferred<String>()
+        @OptIn(InternalForInheritanceCoroutinesApi::class)
         val delegate = object : Deferred<String> by deferred {}
         launch {
             expect(3)
