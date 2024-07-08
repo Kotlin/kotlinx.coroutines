@@ -48,10 +48,12 @@ public enum class CoroutineStart {
      * Atomically (i.e., in a non-cancellable way) schedules the coroutine for execution according to its context.
      * This is similar to [DEFAULT], but the coroutine cannot be cancelled before it starts executing.
      *
+     * This is a **delicate** API. The coroutine starts execution even if its [Job] is canceled before starting.
+     *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions as in [DEFAULT].
      */
-    @ExperimentalCoroutinesApi // Since 1.0.0, no ETA on stability
+    @DelicateCoroutinesApi
     ATOMIC,
 
     /**
