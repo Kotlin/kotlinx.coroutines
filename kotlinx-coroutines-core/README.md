@@ -106,7 +106,7 @@ Low-level primitives for finer-grained control of coroutines.
 
 # Package kotlinx.coroutines.future
 
-[JDK 8's `Future`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html) support.
+[JDK 8's `CompletableFuture`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html) support.
 
 # Package kotlinx.coroutines.stream
 
