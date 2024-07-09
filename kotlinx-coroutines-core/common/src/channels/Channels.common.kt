@@ -62,7 +62,9 @@ public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
  * ```
  * suspend fun <E> ReceiveChannel<E>.consumeFirst(): E =
  *     consume { return receive() }
+ * 
  * fun Int.cleanup() { println("cleaning up $this") }
+ *
  * val channel = Channel<Int>(10, onUndeliveredElement = Int::cleanup)
  * // Launch a procedure that creates values
  * launch(Dispatchers.Default) {
