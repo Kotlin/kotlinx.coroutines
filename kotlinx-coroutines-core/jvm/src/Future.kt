@@ -12,10 +12,15 @@ import java.util.concurrent.*
  * invokeOnCancellation { if (it != null) future.cancel(false) }
  * ```
  */
+@Deprecated(
+    "This function does not do what its name implies: it will not cancel the future if just cancel() was called.",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("this.invokeOnCancellation { future.cancel(false) }")
+)
 public fun CancellableContinuation<*>.cancelFutureOnCancellation(future: Future<*>): Unit =
-    invokeOnCancellation(handler = CancelFutureOnCancel(future))
+    invokeOnCancellation(handler = PublicCancelFutureOnCancel(future))
 
-private class CancelFutureOnCancel(private val future: Future<*>) : CancelHandler {
+private class PublicCancelFutureOnCancel(private val future: Future<*>) : CancelHandler {
     override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
         // interruption flag and it will cause spurious failures elsewhere
