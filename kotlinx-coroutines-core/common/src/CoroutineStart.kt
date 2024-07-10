@@ -48,9 +48,10 @@ public enum class CoroutineStart {
      * Atomically (i.e., in a non-cancellable way) schedules the coroutine for execution according to its context.
      * This is similar to [DEFAULT], but the coroutine cannot be cancelled before it starts executing.
      *
-     * The coroutine stated with [ATOMIC] is guaranteed to start execution even if its [Job] was cancelled.
+     * The coroutine started with [ATOMIC] is guaranteed to start execution even if its [Job] was cancelled.
      * This [CoroutineStart] option can be used to ensure resources' disposal in case of cancellation.
-     * For example, closing a channel used by a producer:
+     * For example, this `producer` guarantees that the `channel` will be eventually closed,
+     * even if the coroutine scope is cancelled before `producer` is called:
      * ```
      * fun CoroutineScope.producer(channel: SendChannel<Int>) =
      *     launch(start = CoroutineStart.ATOMIC) {
@@ -62,10 +63,10 @@ public enum class CoroutineStart {
      *     }
      * ```
      *
-     * This is a **delicate** API. The coroutine starts execution even if its [Job] is canceled before starting.
-     * However, the resources used in within a coroutine may rely on the cancellation mechanism,
+     * This is a **delicate** API. The coroutine starts execution even if its [Job] is cancelled before starting.
+     * However, the resources used within a coroutine may rely on the cancellation mechanism,
      * and cannot be used after the [Job] cancellation. For instance, in Android development, updating a UI element
-     * is not allowed if the coroutine's scope, which is tied to the element's lifecycle, has been canceled.
+     * is not allowed if the coroutine's scope, which is tied to the element's lifecycle, has been cancelled.
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions as in [DEFAULT].
