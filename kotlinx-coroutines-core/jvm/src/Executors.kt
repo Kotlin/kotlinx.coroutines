@@ -205,7 +205,7 @@ private class CancelFutureOnCancel(private val future: Future<*>) : CancelHandle
     override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
         // interruption flag and it will cause spurious failures elsewhere
-        if (cause != null) future.cancel(false)
+        future.cancel(false)
     }
     override fun toString() = "CancelFutureOnCancel[$future]"
 }
