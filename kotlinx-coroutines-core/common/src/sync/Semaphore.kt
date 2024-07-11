@@ -87,7 +87,7 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
 }
 
 @Suppress("UNCHECKED_CAST")
-internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int) : Semaphore {
+internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPermits: Int) {
     /*
        The queue of waiting acquirers is essentially an infinite array based on the list of segments
        (see `SemaphoreSegment`); each segment contains a fixed number of slots. To determine a slot for each enqueue
@@ -144,11 +144,11 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
      * cannot be greater than 2^31 in any real application.
      */
     private val _availablePermits = atomic(permits - acquiredPermits)
-    override val availablePermits: Int get() = max(_availablePermits.value, 0)
+    val availablePermits: Int get() = max(_availablePermits.value, 0)
 
     private val onCancellationRelease = { _: Throwable, _: Unit, _: CoroutineContext -> release() }
 
-    override fun tryAcquire(): Boolean {
+    fun tryAcquire(): Boolean {
         while (true) {
             // Get the current number of available permits.
             val p = _availablePermits.value
@@ -167,7 +167,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         }
     }
 
-    override suspend fun acquire() {
+    suspend fun acquire() {
         // Decrement the number of available permits.
         val p = decPermits()
         // Is the permit acquired?
@@ -239,7 +239,7 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
         }
     }
 
-    override fun release() {
+    fun release() {
         while (true) {
             // Increment the number of available permits.
             val p = _availablePermits.getAndIncrement()
@@ -346,11 +346,15 @@ internal open class SemaphoreImpl(private val permits: Int, acquiredPermits: Int
             } else false
         }
         is SelectInstance<*> -> {
-            trySelect(this@SemaphoreImpl, Unit)
+            trySelect(this@SemaphoreAndMutexImpl, Unit)
         }
         else -> error("unexpected: $this")
     }
 }
+
+private class SemaphoreImpl(
+    permits: Int, acquiredPermits: Int
+): SemaphoreAndMutexImpl(permits, acquiredPermits), Semaphore
 
 private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev, 0)
 
