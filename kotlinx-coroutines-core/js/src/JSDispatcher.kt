@@ -3,7 +3,7 @@ package kotlinx.coroutines
 import org.w3c.dom.*
 import kotlin.js.Promise
 
-public actual typealias W3CWindow = Window
+internal actual typealias W3CWindow = Window
 
 internal actual fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int =
     setTimeout(window, handler, timeout)
