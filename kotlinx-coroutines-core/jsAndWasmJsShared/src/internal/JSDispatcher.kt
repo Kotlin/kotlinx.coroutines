@@ -3,7 +3,7 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
-public expect abstract class W3CWindow
+internal expect abstract class W3CWindow
 internal expect fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int
 internal expect fun w3cSetTimeout(handler: () -> Unit, timeout: Int): Int
 internal expect fun w3cClearTimeout(handle: Int)

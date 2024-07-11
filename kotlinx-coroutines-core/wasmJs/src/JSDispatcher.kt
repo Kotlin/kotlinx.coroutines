@@ -2,7 +2,7 @@ package kotlinx.coroutines
 
 import kotlin.js.*
 
-public actual abstract external class W3CWindow {
+internal actual abstract external class W3CWindow {
     fun clearTimeout(handle: Int)
 }
 
