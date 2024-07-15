@@ -29,12 +29,14 @@ More context elements:
 
 Synchronization primitives for coroutines:
 
-| **Name**                                        | **Suspending functions**                                                                                            | **Description**
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------
-| [Mutex][kotlinx.coroutines.sync.Mutex]          | [lock][kotlinx.coroutines.sync.Mutex.lock]                                                                          | Mutual exclusion
-| [Semaphore][kotlinx.coroutines.sync.Semaphore]  | [acquire][kotlinx.coroutines.sync.Mutex.acquire]                                                                    | Limiting the maximum concurrency
-| [Channel][kotlinx.coroutines.channels.Channel]  | [send][kotlinx.coroutines.channels.SendChannel.send], [receive][kotlinx.coroutines.channels.ReceiveChannel.receive] | Communication channel (aka queue or exchanger)
-| [Flow][kotlinx.coroutines.flow.Flow]            | [collect][kotlinx.coroutines.flow.Flow.collect]                                                                     | Asynchronous stream of values
+| **Name**                                                                                                                                             | **Suspending functions**                                                                                            | **Description**
+|------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------| ---------------
+| [Mutex][kotlinx.coroutines.sync.Mutex]                                                                                                               | [lock][kotlinx.coroutines.sync.Mutex.lock]                                                                          | Mutual exclusion
+| [Semaphore][kotlinx.coroutines.sync.Semaphore]                                                                                                       | [acquire][kotlinx.coroutines.sync.Semaphore.acquire]                                                                | Limiting the maximum concurrency
+| [Channel][kotlinx.coroutines.channels.Channel]                                                                                                       | [send][kotlinx.coroutines.channels.SendChannel.send], [receive][kotlinx.coroutines.channels.ReceiveChannel.receive] | Communication channel (aka queue or exchanger)
+| [Flow](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/)                                         | [collect][kotlinx.coroutines.flow.Flow.collect]                                                                     | Asynchronous stream of values
+
+<!---  Flow direct link is here to workaround MD case-insensitivity -->
 
 Top-level suspending functions:
 
@@ -147,11 +149,24 @@ Low-level primitives for finer-grained control of coroutines.
 [kotlinx.coroutines.Deferred.await]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/await.html
 [kotlinx.coroutines.Deferred.onAwait]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/on-await.html
 
+<!--- INDEX kotlinx.coroutines.flow -->
+
+[kotlinx.coroutines.flow.Flow.collect]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/collect.html
+[kotlinx.coroutines.flow.flow]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flow.html
+[kotlinx.coroutines.flow.flowOf]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/flow-of.html
+[kotlinx.coroutines.flow.channelFlow]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/channel-flow.html
+[kotlinx.coroutines.flow.callbackFlow]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/callback-flow.html
+[kotlinx.coroutines.flow.consumeAsFlow]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/consume-as-flow.html
+[kotlinx.coroutines.flow.receiveAsFlow]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/receive-as-flow.html
+[kotlinx.coroutines.flow.MutableSharedFlow]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-mutable-shared-flow/index.html
+[kotlinx.coroutines.flow.MutableStateFlow]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-mutable-state-flow/index.html
+
 <!--- INDEX kotlinx.coroutines.sync -->
 
 [kotlinx.coroutines.sync.Mutex]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/index.html
 [kotlinx.coroutines.sync.Mutex.lock]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-mutex/lock.html
 [kotlinx.coroutines.sync.Semaphore]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-semaphore/index.html
+[kotlinx.coroutines.sync.Semaphore.acquire]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.sync/-semaphore/acquire.html
 
 <!--- INDEX kotlinx.coroutines.channels -->
 
