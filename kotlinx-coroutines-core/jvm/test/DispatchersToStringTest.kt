@@ -2,6 +2,8 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.scheduling.CORE_POOL_SIZE
+import kotlinx.coroutines.scheduling.MAX_POOL_SIZE
 import kotlin.test.*
 
 class DispatchersToStringTest {
@@ -16,8 +18,16 @@ class DispatchersToStringTest {
 
     @Test
     fun testLimitedParallelism() {
-        assertEquals("Dispatchers.IO.limitedParallelism(1)", Dispatchers.IO.limitedParallelism(1).toString())
-        assertEquals("Dispatchers.Default.limitedParallelism(2)", Dispatchers.Default.limitedParallelism(2).toString())
+        for (parallelism in 1..100) {
+            assertEquals(
+                "Dispatchers.IO" + if (parallelism < MAX_POOL_SIZE) ".limitedParallelism($parallelism)" else "",
+                Dispatchers.IO.limitedParallelism(parallelism).toString()
+            )
+            assertEquals(
+                "Dispatchers.Default" + if (parallelism < CORE_POOL_SIZE) ".limitedParallelism($parallelism)" else "",
+                Dispatchers.Default.limitedParallelism(parallelism).toString()
+            )
+        }
         // Not overridden at all, limited parallelism returns `this`
         assertEquals("DefaultExecutor", (DefaultDelay as CoroutineDispatcher).limitedParallelism(42).toString())
 
