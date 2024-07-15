@@ -124,6 +124,8 @@ public sealed interface SelectBuilder<in R> {
  * 4) the function that specifies how the internal result provided via
  *    [SelectInstance.trySelect] or [SelectInstance.selectInRegistrationPhase]
  *    should be processed in case of this `select` cancellation while dispatching.
+ *
+ * @suppress **This is unstable API, and it is subject to change.**
  */
 @InternalCoroutinesApi
 public sealed interface SelectClause {
@@ -138,6 +140,8 @@ public sealed interface SelectClause {
  * the specified clause object. In case of channels, the registration logic
  * coincides with the plain `send/receive` operation with the only difference that
  * the `select` instance is stored as a waiter instead of continuation.
+ *
+ * @suppress **This is unstable API, and it is subject to change.**
  */
 @InternalCoroutinesApi
 public typealias RegistrationFunction = (clauseObject: Any, select: SelectInstance<*>, param: Any?) -> Unit
@@ -147,6 +151,8 @@ public typealias RegistrationFunction = (clauseObject: Any, select: SelectInstan
  * or [SelectInstance.trySelect] should be processed. For example, both [ReceiveChannel.onReceive] and
  * [ReceiveChannel.onReceiveCatching] clauses perform exactly the same synchronization logic,
  * but differ when the channel has been discovered in the closed or cancelled state.
+ *
+ * @suppress **This is unstable API, and it is subject to change.**
  */
 @InternalCoroutinesApi
 public typealias ProcessResultFunction = (clauseObject: Any, param: Any?, clauseResult: Any?) -> Any?
@@ -156,6 +162,8 @@ public typealias ProcessResultFunction = (clauseObject: Any, param: Any?, clause
  * or [SelectInstance.selectInRegistrationPhase], should be processed in case of this `select`
  * cancellation while dispatching. Unfortunately, we cannot pass this function only in [SelectInstance.trySelect],
  * as [SelectInstance.selectInRegistrationPhase] can be called when the coroutine is already cancelled.
+ *
+ * @suppress **This is unstable API, and it is subject to change.**
  */
 @InternalCoroutinesApi
 public typealias OnCancellationConstructor = (select: SelectInstance<*>, param: Any?, internalResult: Any?) ->
