@@ -144,7 +144,9 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
  *         if (it == 42) {
  *             println("Found the answer")
  *             return@launch
- *         } else it.cleanup()
+ *         } else {
+ *             it.cleanup()
+ *         }
  *     }
  * }
  * ```
