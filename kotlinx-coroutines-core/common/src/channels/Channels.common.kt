@@ -166,7 +166,7 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
  *
  * This function will attempt to receive elements and put them into the list until the channel is
  * [closed][SendChannel.close].
- * Calling [toList] without closing the channel is always incorrect:
+ * Calling [toList] on channels that are not eventually closed is always incorrect:
  * - It will suspend indefinitely if the channel is not closed, but no new elements arrive.
  * - If new elements do arrive and the channel is not eventually closed, [toList] will use more and more memory
  *   until exhausting it.
@@ -179,10 +179,11 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
  * Example:
  * ```
  * val values = listOf(1, 5, 2, 9, 3, 3, 1)
- * val channel = Channel<Int>()
- * GlobalScope.launch {
- *     values.forEach { channel.send(it) }
- *     channel.close()
+ * // start a new coroutine that creates a channel,
+ * // sends elements to it, and closes it
+ * // once the coroutine's body finishes
+ * val channel = produce {
+ *     values.forEach { send(it) }
  * }
  * check(channel.toList() == values)
  * ```
