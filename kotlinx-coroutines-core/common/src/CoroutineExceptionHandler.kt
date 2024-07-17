@@ -16,18 +16,19 @@ import kotlin.coroutines.*
  */
 @InternalCoroutinesApi
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
+    val reportException = if (exception is DispatchException) exception.cause!! else exception
     // Invoke an exception handler from the context if present
     try {
         context[CoroutineExceptionHandler]?.let {
-            it.handleException(context, exception)
+            it.handleException(context, reportException)
             return
         }
     } catch (t: Throwable) {
-        handleUncaughtCoroutineException(context, handlerException(exception, t))
+        handleUncaughtCoroutineException(context, handlerException(reportException, t))
         return
     }
     // If a handler is not present in the context or an exception was thrown, fallback to the global handler
-    handleUncaughtCoroutineException(context, exception)
+    handleUncaughtCoroutineException(context, reportException)
 }
 
 internal fun handlerException(originalException: Throwable, thrownException: Throwable): Throwable {
