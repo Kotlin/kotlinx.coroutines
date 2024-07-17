@@ -77,6 +77,7 @@ internal abstract class DispatchedTask<in T> internal constructor(
     final override fun run() {
         assert { resumeMode != MODE_UNINITIALIZED } // should have been set before dispatching
         var fatalException: Throwable? = null
+        var dispatchException: DispatchException? = null
         try {
             val delegate = delegate as DispatchedContinuation<T>
             val continuation = delegate.continuation
@@ -102,11 +103,14 @@ internal abstract class DispatchedTask<in T> internal constructor(
                     }
                 }
             }
+        } catch (e: DispatchException) {
+            dispatchException = e
         } catch (e: Throwable) {
             // This instead of runCatching to have nicer stacktrace and debug experience
             fatalException = e
         } finally {
             fatalException?.let { handleFatalException(it) }
+            dispatchException?.let { handleCoroutineException(delegate.context, it.cause!!) }
         }
     }
 
@@ -205,3 +209,10 @@ internal inline fun DispatchedTask<*>.runUnconfinedEventLoop(
 internal inline fun Continuation<*>.resumeWithStackTrace(exception: Throwable) {
     resumeWith(Result.failure(recoverStackTrace(exception, this)))
 }
+
+/**
+ * This exception holds an exception raised in [CoroutineDispatcher.dispatch] method
+ *
+ * @see DispatchedContinuation.dispatchWithExceptionHandling
+ */
+internal class DispatchException(cause: Throwable) : Exception(cause)
