@@ -164,6 +164,42 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  *
  * See [newCoroutineContext] for a description of debugging facilities available for newly created coroutines.
  *
+ * ### Undelivered elements
+ *
+ * Some values that [produce] creates may be lost:
+ *
+ * ```
+ * val channel = produce(Dispatchers.Default, capacity = 5) {
+ *     repeat(100) {
+ *         send(it)
+ *         println("Sent $it")
+ *     }
+ * }
+ * channel.cancel() // no elements can be received after this!
+ * ```
+ *
+ * There is no way to recover these lost elements.
+ * If this is unsuitable, please create a [Channel] manually and pass the `onUndeliveredElement` callback to the
+ * constructor.
+ *
+ * ```
+ * fun Int.close() {
+ *     println("Closing $this")
+ * }
+ * val channel = Channel<Int>(5, onUndeliveredElement = Int::close)
+ * launch(start = CoroutineStart.UNDISPATCHED) {
+ *     try {
+ *         repeat(100) {
+ *             channel.send(it)
+ *             println("Sent $it")
+ *         }
+ *     } finally {
+ *         channel.close() // don't forget to close the channel
+ *     }
+ * }
+ * channel.cancel() // the elements in the buffer will be cleaned up
+ * ```
+ *
  * ### Usage example
  *
  * ```
