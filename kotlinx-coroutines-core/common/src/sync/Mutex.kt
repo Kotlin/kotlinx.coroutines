@@ -127,7 +127,7 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
 }
 
 
-internal open class MutexImpl(locked: Boolean) : SemaphoreImpl(1, if (locked) 1 else 0), Mutex {
+internal open class MutexImpl(locked: Boolean) : SemaphoreAndMutexImpl(1, if (locked) 1 else 0), Mutex {
     /**
      * After the lock is acquired, the corresponding owner is stored in this field.
      * The [unlock] operation checks the owner and either re-sets it to [NO_OWNER],

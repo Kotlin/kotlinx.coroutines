@@ -192,4 +192,9 @@ class MutexTest : TestBase() {
             }
         }
     }
+
+    @Test
+    fun testMutexIsNotSemaphore() {
+        assertIsNot<Semaphore>(Mutex())
+    }
 }
