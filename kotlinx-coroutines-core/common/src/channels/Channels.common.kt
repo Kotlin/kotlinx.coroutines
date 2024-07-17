@@ -105,9 +105,10 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
 /**
  * Performs the given [action] for each received element and [cancels][ReceiveChannel.cancel] the channel afterward.
  *
- * This function stops processing elements when the channel is [closed][SendChannel.close],
+ * This function stops processing elements when either the channel is [closed][SendChannel.close],
  * the coroutine in which the collection is performed gets cancelled and there are no readily available elements in the
  * channel's buffer,
+ * [action] fails with an exception,
  * or an early return from [action] happens.
  * If the [action] finishes with an exception, that exception will be used for cancelling the channel and rethrown.
  * If the channel is [closed][SendChannel.close] with a cause, this cause will be rethrown from [consumeEach].
@@ -116,41 +117,44 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
  * a regular `for` loop (`for (element in channel)`) should be used instead.
  *
  * The operation is _terminal_.
- * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
+ * This function [consumes][ReceiveChannel.consume] the elements of the original [ReceiveChannel].
  *
  * This function is useful in cases when this channel is only expected to have a single consumer that decides when
- * the producer may stop and ensures that the elements that were sent do get processed.
+ * the producer may stop.
  * Example:
  *
  * ```
- * fun Int.cleanup() { println("cleaning up $this") }
- * val channel = Channel<Int>(1, onUndeliveredElement = Int::cleanup)
+ * val channel = Channel<Int>(1)
  * // Launch several procedures that create values
  * repeat(5) {
  *     launch(Dispatchers.Default) {
  *         while (true) {
- *             val x = Random.nextInt(40, 50)
- *             println("Generating $x")
- *             channel.send(x)
+ *             channel.send(Random.nextInt(40, 50))
  *         }
  *     }
  * }
  * // Launch the exclusive consumer
- * launch(Dispatchers.Default) {
+ * val result = run {
  *     channel.consumeEach {
  *         if (it == 42) {
  *             println("Found the answer")
- *             return@launch
- *         } else {
- *             it.cleanup()
+ *             return@run it // forcibly stop collection
  *         }
  *     }
+ *     // *Note*: some elements could be lost in the channel!
  * }
+ * check(result == 42)
  * ```
  *
- * In this example, all ten values created by the producer coroutines will be processed:
- * while the single consumer is active, it will receive all the elements, but once it exits,
- * the values that can no longer be delivered will be passed to the `Int.cleanup` handler.
+ * In this example, several coroutines put elements into a single channel, and a single consumer processes the elements.
+ * Once it finds the elements it's looking for, it stops [consumeEach] by making an early return.
+ *
+ * **Pitfall**: even though the name says "each", some elements could be left unprocessed if they are added after
+ * this function decided to close the channel.
+ * In this case, the elements will simply be lost.
+ * If the elements of the channel are resources that must be closed (like file handles, sockets, etc.),
+ * an `onUndeliveredElement` must be passed to the [Channel] on construction.
+ * It will be called for each element left in the channel at the point of cancellation.
  */
 public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit): Unit =
     consume {
