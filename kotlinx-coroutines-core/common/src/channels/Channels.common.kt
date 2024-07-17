@@ -49,46 +49,43 @@ public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
 }
 
 /**
- * Executes the [block] and then [cancels][ReceiveChannel.cancel] the channel,
- * ensuring that all the elements that were sent are processed by either [block] or [ReceiveChannel.cancel].
+ * Executes the [block] and then [cancels][ReceiveChannel.cancel] the channel.
  *
  * It is guaranteed that, after invoking this operation, the channel will be [cancelled][ReceiveChannel.cancel], so
  * the operation is _terminal_.
- * If the [block] finishes with an exception, that exception will be used for cancelling the channel.
+ * If the [block] finishes with an exception, that exception will be used for cancelling the channel and rethrown.
  *
- * This function is useful for building more complex terminal operators while ensuring that no elements will be lost.
+ * This function is useful for building more complex terminal operators while ensuring that the producers stop sending
+ * new elements to the channel.
+ *
  * Example:
- *
  * ```
  * suspend fun <E> ReceiveChannel<E>.consumeFirst(): E =
- *     consume { return receive() }
- * 
- * fun Int.cleanup() { println("cleaning up $this") }
- *
- * val channel = Channel<Int>(10, onUndeliveredElement = Int::cleanup)
- * // Launch a procedure that creates values
- * launch(Dispatchers.Default) {
- *     repeat(10) {
- *         val sendResult = channel.trySend(it)
- *         if (sendResult.isFailure) {
- *             print("in the producer: ")
- *             it.cleanup()
- *         }
- *         yield()
+ *    consume { return receive() }
+ * // Launch a coroutine that constantly sends new values
+ * val channel = produce(Dispatchers.Default) {
+ *     var i = 0
+ *     while (true) {
+ *         // Will fail with a `CancellationException`
+ *         // after `consumeFirst` finishes.
+ *         send(i++)
  *     }
  * }
  * // Grab the first value and discard everything else
- * launch(Dispatchers.Default) {
- *     val firstElement = channel.consumeFirst()
- *     println("received $firstElement")
- * }
+ * val firstElement = channel.consumeFirst()
+ * check(firstElement == 0)
+ * // *Note*: some elements could be lost in the channel!
  * ```
  *
- * In this example, all ten values created by the producer coroutine will be processed: one by `consumeFirst`,
- * and the other ones by `Int.cleanup`, invoked either by [ReceiveChannel.cancel] inside [consume] or by the
- * producer itself when it observes failure.
- * In any case, exactly nine elements will go through a cleanup in this example.
- * If `consumeFirst` is implemented as `for (e in this) { return e }` instead, the cleanup does not happen.
+ * In this example, the channel will get closed, and the producer coroutine will finish its work after the first
+ * element is obtained.
+ * If `consumeFirst` was implemented as `for (e in this) { return e }` instead, the producer coroutine would be active
+ * until it was cancelled some other way.
+ *
+ * [consume] does not guarantee that new elements will not enter the channel after [block] finishes executing, so
+ * some channel elements may be lost.
+ * Use the `onUndeliveredElement` parameter of a manually created [Channel] to define what should happen with these
+ * elements during [ReceiveChannel.cancel].
  */
 public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
     contract {
