@@ -1,6 +1,5 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import java.io.Closeable
 import java.util.concurrent.*
@@ -145,7 +144,7 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
         )
         // If everything went fine and the scheduling attempt was not rejected -- use it
         if (future != null) {
-            continuation.cancelFutureOnCancellation(future)
+            continuation.invokeOnCancellation(CancelFutureOnCancel(future))
             return
         }
         // Otherwise fallback to default executor
@@ -200,4 +199,13 @@ private class DisposableFutureHandle(private val future: Future<*>) : Disposable
         future.cancel(false)
     }
     override fun toString(): String = "DisposableFutureHandle[$future]"
+}
+
+private class CancelFutureOnCancel(private val future: Future<*>) : CancelHandler {
+    override fun invoke(cause: Throwable?) {
+        // Don't interrupt when cancelling future on completion, because no one is going to reset this
+        // interruption flag and it will cause spurious failures elsewhere
+        future.cancel(false)
+    }
+    override fun toString() = "CancelFutureOnCancel[$future]"
 }

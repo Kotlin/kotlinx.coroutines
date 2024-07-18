@@ -607,10 +607,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private inner class SelectOnJoinCompletionHandler(
         private val select: SelectInstance<*>
     ) : JobNode() {
+        override val onCancelling: Boolean get() = false
         override fun invoke(cause: Throwable?) {
             select.trySelect(this@JobSupport, Unit)
         }
-        override val onCancelling: Boolean get() = false
     }
 
     /**
@@ -1263,10 +1263,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         private val child: ChildHandleNode,
         private val proposedUpdate: Any?
     ) : JobNode() {
+        override val onCancelling get() = false
         override fun invoke(cause: Throwable?) {
             parent.continueCompleting(state, child, proposedUpdate)
         }
-        override val onCancelling: Boolean get() = false
     }
 
     private class AwaitContinuation<T>(
@@ -1378,12 +1378,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private inner class SelectOnAwaitCompletionHandler(
         private val select: SelectInstance<*>
     ) : JobNode() {
+        override val onCancelling get() = false
         override fun invoke(cause: Throwable?) {
             val state = this@JobSupport.state
             val result = if (state is CompletedExceptionally) state else state.unboxState()
             select.trySelect(this@JobSupport, result)
         }
-        override val onCancelling: Boolean get() = false
     }
 }
 
@@ -1462,8 +1462,16 @@ internal abstract class JobNode : LockFreeLinkedListNode(), DisposableHandle, In
      * Initialized by [JobSupport.invokeOnCompletionInternal].
      */
     lateinit var job: JobSupport
+
+    /**
+     * If `false`, [invoke] will be called once the job is cancelled or is complete.
+     * If `true`, [invoke] is invoked as soon as the job becomes _cancelling_ instead, and if that doesn't happen,
+     * it will be called once the job is cancelled or is complete.
+     */
+    abstract val onCancelling: Boolean
     override val isActive: Boolean get() = true
     override val list: NodeList? get() = null
+
     override fun dispose() = job.removeNode(this)
     override fun toString() = "$classSimpleName@$hexAddress[job@${job.hexAddress}]"
     /**
@@ -1488,13 +1496,6 @@ internal abstract class JobNode : LockFreeLinkedListNode(), DisposableHandle, In
      * (see [InvokeOnCompletion] and [InvokeOnCancelling]).
      */
     abstract fun invoke(cause: Throwable?)
-
-    /**
-     * If `false`, [invoke] will be called once the job is cancelled or is complete.
-     * If `true`, [invoke] is invoked as soon as the job becomes _cancelling_ instead, and if that doesn't happen,
-     * it will be called once the job is cancelled or is complete.
-     */
-    abstract val onCancelling: Boolean
 }
 
 internal class NodeList : LockFreeLinkedListHead(), Incomplete {
@@ -1529,20 +1530,21 @@ private class InactiveNodeList(
 private class InvokeOnCompletion(
     private val handler: CompletionHandler
 ) : JobNode()  {
-    override fun invoke(cause: Throwable?) = handler.invoke(cause)
     override val onCancelling get() = false
+    override fun invoke(cause: Throwable?) = handler.invoke(cause)
 }
 
 private class ResumeOnCompletion(
     private val continuation: Continuation<Unit>
 ) : JobNode() {
-    override fun invoke(cause: Throwable?) = continuation.resume(Unit)
     override val onCancelling get() = false
+    override fun invoke(cause: Throwable?) = continuation.resume(Unit)
 }
 
 private class ResumeAwaitOnCompletion<T>(
     private val continuation: CancellableContinuationImpl<T>
 ) : JobNode() {
+    override val onCancelling get() = false
     override fun invoke(cause: Throwable?) {
         val state = job.state
         assert { state !is Incomplete }
@@ -1555,7 +1557,6 @@ private class ResumeAwaitOnCompletion<T>(
             continuation.resume(state.unboxState() as T)
         }
     }
-    override val onCancelling get() = false
 }
 
 // -------- invokeOnCancellation nodes
@@ -1565,17 +1566,17 @@ private class InvokeOnCancelling(
 ) : JobNode()  {
     // delegate handler shall be invoked at most once, so here is an additional flag
     private val _invoked = atomic(false)
+    override val onCancelling get() = true
     override fun invoke(cause: Throwable?) {
         if (_invoked.compareAndSet(expect = false, update = true)) handler.invoke(cause)
     }
-    override val onCancelling get() = true
 }
 
 private class ChildHandleNode(
     @JvmField val childJob: ChildJob
 ) : JobNode(), ChildHandle {
     override val parent: Job get() = job
+    override val onCancelling: Boolean get() = true
     override fun invoke(cause: Throwable?) = childJob.parentCancelled(job)
     override fun childCancelled(cause: Throwable): Boolean = job.childCancelled(cause)
-    override val onCancelling: Boolean get() = true
 }

@@ -99,6 +99,8 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
         var disposer: DisposeHandlersOnCancel?
             get() = _disposer.value
             set(value) { _disposer.value = value }
+
+        override val onCancelling get() = false
         
         override fun invoke(cause: Throwable?) {
             if (cause != null) {
@@ -114,7 +116,5 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
                 // Note that all deferreds are complete here, so we don't need to dispose their nodes
             }
         }
-
-        override val onCancelling get() = false
     }
 }

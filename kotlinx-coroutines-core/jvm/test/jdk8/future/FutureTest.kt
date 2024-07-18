@@ -595,4 +595,20 @@ class FutureTest : TestBase() {
             GlobalScope.future<Unit>(start = CoroutineStart.LAZY) {  }
         }
     }
+
+    @Test
+    fun testStackOverflowOnExceptionalCompletion() = runTest {
+        val future = CompletableFuture<Unit>()
+        val didRun = AtomicBoolean(false)
+        future.whenComplete { _, _ -> didRun.set(true) }
+        val deferreds = List(100000) { future.asDeferred() }
+        future.completeExceptionally(TestException())
+        deferreds.forEach {
+            assertTrue(it.isCompleted)
+            val exception = it.getCompletionExceptionOrNull()
+            assertIs<TestException>(exception)
+            assertTrue(exception.suppressedExceptions.isEmpty())
+        }
+        assertTrue(didRun.get())
+    }
 }

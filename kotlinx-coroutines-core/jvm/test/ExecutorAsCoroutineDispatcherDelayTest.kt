@@ -38,4 +38,21 @@ class ExecutorAsCoroutineDispatcherDelayTest : TestBase() {
         executor.shutdown()
         assertEquals(1, callsToSchedule)
     }
+
+    @Test
+    fun testCancelling() = runTest {
+        val executor = STPE()
+        launch(start = CoroutineStart.UNDISPATCHED) {
+            suspendCancellableCoroutine<Unit> { cont ->
+                expect(1)
+                (executor.asCoroutineDispatcher() as Delay).scheduleResumeAfterDelay(1_000_000, cont)
+                cont.cancel()
+                expect(2)
+            }
+        }
+        expect(3)
+        assertTrue(executor.getQueue().isEmpty())
+        executor.shutdown()
+        finish(4)
+    }
 }

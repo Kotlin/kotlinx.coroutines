@@ -692,9 +692,9 @@ private data class CompletedContinuation<R>(
 private class ChildContinuation(
     @JvmField val child: CancellableContinuationImpl<*>
 ) : JobNode() {
+    override val onCancelling get() = true
+
     override fun invoke(cause: Throwable?) {
         child.parentCancelled(child.getContinuationCancellationCause(job))
     }
-
-    override val onCancelling get() = true
 }
