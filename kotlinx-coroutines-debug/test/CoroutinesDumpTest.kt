@@ -32,7 +32,6 @@ class CoroutinesDumpTest : DebugTestBase() {
                     "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
-                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n",
             ignoredCoroutine = "BlockingCoroutine"
         ) {
@@ -60,7 +59,6 @@ class CoroutinesDumpTest : DebugTestBase() {
                     "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
-                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n" +
                     "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
@@ -91,7 +89,6 @@ class CoroutinesDumpTest : DebugTestBase() {
                     "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
-                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n" +
                     "\tat kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
@@ -145,7 +142,6 @@ class CoroutinesDumpTest : DebugTestBase() {
         val expected =
             "kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt)\n" +
             "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt)\n" +
-            "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable\$default(Cancellable.kt)\n" +
             "kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n" +
             "kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt)\n" +
             "kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt)\n" +
