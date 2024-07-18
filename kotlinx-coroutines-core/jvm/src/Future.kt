@@ -12,6 +12,7 @@ import java.util.concurrent.*
  * invokeOnCancellation { if (it != null) future.cancel(false) }
  * ```
  */
+// Warning since 1.9.0, error in 1., hidden in 1.7
 @Deprecated(
     "This function does not do what its name implies: it will not cancel the future if just cancel() was called.",
     level = DeprecationLevel.WARNING,

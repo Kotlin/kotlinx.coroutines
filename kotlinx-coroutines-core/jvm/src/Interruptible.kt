@@ -95,6 +95,8 @@ private class ThreadState : JobNode() {
     // Registered cancellation handler
     private var cancelHandle: DisposableHandle? = null
 
+    override val onCancelling get() = true
+
     fun setup(job: Job) {
         cancelHandle = job.invokeOnCompletion(handler = this)
         // Either we successfully stored it or it was immediately cancelled
@@ -153,8 +155,6 @@ private class ThreadState : JobNode() {
             }
         }
     }
-
-    override val onCancelling get() = true
 
     private fun invalidState(state: Int): Nothing = error("Illegal state $state")
 }

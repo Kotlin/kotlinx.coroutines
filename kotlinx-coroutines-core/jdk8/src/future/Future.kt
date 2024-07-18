@@ -194,6 +194,8 @@ private class ContinuationHandler<T>(
 private class CancelFutureOnCompletion(
     private val future: Future<*>
 ) : JobNode() {
+    override val onCancelling get() = false
+
     override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
         // interruption flag and it will cause spurious failures elsewhere.
@@ -202,6 +204,4 @@ private class CancelFutureOnCompletion(
         // on reentrancy. See https://github.com/Kotlin/kotlinx.coroutines/issues/4156
         if (cause != null && !future.isDone) future.cancel(false)
     }
-
-    override val onCancelling get() = false
 }
