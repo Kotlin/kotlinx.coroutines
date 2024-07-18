@@ -341,8 +341,7 @@ public fun TestScope.runTest(
                     if (exception is TimeoutCancellationException) {
                         dumpCoroutines()
                         val activeChildren = scope.children.filter(Job::isActive).toList()
-                        var message = "After waiting for $timeout, "
-                        message += when {
+                        val message = "After waiting for $timeout, " + when {
                             testBodyFinished.value && activeChildren.isNotEmpty() ->
                                 "there were active child jobs: $activeChildren. " +
                                     "Use `TestScope.backgroundScope` " +
