@@ -3,8 +3,8 @@
 
 package kotlinx.coroutines.test
 
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
@@ -308,12 +308,17 @@ public fun TestScope.runTest(
 ): TestResult = asSpecificImplementation().let { scope ->
     scope.enter()
     createTestResult {
+        val testBodyFinished = AtomicBoolean(false)
         /** TODO: moving this [AbstractCoroutine.start] call outside [createTestResult] fails on JS. */
         scope.start(CoroutineStart.UNDISPATCHED, scope) {
             /* we're using `UNDISPATCHED` to avoid the event loop, but we do want to set up the timeout machinery
             before any code executes, so we have to park here. */
             yield()
-            testBody()
+            try {
+                testBody()
+            } finally {
+                testBodyFinished.value = true
+            }
         }
         var timeoutError: Throwable? = null
         var cancellationException: CancellationException? = null
@@ -336,17 +341,15 @@ public fun TestScope.runTest(
                     if (exception is TimeoutCancellationException) {
                         dumpCoroutines()
                         val activeChildren = scope.children.filter(Job::isActive).toList()
-                        val completionCause = if (scope.isCancelled) scope.tryGetCompletionCause() else null
-                        var message = "After waiting for $timeout"
-                        if (completionCause == null)
-                            message += ", the test coroutine is not completing"
-                        if (activeChildren.isNotEmpty())
-                            message += ", there were active child jobs: $activeChildren"
-                        if (completionCause != null && activeChildren.isEmpty()) {
-                            message += if (scope.isCompleted)
-                                ", the test coroutine completed"
-                            else
-                                ", the test coroutine was not completed"
+                        val message = "After waiting for $timeout, " + when {
+                            testBodyFinished.value && activeChildren.isNotEmpty() ->
+                                "there were active child jobs: $activeChildren. " +
+                                    "Use `TestScope.backgroundScope` " +
+                                    "to launch the coroutines that need to be cancelled when the test body finishes"
+                            testBodyFinished.value ->
+                                "the test completed, but only after the timeout"
+                            else ->
+                                "the test body did not run to completion"
                         }
                         timeoutError = UncompletedCoroutinesError(message)
                         cancellationException = CancellationException("The test timed out")
@@ -603,3 +606,11 @@ public fun TestScope.runTestLegacy(
     marker: Int,
     unused2: Any?,
 ): TestResult = runTest(dispatchTimeoutMs = if (marker and 1 != 0) dispatchTimeoutMs else 60_000L, testBody)
+
+// Remove after https://youtrack.jetbrains.com/issue/KT-62423/
+private class AtomicBoolean(initial: Boolean) {
+    private val container = atomic(initial)
+    var value: Boolean
+        get() = container.value
+        set(value: Boolean) { container.value = value }
+}
