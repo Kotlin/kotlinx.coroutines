@@ -607,6 +607,7 @@ public fun TestScope.runTestLegacy(
     unused2: Any?,
 ): TestResult = runTest(dispatchTimeoutMs = if (marker and 1 != 0) dispatchTimeoutMs else 60_000L, testBody)
 
+// Remove after https://youtrack.jetbrains.com/issue/KT-62423/
 private class AtomicBoolean(initial: Boolean) {
     private val container = atomic(initial)
     var value: Boolean
