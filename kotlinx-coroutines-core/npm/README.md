@@ -15,5 +15,5 @@ suspend fun main() = coroutineScope {
 
 ## Documentation 
 
-* [Guide to kotlinx.coroutines by example on JVM](https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html) (**read it first**)
+* [Guide to kotlinx.coroutines by example on JVM](https://kotlinlang.org/docs/coroutines-guide.html) (**read it first**)
 * [Full kotlinx.coroutines API reference](https://kotlinlang.org/api/kotlinx.coroutines/)
