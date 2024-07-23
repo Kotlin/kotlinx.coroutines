@@ -66,7 +66,7 @@ allprojects {
 }
 
 plugins {
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.16.0"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.16.2"
 }
 
 apply(plugin = "base")
