@@ -118,7 +118,7 @@ class BroadcastChannelMultiReceiveStressTest(
             try {
                 val stop = doReceived(receiverIndex, channel.receive())
                 if (stop) break
-            } catch (ex: ClosedReceiveChannelException) {
+            } catch (_: ClosedReceiveChannelException) {
                 break
             }
         }
@@ -144,7 +144,7 @@ class BroadcastChannelMultiReceiveStressTest(
                 val event = select<Long> { channel.onReceive { it } }
                 val stop = doReceived(receiverIndex, event)
                 if (stop) break
-            } catch (ex: ClosedReceiveChannelException) {
+            } catch (_: ClosedReceiveChannelException) {
                 break
             }
         }

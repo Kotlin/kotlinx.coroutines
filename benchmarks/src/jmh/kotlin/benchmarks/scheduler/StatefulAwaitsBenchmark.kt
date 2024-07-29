@@ -40,6 +40,7 @@ import java.util.concurrent.*
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
+@Suppress("DEPRECATION_ERROR")
 open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
 
     private val stateSize = 2048

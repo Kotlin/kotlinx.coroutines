@@ -56,6 +56,7 @@ class BlockHoundTest : TestBase() {
         }
     }
 
+    @Suppress("DEPRECATION_ERROR")
     @Test
     fun testBroadcastChannelNotBeingConsideredBlocking() = runTest {
         withContext(Dispatchers.Default) {

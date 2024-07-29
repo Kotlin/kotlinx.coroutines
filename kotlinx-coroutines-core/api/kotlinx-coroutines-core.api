@@ -987,7 +987,6 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static final fun asFlow (Lkotlin/ranges/IntRange;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asFlow (Lkotlin/ranges/LongRange;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asFlow (Lkotlin/sequences/Sequence;)Lkotlinx/coroutines/flow/Flow;
-	public static final fun asFlow (Lkotlinx/coroutines/channels/BroadcastChannel;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asFlow ([I)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asFlow ([J)Lkotlinx/coroutines/flow/Flow;
 	public static final fun asFlow ([Ljava/lang/Object;)Lkotlinx/coroutines/flow/Flow;

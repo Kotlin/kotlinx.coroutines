@@ -54,6 +54,7 @@ class ConflatedChannelLincheckTest : ChannelLincheckTestBaseAll(
     sequentialSpecification = SequentialConflatedChannel::class.java,
     obstructionFree = false
 )
+@Suppress("DEPRECATION_ERROR")
 class ConflatedBroadcastChannelLincheckTest : ChannelLincheckTestBaseAll(
     c = ChannelViaBroadcast(ConflatedBroadcastChannel()),
     sequentialSpecification = SequentialConflatedChannel::class.java,

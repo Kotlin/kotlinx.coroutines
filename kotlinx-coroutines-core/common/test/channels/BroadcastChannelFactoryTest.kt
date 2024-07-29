@@ -1,10 +1,9 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.testing.*
-import kotlinx.coroutines.*
 import kotlin.test.*
 
-
+@Suppress("DEPRECATION_ERROR")
 class BroadcastChannelFactoryTest : TestBase() {
 
     @Test
