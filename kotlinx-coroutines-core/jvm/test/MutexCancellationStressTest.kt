@@ -80,3 +80,7 @@ class MutexCancellationStressTest : TestBase() {
         dispatcher.close()
     }
 }
+
+private inline var AtomicInteger.value
+    get() = get()
+    set(value) = set(value)
