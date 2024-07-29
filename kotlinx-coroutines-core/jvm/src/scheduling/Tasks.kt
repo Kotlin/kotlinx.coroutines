@@ -49,39 +49,38 @@ internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(
 internal var schedulerTimeSource: SchedulerTimeSource = NanoTimeSource
 
 /**
- * Marker indicating that task is CPU-bound and will not block
+ * Concurrency context of a task.
+ *
+ * Currently, it only signifies whether the task is blocking or non-blocking.
  */
-internal const val TASK_NON_BLOCKING = 0
+internal typealias TaskContext = Boolean
 
 /**
- * Marker indicating that task may potentially block, thus giving scheduler a hint that additional thread may be required
+ * This would be [TaskContext.toString] if [TaskContext] was a proper class.
  */
-internal const val TASK_PROBABLY_BLOCKING = 1
+private fun taskContextString(taskContext: TaskContext): String = if (taskContext) "Blocking" else "Non-blocking"
 
-internal interface TaskContext {
-    val taskMode: Int // TASK_XXX
-}
+internal const val NonBlockingContext: TaskContext = false
 
-private class TaskContextImpl(override val taskMode: Int): TaskContext
+internal const val BlockingContext: TaskContext = true
 
-@JvmField
-internal val NonBlockingContext: TaskContext = TaskContextImpl(TASK_NON_BLOCKING)
-
-@JvmField
-internal val BlockingContext: TaskContext = TaskContextImpl(TASK_PROBABLY_BLOCKING)
-
+/**
+ * A scheduler task.
+ */
 internal abstract class Task(
     @JvmField var submissionTime: Long,
     @JvmField var taskContext: TaskContext
 ) : Runnable {
     internal constructor() : this(0, NonBlockingContext)
-    internal inline val mode: Int get() = taskContext.taskMode // TASK_XXX
 }
 
-internal inline val Task.isBlocking get() = taskContext.taskMode == TASK_PROBABLY_BLOCKING
+internal inline val Task.isBlocking get() = taskContext
+
+internal fun Runnable.asTask(submissionTime: Long, taskContext: TaskContext): Task =
+    TaskImpl(this, submissionTime, taskContext)
 
 // Non-reusable Task implementation to wrap Runnable instances that do not otherwise implement task
-internal class TaskImpl(
+private class TaskImpl(
     @JvmField val block: Runnable,
     submissionTime: Long,
     taskContext: TaskContext
@@ -91,7 +90,7 @@ internal class TaskImpl(
     }
 
     override fun toString(): String =
-        "Task[${block.classSimpleName}@${block.hexAddress}, $submissionTime, $taskContext]"
+        "Task[${block.classSimpleName}@${block.hexAddress}, $submissionTime, ${taskContextString(taskContext)}]"
 }
 
 // Open for tests
