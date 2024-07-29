@@ -186,7 +186,6 @@ internal class DispatchedContinuation<in T>(
         get() = this
 
     override fun resumeWith(result: Result<T>) {
-        val context = continuation.context
         val state = result.toState()
         if (dispatcher.isDispatchNeeded(context)) {
             _state = state
@@ -194,7 +193,7 @@ internal class DispatchedContinuation<in T>(
             dispatcher.dispatch(context, this)
         } else {
             executeUnconfined(state, MODE_ATOMIC) {
-                withCoroutineContext(this.context, countOrElement) {
+                withCoroutineContext(context, countOrElement) {
                     continuation.resumeWith(result)
                 }
             }
@@ -204,11 +203,8 @@ internal class DispatchedContinuation<in T>(
     // We inline it to save an entry on the stack in cases where it shows (unconfined dispatcher)
     // It is used only in Continuation<T>.resumeCancellableWith
     @Suppress("NOTHING_TO_INLINE")
-    internal inline fun resumeCancellableWith(
-        result: Result<T>,
-        noinline onCancellation: ((cause: Throwable) -> Unit)?
-    ) {
-        val state = result.toState(onCancellation)
+    internal inline fun resumeCancellableWith(result: Result<T>) {
+        val state = result.toState()
         if (dispatcher.isDispatchNeeded(context)) {
             _state = state
             resumeMode = MODE_CANCELLABLE
@@ -219,15 +215,6 @@ internal class DispatchedContinuation<in T>(
                     resumeUndispatchedWith(result)
                 }
             }
-        }
-    }
-
-    // takeState had already cleared the state so we cancel takenState here
-    override fun cancelCompletedResult(takenState: Any?, cause: Throwable) {
-        // It is Ok to call onCancellation here without try/catch around it, since this function only faces
-        // a "bound" cancellation handler that performs the safe call to the user-specified code.
-        if (takenState is CompletedWithCancellation) {
-            takenState.onCancellation(cause)
         }
     }
 
@@ -271,9 +258,8 @@ internal class DispatchedContinuation<in T>(
 @InternalCoroutinesApi
 public fun <T> Continuation<T>.resumeCancellableWith(
     result: Result<T>,
-    onCancellation: ((cause: Throwable) -> Unit)? = null
 ): Unit = when (this) {
-    is DispatchedContinuation -> resumeCancellableWith(result, onCancellation)
+    is DispatchedContinuation -> resumeCancellableWith(result)
     else -> resumeWith(result)
 }
 

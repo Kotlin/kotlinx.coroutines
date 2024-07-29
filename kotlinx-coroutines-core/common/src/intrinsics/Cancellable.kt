@@ -22,11 +22,9 @@ public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuat
  */
 internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(
     receiver: R, completion: Continuation<T>,
-    onCancellation: ((cause: Throwable) -> Unit)? = null
-) =
-    runSafely(completion) {
-        createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellableWith(Result.success(Unit), onCancellation)
-    }
+) = runSafely(completion) {
+    createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellableWith(Result.success(Unit))
+}
 
 /**
  * Similar to [startCoroutineCancellable], but for already created coroutine.
