@@ -60,14 +60,9 @@ internal const val TASK_PROBABLY_BLOCKING = 1
 
 internal interface TaskContext {
     val taskMode: Int // TASK_XXX
-    fun afterTask()
 }
 
-private class TaskContextImpl(override val taskMode: Int): TaskContext {
-    override fun afterTask() {
-        // Nothing for non-blocking context
-    }
-}
+private class TaskContextImpl(override val taskMode: Int): TaskContext
 
 @JvmField
 internal val NonBlockingContext: TaskContext = TaskContextImpl(TASK_NON_BLOCKING)
@@ -92,11 +87,7 @@ internal class TaskImpl(
     taskContext: TaskContext
 ) : Task(submissionTime, taskContext) {
     override fun run() {
-        try {
-            block.run()
-        } finally {
-            taskContext.afterTask()
-        }
+        block.run()
     }
 
     override fun toString(): String =

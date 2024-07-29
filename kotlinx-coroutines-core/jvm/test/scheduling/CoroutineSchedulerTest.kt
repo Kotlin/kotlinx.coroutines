@@ -165,7 +165,5 @@ class CoroutineSchedulerTest : TestBase() {
         }
     }
 
-    private class TaskContextImpl(override val taskMode: Int) : TaskContext {
-        override fun afterTask() {}
-    }
+    private class TaskContextImpl(override val taskMode: Int) : TaskContext
 }
