@@ -180,25 +180,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  *
  * There is no way to recover these lost elements.
  * If this is unsuitable, please create a [Channel] manually and pass the `onUndeliveredElement` callback to the
- * constructor.
- *
- * ```
- * fun Int.close() {
- *     println("Closing $this")
- * }
- * val channel = Channel<Int>(5, onUndeliveredElement = Int::close)
- * launch(start = CoroutineStart.UNDISPATCHED) {
- *     try {
- *         repeat(100) {
- *             channel.send(it)
- *             println("Sent $it")
- *         }
- *     } finally {
- *         channel.close() // don't forget to close the channel
- *     }
- * }
- * channel.cancel() // the elements in the buffer will be cleaned up
- * ```
+ * constructor: [Channel(onUndeliveredElement = ...)][Channel].
  *
  * ### Usage example
  *
