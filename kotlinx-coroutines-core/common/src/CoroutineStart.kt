@@ -11,11 +11,11 @@ import kotlin.coroutines.*
  * to describe when and how the coroutine should be dispatched initially.
  *
  * This parameter only affects how the coroutine behaves until the code of its body starts executing.
- * After that, cancellability and dispatching depend on the implementation details of the invoked suspending functions.
+ * After that, cancellability and dispatching are defined by the behavior of the invoked suspending functions.
  *
  * The summary of coroutine start options is:
  * - [DEFAULT] immediately schedules the coroutine for execution according to its context.
- * - [LAZY] delays the moment of the initial dispatch until the result of the coroutine is awaited.
+ * - [LAZY] delays the moment of the initial dispatch until the result of the coroutine is needed.
  * - [ATOMIC] prevents the coroutine from being cancelled before it starts, ensuring that its code will start
  *   executing in any case.
  * - [UNDISPATCHED] immediately executes the coroutine until its first suspension point _in the current thread_.
@@ -46,7 +46,7 @@ public enum class CoroutineStart {
      *     // Dispatch the job to execute later.
      *     // The parent coroutine's dispatcher is inherited by default.
      *     // In this case, it's the single thread backing `runBlocking`.
-     *     val job = launch { // CoroutineStart.DEFAULT is the launch's default start mode
+     *     launch { // CoroutineStart.DEFAULT is launch's default start mode
      *         println("3. When the thread is available, we start the coroutine")
      *     }
      *     println("2. The thread keeps doing other work after launching the coroutine")
@@ -59,7 +59,7 @@ public enum class CoroutineStart {
      *     println("1. About to start a coroutine not needing a dispatch.")
      *     // Dispatch the job to execute.
      *     // `Dispatchers.Unconfined` is explicitly chosen.
-     *     val job = launch(Dispatchers.Unconfined) { // CoroutineStart.DEFAULT is the launch's default start mode
+     *     launch(Dispatchers.Unconfined) { // CoroutineStart.DEFAULT is the launch's default start mode
      *         println("2. The body will be executed immediately")
      *         delay(50.milliseconds) // give up the thread to the outer coroutine
      *         println("4. When the thread is next available, this coroutine proceeds further")
@@ -109,7 +109,7 @@ public enum class CoroutineStart {
      * }
      * ```
      *
-     * Behavior of [LAZY] can be described with the following examples:
+     * The behavior of [LAZY] can be described with the following examples:
      *
      * ```
      * // Example of lazily starting a new coroutine that goes through a dispatch
@@ -160,34 +160,26 @@ public enum class CoroutineStart {
      *
      * Example:
      * ```
-     * val N_PERMITS = 3
-     * val semaphore = Semaphore(N_PERMITS)
-     * try {
-     *     repeat(100) {
-     *         semaphore.acquire()
-     *         if (it != 7) {
-     *             println("Scheduling $it...")
-     *         } else {
-     *             // "randomly" cancel the whole procedure
-     *             cancel()
-     *         }
-     *         launch(Dispatchers.Default, start = CoroutineStart.ATOMIC) {
-     *             println("Entered $it")
-     *             try {
-     *                 // this `try` block will be entered in any case because of ATOMIC
-     *                 println("Performing the procedure $it")
-     *                 delay(10.milliseconds) // may throw due to cancellation
-     *                 println("Done with the procedure $it")
-     *             } finally {
-     *                 semaphore.release()
-     *             }
-     *         }
+     * val mutex = Mutex()
+     *
+     * mutex.lock() // lock the mutex outside the coroutine
+     * delay(10.milliseconds) // initial portion of the work, protected by the mutex
+     * val job = launch(start = CoroutineStart.ATOMIC) {
+     *     // the work must continue in a coroutine, but still under the mutex
+     *     println("Coroutine running!")
+     *     try {
+     *         // this `try` block will be entered in any case because of ATOMIC
+     *         println("Starting task...")
+     *         delay(10.milliseconds) // throws due to cancellation
+     *         println("Finished task.")
+     *     } finally {
+     *         mutex.unlock() // correctly release the mutex
      *     }
-     * } finally {
-     *     withContext(NonCancellable) {
-     *         repeat(N_PERMITS) { semaphore.acquire() }
-     *         println("All permits were successfully returned!")
-     *     }
+     * }
+     *
+     * job.cancelAndJoin() // we immediately cancel the coroutine.
+     * mutex.withLock {
+     *     println("The lock has been returned correctly!")
      * }
      * ```
      *
@@ -195,17 +187,17 @@ public enum class CoroutineStart {
      * even if cancellation happens between `acquire()` and `launch`.
      * As a result, the semaphore will eventually regain all three permits.
      *
-     * Behavior of [ATOMIC] can be described with the following examples:
+     * The behavior of [ATOMIC] can be described with the following examples:
      *
      * ```
      * // Example of cancelling atomically started coroutines
      * runBlocking {
      *     println("1. Atomically starting a coroutine that goes through a dispatch.")
      *     launch(start = CoroutineStart.ATOMIC) {
-     *         check(!isActive) // attempting to suspend will throw
-     *         println("4. A coroutine that went through a dispatch also starts.")
+     *         check(!isActive) // attempting to suspend later will throw
+     *         println("4. The coroutine was cancelled (isActive = $isActive), but starts anyway.")
      *         try {
-     *             delay(10.milliseconds)
+     *             delay(10.milliseconds) // will throw: the coroutine is cancelled
      *             println("This code will never run.")
      *         } catch (e: CancellationException) {
      *             println("5. Cancellation at later points still works.")
@@ -243,47 +235,31 @@ public enum class CoroutineStart {
      *
      * Example:
      * ```
-     * runBlocking {
-     *     val channel = Channel<Int>(Channel.RENDEZVOUS)
-     *     var subscribers = 0
-     *     fun CoroutineScope.awaitTickNumber(desiredTickNumber: Int) {
-     *         launch(start = CoroutineStart.UNDISPATCHED) {
-     *             ++subscribers
-     *             try {
-     *                 for (tickNumber in channel) {
-     *                     if (tickNumber >= desiredTickNumber) {
-     *                         println("Tick number $desiredTickNumber reached")
-     *                         break
-     *                     }
-     *                 }
-     *             } finally {
-     *                 --subscribers
-     *             }
+     * var tasks = 0
+     * repeat(3) {
+     *     launch(start = CoroutineStart.UNDISPATCHED) {
+     *         tasks++
+     *         try {
+     *             println("Waiting for a reply...")
+     *             delay(50.milliseconds)
+     *             println("Got a reply!")
+     *         } finally {
+     *             tasks--
      *         }
      *     }
-     *     for (subscriberIndex in 1..10) {
-     *         awaitTickNumber(10 + subscriberIndex * 3)
-     *     }
-     *     // Send the current tick number every 10 milliseconds
-     *     // while there are subscribers
-     *     var i = 0
-     *     // Because of UNDISPATCHED,
-     *     // we know that the subscribers are already initialized,
-     *     // so this number is non-zero initially.
-     *     while (subscribers > 0) {
-     *         channel.trySend(++i)
-     *         delay(10.milliseconds)
-     *     }
+     * }
+     * // Because of UNDISPATCHED,
+     * // we know that the tasks already ran to their first suspension point,
+     * // so this number is non-zero initially.
+     * while (tasks > 0) {
+     *     println("currently active: $tasks")
+     *     delay(10.milliseconds)
      * }
      * ```
      *
      * Here, we implement a publisher-subscriber interaction, where [UNDISPATCHED] ensures that the
      * subscribers do get registered before the publisher first checks if it can stop emitting values due to
      * the lack of subscribers.
-     *
-     * **Pitfall**: unlike [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate], nested undispatched
-     * coroutines do not form an event loop that otherwise prevents potential stack overflow in case of unlimited
-     * nesting.
      *
      * ```
      * // Constant usage of stack space
@@ -311,12 +287,12 @@ public enum class CoroutineStart {
      * whereas `factorialWithUndispatched` will lead to `n` recursively nested calls,
      * resulting in a stack overflow for large values of `n`.
      *
-     * Behavior of [UNDISPATCHED] can be described with the following examples:
+     * The behavior of [UNDISPATCHED] can be described with the following examples:
      *
      * ```
      * runBlocking {
      *     println("1. About to start a new coroutine.")
-     *     val job = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+     *     launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
      *         println("2. The coroutine is immediately started in the same thread.")
      *         delay(10.milliseconds)
      *         println("4. The execution continues in a Dispatchers.Default thread.")
@@ -338,6 +314,11 @@ public enum class CoroutineStart {
      *     println("4. Execution of the outer coroutine only continues later.")
      * }
      * ```
+     *
+     * **Pitfall**: unlike [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate], nested undispatched
+     * coroutines do not form an event loop that otherwise prevents potential stack overflow in case of unlimited
+     * nesting.
+     * See [Dispatchers.Unconfined] for an explanation of event loops.
      */
     UNDISPATCHED;
 
