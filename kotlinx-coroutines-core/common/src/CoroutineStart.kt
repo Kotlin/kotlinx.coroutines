@@ -24,15 +24,7 @@ public enum class CoroutineStart {
     /**
      * Immediately schedules the coroutine for execution according to its context. This is usually the default option.
      *
-     * The behavior of [DEFAULT] depends on the result of [CoroutineDispatcher.isDispatchNeeded] in
-     * the context of the started coroutine.
-     * - In the typical case where a dispatch is needed, the coroutine is dispatched for execution on that dispatcher.
-     *   It may take a while for the dispatcher to start the task; the thread that invoked the coroutine builder
-     *   does not wait for the task to start and instead continues its execution.
-     * - If no dispatch is needed (which is the case for [Dispatchers.Main.immediate][MainCoroutineDispatcher.immediate]
-     *   when already on the main thread and for [Dispatchers.Unconfined]),
-     *   the task is executed immediately in the same thread that invoked the coroutine builder,
-     *   similarly to [UNDISPATCHED].
+     * [DEFAULT] uses the default dispatch procedure described in the [CoroutineDispatcher] documentation.
      *
      * If the coroutine's [Job] is cancelled before it started executing, then it will not start its
      * execution at all and will be considered [cancelled][Job.isCancelled].
@@ -91,7 +83,8 @@ public enum class CoroutineStart {
      * Starting a coroutine with [LAZY] only creates the coroutine, but does not schedule it for execution.
      * When the completion of the coroutine is first awaited
      * (for example, via [Job.join]) or explicitly [started][Job.start],
-     * the dispatch procedure described in [DEFAULT] happens in the thread that did it.
+     * the dispatch procedure described in the [CoroutineDispatcher] documentation is performed in the thread
+     * that did it.
      *
      * The details of what counts as waiting can be found in the documentation of the corresponding coroutine builders
      * like [launch][CoroutineScope.launch] and [async][CoroutineScope.async].
@@ -229,6 +222,7 @@ public enum class CoroutineStart {
      * - Resumptions from later suspensions will properly use the actual dispatcher from the coroutine's context.
      *   Only the code until the first suspension point will be executed immediately.
      * - Even if the coroutine was cancelled already, its code will still start to be executed, similar to [ATOMIC].
+     * - The coroutine will not form an event loop. See [Dispatchers.Unconfined] for an explanation of event loops.
      *
      * This set of behaviors makes [UNDISPATCHED] well-suited for cases where the coroutine has a distinct
      * initialization phase whose side effects we want to rely on later.
