@@ -123,7 +123,7 @@ internal suspend inline fun <T> Flow<T>.collectWhile(crossinline predicate: susp
     val collector = object : FlowCollector<T> {
         override suspend fun emit(value: T) {
             // Note: we are checking predicate first, then throw. If the predicate does suspend (calls emit, for example)
-            // the the resulting code is never tail-suspending and produces a state-machine
+            // the resulting code is never tail-suspending and produces a state-machine
             if (!predicate(value)) {
                 throw AbortFlowException(this)
             }

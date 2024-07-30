@@ -364,7 +364,7 @@ fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = laun
 >
 {type="note"}
 
-The output will be similar to the the following one, albeit the processor ids that receive
+The output will be similar to the following one, albeit the processor ids that receive
 each specific integer may be different:
 
 ```text
