@@ -90,7 +90,7 @@ public fun <T> Flow<T>.publishOn(context: CoroutineContext): Flow<T> = noImpl()
  *        }
  * }
  * ```
- * Opposed to subscribeOn, it it **possible** to use multiple `flowOn` operators in the one flow
+ * Opposed to subscribeOn, it is **possible** to use multiple `flowOn` operators in the one flow
  * @suppress
  */
 @Deprecated(message = "Use 'flowOn' instead", level = DeprecationLevel.ERROR)
