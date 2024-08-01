@@ -197,6 +197,10 @@ class ThreadContextElementTest : TestBase() {
             manuallyCaptured += coroutineContext.job
             withContext(CoroutineName("undispatched")) {
                 manuallyCaptured += coroutineContext.job
+                // Without forcing of single backing thread the code inside `withContext`
+                // may already complete at the moment when the parent coroutine decides
+                // whether it needs to suspend or not.
+                // If the parent coroutine does not need to suspend, no context capture will be called.
                 withContext(dispatcher2 + CoroutineName("dispatched")) {
                     manuallyCaptured += coroutineContext.job
                 }
