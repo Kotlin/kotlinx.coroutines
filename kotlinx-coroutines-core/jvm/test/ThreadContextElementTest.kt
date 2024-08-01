@@ -1,10 +1,13 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.testing.*
 import org.junit.Test
+import java.util.*
+import java.util.concurrent.*
+import kotlin.collections.ArrayList
 import kotlin.coroutines.*
 import kotlin.test.*
-import kotlinx.coroutines.flow.*
 
 class ThreadContextElementTest : TestBase() {
 
@@ -169,15 +172,32 @@ class ThreadContextElementTest : TestBase() {
         }
     }
 
+    /**
+     * For stability of the test, it is important to make sure that
+     * the parent job actually suspends when calling
+     * `withContext(dispatcher2 + CoroutineName("dispatched"))`.
+     *
+     * Here this requirement is fulfilled by forcing execution on a single thread.
+     * However, dispatching is performed with two non-equal dispatchers to simulate multithreaded behavior.
+     *
+     * Suspend of the parent coroutine [kotlinx.coroutines.DispatchedCoroutine.trySuspend] is out of the control of the test,
+     * while being executed concurrently with resume of the child coroutine [kotlinx.coroutines.DispatchedCoroutine.tryResume].
+     */
     @Test
     fun testWithContextJobAccess() = runTest {
+        val executor = Executors.newSingleThreadExecutor()
+        // Emulate non-equal dispatchers
+        val executor1 = object : ExecutorService by executor {}
+        val executor2 = object : ExecutorService by executor {}
+        val dispatcher1 = executor1.asCoroutineDispatcher()
+        val dispatcher2 = executor2.asCoroutineDispatcher()
         val captor = JobCaptor()
         val manuallyCaptured = ArrayList<Job>()
-        runBlocking(captor) {
+        runBlocking(captor + dispatcher1) {
             manuallyCaptured += coroutineContext.job
             withContext(CoroutineName("undispatched")) {
                 manuallyCaptured += coroutineContext.job
-                withContext(Dispatchers.IO) {
+                withContext(dispatcher2 + CoroutineName("dispatched")) {
                     manuallyCaptured += coroutineContext.job
                 }
                 // Context restored, captured again
@@ -188,6 +208,7 @@ class ThreadContextElementTest : TestBase() {
         }
 
         assertEquals(manuallyCaptured, captor.capturees)
+        executor.shutdownNow()
     }
 
     @Test
