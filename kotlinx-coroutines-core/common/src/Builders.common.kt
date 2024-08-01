@@ -176,7 +176,16 @@ public suspend fun <T> withContext(
  * completes, and returns the result.
  *
  * This inline function calls [withContext].
+ *
+ * Deprecated, as this is very rarely used, surprising to those who do not already know about it,
+ * and less idiomatic than `withContext(dispatcher) { ... }`.
+ * See https://github.com/Kotlin/kotlinx.coroutines/issues/4199
  */
+@Deprecated(
+    message = "Use withContext(dispatcher) { ... }",
+    level = DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("withContext(this, block)"),
+) // WARNING since 1.9.0, was stable API before
 public suspend inline operator fun <T> CoroutineDispatcher.invoke(
     noinline block: suspend CoroutineScope.() -> T
 ): T = withContext(this, block)
