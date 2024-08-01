@@ -58,6 +58,7 @@ private fun dispatcherFailure(completion: Continuation<*>, e: Throwable) {
      * 2) Rethrow the exception immediately, so it will crash the caller (e.g. when the coroutine had
      *    no parent or it was async/produce over MainScope).
      */
-    completion.resumeWith(Result.failure(e))
-    throw e
+    val reportException = if (e is DispatchException) e.cause!! else e
+    completion.resumeWith(Result.failure(reportException))
+    throw reportException
 }
