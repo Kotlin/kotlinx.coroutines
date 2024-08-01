@@ -134,6 +134,28 @@ public enum class CoroutineStart {
      *     }
      * }
      * ```
+     *
+     * ## Alternatives
+     *
+     * The effects of [LAZY] can usually be achieved more idiomatically without it.
+     *
+     * When a coroutine is started with [LAZY] and is stored in a property,
+     * it may be a better choice to use [lazy] instead:
+     *
+     * ```
+     * // instead of `val page = scope.async(start = CoroutineStart.LAZY) { getPage() }`, do
+     * val page by lazy { scope.async { getPage() } }
+     * ```
+     *
+     * This way, the child coroutine is not created at all unless it is needed.
+     *
+     * If a coroutine is started with [LAZY] and then unconditionally started,
+     * it is more idiomatic to create the coroutine in the exact place where it is started:
+     *
+     * ```
+     * // instead of `val job = scope.launch(start = CoroutineStart.LAZY) { }; job.start()`, do
+     * scope.launch { }
+     * ```
      */
     LAZY,
 
