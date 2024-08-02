@@ -49,7 +49,8 @@ import kotlin.coroutines.*
  *   but the [dispatch] method itself may return immediately, before the task has even began to execute.
  * - If no dispatch is needed (which is the case for [Dispatchers.Main.immediate][MainCoroutineDispatcher.immediate]
  *   when already on the main thread and for [Dispatchers.Unconfined]),
- *   the coroutine is resumed in the thread performing the dispatch procedure,
+ *   [dispatch] is typically not called,
+ *   and the coroutine is resumed in the thread performing the dispatch procedure,
  *   forming an event loop to prevent stack overflows.
  *   See [Dispatchers.Unconfined] for a description of event loops.
  *

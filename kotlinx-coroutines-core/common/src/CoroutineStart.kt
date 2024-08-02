@@ -178,7 +178,7 @@ public enum class CoroutineStart {
      * val mutex = Mutex()
      *
      * mutex.lock() // lock the mutex outside the coroutine
-     * delay(10.milliseconds) // initial portion of the work, protected by the mutex
+     * // ... // initial portion of the work, protected by the mutex
      * val job = launch(start = CoroutineStart.ATOMIC) {
      *     // the work must continue in a coroutine, but still under the mutex
      *     println("Coroutine running!")
@@ -198,9 +198,9 @@ public enum class CoroutineStart {
      * }
      * ```
      *
-     * Here, we used [ATOMIC] to ensure that a semaphore that was acquired outside of the coroutine does get released
-     * even if cancellation happens between `acquire()` and `launch`.
-     * As a result, the semaphore will eventually regain all three permits.
+     * Here, we used [ATOMIC] to ensure that a mutex that was acquired outside of the coroutine does get released
+     * even if cancellation happens between `lock()` and `launch`.
+     * As a result, the mutex will always be released.
      *
      * The behavior of [ATOMIC] can be described with the following examples:
      *
