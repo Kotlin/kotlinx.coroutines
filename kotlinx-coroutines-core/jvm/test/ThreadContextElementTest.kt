@@ -3,9 +3,9 @@ package kotlinx.coroutines
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.testing.*
 import org.junit.Test
-import java.util.*
-import java.util.concurrent.*
-import kotlin.collections.ArrayList
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -158,17 +158,18 @@ class ThreadContextElementTest : TestBase() {
         }
     }
 
-    class JobCaptor(val capturees: ArrayList<Job> = ArrayList()) : ThreadContextElement<Unit> {
+    class JobCaptor(val capturees: MutableList<String> = CopyOnWriteArrayList()) : ThreadContextElement<Unit> {
 
         companion object Key : CoroutineContext.Key<MyElement>
 
         override val key: CoroutineContext.Key<*> get() = Key
 
         override fun updateThreadContext(context: CoroutineContext) {
-            capturees.add(context.job)
+            capturees.add("Update: ${context.job}")
         }
 
         override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
+            capturees.add("Restore: ${context.job}")
         }
     }
 
@@ -178,7 +179,7 @@ class ThreadContextElementTest : TestBase() {
      * `withContext(dispatcher2 + CoroutineName("dispatched"))`.
      *
      * Here this requirement is fulfilled by forcing execution on a single thread.
-     * However, dispatching is performed with two non-equal dispatchers to simulate multithreaded behavior.
+     * However, dispatching is performed with two non-equal dispatchers to force dispatching.
      *
      * Suspend of the parent coroutine [kotlinx.coroutines.DispatchedCoroutine.trySuspend] is out of the control of the test,
      * while being executed concurrently with resume of the child coroutine [kotlinx.coroutines.DispatchedCoroutine.tryResume].
@@ -192,26 +193,45 @@ class ThreadContextElementTest : TestBase() {
         val dispatcher1 = executor1.asCoroutineDispatcher()
         val dispatcher2 = executor2.asCoroutineDispatcher()
         val captor = JobCaptor()
-        val manuallyCaptured = ArrayList<Job>()
+        val manuallyCaptured = mutableListOf<String>()
+
+        fun registerUpdate(job: Job?) = manuallyCaptured.add("Update: $job")
+        fun registerRestore(job: Job?) = manuallyCaptured.add("Restore: $job")
+
+        var rootJob: Job? = null
         runBlocking(captor + dispatcher1) {
-            manuallyCaptured += coroutineContext.job
+            rootJob = coroutineContext.job
+            registerUpdate(rootJob)
+            var undispatchedJob: Job? = null
             withContext(CoroutineName("undispatched")) {
-                manuallyCaptured += coroutineContext.job
+                undispatchedJob = coroutineContext.job
+                registerUpdate(undispatchedJob)
+                // These 2 restores and the corresponding next 2 updates happen only if the following `withContext`
+                // call actually suspends.
+                registerRestore(undispatchedJob)
+                registerRestore(rootJob)
                 // Without forcing of single backing thread the code inside `withContext`
                 // may already complete at the moment when the parent coroutine decides
                 // whether it needs to suspend or not.
-                // If the parent coroutine does not need to suspend, no context capture will be called.
+                var dispatchedJob: Job? = null
                 withContext(dispatcher2 + CoroutineName("dispatched")) {
-                    manuallyCaptured += coroutineContext.job
+                    dispatchedJob = coroutineContext.job
+                    registerUpdate(dispatchedJob)
                 }
+                registerRestore(dispatchedJob)
                 // Context restored, captured again
-                manuallyCaptured += coroutineContext.job
+                registerUpdate(undispatchedJob)
             }
+            registerRestore(undispatchedJob)
             // Context restored, captured again
-            manuallyCaptured += coroutineContext.job
+            registerUpdate(rootJob)
         }
+        registerRestore(rootJob)
 
-        assertEquals(manuallyCaptured, captor.capturees)
+        // Restores may be called concurrently to the update calls in other threads, so their order is not checked.
+        val expected = manuallyCaptured.filter { it.startsWith("Update: ") }.joinToString(separator = "\n")
+        val actual = captor.capturees.filter { it.startsWith("Update: ") }.joinToString(separator = "\n")
+        assertEquals(expected, actual)
         executor.shutdownNow()
     }
 
