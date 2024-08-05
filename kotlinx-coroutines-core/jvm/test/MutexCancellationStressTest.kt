@@ -55,7 +55,7 @@ class MutexCancellationStressTest : TestBase() {
                 delay(500)
                 // If we've caught the completion after delay, then there is a chance no progress were made whatsoever, bail out
                 if (completed.get()) return@launch
-                val c = counterLocal.map { it.value }
+                val c = counterLocal.map { it.get() }
                 for (i in 0 until mutexJobNumber) {
                     assert(c[i] > lastCounterLocalSnapshot[i]) { "No progress in MutexJob-$i, last observed state: ${c[i]}" }
                 }
@@ -76,7 +76,7 @@ class MutexCancellationStressTest : TestBase() {
         cancellationJob.join()
         mutexJobs.forEach { it.join() }
         checkProgressJob.join()
-        assertEquals(counter, counterLocal.sumOf { it.value })
+        assertEquals(counter, counterLocal.sumOf { it.get() })
         dispatcher.close()
     }
 }

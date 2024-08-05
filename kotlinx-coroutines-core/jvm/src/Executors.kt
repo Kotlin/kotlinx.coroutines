@@ -117,13 +117,12 @@ private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) 
 
 internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcher(), Delay {
 
-    /*
-     * Attempts to reflectively (to be Java 6 compatible) invoke
-     * ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy in order to cleanup
-     * internal scheduler queue on cancellation.
-     */
     init {
-        removeFutureOnCancel(executor)
+        /* Attempt to invoke ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy in order to clean up
+         * the internal scheduler queue on cancellation. */
+        if (executor is ScheduledThreadPoolExecutor) {
+            executor.removeOnCancelPolicy = true
+        }
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
