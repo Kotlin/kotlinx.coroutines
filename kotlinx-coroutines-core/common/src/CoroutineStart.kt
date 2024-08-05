@@ -148,6 +148,8 @@ public enum class CoroutineStart {
      * ```
      *
      * This way, the child coroutine is not created at all unless it is needed.
+     * Note that with this, any access to this variable will start the coroutine,
+     * even something like `page.invokeOnCompletion { }` or `page.isActive`.
      *
      * If a coroutine is started with [LAZY] and then unconditionally started,
      * it is more idiomatic to create the coroutine in the exact place where it is started:
