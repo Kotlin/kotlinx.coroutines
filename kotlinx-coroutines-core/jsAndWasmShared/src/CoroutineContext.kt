@@ -1,6 +1,5 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.ScopeCoroutine
 import kotlin.coroutines.*
 
 @PublishedApi // Used from kotlinx-coroutines-test via suppress, not part of ABI
@@ -18,14 +17,5 @@ public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineCo
 }
 
 // No debugging facilities on Wasm and JS
-internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T = block()
-internal actual inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T = block()
 internal actual fun Continuation<*>.toDebugString(): String = toString()
 internal actual val CoroutineContext.coroutineName: String? get() = null // not supported on Wasm and JS
-
-internal actual class UndispatchedCoroutine<in T> actual constructor(
-    context: CoroutineContext,
-    uCont: Continuation<T>
-) : ScopeCoroutine<T>(context, uCont) {
-    override fun afterResume(state: Any?) = uCont.resumeWith(recoverResult(state, uCont))
-}
