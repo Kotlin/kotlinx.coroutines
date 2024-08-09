@@ -9,7 +9,7 @@ class CancelledParentAttachTest : TestBase() {
 
     @Test
     fun testAsync() = runTest {
-        CoroutineStart.values().forEach { testAsyncCancelledParent(it) }
+        CoroutineStart.entries.forEach { testAsyncCancelledParent(it) }
     }
 
     private suspend fun testAsyncCancelledParent(start: CoroutineStart) {
@@ -25,14 +25,14 @@ class CancelledParentAttachTest : TestBase() {
                 }
             }
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             // Expected
         }
     }
 
     @Test
     fun testLaunch() = runTest {
-        CoroutineStart.values().forEach { testLaunchCancelledParent(it) }
+        CoroutineStart.entries.forEach { testLaunchCancelledParent(it) }
     }
 
     private suspend fun testLaunchCancelledParent(start: CoroutineStart) {
@@ -48,7 +48,7 @@ class CancelledParentAttachTest : TestBase() {
                 }
             }
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             // Expected
         }
     }
@@ -67,9 +67,10 @@ class CancelledParentAttachTest : TestBase() {
 
     @Test
     fun testBroadcast() = runTest {
-        CoroutineStart.values().forEach { testBroadcastCancelledParent(it) }
+        CoroutineStart.entries.forEach { testBroadcastCancelledParent(it) }
     }
 
+    @Suppress("DEPRECATION_ERROR")
     private suspend fun testBroadcastCancelledParent(start: CoroutineStart) {
         try {
             withContext(Job()) {
@@ -83,7 +84,7 @@ class CancelledParentAttachTest : TestBase() {
                 }
             }
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             // Expected
         }
     }
@@ -105,7 +106,7 @@ class CancelledParentAttachTest : TestBase() {
                 block()
             }
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             // Expected
         }
     }

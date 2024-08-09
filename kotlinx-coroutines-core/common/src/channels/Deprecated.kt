@@ -18,7 +18,7 @@ import kotlin.jvm.*
  * Safe to remove in 1.9.0 as was inline before.
  */
 @ObsoleteCoroutinesApi
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION_ERROR")
 @Deprecated(level = DeprecationLevel.ERROR, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
     val channel = openSubscription()

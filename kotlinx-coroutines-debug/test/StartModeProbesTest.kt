@@ -140,6 +140,7 @@ class StartModeProbesTest : DebugTestBase() {
     fun testLazy() = runTest({ it is CancellationException }) {
         launch(start = CoroutineStart.LAZY) {  }
         actor<Int>(start = CoroutineStart.LAZY) {  }
+        @Suppress("DEPRECATION_ERROR")
         broadcast<Int>(start = CoroutineStart.LAZY) {  }
         async(start = CoroutineStart.LAZY) { 1 }
         verifyPartialDump(5, "BlockingCoroutine",

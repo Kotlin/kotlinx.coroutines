@@ -1,4 +1,4 @@
-@file:Suppress("FunctionName", "DEPRECATION")
+@file:Suppress("FunctionName", "DEPRECATION", "DEPRECATION_ERROR")
 
 package kotlinx.coroutines.channels
 
@@ -10,62 +10,35 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlin.native.concurrent.*
 
 /**
- * Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
- * that subscribe for the elements using [openSubscription] function and unsubscribe using [ReceiveChannel.cancel]
- * function.
- *
- * See `BroadcastChannel()` factory function for the description of available
- * broadcast channel implementations.
- *
- * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
- * It is replaced with [SharedFlow][kotlinx.coroutines.flow.SharedFlow].
+ * @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0
  */
 @ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
+@Deprecated(level = DeprecationLevel.ERROR, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public interface BroadcastChannel<E> : SendChannel<E> {
     /**
-     * Subscribes to this [BroadcastChannel] and returns a channel to receive elements from it.
-     * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this
-     * broadcast channel.
+     * @suppress
      */
     public fun openSubscription(): ReceiveChannel<E>
 
     /**
-     * Cancels reception of remaining elements from this channel with an optional cause.
-     * This function closes the channel with
-     * the specified cause (unless it was already closed), removes all buffered sent elements from it,
-     * and [cancels][ReceiveChannel.cancel] all open subscriptions.
-     * A cause can be used to specify an error message or to provide other details on
-     * a cancellation reason for debugging purposes.
+     * @suppress
      */
     public fun cancel(cause: CancellationException? = null)
 
     /**
-     * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
+     * @suppress
      */
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
     public fun cancel(cause: Throwable? = null): Boolean
 }
 
 /**
- * Creates a broadcast channel with the specified buffer capacity.
- *
- * The resulting channel type depends on the specified [capacity] parameter:
- *
- * - when `capacity` positive, but less than [UNLIMITED] -- creates `ArrayBroadcastChannel` with a buffer of given capacity.
- *   **Note:** this channel looses all items that have been sent to it until the first subscriber appears;
- * - when `capacity` is [CONFLATED] -- creates [ConflatedBroadcastChannel] that conflates back-to-back sends;
- * - when `capacity` is [BUFFERED] -- creates `ArrayBroadcastChannel` with a default capacity.
- * - otherwise -- throws [IllegalArgumentException].
- *
- * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
- * It is replaced with [SharedFlow][kotlinx.coroutines.flow.SharedFlow] and [StateFlow][kotlinx.coroutines.flow.StateFlow].
+ * @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0
  */
 @ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.WARNING, message = "BroadcastChannel is deprecated in the favour of SharedFlow and StateFlow, and is no longer supported")
+@Deprecated(level = DeprecationLevel.ERROR, message = "BroadcastChannel is deprecated in the favour of SharedFlow and StateFlow, and is no longer supported")
 public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
     when (capacity) {
         0 -> throw IllegalArgumentException("Unsupported 0 capacity for BroadcastChannel")
@@ -76,49 +49,28 @@ public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
     }
 
 /**
- * Broadcasts the most recently sent element (aka [value]) to all [openSubscription] subscribers.
- *
- * Back-to-send sent elements are _conflated_ -- only the most recently sent value is received,
- * while previously sent elements **are lost**.
- * Every subscriber immediately receives the most recently sent element.
- * Sender to this broadcast channel never suspends and [trySend] always succeeds.
- *
- * A secondary constructor can be used to create an instance of this class that already holds a value.
- * This channel is also created by `BroadcastChannel(Channel.CONFLATED)` factory function invocation.
- *
- * In this implementation, [opening][openSubscription] and [closing][ReceiveChannel.cancel] subscription
- * takes linear time in the number of subscribers.
- *
- * **Note: This API is obsolete since 1.5.0 and deprecated for removal since 1.7.0**
- * It is replaced with [SharedFlow][kotlinx.coroutines.flow.StateFlow].
+ * @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0
  */
 @ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.WARNING, message = "ConflatedBroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
+@Deprecated(level = DeprecationLevel.ERROR, message = "ConflatedBroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
 public class ConflatedBroadcastChannel<E> private constructor(
     private val broadcast: BroadcastChannelImpl<E>
 ) : BroadcastChannel<E> by broadcast {
     public constructor(): this(BroadcastChannelImpl<E>(capacity = CONFLATED))
     /**
-     * Creates an instance of this class that already holds a value.
-     *
-     * It is as a shortcut to creating an instance with a default constructor and
-     * immediately sending an element: `ConflatedBroadcastChannel().apply { offer(value) }`.
+     * @suppress
      */
     public constructor(value: E) : this() {
         trySend(value)
     }
 
     /**
-     * The most recently sent element to this channel.
-     *
-     * Access to this property throws [IllegalStateException] when this class is constructed without
-     * initial value and no value was sent yet or if it was [closed][close] without a cause.
-     * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
+     * @suppress
      */
     public val value: E get() = broadcast.value
+
     /**
-     * The most recently sent element to this channel or `null` when this class is constructed without
-     * initial value and no value was sent yet or if it was [closed][close].
+     * @suppress
      */
     public val valueOrNull: E? get() = broadcast.valueOrNull
 }

@@ -4,6 +4,7 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION_ERROR")
 class BufferedBroadcastChannelTest : TestBase() {
 
     @Test

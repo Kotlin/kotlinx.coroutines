@@ -1,5 +1,6 @@
 package kotlinx.coroutines.channels
 
+@Suppress("DEPRECATION_ERROR")
 enum class TestBroadcastChannelKind {
     ARRAY_1 {
         override fun <T> create(): BroadcastChannel<T> = BroadcastChannel(1)

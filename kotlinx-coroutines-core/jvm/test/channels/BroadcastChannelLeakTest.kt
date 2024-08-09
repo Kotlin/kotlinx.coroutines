@@ -4,6 +4,7 @@ import kotlinx.coroutines.testing.*
 import org.junit.Test
 import kotlin.test.*
 
+@Suppress("DEPRECATION_ERROR")
 class BroadcastChannelLeakTest : TestBase() {
     @Test
     fun testBufferedBroadcastChannelSubscriptionLeak() {
@@ -18,7 +19,7 @@ class BroadcastChannelLeakTest : TestBase() {
     enum class TestKind { BROADCAST_CLOSE, SUB_CANCEL, BOTH }
 
     private fun checkLeak(factory: () -> BroadcastChannel<String>) = runTest {
-        for (kind in TestKind.values()) {
+        for (kind in TestKind.entries) {
             val broadcast = factory()
             val sub = broadcast.openSubscription()
             broadcast.send("OK")

@@ -4,7 +4,6 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
-import kotlin.coroutines.*
 import kotlin.test.*
 
 /**
@@ -57,6 +56,7 @@ class ParentCancellationTest : TestBase() {
     }
 
     @Test
+    @Suppress("DEPRECATION_ERROR")
     fun testBroadcastChild() = runTest {
         testParentCancellation(runsInScopeContext = true) { fail ->
             broadcast<Unit> { fail() }.openSubscription()

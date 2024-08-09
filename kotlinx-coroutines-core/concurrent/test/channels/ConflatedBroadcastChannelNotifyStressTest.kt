@@ -5,6 +5,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION_ERROR")
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     private val nSenders = 2
     private val nReceivers = 3
