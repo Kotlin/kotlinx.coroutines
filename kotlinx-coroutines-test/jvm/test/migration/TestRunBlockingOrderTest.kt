@@ -4,7 +4,7 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION", "DEPRECATION_ERROR")
 class TestRunBlockingOrderTest: OrderedExecutionTestBase() {
 
     @Test

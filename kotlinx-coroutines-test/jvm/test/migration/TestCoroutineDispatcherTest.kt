@@ -5,17 +5,6 @@ import kotlin.test.*
 
 @Suppress("DEPRECATION", "DEPRECATION_ERROR")
 class TestCoroutineDispatcherTest {
-    @Test
-    fun whenDispatcherPaused_doesNotAutoProgressCurrent() {
-        val subject = TestCoroutineDispatcher()
-        subject.pauseDispatcher()
-        val scope = CoroutineScope(subject)
-        var executed = 0
-        scope.launch {
-            executed++
-        }
-        assertEquals(0, executed)
-    }
 
     @Test
     fun whenDispatcherResumed_doesAutoProgressCurrent() {
@@ -42,32 +31,6 @@ class TestCoroutineDispatcherTest {
         assertEquals(0, executed)
         subject.advanceUntilIdle()
         assertEquals(1, executed)
-    }
-
-    @Test
-    fun whenDispatcherPaused_thenResume_itDoesDispatchCurrent() {
-        val subject = TestCoroutineDispatcher()
-        subject.pauseDispatcher()
-        val scope = CoroutineScope(subject)
-        var executed = 0
-        scope.launch {
-            executed++
-        }
-
-        assertEquals(0, executed)
-        subject.resumeDispatcher()
-        assertEquals(1, executed)
-    }
-
-    @Test
-    fun whenDispatcherHasUncompletedCoroutines_itThrowsErrorInCleanup() {
-        val subject = TestCoroutineDispatcher()
-        subject.pauseDispatcher()
-        val scope = CoroutineScope(subject)
-        scope.launch {
-            delay(1_000)
-        }
-        assertFailsWith<UncompletedCoroutinesError> { subject.cleanupTestCoroutines() }
     }
 
 }
