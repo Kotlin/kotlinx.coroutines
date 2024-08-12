@@ -9,7 +9,7 @@ import kotlin.test.*
 import kotlin.test.assertFailsWith
 
 /** Copy of [RunTestTest], but for [TestCoroutineScope] */
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION", "DEPRECATION_ERROR")
 class RunTestLegacyScopeTest {
 
     @Test

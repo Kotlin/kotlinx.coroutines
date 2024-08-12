@@ -43,7 +43,7 @@ suspend fun main() = coroutineScope {
   * Integration with `Window` via [Window.asCoroutineDispatcher], etc.
 * [test](kotlinx-coroutines-test/README.md) &mdash; test utilities for coroutines:
   * [Dispatchers.setMain] to override [Dispatchers.Main] in tests;
-  * [TestCoroutineScope] to test suspending functions and coroutines.
+  * [runTest] and [TestScope] to test suspending functions and coroutines.
 * [debug](kotlinx-coroutines-debug/README.md) &mdash; debug utilities for coroutines:
   * [DebugProbes] API to probe, keep track of, print and dump active coroutines;
   * [CoroutinesTimeout] test rule to automatically dump coroutines on test timeout.
@@ -240,7 +240,8 @@ See [Contributing Guidelines](CONTRIBUTING.md).
 <!--- INDEX kotlinx.coroutines.test -->
 
 [Dispatchers.setMain]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/set-main.html
-[TestCoroutineScope]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scope/index.html
+[runTest]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-test.html
+[TestScope]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-scope/index.html
 
 <!--- MODULE kotlinx-coroutines-debug -->
 <!--- INDEX kotlinx.coroutines.debug -->

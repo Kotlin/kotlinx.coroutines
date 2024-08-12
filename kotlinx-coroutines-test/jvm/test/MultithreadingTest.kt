@@ -4,6 +4,7 @@ import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION", "DEPRECATION_ERROR")
 class MultithreadingTest {
 
     @Test
