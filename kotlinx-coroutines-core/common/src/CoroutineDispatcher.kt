@@ -6,23 +6,56 @@ import kotlin.coroutines.*
 /**
  * Base class to be extended by all coroutine dispatcher implementations.
  *
+ * If `kotlinx-coroutines` is used, it is recommended to avoid [ContinuationInterceptor] instances that are not
+ * [CoroutineDispatcher] implementations, as [CoroutineDispatcher] ensures that the
+ * debugging facilities in the [newCoroutineContext] function work properly.
+ *
+ * ## Predefined dispatchers
+ *
  * The following standard implementations are provided by `kotlinx.coroutines` as properties on
  * the [Dispatchers] object:
  *
- * - [Dispatchers.Default] &mdash; is used by all standard builders if no dispatcher or any other [ContinuationInterceptor]
- *   is specified in their context. It uses a common pool of shared background threads.
+ * - [Dispatchers.Default] is used by all standard builders if no dispatcher or any other [ContinuationInterceptor]
+ *   is specified in their context.
+ *   It uses a common pool of shared background threads.
  *   This is an appropriate choice for compute-intensive coroutines that consume CPU resources.
- * - [Dispatchers.IO] &mdash; uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive _blocking_
+ * - `Dispatchers.IO` (available on the JVM and Native targets)
+ *   uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive _blocking_
  *   operations (like file I/O and blocking socket I/O).
- * - [Dispatchers.Unconfined] &mdash; starts coroutine execution in the current call-frame until the first suspension,
- *   whereupon the coroutine builder function returns.
- *   The coroutine will later resume in whatever thread used by the
- *   corresponding suspending function, without confining it to any specific thread or pool.
+ * - [Dispatchers.Main] represents the UI thread if one is available.
+ * - [Dispatchers.Unconfined] starts coroutine execution in the current call-frame until the first suspension,
+ *   at which point the coroutine builder function returns.
+ *   When the coroutine is resumed, the thread from which it is resumed will run the coroutine code until the next
+ *   suspension, and so on.
  *   **The `Unconfined` dispatcher should not normally be used in code**.
- * - Private thread pools can be created with [newSingleThreadContext] and [newFixedThreadPoolContext].
- * - An arbitrary [Executor][java.util.concurrent.Executor] can be converted to a dispatcher with the [asCoroutineDispatcher] extension function.
+ * - Calling [limitedParallelism] on any dispatcher creates a view of the dispatcher that limits the parallelism
+ *   to the given value.
+ *   This allows creating private thread pools without spawning new threads.
+ *   For example, `Dispatchers.IO.limitedParallelism(4)` creates a dispatcher that allows running at most
+ *   4 tasks in parallel, reusing the existing IO dispatcher threads.
+ * - When thread pools completely separate from [Dispatchers.Default] and [Dispatchers.IO] are required,
+ *   they can be created with `newSingleThreadContext` and `newFixedThreadPoolContext` on the JVM and Native targets.
+ * - An arbitrary `java.util.concurrent.Executor` can be converted to a dispatcher with the
+ *   `asCoroutineDispatcher` extension function.
  *
- * This class ensures that debugging facilities in [newCoroutineContext] function work properly.
+ * ## Dispatch procedure
+ *
+ * Typically, a dispatch procedure is performed as follows:
+ *
+ * - First, [isDispatchNeeded] is invoked to determine whether the coroutine should be dispatched
+ *   or is already in the right context.
+ * - If [isDispatchNeeded] returns `true`, the coroutine is dispatched using the [dispatch] method.
+ *   It may take a while for the dispatcher to start the task,
+ *   but the [dispatch] method itself may return immediately, before the task has even begun to execute.
+ * - If no dispatch is needed (which is the case for [Dispatchers.Main.immediate][MainCoroutineDispatcher.immediate]
+ *   when already on the main thread and for [Dispatchers.Unconfined]),
+ *   [dispatch] is typically not called,
+ *   and the coroutine is resumed in the thread performing the dispatch procedure,
+ *   forming an event loop to prevent stack overflows.
+ *   See [Dispatchers.Unconfined] for a description of event loops.
+ *
+ * This behavior may be different on the very first dispatch procedure for a given coroutine, depending on the
+ * [CoroutineStart] parameter of the coroutine builder.
  */
 public abstract class CoroutineDispatcher :
     AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
@@ -205,7 +238,7 @@ public abstract class CoroutineDispatcher :
 
     public final override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
         /*
-         * Unconditional cast is safe here: we only return DispatchedContinuation from `interceptContinuation`,
+         * Unconditional cast is safe here: we return only DispatchedContinuation from `interceptContinuation`,
          * any ClassCastException can only indicate compiler bug
          */
         val dispatched = continuation as DispatchedContinuation<*>
@@ -229,4 +262,3 @@ public abstract class CoroutineDispatcher :
     /** @suppress for nicer debugging */
     override fun toString(): String = "$classSimpleName@$hexAddress"
 }
-
