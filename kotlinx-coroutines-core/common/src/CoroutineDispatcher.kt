@@ -46,7 +46,7 @@ import kotlin.coroutines.*
  *   or is already in the right context.
  * - If [isDispatchNeeded] returns `true`, the coroutine is dispatched using the [dispatch] method.
  *   It may take a while for the dispatcher to start the task,
- *   but the [dispatch] method itself may return immediately, before the task has even began to execute.
+ *   but the [dispatch] method itself may return immediately, before the task has even begun to execute.
  * - If no dispatch is needed (which is the case for [Dispatchers.Main.immediate][MainCoroutineDispatcher.immediate]
  *   when already on the main thread and for [Dispatchers.Unconfined]),
  *   [dispatch] is typically not called,

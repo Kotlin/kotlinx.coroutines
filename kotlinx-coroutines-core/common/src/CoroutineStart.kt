@@ -97,6 +97,7 @@ public enum class CoroutineStart {
      * For example, the following code will deadlock, since [coroutineScope] waits for all of its child coroutines to
      * complete:
      * ```
+     * // This code hangs!
      * coroutineScope {
      *     launch(start = CoroutineStart.LAZY) { }
      * }
@@ -200,7 +201,7 @@ public enum class CoroutineStart {
      * }
      * ```
      *
-     * Here, we used [ATOMIC] to ensure that a mutex that was acquired outside of the coroutine does get released
+     * Here, we used [ATOMIC] to ensure that a mutex that was acquired outside the coroutine does get released
      * even if cancellation happens between `lock()` and `launch`.
      * As a result, the mutex will always be released.
      *
@@ -245,7 +246,7 @@ public enum class CoroutineStart {
      * Starting a coroutine using [UNDISPATCHED] is similar to using [Dispatchers.Unconfined] with [DEFAULT], except:
      * - Resumptions from later suspensions will properly use the actual dispatcher from the coroutine's context.
      *   Only the code until the first suspension point will be executed immediately.
-     * - Even if the coroutine was cancelled already, its code will still start to be executed, similar to [ATOMIC].
+     * - Even if the coroutine was cancelled already, its code will still start running, similar to [ATOMIC].
      * - The coroutine will not form an event loop. See [Dispatchers.Unconfined] for an explanation of event loops.
      *
      * This set of behaviors makes [UNDISPATCHED] well-suited for cases where the coroutine has a distinct
@@ -335,7 +336,8 @@ public enum class CoroutineStart {
      *
      * **Pitfall**: unlike [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate], nested undispatched
      * coroutines do not form an event loop that otherwise prevents potential stack overflow in case of unlimited
-     * nesting.
+     * nesting. This property is necessary for the use case of guaranteed initialization, but may be undesirable in
+     * other cases.
      * See [Dispatchers.Unconfined] for an explanation of event loops.
      */
     UNDISPATCHED;
