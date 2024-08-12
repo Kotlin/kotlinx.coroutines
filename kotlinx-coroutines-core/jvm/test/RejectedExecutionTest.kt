@@ -87,7 +87,6 @@ class RejectedExecutionTest : TestBase() {
 
     @Test
     fun testRejectOnDelay() = runTest {
-        if (!removeFutureOnCancel(executor)) return@runTest // Skip this test on old JDKs
         expect(1)
         executor.acceptTasks = 1 // accept one task
         assertFailsWith<CancellationException> {
@@ -109,7 +108,6 @@ class RejectedExecutionTest : TestBase() {
 
     @Test
     fun testRejectWithTimeout() = runTest {
-        if (!removeFutureOnCancel(executor)) return@runTest // Skip this test on old JDKs
         expect(1)
         executor.acceptTasks = 1 // accept one task
         assertFailsWith<CancellationException> {

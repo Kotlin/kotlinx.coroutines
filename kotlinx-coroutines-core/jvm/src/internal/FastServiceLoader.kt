@@ -1,11 +1,11 @@
 package kotlinx.coroutines.internal
 
+import kotlinx.coroutines.CoroutineExceptionHandler
 import java.io.*
 import java.net.*
 import java.util.*
 import java.util.jar.*
 import java.util.zip.*
-import kotlin.collections.ArrayList
 
 /**
  * Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
@@ -68,7 +68,7 @@ internal object FastServiceLoader {
             // Also search for test-module factory
             createInstanceOf(clz, "kotlinx.coroutines.test.internal.TestMainDispatcherFactory")?.apply { result.add(this) }
             result
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             // Fallback to the regular SL in case of any unexpected exception
             load(clz, clz.classLoader)
         }
@@ -85,7 +85,7 @@ internal object FastServiceLoader {
         return try {
             val clz = Class.forName(serviceClass, true, baseClass.classLoader)
             baseClass.cast(clz.getDeclaredConstructor().newInstance())
-        } catch (e: ClassNotFoundException) { // Do not fail if TestMainDispatcherFactory is not found
+        } catch (_: ClassNotFoundException) { // Do not fail if TestMainDispatcherFactory is not found
             null
         }
     }
@@ -93,7 +93,7 @@ internal object FastServiceLoader {
     private fun <S> load(service: Class<S>, loader: ClassLoader): List<S> {
         return try {
             loadProviders(service, loader)
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             // Fallback to default service loader
             ServiceLoader.load(service, loader).toList()
         }

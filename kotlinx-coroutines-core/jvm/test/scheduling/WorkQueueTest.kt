@@ -78,8 +78,8 @@ class WorkQueueTest : TestBase() {
     }
 }
 
-internal fun task(n: Long) = TaskImpl(Runnable {}, n, NonBlockingContext)
-internal fun blockingTask(n: Long) = TaskImpl(Runnable {}, n, BlockingContext)
+internal fun task(n: Long) = Runnable {}.asTask(n, NonBlockingContext)
+internal fun blockingTask(n: Long) = Runnable {}.asTask(n, BlockingContext)
 
 internal fun WorkQueue.drain(ref: ObjectRef<Task?>): List<Long> {
     var task: Task? = poll()

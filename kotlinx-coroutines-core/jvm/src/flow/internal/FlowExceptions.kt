@@ -1,7 +1,6 @@
 package kotlinx.coroutines.flow.internal
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 
 internal actual class AbortFlowException actual constructor(
     @JvmField @Transient actual val owner: Any

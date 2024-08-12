@@ -73,7 +73,7 @@ import kotlin.math.*
  *
  * ### Support for blocking tasks
  *
- * The scheduler also supports the notion of [blocking][TASK_PROBABLY_BLOCKING] tasks.
+ * The scheduler also supports the notion of [blocking][Task.isBlocking] tasks.
  * When executing or enqueuing blocking tasks, the scheduler notifies or creates an additional worker in
  * addition to the core pool size, so at any given moment, it has [corePoolSize] threads (potentially not yet created)
  * available to serve CPU-bound tasks. To properly guarantee liveness, the scheduler maintains
@@ -425,7 +425,7 @@ internal class CoroutineScheduler(
             block.taskContext = taskContext
             return block
         }
-        return TaskImpl(block, nanoTime, taskContext)
+        return block.asTask(nanoTime, taskContext)
     }
 
     // NB: should only be called from 'dispatch' method due to blocking tasks increment
@@ -514,7 +514,7 @@ internal class CoroutineScheduler(
          */
         if (state === WorkerState.TERMINATED) return task
         // Do not add CPU tasks in local queue if we are not able to execute it
-        if (task.mode == TASK_NON_BLOCKING && state === WorkerState.BLOCKING) {
+        if (!task.isBlocking && state === WorkerState.BLOCKING) {
             return task
         }
         mayHaveLocalTasks = true
@@ -810,29 +810,26 @@ internal class CoroutineScheduler(
         private fun inStack(): Boolean = nextParkedWorker !== NOT_IN_STACK
 
         private fun executeTask(task: Task) {
-            val taskMode = task.mode
-            idleReset(taskMode)
-            beforeTask(taskMode)
-            runSafely(task)
-            afterTask(taskMode)
-        }
-
-        private fun beforeTask(taskMode: Int) {
-            if (taskMode == TASK_NON_BLOCKING) return
-            // Always notify about new work when releasing CPU-permit to execute some blocking task
-            if (tryReleaseCpu(WorkerState.BLOCKING)) {
-                signalCpuWork()
+            terminationDeadline = 0L // reset deadline for termination
+            if (state == WorkerState.PARKING) {
+                assert { task.isBlocking }
+                state = WorkerState.BLOCKING
             }
-        }
-
-        private fun afterTask(taskMode: Int) {
-            if (taskMode == TASK_NON_BLOCKING) return
-            decrementBlockingTasks()
-            val currentState = state
-            // Shutdown sequence of blocking dispatcher
-            if (currentState !== WorkerState.TERMINATED) {
-                assert { currentState == WorkerState.BLOCKING } // "Expected BLOCKING state, but has $currentState"
-                state = WorkerState.DORMANT
+            if (task.isBlocking) {
+                // Always notify about new work when releasing CPU-permit to execute some blocking task
+                if (tryReleaseCpu(WorkerState.BLOCKING)) {
+                    signalCpuWork()
+                }
+                runSafely(task)
+                decrementBlockingTasks()
+                val currentState = state
+                // Shutdown sequence of blocking dispatcher
+                if (currentState !== WorkerState.TERMINATED) {
+                    assert { currentState == WorkerState.BLOCKING } // "Expected BLOCKING state, but has $currentState"
+                    state = WorkerState.DORMANT
+                }
+            } else {
+                runSafely(task)
             }
         }
 
@@ -923,15 +920,6 @@ internal class CoroutineScheduler(
             state = WorkerState.TERMINATED
         }
 
-        // It is invoked by this worker when it finds a task
-        private fun idleReset(mode: Int) {
-            terminationDeadline = 0L // reset deadline for termination
-            if (state == WorkerState.PARKING) {
-                assert { mode == TASK_PROBABLY_BLOCKING }
-                state = WorkerState.BLOCKING
-            }
-        }
-
         fun findTask(mayHaveLocalTasks: Boolean): Task? {
             if (tryAcquireCpuPermit()) return findAnyTask(mayHaveLocalTasks)
             /*
@@ -1013,12 +1001,12 @@ internal class CoroutineScheduler(
 
     enum class WorkerState {
         /**
-         * Has CPU token and either executes [TASK_NON_BLOCKING] task or tries to find one.
+         * Has CPU token and either executes a [Task.isBlocking]` == false` task or tries to find one.
          */
         CPU_ACQUIRED,
 
         /**
-         * Executing task with [TASK_PROBABLY_BLOCKING].
+         * Executing task with [Task.isBlocking].
          */
         BLOCKING,
 

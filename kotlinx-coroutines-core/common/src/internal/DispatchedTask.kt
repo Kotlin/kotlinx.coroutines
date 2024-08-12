@@ -76,7 +76,6 @@ internal abstract class DispatchedTask<in T> internal constructor(
 
     final override fun run() {
         assert { resumeMode != MODE_UNINITIALIZED } // should have been set before dispatching
-        val taskContext = this.taskContext
         var fatalException: Throwable? = null
         try {
             val delegate = delegate as DispatchedContinuation<T>
@@ -107,8 +106,7 @@ internal abstract class DispatchedTask<in T> internal constructor(
             // This instead of runCatching to have nicer stacktrace and debug experience
             fatalException = e
         } finally {
-            val result = runCatching { taskContext.afterTask() }
-            handleFatalException(fatalException, result.exceptionOrNull())
+            fatalException?.let { handleFatalException(it) }
         }
     }
 
@@ -130,15 +128,9 @@ internal abstract class DispatchedTask<in T> internal constructor(
      * Fatal exception handling can be intercepted with [CoroutineExceptionHandler] element in the context of
      * a failed coroutine, but such exceptions should be reported anyway.
      */
-    internal fun handleFatalException(exception: Throwable?, finallyException: Throwable?) {
-        if (exception === null && finallyException === null) return
-        if (exception !== null && finallyException !== null) {
-            exception.addSuppressed(finallyException)
-        }
-
-        val cause = exception ?: finallyException
+    internal fun handleFatalException(exception: Throwable) {
         val reason = CoroutinesInternalError("Fatal exception in coroutines machinery for $this. " +
-                "Please read KDoc to 'handleFatalException' method and report this incident to maintainers", cause!!)
+                "Please read KDoc to 'handleFatalException' method and report this incident to maintainers", exception)
         handleCoroutineException(this.delegate.context, reason)
     }
 }
@@ -203,7 +195,7 @@ internal inline fun DispatchedTask<*>.runUnconfinedEventLoop(
          * This exception doesn't happen normally, only if we have a bug in implementation.
          * Report it as a fatal exception.
          */
-        handleFatalException(e, null)
+        handleFatalException(e)
     } finally {
         eventLoop.decrementUseCount(unconfined = true)
     }
