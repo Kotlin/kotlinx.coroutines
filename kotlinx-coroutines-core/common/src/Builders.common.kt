@@ -8,6 +8,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
+import kotlin.concurrent.Volatile
 import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -205,10 +206,115 @@ private class LazyStandaloneCoroutine(
 }
 
 // Used by withContext when context changes, but dispatcher stays the same
-internal expect class UndispatchedCoroutine<in T>(
+internal class UndispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>
+) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont) {
+
+    /**
+     * The state of [ThreadContextElement]s associated with the current undispatched coroutine.
+     * It is stored in a thread local because this coroutine can be used concurrently in suspend-resume race scenario.
+     * See the followin, boiled down example with inlined `withContinuationContext` body:
+     * ```
+     * val state = saveThreadContext(ctx)
+     * try {
+     *     invokeSmthWithThisCoroutineAsCompletion() // Completion implies that 'afterResume' will be called
+     *     // COROUTINE_SUSPENDED is returned
+     * } finally {
+     *     thisCoroutine().clearThreadContext() // Concurrently the "smth" could've been already resumed on a different thread
+     *     // and it also calls saveThreadContext and clearThreadContext
+     * }
+     * ```
+     *
+     * Usage note:
+     *
+     * This part of the code is performance-sensitive.
+     * It is a well-established pattern to wrap various activities into system-specific undispatched
+     * `withContext` for the sake of logging, MDC, tracing etc., meaning that there exists thousands of
+     * undispatched coroutines.
+     * Each access to [CommonThreadLocal] on JVM leaves a footprint in the corresponding Thread's `ThreadLocalMap`
+     * that is cleared automatically as soon as the associated thread-local (-> UndispatchedCoroutine) is garbage collected.
+     * When such coroutines are promoted to old generation, `ThreadLocalMap`s become bloated and an arbitrary accesses to thread locals
+     * start to consume significant amount of CPU because these maps are open-addressed and cleaned up incrementally on each access.
+     * (You can read more about this effect as "GC nepotism").
+     *
+     * To avoid that, we attempt to narrow down the lifetime of this thread local as much as possible:
+     * - It's never accessed when we are sure there are no thread context elements
+     * - It's cleaned up via [CommonThreadLocal.remove] as soon as the coroutine is suspended or finished.
+     */
+    private val threadStateToRecover = commonThreadLocal<Pair<CoroutineContext, Any?>?>(Symbol("UndispatchedCoroutine"))
+
+    /*
+     * Indicates that a coroutine has at least one thread context element associated with it
+     * and that 'threadStateToRecover' is going to be set in case of dispatchhing in order to preserve them.
+     * Better than nullable thread-local for easier debugging.
+     *
+     * It is used as a performance optimization to avoid 'threadStateToRecover' initialization
+     * (note: tl.get() initializes thread local),
+     * and is prone to false-positives as it is never reset: otherwise
+     * it may lead to logical data races between suspensions point where
+     * coroutine is yet being suspended in one thread while already being resumed
+     * in another.
+     */
+    @Volatile
+    private var threadLocalIsSet = false
+
+    init {
+        /*
+         * This is a hack for a very specific case in #2930 unless #3253 is implemented.
+         * 'ThreadLocalStressTest' covers this change properly.
+         *
+         * The scenario this change covers is the following:
+         * 1) The coroutine is being started as plain non kotlinx.coroutines related suspend function,
+         *    e.g. `suspend fun main` or, more importantly, Ktor `SuspendFunGun`, that is invoking
+         *    `withContext(tlElement)` which creates `UndispatchedCoroutine`.
+         * 2) It (original continuation) is then not wrapped into `DispatchedContinuation` via `intercept()`
+         *    and goes neither through `DC.run` nor through `resumeUndispatchedWith` that both
+         *    do thread context element tracking.
+         * 3) So thread locals never got chance to get properly set up via `saveThreadContext`,
+         *    but when `withContext` finishes, it attempts to recover thread locals in its `afterResume`.
+         *
+         * Here we detect precisely this situation and properly setup context to recover later.
+         *
+         */
+        if (uCont.context[ContinuationInterceptor] !is CoroutineDispatcher) {
+            /*
+             * We cannot just "read" the elements as there is no such API,
+             * so we update-restore it immediately and use the intermediate value
+             * as the initial state, leveraging the fact that thread context element
+             * is idempotent and such situations are increasingly rare.
+             */
+            val values = updateThreadContext(context, null)
+            restoreThreadContext(context, values)
+            saveThreadContext(context, values)
+        }
+    }
+
+    fun saveThreadContext(context: CoroutineContext, oldValue: Any?) {
+        threadLocalIsSet = true // Specify that thread-local is touched at all
+        threadStateToRecover.set(context to oldValue)
+    }
+
+    fun clearThreadContext(): Boolean {
+        return !(threadLocalIsSet && threadStateToRecover.get() == null).also {
+            threadStateToRecover.remove()
+        }
+    }
+
+    override fun afterResume(state: Any?) {
+        if (threadLocalIsSet) {
+            threadStateToRecover.get()?.let { (ctx, value) ->
+                restoreThreadContext(ctx, value)
+            }
+            threadStateToRecover.remove()
+        }
+        // resume undispatched -- update context but stay on the same dispatcher
+        val result = recoverResult(state, uCont)
+        withContinuationContext(uCont, null) {
+            uCont.resumeWith(result)
+        }
+    }
+}
 
 private const val UNDECIDED = 0
 private const val SUSPENDED = 1
