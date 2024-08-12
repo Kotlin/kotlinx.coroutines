@@ -132,25 +132,6 @@ private class ChannelAsFlow<T>(
 }
 
 /**
- * Represents the given broadcast channel as a hot flow.
- * Every flow collector will trigger a new broadcast channel subscription.
- *
- * ### Cancellation semantics
- * 1) Flow consumer is cancelled when the original channel is cancelled.
- * 2) Flow consumer completes normally when the original channel completes (~is closed) normally.
- * 3) If the flow consumer fails with an exception, subscription is cancelled.
- */
-@Suppress("DEPRECATION")
-@Deprecated(
-    level = DeprecationLevel.ERROR,
-    message = "'BroadcastChannel' is obsolete and all corresponding operators are deprecated " +
-        "in the favour of StateFlow and SharedFlow"
-) // Since 1.5.0, ERROR since 1.7.0, was @FlowPreview, safe to remove in 1.8.0
-public fun <T> BroadcastChannel<T>.asFlow(): Flow<T> = flow {
-    emitAll(openSubscription())
-}
-
-/**
  * Creates a [produce] coroutine that collects the given flow.
  *
  * This transformation is **stateful**, it launches a [produce] coroutine
