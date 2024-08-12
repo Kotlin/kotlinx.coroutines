@@ -1,5 +1,18 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.9.0-RC.2
+
+* Advanced the deprecation levels for `BroadcastChannel`-based API (#4197).
+* Advanced the deprecation levels for the old `kotlinx-coroutines-test` API (#4198).
+* Promoted `CoroutineStart.ATOMIC` from `ExperimentalCoroutinesApi` to `DelicateCoroutinesApi` (#4169).
+* Reworked the documentation for `CoroutineStart` and `Channel`-based API (#4147, #4148, #4167). Thanks, @globsterg!
+* Forbid casting a `Mutex` to `Semaphore` (#4176).
+* Deprecated `Job.cancelFutureOnCompletion` (#4211).
+* Worked around a stack overflow that may occur when calling `asDeferred` on a `Future` many times (#4156).
+* Fixed a bug that disallowed setting a custom `probeCoroutineResumed` when starting coroutines with `UNDISPATCHED` (#4211).
+* No longer initialize `Dispatchers.IO` on the JVM when other standard dispatchers are accessed (#4166). Thanks, @metalhead8816!
+* Small tweaks, fixes, and documentation improvements.
+
 ## Version 1.9.0-RC
 
 * Kotlin was updated to 2.0 (#4137).
