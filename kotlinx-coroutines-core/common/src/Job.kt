@@ -101,7 +101,7 @@ import kotlin.jvm.*
  * be safely invoked from concurrent coroutines without external synchronization.
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(markerClass = InternalForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(InternalForInheritanceCoroutinesApi::class)
 public interface Job : CoroutineContext.Element {
     /**
      * Key for [Job] instance in the coroutine context.

@@ -17,7 +17,7 @@ import kotlinx.coroutines.selects.*
  * be safely invoked from concurrent coroutines without external synchronization.
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(markerClass = InternalForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(InternalForInheritanceCoroutinesApi::class)
 public interface CompletableDeferred<T> : Deferred<T> {
     /**
      * Completes this deferred value with a given [value]. The result is `true` if this deferred was

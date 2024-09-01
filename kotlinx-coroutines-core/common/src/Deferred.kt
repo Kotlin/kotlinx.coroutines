@@ -28,7 +28,7 @@ import kotlinx.coroutines.selects.*
  * be safely invoked from concurrent coroutines without external synchronization.
  */
 @OptIn(ExperimentalSubclassOptIn::class)
-@SubclassOptInRequired(markerClass = InternalForInheritanceCoroutinesApi::class)
+@SubclassOptInRequired(InternalForInheritanceCoroutinesApi::class)
 public interface Deferred<out T> : Job {
 
     /**
