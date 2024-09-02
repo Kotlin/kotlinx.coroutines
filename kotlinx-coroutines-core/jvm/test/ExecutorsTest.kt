@@ -168,6 +168,33 @@ class ExecutorsTest : TestBase() {
         }
     }
 
+    @Test
+    fun testExceptionInIsDispatchNeeded() {
+        val dispatcher = object : CoroutineDispatcher() {
+            override fun isDispatchNeeded(context: CoroutineContext): Boolean {
+                expect(2)
+                throw TestException()
+            }
+            override fun dispatch(context: CoroutineContext, block: Runnable) = expectUnreached()
+        }
+        try {
+            runBlocking {
+                expect(1)
+                try {
+                    launch(dispatcher) {
+                        expectUnreached()
+                    }
+                    expectUnreached()
+                } catch (_: TestException) {
+                    expect(3)
+                }
+
+            }
+        } catch (_: TestException) {
+            finish(4)
+        }
+    }
+
     private fun runTestExceptionInDispatch(
         totalSteps: Int,
         isExpectedException: (Throwable) -> Boolean,
