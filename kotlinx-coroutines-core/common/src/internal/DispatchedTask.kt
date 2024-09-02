@@ -110,7 +110,7 @@ internal abstract class DispatchedTask<in T> internal constructor(
             fatalException = e
         } finally {
             fatalException?.let { handleFatalException(it) }
-            dispatchException?.let { handleCoroutineException(delegate.context, it.cause!!) }
+            dispatchException?.let { handleCoroutineException(delegate.context, it.cause) }
         }
     }
 
