@@ -105,8 +105,8 @@ public fun CoroutineDispatcher.asExecutor(): Executor =
 
 private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) : Executor {
     override fun execute(block: Runnable) {
-        if (dispatcher.isDispatchNeeded(EmptyCoroutineContext)) {
-            dispatcher.dispatch(EmptyCoroutineContext, block)
+        if (dispatcher.safeIsDispatchNeeded(EmptyCoroutineContext)) {
+            dispatcher.safeDispatch(EmptyCoroutineContext, block)
         } else {
             block.run()
         }

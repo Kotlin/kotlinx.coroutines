@@ -26,7 +26,7 @@ public suspend fun yield(): Unit = suspendCoroutineUninterceptedOrReturn sc@ { u
     val context = uCont.context
     context.ensureActive()
     val cont = uCont.intercepted() as? DispatchedContinuation<Unit> ?: return@sc Unit
-    if (cont.dispatcher.isDispatchNeeded(context)) {
+    if (cont.dispatcher.safeIsDispatchNeeded(context)) {
         // this is a regular dispatcher -- do simple dispatchYield
         cont.dispatchYield(context, Unit)
     } else {

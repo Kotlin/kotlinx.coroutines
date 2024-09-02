@@ -147,8 +147,8 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
         // dispatch directly using this instance's Runnable implementation
         val dispatcher = delegate.dispatcher
         val context = delegate.context
-        if (dispatcher.isDispatchNeeded(context)) {
-            dispatcher.dispatch(context, this)
+        if (dispatcher.safeIsDispatchNeeded(context)) {
+            dispatcher.safeDispatch(context, this)
         } else {
             resumeUnconfined()
         }
@@ -213,7 +213,7 @@ internal inline fun Continuation<*>.resumeWithStackTrace(exception: Throwable) {
 /**
  * This exception holds an exception raised in [CoroutineDispatcher.dispatch] method
  *
- * @see DispatchedContinuation.dispatchWithExceptionHandling
+ * @see safeDispatch
  */
 internal class DispatchException(
     override val cause: Throwable,
