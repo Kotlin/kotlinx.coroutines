@@ -12,9 +12,9 @@ internal class NamedDispatcher(
     private val name: String
 ) : CoroutineDispatcher(), Delay by (dispatcher as? Delay ?: DefaultDelay) {
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = dispatcher.safeIsDispatchNeeded(context)
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = dispatcher.isDispatchNeeded(context)
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) = dispatcher.safeDispatch(context, block)
+    override fun dispatch(context: CoroutineContext, block: Runnable) = dispatcher.dispatch(context, block)
 
     @InternalCoroutinesApi
     override fun dispatchYield(context: CoroutineContext, block: Runnable) = dispatcher.dispatchYield(context, block)
