@@ -252,7 +252,7 @@ internal class DispatchedContinuation<in T>(
         try {
             dispatcher.dispatch(context, this)
         } catch (e: Throwable) {
-            throw DispatchException(e)
+            throw DispatchException(e, dispatcher, context)
         }
     }
 }

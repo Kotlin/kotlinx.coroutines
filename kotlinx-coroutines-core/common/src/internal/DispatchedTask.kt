@@ -215,4 +215,8 @@ internal inline fun Continuation<*>.resumeWithStackTrace(exception: Throwable) {
  *
  * @see DispatchedContinuation.dispatchWithExceptionHandling
  */
-internal class DispatchException(cause: Throwable) : Exception(cause)
+internal class DispatchException(
+    override val cause: Throwable,
+    dispatcher: CoroutineDispatcher,
+    context: CoroutineContext,
+) : Exception("Coroutine dispatcher $dispatcher threw an exception, context = $context", cause)
