@@ -1,4 +1,5 @@
 <!--- TEST_NAME ExceptionsGuideTest -->
+<contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
 
 [//]: # (title: Coroutine exceptions handling)
 
