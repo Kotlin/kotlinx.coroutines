@@ -43,9 +43,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-01.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-01.kt).
 >
-{type="note"}
+{style="note"}
 
 It produces the following output (maybe in different order):
 
@@ -105,9 +105,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-02.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-02.kt).
 >
-{type="note"}
+{style="note"}
 
 Produces the output: 
  
@@ -129,7 +129,7 @@ function is using.
 > because some operation in a coroutine must be performed right away. 
 > The unconfined dispatcher should not be used in general code. 
 >
-{type="note"}
+{style="note"}
 
 ## Debugging coroutines and threads
 
@@ -143,7 +143,7 @@ The Coroutine Debugger of the Kotlin plugin simplifies debugging coroutines in I
 
 > Debugging works for versions 1.3.8 or later of `kotlinx-coroutines-core`.
 >
-{type="note"}
+{style="note"}
 
 The **Debug** tool window contains the **Coroutines** tab. In this tab, you can find information about both currently running and suspended coroutines. 
 The coroutines are grouped by the dispatcher they are running on.
@@ -191,9 +191,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-03.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-03.kt).
 >
-{type="note"}
+{style="note"}
 
 There are three coroutines. The main coroutine (#1) inside `runBlocking` 
 and two coroutines computing the deferred values `a` (#2) and `b` (#3).
@@ -215,7 +215,7 @@ is consecutively assigned to all created coroutines when the debugging mode is o
 > Debugging mode is also turned on when JVM is run with `-ea` option.
 > You can read more about debugging facilities in the documentation of the [DEBUG_PROPERTY_NAME] property.
 >
-{type="note"}
+{style="note"}
 
 ## Jumping between threads
 
@@ -241,9 +241,9 @@ fun main() {
 }
 ```
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-04.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-04.kt).
 >
-{type="note"}
+{style="note"}
 
 It demonstrates several new techniques. One is using [runBlocking] with an explicitly specified context, and
 the other one is using the [withContext] function to change the context of a coroutine while still staying in the
@@ -276,9 +276,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-05.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-05.kt).
 > 
-{type="note"}
+{style="note"}
 
 In the [debug mode](#debugging-coroutines-and-threads), it outputs something like this:
 
@@ -338,9 +338,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-06.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-06.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -380,9 +380,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-07.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-07.kt).
 >
-{type="note"}
+{style="note"}
 
 The result is going to be:
 
@@ -431,9 +431,9 @@ fun main() = runBlocking(CoroutineName("main")) {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-08.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-08.kt).
 >
-{type="note"}
+{style="note"}
 
 The output it produces with `-Dkotlinx.coroutines.debug` JVM option is similar to:
  
@@ -465,9 +465,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-09.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-09.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code with the `-Dkotlinx.coroutines.debug` JVM option is: 
 
@@ -560,9 +560,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-10.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-10.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this example is:
 
@@ -581,7 +581,7 @@ by a single invocation of `job.cancel()` in `Activity.destroy()`.
 > Note, that Android has first-party support for coroutine scope in all entities with the lifecycle.
 > See [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope).
 >
-{type="note"}
+{style="note"}
 
 ### Thread-local data
 
@@ -615,9 +615,9 @@ fun main() = runBlocking<Unit> {
 ```  
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-context-11.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-context-11.kt).
 >
-{type="note"}
+{style="note"}
 
 In this example we launch a new coroutine in a background thread pool using [Dispatchers.Default], so
 it works on a different thread from the thread pool, but it still has the value of the thread local variable

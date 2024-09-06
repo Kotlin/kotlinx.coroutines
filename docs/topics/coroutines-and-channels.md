@@ -5,7 +5,7 @@ underlying thread or callbacks.
 
 > No prior knowledge of coroutines is required, but you're expected to be familiar with basic Kotlin syntax.
 >
-{type="tip"}
+{style="tip"}
 
 You'll learn:
 
@@ -18,7 +18,7 @@ this tutorial works similarly for any other libraries that support coroutines.
 
 > You can find solutions for all of the tasks on the `solutions` branch of the [project's repository](http://github.com/kotlin-hands-on/intro-coroutines).
 >
-{type="tip"}
+{style="tip"}
 
 ## Before you start
 
@@ -186,13 +186,13 @@ The corresponding test file `test/tasks/AggregationKtTest.kt` shows an example o
 > You can jump between the source code and the test class automatically by using the [IntelliJ IDEA shortcut](https://www.jetbrains.com/help/idea/create-tests.html#test-code-navigation)
 > `Ctrl+Shift+T` / `⇧ ⌘ T`.
 >
-{type="tip"}
+{style="tip"}
 
 After implementing this task, the resulting list for the "kotlin" organization should be similar to the following:
 
 ![The list for the "kotlin" organization](aggregate.png){width=500}
 
-#### Solution for task 1 {initial-collapse-state="collapsed"}
+#### Solution for task 1 {initial-collapse-state="collapsed" collapsible="true"}
 
 1. To group users by login, use [`groupBy()`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/group-by.html),
    which returns a map from a login to all occurrences of the user with this login in different repositories.
@@ -269,7 +269,7 @@ nothing changes.
 Fix the `loadContributorsBackground()` function in `src/tasks/Request2Background.kt` so that the resulting list is shown
 in the UI.
 
-#### Solution for task 2 {initial-collapse-state="collapsed"}
+#### Solution for task 2 {initial-collapse-state="collapsed" collapsible="true"}
 
 If you try to load the contributors, you can see in the log that the contributors are loaded but the result isn't displayed.
 To fix this, call `updateResults()` on the resulting list of users:
@@ -340,7 +340,7 @@ Think about why the given code doesn't work as expected and try to fix it, or se
 
 Rewrite the code in the `src/tasks/Request3Callbacks.kt` file so that the loaded list of contributors is shown.
 
-#### The first attempted solution for task 3 {initial-collapse-state="collapsed"}
+#### The first attempted solution for task 3 {initial-collapse-state="collapsed" collapsible="true"}
 
 In the current solution, many requests are started concurrently, which decreases the total loading time. However,
 the result isn't loaded. This is because the `updateResults()` callback is called right after all of the loading requests are started,
@@ -369,7 +369,7 @@ for ((index, repo) in repos.withIndex()) {   // #1
 
 However, this code also fails to achieve our objective. Try to find the answer yourself, or see the solution below.
 
-#### The second attempted solution for task 3 {initial-collapse-state="collapsed"}
+#### The second attempted solution for task 3 {initial-collapse-state="collapsed" collapsible="true"}
 
 Since the loading requests are started concurrently, there's no guarantee that the result for the last one comes last. The
 results can come in any order.
@@ -401,7 +401,7 @@ for (repo in repos) {
 This code uses a synchronized version of the list and `AtomicInteger()` because, in general, there's no guarantee that
 different callbacks that process `getRepoContributors()` requests will always be called from the same thread.
 
-#### The third attempted solution for task 3 {initial-collapse-state="collapsed"}
+#### The third attempted solution for task 3 {initial-collapse-state="collapsed" collapsible="true"}
 
 An even better solution is to use the `CountDownLatch` class. It stores a counter initialized with the number of
 repositories. This counter is decremented after processing each repository. It then waits until the latch is counted
@@ -429,7 +429,7 @@ and error-prone, especially when several underlying threads and synchronization 
 > necessary dependencies and solutions for using RxJava can be found in a separate `rx` branch. It is also possible to
 > complete this tutorial and implement or check the proposed Rx versions for a proper comparison.
 >
-{type="tip"}
+{style="tip"}
 
 ## Suspending functions
 
@@ -482,7 +482,7 @@ new API.
 > result in an error with the message "Suspend function 'getOrgRepos' should be called only from a coroutine or another
 > suspend function".
 >
-{type="note"}
+{style="note"}
 
 1. Copy the implementation of `loadContributorsBlocking()` that is defined in `src/tasks/Request1Blocking.kt`
    into the `loadContributorsSuspend()` that is defined in `src/tasks/Request4Suspend.kt`.
@@ -490,7 +490,7 @@ new API.
 3. Run the program by choosing the _SUSPEND_ option and ensure that the UI is still responsive while the GitHub requests
    are performed.
 
-#### Solution for task 4 {initial-collapse-state="collapsed"}
+#### Solution for task 4 {initial-collapse-state="collapsed" collapsible="true"}
 
 Replace `.getOrgReposCall(req.org).execute()` with `.getOrgRepos(req.org)` and repeat the same replacement for the
 second "contributors" request:
@@ -528,7 +528,7 @@ thread -> coroutine
 > Coroutines are often called lightweight threads because you can run code on coroutines, similar to how you run code on
 > threads. The operations that were blocking before (and had to be avoided) can now suspend the coroutine instead.
 >
-{type="note"}
+{style="note"}
 
 ### Starting a new coroutine
 
@@ -640,7 +640,7 @@ tests.
 
 > Watch [this video](https://www.youtube.com/watch?v=zEZc5AmHQhk) for a better understanding of coroutines.
 >
-{type="tip"}
+{style="tip"}
 
 If there is a list of deferred objects, you can call `awaitAll()` to await the results of all of them:
 
@@ -673,7 +673,7 @@ What's more, `async` explicitly emphasizes which parts run concurrently in the c
 In the `Request5Concurrent.kt` file, implement a `loadContributorsConcurrent()` function by using the
 previous `loadContributorsSuspend()` function.
 
-#### Tip for task 5 {initial-collapse-state="collapsed"}
+#### Tip for task 5 {initial-collapse-state="collapsed" collapsible="true"}
 
 You can only start a new coroutine inside a coroutine scope. Copy the content
 from `loadContributorsSuspend()` to the `coroutineScope` call so that you can call `async` functions there:
@@ -698,7 +698,7 @@ val deferreds: List<Deferred<List<User>>> = repos.map { repo ->
 deferreds.awaitAll() // List<List<User>>
 ```
 
-#### Solution for task 5 {initial-collapse-state="collapsed"}
+#### Solution for task 5 {initial-collapse-state="collapsed" collapsible="true"}
 
 Wrap each "contributors" request with `async` to create as many coroutines as there are repositories. `async`
 returns `Deferred<List<User>>`. This is not an issue because creating new coroutines is not very resource-intensive, so you can
@@ -1042,7 +1042,7 @@ top-level coroutine. All the nested coroutines then inherit the context and modi
 > use `CoroutineDispatchers.Main` by default for the top coroutine and then to explicitly put a different dispatcher when
 > you need to run the code on a different thread.
 >
-{type="tip"}
+{style="tip"}
 
 ## Showing progress
 
@@ -1098,7 +1098,7 @@ progress. Base it on the `loadContributorsSuspend()` function from `Request4Susp
 * The total number of contributions for each user should be increased when the data for each new
   repository is loaded.
 
-#### Solution for task 6 {initial-collapse-state="collapsed"}
+#### Solution for task 6 {initial-collapse-state="collapsed" collapsible="true"}
 
 To store the intermediate list of loaded contributors in the "aggregated" state, define an `allUsers` variable which
 stores the list of users, and then update it after contributors for each new repository are loaded:
@@ -1267,7 +1267,7 @@ fun log(message: Any?) {
 
 > Watch [this video](https://www.youtube.com/watch?v=HpWQUoVURWQ) for a better understanding of channels.
 >
-{type="tip"}
+{style="tip"}
 
 ### Task 7
 
@@ -1277,7 +1277,7 @@ contributors concurrently and shows intermediate progress at the same time.
 Use the previous functions, `loadContributorsConcurrent()` from `Request5Concurrent.kt`
 and `loadContributorsProgress()` from `Request6Progress.kt`.
 
-#### Tip for task 7 {initial-collapse-state="collapsed"}
+#### Tip for task 7 {initial-collapse-state="collapsed" collapsible="true"}
 
 Different coroutines that concurrently receive contributor lists for different repositories can send all of the received
 results to the same channel:
@@ -1304,7 +1304,7 @@ repeat(repos.size) {
 
 Since the `receive()` calls are sequential, no additional synchronization is needed.
 
-#### Solution for task 7 {initial-collapse-state="collapsed"}
+#### Solution for task 7 {initial-collapse-state="collapsed" collapsible="true"}
 
 As with the `loadContributorsProgress()` function, you can create an `allUsers` variable to store the intermediate
 states of the "all contributors" list.
@@ -1459,7 +1459,7 @@ which allows for more flexibility and easier testing.
 
 > The testing API that supports virtual time is [Experimental](components-stability.md) and may change in the future.
 >
-{type="warning"}
+{style="warning"}
 
 By default, the compiler shows warnings if you use the experimental testing API. To suppress these warnings, annotate
 the test function or the whole class containing the tests with `@OptIn(ExperimentalCoroutinesApi::class)`.
@@ -1486,7 +1486,7 @@ Refactor the following tests in `tests/tasks/` to use virtual time instead of re
 
 Compare the total running times before and after applying your refactoring.
 
-#### Tip for task 8 {initial-collapse-state="collapsed"}
+#### Tip for task 8 {initial-collapse-state="collapsed" collapsible="true"}
 
 1. Replace the `runBlocking` invocation with `runTest`, and replace `System.currentTimeMillis()` with `currentTime`:
 
@@ -1503,7 +1503,7 @@ Compare the total running times before and after applying your refactoring.
 2. Uncomment the assertions that check the exact virtual time.
 3. Don't forget to add `@UseExperimental(ExperimentalCoroutinesApi::class)`.
 
-#### Solution for task 8 {initial-collapse-state="collapsed"}
+#### Solution for task 8 {initial-collapse-state="collapsed" collapsible="true"}
 
 Here are the solutions for the concurrent and channels cases:
 
@@ -1547,7 +1547,7 @@ can see the difference in tests that use virtual time.
 > The tests for the remaining "suspend" and "progress" tasks are very similar – you can find them in the project's
 > `solutions` branch.
 >
-{type="tip"}
+{style="tip"}
 
 ## What's next
 

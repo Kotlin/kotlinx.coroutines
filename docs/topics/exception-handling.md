@@ -23,7 +23,7 @@ It can be demonstrated by a simple example that creates root coroutines using th
 > whole application is one of the rare legitimate uses for `GlobalScope`, so you must explicitly opt-in into 
 > using `GlobalScope` with `@OptIn(DelicateCoroutinesApi::class)`.
 >
-{type="note"}
+{style="note"}
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -52,9 +52,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-01.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-exceptions-01.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is (with [debug](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/coroutine-context-and-dispatchers.md#debugging-coroutines-and-threads)):
 
@@ -89,7 +89,7 @@ so its `CoroutineExceptionHandler` has no effect either.
 > Coroutines running in supervision scope do not propagate exceptions to their parent and are
 > excluded from this rule. A further [Supervision](#supervision) section of this document gives more details.
 >
-{type="note"}  
+{style="note"}  
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -112,9 +112,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-02.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-exceptions-02.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -157,9 +157,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-03.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-exceptions-03.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -181,7 +181,7 @@ This behaviour cannot be overridden and is used to provide stable coroutines hie
 > is launched in the scope of the main [runBlocking], since the main coroutine is going to be always cancelled
 > when its child completes with exception despite the installed handler.
 >
-{type="note"}
+{style="note"}
 
 The original exception is handled by the parent only when all its children terminate,
 which is demonstrated by the following example.
@@ -219,9 +219,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-04.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-exceptions-04.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -272,9 +272,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-05.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-exceptions-05.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -287,7 +287,7 @@ CoroutineExceptionHandler got java.io.IOException with suppressed [java.lang.Ari
 > Note that this mechanism currently only works on Java version 1.7+. 
 > The JS and Native restrictions are temporary and will be lifted in the future.
 >
-{type="note"}
+{style="note"}
 
 Cancellation exceptions are transparent and are unwrapped by default:
 
@@ -322,9 +322,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-exceptions-06.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-exceptions-06.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -388,9 +388,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-supervision-01.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-supervision-01.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -438,9 +438,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-supervision-02.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-supervision-02.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -484,9 +484,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-supervision-03.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-supervision-03.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
