@@ -1,3 +1,5 @@
+<contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
+
 [//]: # (title: Coroutines and channels − tutorial)
 
 In this tutorial, you'll learn how to use coroutines in IntelliJ IDEA to perform network requests without blocking the

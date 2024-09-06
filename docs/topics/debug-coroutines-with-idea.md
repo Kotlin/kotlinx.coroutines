@@ -1,3 +1,6 @@
+<contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
+
+
 [//]: # (title: Debug coroutines using IntelliJ IDEA – tutorial)
 
 This tutorial demonstrates how to create Kotlin coroutines and debug them using IntelliJ IDEA.

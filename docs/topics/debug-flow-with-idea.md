@@ -1,3 +1,6 @@
+<contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
+
+
 [//]: # (title: Debug Kotlin Flow using IntelliJ IDEA – tutorial)
 
 This tutorial demonstrates how to create Kotlin Flow and debug it using IntelliJ IDEA.
