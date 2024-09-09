@@ -44,3 +44,7 @@ kover {
         }
     }
 }
+
+atomicfu {
+    transformJs = false
+}

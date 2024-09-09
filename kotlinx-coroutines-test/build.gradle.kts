@@ -22,3 +22,7 @@ kotlin {
         }
     }
 }
+
+atomicfu {
+    transformJs = false
+}

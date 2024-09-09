@@ -306,3 +306,7 @@ artifacts {
 tasks.named("dokkaHtmlPartial") {
     dependsOn(jvmJar)
 }
+
+atomicfu {
+    transformJs = false
+}

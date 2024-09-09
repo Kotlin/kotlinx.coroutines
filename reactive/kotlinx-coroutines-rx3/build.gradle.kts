@@ -34,3 +34,7 @@ val test by tasks.getting(Test::class) {
     dependsOn(testNG)
     reports.html.outputLocation = file("$buildDir/reports/junit")
 }
+
+atomicfu {
+    transformJs = false
+}

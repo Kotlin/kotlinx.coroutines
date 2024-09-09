@@ -49,3 +49,7 @@ kover {
         }
     }
 }
+
+atomicfu {
+    transformJs = false
+}
