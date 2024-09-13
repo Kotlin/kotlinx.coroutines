@@ -1,19 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.*
-import kotlin.reflect.*
-import kotlin.reflect.full.*
 
 configure(subprojects) {
     val project = this
     if (name in sourceless) return@configure
-    apply(plugin = "org.jetbrains.kotlinx.atomicfu")
-    // Workaround for KT-71203. Can be removed after https://github.com/Kotlin/kotlinx-atomicfu/issues/431
-    afterEvaluate {
-        extensions.findByName("atomicfu")?.let { atomicfuExtension ->
-            atomicfuExtension::class.memberProperties.firstOrNull { it is KMutableProperty<*> && it.name == "transformJs" }?.let {
-                (it as KMutableProperty<*>).setter.call(atomicfuExtension, false)
-            }
-        }
-    }
+    apply(plugin = "atomicfu-conventions")
     tasks.withType<KotlinCompilationTask<*>>().configureEach {
         val isMainTaskName = name.startsWith("compileKotlin")
         compilerOptions {
