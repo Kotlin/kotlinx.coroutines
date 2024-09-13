@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.*
 configure(subprojects) {
     val project = this
     if (name in sourceless) return@configure
-    apply(plugin = "org.jetbrains.kotlinx.atomicfu")
+    apply(plugin = "atomicfu-conventions")
     tasks.withType<KotlinCompilationTask<*>>().configureEach {
         val isMainTaskName = name.startsWith("compileKotlin")
         compilerOptions {
