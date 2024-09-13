@@ -89,10 +89,14 @@ class JobChildStressTest : TestBase() {
                 launch(pool + deferred) {
                     deferred.complete(Unit) // Transition deferred into "completing" state waiting for current child
                     // **Asynchronously** submit task that launches a child so it races with completion
-                    pool.executor.execute {
-                        rogueJob.set(launch(pool + deferred) {
-                            throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
-                        })
+                    try {
+                        pool.executor.execute {
+                            rogueJob.set(launch(pool + deferred) {
+                                throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
+                            })
+                        }
+                    } catch (_: RejectedExecutionException) {
+                        // This is expected if the pool is closed
                     }
                 }
 
