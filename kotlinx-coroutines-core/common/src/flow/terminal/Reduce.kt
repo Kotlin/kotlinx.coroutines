@@ -107,7 +107,7 @@ public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
             true
         }
     }
-    if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate $predicate")
+    if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate")
     return result as T
 }
 
