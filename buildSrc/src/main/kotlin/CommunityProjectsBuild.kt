@@ -134,12 +134,10 @@ fun getOverriddenKotlinVersion(project: Project): String? =
 /**
  * Checks if the project is built with a snapshot version of Kotlin compiler.
  */
-fun isSnapshotTrainEnabled(project: Project): Boolean =
-    when (project.rootProject.properties["build_snapshot_train"]) {
-        null -> false
-        "" -> false
-        else -> true
-    }
+fun isSnapshotTrainEnabled(project: Project): Boolean {
+    val buildSnapshotTrain = project.rootProject.properties["build_snapshot_train"] as? String
+    return !buildSnapshotTrain.isNullOrBlank()
+}
 
 fun shouldUseLocalMaven(project: Project): Boolean {
     var someDependencyIsSnapshot = false
