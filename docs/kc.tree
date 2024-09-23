@@ -1,25 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<!DOCTYPE product-profile
-        SYSTEM "https://resources.jetbrains.com/stardust/product-profile.dtd">
-
-<product-profile id="kc"
-                 name="Kotlin coroutines"
-                 start-page="coroutines-guide.md">
-
-    <chunk include-id="coroutines">
-        <toc-element id="coroutines-guide.md"/>
-        <toc-element id="coroutines-basics.md" accepts-web-file-names="basics.html,coroutines-basic-jvm.html"/>
-        <toc-element id="coroutines-and-channels.md"/>
-        <toc-element id="cancellation-and-timeouts.md"/>
-        <toc-element id="composing-suspending-functions.md"/>
-        <toc-element id="coroutine-context-and-dispatchers.md"/>
-        <toc-element id="flow.md"/>
-        <toc-element id="channels.md"/>
-        <toc-element id="exception-handling.md"/>
-        <toc-element id="shared-mutable-state-and-concurrency.md"/>
-        <toc-element id="select-expression.md"/>
-        <toc-element id="debug-coroutines-with-idea.md"/>
-        <toc-element id="debug-flow-with-idea.md"/>
-    </chunk>
-</product-profile>
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE instance-profile SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+<instance-profile id="kc" name="Kotlin coroutines" start-page="coroutines-guide.md">
+	<snippet id="coroutines">
+		<toc-element topic="coroutines-guide.md"/>
+		<toc-element accepts-web-file-names="basics.html,coroutines-basic-jvm.html" topic="coroutines-basics.md"/>
+		<toc-element topic="coroutines-and-channels.md"/>
+		<toc-element topic="cancellation-and-timeouts.md"/>
+		<toc-element topic="composing-suspending-functions.md"/>
+		<toc-element topic="coroutine-context-and-dispatchers.md"/>
+		<toc-element topic="flow.md"/>
+		<toc-element topic="channels.md"/>
+		<toc-element topic="exception-handling.md"/>
+		<toc-element topic="shared-mutable-state-and-concurrency.md"/>
+		<toc-element topic="select-expression.md"/>
+		<toc-element topic="debug-coroutines-with-idea.md"/>
+		<toc-element topic="debug-flow-with-idea.md"/>
+	</snippet>
+</instance-profile>

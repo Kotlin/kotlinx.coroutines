@@ -9,7 +9,7 @@ the first one that becomes available.
 > evolve in the upcoming updates of the `kotlinx.coroutines` library with potentially
 > breaking changes.
 >
-{type="note"}
+{style="note"}
 
 ## Selecting from channels
 
@@ -99,9 +99,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-01.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-select-01.kt).
 >
-{type="note"}
+{style="note"}
 
 The result of this code is: 
 
@@ -194,9 +194,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-02.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-select-02.kt).
 >
-{type="note"}
+{style="note"}
 
 The result of this code is quite interesting, so we'll analyze it in more detail:
 
@@ -279,9 +279,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-03.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-select-03.kt).
 >
-{type="note"}
+{style="note"}
   
 So let us see what happens:
  
@@ -363,9 +363,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-04.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-select-04.kt).
 >
-{type="note"}
+{style="note"}
 
 The output is:
 
@@ -472,9 +472,9 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-select-05.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-select-05.kt).
 >
-{type="note"}
+{style="note"}
 
 The result of this code:
 
