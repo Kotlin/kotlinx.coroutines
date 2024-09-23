@@ -59,7 +59,7 @@ the code with coroutines inside of `runBlocking { ... }` curly braces. This is h
 If you remove or forget `runBlocking` in this code, you'll get an error on the [launch] call, since `launch`
 is declared only on the [CoroutineScope]:
 
-```Plain Text
+```
 Unresolved reference: launch
 ```
 
