@@ -159,7 +159,7 @@ suspend fun foo() {
 }
 ```
 
-## `launch` and `async`
+## launch and async
 
 The coroutine dispatcher used for tests is single-threaded, meaning that the child coroutines of the [runTest] block
 will run on the thread that started the test, and will never run in parallel.
@@ -323,7 +323,7 @@ fun testExampleBackgroundJob() = runTest {
 }
 ```
 
-## Eagerly entering `launch` and `async` blocks
+## Eagerly entering launch and async blocks
 
 Some tests only test functionality and don't particularly care about the precise order in which coroutines are
 dispatched.

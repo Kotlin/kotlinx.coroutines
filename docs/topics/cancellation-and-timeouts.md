@@ -189,7 +189,7 @@ main: I'm tired of waiting!
 main: Now I can quit.
 -->
 
-## Closing resources with `finally`
+## Closing resources with finally
 
 Cancellable suspending functions throw [CancellationException] on cancellation, which can be handled in 
 the usual way. For example, the `try {...} finally {...}` expression and Kotlin's `use` function execute their
