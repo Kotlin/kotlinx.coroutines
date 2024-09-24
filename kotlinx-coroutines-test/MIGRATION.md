@@ -151,7 +151,7 @@ code until the first suspension is executed without dispatching.
 
 There are two common ways in which this property is useful.
 
-#### `TestCoroutineDispatcher` for the top-level coroutine
+#### TestCoroutineDispatcher for the top-level coroutine
 
 Some tests that rely on `launch` and `async` blocks being entered immediately have a form similar to this:
 ```kotlin
@@ -177,7 +177,7 @@ blocks.
 Note though that *this only works at the top level*: if a child coroutine also called `launch` or `async`, we don't provide
 any guarantees about their dispatching order.
 
-#### `TestCoroutineDispatcher` for testing intermediate emissions
+#### TestCoroutineDispatcher for testing intermediate emissions
 
 Some code tests `StateFlow` or channels in a manner similar to this:
 
