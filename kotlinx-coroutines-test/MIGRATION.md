@@ -9,7 +9,7 @@ This guide is written step-by-step; the idea is to separate the migration into s
 We couldn't find any code that defined new implementations of these interfaces, so they are deprecated. It's likely that
 you don't need to do anything for this section.
 
-### `UncaughtExceptionCaptor`
+### UncaughtExceptionCaptor
 
 If the code base has an `UncaughtExceptionCaptor`, its special behavior as opposed to just `CoroutineExceptionHandler`
 was that, at the end of `runBlockingTest` or `cleanupTestCoroutines` (or both), its `cleanupTestCoroutines` procedure
@@ -35,7 +35,7 @@ fun testFoo() = runTest {
 }
 ```
 
-### `DelayController`
+### DelayController
 
 We don't provide a way to define custom dispatching strategies that support virtual time.
 That said, we significantly enhanced this mechanism:
@@ -48,7 +48,7 @@ That said, we significantly enhanced this mechanism:
 If you have a use case for `DelayController` that's not covered by what we provide, please tell us about it in the issue
 tracker.
 
-### `TestCoroutineScope`
+### TestCoroutineScope
 
 This scope couldn't be meaningfully used in tandem with `runBlockingTest`: according to the definition of
 `TestCoroutineScope.runBlockingTest`, only the scope's `coroutineContext` is used.
@@ -142,7 +142,7 @@ Significant differences of `runTest` from `runBlockingTest` are each given a sec
 
 No action on your part is required, other than replacing `runBlocking` with `runTest` as well.
 
-### It uses `StandardTestDispatcher` by default, not `TestCoroutineDispatcher`.
+### It uses StandardTestDispatcher by default, not TestCoroutineDispatcher.
 
 By now, calls to `pauseDispatcher` and `resumeDispatcher` should be purged from the code base, so only the unpaused
 variant of `TestCoroutineDispatcher` should be used.
@@ -304,7 +304,7 @@ fun testFoo() = runTest {
 }
 ```
 
-### Only a single call to `runTest` is permitted per test.
+### Only a single call to runTest is permitted per test.
 
 In order to work on JS, only a single call to `runTest` must happen during one test, and its result must be returned
 immediately:
@@ -323,7 +323,7 @@ When used only on the JVM, `runTest` will work when called repeatedly, but this 
 Please only call `runTest` once per test, and if for some reason you can't, please tell us about in on the issue
 tracker.
 
-### It uses `TestScope`, not `TestCoroutineScope`, by default.
+### It uses TestScope, not TestCoroutineScope, by default.
 
 There is a `runTestWithLegacyScope` method that allows migrating from `runBlockingTest` to `runTest` before migrating
 from `TestCoroutineScope` to `TestScope`, if exactly the `TestCoroutineScope` needs to be passed somewhere else and

@@ -374,7 +374,7 @@ fun testEagerlyEnteringSomeChildCoroutines() = runTest(UnconfinedTestDispatcher(
 }
 ```
 
-### Using `withTimeout` inside `runTest`
+### Using withTimeout inside runTest
 
 Timeouts are also susceptible to time control, so the code below will immediately finish.
 
