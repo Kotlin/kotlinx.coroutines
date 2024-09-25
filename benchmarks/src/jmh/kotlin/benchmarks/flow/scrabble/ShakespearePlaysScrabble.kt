@@ -66,7 +66,7 @@ abstract class ShakespearePlaysScrabble {
 
     private fun readResource(path: String) =
         BufferedReader(InputStreamReader(GZIPInputStream(this.javaClass.classLoader.getResourceAsStream(path)))).lines()
-            .map { it.toLowerCase() }.collect(Collectors.toSet())
+            .map { it.lowercase() }.collect(Collectors.toSet())
 
     init {
         val expected = listOf(120 to listOf("jezebel", "quickly"),
