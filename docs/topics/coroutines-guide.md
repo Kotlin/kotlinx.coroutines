@@ -1,3 +1,6 @@
+<contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
+
+
 [//]: # (title: Coroutines guide)
 
 Kotlin provides only minimal low-level APIs in its standard library to enable other 

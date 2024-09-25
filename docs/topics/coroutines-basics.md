@@ -1,4 +1,5 @@
 <!--- TEST_NAME BasicsGuideTest -->
+<contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
 
 [//]: # (title: Coroutines basics)
 
@@ -30,9 +31,9 @@ fun main() = runBlocking { // this: CoroutineScope
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-01.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-basic-01.kt).
 >
-{type="note"}
+{style="note"}
 
 You will see the following result:
 
@@ -59,7 +60,7 @@ the code with coroutines inside of `runBlocking { ... }` curly braces. This is h
 If you remove or forget `runBlocking` in this code, you'll get an error on the [launch] call, since `launch`
 is declared only on the [CoroutineScope]:
 
-```Plain Text
+```
 Unresolved reference: launch
 ```
 
@@ -105,9 +106,9 @@ suspend fun doWorld() {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-02.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-basic-02.kt).
 >
-{type="note"}
+{style="note"}
 
 <!--- TEST
 Hello
@@ -146,9 +147,9 @@ suspend fun doWorld() = coroutineScope {  // this: CoroutineScope
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-03.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-basic-03.kt).
 >
-{type="note"}
+{style="note"}
 
 This code also prints:
 
@@ -190,9 +191,9 @@ suspend fun doWorld() = coroutineScope { // this: CoroutineScope
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-04.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-basic-04.kt).
 >
-{type="note"}
+{style="note"}
 
 Both pieces of code inside `launch { ... }` blocks execute _concurrently_, with 
 `World 1` printed first, after a second from start, and `World 2` printed next, after two seconds from start.
@@ -231,9 +232,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-05.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-basic-05.kt).
 >
-{type="note"}
+{style="note"}
 
 This code produces: 
 
@@ -267,9 +268,9 @@ fun main() = runBlocking {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-basic-06.kt).
 >
-{type="note"}
+{style="note"}
 
 <!--- TEST lines.size == 1 && lines[0] == ".".repeat(50_000) -->
 
