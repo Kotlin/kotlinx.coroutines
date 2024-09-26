@@ -21,7 +21,7 @@ fun main() {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-01.kt).
+> You can get the full code from [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-01.kt).
 >
 {style="note"}
 
@@ -54,7 +54,7 @@ fun main() {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-02.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-02.kt).
 >
 {style="note"}
 
@@ -88,7 +88,7 @@ fun main() = runBlocking<Unit> {
 ```  
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-03.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-03.kt).
 >
 {style="note"}
 
@@ -132,7 +132,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-04.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-04.kt).
 >
 {style="note"}
 
@@ -193,7 +193,7 @@ fun main() = runBlocking<Unit> {
 ```  
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-05.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-05.kt).
 >
 {style="note"}
 
@@ -249,7 +249,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-06.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-06.kt).
 >
 {style="note"}
 
@@ -290,7 +290,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-07.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-07.kt).
 >
 {style="note"}
 
@@ -335,7 +335,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-08.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-08.kt).
 >
 {style="note"}
 
@@ -380,7 +380,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-09.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-09.kt).
 >
 {style="note"}
 
@@ -428,7 +428,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-10.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-10.kt).
 >
 {style="note"}
 
@@ -469,7 +469,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-11.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-11.kt).
 >
 {style="note"}
 
@@ -513,7 +513,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-12.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-12.kt).
 >
 {style="note"}
 
@@ -576,7 +576,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-13.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-13.kt).
 >
 {style="note"}
 
@@ -626,7 +626,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-14.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-14.kt).
 >
 {style="note"}
 
@@ -672,7 +672,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-15.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-15.kt).
 >
 {style="note"}
   
@@ -727,7 +727,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-16.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-16.kt).
 >
 {style="note"}
 
@@ -773,7 +773,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-17.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-17.kt).
 >
 {style="note"}
 
@@ -829,7 +829,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-18.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-18.kt).
 >
 {style="note"}
 
@@ -879,7 +879,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-19.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-19.kt).
 >
 {style="note"}
  
@@ -920,7 +920,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-20.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-20.kt).
 >
 {style="note"}
 
@@ -968,7 +968,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-21.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-21.kt).
 >
 {style="note"}
 
@@ -998,7 +998,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-22.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-22.kt).
 >
 {style="note"}
 
@@ -1072,7 +1072,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-23.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-23.kt).
 >
 {style="note"}
 
@@ -1120,7 +1120,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-24.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-24.kt).
 >
 {style="note"}
 
@@ -1173,7 +1173,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-25.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-25.kt).
 >
 {style="note"}
 
@@ -1231,7 +1231,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-26.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-26.kt).
 >
 {style="note"}
 
@@ -1282,7 +1282,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-27.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-27.kt).
 >
 {style="note"}
 
@@ -1341,7 +1341,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-28.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-28.kt).
 >
 {style="note"} 
  
@@ -1384,7 +1384,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-29.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-29.kt).
 >
 {style="note"}
  
@@ -1431,7 +1431,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-30.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-30.kt).
 >
 {style="note"} 
  
@@ -1475,7 +1475,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-31.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-31.kt).
 >
 {style="note"} 
 
@@ -1513,7 +1513,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-32.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-32.kt).
 >
 {style="note"} 
 
@@ -1548,7 +1548,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-33.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-33.kt).
 >
 {style="note"}
 
@@ -1590,7 +1590,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-34.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-34.kt).
 >
 {style="note"}
 
@@ -1639,7 +1639,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-35.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-35.kt).
 >
 {style="note"} 
   
@@ -1676,7 +1676,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-36.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-36.kt).
 >
 {style="note"} 
   
@@ -1732,7 +1732,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-37.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-37.kt).
 >
 {style="note"}
 
@@ -1770,7 +1770,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-38.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-38.kt).
 >
 {style="note"}
 
@@ -1808,7 +1808,7 @@ fun main() = runBlocking<Unit> {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code from [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-flow-39.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-flow-39.kt).
 >
 {style="note"}
 

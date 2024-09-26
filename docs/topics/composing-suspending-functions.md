@@ -61,7 +61,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-compose-01.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-01.kt).
 >
 {style="note"}
 
@@ -112,7 +112,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-compose-02.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-02.kt).
 >
 {style="note"}
 
@@ -165,7 +165,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-compose-03.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-03.kt).
 >
 {style="note"}
 
@@ -273,7 +273,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-compose-04.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-04.kt).
 >
 {style="note"}
 
@@ -340,7 +340,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-compose-05.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-05.kt).
 >
 {style="note"}
 
@@ -386,7 +386,7 @@ suspend fun failedConcurrentSum(): Int = coroutineScope {
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-compose-06.kt).
+> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-compose-06.kt).
 >
 {style="note"}
 
