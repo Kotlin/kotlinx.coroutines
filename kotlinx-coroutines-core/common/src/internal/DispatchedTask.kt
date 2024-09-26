@@ -76,8 +76,6 @@ internal abstract class DispatchedTask<in T> internal constructor(
 
     final override fun run() {
         assert { resumeMode != MODE_UNINITIALIZED } // should have been set before dispatching
-        var fatalException: Throwable? = null
-        var dispatchException: DispatchException? = null
         try {
             val delegate = delegate as DispatchedContinuation<T>
             val continuation = delegate.continuation
@@ -104,13 +102,9 @@ internal abstract class DispatchedTask<in T> internal constructor(
                 }
             }
         } catch (e: DispatchException) {
-            dispatchException = e
+            handleCoroutineException(delegate.context, e.cause)
         } catch (e: Throwable) {
-            // This instead of runCatching to have nicer stacktrace and debug experience
-            fatalException = e
-        } finally {
-            fatalException?.let { handleFatalException(it) }
-            dispatchException?.let { handleCoroutineException(delegate.context, it.cause) }
+            handleFatalException(e)
         }
     }
 
