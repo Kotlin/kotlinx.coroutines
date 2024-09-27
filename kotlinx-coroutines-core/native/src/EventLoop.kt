@@ -4,7 +4,7 @@ package kotlinx.coroutines
 
 import kotlin.coroutines.*
 import kotlin.native.concurrent.*
-import kotlin.system.*
+import kotlin.time.*
 
 internal actual abstract class EventLoopImplPlatform : EventLoop() {
 
@@ -26,5 +26,6 @@ internal class EventLoopImpl: EventLoopImplBase() {
 
 internal actual fun createEventLoop(): EventLoop = EventLoopImpl()
 
-@Suppress("DEPRECATION")
-internal actual fun nanoTime(): Long = getTimeNanos()
+private val startingPoint = TimeSource.Monotonic.markNow()
+
+internal actual fun nanoTime(): Long = (TimeSource.Monotonic.markNow() - startingPoint).inWholeNanoseconds
