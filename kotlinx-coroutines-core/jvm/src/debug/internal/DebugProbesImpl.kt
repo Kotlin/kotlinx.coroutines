@@ -14,6 +14,16 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 import kotlin.synchronized
 import _COROUTINE.ArtificialStackFrames
 
+/**
+ * Usage Note: IntelliJ @SuppressWarnings({"KotlinInternalInJava"}): CoroutineDumpState
+ *  call to 'install'
+ *
+ * Usage Note: IntelliJ @SuppressWarnings({"KotlinInternalInJava"}): DebugProbesKt
+ *  Custom 'DebugProbesKt' class providing 'probeCoroutineCreated', 'probeCoroutineResumed', 'probeCoroutineSuspended'
+ *  calling into DebugProbesImpl (similar to our DebugProbesKt)
+ *
+ * Usage Note: IntelliJ/Coroutines Debugger: Reflection
+ */
 @PublishedApi
 internal object DebugProbesImpl {
     private val ARTIFICIAL_FRAME = ArtificialStackFrames().coroutineCreation()
@@ -284,7 +294,8 @@ internal object DebugProbesImpl {
             .forEach { owner ->
                 val info = owner.info
                 val observedStackTrace = info.lastObservedStackTrace()
-                val enhancedStackTrace = enhanceStackTraceWithThreadDumpImpl(info.state, info.lastObservedThread, observedStackTrace)
+                val enhancedStackTrace =
+                    enhanceStackTraceWithThreadDumpImpl(info.state, info.lastObservedThread, observedStackTrace)
                 val state = if (info.state == RUNNING && enhancedStackTrace === observedStackTrace)
                     "${info.state} (Last suspension stacktrace, not an actual stacktrace)"
                 else
@@ -350,8 +361,8 @@ internal object DebugProbesImpl {
          */
         val indexOfResumeWith = actualTrace.indexOfFirst {
             it.className == "kotlin.coroutines.jvm.internal.BaseContinuationImpl" &&
-                    it.methodName == "resumeWith" &&
-                    it.fileName == "ContinuationImpl.kt"
+                it.methodName == "resumeWith" &&
+                it.fileName == "ContinuationImpl.kt"
         }
 
         val (continuationStartFrame, delta) = findContinuationStartIndex(
@@ -411,8 +422,8 @@ internal object DebugProbesImpl {
 
         return coroutineTrace.indexOfFirst {
             it.fileName == continuationFrame.fileName &&
-                    it.className == continuationFrame.className &&
-                    it.methodName == continuationFrame.methodName
+                it.className == continuationFrame.className &&
+                it.methodName == continuationFrame.methodName
         }
     }
 
@@ -527,6 +538,8 @@ internal object DebugProbesImpl {
     /**
      * This class is injected as completion of all continuations in [probeCoroutineCompleted].
      * It is owning the coroutine info and responsible for managing all its external info related to debug agent.
+     *
+     * Usage Note: IntelliJ/Coroutines Debugger: Reflection
      */
     public class CoroutineOwner<T> internal constructor(
         @JvmField internal val delegate: Continuation<T>,
