@@ -1,12 +1,11 @@
-package kotlinx.coroutines.debug
+package kotlinx.coroutines.debug.internal
 
-import android.annotation.*
-import kotlinx.coroutines.debug.internal.*
-import org.codehaus.mojo.animal_sniffer.*
-import sun.misc.*
-import java.lang.instrument.*
+import android.annotation.SuppressLint
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+import sun.misc.Signal
 import java.lang.instrument.ClassFileTransformer
-import java.security.*
+import java.lang.instrument.Instrumentation
+import java.security.ProtectionDomain
 
 /*
  * This class is loaded if and only if kotlinx-coroutines-core was used as -javaagent argument,
