@@ -39,19 +39,19 @@ private fun sleep(nanos: Long, ptrTo32Bytes: Pointer, ptrTo8Bytes: Pointer, ptrT
 }
 
 internal actual object DefaultExecutor : EventLoopImplBase() {
+
+    init {
+        if (kotlin.wasm.internal.onExportedFunctionExit == null) {
+            kotlin.wasm.internal.onExportedFunctionExit = ::runEventLoop
+        }
+    }
+    
     override fun shutdown() {
         // don't do anything: on WASI, the event loop is the default executor, we can't shut it down
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         scheduleInvokeOnTimeout(timeMillis, block)
-
-    actual override fun enqueue(task: Runnable) {
-        if (kotlin.wasm.internal.onExportedFunctionExit == null) {
-            kotlin.wasm.internal.onExportedFunctionExit = ::runEventLoop
-        }
-        super.enqueue(task)
-    }
 }
 
 internal actual abstract class EventLoopImplPlatform : EventLoop() {
