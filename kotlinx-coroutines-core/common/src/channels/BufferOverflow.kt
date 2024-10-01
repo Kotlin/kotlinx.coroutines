@@ -13,7 +13,7 @@ package kotlinx.coroutines.channels
  */
 public enum class BufferOverflow {
     /**
-     * Suspend on buffer overflow.
+     * Suspend until free space appears in the buffer.
      *
      * Use this to create backpressure, forcing the producers to slow down creation of new values in response to
      * consumers not being able to process the incoming values in time.

@@ -81,6 +81,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * The kind of the resulting channel depends on the specified [capacity] parameter.
  * See the [Channel] interface documentation for details.
  * By default, an unbuffered channel is created.
+ * If an invalid [capacity] value is specified, an [IllegalArgumentException] is thrown.
  *
  * ### Behavior on termination
  *

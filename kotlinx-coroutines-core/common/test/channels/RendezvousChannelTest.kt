@@ -273,4 +273,24 @@ class RendezvousChannelTest : TestBase() {
         channel.cancel(TestCancellationException())
         channel.receiveCatching().getOrThrow()
     }
+
+    /** Tests that [BufferOverflow.DROP_OLDEST] takes precedence over [Channel.RENDEZVOUS]. */
+    @Test
+    fun testDropOldest() = runTest {
+        val channel = Channel<Int>(Channel.RENDEZVOUS, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        channel.send(1)
+        channel.send(2)
+        channel.send(3)
+        assertEquals(3, channel.receive())
+    }
+
+    /** Tests that [BufferOverflow.DROP_LATEST] takes precedence over [Channel.RENDEZVOUS]. */
+    @Test
+    fun testDropLatest() = runTest {
+        val channel = Channel<Int>(Channel.RENDEZVOUS, onBufferOverflow = BufferOverflow.DROP_LATEST)
+        channel.send(1)
+        channel.send(2)
+        channel.send(3)
+        assertEquals(1, channel.receive())
+    }
 }
