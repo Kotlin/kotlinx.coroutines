@@ -403,7 +403,7 @@ public interface ReceiveChannel<out E> {
      * ```
      * // DANGER! THIS CHECK IS NOT RELIABLE!
      * while (!channel.isEmpty) {
-     *     // can still suspend in other `receive` happens in parallel!
+     *     // can still suspend if other `receive` happens in parallel!
      *     val element = channel.receive()
      *     println(element)
      * }
