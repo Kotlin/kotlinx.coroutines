@@ -1070,7 +1070,7 @@ public interface ChannelIterator<out E> {
      *
      * Note that this function does not check for cancellation when it is not suspended, that is,
      * if the next element is immediately available.
-     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+     * Use [ensureActive] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      */
     public suspend operator fun hasNext(): Boolean
 
