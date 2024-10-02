@@ -654,7 +654,7 @@ public interface ReceiveChannel<out E> {
      *
      * Note that if an early return happens from the `for` loop, the channel does not get cancelled.
      * To forbid sending new elements after the iteration is completed, use [consumeEach] or
-     * call [close] manually.
+     * call [cancel] manually.
      */
     public operator fun iterator(): ChannelIterator<E>
 
