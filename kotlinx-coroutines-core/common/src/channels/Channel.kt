@@ -136,7 +136,7 @@ public interface SendChannel<in E> {
      * If a channel was [closed][close] before [send] was called and no cause was specified,
      * an [ClosedSendChannelException] will be thrown from [send].
      * If a channel was [closed][close] with a cause before [send] was called,
-     * then [send] will rethrow the exact object that was passed to [close].
+     * then [send] will rethrow the same (in the `===` sense) exception that was passed to [close].
      *
      * In both cases, it is guaranteed that the element was not delivered to the consumer,
      * and the `onUndeliveredElement` callback will be called.
@@ -357,7 +357,7 @@ public interface SendChannel<in E> {
  */
 public interface ReceiveChannel<out E> {
     /**
-     * Returns `true` if either the sending side of this channel was [closed][SendChannel.close]
+     * Returns `true` if the sending side of this channel was [closed][SendChannel.close]
      * and all previously sent items were already received (which also happens for [cancelled][cancel] channels).
      *
      * Note that if this property returns `false`,
@@ -469,7 +469,8 @@ public interface ReceiveChannel<out E> {
      *   will successfully retrieve an element from the channel.
      * - When a channel is [closed][SendChannel.close] and there are no elements remaining,
      *   the channel becomes [closed for `receive`][isClosedForReceive].
-     *   After that, [receive] will rethrow the exact exception that was passed to [SendChannel.close],
+     *   After that,
+     *   [receive] will rethrow the same (in the `===` sense) exception that was passed to [SendChannel.close],
      *   or [ClosedReceiveChannelException] if none was given.
      *
      * ## Related
@@ -524,8 +525,8 @@ public interface ReceiveChannel<out E> {
      * It is guaranteed that the only way this function can return a [failed][ChannelResult.isFailure] result is when
      * the channel is [closed for `receive`][isClosedForReceive], so [ChannelResult.isClosed] is also true.
      *
-     * This function suspends if the channel is empty, waiting until an element is available.
-     * If the channel is [closed for `receive`][isClosedForReceive], an exception is thrown (see below).
+     * This function suspends if the channel is empty, waiting until an element is available or the channel becomes
+     * closed.
      * ```
      * val channel = Channel<Int>()
      * launch {
@@ -579,7 +580,8 @@ public interface ReceiveChannel<out E> {
      * - When a channel is [closed][SendChannel.close] and there are no elements remaining,
      *   the channel becomes [closed for `receive`][isClosedForReceive].
      *   After that, [receiveCatching] will return a result with [ChannelResult.isClosed] set.
-     *   [ChannelResult.exceptionOrNull] will be the exact exception that was passed to [SendChannel.close],
+     *   [ChannelResult.exceptionOrNull] will be the exact (in the `===` sense) exception
+     *   that was passed to [SendChannel.close],
      *   or `null` if none was given.
      *
      * ## Related
@@ -904,13 +906,16 @@ public value class ChannelResult<out T>
      *  }
      *  ```
      *
-     *  @throws IllegalStateException if the operation failed because the channel is closed without a cause.
+     *  @throws IllegalStateException if the operation failed, but the channel was not claused with a cause.
      */
     public fun getOrThrow(): T {
         @Suppress("UNCHECKED_CAST")
         if (holder !is Failed) return holder as T
-        if (holder is Closed && holder.cause != null) throw holder.cause
-        error("Trying to call 'getOrThrow' on a channel closed without a cause")
+        if (holder is Closed) {
+            check(holder.cause != null) { "Trying to call 'getOrThrow' on a channel closed without a cause" }
+            throw holder.cause
+        }
+        error("Trying to call 'getOrThrow' on a failed result of a non-closed channel")
     }
 
     /**
@@ -1179,6 +1184,8 @@ public interface ChannelIterator<out E> {
  * that was sent to the channel with the call to the [send][SendChannel.send] function but failed to be delivered,
  * which can happen in the following cases:
  *
+ * - When an element is dropped due to the limited buffer capacity.
+ *   This can happen when the overflow strategy is [BufferOverflow.DROP_LATEST] and [BufferOverflow.DROP_OLDEST].
  * - When the sending operations like [send][SendChannel.send] or [onSend][SendChannel.onSend]
  *   throw an exception because it was cancelled
  *   before it had a chance to actually send the element
@@ -1287,7 +1294,8 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * creating a channel with a buffer of size 1 and a [BufferOverflow] strategy of [BufferOverflow.DROP_OLDEST]:
          * `Channel(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)`.
          * Such a channel buffers at most one element and conflates all subsequent `send` and `trySend` invocations
-         * so that the receiver always gets the last element sent, **losing** the previously sent elements.
+         * so that the receiver always gets the last element sent, **losing** the previously sent elements:
+         * see the "Undelivered elements" section in the [Channel] documentation.
          * [Sending][send] to this channel never suspends, and [trySend] always succeeds.
          *
          * ```
