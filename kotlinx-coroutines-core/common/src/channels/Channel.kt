@@ -585,7 +585,7 @@ public interface ReceiveChannel<out E> {
      * ## Related
      *
      * This function can be used in [select] invocations with the [onReceiveCatching] clause.
-     * Use [tryReceive] to try receiving from this channel without waiting.
+     * Use [tryReceive] to try receiving from this channel without waiting and throwing.
      * Use [receive] to receive from this channel and throw exceptions on error.
      */
     public suspend fun receiveCatching(): ChannelResult<E>
