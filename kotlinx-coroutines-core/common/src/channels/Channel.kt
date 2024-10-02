@@ -1174,7 +1174,7 @@ public interface ChannelIterator<out E> {
  * it can be successfully extracted from the channel,
  * but still be lost if the receiving operation is cancelled in parallel.
  *
- * The `Channel()` constructor function has the optional parameter `onUndeliveredElement`.
+ * The `Channel()` factory function has the optional parameter `onUndeliveredElement`.
  * When that parameter is set, the corresponding function is called once for each element
  * that was sent to the channel with the call to the [send][SendChannel.send] function but failed to be delivered,
  * which can happen in the following cases:
