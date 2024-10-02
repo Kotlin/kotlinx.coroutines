@@ -1319,7 +1319,7 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * }
          * channel.close()
          * // The check can fail if the default buffer capacity is changed
-         * check(channel.toList() == (0 until 64).toList())
+         * check(channel.toList() == (0..<64).toList())
          * ```
          *
          * If a different [BufferOverflow] is specified, `Channel(BUFFERED)` creates a channel with a buffer of size 1:
