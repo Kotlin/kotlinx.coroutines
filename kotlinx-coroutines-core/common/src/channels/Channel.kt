@@ -652,7 +652,7 @@ public interface ReceiveChannel<out E> {
      * }
      * ```
      *
-     * Note that is an early return happens from the `for` loop, the channel does not get cancelled.
+     * Note that if an early return happens from the `for` loop, the channel does not get cancelled.
      * To forbid sending new elements after the iteration is completed, use [consumeEach] or
      * call [close] manually.
      */
