@@ -1185,7 +1185,7 @@ public interface ChannelIterator<out E> {
  * which can happen in the following cases:
  *
  * - When an element is dropped due to the limited buffer capacity.
- *   This can happen when the overflow strategy is [BufferOverflow.DROP_LATEST] and [BufferOverflow.DROP_OLDEST].
+ *   This can happen when the overflow strategy is [BufferOverflow.DROP_LATEST] or [BufferOverflow.DROP_OLDEST].
  * - When the sending operations like [send][SendChannel.send] or [onSend][SendChannel.onSend]
  *   throw an exception because it was cancelled
  *   before it had a chance to actually send the element
