@@ -906,7 +906,7 @@ public value class ChannelResult<out T>
      *  }
      *  ```
      *
-     *  @throws IllegalStateException if the operation failed, but the channel was not claused with a cause.
+     *  @throws IllegalStateException if the operation failed, but the channel was not closed with a cause.
      */
     public fun getOrThrow(): T {
         @Suppress("UNCHECKED_CAST")
