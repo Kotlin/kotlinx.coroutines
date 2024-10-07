@@ -54,7 +54,6 @@ public final class kotlinx/coroutines/reactor/ReactorFlowKt {
 
 public final class kotlinx/coroutines/reactor/SchedulerCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lreactor/core/scheduler/Scheduler;)V
-	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getScheduler ()Lreactor/core/scheduler/Scheduler;

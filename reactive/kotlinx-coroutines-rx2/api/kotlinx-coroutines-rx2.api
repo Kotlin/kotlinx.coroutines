@@ -83,7 +83,6 @@ public final class kotlinx/coroutines/rx2/RxSingleKt {
 
 public final class kotlinx/coroutines/rx2/SchedulerCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lio/reactivex/Scheduler;)V
-	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getScheduler ()Lio/reactivex/Scheduler;
