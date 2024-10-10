@@ -1,5 +1,5 @@
 @file:Suppress("unused")
-package kotlinx.coroutines.debug.internal
+package kotlinx.coroutines.debug
 
 import net.bytebuddy.*
 import net.bytebuddy.agent.*
@@ -28,7 +28,7 @@ internal class ByteBuddyDynamicAttach : Function1<Boolean, Unit> {
 
     private fun detach() {
         val cl = Class.forName("kotlin.coroutines.jvm.internal.DebugProbesKt")
-        val cl2 = Class.forName("kotlinx.coroutines.debug.internal.NoOpProbesKt")
+        val cl2 = Class.forName("kotlinx.coroutines.debug.NoOpProbesKt")
         ByteBuddy()
             .redefine(cl2)
             .name(cl.name)
