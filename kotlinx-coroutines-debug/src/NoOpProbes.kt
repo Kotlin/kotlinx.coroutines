@@ -1,6 +1,6 @@
 @file:Suppress("unused", "UNUSED_PARAMETER")
 
-package kotlinx.coroutines.debug.internal
+package kotlinx.coroutines.debug
 
 import kotlin.coroutines.*
 
