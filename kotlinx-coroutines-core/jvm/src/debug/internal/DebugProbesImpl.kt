@@ -14,6 +14,16 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 import kotlin.synchronized
 import _COROUTINE.ArtificialStackFrames
 
+/**
+ * Usage Note: IntelliJ @SuppressWarnings({"KotlinInternalInJava"}): CoroutineDumpState
+ *  call to 'install'
+ *
+ * Usage Note: IntelliJ @SuppressWarnings({"KotlinInternalInJava"}): DebugProbesKt
+ *  Custom 'DebugProbesKt' class providing 'probeCoroutineCreated', 'probeCoroutineResumed', 'probeCoroutineSuspended'
+ *  calling into DebugProbesImpl (similar to our DebugProbesKt)
+ *
+ * Usage Note: IntelliJ/Coroutines Debugger: Reflection
+ */
 @PublishedApi
 internal object DebugProbesImpl {
     private val ARTIFICIAL_FRAME = ArtificialStackFrames().coroutineCreation()
@@ -51,7 +61,7 @@ internal object DebugProbesImpl {
 
     @Suppress("UNCHECKED_CAST")
     private fun getDynamicAttach(): Function1<Boolean, Unit>? = runCatching {
-        val clz = Class.forName("kotlinx.coroutines.debug.internal.ByteBuddyDynamicAttach")
+        val clz = Class.forName("kotlinx.coroutines.debug.ByteBuddyDynamicAttach")
         val ctor = clz.constructors[0]
         ctor.newInstance() as Function1<Boolean, Unit>
     }.getOrNull()
@@ -527,6 +537,8 @@ internal object DebugProbesImpl {
     /**
      * This class is injected as completion of all continuations in [probeCoroutineCompleted].
      * It is owning the coroutine info and responsible for managing all its external info related to debug agent.
+     *
+     * Usage Note: IntelliJ/Coroutines Debugger: Reflection
      */
     public class CoroutineOwner<T> internal constructor(
         @JvmField internal val delegate: Continuation<T>,

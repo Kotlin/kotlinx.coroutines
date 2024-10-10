@@ -5,13 +5,12 @@ module kotlinx.coroutines.core {
     requires transitive kotlin.stdlib;
     requires kotlinx.atomicfu;
 
-    // these are used by kotlinx.coroutines.debug.AgentPremain
+    // these are used by kotlinx.coroutines.debug.internal.AgentPremain
     requires static java.instrument; // contains java.lang.instrument.*
     requires static jdk.unsupported; // contains sun.misc.Signal
 
     exports kotlinx.coroutines;
     exports kotlinx.coroutines.channels;
-    exports kotlinx.coroutines.debug;
     exports kotlinx.coroutines.debug.internal;
     exports kotlinx.coroutines.flow;
     exports kotlinx.coroutines.flow.internal;
