@@ -188,7 +188,7 @@ val allMetadataJar by tasks.getting(Jar::class) { setupManifest(this) }
 fun setupManifest(jar: Jar) {
     jar.manifest {
         attributes(mapOf(
-            "Premain-Class" to "kotlinx.coroutines.debug.AgentPremain",
+            "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
             "Can-Retransform-Classes" to "true",
         ))
     }
