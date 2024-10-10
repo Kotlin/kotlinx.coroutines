@@ -11,6 +11,8 @@ internal const val SUSPENDED = "SUSPENDED"
 /**
  * Internal implementation class where debugger tracks details it knows about each coroutine.
  * Its mutable fields can be updated concurrently, thus marked with `@Volatile`
+ *
+ * Usage Note: IntelliJ/Coroutines Debugger: Reflection
  */
 @PublishedApi
 internal class DebugCoroutineInfoImpl internal constructor(
