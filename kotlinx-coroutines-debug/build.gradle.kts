@@ -68,7 +68,7 @@ val shadowJar by tasks.existing(ShadowJar::class) {
     manifest {
         attributes(
             mapOf(
-                "Premain-Class" to "kotlinx.coroutines.debug.AgentPremain",
+                "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
                 "Can-Redefine-Classes" to "true",
                 "Multi-Release" to "true"
             )
@@ -104,7 +104,7 @@ kover {
         filters {
             excludes {
                 // Never used, safety mechanism
-                classes("kotlinx.coroutines.debug.internal.NoOpProbesKt")
+                classes("kotlinx.coroutines.debug.NoOpProbesKt")
             }
         }
     }

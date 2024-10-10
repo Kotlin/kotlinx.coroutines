@@ -8,5 +8,6 @@ pluginManagement {
 }
 
 include 'smokeTest'
+include(":jpmsTest")
 
 rootProject.name = "kotlinx-coroutines-integration-testing"

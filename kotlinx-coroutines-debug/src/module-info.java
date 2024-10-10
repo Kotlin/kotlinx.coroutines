@@ -8,7 +8,7 @@ module kotlinx.coroutines.debug {
     requires org.junit.jupiter.api;
     requires org.junit.platform.commons;
 
-//    exports kotlinx.coroutines.debug; // already exported by kotlinx.coroutines.core
+    exports kotlinx.coroutines.debug;
     exports kotlinx.coroutines.debug.junit4;
     exports kotlinx.coroutines.debug.junit5;
 }
