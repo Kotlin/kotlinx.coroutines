@@ -3,10 +3,10 @@ module kotlinx.coroutines.debug {
     requires java.instrument;
     requires kotlin.stdlib;
     requires kotlinx.coroutines.core;
-    requires net.bytebuddy;
-    requires net.bytebuddy.agent;
-    requires org.junit.jupiter.api;
-    requires org.junit.platform.commons;
+    requires static net.bytebuddy;
+    requires static net.bytebuddy.agent;
+    requires static org.junit.jupiter.api;
+    requires static org.junit.platform.commons;
 
     exports kotlinx.coroutines.debug;
     exports kotlinx.coroutines.debug.junit4;
