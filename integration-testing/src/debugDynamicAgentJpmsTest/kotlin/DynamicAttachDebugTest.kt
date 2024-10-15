@@ -12,15 +12,23 @@ import kotlin.test.*
 class DynamicAttachDebugTest {
 
     /**
-     * Using:
+     * This test is disabled because:
+     * Dynamic Attach with JPMS is not yet supported.
      *
+     * Here is the state of experiments:
+     * When launching this test with additional workarounds like
+     * ```
      *     jvmArgs("--add-exports=kotlinx.coroutines.debug/kotlinx.coroutines.repackaged.net.bytebuddy=com.sun.jna")
      *     jvmArgs("--add-exports=kotlinx.coroutines.debug/kotlinx.coroutines.repackaged.net.bytebuddy.agent=com.sun.jna")
+     *```
      *
+     * Then we see issues like
      *
+     * ```
      * Caused by: java.lang.IllegalStateException: The Byte Buddy agent is not loaded or this method is not called via the system class loader
      * 	at kotlinx.coroutines.debug/kotlinx.coroutines.repackaged.net.bytebuddy.agent.Installer.getInstrumentation(Installer.java:61)
      * 	... 54 more
+     * 	```
      */
     @Ignore("shaded byte-buddy does not work with JPMS")
     @Test
