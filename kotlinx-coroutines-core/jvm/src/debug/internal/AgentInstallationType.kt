@@ -7,10 +7,12 @@ package kotlinx.coroutines.debug.internal
  * Otherwise, access to `AgentPremain.isInstalledStatically` triggers the load of its internal `ClassFileTransformer`
  * that is not available on Android.
  *
- * Usage Note: Fleet (Reflection): FleetDebugProbes
- * Usage Note: Android (Hard Coded, ignored for Leak Detection)
- * Usage Note: IntelliJ (Suppress KotlinInternalInJava): CoroutineDumpState
+ * The entity (despite being internal) has usages in the following products
+ * - Fleet (Reflection): FleetDebugProbes
+ * - Android (Hard Coded, ignored for Leak Detection)
+ * - IntelliJ (Suppress KotlinInternalInJava): CoroutineDumpState
  */
+@PublishedApi
 internal object AgentInstallationType {
     internal var isInstalledStatically = false
 }
