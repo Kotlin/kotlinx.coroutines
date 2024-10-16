@@ -14,5 +14,6 @@ package kotlinx.coroutines.debug.internal
  */
 @PublishedApi
 internal object AgentInstallationType {
+    @PublishedApi
     internal var isInstalledStatically = false
 }

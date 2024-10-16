@@ -913,6 +913,8 @@ public final class kotlinx/coroutines/channels/TickerMode : java/lang/Enum {
 
 public final class kotlinx/coroutines/debug/internal/AgentInstallationType {
 	public static final field INSTANCE Lkotlinx/coroutines/debug/internal/AgentInstallationType;
+	public final fun isInstalledStatically ()Z
+	public final fun setInstalledStatically (Z)V
 }
 
 public final class kotlinx/coroutines/debug/internal/DebugCoroutineInfo {
