@@ -35,7 +35,7 @@ class DynamicAttachDebugJpmsTest {
             }
         }
 
-    @Test()
+    @Test
     fun testAgentIsNotInstalled() {
         assertEquals(false, DebugProbes.isInstalled)
         assertFailsWith<IllegalStateException> {
