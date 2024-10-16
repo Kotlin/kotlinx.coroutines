@@ -1,7 +1,6 @@
-package kotlinx.coroutines.debug
+package kotlinx.coroutines.debug.internal
 
 import android.annotation.*
-import kotlinx.coroutines.debug.internal.*
 import org.codehaus.mojo.animal_sniffer.*
 import sun.misc.*
 import java.lang.instrument.*
