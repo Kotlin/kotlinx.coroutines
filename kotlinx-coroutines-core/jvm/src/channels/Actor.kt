@@ -45,8 +45,8 @@ public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
  * it will be started implicitly on the first message
  * [sent][SendChannel.send] to this actors's mailbox channel.
  *
- * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
- * the resulting channel becomes _failed_, so that any attempt to send to such a channel throws exception.
+ * Uncaught exceptions in this coroutine close the channel with this exception as a cause,
+ * so that any attempt to send to such a channel throws exception.
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter.
  * See [Channel] interface documentation for details.
