@@ -4,6 +4,8 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.exceptions.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RunBlockingTest : TestBase() {
 
@@ -173,6 +175,22 @@ class RunBlockingTest : TestBase() {
         assertFailsWith<CancellationException> {
             runBlocking(job) {
                 expectUnreached()
+            }
+        }
+    }
+
+    /** Tests that the delayed tasks scheduled on a closed `runBlocking` event loop get processed in reasonable time. */
+    @Test
+    fun testReschedulingDelayedTasks() {
+        val job = runBlocking {
+            val dispatcher = coroutineContext[ContinuationInterceptor]!!
+            GlobalScope.launch(dispatcher) {
+                delay(1.milliseconds)
+            }
+        }
+        runBlocking {
+            withTimeout(10.seconds) {
+                job.join()
             }
         }
     }

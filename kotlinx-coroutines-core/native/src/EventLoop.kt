@@ -15,7 +15,8 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
     }
 
     protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
-        DefaultExecutor.invokeOnTimeout(now, delayedTask, EmptyCoroutineContext)
+        val delayTimeMillis = delayNanosToMillis(delayedTask.nanoTime - now)
+        DefaultExecutor.invokeOnTimeout(delayTimeMillis, delayedTask, EmptyCoroutineContext)
     }
 }
 
