@@ -42,7 +42,7 @@ internal class LimitedDispatcher(
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         dispatchInternal(block) { worker ->
-            dispatcher.dispatch(this, worker)
+            dispatcher.safeDispatch(this, worker)
         }
     }
 
@@ -116,10 +116,10 @@ internal class LimitedDispatcher(
                 }
                 currentTask = obtainTaskOrDeallocateWorker() ?: return
                 // 16 is our out-of-thin-air constant to emulate fairness. Used in JS dispatchers as well
-                if (++fairnessCounter >= 16 && dispatcher.isDispatchNeeded(this@LimitedDispatcher)) {
+                if (++fairnessCounter >= 16 && dispatcher.safeIsDispatchNeeded(this@LimitedDispatcher)) {
                     // Do "yield" to let other views execute their runnable as well
                     // Note that we do not decrement 'runningWorkers' as we are still committed to our part of work
-                    dispatcher.dispatch(this@LimitedDispatcher, this)
+                    dispatcher.safeDispatch(this@LimitedDispatcher, this)
                     return
                 }
             }

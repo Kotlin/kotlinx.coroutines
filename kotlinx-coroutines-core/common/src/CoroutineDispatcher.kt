@@ -225,7 +225,7 @@ public abstract class CoroutineDispatcher :
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    public open fun dispatchYield(context: CoroutineContext, block: Runnable): Unit = dispatch(context, block)
+    public open fun dispatchYield(context: CoroutineContext, block: Runnable): Unit = safeDispatch(context, block)
 
     /**
      * Returns a continuation that wraps the provided [continuation], thus intercepting all resumptions.

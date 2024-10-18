@@ -20,7 +20,8 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, c
             startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
         }
     } catch (e: Throwable) {
-        actualCompletion.resumeWithException(e)
+        val reportException = if (e is DispatchException) e.cause else e
+        actualCompletion.resumeWithException(reportException)
         return
     }
     if (value !== COROUTINE_SUSPENDED) {
