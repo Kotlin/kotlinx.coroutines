@@ -385,8 +385,7 @@ internal class CoroutineScheduler(
      *
      * [taskContext] -- concurrency context of given [block].
      * [fair] -- whether this [dispatch] call is fair.
-     * If `true` then the task will be dispatched in a FIFO manner and no additional workers will be requested,
-     * but only if the current thread is a corresponding worker thread.
+     * If `true` then the task will be dispatched in a FIFO manner.
      * Note that caller cannot be ensured that it is being executed on worker thread for the following reasons:
      *   - [CoroutineStart.UNDISPATCHED]
      *   - Concurrent [close] that effectively shutdowns the worker thread.
@@ -408,13 +407,11 @@ internal class CoroutineScheduler(
                 throw RejectedExecutionException("$schedulerName was terminated")
             }
         }
-        val skipUnpark = fair && currentWorker != null
         // Checking 'task' instead of 'notAdded' is completely okay
         if (isBlockingTask) {
             // Use state snapshot to better estimate the number of running threads
-            signalBlockingWork(stateSnapshot, skipUnpark = skipUnpark)
+            signalBlockingWork(stateSnapshot)
         } else {
-            if (skipUnpark) return
             signalCpuWork()
         }
     }
@@ -430,8 +427,7 @@ internal class CoroutineScheduler(
     }
 
     // NB: should only be called from 'dispatch' method due to blocking tasks increment
-    private fun signalBlockingWork(stateSnapshot: Long, skipUnpark: Boolean) {
-        if (skipUnpark) return
+    private fun signalBlockingWork(stateSnapshot: Long) {
         if (tryUnpark()) return
         // Use state snapshot to avoid accidental thread overprovision
         if (tryCreateWorker(stateSnapshot)) return
