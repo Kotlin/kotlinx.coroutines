@@ -187,10 +187,10 @@ internal class DispatchedContinuation<in T>(
 
     override fun resumeWith(result: Result<T>) {
         val state = result.toState()
-        if (dispatcher.isDispatchNeeded(context)) {
+        if (dispatcher.safeIsDispatchNeeded(context)) {
             _state = state
             resumeMode = MODE_ATOMIC
-            dispatcher.dispatch(context, this)
+            dispatcher.safeDispatch(context, this)
         } else {
             executeUnconfined(state, MODE_ATOMIC) {
                 withCoroutineContext(context, countOrElement) {
@@ -205,10 +205,10 @@ internal class DispatchedContinuation<in T>(
     @Suppress("NOTHING_TO_INLINE")
     internal inline fun resumeCancellableWith(result: Result<T>) {
         val state = result.toState()
-        if (dispatcher.isDispatchNeeded(context)) {
+        if (dispatcher.safeIsDispatchNeeded(context)) {
             _state = state
             resumeMode = MODE_CANCELLABLE
-            dispatcher.dispatch(context, this)
+            dispatcher.safeDispatch(context, this)
         } else {
             executeUnconfined(state, MODE_CANCELLABLE) {
                 if (!resumeCancelled(state)) {
@@ -247,6 +247,22 @@ internal class DispatchedContinuation<in T>(
 
     override fun toString(): String =
         "DispatchedContinuation[$dispatcher, ${continuation.toDebugString()}]"
+}
+
+internal fun CoroutineDispatcher.safeDispatch(context: CoroutineContext, runnable: Runnable) {
+    try {
+        dispatch(context, runnable)
+    } catch (e: Throwable) {
+        throw DispatchException(e, this, context)
+    }
+}
+
+internal fun CoroutineDispatcher.safeIsDispatchNeeded(context: CoroutineContext): Boolean {
+    try {
+        return isDispatchNeeded(context)
+    } catch (e: Throwable) {
+        throw DispatchException(e, this, context)
+    }
 }
 
 /**

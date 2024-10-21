@@ -76,7 +76,6 @@ internal abstract class DispatchedTask<in T> internal constructor(
 
     final override fun run() {
         assert { resumeMode != MODE_UNINITIALIZED } // should have been set before dispatching
-        var fatalException: Throwable? = null
         try {
             val delegate = delegate as DispatchedContinuation<T>
             val continuation = delegate.continuation
@@ -102,11 +101,10 @@ internal abstract class DispatchedTask<in T> internal constructor(
                     }
                 }
             }
+        } catch (e: DispatchException) {
+            handleCoroutineException(delegate.context, e.cause)
         } catch (e: Throwable) {
-            // This instead of runCatching to have nicer stacktrace and debug experience
-            fatalException = e
-        } finally {
-            fatalException?.let { handleFatalException(it) }
+            handleFatalException(e)
         }
     }
 
@@ -143,8 +141,8 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int) {
         // dispatch directly using this instance's Runnable implementation
         val dispatcher = delegate.dispatcher
         val context = delegate.context
-        if (dispatcher.isDispatchNeeded(context)) {
-            dispatcher.dispatch(context, this)
+        if (dispatcher.safeIsDispatchNeeded(context)) {
+            dispatcher.safeDispatch(context, this)
         } else {
             resumeUnconfined()
         }
@@ -205,3 +203,17 @@ internal inline fun DispatchedTask<*>.runUnconfinedEventLoop(
 internal inline fun Continuation<*>.resumeWithStackTrace(exception: Throwable) {
     resumeWith(Result.failure(recoverStackTrace(exception, this)))
 }
+
+/**
+ * This exception holds an exception raised in [CoroutineDispatcher.dispatch] method.
+ * When dispatcher methods fail unexpectedly, it is likely a user-induced programmatic bug,
+ * such as calling `executor.close()` prematurely. To avoid reporting such exceptions as fatal errors,
+ * we handle them with a separate code path. See also #4091.
+ *
+ * @see safeDispatch
+ */
+internal class DispatchException(
+    override val cause: Throwable,
+    dispatcher: CoroutineDispatcher,
+    context: CoroutineContext,
+) : Exception("Coroutine dispatcher $dispatcher threw an exception, context = $context", cause)
