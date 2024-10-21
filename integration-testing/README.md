@@ -8,6 +8,7 @@ The tests are the following:
 * `coreAgentTest` checks that `kotlinx-coroutines-core` can be run as a Java agent.
 * `debugAgentTest` checks that the coroutine debugger can be run as a Java agent.
 * `debugDynamicAgentTest` checks that `kotlinx-coroutines-debug` agent can self-attach dynamically to JVM as a standalone dependency.
+* `debugDynamicAgentJpmsTest` checks that `kotlinx-coroutines-debug` agent can self-attach dynamically to JVM as a standalone dependency  (with JPMS)
 * `smokeTest` builds the multiplatform test project that depends on coroutines.
 
 The `integration-testing` project is expected to be in a subdirectory of the main `kotlinx.coroutines` project.
