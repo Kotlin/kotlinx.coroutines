@@ -222,6 +222,9 @@ public abstract class CoroutineDispatcher :
      * Though the `yield` marker may be passed as a part of [context], this
      * is a separate method for performance reasons.
      *
+     * Implementation note: this entry-point is used for `Dispatchers.IO` and [Dispatchers.Default]
+     * unerlying implementations, see overrides for this method.
+     *
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
