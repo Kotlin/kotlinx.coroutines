@@ -5,6 +5,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
+import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlinx.coroutines.flow.flow as safeFlow
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
@@ -133,5 +134,7 @@ internal suspend inline fun <T> Flow<T>.collectWhile(crossinline predicate: susp
         collect(collector)
     } catch (e: AbortFlowException) {
         e.checkOwnership(collector)
+        // The task might have been cancelled before AbortFlowException was thrown.
+        coroutineContext.ensureActive()
     }
 }
