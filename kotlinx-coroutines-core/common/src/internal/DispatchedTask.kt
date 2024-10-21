@@ -205,7 +205,10 @@ internal inline fun Continuation<*>.resumeWithStackTrace(exception: Throwable) {
 }
 
 /**
- * This exception holds an exception raised in [CoroutineDispatcher.dispatch] method
+ * This exception holds an exception raised in [CoroutineDispatcher.dispatch] method.
+ * When dispatcher methods fail unexpectedly, it is likely a user-induced programmatic bug,
+ * such as calling `executor.close()` prematurely. To avoid reporting such exceptions as fatal errors,
+ * we handle them with a separate code path. See also #4091.
  *
  * @see safeDispatch
  */
