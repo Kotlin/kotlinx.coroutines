@@ -5,6 +5,20 @@ import kotlinx.coroutines.*
 import kotlin.test.*
 
 class BufferedChannelTest : TestBase() {
+
+    /** Tests that a buffered channel does not consume enough memory to fail with an OOM. */
+    @Test
+    fun testMemoryConsumption() = runTest {
+        val largeChannel = Channel<Int>(Int.MAX_VALUE / 2)
+        repeat(10_000) {
+            largeChannel.send(it)
+        }
+        repeat(10_000) {
+            val element = largeChannel.receive()
+            assertEquals(it, element)
+        }
+    }
+
     @Test
     fun testIteratorHasNextIsIdempotent() = runTest {
         val q = Channel<Int>()

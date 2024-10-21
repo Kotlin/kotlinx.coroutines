@@ -266,6 +266,13 @@ class ProduceTest : TestBase() {
         }
     }
 
+    @Test
+    fun testProduceWithInvalidCapacity() = runTest {
+        assertFailsWith<IllegalArgumentException> {
+            produce<Int>(capacity = -3) { }
+        }
+    }
+
     private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
         val source = Channel<Int>()
         expect(1)
