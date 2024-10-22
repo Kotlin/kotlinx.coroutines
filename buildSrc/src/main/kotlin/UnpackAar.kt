@@ -17,6 +17,9 @@ val artifactType = Attribute.of("artifactType", String::class.java)
 val unpackedAar = Attribute.of("unpackedAar", Boolean::class.javaObjectType)
 
 fun Project.configureAar() = configurations.configureEach {
+    if (this.name.contains("dokka", ignoreCase = true)) {
+        return@configureEach
+    }
     afterEvaluate {
         if (isCanBeResolved && !isCanBeConsumed) {
             attributes.attribute(unpackedAar, true) // request all AARs to be unpacked
