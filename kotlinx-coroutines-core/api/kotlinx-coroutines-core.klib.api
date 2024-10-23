@@ -289,9 +289,9 @@ abstract interface kotlinx.coroutines/CoroutineScope { // kotlinx.coroutines/Cor
 }
 
 abstract interface kotlinx.coroutines/Delay { // kotlinx.coroutines/Delay|null[0]
-    abstract fun scheduleResumeAfterDelay(kotlin/Long, kotlinx.coroutines/CancellableContinuation<kotlin/Unit>) // kotlinx.coroutines/Delay.scheduleResumeAfterDelay|scheduleResumeAfterDelay(kotlin.Long;kotlinx.coroutines.CancellableContinuation<kotlin.Unit>){}[0]
-    open fun invokeOnTimeout(kotlin/Long, kotlinx.coroutines/Runnable, kotlin.coroutines/CoroutineContext): kotlinx.coroutines/DisposableHandle // kotlinx.coroutines/Delay.invokeOnTimeout|invokeOnTimeout(kotlin.Long;kotlinx.coroutines.Runnable;kotlin.coroutines.CoroutineContext){}[0]
-    open suspend fun delay(kotlin/Long) // kotlinx.coroutines/Delay.delay|delay(kotlin.Long){}[0]
+    abstract fun scheduleResumeAfterDelay(kotlin.time/Duration, kotlinx.coroutines/CancellableContinuation<kotlin/Unit>) // kotlinx.coroutines/Delay.scheduleResumeAfterDelay|scheduleResumeAfterDelay(kotlin.time.Duration;kotlinx.coroutines.CancellableContinuation<kotlin.Unit>){}[0]
+    open fun invokeOnTimeout(kotlin.time/Duration, kotlinx.coroutines/Runnable, kotlin.coroutines/CoroutineContext): kotlinx.coroutines/DisposableHandle // kotlinx.coroutines/Delay.invokeOnTimeout|invokeOnTimeout(kotlin.time.Duration;kotlinx.coroutines.Runnable;kotlin.coroutines.CoroutineContext){}[0]
+    open fun timeoutMessage(kotlin.time/Duration): kotlin/String // kotlinx.coroutines/Delay.timeoutMessage|timeoutMessage(kotlin.time.Duration){}[0]
 }
 
 abstract interface kotlinx.coroutines/Job : kotlin.coroutines/CoroutineContext.Element { // kotlinx.coroutines/Job|null[0]
@@ -758,6 +758,7 @@ final fun (kotlin.coroutines/CoroutineContext).kotlinx.coroutines/ensureActive()
 final fun (kotlin.coroutines/CoroutineContext).kotlinx.coroutines/newCoroutineContext(kotlin.coroutines/CoroutineContext): kotlin.coroutines/CoroutineContext // kotlinx.coroutines/newCoroutineContext|newCoroutineContext@kotlin.coroutines.CoroutineContext(kotlin.coroutines.CoroutineContext){}[0]
 final fun (kotlin.ranges/IntRange).kotlinx.coroutines.flow/asFlow(): kotlinx.coroutines.flow/Flow<kotlin/Int> // kotlinx.coroutines.flow/asFlow|asFlow@kotlin.ranges.IntRange(){}[0]
 final fun (kotlin.ranges/LongRange).kotlinx.coroutines.flow/asFlow(): kotlinx.coroutines.flow/Flow<kotlin/Long> // kotlinx.coroutines.flow/asFlow|asFlow@kotlin.ranges.LongRange(){}[0]
+final fun (kotlin.time/Duration).kotlinx.coroutines/toDelayMillis(): kotlin/Long // kotlinx.coroutines/toDelayMillis|toDelayMillis@kotlin.time.Duration(){}[0]
 final fun (kotlin/IntArray).kotlinx.coroutines.flow/asFlow(): kotlinx.coroutines.flow/Flow<kotlin/Int> // kotlinx.coroutines.flow/asFlow|asFlow@kotlin.IntArray(){}[0]
 final fun (kotlin/LongArray).kotlinx.coroutines.flow/asFlow(): kotlinx.coroutines.flow/Flow<kotlin/Long> // kotlinx.coroutines.flow/asFlow|asFlow@kotlin.LongArray(){}[0]
 final fun (kotlinx.coroutines.channels/ReceiveChannel<*>).kotlinx.coroutines.channels/cancelConsumed(kotlin/Throwable?) // kotlinx.coroutines.channels/cancelConsumed|cancelConsumed@kotlinx.coroutines.channels.ReceiveChannel<*>(kotlin.Throwable?){}[0]

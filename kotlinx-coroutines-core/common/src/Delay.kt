@@ -4,6 +4,7 @@ import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * This dispatcher _feature_ is implemented by [CoroutineDispatcher] implementations that natively support
@@ -16,19 +17,8 @@ import kotlin.time.Duration.Companion.nanoseconds
  */
 @InternalCoroutinesApi
 public interface Delay {
-
-    /** @suppress **/
-    @Deprecated(
-        message = "Deprecated without replacement as an internal method never intended for public use",
-        level = DeprecationLevel.ERROR
-    ) // Error since 1.6.0
-    public suspend fun delay(time: Long) {
-        if (time <= 0) return // don't delay
-        return suspendCancellableCoroutine { scheduleResumeAfterDelay(time, it) }
-    }
-
     /**
-     * Schedules resume of a specified [continuation] after a specified delay [timeMillis].
+     * Schedules resume of a specified [continuation] after a specified delay [time].
      *
      * Continuation **must be scheduled** to resume even if it is already cancelled, because a cancellation is just
      * an exception that the coroutine that used `delay` might wanted to catch and process. It might
@@ -42,28 +32,20 @@ public interface Delay {
      * with(continuation) { resumeUndispatchedWith(Unit) }
      * ```
      */
-    public fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>)
+    public fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>)
 
     /**
-     * Schedules invocation of a specified [block] after a specified delay [timeMillis].
+     * Schedules invocation of a specified [block] after a specified delay [timeout].
      * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] of this invocation
      * request if it is not needed anymore.
      */
-    public fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        DefaultDelay.invokeOnTimeout(timeMillis, block, context)
-}
+    public fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle =
+        DefaultDelay.invokeOnTimeout(timeout, block, context)
 
-/**
- * Enhanced [Delay] interface that provides additional diagnostics for [withTimeout].
- * Is going to be removed once there is proper JVM-default support.
- * Then we'll be able put this function into [Delay] without breaking binary compatibility.
- */
-@InternalCoroutinesApi
-internal interface DelayWithTimeoutDiagnostics : Delay {
     /**
      * Returns a string that explains that the timeout has occurred, and explains what can be done about it.
      */
-    fun timeoutMessage(timeout: Duration): String
+    fun timeoutMessage(timeout: Duration): String = "Timed out waiting for $timeout"
 }
 
 /**
@@ -103,6 +85,31 @@ internal interface DelayWithTimeoutDiagnostics : Delay {
 public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
 
 /**
+ * Delays coroutine for at least the given [duration] without blocking a thread and resumes it after the specified time.
+ * If the given [duration] is non-positive, this function returns immediately.
+ *
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
+ * suspending function is waiting, this function immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
+ * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+ *
+ * If you want to delay forever (until cancellation), consider using [awaitCancellation] instead.
+ *
+ * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
+ */
+public suspend fun delay(duration: Duration) {
+    if (duration <= Duration.ZERO) return // don't delay
+    return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
+        // instead of actually waiting for an infinite time, just wait forever like awaitCancellation, don't schedule.
+        if (duration.isFinite()) {
+            cont.context.delay.scheduleResumeAfterDelay(duration, cont)
+        }
+    }
+}
+
+/**
  * Delays coroutine for at least the given time without blocking a thread and resumes it after a specified time.
  * If the given [timeMillis] is non-positive, this function returns immediately.
  *
@@ -119,31 +126,8 @@ public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
  * @param timeMillis time in milliseconds.
  */
 public suspend fun delay(timeMillis: Long) {
-    if (timeMillis <= 0) return // don't delay
-    return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
-        // if timeMillis == Long.MAX_VALUE then just wait forever like awaitCancellation, don't schedule.
-        if (timeMillis < Long.MAX_VALUE) {
-            cont.context.delay.scheduleResumeAfterDelay(timeMillis, cont)
-        }
-    }
+    delay(timeMillis.milliseconds)
 }
-
-/**
- * Delays coroutine for at least the given [duration] without blocking a thread and resumes it after the specified time.
- * If the given [duration] is non-positive, this function returns immediately.
- *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
- * suspending function is waiting, this function immediately resumes with [CancellationException].
- * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
- * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
- *
- * If you want to delay forever (until cancellation), consider using [awaitCancellation] instead.
- *
- * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
- *
- * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
- */
-public suspend fun delay(duration: Duration): Unit = delay(duration.toDelayMillis())
 
 /** Returns [Delay] implementation of the given context */
 internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) as? Delay ?: DefaultDelay
@@ -152,6 +136,7 @@ internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) 
  * Convert this duration to its millisecond value. Durations which have a nanosecond component less than
  * a single millisecond will be rounded up to the next largest millisecond.
  */
+@PublishedApi
 internal fun Duration.toDelayMillis(): Long = when (isPositive()) {
     true -> plus(999_999L.nanoseconds).inWholeMilliseconds
     false -> 0L
