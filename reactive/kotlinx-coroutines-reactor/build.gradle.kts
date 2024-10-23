@@ -27,7 +27,7 @@ tasks {
 
 // the version of the docs can be different from the version of the Reactor
 // library itself: https://github.com/reactor/reactor-core/issues/3794
-externalDocumentationLink(
+configureExternalLinks(
     url = "https://projectreactor.io/docs/core/${version("reactor_docs")}/api/"
 )
 

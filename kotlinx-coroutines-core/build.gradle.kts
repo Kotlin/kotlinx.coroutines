@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
+import org.jetbrains.dokka.gradle.tasks.DokkaBaseTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -303,6 +304,6 @@ artifacts {
 }
 
 // Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
-tasks.named("dokkaHtmlPartial") {
+tasks.withType<DokkaBaseTask>() {
     dependsOn(jvmJar)
 }

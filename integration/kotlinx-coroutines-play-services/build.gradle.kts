@@ -13,6 +13,6 @@ dependencies {
     testImplementation("androidx.test:monitor:1.2.0")
 }
 
-externalDocumentationLink(
+configureExternalLinks(
     url = "https://developers.google.com/android/reference/"
 )
