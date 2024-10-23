@@ -3,6 +3,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.IgnoreJreRequirement
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * A command emitted by [SharingStarted] implementations to control the sharing coroutine in
@@ -102,7 +103,7 @@ public fun interface SharingStarted {
             stopTimeoutMillis: Long = 0,
             replayExpirationMillis: Long = Long.MAX_VALUE
         ): SharingStarted =
-            StartedWhileSubscribed(stopTimeoutMillis, replayExpirationMillis)
+            StartedWhileSubscribed(stopTimeoutMillis.milliseconds, replayExpirationMillis.milliseconds)
     }
 
     /**
@@ -135,7 +136,7 @@ public fun SharingStarted.Companion.WhileSubscribed(
     stopTimeout: Duration = Duration.ZERO,
     replayExpiration: Duration = Duration.INFINITE
 ): SharingStarted =
-    StartedWhileSubscribed(stopTimeout.inWholeMilliseconds, replayExpiration.inWholeMilliseconds)
+    StartedWhileSubscribed(stopTimeout, replayExpiration)
 
 // -------------------------------- implementation --------------------------------
 
@@ -160,12 +161,12 @@ private class StartedLazily : SharingStarted {
 }
 
 private class StartedWhileSubscribed(
-    private val stopTimeout: Long,
-    private val replayExpiration: Long
+    private val stopTimeout: Duration,
+    private val replayExpiration: Duration,
 ) : SharingStarted {
     init {
-        require(stopTimeout >= 0) { "stopTimeout($stopTimeout ms) cannot be negative" }
-        require(replayExpiration >= 0) { "replayExpiration($replayExpiration ms) cannot be negative" }
+        require(stopTimeout >= Duration.ZERO) { "stopTimeout($stopTimeout) cannot be negative" }
+        require(replayExpiration >= Duration.ZERO) { "replayExpiration($replayExpiration) cannot be negative" }
     }
 
     override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> = subscriptionCount
@@ -174,7 +175,7 @@ private class StartedWhileSubscribed(
                 emit(SharingCommand.START)
             } else {
                 delay(stopTimeout)
-                if (replayExpiration > 0) {
+                if (replayExpiration > Duration.ZERO) {
                     emit(SharingCommand.STOP)
                     delay(replayExpiration)
                 }
@@ -187,8 +188,8 @@ private class StartedWhileSubscribed(
     @OptIn(ExperimentalStdlibApi::class)
     override fun toString(): String {
         val params = buildList(2) {
-            if (stopTimeout > 0) add("stopTimeout=${stopTimeout}ms")
-            if (replayExpiration < Long.MAX_VALUE) add("replayExpiration=${replayExpiration}ms")
+            if (stopTimeout > Duration.ZERO) add("stopTimeout=${stopTimeout}ms")
+            if (replayExpiration < Duration.INFINITE) add("replayExpiration=${replayExpiration}ms")
         }
         return "SharingStarted.WhileSubscribed(${params.joinToString()})"
     }

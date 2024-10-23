@@ -1,7 +1,5 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.scheduling.*
 import kotlinx.coroutines.scheduling.CoroutineScheduler
 
 internal actual abstract class EventLoopImplPlatform: EventLoop() {
@@ -122,4 +120,3 @@ internal fun Thread.isIoDispatcherThread(): Boolean {
     if (this !is CoroutineScheduler.Worker) return false
     return isIo()
 }
-

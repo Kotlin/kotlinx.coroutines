@@ -8,6 +8,8 @@ import platform.darwin.*
 import kotlin.coroutines.*
 import kotlin.concurrent.*
 import kotlin.native.internal.NativePtr
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 internal fun isMainThread(): Boolean = CFRunLoopGetCurrent() == CFRunLoopGetMain()
 
@@ -42,23 +44,23 @@ private class DarwinMainDispatcher(
         }
     }
     
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(timeout: Duration, continuation: CancellableContinuation<Unit>) {
         val timer = Timer()
         val timerBlock: TimerBlock = {
             timer.dispose()
             continuation.resume(Unit)
         }
-        timer.start(timeMillis, timerBlock)
+        timer.start(timeout, timerBlock)
         continuation.disposeOnCancellation(timer)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle {
         val timer = Timer()
         val timerBlock: TimerBlock = {
             timer.dispose()
             block.run()
         }
-        timer.start(timeMillis, timerBlock)
+        timer.start(timeout, timerBlock)
         return timer
     }
 
@@ -74,8 +76,8 @@ private val TIMER_DISPOSED = NativePtr.NULL.plus(1)
 private class Timer : DisposableHandle {
     private val ref = AtomicNativePtr(TIMER_NEW)
 
-    fun start(timeMillis: Long, timerBlock: TimerBlock) {
-        val fireDate = CFAbsoluteTimeGetCurrent() + timeMillis / 1000.0
+    fun start(timeout: Duration, timerBlock: TimerBlock) {
+        val fireDate = CFAbsoluteTimeGetCurrent() + timeout.toDouble(DurationUnit.SECONDS)
         val timer = CFRunLoopTimerCreateWithHandler(null, fireDate, 0.0, 0u, 0, timerBlock)
         CFRunLoopAddTimer(CFRunLoopGetMain(), timer, kCFRunLoopCommonModes)
         if (!ref.compareAndSet(TIMER_NEW, timer.rawValue)) {

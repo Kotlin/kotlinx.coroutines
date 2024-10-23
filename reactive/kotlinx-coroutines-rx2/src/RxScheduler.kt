@@ -8,6 +8,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * Converts an instance of [Scheduler] to an implementation of [CoroutineDispatcher]
@@ -52,7 +54,7 @@ private class DispatcherScheduler(@JvmField val dispatcher: CoroutineDispatcher)
     private val workerCounter = atomic(1L)
 
     override fun scheduleDirect(block: Runnable, delay: Long, unit: TimeUnit): Disposable =
-        scope.scheduleTask(block, unit.toMillis(delay)) { task ->
+        scope.scheduleTask(block, delay, unit) { task ->
             Runnable { scope.launch { task() } }
         }
 
@@ -81,7 +83,7 @@ private class DispatcherScheduler(@JvmField val dispatcher: CoroutineDispatcher)
         }
 
         override fun schedule(block: Runnable, delay: Long, unit: TimeUnit): Disposable =
-            workerScope.scheduleTask(block, unit.toMillis(delay)) { task ->
+            workerScope.scheduleTask(block, delay, unit) { task ->
                 Runnable { blockChannel.trySend(task) }
             }
 
@@ -106,7 +108,8 @@ private typealias Task = suspend () -> Unit
  */
 private fun CoroutineScope.scheduleTask(
     block: Runnable,
-    delayMillis: Long,
+    delay: Long,
+    unit: TimeUnit,
     adaptForScheduling: (Task) -> Runnable
 ): Disposable {
     val ctx = coroutineContext
@@ -129,11 +132,11 @@ private fun CoroutineScope.scheduleTask(
 
     val toSchedule = adaptForScheduling(::task)
     if (!isActive) return Disposables.disposed()
-    if (delayMillis <= 0) {
+    if (delay <= 0) {
         toSchedule.run()
     } else {
         @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
-        ctx.delay.invokeOnTimeout(delayMillis, toSchedule, ctx).let { handle = it }
+        ctx.delay.invokeOnTimeout(unit.toNanos(delay).nanoseconds, toSchedule, ctx).let { handle = it }
     }
     return disposable
 }
@@ -153,16 +156,16 @@ public class SchedulerCoroutineDispatcher(
     }
 
     /** @suppress */
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
         val disposable = scheduler.scheduleDirect({
             with(continuation) { resumeUndispatched(Unit) }
-        }, timeMillis, TimeUnit.MILLISECONDS)
+        }, time.inWholeNanoseconds, TimeUnit.NANOSECONDS)
         continuation.disposeOnCancellation(disposable)
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val disposable = scheduler.scheduleDirect(block, timeMillis, TimeUnit.MILLISECONDS)
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle {
+        val disposable = scheduler.scheduleDirect(block, timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)
         return DisposableHandle { disposable.dispose() }
     }
 

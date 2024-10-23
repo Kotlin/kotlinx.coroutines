@@ -51,7 +51,7 @@ class DisabledHandlerTest : TestBase() {
             withContext(disabledDispatcher) {
                 expect(1)
                 delegateToSuper = false
-                delay(Long.MAX_VALUE - 1)
+                delay(Long.MAX_VALUE / 2 - 1)
                 expectUnreached()
             }
             expectUnreached()

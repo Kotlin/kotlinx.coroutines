@@ -5,6 +5,8 @@ import kotlinx.coroutines.internal.*
 import java.awt.event.*
 import javax.swing.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 /**
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
@@ -23,23 +25,23 @@ public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = SwingUtilities.invokeLater(block)
 
     /** @suppress */
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timer = schedule(timeMillis) {
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
+        val timer = schedule(time) {
             with(continuation) { resumeUndispatched(Unit) }
         }
         continuation.invokeOnCancellation { timer.stop() }
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val timer = schedule(timeMillis) {
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle {
+        val timer = schedule(timeout) {
             block.run()
         }
         return DisposableHandle { timer.stop() }
     }
 
-    private fun schedule(timeMillis: Long, action: ActionListener): Timer =
-        Timer(timeMillis.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), action).apply {
+    private fun schedule(time: Duration, action: ActionListener): Timer =
+        Timer(time.toInt(DurationUnit.MILLISECONDS), action).apply {
             isRepeats = false
             start()
         }

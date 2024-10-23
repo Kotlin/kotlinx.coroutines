@@ -2,6 +2,9 @@ package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * Mode for [ticker] function.
@@ -61,24 +64,26 @@ public fun ticker(
     context: CoroutineContext = EmptyCoroutineContext,
     mode: TickerMode = TickerMode.FIXED_PERIOD
 ): ReceiveChannel<Unit> {
-    require(delayMillis >= 0) { "Expected non-negative delay, but has $delayMillis ms" }
-    require(initialDelayMillis >= 0) { "Expected non-negative initial delay, but has $initialDelayMillis ms" }
+    val delay = delayMillis.milliseconds
+    val initialDelay = initialDelayMillis.milliseconds
+    require(delayMillis >= 0) { "Expected non-negative delay, but got $delay" }
+    require(initialDelayMillis >= 0) { "Expected non-negative initial delay, but got $initialDelay" }
     return GlobalScope.produce(Dispatchers.Unconfined + context, capacity = 0) {
         when (mode) {
-            TickerMode.FIXED_PERIOD -> fixedPeriodTicker(delayMillis, initialDelayMillis, channel)
-            TickerMode.FIXED_DELAY -> fixedDelayTicker(delayMillis, initialDelayMillis, channel)
+            TickerMode.FIXED_PERIOD -> fixedPeriodTicker(delay, initialDelay, channel)
+            TickerMode.FIXED_DELAY -> fixedDelayTicker(delay, initialDelay, channel)
         }
     }
 }
 
 private suspend fun fixedPeriodTicker(
-    delayMillis: Long,
-    initialDelayMillis: Long,
+    delay: Duration,
+    initialDelay: Duration,
     channel: SendChannel<Unit>
 ) {
-    var deadline = nanoTime() + delayToNanos(initialDelayMillis)
-    delay(initialDelayMillis)
-    val delayNs = delayToNanos(delayMillis)
+    var deadline = nanoTime() + initialDelay.inWholeNanoseconds
+    delay(initialDelay)
+    val delayNs = delay.inWholeNanoseconds
     while (true) {
         deadline += delayNs
         channel.send(Unit)
@@ -87,21 +92,21 @@ private suspend fun fixedPeriodTicker(
         if (nextDelay == 0L && delayNs != 0L) {
             val adjustedDelay = delayNs - (now - deadline) % delayNs
             deadline = now + adjustedDelay
-            delay(delayNanosToMillis(adjustedDelay))
+            delay(adjustedDelay.nanoseconds)
         } else {
-            delay(delayNanosToMillis(nextDelay))
+            delay(nextDelay.nanoseconds)
         }
     }
 }
 
 private suspend fun fixedDelayTicker(
-    delayMillis: Long,
-    initialDelayMillis: Long,
+    delay: Duration,
+    initialDelay: Duration,
     channel: SendChannel<Unit>
 ) {
-    delay(initialDelayMillis)
+    delay(initialDelay)
     while (true) {
         channel.send(Unit)
-        delay(delayMillis)
+        delay(delay)
     }
 }

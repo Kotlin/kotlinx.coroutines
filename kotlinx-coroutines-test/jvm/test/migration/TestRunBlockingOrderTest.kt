@@ -56,7 +56,7 @@ class TestRunBlockingOrderTest: OrderedExecutionTestBase() {
         expect(1)
         delay(100) // move time forward a bit some that naive time + delay gives an overflow
         launch {
-            delay(Long.MAX_VALUE / 2) // very long delay
+            delay(Long.MAX_VALUE / 3_000_000) // very long delay
             finish(4)
         }
         launch  {

@@ -13,6 +13,7 @@ import kotlin.random.*
 import kotlin.random.Random
 import kotlin.test.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.nanoseconds
 
 class CoroutineSchedulerInternalApiStressTest : TestBase() {
 
@@ -71,7 +72,7 @@ class CoroutineSchedulerInternalApiStressTest : TestBase() {
                         ++timesHelped
                         continue
                     } else if (result >= 0L) {
-                        Thread.sleep(result.toDuration(DurationUnit.NANOSECONDS).toDelayMillis())
+                        Thread.sleep(result.nanoseconds.toDelayMillis())
                     } else {
                         Thread.sleep(10)
                     }
@@ -83,4 +84,3 @@ class CoroutineSchedulerInternalApiStressTest : TestBase() {
         }
     }
 }
-

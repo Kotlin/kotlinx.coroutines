@@ -3,6 +3,7 @@ package kotlinx.coroutines.internal
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
 
 /**
  * Name of the boolean property that enables using of [FastServiceLoader].
@@ -94,13 +95,13 @@ private class MissingMainCoroutineDispatcher(
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher =
         missing()
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle =
         missing()
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
         missing()
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) =
         missing()
 
     private fun missing(): Nothing {

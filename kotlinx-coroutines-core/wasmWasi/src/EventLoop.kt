@@ -4,6 +4,7 @@ package kotlinx.coroutines
 import kotlin.coroutines.CoroutineContext
 import kotlin.wasm.*
 import kotlin.wasm.unsafe.*
+import kotlin.time.Duration
 
 @WasmImport("wasi_snapshot_preview1", "poll_oneoff")
 private external fun wasiPollOneOff(ptrToSubscription: Int, eventPtr: Int, nsubscriptions: Int, resultPtr: Int): Int
@@ -50,8 +51,8 @@ internal actual object DefaultExecutor : EventLoopImplBase() {
         // don't do anything: on WASI, the event loop is the default executor, we can't shut it down
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        scheduleInvokeOnTimeout(timeMillis, block)
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle =
+        scheduleInvokeOnTimeout(timeout, block)
 }
 
 internal actual abstract class EventLoopImplPlatform : EventLoop() {

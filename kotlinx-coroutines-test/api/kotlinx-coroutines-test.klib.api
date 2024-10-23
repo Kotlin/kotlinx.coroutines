@@ -14,23 +14,22 @@ sealed interface kotlinx.coroutines.test/TestScope : kotlinx.coroutines/Coroutin
         abstract fun <get-testScheduler>(): kotlinx.coroutines.test/TestCoroutineScheduler // kotlinx.coroutines.test/TestScope.testScheduler.<get-testScheduler>|<get-testScheduler>(){}[0]
 }
 
-abstract class kotlinx.coroutines.test/TestDispatcher : kotlinx.coroutines/CoroutineDispatcher, kotlinx.coroutines/Delay, kotlinx.coroutines/DelayWithTimeoutDiagnostics { // kotlinx.coroutines.test/TestDispatcher|null[0]
+abstract class kotlinx.coroutines.test/TestDispatcher : kotlinx.coroutines/CoroutineDispatcher, kotlinx.coroutines/Delay { // kotlinx.coroutines.test/TestDispatcher|null[0]
     abstract val scheduler // kotlinx.coroutines.test/TestDispatcher.scheduler|{}scheduler[0]
         abstract fun <get-scheduler>(): kotlinx.coroutines.test/TestCoroutineScheduler // kotlinx.coroutines.test/TestDispatcher.scheduler.<get-scheduler>|<get-scheduler>(){}[0]
 
-    open fun invokeOnTimeout(kotlin/Long, kotlinx.coroutines/Runnable, kotlin.coroutines/CoroutineContext): kotlinx.coroutines/DisposableHandle // kotlinx.coroutines.test/TestDispatcher.invokeOnTimeout|invokeOnTimeout(kotlin.Long;kotlinx.coroutines.Runnable;kotlin.coroutines.CoroutineContext){}[0]
-    open fun scheduleResumeAfterDelay(kotlin/Long, kotlinx.coroutines/CancellableContinuation<kotlin/Unit>) // kotlinx.coroutines.test/TestDispatcher.scheduleResumeAfterDelay|scheduleResumeAfterDelay(kotlin.Long;kotlinx.coroutines.CancellableContinuation<kotlin.Unit>){}[0]
+    open fun invokeOnTimeout(kotlin.time/Duration, kotlinx.coroutines/Runnable, kotlin.coroutines/CoroutineContext): kotlinx.coroutines/DisposableHandle // kotlinx.coroutines.test/TestDispatcher.invokeOnTimeout|invokeOnTimeout(kotlin.time.Duration;kotlinx.coroutines.Runnable;kotlin.coroutines.CoroutineContext){}[0]
+    open fun scheduleResumeAfterDelay(kotlin.time/Duration, kotlinx.coroutines/CancellableContinuation<kotlin/Unit>) // kotlinx.coroutines.test/TestDispatcher.scheduleResumeAfterDelay|scheduleResumeAfterDelay(kotlin.time.Duration;kotlinx.coroutines.CancellableContinuation<kotlin.Unit>){}[0]
     open fun timeoutMessage(kotlin.time/Duration): kotlin/String // kotlinx.coroutines.test/TestDispatcher.timeoutMessage|timeoutMessage(kotlin.time.Duration){}[0]
 }
 
 final class kotlinx.coroutines.test/TestCoroutineScheduler : kotlin.coroutines/AbstractCoroutineContextElement, kotlin.coroutines/CoroutineContext.Element { // kotlinx.coroutines.test/TestCoroutineScheduler|null[0]
     constructor <init>() // kotlinx.coroutines.test/TestCoroutineScheduler.<init>|<init>(){}[0]
 
+    final val currentTime // kotlinx.coroutines.test/TestCoroutineScheduler.currentTime|{}currentTime[0]
+        final fun <get-currentTime>(): kotlin/Long // kotlinx.coroutines.test/TestCoroutineScheduler.currentTime.<get-currentTime>|<get-currentTime>(){}[0]
     final val timeSource // kotlinx.coroutines.test/TestCoroutineScheduler.timeSource|{}timeSource[0]
         final fun <get-timeSource>(): kotlin.time/TimeSource.WithComparableMarks // kotlinx.coroutines.test/TestCoroutineScheduler.timeSource.<get-timeSource>|<get-timeSource>(){}[0]
-
-    final var currentTime // kotlinx.coroutines.test/TestCoroutineScheduler.currentTime|{}currentTime[0]
-        final fun <get-currentTime>(): kotlin/Long // kotlinx.coroutines.test/TestCoroutineScheduler.currentTime.<get-currentTime>|<get-currentTime>(){}[0]
 
     final fun advanceTimeBy(kotlin.time/Duration) // kotlinx.coroutines.test/TestCoroutineScheduler.advanceTimeBy|advanceTimeBy(kotlin.time.Duration){}[0]
     final fun advanceTimeBy(kotlin/Long) // kotlinx.coroutines.test/TestCoroutineScheduler.advanceTimeBy|advanceTimeBy(kotlin.Long){}[0]
