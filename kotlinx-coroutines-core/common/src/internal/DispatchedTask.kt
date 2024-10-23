@@ -117,7 +117,7 @@ internal abstract class DispatchedTask<in T> internal constructor(
      *    They usually have specific workarounds, but require careful study of the cause and should
      *    be reported to the maintainers and fixed on the library's side anyway.
      *
-     * 2) Exceptions from [ThreadContextElement.updateThreadContext] and [ThreadContextElement.restoreThreadContext].
+     * 2) Exceptions from [ScopedContextElement.updateThreadContext] and [ScopedContextElement.restoreThreadContext].
      *    While a user code can trigger such exception by providing an improper implementation of [ThreadContextElement],
      *    we can't ignore it because it may leave coroutine in the inconsistent state.
      *    If you encounter such exception, you can either disable this context element or wrap it into
