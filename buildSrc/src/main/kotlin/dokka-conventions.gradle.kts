@@ -1,4 +1,6 @@
+import org.gradle.api.Project
 import org.jetbrains.dokka.gradle.*
+import java.io.File
 import java.net.*
 
 
@@ -18,64 +20,59 @@ configure(subprojects.filterNot { projetsWithoutDokka.contains(it.name) }) {
     configureExternalLinks()
 }
 
-// Setup top-level 'dokkaHtmlMultiModule' with templates
-tasks.withType<DokkaMultiModuleTask>().named("dokkaHtmlMultiModule") {
-    setupDokkaTemplatesDir(this)
+// For top-level multimodule collection
+dokka {
+    setupDokkaTemplatesDir()
 }
-
 dependencies {
-    // Add explicit dependency between Dokka and Knit plugin
-    add("dokkaHtmlMultiModulePlugin", "org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+    dokkaPlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+
+    subprojects.forEach {
+        if (it.name !in projetsWithoutDokka) {
+            dokka(it)
+        }
+    }
 }
 
 // Dependencies for Knit processing: Knit plugin to work with Dokka
 private fun Project.configurePathsaver() {
-    tasks.withType(DokkaTaskPartial::class).configureEach {
-        dependencies {
-            plugins("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
-        }
+    dependencies {
+        dokkaPlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
     }
 }
 
 // Configure Dokka setup
 private fun Project.condigureDokkaSetup() {
-    tasks.withType(DokkaTaskPartial::class).configureEach {
-        suppressInheritedMembers = true
-        setupDokkaTemplatesDir(this)
+    dokka {
+        dokkaPublications.configureEach {
+            suppressInheritedMembers = true
+        }
+
+        setupDokkaTemplatesDir()
 
         dokkaSourceSets.configureEach {
             jdkVersion = 11
             includes.from("README.md")
-            noStdlibLink = true
-
-            externalDocumentationLink {
-                url = URL("https://kotlinlang.org/api/latest/jvm/stdlib/")
-                packageListUrl = rootProject.projectDir.toPath().resolve("site/stdlib.package.list").toUri().toURL()
-            }
-
-            // Something suspicious to figure out, probably legacy of earlier days
-            if (!project.isMultiplatform) {
-                dependsOn(project.configurations["compileClasspath"])
+            sourceLink {
+                localDirectory = rootDir
+                remoteUrl = URI("https://github.com/kotlin/kotlinx.coroutines/tree/master")
+                remoteLineSuffix = "#L"
             }
         }
 
-        // Source links
-        dokkaSourceSets.configureEach {
-            sourceLink {
-                localDirectory = rootDir
-                remoteUrl = URL("https://github.com/kotlin/kotlinx.coroutines/tree/master")
-                remoteLineSuffix ="#L"
-            }
+        // TODO: WA for KT-71784
+        dokkaSourceSets.matching { it.name == "commonMain" }.configureEach {
+            suppress.set(true)
         }
     }
 }
 
 private fun Project.configureExternalLinks() {
-    tasks.withType<DokkaTaskPartial>() {
+    dokka {
         dokkaSourceSets.configureEach {
-            externalDocumentationLink {
-                url = URL(coreModuleDocsUrl)
-                packageListUrl = File(coreModuleDocsPackageList).toURI().toURL()
+            externalDocumentationLinks.register("kotlinx-coroutines-core") {
+                url = URI(coreModuleDocsUrl)
+                packageListUrl = File(coreModuleDocsPackageList).toURI()
             }
         }
     }
@@ -90,10 +87,8 @@ private fun Project.configureExternalLinks() {
  * - Template setup: https://github.com/JetBrains/kotlin-web-site/blob/master/.teamcity/builds/apiReferences/kotlinx/coroutines/KotlinxCoroutinesPrepareDokkaTemplates.kt
  * - Templates repository: https://github.com/JetBrains/kotlin-web-site/tree/master/dokka-templates
  */
-private fun Project.setupDokkaTemplatesDir(dokkaTask: AbstractDokkaTask) {
-    dokkaTask.pluginsMapConfiguration = mapOf(
-        "org.jetbrains.dokka.base.DokkaBase" to """{ "templatesDir" : "${
-            project.rootProject.projectDir.toString().replace('\\', '/')
-        }/dokka-templates" }"""
-    )
+private fun DokkaExtension.setupDokkaTemplatesDir() {
+    pluginsConfiguration.html {
+        templatesDir = file(rootDir.toString().replace('\\', '/') + "/dokka-templates")
+    }
 }

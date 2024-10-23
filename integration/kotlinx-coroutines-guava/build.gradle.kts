@@ -9,6 +9,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
-externalDocumentationLink(
+configureExternalLinks(
     url = "https://google.github.io/guava/releases/$guavaVersion/api/docs/"
 )

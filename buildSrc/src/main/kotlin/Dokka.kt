@@ -1,21 +1,22 @@
 import org.gradle.api.*
+import org.gradle.api.publish.PublishingExtension
 import org.gradle.kotlin.dsl.*
-import org.jetbrains.dokka.gradle.*
+import org.jetbrains.dokka.gradle.DokkaExtension
 import java.io.*
 import java.net.*
 
 /**
  * Package-list by external URL for documentation generation.
  */
-fun Project.externalDocumentationLink(
+fun Project.configureExternalLinks(
     url: String,
     packageList: File = projectDir.resolve("package.list")
 ) {
-    tasks.withType<AbstractDokkaLeafTask>().configureEach {
+    extensions.configure<DokkaExtension> {
         dokkaSourceSets.configureEach {
-            externalDocumentationLink {
-                this.url = URL(url)
-                packageListUrl = packageList.toPath().toUri().toURL()
+            externalDocumentationLinks.register("api") {
+                this.url = URI.create(url)
+                this.packageListUrl = packageList.toURI()
             }
         }
     }
