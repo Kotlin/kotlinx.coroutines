@@ -56,7 +56,6 @@ private fun Project.condigureDokkaSetup() {
             sourceLink {
                 localDirectory = rootDir
                 remoteUrl = URI("https://github.com/kotlin/kotlinx.coroutines/tree/master")
-                remoteLineSuffix = "#L"
             }
         }
 
