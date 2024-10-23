@@ -21,6 +21,7 @@ kotlin {
     jvmToolchain(17)
 
     val test = target.compilations.getByName("test")
+
     target.compilations.create("debugDynamicAgentJpmsTest") {
         associateWith(test)
 
@@ -31,6 +32,22 @@ kotlin {
         }
 
         tasks.register<Test>("debugDynamicAgentJpmsTest") {
+            testClassesDirs = output.classesDirs
+            classpath = javaSourceSet.runtimeClasspath
+        }
+    }
+
+
+    target.compilations.create("externalStaticDebugProbesTest") {
+        associateWith(test)
+
+
+        defaultSourceSet.dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutines_version")
+        }
+
+        tasks.register<Test>("externalStaticDebugProbesTest") {
             testClassesDirs = output.classesDirs
             classpath = javaSourceSet.runtimeClasspath
         }
