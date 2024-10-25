@@ -604,7 +604,7 @@ public interface ReceiveChannel<out E> {
     public val onReceiveCatching: SelectClause1<ChannelResult<E>>
 
     /**
-     * Attempts to retrieve an element, removing it from the channel.
+     * Attempts to retrieve an element without waiting, removing it from the channel.
      *
      * - When the channel is non-empty, a [successful][ChannelResult.isSuccess] result is returned,
      *   and [ChannelResult.getOrNull] returns the retrieved element.
@@ -675,6 +675,8 @@ public interface ReceiveChannel<out E> {
      * [isClosedForReceive] and, on the [SendChannel] side, [isClosedForSend][SendChannel.isClosedForSend]
      * start returning `true`.
      * Any attempt to send to or receive from this channel will lead to a [CancellationException].
+     * This also applies to the existing senders and receivers that are suspended at the time of the call:
+     * they will be resumed with a [CancellationException] immediately after [cancel] is called.
      *
      * If the channel has an `onUndeliveredElement` callback installed, this function will invoke it for each of the
      * elements still in the channel, since these elements will be inaccessible otherwise.
@@ -856,7 +858,8 @@ public value class ChannelResult<out T>
      * If this returns `true`, the channel was closed for the operation that returned this result.
      * In this case, retrying the operation is meaningless: once closed, the channel will remain closed.
      * [isSuccess] will return `false`.
-     * [exceptionOrNull] can be used to determine the reason the channel was closed.
+     * [exceptionOrNull] can be used to determine the reason the channel was [closed][SendChannel.close]
+     * if one was given.
      *
      * If this returns `false`, subsequent attempts to perform the same operation may succeed.
      *
@@ -1319,6 +1322,8 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * When passed as a parameter to the `Channel(...)` factory function, the default buffer capacity is used.
          * For [BufferOverflow.SUSPEND] (the default buffer overflow strategy), the default capacity is 64,
          * but on the JVM it can be overridden by setting the [DEFAULT_BUFFER_PROPERTY_NAME] system property.
+         * The overridden value is used for all channels created with a default buffer capacity,
+         * including those created in third-party libraries.
          *
          * ```
          * val channel = Channel<Int>(Channel.BUFFERED)
@@ -1350,7 +1355,15 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * Name of the JVM system property for the default channel capacity (64 by default).
          *
          * See [BUFFERED] for details on how this property is used.
+         *
+         * Setting this property affects the default channel capacity for channel constructors,
+         * channel-backed coroutines and flow operators that imply channel usage,
+         * including ones defined in 3rd-party libraries.
+         *
+         * Usage of this property is highly discouraged and is intended to be used as a last-ditch effort
+         * as an immediate measure for hot fixes and duct-taping.
          */
+        @DelicateCoroutinesApi
         public const val DEFAULT_BUFFER_PROPERTY_NAME: String = "kotlinx.coroutines.channels.defaultBuffer"
 
         internal val CHANNEL_DEFAULT_CAPACITY = systemProp(DEFAULT_BUFFER_PROPERTY_NAME,
@@ -1453,7 +1466,7 @@ public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> = Channel(capacit
  * or a new [CancellationException] gets constructed to be thrown from [SendChannel.send].
  *
  * This exception is a subclass of [IllegalStateException], because the sender should not attempt to send to a closed
- * channel after it itself has [closed][SendChannel.close] it.
+ * channel after it itself has [closed][SendChannel.close] it, and indicates an error on the part of the programmer.
  * Usually, this exception can be avoided altogether by restructuring the code.
  */
 public class ClosedSendChannelException(message: String?) : IllegalStateException(message)
