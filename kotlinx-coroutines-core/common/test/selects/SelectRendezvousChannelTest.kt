@@ -419,10 +419,10 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectSendWhenClosed() = runTest {
         expect(1)
         val c = Channel<Int>(Channel.RENDEZVOUS)
-        val sender = launch(start = CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             c.send(1) // enqueue sender
-            expectUnreached()
+            finish(4)
         }
         c.close() // then close
         assertFailsWith<ClosedSendChannelException> {
@@ -434,8 +434,7 @@ class SelectRendezvousChannelTest : TestBase() {
                 }
             }
         }
-        sender.cancel()
-        finish(4)
+        assertEquals(1, c.receive())
     }
 
     // only for debugging

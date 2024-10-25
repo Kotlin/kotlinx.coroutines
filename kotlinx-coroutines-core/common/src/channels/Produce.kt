@@ -81,6 +81,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * The kind of the resulting channel depends on the specified [capacity] parameter.
  * See the [Channel] interface documentation for details.
  * By default, an unbuffered channel is created.
+ * If an invalid [capacity] value is specified, an [IllegalArgumentException] is thrown.
  *
  * ### Behavior on termination
  *
@@ -114,9 +115,9 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * channel.cancel()
  * ```
  *
- * If this coroutine finishes with an exception, it will close the channel with that exception as the cause and
- * the resulting channel will become _failed_, so after receiving all the existing elements, all further attempts
- * to receive from it will throw the exception with which the coroutine finished.
+ * If this coroutine finishes with an exception, it will close the channel with that exception as the cause,
+ * so after receiving all the existing elements,
+ * all further attempts to receive from it will throw the exception with which the coroutine finished.
  *
  * ```
  * val produceJob = Job()
@@ -150,8 +151,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * } // throws a `CancellationException` exception after reaching -1
  * ```
  *
- * Note that cancelling `produce` via structured concurrency closes the channel with a cause,
- * making it a _failed_ channel.
+ * Note that cancelling `produce` via structured concurrency closes the channel with a cause.
  *
  * The behavior around coroutine cancellation and error handling is experimental and may change in a future release.
  *
