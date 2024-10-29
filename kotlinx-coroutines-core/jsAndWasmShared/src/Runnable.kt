@@ -2,21 +2,12 @@ package kotlinx.coroutines
 
 /**
  * A runnable task for [CoroutineDispatcher.dispatch].
+ *
+ * Equivalent to the type `() -> Unit`.
  */
-public actual interface Runnable {
+public actual fun interface Runnable {
     /**
      * @suppress
      */
     public actual fun run()
 }
-
-/**
- * Creates [Runnable] task instance.
- */
-@Suppress("FunctionName")
-public actual inline fun Runnable(crossinline block: () -> Unit): Runnable =
-    object : Runnable {
-        override fun run() {
-            block()
-        }
-    }

@@ -96,6 +96,10 @@ abstract fun interface kotlinx.coroutines/DisposableHandle { // kotlinx.coroutin
     abstract fun dispose() // kotlinx.coroutines/DisposableHandle.dispose|dispose(){}[0]
 }
 
+abstract fun interface kotlinx.coroutines/Runnable { // kotlinx.coroutines/Runnable|null[0]
+    abstract fun run() // kotlinx.coroutines/Runnable.run|run(){}[0]
+}
+
 abstract interface <#A: in kotlin/Any?> kotlinx.coroutines.channels/ProducerScope : kotlinx.coroutines.channels/SendChannel<#A>, kotlinx.coroutines/CoroutineScope { // kotlinx.coroutines.channels/ProducerScope|null[0]
     abstract val channel // kotlinx.coroutines.channels/ProducerScope.channel|{}channel[0]
         abstract fun <get-channel>(): kotlinx.coroutines.channels/SendChannel<#A> // kotlinx.coroutines.channels/ProducerScope.channel.<get-channel>|<get-channel>(){}[0]
@@ -324,10 +328,6 @@ abstract interface kotlinx.coroutines/Job : kotlin.coroutines/CoroutineContext.E
 
 abstract interface kotlinx.coroutines/ParentJob : kotlinx.coroutines/Job { // kotlinx.coroutines/ParentJob|null[0]
     abstract fun getChildJobCancellationCause(): kotlin.coroutines.cancellation/CancellationException // kotlinx.coroutines/ParentJob.getChildJobCancellationCause|getChildJobCancellationCause(){}[0]
-}
-
-abstract interface kotlinx.coroutines/Runnable { // kotlinx.coroutines/Runnable|null[0]
-    abstract fun run() // kotlinx.coroutines/Runnable.run|run(){}[0]
 }
 
 sealed interface <#A: in kotlin/Any?, #B: out kotlin/Any?> kotlinx.coroutines.selects/SelectClause2 : kotlinx.coroutines.selects/SelectClause // kotlinx.coroutines.selects/SelectClause2|null[0]
@@ -963,7 +963,6 @@ final inline fun <#A: reified kotlin/Any?, #B: kotlin/Any?> kotlinx.coroutines.f
 final inline fun <#A: reified kotlin/Any?> (kotlinx.coroutines.flow/Flow<*>).kotlinx.coroutines.flow/filterIsInstance(): kotlinx.coroutines.flow/Flow<#A> // kotlinx.coroutines.flow/filterIsInstance|filterIsInstance@kotlinx.coroutines.flow.Flow<*>(){0§<kotlin.Any?>}[0]
 final inline fun kotlinx.coroutines.flow.internal/checkIndexOverflow(kotlin/Int): kotlin/Int // kotlinx.coroutines.flow.internal/checkIndexOverflow|checkIndexOverflow(kotlin.Int){}[0]
 final inline fun kotlinx.coroutines/CoroutineExceptionHandler(crossinline kotlin/Function2<kotlin.coroutines/CoroutineContext, kotlin/Throwable, kotlin/Unit>): kotlinx.coroutines/CoroutineExceptionHandler // kotlinx.coroutines/CoroutineExceptionHandler|CoroutineExceptionHandler(kotlin.Function2<kotlin.coroutines.CoroutineContext,kotlin.Throwable,kotlin.Unit>){}[0]
-final inline fun kotlinx.coroutines/Runnable(crossinline kotlin/Function0<kotlin/Unit>): kotlinx.coroutines/Runnable // kotlinx.coroutines/Runnable|Runnable(kotlin.Function0<kotlin.Unit>){}[0]
 final suspend fun (kotlin.collections/Collection<kotlinx.coroutines/Job>).kotlinx.coroutines/joinAll() // kotlinx.coroutines/joinAll|joinAll@kotlin.collections.Collection<kotlinx.coroutines.Job>(){}[0]
 final suspend fun (kotlinx.coroutines.channels/ProducerScope<*>).kotlinx.coroutines.channels/awaitClose(kotlin/Function0<kotlin/Unit> = ...) // kotlinx.coroutines.channels/awaitClose|awaitClose@kotlinx.coroutines.channels.ProducerScope<*>(kotlin.Function0<kotlin.Unit>){}[0]
 final suspend fun (kotlinx.coroutines.flow/Flow<*>).kotlinx.coroutines.flow/collect() // kotlinx.coroutines.flow/collect|collect@kotlinx.coroutines.flow.Flow<*>(){}[0]
