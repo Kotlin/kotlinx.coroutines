@@ -210,7 +210,7 @@ internal open class CancellableContinuationImpl<in T>(
                 is Segment<*> -> callSegmentOnCancellation(state, cause)
             }
             // Complete state update
-            detachChildIfNonResuable()
+            detachChildIfNonReusable()
             dispatchResume(resumeMode) // no need for additional cancellation checks
             return true
         }
@@ -220,7 +220,7 @@ internal open class CancellableContinuationImpl<in T>(
         if (cancelLater(cause)) return
         cancel(cause)
         // Even if cancellation has failed, we should detach child to avoid potential leak
-        detachChildIfNonResuable()
+        detachChildIfNonReusable()
     }
 
     private inline fun callCancelHandlerSafely(block: () -> Unit) {
@@ -500,7 +500,7 @@ internal open class CancellableContinuationImpl<in T>(
                 is NotCompleted -> {
                     val update = resumedState(state, proposedUpdate, resumeMode, onCancellation, idempotent = null)
                     if (!_state.compareAndSet(state, update)) return@loop // retry on cas failure
-                    detachChildIfNonResuable()
+                    detachChildIfNonReusable()
                     dispatchResume(resumeMode) // dispatch resume, but it might get cancelled in process
                     return // done
                 }
@@ -536,7 +536,7 @@ internal open class CancellableContinuationImpl<in T>(
                 is NotCompleted -> {
                     val update = resumedState(state, proposedUpdate, resumeMode, onCancellation, idempotent)
                     if (!_state.compareAndSet(state, update)) return@loop // retry on cas failure
-                    detachChildIfNonResuable()
+                    detachChildIfNonReusable()
                     return RESUME_TOKEN
                 }
                 is CompletedContinuation<*> -> {
@@ -557,7 +557,7 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     // Unregister from parent job
-    private fun detachChildIfNonResuable() {
+    private fun detachChildIfNonReusable() {
         // If instance is reusable, do not detach on every reuse, #releaseInterceptedContinuation will do it for us in the end
         if (!isReusable()) detachChild()
     }
