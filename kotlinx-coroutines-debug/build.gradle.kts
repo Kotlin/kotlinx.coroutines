@@ -7,16 +7,6 @@ plugins {
     id("org.jetbrains.kotlinx.kover") // apply plugin to use autocomplete for Kover DSL
 }
 
-configurations {
-    val shadowDeps by creating
-    compileOnly.configure {
-        extendsFrom(shadowDeps)
-    }
-    runtimeOnly.configure {
-        extendsFrom(shadowDeps)
-    }
-}
-
 val junit_version by properties
 val junit5_version by properties
 val byte_buddy_version by properties
