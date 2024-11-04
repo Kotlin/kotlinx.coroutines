@@ -1,9 +1,7 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.*
 import java.net.*
 import java.nio.file.*
 
 plugins {
-    id("com.github.johnrengelman.shadow")
     id("org.jetbrains.kotlinx.kover") // apply plugin to use autocomplete for Kover DSL
 }
 
@@ -28,8 +26,8 @@ dependencies {
     compileOnly("org.junit.jupiter:junit-jupiter-api:$junit5_version")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junit5_version")
     testImplementation("org.junit.platform:junit-platform-testkit:1.7.0")
-    add("shadowDeps", "net.bytebuddy:byte-buddy:$byte_buddy_version")
-    add("shadowDeps", "net.bytebuddy:byte-buddy-agent:$byte_buddy_version")
+    implementation("net.bytebuddy:byte-buddy:$byte_buddy_version")
+    implementation("net.bytebuddy:byte-buddy-agent:$byte_buddy_version")
     compileOnly("io.projectreactor.tools:blockhound:$blockhound_version")
     testImplementation("io.projectreactor.tools:blockhound:$blockhound_version")
     testImplementation("com.google.code.gson:gson:2.8.6")
@@ -51,20 +49,6 @@ tasks.withType<Test>().configureEach {
 }
 
 val jar by tasks.existing(Jar::class) {
-    enabled = false
-}
-
-val shadowJar by tasks.existing(ShadowJar::class) {
-    // Shadow only byte buddy, do not package kotlin stdlib
-    configurations = listOf(project.configurations["shadowDeps"])
-    relocate("net.bytebuddy", "kotlinx.coroutines.repackaged.net.bytebuddy")
-    /* These classifiers are both set to `null` to trick Gradle into thinking that this jar file is both the
-    artifact from the `jar` task and the one from `shadowJar`. Without this, Gradle complains that the artifact
-    from the `jar` task is not present when the compilaton finishes, even if the file with this name exists. */
-    archiveClassifier.convention(null as String?)
-    archiveClassifier = null
-    archiveBaseName = jar.flatMap { it.archiveBaseName }
-    archiveVersion = jar.flatMap { it.archiveVersion }
     manifest {
         attributes(
             mapOf(
@@ -90,14 +74,6 @@ val shadowJar by tasks.existing(ShadowJar::class) {
     }
 }
 
-configurations {
-    // shadowJar is already part of the `shadowRuntimeElements` and `shadowApiElements`, but the other subprojects
-    // that depend on `kotlinx-coroutines-debug` look at `runtimeElements` and `apiElements`.
-    artifacts {
-        add("apiElements", shadowJar)
-        add("runtimeElements", shadowJar)
-    }
-}
 
 kover {
     reports {
