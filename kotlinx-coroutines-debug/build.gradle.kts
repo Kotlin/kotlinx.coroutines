@@ -1,5 +1,7 @@
-import java.net.*
-import java.nio.file.*
+import org.gradle.api.JavaVersion
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.testing.Test
 
 plugins {
     id("org.jetbrains.kotlinx.kover") // apply plugin to use autocomplete for Kover DSL
@@ -58,19 +60,14 @@ val jar by tasks.existing(Jar::class) {
             )
         )
     }
+
     // add module-info.class to the META-INF/versions/9/ directory.
     dependsOn(tasks.compileModuleInfoJava)
-    doLast {
-        // We can't do that directly with the shadowJar task because it doesn't support replacing existing files.
-        val zipPath = this@existing.outputs.files.singleFile.toPath()
-        val zipUri = URI.create("jar:${zipPath.toUri()}")
-        val moduleInfoFilePath = tasks.compileModuleInfoJava.get().outputs.files.asFileTree.matching {
-            include("module-info.class")
-        }.singleFile.toPath()
-        FileSystems.newFileSystem(zipUri, emptyMap<String, String>()).use { fs ->
-            val moduleInfoFile = fs.getPath("META-INF/versions/9/module-info.class")
-            Files.copy(moduleInfoFilePath, moduleInfoFile, StandardCopyOption.REPLACE_EXISTING)
-        }
+    from(tasks.compileModuleInfoJava.get().outputs.files.asFileTree.matching {
+        include("module-info.class")
+    }) {
+        this.duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        into("META-INF/versions/9")
     }
 }
 
