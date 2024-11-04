@@ -40,7 +40,7 @@ tasks.withType<Test>().configureEach {
     }
 }
 
-val jar by tasks.existing(Jar::class) {
+tasks.named<Jar>("jar") {
     manifest {
         attributes(
             mapOf(
