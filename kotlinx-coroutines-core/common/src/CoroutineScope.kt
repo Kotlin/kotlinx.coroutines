@@ -127,7 +127,7 @@ public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatch
  * and normally, it's checked if a coroutine is cancelled when it *suspends*, for example,
  * when trying to read from a [channel][kotlinx.coroutines.channels.Channel] that is empty.
  *
- * Sometimes, a coroutine does not need to do any of such operations, but still wants to be cooperative
+ * Sometimes, a coroutine does not need to perform suspending operations, but still wants to be cooperative
  * and respect cancellation.
  *
  * The [isActive] property is inteded to be used for scenarios like this:
