@@ -2,9 +2,11 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlin.test.*
+import kotlin.time.*
 
 class FirstTest : TestBase() {
     @Test
@@ -172,5 +174,22 @@ class FirstTest : TestBase() {
         }
 
         assertFailsWith<CancellationException> { flow.first() }
+    }
+
+    @Test
+    fun testFirstThrowOnCancellation() = runTest {
+        val job = launch(start = UNDISPATCHED) {
+            flow {
+                try {
+                    emit(Unit)
+                } finally {
+                    runCatching { yield() }
+                    finish(2)
+                }
+            }.first()
+            expectUnreached()
+        }
+        expect(1)
+        job.cancel()
     }
 }
