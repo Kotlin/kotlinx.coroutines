@@ -123,14 +123,14 @@ public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatch
 /**
  * Returns `true` when the current [Job] is still active (has not completed and was not cancelled yet).
  *
- * A coroutine cancallation [is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative)
- * and normally, the cancellation machinery happens when the coroutine *suspends*, for example,
+ * Coroutine cancallation [is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative)
+ * and normally, it's checked if a coroutine is cancelled when it *suspends*, for example,
  * when trying to read from a [channel][kotlinx.coroutines.channels.Channel] that is empty.
  *
- * Sometimes, a coroutine does not need to do any of such operations, but still wants to be a cooperative
+ * Sometimes, a coroutine does not need to do any of such operations, but still wants to be cooperative
  * and respect cancellation.
  *
- * [isActive] property is inteded to be used for scenarios like this:
+ * The [isActive] property is inteded to be used for scenarios like this:
  * ```
  * val watchdogDispatcher = Dispatchers.IO.limitParallelism(1)
  * fun backgroundWork() {
@@ -315,14 +315,13 @@ public fun CoroutineScope.cancel(cause: CancellationException? = null) {
 public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Unit = cancel(CancellationException(message, cause))
 
 /**
- * Ensures that current scope is [active][CoroutineScope.isActive] and throws the [CancellationException] that was the
- * scope's cancellation cause otherwise.
+ * Throws the [CancellationException] that was the scope's cancellation cause if the scope is no longer [active][CoroutineScope.isActive].
  *
- * A coroutine cancallation [is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative)
- * and normally, the cancellation machinery happens when the coroutine *suspends*, for example,
+ * Coroutine cancallation [is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative)
+ * and normally, it's checked if a coroutine is cancelled when it *suspends*, for example,
  * when trying to read from a [channel][kotlinx.coroutines.channels.Channel] that is empty.
  *
- * Sometimes, a coroutine does not need to do any of such operations, but still wants to be a cooperative
+ * Sometimes, a coroutine does not need to perform suspending operations, but still wants to be cooperative
  * and respect cancellation.
  *
  * [ensureActive] function is inteded to be used for these scenarios and immediately bubble up the cancellation exception:
