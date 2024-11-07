@@ -312,15 +312,23 @@ public fun CoroutineScope.ensureActive(): Unit = coroutineContext.ensureActive()
 
 /**
  * Returns the current [CoroutineContext] retrieved by using [kotlin.coroutines.coroutineContext].
- * This function is an alias to avoid name clash with [CoroutineScope.coroutineContext] in a receiver position:
+ * This function is an alias to avoid name clash with [CoroutineScope.coroutineContext]:
  *
  * ```
- * launch { // this: CoroutineScope
- *     val flow = flow<Unit> {
- *         coroutineContext // Resolves into the context of outer launch, which is incorrect, see KT-38033
- *         currentCoroutineContext() // Retrieves actual context where the flow is collected
- *     }
+ * // ANTIPATTERN! DO NOT WRITE SUCH A CODE
+ * suspend fun CoroutineScope.suspendFunWithScope() {
+ *     // Name of the CoroutineScope.coroutineContext in 'this' position, same as `this.coroutineContext`
+ *     println(coroutineContext[CoroutineName])
+ *     // Name of the context that invoked this suspend function, same as `kotlin.coroutines.coroutineContext`
+ *     println(currentCoroutineContext()[CoroutineName])
+ * }
+ *
+ * withContext(CoroutineName("Caller")) {
+ *     // Will print 'CoroutineName("Receiver")' and 'CoroutineName("Caller")'
+ *     CoroutineScope("Receiver").suspendFunWithScope()
  * }
  * ```
+ *
+ * This function should always be preferred over [kotlin.coroutines.coroutineContext] property even when there is no explicit clash.
  */
 public suspend inline fun currentCoroutineContext(): CoroutineContext = coroutineContext
