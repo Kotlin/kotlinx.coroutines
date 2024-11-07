@@ -19,8 +19,8 @@ import kotlin.coroutines.intrinsics.*
  * An instance of `CancellableContinuation` can only be obtained by the [suspendCancellableCoroutine] function.
  * The interface itself is public for use and private for implementation.
  *
- * A typical use of this function is to suspend a coroutine while waiting for a result
- * from a callback or external source of values:
+ * A typical usages of this function is to suspend a coroutine while waiting for a result
+ * from a callback or an external source of values that optionally supports cancellation:
  *
  * ```
  * suspend fun <T> CompletableFuture<T>.await(): T = suspendCancellableCoroutine { c ->
@@ -42,13 +42,14 @@ import kotlin.coroutines.intrinsics.*
  * ### Thread-safety
  *
  * Instances of [CancellableContinuation] are thread-safe and can be safely shared across multiple threads.
- * [CancellableContinuation] allows concurrent invocations of [cancel] and [resume] pair, guaranteing
+ * [CancellableContinuation] allows concurrent invocations of the [cancel] and [resume] pair, guaranteeing
  * that only one of these operations will succeed.
- * Concurrent invocations of [resume] methods lead to a [IllegalStateException] and considered a programmatic error.
+ * Concurrent invocations of [resume] methods lead to a [IllegalStateException] and are considered a programmatic error.
+ * Concurrent invocations of [cancel] methods is permitted, and at most one of them succeeds.
  *
  * ### Prompt cancellation guarantee
  *
- * Cancellable continuation provides a **prompt cancellation guarantee**.
+ * A cancellable continuation provides a **prompt cancellation guarantee**.
  *
  * If the [Job] of the coroutine that obtained a cancellable continuation was cancelled while this continuation was suspended it will not resume
  * successfully, even if [CancellableContinuation.resume] was already invoked but not yet executed.
@@ -61,16 +62,16 @@ import kotlin.coroutines.intrinsics.*
  * The job's cancellation can happen before, after, and concurrently with the call to `resume`. In any
  * case, prompt cancellation guarantees that the coroutine will not resume its code successfully.
  *
- * If the coroutine was resumed with an exception (for example, using [Continuation.resumeWithException] extension
+ * If the coroutine was resumed with an exception (for example, using the [Continuation.resumeWithException] extension
  * function) and cancelled, then the exception thrown by the `suspendCancellableCoroutine` function is determined
  * by what happened first: exceptional resume or cancellation.
  *
  * ### Resuming with a closeable resource
  *
- * [CancellableContinuation] provides the capability for working with values that represent a resource that should be
- * closed. For that, it proved `resume(value: R, onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)`
- * function that guarantees either the given `value` will be successfully returned from the corresponding `suspend` function
- * or that `onCancellation` will be invoked with the supplied value:
+ * [CancellableContinuation] provides the capability to work with values that represent a resource that should be
+ * closed. For that, it provides `resume(value: R, onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)`
+ * function that guarantees that either the given `value` will be successfully returned from the corresponding
+ * `suspend` function or that `onCancellation` will be invoked with the supplied value:
  *
  * ```
  * continuation.resume(resourceToResumeWith) { _, resourceToClose, _
@@ -81,7 +82,7 @@ import kotlin.coroutines.intrinsics.*
  *
  * #### Continuation states
  *
- * Cancellable continuation has three observable states:
+ * A cancellable continuation has three observable states:
  *
  * | **State**                           | [isActive] | [isCompleted] | [isCancelled] |
  * | ----------------------------------- | ---------- | ------------- | ------------- |
@@ -91,8 +92,9 @@ import kotlin.coroutines.intrinsics.*
  *
  * For a detailed description of each state, see the corresponding properties' documentation.
  *
- * A successful invocation of [cancel] transitions continuation from _active_ to _cancelled_ state, while
- * invocation of [Continuation.resume] or [Continuation.resumeWithException] transitions it from _active_ to _resumed_ state.
+ * A successful invocation of [cancel] transitions the continuation from an _active_ to a _cancelled_ state, while
+ * an invocation of [Continuation.resume] or [Continuation.resumeWithException] transitions it from
+ * an _active_ to _resumed_ state.
  *
  * Possible state transitions diagram:
  * ```
@@ -114,7 +116,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Returns `true` when this continuation is active -- it was created,
      * but not yet [resumed][Continuation.resumeWith] or [cancelled][CancellableContinuation.cancel].
      *
-     * This state implies that [isCompleted] and [isCancelled] are `false`.
+     * This state implies that [isCompleted] and [isCancelled] are `false`,
+     * but this can change immediately after the invocation because of parallel calls to [cancel] and [resume].
      */
     public val isActive: Boolean
 
