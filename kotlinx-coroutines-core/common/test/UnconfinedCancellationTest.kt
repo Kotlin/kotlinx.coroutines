@@ -3,7 +3,7 @@ package kotlinx.coroutines
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
-class ExperimentalDispatchModeTest : TestBase() {
+class UnconfinedCancellationTest : TestBase() {
     @Test
     fun testUnconfinedCancellation() = runTest {
         val parent = Job()
