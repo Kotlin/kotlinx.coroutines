@@ -169,9 +169,6 @@ private typealias Queue<T> = LockFreeTaskQueueCore<T>
 internal expect abstract class EventLoopImplPlatform() : EventLoop {
     // Called to unpark this event loop's thread
     protected fun unpark()
-
-    // Called to reschedule to DefaultExecutor when this event loop is complete
-    protected fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask)
 }
 
 internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
@@ -275,7 +272,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
         } else {
-            DefaultExecutor.enqueue(task)
+            rescheduleTaskFromClosedDispatcher(task)
         }
     }
 
@@ -408,6 +405,14 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         }
     }
 
+    // Called to reschedule when this event loop is complete
+    protected open fun reschedule(now: Long, delayedTask: DelayedTask) {
+        val delayTimeMillis = delayNanosToMillis(delayedTask.nanoTime - now)
+        DefaultDelay.invokeOnTimeout(delayTimeMillis, Runnable {
+            rescheduleTaskFromClosedDispatcher(delayedTask)
+        }, EmptyCoroutineContext)
+    }
+
     internal abstract class DelayedTask(
         /**
          * This field can be only modified in [scheduleTask] before putting this DelayedTask
@@ -529,10 +534,6 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
 internal expect fun createEventLoop(): EventLoop
 
 internal expect fun nanoTime(): Long
-
-internal expect object DefaultExecutor {
-    fun enqueue(task: Runnable)
-}
 
 /**
  * Used by Darwin targets to wrap a [Runnable.run] call in an Objective-C Autorelease Pool. It is a no-op on JVM, JS and

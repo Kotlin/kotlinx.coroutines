@@ -131,7 +131,7 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
         } catch (e: RejectedExecutionException) {
             unTrackTask()
             cancelJobOnRejection(context, e)
-            Dispatchers.IO.dispatch(context, block)
+            rescheduleTaskFromClosedDispatcher(block)
         }
     }
 
@@ -146,15 +146,15 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
             continuation.invokeOnCancellation(CancelFutureOnCancel(future))
             return
         }
-        // Otherwise fallback to default executor
-        DefaultExecutor.scheduleResumeAfterDelay(timeMillis, continuation)
+        // Otherwise fallback to default delay
+        DefaultDelay.scheduleResumeAfterDelay(timeMillis, continuation)
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
         val future = (executor as? ScheduledExecutorService)?.scheduleBlock(block, context, timeMillis)
         return when {
             future != null -> DisposableFutureHandle(future)
-            else -> DefaultExecutor.invokeOnTimeout(timeMillis, block, context)
+            else -> DefaultDelay.invokeOnTimeout(timeMillis, block, context)
         }
     }
 
@@ -186,6 +186,14 @@ private class ResumeUndispatchedRunnable(
 ) : Runnable {
     override fun run() {
         with(continuation) { dispatcher.resumeUndispatched(Unit) }
+    }
+}
+
+private class ResumeDispatchedRunnable(
+    private val continuation: CancellableContinuation<Unit>
+) : Runnable {
+    override fun run() {
+        continuation.resume(Unit)
     }
 }
 
