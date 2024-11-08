@@ -39,4 +39,26 @@ package kotlinx.coroutines
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public expect val Dispatchers.IO: CoroutineDispatcher
 
-
+internal actual fun rescheduleTaskFromClosedDispatcher(task: Runnable) {
+    /**
+     * We do not create a separate view of [Dispatchers.IO] for the cleanup needs.
+     *
+     * If [Dispatchers.IO] is not flooded with other tasks + the cleanup view does not have more threads than
+     * [Dispatchers.IO], there is no difference between sending cleanup tasks to [Dispatchers.IO] and creating
+     * a separate view of [Dispatchers.IO] for cleanup.
+     *
+     * If [Dispatchers.IO] is flooded with other tasks, we are at a crossroads:
+     * - On the one hand, we do not want to create too many threads.
+     *   Some clients are carefully monitoring the number of threads and are relying on it not being larger than
+     *   the system property + the sum of explicit `limitedParallelism` arguments in the system.
+     * - On the other hand, we don't want to delay productive tasks in favor of cleanup tasks.
+     *
+     * The first consideration wins on two accounts:
+     * - As of writing this, [Dispatchers.IO] has been in use as the cleanup dispatcher for dispatchers obtained
+     *   from JVM executors for years, and this has not caused any issues that we know of.
+     * - On the other hand, some people likely rely on the number of threads not exceeding the number they control.
+     *   If we were to create a separate view of [Dispatchers.IO] for cleanup, this number would be exceeded, which
+     *   is a regression.
+     */
+    Dispatchers.IO.dispatch(Dispatchers.IO, task)
+}

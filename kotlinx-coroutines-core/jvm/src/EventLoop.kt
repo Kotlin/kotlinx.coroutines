@@ -10,9 +10,6 @@ internal actual abstract class EventLoopImplPlatform: EventLoop() {
             unpark(thread)
     }
 
-    protected actual open fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
-        DefaultExecutor.schedule(now, delayedTask)
-    }
 }
 
 internal class BlockingEventLoop(
