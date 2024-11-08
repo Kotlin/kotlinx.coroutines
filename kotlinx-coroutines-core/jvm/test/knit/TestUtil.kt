@@ -35,9 +35,8 @@ fun <R> test(name: String, block: () -> R): List<String> = outputException(name)
             } finally {
                 // the shutdown
                 log.println("--- shutting down")
-                DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
                 shutdownDispatcherPools(SHUTDOWN_TIMEOUT)
-                DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
+                DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
             }
             checkTestThreads(threadsBefore) // check thread if the main completed successfully
         }
@@ -55,7 +54,7 @@ private fun shutdownDispatcherPools(timeout: Long) {
             (thread.dispatcher.executor as ExecutorService).apply {
                 shutdown()
                 awaitTermination(timeout, TimeUnit.MILLISECONDS)
-                shutdownNow().forEach { DefaultExecutor.enqueue(it) }
+                shutdownNow().forEach { rescheduleTaskFromClosedDispatcher(it) }
             }
     }
 }

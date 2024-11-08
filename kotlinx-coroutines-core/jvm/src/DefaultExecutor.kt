@@ -11,18 +11,27 @@ internal actual val DefaultDelay: Delay = initializeDefaultDelay()
 
 private fun initializeDefaultDelay(): Delay {
     // Opt-out flag
-    if (!defaultMainDelayOptIn) return DefaultExecutor
+    if (!defaultMainDelayOptIn) return DefaultDelayImpl
     val main = Dispatchers.Main
     /*
      * When we already are working with UI and Main threads, it makes
      * no sense to create a separate thread with timer that cannot be controller
      * by the UI runtime.
      */
-    return if (main.isMissing() || main !is Delay) DefaultExecutor else main
+    return if (main.isMissing() || main !is Delay) DefaultDelayImpl else main
 }
 
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
+internal object DefaultExecutor {
+    fun shutdown() = DefaultDelayImpl.shutdown()
+
+    fun ensureStarted() = DefaultDelayImpl.ensureStarted()
+
+    fun shutdownForTests(timeout: Long) = DefaultDelayImpl.shutdownForTests(timeout)
+
+    val isThreadPresent: Boolean get() = DefaultDelayImpl.isThreadPresent
+}
+
+private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
     const val THREAD_NAME = "kotlinx.coroutines.DefaultExecutor"
 
     init {
@@ -61,7 +70,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
         return debugStatus == SHUTDOWN_REQ || debugStatus == SHUTDOWN_ACK
     }
 
-    actual override fun enqueue(task: Runnable) {
+    override fun enqueue(task: Runnable) {
         if (isShutDown) shutdownError()
         super.enqueue(task)
     }
@@ -137,7 +146,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
              * the singleton itself instead of using parent' thread one
              * in order not to accidentally capture temporary application classloader.
              */
-            contextClassLoader = this@DefaultExecutor.javaClass.classLoader
+            contextClassLoader = this@DefaultDelayImpl.javaClass.classLoader
             isDaemon = true
             start()
         }
