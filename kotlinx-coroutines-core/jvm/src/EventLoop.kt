@@ -3,6 +3,7 @@ package kotlinx.coroutines
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.scheduling.*
 import kotlinx.coroutines.scheduling.CoroutineScheduler
+import kotlin.coroutines.EmptyCoroutineContext
 
 internal actual abstract class EventLoopImplPlatform: EventLoop() {
 
@@ -14,9 +15,6 @@ internal actual abstract class EventLoopImplPlatform: EventLoop() {
             unpark(thread)
     }
 
-    protected actual open fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
-        DefaultExecutor.schedule(now, delayedTask)
-    }
 }
 
 internal class BlockingEventLoop(
@@ -122,4 +120,3 @@ internal fun Thread.isIoDispatcherThread(): Boolean {
     if (this !is CoroutineScheduler.Worker) return false
     return isIo()
 }
-

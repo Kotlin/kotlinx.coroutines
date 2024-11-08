@@ -20,5 +20,8 @@ import kotlin.coroutines.*
  *
  * Here, instead of releasing the thread on which `loadConfiguration` runs if `fetchConfigurationData` suspends, it will
  * block, potentially leading to thread starvation issues.
+ *
+ * If new tasks are submitted to the dispatcher created by [runBlocking] after this function returns,
+ * they are resubmitted to [Dispatchers.IO].
  */
 public expect fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T

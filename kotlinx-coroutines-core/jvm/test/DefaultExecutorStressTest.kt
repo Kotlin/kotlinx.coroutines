@@ -8,7 +8,7 @@ class DefaultExecutorStressTest : TestBase() {
     @Test
     fun testDelay() = runTest {
         val iterations = 100_000 * stressTestMultiplier
-        withContext(DefaultExecutor) {
+        withContext(DefaultDelay as CoroutineDispatcher) {
             expect(1)
             var expected = 1
             repeat(iterations) {
