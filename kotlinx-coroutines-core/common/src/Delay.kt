@@ -48,6 +48,8 @@ public interface Delay {
      * Schedules invocation of a specified [block] after a specified delay [timeMillis].
      * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] of this invocation
      * request if it is not needed anymore.
+     *
+     * [block] must execute quickly, be non-blocking, and must not throw any exceptions.
      */
     public fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         DefaultDelay.invokeOnTimeout(timeMillis, block, context)
