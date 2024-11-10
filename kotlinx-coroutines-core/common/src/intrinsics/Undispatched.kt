@@ -38,43 +38,42 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, c
  *
  * It starts the coroutine using [startCoroutineUninterceptedOrReturn].
  */
-internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
-    return undispatchedResult({ true }) {
-        block.startCoroutineUninterceptedOrReturn(receiver, this)
-    }
-}
+internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(
+    receiver: R, block: suspend R.() -> T
+): Any? = startUndspatched(alwaysRethrow = true, receiver, block)
 
 /**
  * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
     receiver: R, block: suspend R.() -> T
-): Any? {
-    return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === this) }) {
-        block.startCoroutineUninterceptedOrReturn(receiver, this)
-    }
-}
+): Any? = startUndspatched(alwaysRethrow = false, receiver, block)
 
-private inline fun <T> ScopeCoroutine<T>.undispatchedResult(
-    shouldThrow: (Throwable) -> Boolean,
-    startBlock: () -> Any?
+/**
+ * Starts and handles the result of an undispatched coroutine, potentially with children.
+ * For example, it handles `coroutineScope { ...suspend of throw, maybe start children... }`
+ * and `launch(start = UNDISPATCHED) { ... }`
+ *
+ * @param alwaysRethrow specifies whether an exception should be unconditioanlly rethrown.
+ *     It is a tweak for 'withTimeout' in order to successfully return values when the block was cancelled:
+ *     i.e. `withTimeout(1ms) { Thread.sleep(1000); 42 }` should not fail.
+ */
+private fun <T, R> ScopeCoroutine<T>.startUndspatched(
+    alwaysRethrow: Boolean,
+    receiver: R, block: suspend R.() -> T
 ): Any? {
     val result = try {
-        startBlock()
+        block.startCoroutineUninterceptedOrReturn(receiver, this)
     } catch (e: Throwable) {
         CompletedExceptionally(e)
     }
+
     /*
-     * We're trying to complete our undispatched block here and have three code-paths:
-     * (1) Coroutine is suspended.
-     * Otherwise, coroutine had returned result, so we are completing our block (and its job).
-     * (2) If we can't complete it or started waiting for children, we suspend.
-     * (3) If we have successfully completed the coroutine state machine here,
-     *     then we take the actual final state of the coroutine from makeCompletingOnce and return it.
-     *
-     * shouldThrow parameter is a special code path for timeout coroutine:
-     * If timeout is exceeded, but withTimeout() block was not suspended, we would like to return block value,
-     * not a timeout exception.
+     * We are trying to complete our undispatched block with the following possible codepaths:
+     * 1) The coroutine just suspended. I.e. `coroutineScope { .. suspend here }`.
+     *   Then just suspend
+     * 2) The coroutine completed with something, but has active children. Wait for them, also suspend
+     * 3) The coroutine succesfully completed. Return or rethrow its result.
      */
     if (result === COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED // (1)
     val state = makeCompletingOnce(result)
@@ -82,11 +81,15 @@ private inline fun <T> ScopeCoroutine<T>.undispatchedResult(
     afterCompletionUndispatched()
     return if (state is CompletedExceptionally) { // (3)
         when {
-            shouldThrow(state.cause) -> throw recoverStackTrace(state.cause, uCont)
+            alwaysRethrow || notOwnTimeout(state.cause) -> throw recoverStackTrace(state.cause, uCont)
             result is CompletedExceptionally -> throw recoverStackTrace(result.cause, uCont)
             else -> result
         }
     } else {
         state.unboxState()
     }
+}
+
+private fun ScopeCoroutine<*>.notOwnTimeout(cause: Throwable): Boolean {
+    return cause !is TimeoutCancellationException || cause.coroutine !== this
 }
