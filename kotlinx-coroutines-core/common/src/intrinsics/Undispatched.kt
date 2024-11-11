@@ -64,6 +64,10 @@ private fun <T, R> ScopeCoroutine<T>.startUndspatched(
 ): Any? {
     val result = try {
         block.startCoroutineUninterceptedOrReturn(receiver, this)
+    } catch (e: DispatchException) {
+        // Special codepath for failing CoroutineDispatcher: rethrow an exception
+        // immediately without waiting for children to indicate something is wrong
+        dispatchException(e)
     } catch (e: Throwable) {
         CompletedExceptionally(e)
     }
@@ -92,4 +96,9 @@ private fun <T, R> ScopeCoroutine<T>.startUndspatched(
 
 private fun ScopeCoroutine<*>.notOwnTimeout(cause: Throwable): Boolean {
     return cause !is TimeoutCancellationException || cause.coroutine !== this
+}
+
+private fun ScopeCoroutine<*>.dispatchException(e: DispatchException) {
+    makeCompleting(CompletedExceptionally(e.cause))
+    throw throw recoverStackTrace(e.cause, uCont)
 }
