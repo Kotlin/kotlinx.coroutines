@@ -167,7 +167,7 @@ dependency of `kotlinx-coroutines-test`) may fail with `DuplicateRelativeFileExc
 
 The problem is that Android merges the resources of all its dependencies into a single directory and complains about
 conflicts, but:
-`kotlinx-coroutines-debug` transitively depends on JNA and JNA-platform, byte-buddy and byte-buddy-agent, both of which include license files in their
+`kotlinx-coroutines-debug` transitively depends on JNA and JNA-platform, byte-buddy and byte-buddy-agent, all of them include license files in their
 META-INF directories. Trying to merge these files leads to conflicts, which means that any Android project that
 depends on JNA and JNA-platform will experience build failures.
 
