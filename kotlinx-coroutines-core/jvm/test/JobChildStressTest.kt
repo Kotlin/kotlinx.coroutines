@@ -77,6 +77,7 @@ class JobChildStressTest : TestBase() {
     fun testChildAttachmentRacingWithLastChildCompletion() {
         // All exceptions should get aggregated here
         repeat(N_ITERATIONS) {
+            val canCloseThePool = CountDownLatch(1)
             runBlocking {
                 val rogueJob = AtomicReference<Job?>()
                 /** not using [createCompletableDeferredForTesting] because we don't need extra children. */
@@ -89,14 +90,11 @@ class JobChildStressTest : TestBase() {
                 launch(pool + deferred) {
                     deferred.complete(Unit) // Transition deferred into "completing" state waiting for current child
                     // **Asynchronously** submit task that launches a child so it races with completion
-                    try {
-                        pool.executor.execute {
-                            rogueJob.set(launch(pool + deferred) {
-                                throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
-                            })
-                        }
-                    } catch (_: RejectedExecutionException) {
-                        // This is expected if the pool is closed
+                    pool.executor.execute {
+                        rogueJob.set(launch(pool + deferred) {
+                            throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
+                        })
+                        canCloseThePool.countDown()
                     }
                 }
 
@@ -104,6 +102,12 @@ class JobChildStressTest : TestBase() {
                 val rogue = rogueJob.get()
                 if (rogue?.isActive == true) {
                     throw TestException("Rogue job $rogue with parent " + rogue.parent + " and children list: " + rogue.parent?.children?.toList())
+                } else {
+                    canCloseThePool.await()
+                    rogueJob.get().let {
+                        assertNotNull(it)
+                        assertTrue(it.isCancelled)
+                    }
                 }
             }
         }
