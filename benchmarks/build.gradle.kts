@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.github.johnrengelman.shadow")
     id("me.champeau.jmh")
 }
 
