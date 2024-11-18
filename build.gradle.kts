@@ -27,9 +27,6 @@ buildscript {
         classpath("ru.vyarus:gradle-animalsniffer-plugin:${version("animalsniffer")}") // Android API check
         classpath("org.jetbrains.kotlin:atomicfu:${version("kotlin")}")
         classpath("org.jetbrains.kotlinx:kover-gradle-plugin:${version("kover")}")
-
-        // JMH plugins
-        classpath("gradle.plugin.com.github.johnrengelman:shadow:${version("shadow")}")
     }
 
     with(CacheRedirector) { buildscript.configureBuildScript(rootProject) }
