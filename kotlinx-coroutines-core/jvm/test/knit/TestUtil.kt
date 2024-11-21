@@ -24,7 +24,6 @@ fun <R> test(name: String, block: () -> R): List<String> = outputException(name)
     try {
         captureOutput(name, stdoutEnabled = OUT_ENABLED) { log ->
             DefaultScheduler.usePrivateScheduler()
-            DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
             resetCoroutineId()
             val threadsBefore = currentThreads()
             try {

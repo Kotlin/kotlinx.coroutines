@@ -172,7 +172,6 @@ fun initPoolsBeforeTest() {
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 fun shutdownPoolsAfterTest() {
     DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
-    DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
     DefaultScheduler.restore()
 }
 

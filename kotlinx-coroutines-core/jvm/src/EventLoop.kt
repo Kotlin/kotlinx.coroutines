@@ -1,25 +1,25 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.scheduling.*
 import kotlinx.coroutines.scheduling.CoroutineScheduler
-import kotlin.coroutines.EmptyCoroutineContext
 
 internal actual abstract class EventLoopImplPlatform: EventLoop() {
-
-    protected abstract val thread: Thread
+    /** Returns `null` if a thread was created and doesn't need to be awoken.
+     * Returns a thread to awaken if the thread already existed when this method was called. */
+    protected abstract fun startThreadOrObtainSleepingThread(): Thread?
 
     protected actual fun unpark() {
-        val thread = thread // atomic read
-        if (Thread.currentThread() !== thread)
-            unpark(thread)
+        startThreadOrObtainSleepingThread()?.let(::unpark)
     }
 
 }
 
 internal class BlockingEventLoop(
-    override val thread: Thread
-) : EventLoopImplBase()
+    private val thread: Thread
+) : EventLoopImplBase() {
+    override fun startThreadOrObtainSleepingThread(): Thread? =
+        if (Thread.currentThread() !== thread) thread else null
+
+}
 
 internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.currentThread())
 

@@ -13,33 +13,6 @@ abstract class SchedulerTestBase : TestBase() {
     companion object {
         val CORES_COUNT = AVAILABLE_PROCESSORS
 
-        /**
-         * Asserts that [expectedThreadsCount] pool worker threads were created.
-         * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
-         */
-        fun checkPoolThreadsCreated(expectedThreadsCount: Int = CORES_COUNT) {
-            val threadsCount = maxSequenceNumber()!!
-            assertEquals(expectedThreadsCount, threadsCount, "Expected $expectedThreadsCount pool threads, but has $threadsCount")
-        }
-
-        /**
-         * Asserts that any number of pool worker threads in [range] were created.
-         * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
-         */
-        fun checkPoolThreadsCreated(range: IntRange, base: Int = CORES_COUNT) {
-            val maxSequenceNumber = maxSequenceNumber()!!
-            val r = (range.first)..(range.last + base)
-            assertTrue(
-                maxSequenceNumber in r,
-                "Expected pool threads to be in interval $r, but has $maxSequenceNumber"
-            )
-        }
-
-        private fun maxSequenceNumber(): Int? {
-            return Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }
-                .map { sequenceNumber(it.name) }.maxOrNull()
-        }
-
         private fun sequenceNumber(threadName: String): Int {
             val suffix = threadName.substring(threadName.lastIndexOf("-") + 1)
             val separatorIndex = suffix.indexOf(' ')
@@ -49,8 +22,6 @@ abstract class SchedulerTestBase : TestBase() {
 
             return suffix.substring(0, separatorIndex).toInt()
         }
-
-        suspend fun Iterable<Job>.joinAll() = forEach { it.join() }
     }
 
     protected var corePoolSize = CORES_COUNT
@@ -85,19 +56,43 @@ abstract class SchedulerTestBase : TestBase() {
         return _dispatcher!!.limitedParallelism(parallelism)
     }
 
+    /**
+     * Asserts that [expectedThreadsCount] pool worker threads were created.
+     * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
+     */
+    fun checkPoolThreadsCreated(expectedThreadsCount: Int = CORES_COUNT) {
+        val threadsCount = maxSequenceNumber()!!
+        assertEquals(expectedThreadsCount, threadsCount, "Expected $expectedThreadsCount pool threads, but has $threadsCount")
+    }
+
+    /**
+     * Asserts that any number of pool worker threads in [range] were created.
+     * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
+     */
+    fun checkPoolThreadsCreated(range: IntRange, base: Int = CORES_COUNT) {
+        val maxSequenceNumber = maxSequenceNumber()!!
+        val r = (range.first)..(range.last + base)
+        assertTrue(
+            maxSequenceNumber in r,
+            "Expected pool threads to be in interval $r, but has $maxSequenceNumber"
+        )
+    }
+
+    private fun maxSequenceNumber(): Int? {
+        return Thread.getAllStackTraces().keys.asSequence().filter {
+            it is CoroutineScheduler.Worker && it.scheduler === _dispatcher?.executor
+        }.map { sequenceNumber(it.name) }.maxOrNull()
+    }
+
     @After
     fun after() {
-        runBlocking {
-            withTimeout(5_000) {
-                _dispatcher?.close()
-            }
-        }
+        _dispatcher?.close()
     }
 }
 
 /**
  * Implementation note:
- * Our [Dispatcher.IO] is a [limitedParallelism][CoroutineDispatcher.limitedParallelism] dispatcher
+ * Our [Dispatchers.IO] is a [limitedParallelism][CoroutineDispatcher.limitedParallelism] dispatcher
  * on top of unbounded scheduler. We want to test this scenario, but on top of non-singleton
  * scheduler so we can control the number of threads, thus this method.
  */

@@ -1,8 +1,9 @@
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
-import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
 
 private val defaultMainDelayOptIn = systemProp("kotlinx.coroutines.main.delay", false)
 
@@ -21,78 +22,38 @@ private fun initializeDefaultDelay(): Delay {
     return if (main.isMissing() || main !is Delay) DefaultDelayImpl else main
 }
 
-internal object DefaultExecutor {
-    fun shutdown() = DefaultDelayImpl.shutdown()
-
-    fun ensureStarted() = DefaultDelayImpl.ensureStarted()
-
-    fun shutdownForTests(timeout: Long) = DefaultDelayImpl.shutdownForTests(timeout)
-
-    val isThreadPresent: Boolean get() = DefaultDelayImpl.isThreadPresent
+/**
+ * This method can be invoked after all coroutines are completed to wait for the default delay executor to shut down
+ * in response to the lack of tasks.
+ *
+ * This is only useful in tests to ensure that setting a fresh virtual time source will not confuse the default delay
+ * still running the previous test.
+ *
+ * Does nothing if the default delay executor is not in use.
+ *
+ * @throws IllegalStateException if the shutdown process notices new tasks entering the system
+ * @throws IllegalStateException if the shutdown process times out
+ */
+internal fun ensureDefaultDelayDeinitialized(timeout: Duration) {
+    (DefaultDelay as? DefaultDelayImpl)?.shutdownForTests(timeout)
 }
 
 private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
-    const val THREAD_NAME = "kotlinx.coroutines.DefaultExecutor"
+    const val THREAD_NAME = "kotlinx.coroutines.DefaultDelay"
 
     init {
         incrementUseCount() // this event loop is never completed
     }
 
-    private const val DEFAULT_KEEP_ALIVE_MS = 1000L // in milliseconds
+    private val _thread = atomic<Thread?>(null)
 
-    private val KEEP_ALIVE_NANOS = TimeUnit.MILLISECONDS.toNanos(
-        try {
-            java.lang.Long.getLong("kotlinx.coroutines.DefaultExecutor.keepAlive", DEFAULT_KEEP_ALIVE_MS)
-        } catch (e: SecurityException) {
-            DEFAULT_KEEP_ALIVE_MS
-        })
-
-    @Suppress("ObjectPropertyName")
-    @Volatile
-    private var _thread: Thread? = null
-
-    override val thread: Thread
-        get() = _thread ?: createThreadSync()
-
-    private const val FRESH = 0
-    private const val ACTIVE = 1
-    private const val SHUTDOWN_REQ = 2
-    private const val SHUTDOWN_ACK = 3
-    private const val SHUTDOWN = 4
-
-    @Volatile
-    private var debugStatus: Int = FRESH
-
-    private val isShutDown: Boolean get() = debugStatus == SHUTDOWN
-
-    private val isShutdownRequested: Boolean get() {
-        val debugStatus = debugStatus
-        return debugStatus == SHUTDOWN_REQ || debugStatus == SHUTDOWN_ACK
-    }
-
-    override fun enqueue(task: Runnable) {
-        if (isShutDown) shutdownError()
-        super.enqueue(task)
-    }
-
-     override fun reschedule(now: Long, delayedTask: DelayedTask) {
-         // Reschedule on default executor can only be invoked after Dispatchers.shutdown
-         shutdownError()
-    }
-
-    private fun shutdownError() {
-        throw RejectedExecutionException("DefaultExecutor was shut down. " +
-            "This error indicates that Dispatchers.shutdown() was invoked prior to completion of exiting coroutines, leaving coroutines in incomplete state. " +
-            "Please refer to Dispatchers.shutdown documentation for more details")
-    }
-
-    override fun shutdown() {
-        debugStatus = SHUTDOWN
-        super.shutdown()
+    /** Can only happen when tests close the default executor */
+    override fun reschedule(now: Long, delayedTask: DelayedTask) {
+        throw IllegalStateException("Attempted to schedule $delayedTask at $now after shutdown")
     }
 
     /**
-     * All event loops are using DefaultExecutor#invokeOnTimeout to avoid livelock on
+     * All event loops are using DefaultDelay#invokeOnTimeout to avoid livelock on
      * ```
      * runBlocking(eventLoop) { withTimeout { while(isActive) { ... } } }
      * ```
@@ -104,100 +65,70 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
         scheduleInvokeOnTimeout(timeMillis, block)
 
     override fun run() {
-        ThreadLocalEventLoop.setEventLoop(this)
-        registerTimeLoopThread()
+        val currentThread = Thread.currentThread()
+        if (!_thread.compareAndSet(null, currentThread)) return // some other thread won the race to start the thread
+        val oldName = currentThread.name
+        currentThread.name = THREAD_NAME
         try {
-            var shutdownNanos = Long.MAX_VALUE
-            if (!notifyStartup()) return
-            while (true) {
-                Thread.interrupted() // just reset interruption flag
-                var parkNanos = processNextEvent()
-                if (parkNanos == Long.MAX_VALUE) {
-                    // nothing to do, initialize shutdown timeout
-                    val now = nanoTime()
-                    if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
-                    val tillShutdown = shutdownNanos - now
-                    if (tillShutdown <= 0) return // shut thread down
-                    parkNanos = parkNanos.coerceAtMost(tillShutdown)
-                } else
-                    shutdownNanos = Long.MAX_VALUE
-                if (parkNanos > 0) {
-                    // check if shutdown was requested and bail out in this case
-                    if (isShutdownRequested) return
-                    parkNanos(this, parkNanos)
+            ThreadLocalEventLoop.setEventLoop(DefaultDelayImpl)
+            registerTimeLoopThread()
+            try {
+                while (true) {
+                    Thread.interrupted() // just reset interruption flag
+                    val parkNanos = processNextEvent()
+                    if (parkNanos == Long.MAX_VALUE) break // no more events
+                    parkNanos(DefaultDelayImpl, parkNanos)
+                }
+            } finally {
+                _thread.value = null
+                unregisterTimeLoopThread()
+                // recheck if queues are empty after _thread reference was set to null (!!!)
+                if (isEmpty) {
+                    notifyAboutThreadExiting()
+                } else {
+                    /* recreate the thread, as there is still work to do,
+                    and `unpark` could have awoken the thread we're currently running on */
+                    startThreadOrObtainSleepingThread()
                 }
             }
         } finally {
-            _thread = null // this thread is dead
-            acknowledgeShutdownIfNeeded()
-            unregisterTimeLoopThread()
-            // recheck if queues are empty after _thread reference was set to null (!!!)
-            if (!isEmpty) thread // recreate thread if it is needed
+            currentThread.name = oldName
         }
     }
 
-    @Synchronized
-    private fun createThreadSync(): Thread {
-        return _thread ?: Thread(this, THREAD_NAME).apply {
-            _thread = this
-            /*
-             * `DefaultExecutor` is a global singleton that creates its thread lazily.
-             * To isolate the classloaders properly, we are inherting the context classloader from
-             * the singleton itself instead of using parent' thread one
-             * in order not to accidentally capture temporary application classloader.
-             */
-            contextClassLoader = this@DefaultDelayImpl.javaClass.classLoader
-            isDaemon = true
-            start()
+    override fun startThreadOrObtainSleepingThread(): Thread? {
+        // Check if the thread is already running
+        _thread.value?.let { return it }
+        /* Now we know that at the moment of this call the thread was not initially running.
+        This means that whatever thread is going to be running by the end of this function,
+        it's going to notice the tasks it's supposed to run.
+        We can return `null` unconditionally. */
+        ioView.dispatch(ioView, this)
+        return null
+    }
+
+    fun shutdownForTests(timeout: Duration) {
+        if (_thread.value != null) {
+            val end = System.currentTimeMillis() + timeout.inWholeMilliseconds
+            while (true) {
+                check(isEmpty) { "There are tasks in the DefaultExecutor" }
+                synchronized(this) {
+                    unpark(_thread.value ?: return)
+                    val toWait = end - System.currentTimeMillis()
+                    check(toWait > 0) { "Timeout waiting for DefaultExecutor to shutdown" }
+                    (this as Object).wait(toWait)
+                }
+            }
         }
     }
 
-    // used for tests
-    @Synchronized
-    internal fun ensureStarted() {
-        assert { _thread == null } // ensure we are at a clean state
-        assert { debugStatus == FRESH || debugStatus == SHUTDOWN_ACK }
-        debugStatus = FRESH
-        createThreadSync() // create fresh thread
-        while (debugStatus == FRESH) (this as Object).wait()
+    private fun notifyAboutThreadExiting() {
+        synchronized(this) { (this as Object).notifyAll() }
     }
 
-    @Synchronized
-    private fun notifyStartup(): Boolean {
-        if (isShutdownRequested) return false
-        debugStatus = ACTIVE
-        (this as Object).notifyAll()
-        return true
-    }
-
-    @Synchronized // used _only_ for tests
-    fun shutdownForTests(timeout: Long) {
-        val deadline = System.currentTimeMillis() + timeout
-        if (!isShutdownRequested) debugStatus = SHUTDOWN_REQ
-        // loop while there is anything to do immediately or deadline passes
-        while (debugStatus != SHUTDOWN_ACK && _thread != null) {
-            _thread?.let { unpark(it) } // wake up thread if present
-            val remaining = deadline - System.currentTimeMillis()
-            if (remaining <= 0) break
-            (this as Object).wait(timeout)
-        }
-        // restore fresh status
-        debugStatus = FRESH
-    }
-
-    @Synchronized
-    private fun acknowledgeShutdownIfNeeded() {
-        if (!isShutdownRequested) return
-        debugStatus = SHUTDOWN_ACK
-        resetAll() // clear queues
-        (this as Object).notifyAll()
-    }
-
-    // User only for testing and nothing else
-    internal val isThreadPresent
-        get() = _thread != null
-
-    override fun toString(): String {
-        return "DefaultExecutor"
-    }
+    override fun toString(): String = "DefaultDelay"
 }
+
+/** A view separate from [Dispatchers.IO].
+ * [Int.MAX_VALUE] instead of `1` to avoid needlessly using the [LimitedDispatcher] machinery. */
+private val ioView = Dispatchers.IO.limitedParallelism(Int.MAX_VALUE)
