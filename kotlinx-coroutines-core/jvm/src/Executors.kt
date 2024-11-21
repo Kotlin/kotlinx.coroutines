@@ -189,14 +189,6 @@ private class ResumeUndispatchedRunnable(
     }
 }
 
-private class ResumeDispatchedRunnable(
-    private val continuation: CancellableContinuation<Unit>
-) : Runnable {
-    override fun run() {
-        continuation.resume(Unit)
-    }
-}
-
 /**
  * An implementation of [DisposableHandle] that cancels the specified future on dispose.
  * @suppress **This is unstable API and it is subject to change.**
