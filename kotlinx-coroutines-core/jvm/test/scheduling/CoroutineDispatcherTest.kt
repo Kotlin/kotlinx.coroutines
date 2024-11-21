@@ -1,6 +1,5 @@
 package kotlinx.coroutines.scheduling
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
@@ -17,17 +16,22 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     @Test
     fun testSingleThread() = runBlocking {
         corePoolSize = 1
+        println("1. Thread is ${Thread.currentThread()}")
         expect(1)
         withContext(dispatcher) {
             require(Thread.currentThread() is CoroutineScheduler.Worker)
+            println("2. Thread is ${Thread.currentThread()}")
             expect(2)
             val job = async {
+                println("3. Thread is ${Thread.currentThread()}")
                 expect(3)
                 delay(10)
+                println("4. Thread is ${Thread.currentThread()}")
                 expect(4)
             }
 
             job.await()
+            println("5. Thread is ${Thread.currentThread()}")
             expect(5)
         }
 

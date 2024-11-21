@@ -8,7 +8,7 @@ import kotlin.time.*
 
 internal actual abstract class EventLoopImplPlatform : EventLoop() {
 
-    private val current = Worker.current
+    private val current = Worker.current // not `get()`! We're interested in the worker at the moment of creation.
 
     protected actual fun unpark() {
         current.executeAfter(0L, {})// send an empty task to unpark the waiting event loop
