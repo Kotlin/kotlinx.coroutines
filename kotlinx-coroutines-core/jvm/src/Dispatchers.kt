@@ -66,8 +66,8 @@ public actual object Dispatchers {
     /**
      * Shuts down built-in dispatchers, such as [Default] and [IO],
      * stopping all the threads associated with them and making them reject all new tasks.
-     * Dispatcher used as a fallback for time-related operations (`delay`, `withTimeout`)
-     * and to handle rejected tasks from other dispatchers is also shut down.
+     * Dispatchers used as fallbacks for time-related operations (`delay`, `withTimeout`)
+     * and to handle rejected tasks from other dispatchers are also shut down.
      *
      * This is a **delicate** API. It is not supposed to be called from a general
      * application-level code and its invocation is irreversible.
@@ -85,7 +85,6 @@ public actual object Dispatchers {
      */
     @DelicateCoroutinesApi
     public fun shutdown() {
-        DefaultExecutor.shutdown()
         // Also shuts down Dispatchers.IO
         DefaultScheduler.shutdown()
     }
