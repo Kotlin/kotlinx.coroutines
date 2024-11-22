@@ -206,8 +206,12 @@ internal class CoroutinesTimeoutExtension internal constructor(
     }
 
     private fun<T> Class<T>.coroutinesTimeoutAnnotation(): Optional<CoroutinesTimeout> =
-        AnnotationSupport.findAnnotation(this, CoroutinesTimeout::class.java).or {
-            enclosingClass?.coroutinesTimeoutAnnotation() ?: Optional.empty()
+        AnnotationSupport.findAnnotation(this, CoroutinesTimeout::class.java).let {
+            when {
+                it.isPresent -> it
+                enclosingClass != null -> enclosingClass.coroutinesTimeoutAnnotation()
+                else -> Optional.empty()
+            }
         }
 
     private fun <T: Any?> interceptMethod(
@@ -232,7 +236,7 @@ internal class CoroutinesTimeoutExtension internal constructor(
         }
         /* The extension was registered via an annotation; check that we succeeded in finding the annotation that led to
         the extension being registered and taking its parameters. */
-        if (testAnnotationOptional.isEmpty && classAnnotationOptional.isEmpty) {
+        if (!testAnnotationOptional.isPresent && !classAnnotationOptional.isPresent) {
             throw UnsupportedOperationException("Timeout was registered with a CoroutinesTimeout annotation, but we were unable to find it. Please report this.")
         }
         return when {

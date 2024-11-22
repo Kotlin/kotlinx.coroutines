@@ -167,7 +167,7 @@ compileTestKotlin {
 }
 
 check {
-    dependsOn([jvmCoreTest, debugDynamicAgentTest, mavenTest, debugAgentTest, coreAgentTest, ":jpmsTest:check", 'smokeTest:build'])
+    dependsOn([jvmCoreTest, debugDynamicAgentTest, mavenTest, debugAgentTest, coreAgentTest, ":jpmsTest:check", 'smokeTest:build', "java8Test:check"])
 }
 compileKotlin {
     kotlinOptions {
