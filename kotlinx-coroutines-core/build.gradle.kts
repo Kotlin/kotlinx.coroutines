@@ -4,6 +4,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.testing.*
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
 
 plugins {
     kotlin("multiplatform")
@@ -147,8 +149,18 @@ kotlin {
 benchmark {
     targets {
         register("jvmBenchmark")
+        register("js")
     }
 }
+
+//project.the<NodeJsRootExtension>().apply {
+//    nodeVersion = "21.0.0-v8-canary202310177990572111"
+//    nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+//}
+//
+//project.tasks.withType<KotlinNpmInstallTask>().configureEach {
+//    args.add("--ignore-engines")
+//}
 
 // Update module name for metadata artifact to avoid conflicts
 // see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
