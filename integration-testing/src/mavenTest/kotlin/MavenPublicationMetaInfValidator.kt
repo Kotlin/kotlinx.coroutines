@@ -48,10 +48,10 @@ class MavenPublicationMetaInfValidator {
     private fun JarFile.checkMetaInfStructure(expected: Set<String>) {
         val actual = HashSet<String>()
         for (e in entries()) {
-            if (e.isDirectory() || !e.realName.contains("META-INF")) {
+            if (e.isDirectory() || !e.name.contains("META-INF")) {
                 continue
             }
-            val partialName = e.realName.substringAfter("META-INF/")
+            val partialName = e.name.substringAfter("META-INF/")
             actual.add(partialName)
         }
 
