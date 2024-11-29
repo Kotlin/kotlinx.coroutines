@@ -27,7 +27,6 @@ import kotlin.time.Duration.Companion.seconds
  *   with a [TestResult] is to immediately `return` it from a test.
  * - Don't nest functions returning a [TestResult].
  */
-@Suppress("NO_ACTUAL_FOR_EXPECT")
 public expect class TestResult
 
 /**
@@ -409,7 +408,6 @@ public fun TestScope.runTest(
 /**
  * Runs [testProcedure], creating a [TestResult].
  */
-@Suppress("NO_ACTUAL_FOR_EXPECT") // actually suppresses `TestResult`
 internal expect fun createTestResult(testProcedure: suspend CoroutineScope.() -> Unit): TestResult
 
 /** A coroutine context element indicating that the coroutine is running inside `runTest`. */

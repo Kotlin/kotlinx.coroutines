@@ -3,12 +3,10 @@ package kotlinx.coroutines.internal
 import java.util.*
 import kotlin.concurrent.withLock as withLockJvm
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias ReentrantLock = java.util.concurrent.locks.ReentrantLock
 
 internal actual inline fun <T> ReentrantLock.withLock(action: () -> T) = this.withLockJvm(action)
 
-@Suppress("ACTUAL_WITHOUT_EXPECT") // Visibility
 internal actual typealias WorkaroundAtomicReference<T> = java.util.concurrent.atomic.AtomicReference<T>
 
 // BenignDataRace is OptionalExpectation and doesn't have to be here

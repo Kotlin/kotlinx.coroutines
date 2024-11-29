@@ -198,10 +198,8 @@ private fun StackTraceElement.elementWiseEquals(e: StackTraceElement): Boolean {
             && fileName == e.fileName && className == e.className
 }
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias CoroutineStackFrame = kotlin.coroutines.jvm.internal.CoroutineStackFrame
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias StackTraceElement = java.lang.StackTraceElement
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")

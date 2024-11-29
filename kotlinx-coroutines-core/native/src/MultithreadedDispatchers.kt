@@ -92,8 +92,11 @@ private class MultiWorkerDispatcher(
      */
     private val tasksAndWorkersCounter = atomic(0L)
 
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun Long.isClosed() = this and 1L == 1L
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun Long.hasTasks() = this >= 2
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun Long.hasWorkers() = this < 0
 
     private fun workerRunLoop() = runBlocking {

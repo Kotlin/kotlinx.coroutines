@@ -64,6 +64,7 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
     var completed = false
     ThreadLocalKeepAlive.addCheck { !completed }
     try {
+        @Suppress("LEAKED_IN_PLACE_LAMBDA") // Contract is preserved, invoked immediately or throws
         coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
         return coroutine.joinBlocking()
     } finally {

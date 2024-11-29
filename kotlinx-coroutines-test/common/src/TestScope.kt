@@ -304,7 +304,6 @@ internal class TestScopeImpl(context: CoroutineContext) :
 }
 
 /** Use the knowledge that any [TestScope] that we receive is necessarily a [TestScopeImpl]. */
-@Suppress("NO_ELSE_IN_WHEN") // TODO: a problem with `sealed` in MPP not allowing total pattern-matching
 internal fun TestScope.asSpecificImplementation(): TestScopeImpl = when (this) {
     is TestScopeImpl -> this
 }
