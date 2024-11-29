@@ -168,8 +168,7 @@ public suspend fun <T> withContext(
         }
         // SLOW PATH -- use new dispatcher
         val coroutine = DispatchedCoroutine(newContext, uCont)
-        // Contract is preserved, invoked immediately or throws
-        @Suppress("LEAKED_IN_PLACE_LAMBDA")
+        @Suppress("LEAKED_IN_PLACE_LAMBDA")  // Contract is preserved, invoked immediately or throws
         block.startCoroutineCancellable(coroutine, coroutine)
         coroutine.getResult()
     }
