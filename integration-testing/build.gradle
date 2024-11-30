@@ -122,6 +122,7 @@ sourceSets {
 compileDebugAgentTestKotlin {
     kotlinOptions {
         freeCompilerArgs += ["-Xallow-kotlin-package"]
+        jvmTarget = "1.8"
     }
 }
 
@@ -177,10 +178,6 @@ compileKotlin {
 }
 
 kotlin.jvmToolchain(17)
-
-tasks.compileDebugAgentTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-}
 
 // Drop this when node js version become stable
 tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask.class).configureEach {
