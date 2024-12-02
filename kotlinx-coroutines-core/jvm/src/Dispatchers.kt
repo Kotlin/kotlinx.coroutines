@@ -19,7 +19,8 @@ public actual object Dispatchers {
     public actual val Main: MainCoroutineDispatcher get() = MainDispatcherLoader.dispatcher
 
     @JvmStatic
-    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
+    public actual val Unconfined: CoroutineDispatcher get() =
+        kotlinx.coroutines.Unconfined
 
     /**
      * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
