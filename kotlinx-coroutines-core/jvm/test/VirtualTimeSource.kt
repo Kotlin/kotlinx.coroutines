@@ -48,7 +48,7 @@ internal class VirtualTimeSource(
     @Volatile
     private var time: Long = 0
 
-    private var trackedTasks = 0
+    private val trackedTasks = HashSet<Any>()
 
     private val threads = ConcurrentHashMap<Thread, ThreadStatus>()
 
@@ -56,22 +56,21 @@ internal class VirtualTimeSource(
     override fun nanoTime(): Long = time
 
     override fun wrapTask(block: Runnable): Runnable {
-        trackTask()
+        trackTask(block)
         return Runnable {
             try { block.run() }
-            finally { unTrackTask() }
+            finally { unTrackTask(block) }
         }
     }
 
     @Synchronized
-    override fun trackTask() {
-        trackedTasks++
+    override fun trackTask(obj: Any) {
+        trackedTasks.add(obj)
     }
 
     @Synchronized
-    override fun unTrackTask() {
-        assert(trackedTasks > 0)
-        trackedTasks--
+    override fun unTrackTask(obj: Any) {
+        trackedTasks.remove(obj)
     }
 
     @Synchronized
@@ -125,7 +124,7 @@ internal class VirtualTimeSource(
             return
         }
         if (threads[mainThread] == null) return
-        if (trackedTasks != 0) return
+        if (trackedTasks.isNotEmpty()) return
         val minParkedTill = minParkedTill()
         if (minParkedTill <= time) return
         time = minParkedTill
@@ -145,6 +144,7 @@ internal class VirtualTimeSource(
         isShutdown = true
         wakeupAll()
         while (!threads.isEmpty()) (this as Object).wait()
+        assert(trackedTasks.isEmpty()) { "There are still tracked tasks: $trackedTasks" }
     }
 
     private fun wakeupAll() {

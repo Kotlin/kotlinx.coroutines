@@ -3,6 +3,8 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.scheduling.*
+import kotlinx.coroutines.scheduling.scheduleBackgroundIoTask
 import kotlin.coroutines.*
 import kotlin.time.Duration
 
@@ -78,7 +80,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
                     Thread.interrupted() // just reset interruption flag
                     val parkNanos = processNextEvent()
                     if (parkNanos == Long.MAX_VALUE) break // no more events
-                    parkNanos(this@DefaultDelayImpl, parkNanos)
+                    if (parkNanos > 0) parkNanos(this@DefaultDelayImpl, parkNanos)
                 }
             } finally {
                 _thread.value = null
@@ -105,7 +107,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
         This means that whatever thread is going to be running by the end of this function,
         it's going to notice the tasks it's supposed to run.
         We can return `null` unconditionally. */
-        ioView.dispatch(ioView, this)
+        scheduleBackgroundIoTask(this)
         return null
     }
 
@@ -113,7 +115,6 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
         if (_thread.value != null) {
             val end = System.currentTimeMillis() + timeout.inWholeMilliseconds
             while (true) {
-                check(delayedQueueIsEmpty) { "There are tasks in the DefaultExecutor" }
                 synchronized(this) {
                     unpark(_thread.value ?: return)
                     val toWait = end - System.currentTimeMillis()
@@ -155,6 +156,7 @@ private fun defaultDelayRunningUnconfinedLoop(): Nothing {
         "but no tasks can run on this thread."
     )
 }
+
 
 /** A view separate from [Dispatchers.IO].
  * [Int.MAX_VALUE] instead of `1` to avoid needlessly using the [LimitedDispatcher] machinery. */
