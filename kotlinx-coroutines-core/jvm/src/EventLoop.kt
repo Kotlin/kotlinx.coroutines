@@ -46,7 +46,7 @@ internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.curr
 public fun processNextEventInCurrentThread(): Long =
     // This API is used in Ktor for serverless integration where a single thread awaits a blocking call
     // (and, to avoid actual blocking, does something via this call), see #850
-    ThreadLocalEventLoop.currentOrNull()?.processNextEvent() ?: Long.MAX_VALUE
+    ThreadLocalEventLoop.currentOrNull()?.tryUseAsEventLoop()?.processNextEvent() ?: Long.MAX_VALUE
 
 internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()
 

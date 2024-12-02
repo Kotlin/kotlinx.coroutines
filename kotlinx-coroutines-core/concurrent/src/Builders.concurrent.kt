@@ -25,3 +25,6 @@ import kotlin.coroutines.*
  * they are resubmitted to [Dispatchers.IO].
  */
 public expect fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T
+
+internal fun UnconfinedEventLoop.useAsEventLoopForRunBlockingOrFail(): EventLoop =
+    tryUseAsEventLoop() ?: throw IllegalStateException("runBlocking can not be run in direct dispatchers")

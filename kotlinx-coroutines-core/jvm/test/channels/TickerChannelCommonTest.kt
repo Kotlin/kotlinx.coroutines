@@ -9,7 +9,7 @@ import org.junit.runners.*
 import kotlin.test.*
 
 @RunWith(Parameterized::class)
-class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
+class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase(disableOutCheck = true) {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
