@@ -1,3 +1,4 @@
+@file:JvmName("DefaultExecutorKt")
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
@@ -70,20 +71,21 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
         val oldName = currentThread.name
         currentThread.name = THREAD_NAME
         try {
-            ThreadLocalEventLoop.setEventLoop(DefaultDelayImpl)
+            ThreadLocalEventLoop.setEventLoop(DelegatingUnconfinedEventLoop)
             registerTimeLoopThread()
             try {
                 while (true) {
                     Thread.interrupted() // just reset interruption flag
                     val parkNanos = processNextEvent()
                     if (parkNanos == Long.MAX_VALUE) break // no more events
-                    parkNanos(DefaultDelayImpl, parkNanos)
+                    parkNanos(this@DefaultDelayImpl, parkNanos)
                 }
             } finally {
                 _thread.value = null
                 unregisterTimeLoopThread()
+                ThreadLocalEventLoop.resetEventLoop()
                 // recheck if queues are empty after _thread reference was set to null (!!!)
-                if (isEmpty) {
+                if (delayedQueueIsEmpty) {
                     notifyAboutThreadExiting()
                 } else {
                     /* recreate the thread, as there is still work to do,
@@ -111,7 +113,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
         if (_thread.value != null) {
             val end = System.currentTimeMillis() + timeout.inWholeMilliseconds
             while (true) {
-                check(isEmpty) { "There are tasks in the DefaultExecutor" }
+                check(delayedQueueIsEmpty) { "There are tasks in the DefaultExecutor" }
                 synchronized(this) {
                     unpark(_thread.value ?: return)
                     val toWait = end - System.currentTimeMillis()
@@ -127,6 +129,31 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
     }
 
     override fun toString(): String = "DefaultDelay"
+}
+
+private object DelegatingUnconfinedEventLoop: UnconfinedEventLoop {
+    override val thisLoopsTaskCanAvoidYielding: Boolean
+        get() = defaultDelayRunningUnconfinedLoop()
+
+    override val isUnconfinedLoopActive: Boolean get() = false
+
+    override fun runUnconfinedEventLoop(initialBlock: () -> Unit) {
+        ioView.dispatch(ioView, Runnable {
+            ThreadLocalEventLoop.unconfinedEventLoop.runUnconfinedEventLoop(initialBlock)
+        })
+    }
+
+    override fun dispatchUnconfined(task: DispatchedTask<*>) =
+        defaultDelayRunningUnconfinedLoop()
+
+    override fun tryUseAsEventLoop(): EventLoop? = null
+}
+
+private fun defaultDelayRunningUnconfinedLoop(): Nothing {
+    throw UnsupportedOperationException(
+        "This method can only be called from the thread where an unconfined event loop is running, " +
+        "but no tasks can run on this thread."
+    )
 }
 
 /** A view separate from [Dispatchers.IO].

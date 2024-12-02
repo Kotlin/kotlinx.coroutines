@@ -6,6 +6,48 @@ import kotlin.concurrent.Volatile
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
+internal interface UnconfinedEventLoop {
+    /**
+     * Returns `true` if calling [yield] in a coroutine in this event loop can avoid yielding and continue executing
+     * due to there being no other tasks in the queue.
+     *
+     * This can only be called from the thread that owns this event loop.
+     */
+    val thisLoopsTaskCanAvoidYielding: Boolean
+
+    /**
+     * Returns `true` if someone (typically a call to [runUnconfinedEventLoop]) is currently processing the tasks,
+     * so calling [dispatchUnconfined] is guaranteed to be processed eventually.
+     *
+     * This can only be called from the thread that owns this event loop.
+     */
+    val isUnconfinedLoopActive: Boolean
+
+    /**
+     * Executes [initialBlock] and then processes unconfined tasks until there are no more, blocking the current thread.
+     *
+     * This can only be called when no other [runUnconfinedEventLoop] is currently active on this event loop.
+     *
+     * This can only be called from the thread that owns this event loop.
+     */
+    fun runUnconfinedEventLoop(initialBlock: () -> Unit)
+
+    /**
+     * Sends the [task] to this event loop for execution.
+     *
+     * This method should only be called while [isUnconfinedLoopActive] is `true`.
+     * Otherwise, the task may be left unprocessed.
+     *
+     * This can only be called from the thread that owns this event loop.
+     */
+    fun dispatchUnconfined(task: DispatchedTask<*>)
+
+    /**
+     * Tries to interpret this event loop for unconfined tasks as a proper event loop and returns it if successful.
+     */
+    fun tryUseAsEventLoop(): EventLoop?
+}
+
 /**
  * Extended by [CoroutineDispatcher] implementations that have event loop inside and can
  * be asked to process next event from their event queue.
@@ -16,7 +58,7 @@ import kotlin.jvm.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-internal abstract class EventLoop : CoroutineDispatcher() {
+internal abstract class EventLoop : CoroutineDispatcher(), UnconfinedEventLoop {
     /**
      * Counts the number of nested `runBlocking` and [Dispatchers.Unconfined] that use this event loop.
      */
@@ -51,8 +93,6 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         return 0
     }
 
-    protected open val isEmpty: Boolean get() = isUnconfinedQueueEmpty
-
     protected open val nextTime: Long
         get() {
             val queue = unconfinedQueue ?: return Long.MAX_VALUE
@@ -65,6 +105,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         task.run()
         return true
     }
+
     /**
      * Returns `true` if the invoking `runBlocking(context) { ... }` that was passed this event loop in its context
      * parameter should call [processNextEvent] for this event loop (otherwise, it will process thread-local one).
@@ -77,28 +118,26 @@ internal abstract class EventLoop : CoroutineDispatcher() {
      * Dispatches task whose dispatcher returned `false` from [CoroutineDispatcher.isDispatchNeeded]
      * into the current event loop.
      */
-    fun dispatchUnconfined(task: DispatchedTask<*>) {
-        val queue = unconfinedQueue ?:
-            ArrayDeque<DispatchedTask<*>>().also { unconfinedQueue = it }
+    override fun dispatchUnconfined(task: DispatchedTask<*>) {
+        val queue = unconfinedQueue ?: ArrayDeque<DispatchedTask<*>>().also { unconfinedQueue = it }
         queue.addLast(task)
     }
 
     val isActive: Boolean
         get() = useCount > 0
 
-    val isUnconfinedLoopActive: Boolean
+    override val isUnconfinedLoopActive: Boolean
         get() = useCount >= delta(unconfined = true)
 
-    // May only be used from the event loop's thread
-    val isUnconfinedQueueEmpty: Boolean
-        get() = unconfinedQueue?.isEmpty() ?: true
+    override val thisLoopsTaskCanAvoidYielding: Boolean
+        get() = unconfinedQueue?.isEmpty() != false
 
     private fun delta(unconfined: Boolean) =
         if (unconfined) (1L shl 32) else 1L
 
     fun incrementUseCount(unconfined: Boolean = false) {
         useCount += delta(unconfined)
-        if (!unconfined) shared = true 
+        if (!unconfined) shared = true
     }
 
     fun decrementUseCount(unconfined: Boolean = false) {
@@ -117,22 +156,37 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     }
 
     open fun shutdown() {}
+
+    override fun runUnconfinedEventLoop(initialBlock: () -> Unit) {
+        incrementUseCount(unconfined = true)
+        try {
+            initialBlock()
+            while (true) {
+                // break when all unconfined continuations where executed
+                if (!processUnconfinedEvent()) break
+            }
+        } finally {
+            decrementUseCount(unconfined = true)
+        }
+    }
+
+    override fun tryUseAsEventLoop(): EventLoop? = this
 }
 
 internal object ThreadLocalEventLoop {
-    private val ref = commonThreadLocal<EventLoop?>(Symbol("ThreadLocalEventLoop"))
+    private val ref = commonThreadLocal<UnconfinedEventLoop?>(Symbol("ThreadLocalEventLoop"))
 
-    internal val eventLoop: EventLoop
+    internal val unconfinedEventLoop: UnconfinedEventLoop
         get() = ref.get() ?: createEventLoop().also { ref.set(it) }
 
-    internal fun currentOrNull(): EventLoop? =
+    internal fun currentOrNull(): UnconfinedEventLoop? =
         ref.get()
 
     internal fun resetEventLoop() {
         ref.set(null)
     }
 
-    internal fun setEventLoop(eventLoop: EventLoop) {
+    internal fun setEventLoop(eventLoop: UnconfinedEventLoop) {
         ref.set(eventLoop)
     }
 }
@@ -183,8 +237,10 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         get() = _isCompleted.value
         set(value) { _isCompleted.value = value }
 
-    override val isEmpty: Boolean get() {
-        if (!isUnconfinedQueueEmpty) return false
+    /**
+     * Checks that at the moment this method is called, there are no tasks in the delayed tasks queue.
+     */
+    protected val delayedQueueIsEmpty: Boolean get() {
         val delayed = _delayed.value
         if (delayed != null && !delayed.isEmpty) return false
         return when (val queue = _queue.value) {
@@ -381,12 +437,6 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             _delayed.value!!
         }
         return delayedTask.scheduleTask(now, delayedQueue, this)
-    }
-
-    // It performs "hard" shutdown for test cleanup purposes
-    protected fun resetAll() {
-        _queue.value = null
-        _delayed.value = null
     }
 
     // This is a "soft" (normal) shutdown

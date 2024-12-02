@@ -292,12 +292,12 @@ internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
  */
 private inline fun DispatchedContinuation<*>.executeUnconfined(
     contState: Any?, mode: Int, doYield: Boolean = false,
-    block: () -> Unit
+    noinline block: () -> Unit
 ): Boolean {
     assert { mode != MODE_UNINITIALIZED } // invalid execution mode
-    val eventLoop = ThreadLocalEventLoop.eventLoop
+    val eventLoop = ThreadLocalEventLoop.unconfinedEventLoop
     // If we are yielding and unconfined queue is empty, we can bail out as part of fast path
-    if (doYield && eventLoop.isUnconfinedQueueEmpty) return false
+    if (doYield && eventLoop.thisLoopsTaskCanAvoidYielding) return false
     return if (eventLoop.isUnconfinedLoopActive) {
         // When unconfined loop is active -- dispatch continuation for execution to avoid stack overflow
         _state = contState
