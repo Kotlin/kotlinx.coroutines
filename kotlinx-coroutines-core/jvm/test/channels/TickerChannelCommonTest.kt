@@ -9,12 +9,12 @@ import org.junit.runners.*
 import kotlin.test.*
 
 @RunWith(Parameterized::class)
-class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase(disableOutCheck = true) {
+class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
         fun params(): Collection<Array<Any>> =
-            Channel.values().map { arrayOf<Any>(it) }
+            Channel.entries.map { arrayOf<Any>(it) }
     }
 
     enum class Channel {
@@ -35,13 +35,13 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase(di
     fun testDelay() = withVirtualTimeSource {
         runTest {
             val delayChannel = channelFactory(delay = 10000)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
             delayChannel.checkEmpty()
 
             delay(5000)
             delayChannel.checkEmpty()
             delay(5100)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
 
             delayChannel.cancel()
             delay(5100)
@@ -57,13 +57,13 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase(di
             delay(500)
             delayChannel.checkEmpty()
             delay(300)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
 
             // Regular delay
             delay(750)
             delayChannel.checkEmpty()
             delay(260)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
             delayChannel.cancel()
         }
     }
@@ -72,7 +72,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase(di
     fun testReceive() = withVirtualTimeSource {
         runTest {
             val delayChannel = channelFactory(delay = 1000)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
             var value = withTimeoutOrNull(750) {
                 delayChannel.receive()
                 1
@@ -158,7 +158,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase(di
 
 fun ReceiveChannel<Unit>.checkEmpty() = assertNull(tryReceive().getOrNull())
 
-fun ReceiveChannel<Unit>.checkNotEmpty() {
-    assertNotNull(tryReceive().getOrNull())
+suspend fun ReceiveChannel<Unit>.receiveSingle() {
+    receive()
     assertNull(tryReceive().getOrNull())
 }

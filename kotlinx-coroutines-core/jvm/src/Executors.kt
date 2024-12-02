@@ -129,7 +129,7 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
         try {
             executor.execute(wrapTask(block))
         } catch (e: RejectedExecutionException) {
-            unTrackTask()
+            unTrackTask(block)
             cancelJobOnRejection(context, e)
             rescheduleTaskFromClosedDispatcher(block)
         }
