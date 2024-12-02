@@ -115,7 +115,7 @@ Produces the output:
 ```text
 Unconfined      : I'm working in thread main
 main runBlocking: I'm working in thread main
-Unconfined      : After delay in thread kotlinx.coroutines.DefaultDelay
+Unconfined      : After delay in thread DefaultDispatcher oroutine#2
 main runBlocking: After delay in thread main
 ```
 

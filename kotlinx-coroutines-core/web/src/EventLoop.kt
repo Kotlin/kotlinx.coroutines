@@ -2,11 +2,11 @@ package kotlinx.coroutines
 
 import kotlin.coroutines.*
 
-internal actual fun createEventLoop(): EventLoop = UnconfinedEventLoop()
+internal actual fun createEventLoop(): EventLoop = UnconfinedEventLoopImpl()
 
 internal actual fun nanoTime(): Long = unsupported()
 
-internal class UnconfinedEventLoop : EventLoop() {
+private class UnconfinedEventLoopImpl : EventLoop() {
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = unsupported()
 }
 
