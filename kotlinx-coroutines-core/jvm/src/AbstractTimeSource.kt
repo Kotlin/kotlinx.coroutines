@@ -10,8 +10,8 @@ internal abstract class AbstractTimeSource {
     abstract fun currentTimeMillis(): Long
     abstract fun nanoTime(): Long
     abstract fun wrapTask(block: Runnable): Runnable
-    abstract fun trackTask()
-    abstract fun unTrackTask()
+    abstract fun trackTask(obj: Any)
+    abstract fun unTrackTask(obj: Any)
     abstract fun registerTimeLoopThread()
     abstract fun unregisterTimeLoopThread()
     abstract fun parkNanos(blocker: Any, nanos: Long) // should return immediately when nanos <= 0
@@ -80,18 +80,21 @@ internal inline fun wrapTask(block: Runnable): Runnable =
  *
  * If the second thread is not tracked, the first thread effectively enters a spin loop until the second thread
  * physically changes the shared state.
+ *
+ * Every call to [trackTask] must be accompanied by a call to [unTrackTask] with the same [obj],
+ * but [unTrackTask] can be called even if the corresponding [trackTask] wasn't called.
  */
 @InlineOnly
-internal inline fun trackTask() {
-    timeSource?.trackTask()
+internal inline fun trackTask(obj: Any) {
+    timeSource?.trackTask(obj)
 }
 
 /**
- * Decrements the number of tasks not under our control. See [trackTask] for more details.
+ * Marks the task [obj] as complete. If [obj] wasn't tracked, does nothing. See [trackTask] for more details.
  */
 @InlineOnly
-internal inline fun unTrackTask() {
-    timeSource?.unTrackTask()
+internal inline fun unTrackTask(obj: Any) {
+    timeSource?.unTrackTask(obj)
 }
 
 /**
