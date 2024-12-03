@@ -58,7 +58,7 @@ public fun <T> StateFlow<T>.distinctUntilChanged(): Flow<T> = noImpl()
  * @suppress
  */
 @Deprecated(
-    message = "isActive is resolved into the extension of outer CoroutineScope which is likely to be an error." +
+    message = "isActive is resolved into the extension of outer CoroutineScope which is likely to be an error. " +
         "Use currentCoroutineContext().isActive or cancellable() operator instead " +
         "or specify the receiver of isActive explicitly. " +
         "Additionally, flow {} builder emissions are cancellable by default.",
@@ -72,7 +72,7 @@ public val FlowCollector<*>.isActive: Boolean
  * @suppress
  */
 @Deprecated(
-    message = "cancel() is resolved into the extension of outer CoroutineScope which is likely to be an error." +
+    message = "cancel() is resolved into the extension of outer CoroutineScope which is likely to be an error. " +
         "Use currentCoroutineContext().cancel() instead or specify the receiver of cancel() explicitly",
     level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("currentCoroutineContext().cancel(cause)")
@@ -83,7 +83,7 @@ public fun FlowCollector<*>.cancel(cause: CancellationException? = null): Unit =
  * @suppress
  */
 @Deprecated(
-    message = "coroutineContext is resolved into the property of outer CoroutineScope which is likely to be an error." +
+    message = "coroutineContext is resolved into the property of outer CoroutineScope which is likely to be an error. " +
         "Use currentCoroutineContext() instead or specify the receiver of coroutineContext explicitly",
     level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("currentCoroutineContext()")
