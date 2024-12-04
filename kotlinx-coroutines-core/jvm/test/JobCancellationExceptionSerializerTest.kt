@@ -41,16 +41,15 @@ class JobCancellationExceptionSerializerTest : TestBase() {
     fun testHashCodeAfterDeserialization() = runTest {
         try {
             coroutineScope {
-                val job = launch {
-                    hang {}
-                }
+                expect(1)
                 throw JobCancellationException(
                     message = "Job Cancelled",
-                    job = job,
+                    job = Job(),
                     cause = null,
                 )
             }
         } catch (e: Throwable) {
+            finish(2)
             val outputStream = ByteArrayOutputStream()
             ObjectOutputStream(outputStream).use {
                 it.writeObject(e)
