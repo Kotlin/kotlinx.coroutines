@@ -61,6 +61,6 @@ internal actual class JobCancellationException public actual constructor(
     override fun equals(other: Any?): Boolean =
         other === this ||
             other is JobCancellationException && other.message == message && other.job == job && other.cause == cause
-    override fun hashCode(): Int =
-        (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
+    override fun hashCode(): Int = /* since job is transient it is indeed nullable after deserialization */
+        (message!!.hashCode() * 31 + (job?.hashCode() ?: 0)) * 31 + (cause?.hashCode() ?: 0)
 }

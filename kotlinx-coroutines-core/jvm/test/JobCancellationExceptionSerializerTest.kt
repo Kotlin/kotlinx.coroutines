@@ -36,4 +36,31 @@ class JobCancellationExceptionSerializerTest : TestBase() {
             finish(4)
         }
     }
+
+    @Test
+    fun testHashCodeAfterDeserialization() = runTest {
+        try {
+            coroutineScope {
+                val job = launch {
+                    hang {}
+                }
+                throw JobCancellationException(
+                    message = "Job Cancelled",
+                    job = job,
+                    cause = null,
+                )
+            }
+        } catch (e: Throwable) {
+            val outputStream = ByteArrayOutputStream()
+            ObjectOutputStream(outputStream).use {
+                it.writeObject(e)
+            }
+            val deserializedException =
+                ObjectInputStream(outputStream.toByteArray().inputStream()).use {
+                it.readObject() as JobCancellationException
+            }
+            // verify hashCode does not fail even though Job is transient
+            assert(deserializedException.hashCode() != 0)
+        }
+    }
 }
