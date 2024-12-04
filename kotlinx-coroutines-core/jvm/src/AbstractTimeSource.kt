@@ -99,7 +99,8 @@ internal inline fun unTrackTask(obj: Any) {
 
 /**
  * Increases the registered number of nested loops of the form
- * `while (nanoTime() < deadline) { parkNanos(deadline - nanoTime()) }` running in the current thread.
+ * `while (nanoTime() < deadline) { parkNanos(deadline - nanoTime()) }` corresponding to the object [key]
+ * and signals that the current thread is in such a loop.
  *
  * While at least one such loop is running, other threads are allowed to call [unpark] on the current thread
  * and wake it up. Before [registerTimeLoopThread] is called, [unpark] is not guaranteed to have any effect.
