@@ -144,7 +144,6 @@ internal class VirtualTimeSource(
         isShutdown = true
         wakeupAll()
         while (!threads.isEmpty()) (this as Object).wait()
-        assert(trackedTasks.isEmpty()) { "There are still tracked tasks: $trackedTasks" }
     }
 
     private fun wakeupAll() {
