@@ -93,6 +93,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
     fun testComplexOperator() = withVirtualTimeSource {
         runTest {
             val producer = GlobalScope.produce {
+                delay(1) // ensure that the ordering of dispatches doesn't affect the result
                 for (i in 1..7) {
                     send(i)
                     delay(1000)
