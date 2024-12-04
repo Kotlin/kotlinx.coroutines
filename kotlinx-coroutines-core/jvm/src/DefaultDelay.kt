@@ -75,6 +75,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
         try {
             ThreadLocalEventLoop.setEventLoop(DelegatingUnconfinedEventLoop)
             registerTimeLoopThread()
+            unTrackTask(this) /** see the comment in [startThreadOrObtainSleepingThread] */
             try {
                 while (true) {
                     Thread.interrupted() // just reset interruption flag
@@ -107,6 +108,17 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
         This means that whatever thread is going to be running by the end of this function,
         it's going to notice the tasks it's supposed to run.
         We can return `null` unconditionally. */
+        /** If this function is called from a thread that's already registered as a time loop thread,
+        because a time loop thread is not parked right now, the time source will not advance time *currently*,
+        but it may do that as soon as the thread calling this is parked, which may happen earlier than the default
+        delay thread has a chance to run.
+        Because of that, we notify the time source that something is actually happening right now.
+        This would work automatically if instead of [scheduleBackgroundIoTask] we used [CoroutineDispatcher.dispatch] on
+        [Dispatchers.IO], but then, none of the delays would be skipped, as the whole time a [DefaultDelay] thread runs
+        would be considered as a task.
+        Therefore, we register a task right now and mark it as completed as soon as a [DefaultDelay] time loop gets
+        registered. */
+        trackTask(this)
         scheduleBackgroundIoTask(this)
         return null
     }
