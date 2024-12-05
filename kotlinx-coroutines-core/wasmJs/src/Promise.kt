@@ -75,6 +75,6 @@ public fun <T> Promise<JsAny?>.asDeferred(): Deferred<T> {
 public suspend fun <T> Promise<JsAny?>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     this@await.then(
         onFulfilled = { cont.resume(it as T); null },
-        onRejected = { cont.resumeWithException(it.toThrowableOrNull() ?: Exception("Non-Kotlin exception $it")); null }
+        onRejected = { cont.resumeWithException(it.toThrowableOrNull() ?: error("Unexpected non-Kotlin exception $it")); null }
     )
 }
