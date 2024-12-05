@@ -104,6 +104,6 @@ class PromiseTest : TestBase() {
         }
         r(RuntimeException("Rejected"))
         assertIs<RuntimeException>(throwable.await())
-        assertContains(throwable.await().message ?: "", "Rejected")
+        assertEquals("Rejected", throwable.await().message)
     }
 }
