@@ -63,5 +63,5 @@ public fun <T> Promise<T>.asDeferred(): Deferred<T> {
 public suspend fun <T> Promise<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     this@await.then(
         onFulfilled = { cont.resume(it) },
-        onRejected = { cont.resumeWithException(it) })
+        onRejected = { cont.resumeWithException(it as? Throwable ?: Exception("Non-Kotlin exception $it")) })
 }
