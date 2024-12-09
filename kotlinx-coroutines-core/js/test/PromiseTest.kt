@@ -83,4 +83,27 @@ class PromiseTest : TestBase() {
             if (seq != 1) error("Unexpected result: $seq")
         }
     }
+
+    @Test
+    fun testAwaitPromiseRejectedWithNonKotlinException() = GlobalScope.promise {
+        lateinit var r: (dynamic) -> Unit
+        val toAwait = Promise<dynamic> { _, reject -> r = reject }
+        val throwable = async(start = CoroutineStart.UNDISPATCHED) {
+            assertFails { toAwait.await() }
+        }
+        r("Rejected")
+        assertContains(throwable.await().message ?: "", "Rejected")
+    }
+
+    @Test
+    fun testAwaitPromiseRejectedWithKotlinException() = GlobalScope.promise {
+        lateinit var r: (dynamic) -> Unit
+        val toAwait = Promise<dynamic> { _, reject -> r = reject }
+        val throwable = async(start = CoroutineStart.UNDISPATCHED) {
+            assertFails { toAwait.await() }
+        }
+        r(RuntimeException("Rejected"))
+        assertIs<RuntimeException>(throwable.await())
+        assertEquals("Rejected", throwable.await().message)
+    }
 }

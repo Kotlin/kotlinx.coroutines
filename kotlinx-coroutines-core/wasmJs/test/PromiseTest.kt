@@ -84,4 +84,27 @@ class PromiseTest : TestBase() {
             null
         }
     }
+
+    @Test
+    fun testAwaitPromiseRejectedWithNonKotlinException() = GlobalScope.promise {
+        lateinit var r: (JsAny) -> Unit
+        val toAwait = Promise<JsAny?> { _, reject -> r = reject }
+        val throwable = async(start = CoroutineStart.UNDISPATCHED) {
+            assertFails { toAwait.await<JsAny?>() }
+        }
+        r("Rejected".toJsString())
+        assertIs<JsException>(throwable.await())
+    }
+
+    @Test
+    fun testAwaitPromiseRejectedWithKotlinException() = GlobalScope.promise {
+        lateinit var r: (JsAny) -> Unit
+        val toAwait = Promise<JsAny?> { _, reject -> r = reject }
+        val throwable = async(start = CoroutineStart.UNDISPATCHED) {
+            assertFails { toAwait.await<JsAny?>() }
+        }
+        r(RuntimeException("Rejected").toJsReference())
+        assertIs<RuntimeException>(throwable.await())
+        assertEquals("Rejected", throwable.await().message)
+    }
 }
