@@ -24,8 +24,14 @@ public actual fun CancellationException(message: String?, cause: Throwable?) : C
 internal actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
-    @JvmField @Transient internal actual val job: Job
+    job: Job
 ) : CancellationException(message), CopyableThrowable<JobCancellationException> {
+
+    @Transient
+    private val _job: Job? = job
+
+    // The safest option for transient -- return something that meanigfully reject any attemp to interact with the job
+    internal actual val job get() = _job ?: NonCancellable
 
     init {
         if (cause != null) initCause(cause)
