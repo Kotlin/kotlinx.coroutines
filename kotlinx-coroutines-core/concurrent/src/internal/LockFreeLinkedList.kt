@@ -1,5 +1,3 @@
-@file:Suppress("NO_EXPLICIT_VISIBILITY_IN_API_MODE")
-
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*

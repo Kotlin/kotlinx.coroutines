@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 import org.junit.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*

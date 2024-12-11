@@ -122,6 +122,7 @@ sourceSets {
 compileDebugAgentTestKotlin {
     kotlinOptions {
         freeCompilerArgs += ["-Xallow-kotlin-package"]
+        jvmTarget = "1.8"
     }
 }
 
@@ -163,19 +164,26 @@ task coreAgentTest(type: Test) {
 }
 
 compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "17"
 }
 
 check {
     dependsOn([jvmCoreTest, debugDynamicAgentTest, mavenTest, debugAgentTest, coreAgentTest, ":jpmsTest:check", 'smokeTest:build', "java8Test:check"])
 }
+
 compileKotlin {
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 }
+
+kotlin.jvmToolchain(17)
 
 // Drop this when node js version become stable
 tasks.withType(org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask.class).configureEach {
     it.args.add("--ignore-engines")
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile.class).configureEach {
+    jvmTargetValidationMode = org.jetbrains.kotlin.gradle.dsl.jvm.JvmTargetValidationMode.WARNING
 }

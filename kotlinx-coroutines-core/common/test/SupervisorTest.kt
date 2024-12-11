@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*

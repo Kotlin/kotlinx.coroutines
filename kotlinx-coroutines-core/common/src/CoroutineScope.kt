@@ -281,6 +281,7 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
     }
     return suspendCoroutineUninterceptedOrReturn { uCont ->
         val coroutine = ScopeCoroutine(uCont.context, uCont)
+        @Suppress("LEAKED_IN_PLACE_LAMBDA") // Contract is preserved, invoked immediately or throws
         coroutine.startUndispatchedOrReturn(coroutine, block)
     }
 }
