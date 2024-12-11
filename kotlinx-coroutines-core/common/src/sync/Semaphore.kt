@@ -131,7 +131,7 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
     init {
         require(permits > 0) { "Semaphore should have at least 1 permit, but had $permits" }
         require(acquiredPermits in 0..permits) { "The number of acquired permits should be in 0..$permits" }
-        val s = SemaphoreSegment(0, null, 2)
+        val s = SemaphoreSegment(0, null)
         head = atomic(s)
         tail = atomic(s)
     }
@@ -356,11 +356,12 @@ private class SemaphoreImpl(
     permits: Int, acquiredPermits: Int
 ): SemaphoreAndMutexImpl(permits, acquiredPermits), Semaphore
 
-private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev, 0)
+private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev)
 
-private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int) : Segment<SemaphoreSegment>(id, prev, pointers) {
+private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?) : Segment<SemaphoreSegment>(id, prev) {
     val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
     override val numberOfSlots: Int get() = SEGMENT_SIZE
+    override val isLeftmostOrProcessed: Boolean get() = false // Does not impact semaphore implementation
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun get(index: Int): Any? = acquirers[index].value

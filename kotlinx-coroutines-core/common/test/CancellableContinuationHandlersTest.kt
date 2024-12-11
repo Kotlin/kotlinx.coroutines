@@ -160,8 +160,9 @@ class CancellableContinuationHandlersTest : TestBase() {
 
     @Test
     fun testSegmentAsHandler() = runTest {
-        class MySegment : Segment<MySegment>(0, null, 0) {
+        class MySegment : Segment<MySegment>(0, null) {
             override val numberOfSlots: Int get() = 0
+            override val isLeftmostOrProcessed: Boolean get() = false
 
             var invokeOnCancellationCalled = false
             override fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext) {

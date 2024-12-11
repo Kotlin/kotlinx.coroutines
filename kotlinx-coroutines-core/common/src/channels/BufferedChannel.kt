@@ -90,9 +90,12 @@ internal open class BufferedChannel<E>(
     private val receiveSegment: AtomicRef<ChannelSegment<E>>
     private val bufferEndSegment: AtomicRef<ChannelSegment<E>>
 
+    internal val sendSegmentId: Long get() = sendSegment.value.id
+    internal val receiveSegmentId: Long get() = receiveSegment.value.id
+
     init {
         @Suppress("LeakingThis")
-        val firstSegment = ChannelSegment(id = 0, prev = null, channel = this, pointers = 3)
+        val firstSegment = ChannelSegment(id = 0, prev = null, channel = this)
         sendSegment = atomic(firstSegment)
         receiveSegment = atomic(firstSegment)
         // If this channel is rendezvous or has unlimited capacity, the algorithm never
@@ -301,10 +304,6 @@ internal open class BufferedChannel<E>(
             when (updateCellSend(segment, i, element, s, waiter, closed)) {
                 RESULT_RENDEZVOUS -> {
                     // A rendezvous with a receiver has happened.
-                    // The previous segments are no longer needed
-                    // for the upcoming requests, so the algorithm
-                    // resets the link to the previous segment.
-                    segment.cleanPrev()
                     return onRendezvousOrBuffered()
                 }
                 RESULT_BUFFERED -> {
@@ -325,17 +324,11 @@ internal open class BufferedChannel<E>(
                 }
                 RESULT_CLOSED -> {
                     // This channel is closed.
-                    // In case this segment is already or going to be
-                    // processed by a receiver, ensure that all the
-                    // previous segments are unreachable.
-                    if (s < receiversCounter) segment.cleanPrev()
                     return onClosed()
                 }
                 RESULT_FAILED -> {
                     // Either the cell stores an interrupted receiver,
                     // or it was poisoned by a concurrent receiver.
-                    // In both cases, all the previous segments are already processed,
-                    segment.cleanPrev()
                     continue
                 }
                 RESULT_SUSPEND_NO_WAITER -> {
@@ -392,22 +385,16 @@ internal open class BufferedChannel<E>(
         // restarting the operation from the beginning on failure.
         // Check the `sendImpl(..)` function for the comments.
         when (updateCellSend(segment, index, element, s, waiter, false)) {
-            RESULT_RENDEZVOUS -> {
-                segment.cleanPrev()
-                onRendezvousOrBuffered()
-            }
-            RESULT_BUFFERED -> {
+            RESULT_RENDEZVOUS, RESULT_BUFFERED -> {
                 onRendezvousOrBuffered()
             }
             RESULT_SUSPEND -> {
                 waiter.prepareSenderForSuspension(segment, index)
             }
             RESULT_CLOSED -> {
-                if (s < receiversCounter) segment.cleanPrev()
                 onClosed()
             }
             RESULT_FAILED -> {
-                segment.cleanPrev()
                 sendImpl(
                     element = element,
                     waiter = waiter,
@@ -857,14 +844,9 @@ internal open class BufferedChannel<E>(
             when {
                 updCellResult === FAILED -> {
                     // The cell is poisoned; restart from the beginning.
-                    // To avoid memory leaks, we also need to reset
-                    // the `prev` pointer of the working segment.
-                    if (r < sendersCounter) segment.cleanPrev()
                 }
                 else -> { // element
                     // A buffered element was retrieved from the cell.
-                    // Clean the reference to the previous segment.
-                    segment.cleanPrev()
                     @Suppress("UNCHECKED_CAST")
                     onUndeliveredElement?.callUndeliveredElementCatchingException(updCellResult as E)?.let { throw it }
                 }
@@ -938,9 +920,6 @@ internal open class BufferedChannel<E>(
                     // but failed: either the opposite request has
                     // already been cancelled or the cell is poisoned.
                     // Restart from the beginning in this case.
-                    // To avoid memory leaks, we also need to reset
-                    // the `prev` pointer of the working segment.
-                    if (r < sendersCounter) segment.cleanPrev()
                     continue
                 }
                 updCellResult === SUSPEND_NO_WAITER -> {
@@ -951,8 +930,6 @@ internal open class BufferedChannel<E>(
                 else -> { // element
                     // Either a buffered element was retrieved from the cell
                     // or a rendezvous with a waiting sender has happened.
-                    // Clean the reference to the previous segment before finishing.
-                    segment.cleanPrev()
                     @Suppress("UNCHECKED_CAST")
                     onElementRetrieved(updCellResult as E)
                 }
@@ -987,7 +964,6 @@ internal open class BufferedChannel<E>(
                 waiter.prepareReceiverForSuspension(segment, index)
             }
             updCellResult === FAILED -> {
-                if (r < sendersCounter) segment.cleanPrev()
                 receiveImpl(
                     waiter = waiter,
                     onElementRetrieved = onElementRetrieved,
@@ -996,7 +972,6 @@ internal open class BufferedChannel<E>(
                 )
             }
             else -> {
-                segment.cleanPrev()
                 @Suppress("UNCHECKED_CAST")
                 onElementRetrieved(updCellResult as E)
             }
@@ -1211,7 +1186,7 @@ internal open class BufferedChannel<E>(
             if (s <= b) {
                 // Should `bufferEndSegment` be moved forward to avoid memory leaks?
                 if (segment.id < id && segment.next != null)
-                    moveSegmentBufferEndToSpecifiedOrLast(id, segment)
+                    bufferEndSegment.moveToSpecifiedOrLast(id, segment)
                 // Increment the number of completed `expandBuffer()`-s and finish.
                 incCompletedExpandBufferAttempts()
                 return
@@ -2299,7 +2274,6 @@ internal open class BufferedChannel<E>(
                     // Otherwise, if the required segment is removed, the operation restarts.
                     if (receiveSegment.value.id < id) return false else continue
             }
-            segment.cleanPrev() // all the previous segments are no longer needed.
             // Does the `r`-th cell contain waiting sender or buffered element?
             val i = (r % SEGMENT_SIZE).toInt()
             if (isCellNonEmpty(segment, i, r)) return true
@@ -2398,12 +2372,6 @@ internal open class BufferedChannel<E>(
                 // This channel is already closed or cancelled; help to complete
                 // the closing or cancellation procedure.
                 completeCloseOrCancel()
-                // Clean the `prev` reference of the provided segment
-                // if all the previous cells are already covered by senders.
-                // It is important to clean the `prev` reference only in
-                // this case, as the closing/cancellation procedure may
-                // need correct value to traverse the linked list from right to left.
-                if (startFrom.id * SEGMENT_SIZE <  receiversCounter) startFrom.cleanPrev()
                 // As the required segment is not found and cannot be allocated, return `null`.
                 null
             } else {
@@ -2415,12 +2383,6 @@ internal open class BufferedChannel<E>(
                     // segment with `id` not lower than the required one.
                     // Skip the sequence of removed cells in O(1).
                     updateSendersCounterIfLower(segment.id * SEGMENT_SIZE)
-                    // Clean the `prev` reference of the provided segment
-                    // if all the previous cells are already covered by senders.
-                    // It is important to clean the `prev` reference only in
-                    // this case, as the closing/cancellation procedure may
-                    // need correct value to traverse the linked list from right to left.
-                    if (segment.id * SEGMENT_SIZE <  receiversCounter) segment.cleanPrev()
                     // As the required segment is not found and cannot be allocated, return `null`.
                     null
                 } else {
@@ -2453,12 +2415,6 @@ internal open class BufferedChannel<E>(
                 // This channel is already closed or cancelled; help to complete
                 // the closing or cancellation procedure.
                 completeCloseOrCancel()
-                // Clean the `prev` reference of the provided segment
-                // if all the previous cells are already covered by senders.
-                // It is important to clean the `prev` reference only in
-                // this case, as the closing/cancellation procedure may
-                // need correct value to traverse the linked list from right to left.
-                if (startFrom.id * SEGMENT_SIZE < sendersCounter) startFrom.cleanPrev()
                 // As the required segment is not found and cannot be allocated, return `null`.
                 null
             } else {
@@ -2474,12 +2430,6 @@ internal open class BufferedChannel<E>(
                     // segment with `id` not lower than the required one.
                     // Skip the sequence of removed cells in O(1).
                     updateReceiversCounterIfLower(segment.id * SEGMENT_SIZE)
-                    // Clean the `prev` reference of the provided segment
-                    // if all the previous cells are already covered by senders.
-                    // It is important to clean the `prev` reference only in
-                    // this case, as the closing/cancellation procedure may
-                    // need correct value to traverse the linked list from right to left.
-                    if (segment.id * SEGMENT_SIZE < sendersCounter) segment.cleanPrev()
                     // As the required segment is already removed, return `null`.
                     null
                 } else {
@@ -2504,7 +2454,7 @@ internal open class BufferedChannel<E>(
                 completeCloseOrCancel()
                 // Update `bufferEndSegment` to the last segment
                 // in the linked list to avoid memory leaks.
-                moveSegmentBufferEndToSpecifiedOrLast(id, startFrom)
+                bufferEndSegment.moveToSpecifiedOrLast(id, startFrom)
                 // When this function does not find the requested segment,
                 // it should update the number of completed `expandBuffer()` attempts.
                 incCompletedExpandBufferAttempts()
@@ -2535,32 +2485,6 @@ internal open class BufferedChannel<E>(
         }
 
     /**
-     * Updates [bufferEndSegment] to the one with the specified [id] or
-     * to the last existing segment, if the required segment is not yet created.
-     *
-     * Unlike [findSegmentBufferEnd], this function does not allocate new segments.
-     */
-    private fun moveSegmentBufferEndToSpecifiedOrLast(id: Long, startFrom: ChannelSegment<E>) {
-        // Start searching the required segment from the specified one.
-        var segment: ChannelSegment<E> = startFrom
-        while (segment.id < id) {
-            segment = segment.next ?: break
-        }
-        // Skip all removed segments and try to update `bufferEndSegment`
-        // to the first non-removed one. This part should succeed eventually,
-        // as the tail segment is never removed.
-        while (true) {
-            while (segment.isRemoved) {
-                segment = segment.next ?: break
-            }
-            // Try to update `bufferEndSegment`. On failure,
-            // the found segment is already removed, so it
-            // should be skipped.
-            if (bufferEndSegment.moveForward(segment)) return
-        }
-    }
-
-    /**
      * Updates the `senders` counter if its value
      * is lower that the specified one.
      *
@@ -2587,6 +2511,17 @@ internal open class BufferedChannel<E>(
             if (cur >= value) return
             if (receivers.compareAndSet(cur, value)) return
         }
+
+    /**
+    This method is used in the physical removal of the segment. It helps to move pointers forward from
+    the segment which was physically removed.
+     */
+    internal fun movePointersForwardFrom(from: ChannelSegment<E>) {
+        check(from.isRemoved) { "Trying to move channel pointers from the alive segment." }
+        if (from == sendSegment.value) sendSegment.moveToSpecifiedOrLast(from.id, from)
+        if (from == receiveSegment.value) receiveSegment.moveToSpecifiedOrLast(from.id, from)
+        if (from == bufferEndSegment.value) bufferEndSegment.moveToSpecifiedOrLast(from.id, from)
+    }
 
     // ###################
     // # Debug Functions #
@@ -2799,7 +2734,7 @@ internal open class BufferedChannel<E>(
  * to update [BufferedChannel.sendSegment], [BufferedChannel.receiveSegment],
  * and [BufferedChannel.bufferEndSegment] correctly.
  */
-internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: BufferedChannel<E>?, pointers: Int) : Segment<ChannelSegment<E>>(id, prev, pointers) {
+internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: BufferedChannel<E>?) : Segment<ChannelSegment<E>>(id, prev) {
     private val _channel: BufferedChannel<E>? = channel
     val channel get() = _channel!! // always non-null except for `NULL_SEGMENT`
 
@@ -2841,6 +2776,26 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
 
     internal fun getAndSetState(index: Int, update: Any?) = data[index * 2 + 1].getAndSet(update)
 
+    // ###################################################
+    // # Manipulation with the structure of segment list #
+    // ###################################################
+
+    /**
+     * Shows if all segments going before this segment have been processed.
+     * When the value is true, the [prev] reference of the segment should be `null`.
+     */
+    override val isLeftmostOrProcessed: Boolean get() = id <= channel.sendSegmentId && id <= channel.receiveSegmentId
+
+    /**
+     * Removes the segment physically from the segment list.
+     *
+     * If the physical removal was successful and there are channel pointers pointing on this segment,
+     * the [BufferedChannel.movePointersForwardFrom] method is invoked to move them further on the segment list.
+     */
+    override fun remove(): Boolean =
+        super.remove().also {
+            if (it) channel.movePointersForwardFrom(this)
+        }
 
     // ########################
     // # Cancellation Support #
@@ -2926,10 +2881,9 @@ internal fun <E> createSegmentFunction(): KFunction2<Long, ChannelSegment<E>, Ch
 private fun <E> createSegment(id: Long, prev: ChannelSegment<E>) = ChannelSegment(
     id = id,
     prev = prev,
-    channel = prev.channel,
-    pointers = 0
+    channel = prev.channel
 )
-private val NULL_SEGMENT = ChannelSegment<Any?>(id = -1, prev = null, channel = null, pointers = 0)
+private val NULL_SEGMENT = ChannelSegment<Any?>(id = -1, prev = null, channel = null)
 
 /**
  * Number of cells in each segment.
