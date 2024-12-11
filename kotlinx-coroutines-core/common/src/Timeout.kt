@@ -13,6 +13,36 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
+ * Runs a given suspending [block] of code inside a coroutine with the specified [timeout] and throws
+ * a [TimeoutCancellationException] if the timeout was exceeded.
+ * If the given [timeout] is non-positive, [TimeoutCancellationException] is thrown immediately.
+ *
+ * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
+ * the cancellable suspending function inside the block throws a [TimeoutCancellationException].
+ *
+ * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
+ * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
+ * even right before the return from inside the timeout [block]. Keep this in mind if you open or acquire some
+ * resource inside the [block] that needs closing or release outside the block.
+ * See the
+ * [Asynchronous timeout and resources](https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources)
+ * section of the coroutines guide for details.
+ *
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ */
+public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    if (timeout <= Duration.ZERO) throw TimeoutCancellationException("Timed out immediately")
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
+        setupTimeout(TimeoutCoroutine(timeout, uCont), block)
+    }
+}
+
+/**
  * Runs a given suspending [block] of code inside a coroutine with a specified [timeout][timeMillis] and throws
  * a [TimeoutCancellationException] if the timeout was exceeded.
  * If the given [timeMillis] is non-positive, [TimeoutCancellationException] is thrown immediately.
@@ -38,21 +68,18 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
-    if (timeMillis <= 0L) throw TimeoutCancellationException("Timed out immediately")
-    return suspendCoroutineUninterceptedOrReturn { uCont ->
-        setupTimeout(TimeoutCoroutine(timeMillis, uCont), block)
-    }
+    return withTimeout(timeMillis.milliseconds, block)
 }
 
 /**
- * Runs a given suspending [block] of code inside a coroutine with the specified [timeout] and throws
- * a [TimeoutCancellationException] if the timeout was exceeded.
- * If the given [timeout] is non-positive, [TimeoutCancellationException] is thrown immediately.
+ * Runs a given suspending block of code inside a coroutine with the specified [timeout] and returns
+ * `null` if this timeout was exceeded.
+ * If the given [timeout] is non-positive, `null` is returned immediately.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * the cancellable suspending function inside the block throws a [TimeoutCancellationException].
+ * cancellable suspending function inside the block throws a [TimeoutCancellationException].
  *
- * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
+ * The sibling function that throws an exception on timeout is [withTimeout].
  * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
  * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
@@ -64,11 +91,23 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  *
  * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  */
-public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
-    contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+public suspend fun <T> withTimeoutOrNull(timeout: Duration, block: suspend CoroutineScope.() -> T): T? {
+    if (timeout <= Duration.ZERO) return null
+
+    var coroutine: TimeoutCoroutine<T?, T?>? = null
+    try {
+        return suspendCoroutineUninterceptedOrReturn { uCont ->
+            val timeoutCoroutine = TimeoutCoroutine(timeout, uCont)
+            coroutine = timeoutCoroutine
+            setupTimeout<T?, T?>(timeoutCoroutine, block)
+        }
+    } catch (e: TimeoutCancellationException) {
+        // Return null if it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
+        if (e.coroutine === coroutine) {
+            return null
+        }
+        throw e
     }
-    return withTimeout(timeout.toDelayMillis(), block)
 }
 
 /**
@@ -93,47 +132,8 @@ public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineSc
  *
  * @param timeMillis timeout time in milliseconds.
  */
-public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend CoroutineScope.() -> T): T? {
-    if (timeMillis <= 0L) return null
-
-    var coroutine: TimeoutCoroutine<T?, T?>? = null
-    try {
-        return suspendCoroutineUninterceptedOrReturn { uCont ->
-            val timeoutCoroutine = TimeoutCoroutine(timeMillis, uCont)
-            coroutine = timeoutCoroutine
-            setupTimeout<T?, T?>(timeoutCoroutine, block)
-        }
-    } catch (e: TimeoutCancellationException) {
-        // Return null if it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
-        if (e.coroutine === coroutine) {
-            return null
-        }
-        throw e
-    }
-}
-
-/**
- * Runs a given suspending block of code inside a coroutine with the specified [timeout] and returns
- * `null` if this timeout was exceeded.
- * If the given [timeout] is non-positive, `null` is returned immediately.
- *
- * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * cancellable suspending function inside the block throws a [TimeoutCancellationException].
- *
- * The sibling function that throws an exception on timeout is [withTimeout].
- * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
- *
- * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
- * even right before the return from inside the timeout [block]. Keep this in mind if you open or acquire some
- * resource inside the [block] that needs closing or release outside the block.
- * See the
- * [Asynchronous timeout and resources](https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources)
- * section of the coroutines guide for details.
- *
- * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
- */
-public suspend fun <T> withTimeoutOrNull(timeout: Duration, block: suspend CoroutineScope.() -> T): T? =
-    withTimeoutOrNull(timeout.toDelayMillis(), block)
+public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend CoroutineScope.() -> T): T? =
+    withTimeoutOrNull(timeMillis.milliseconds, block)
 
 private fun <U, T : U> setupTimeout(
     coroutine: TimeoutCoroutine<U, T>,
@@ -149,11 +149,11 @@ private fun <U, T : U> setupTimeout(
 }
 
 private class TimeoutCoroutine<U, in T : U>(
-    @JvmField val time: Long,
+    val time: Duration,
     uCont: Continuation<U> // unintercepted continuation
 ) : ScopeCoroutine<T>(uCont.context, uCont), Runnable {
     override fun run() {
-        cancelCoroutine(TimeoutCancellationException(time, context.delay, this))
+        cancelCoroutine(TimeoutCancellationException(context.delay.timeoutMessage(time), this))
     }
 
     override fun nameString(): String =
@@ -162,6 +162,18 @@ private class TimeoutCoroutine<U, in T : U>(
 
 /**
  * This exception is thrown by [withTimeout] to indicate timeout.
+ *
+ * **Pitfall**: This exception is an instance of [CancellationException] and inherits its behavior.
+ * In particular, if this exception is not caught, it cancels the coroutine it's thrown from.
+ * ```
+ * // This coroutine will simply be cancelled, without any errors being printed
+ * launch {
+ *     withTimeout(1.seconds) {
+ *         delay(100.seconds)
+ *     } // will throw TimeoutCancellationException
+ *     error("Will not be printed")
+ * }
+ * ```
  */
 public class TimeoutCancellationException internal constructor(
     message: String,
@@ -176,14 +188,4 @@ public class TimeoutCancellationException internal constructor(
     // message is never null in fact
     override fun createCopy(): TimeoutCancellationException =
         TimeoutCancellationException(message ?: "", coroutine).also { it.initCause(this) }
-}
-
-internal fun TimeoutCancellationException(
-    time: Long,
-    delay: Delay,
-    coroutine: Job
-) : TimeoutCancellationException {
-    val message = (delay as? DelayWithTimeoutDiagnostics)?.timeoutMessage(time.milliseconds)
-        ?: "Timed out waiting for $time ms"
-    return TimeoutCancellationException(message, coroutine)
 }

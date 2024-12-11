@@ -5,6 +5,7 @@ import java.io.Closeable
 import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.AutoCloseable
+import kotlin.time.Duration
 
 /**
  * [CoroutineDispatcher] that has underlying [Executor] for dispatching tasks.
@@ -135,11 +136,11 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
         }
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
         val future = (executor as? ScheduledExecutorService)?.scheduleBlock(
             ResumeUndispatchedRunnable(this, continuation),
             continuation.context,
-            timeMillis
+            time
         )
         // If everything went fine and the scheduling attempt was not rejected -- use it
         if (future != null) {
@@ -147,20 +148,20 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
             return
         }
         // Otherwise fallback to default executor
-        DefaultExecutor.scheduleResumeAfterDelay(timeMillis, continuation)
+        DefaultExecutor.scheduleResumeAfterDelay(time, continuation)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val future = (executor as? ScheduledExecutorService)?.scheduleBlock(block, context, timeMillis)
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle {
+        val future = (executor as? ScheduledExecutorService)?.scheduleBlock(block, context, timeout)
         return when {
             future != null -> DisposableFutureHandle(future)
-            else -> DefaultExecutor.invokeOnTimeout(timeMillis, block, context)
+            else -> DefaultExecutor.invokeOnTimeout(timeout, block, context)
         }
     }
 
-    private fun ScheduledExecutorService.scheduleBlock(block: Runnable, context: CoroutineContext, timeMillis: Long): ScheduledFuture<*>? {
+    private fun ScheduledExecutorService.scheduleBlock(block: Runnable, context: CoroutineContext, time: Duration): ScheduledFuture<*>? {
         return try {
-            schedule(block, timeMillis, TimeUnit.MILLISECONDS)
+            schedule(block, time.inWholeNanoseconds, TimeUnit.NANOSECONDS)
         } catch (e: RejectedExecutionException) {
             cancelJobOnRejection(context, e)
             null

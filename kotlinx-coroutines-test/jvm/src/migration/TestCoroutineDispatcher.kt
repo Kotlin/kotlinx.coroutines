@@ -2,6 +2,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
 
 /**
  * @suppress
@@ -43,7 +44,7 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
     override fun toString(): String = "TestCoroutineDispatcher[scheduler=$scheduler]"
 
     private fun post(block: Runnable, context: CoroutineContext) =
-        scheduler.registerEvent(this, 0, block, context) { false }
+        scheduler.registerEvent(this, Duration.ZERO, block, context) { false }
 
     val currentTime: Long
         get() = scheduler.currentTime
