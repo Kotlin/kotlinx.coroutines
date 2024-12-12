@@ -38,24 +38,25 @@ class CustomContinuationInterceptorTest : TestBase() {
 
         ensureCoroutineContextGCed(
             CustomContinuationInterceptor(dispatcher),
-            suspend = false
-        ) {
-            // Ensure that the ThreadLocal instance is GCed.
-            System.gc()
-            // At this point, the thread local value is still in Thread.threadLocals, it's a
-            // stale entry
-            val task = executor.submit {
-                val threadLocals = (1..100).map { ThreadLocal<String>() }.toList()
-                // Grow the size of Thread.threadLocals, forcing a call to expungeStaleEntries
-                threadLocals.forEach { it.set("") }
-                // Cleanup the new thread locals
-                threadLocals.forEach { it.remove() }
-            }
-            task.get()
-            // At this point CoroutineContext should be unreachable.
-            System.gc()
-            executor.shutdown()
-        }
+            suspend = false,
+            clearLeak = {
+                // Ensure that the ThreadLocal instance is GCed.
+                System.gc()
+                // At this point, the thread local value is still in Thread.threadLocals, it's a
+                // stale entry
+                val task = executor.submit {
+                    val threadLocals = (1..100).map { ThreadLocal<String>() }.toList()
+                    // Grow the size of Thread.threadLocals, forcing a call to expungeStaleEntries
+                    threadLocals.forEach { it.set("") }
+                    // Cleanup the new thread locals
+                    threadLocals.forEach { it.remove() }
+                }
+                task.get()
+                // At this point CoroutineContext should be unreachable.
+                System.gc()
+            }, cleanup = {
+                executor.shutdown()
+            })
     }
 
     @Test
@@ -65,13 +66,13 @@ class CustomContinuationInterceptorTest : TestBase() {
 
         ensureCoroutineContextGCed(
             CustomContinuationInterceptor(dispatcher),
-            suspend = false
-        ) {
-            executor.shutdown()
-            executor.awaitTermination(30, TimeUnit.SECONDS)
-            // At this point CoroutineContext should be unreachable.
-            System.gc()
-        }
+            suspend = false,
+            clearLeak = {
+                executor.shutdown()
+                executor.awaitTermination(30, TimeUnit.SECONDS)
+                // At this point CoroutineContext should be unreachable.
+                System.gc()
+            })
     }
 
     @Test
@@ -96,7 +97,8 @@ class CustomContinuationInterceptorTest : TestBase() {
             // Run finalizations
             Thread.sleep(100)
             System.gc()
-        }
+        },
+        cleanup: () -> Unit = {}
     ) {
         runTest {
             lateinit var ref: WeakReference<CoroutineName>
@@ -112,7 +114,11 @@ class CustomContinuationInterceptorTest : TestBase() {
             job.join()
 
             clearLeak()
-            assertNull(ref.get())
+            try {
+                assertNull(ref.get())
+            } finally {
+                cleanup()
+            }
         }
     }
 
