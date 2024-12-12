@@ -3,6 +3,7 @@ package kotlinx.coroutines
 import kotlinx.coroutines.testing.*
 import org.junit.Test
 import java.lang.ref.*
+import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -14,7 +15,6 @@ class CustomContinuationInterceptorTest : TestBase() {
     @Test
     fun `CoroutineDispatcher suspending does not leak CoroutineContext`() =
         ensureCoroutineContextGCed(Dispatchers.Default, suspend = true)
-
 
     @Test
     fun `CustomContinuationInterceptor suspending does not leak CoroutineContext`() =
@@ -32,6 +32,49 @@ class CustomContinuationInterceptorTest : TestBase() {
         )
 
     @Test
+    fun `CustomContinuationInterceptor not suspending does not leak CoroutineContext when thread locals cleaned up`() {
+        val executor = Executors.newSingleThreadExecutor()
+        val dispatcher = executor.asCoroutineDispatcher()
+
+        ensureCoroutineContextGCed(
+            CustomContinuationInterceptor(dispatcher),
+            suspend = false
+        ) {
+            // Ensure that the ThreadLocal instance is GCed.
+            System.gc()
+            // At this point, the thread local value is still in Thread.threadLocals, it's a
+            // stale entry
+            val task = executor.submit {
+                val threadLocals = (1..100).map { ThreadLocal<String>() }.toList()
+                // Grow the size of Thread.threadLocals, forcing a call to expungeStaleEntries
+                threadLocals.forEach { it.set("") }
+                // Cleanup the new thread locals
+                threadLocals.forEach { it.remove() }
+            }
+            task.get()
+            // At this point CoroutineContext should be unreachable.
+            System.gc()
+            executor.shutdown()
+        }
+    }
+
+    @Test
+    fun `CustomContinuationInterceptor not suspending does not leak CoroutineContext when thread GCed`() {
+        val executor = Executors.newSingleThreadExecutor()
+        val dispatcher = executor.asCoroutineDispatcher()
+
+        ensureCoroutineContextGCed(
+            CustomContinuationInterceptor(dispatcher),
+            suspend = false
+        ) {
+            executor.shutdown()
+            executor.awaitTermination(30, TimeUnit.SECONDS)
+            // At this point CoroutineContext should be unreachable.
+            System.gc()
+        }
+    }
+
+    @Test
     fun `CustomNeverEqualContinuationInterceptor suspending does not leak CoroutineContext`() =
         ensureCoroutineContextGCed(
             CustomNeverEqualContinuationInterceptor(Dispatchers.Default),
@@ -45,8 +88,16 @@ class CustomContinuationInterceptorTest : TestBase() {
             suspend = false
         )
 
-
-    private fun ensureCoroutineContextGCed(coroutineContext: CoroutineContext, suspend: Boolean) {
+    private fun ensureCoroutineContextGCed(
+        coroutineContext: CoroutineContext,
+        suspend: Boolean,
+        clearLeak: () -> Unit = {
+            System.gc()
+            // Run finalizations
+            Thread.sleep(100)
+            System.gc()
+        }
+    ) {
         runTest {
             lateinit var ref: WeakReference<CoroutineName>
             val job = GlobalScope.launch(coroutineContext) {
@@ -60,7 +111,7 @@ class CustomContinuationInterceptorTest : TestBase() {
             }
             job.join()
 
-            System.gc()
+            clearLeak()
             assertNull(ref.get())
         }
     }
