@@ -8,27 +8,63 @@ import kotlin.test.*
 
 class CustomContinuationInterceptorTest : TestBase() {
 
-    @Test
-    fun `CoroutineDispatcher does not leak CoroutineContext`() =
-        ensureCoroutineContextGCed(Dispatchers.Default)
+    fun `CoroutineDispatcher not suspending does not leak CoroutineContext`() =
+        ensureCoroutineContextGCed(Dispatchers.Default, suspend = false)
 
     @Test
-    fun `custom ContinuationInterceptor leaks CoroutineContext`() =
-        ensureCoroutineContextGCed(CustomContinuationInterceptor(Dispatchers.Default))
+    fun `CoroutineDispatcher suspending does not leak CoroutineContext`() =
+        ensureCoroutineContextGCed(Dispatchers.Default, suspend = true)
 
-    fun ensureCoroutineContextGCed(interceptor: ContinuationInterceptor) = runTest {
-        lateinit var ref: WeakReference<CoroutineName>
-        val job = GlobalScope.launch(interceptor) {
-            val coroutineName = CoroutineName("Yo")
-            ref = WeakReference(coroutineName)
-            withContext(coroutineName) {
+
+    @Test
+    fun `CustomContinuationInterceptor suspending does not leak CoroutineContext`() =
+        ensureCoroutineContextGCed(
+            CustomContinuationInterceptor(Dispatchers.Default),
+            suspend = true
+        )
+
+    // This is the one test that fails
+    @Test
+    fun `CustomContinuationInterceptor not suspending leaks CoroutineContext`() =
+        ensureCoroutineContextGCed(
+            CustomContinuationInterceptor(Dispatchers.Default),
+            suspend = false
+        )
+
+    @Test
+    fun `CustomNeverEqualContinuationInterceptor suspending does not leak CoroutineContext`() =
+        ensureCoroutineContextGCed(
+            CustomNeverEqualContinuationInterceptor(Dispatchers.Default),
+            suspend = true
+        )
+
+    @Test
+    fun `CustomNeverEqualContinuationInterceptor not suspending does not leak CoroutineContext`() =
+        ensureCoroutineContextGCed(
+            CustomNeverEqualContinuationInterceptor(Dispatchers.Default),
+            suspend = false
+        )
+
+
+    private fun ensureCoroutineContextGCed(coroutineContext: CoroutineContext, suspend: Boolean) {
+        runTest {
+            lateinit var ref: WeakReference<CoroutineName>
+            val job = GlobalScope.launch(coroutineContext) {
+                val coroutineName = CoroutineName("Yo")
+                ref = WeakReference(coroutineName)
+                withContext(coroutineName) {
+                    if (suspend) {
+                        delay(1)
+                    }
+                }
             }
-        }
-        job.join()
+            job.join()
 
-        System.gc()
-        assertNull(ref.get())
+            System.gc()
+            assertNull(ref.get())
+        }
     }
+
 }
 
 class CustomContinuationInterceptor(private val delegate: ContinuationInterceptor) :
@@ -37,4 +73,14 @@ class CustomContinuationInterceptor(private val delegate: ContinuationIntercepto
     override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
         return delegate.interceptContinuation(continuation)
     }
+}
+
+class CustomNeverEqualContinuationInterceptor(private val delegate: ContinuationInterceptor) :
+    AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+
+    override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
+        return delegate.interceptContinuation(continuation)
+    }
+
+    override fun equals(other: Any?) = false
 }
