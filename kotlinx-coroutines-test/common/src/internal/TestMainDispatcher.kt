@@ -9,31 +9,36 @@ import kotlin.coroutines.*
  * The testable main dispatcher used by kotlinx-coroutines-test.
  * It is a [MainCoroutineDispatcher] that delegates all actions to a settable delegate.
  */
-internal class TestMainDispatcher(delegate: CoroutineDispatcher):
+internal class TestMainDispatcher(createInnerMain: () -> CoroutineDispatcher):
     MainCoroutineDispatcher(),
     Delay
 {
-    private val mainDispatcher = delegate
-    private var delegate = NonConcurrentlyModifiable(mainDispatcher, "Dispatchers.Main")
+    internal constructor(delegate: CoroutineDispatcher): this({ delegate })
+
+    private val mainDispatcher by lazy(createInnerMain)
+    private var delegate = NonConcurrentlyModifiable<CoroutineDispatcher?>(null, "Dispatchers.Main")
+
+    private val dispatcher
+        get() = delegate.value ?: mainDispatcher
 
     private val delay
-        get() = delegate.value as? Delay ?: defaultDelay
+        get() = dispatcher as? Delay ?: defaultDelay
 
     override val immediate: MainCoroutineDispatcher
-        get() = (delegate.value as? MainCoroutineDispatcher)?.immediate ?: this
+        get() = (dispatcher as? MainCoroutineDispatcher)?.immediate ?: this
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) = delegate.value.dispatch(context, block)
+    override fun dispatch(context: CoroutineContext, block: Runnable) = dispatcher.dispatch(context, block)
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = delegate.value.isDispatchNeeded(context)
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = dispatcher.isDispatchNeeded(context)
 
-    override fun dispatchYield(context: CoroutineContext, block: Runnable) = delegate.value.dispatchYield(context, block)
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) = dispatcher.dispatchYield(context, block)
 
     fun setDispatcher(dispatcher: CoroutineDispatcher) {
         delegate.value = dispatcher
     }
 
     fun resetDispatcher() {
-        delegate.value = mainDispatcher
+        delegate.value = null
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =

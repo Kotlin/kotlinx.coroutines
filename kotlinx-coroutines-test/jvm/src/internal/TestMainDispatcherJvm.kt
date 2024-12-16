@@ -8,8 +8,9 @@ internal class TestMainDispatcherFactory : MainDispatcherFactory {
     override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher {
         val otherFactories = allFactories.filter { it !== this }
         val secondBestFactory = otherFactories.maxByOrNull { it.loadPriority } ?: MissingMainCoroutineDispatcherFactory
-        val dispatcher = secondBestFactory.tryCreateDispatcher(otherFactories)
-        return TestMainDispatcher(dispatcher)
+        /* Do not immediately create the alternative dispatcher, as with `SUPPORT_MISSING` set to `false`,
+        it will throw an exception. Instead, create it lazily. */
+        return TestMainDispatcher({ secondBestFactory.tryCreateDispatcher(otherFactories) })
     }
 
     /**
