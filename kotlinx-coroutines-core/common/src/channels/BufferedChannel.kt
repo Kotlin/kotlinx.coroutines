@@ -2422,7 +2422,7 @@ internal open class BufferedChannel<E>(
                 val segment = it.segment
                 // Advance the `bufferEnd` segment if required.
                 if (!isRendezvousOrUnlimited && id <= bufferEndCounter / SEGMENT_SIZE) {
-                    bufferEndSegment.moveForward(segment)
+                    bufferEndSegment.value.let { bufferEndSegment.moveToSpecifiedOrLast(id, it) }
                 }
                 // Is the required segment removed?
                 if (segment.id > id) {
