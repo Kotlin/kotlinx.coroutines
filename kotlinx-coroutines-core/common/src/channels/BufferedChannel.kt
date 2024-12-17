@@ -302,12 +302,8 @@ internal open class BufferedChannel<E>(
             // the channel is already closed, storing a waiter is illegal, so
             // the algorithm stores the `INTERRUPTED_SEND` token in this case.
             when (updateCellSend(segment, i, element, s, waiter, closed)) {
-                RESULT_RENDEZVOUS -> {
-                    // A rendezvous with a receiver has happened.
-                    return onRendezvousOrBuffered()
-                }
-                RESULT_BUFFERED -> {
-                    // The element has been buffered.
+                RESULT_BUFFERED, RESULT_RENDEZVOUS -> {
+                    // The element has been buffered or a rendezvous with a receiver has happened.
                     return onRendezvousOrBuffered()
                 }
                 RESULT_SUSPEND -> {
@@ -2422,7 +2418,7 @@ internal open class BufferedChannel<E>(
                 val segment = it.segment
                 // Advance the `bufferEnd` segment if required.
                 if (!isRendezvousOrUnlimited && id <= bufferEndCounter / SEGMENT_SIZE) {
-                    bufferEndSegment.value.let { bufferEndSegment.moveToSpecifiedOrLast(id, it) }
+                    bufferEndSegment.moveToSpecifiedOrLast(id, bufferEndSegment.value)
                 }
                 // Is the required segment removed?
                 if (segment.id > id) {
