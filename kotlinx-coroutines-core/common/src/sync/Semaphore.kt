@@ -128,10 +128,16 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
     private val tail: AtomicRef<SemaphoreSegment>
     private val enqIdx = atomic(0L)
 
+    /**
+      This value is used in [SemaphoreSegment.isLeftmostOrProcessed].
+      It helps to detect when the `prev` reference of the segment should be cleaned.
+    */
+    internal val headId: Long get() = head.value.id
+
     init {
         require(permits > 0) { "Semaphore should have at least 1 permit, but had $permits" }
         require(acquiredPermits in 0..permits) { "The number of acquired permits should be in 0..$permits" }
-        val s = SemaphoreSegment(0, null)
+        val s = SemaphoreSegment(0, null, this)
         head = atomic(s)
         tail = atomic(s)
     }
@@ -317,7 +323,6 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         val createNewSegment = ::createSegment
         val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
             createNewSegment = createNewSegment).segment // cannot be closed
-        segment.cleanPrev()
         if (segment.id > id) return false
         val i = (deqIdx % SEGMENT_SIZE).toInt()
         val cellState = segment.getAndSet(i, PERMIT) // set PERMIT and retrieve the prev cell state
@@ -356,12 +361,19 @@ private class SemaphoreImpl(
     permits: Int, acquiredPermits: Int
 ): SemaphoreAndMutexImpl(permits, acquiredPermits), Semaphore
 
-private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev)
+private fun createSegment(id: Long, prev: SemaphoreSegment) = SemaphoreSegment(
+    id = id,
+    prev = prev,
+    semaphore = prev.semaphore
+)
 
-private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?) : Segment<SemaphoreSegment>(id, prev) {
+private class SemaphoreSegment(
+    id: Long, prev: SemaphoreSegment?,
+    val semaphore: SemaphoreAndMutexImpl
+) : Segment<SemaphoreSegment>(id, prev) {
     val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
     override val numberOfSlots: Int get() = SEGMENT_SIZE
-    override val isLeftmostOrProcessed: Boolean get() = false // Does not impact semaphore implementation
+    override val isLeftmostOrProcessed: Boolean get() = id <= semaphore.headId
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun get(index: Int): Any? = acquirers[index].value

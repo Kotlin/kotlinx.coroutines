@@ -90,6 +90,10 @@ internal open class BufferedChannel<E>(
     private val receiveSegment: AtomicRef<ChannelSegment<E>>
     private val bufferEndSegment: AtomicRef<ChannelSegment<E>>
 
+    /**
+      These values are used in [ChannelSegment.isLeftmostOrProcessed].
+      They help to detect when the `prev` reference of the segment should be cleaned.
+     */
     internal val sendSegmentId: Long get() = sendSegment.value.id
     internal val receiveSegmentId: Long get() = receiveSegment.value.id
 
@@ -146,9 +150,9 @@ internal open class BufferedChannel<E>(
         the segment and the index in it. */
         segment: ChannelSegment<E>,
         index: Int,
-        /** The element to be inserted. */
+        /* The element to be inserted. */
         element: E,
-        /** The global index of the cell. */
+        /* The global index of the cell. */
         s: Long
     ) = suspendCancellableCoroutineReusable sc@{ cont ->
         sendImplOnNoWaiter( // <-- this is an inline function

@@ -71,7 +71,7 @@ internal inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = 
  *
  * The method is called when [moveForward] successfully updates the value stored in the `AtomicRef` reference.
  */
-internal inline fun <S : Segment<S>> cleanLeftmostPrev(from: S, to: S) {
+private inline fun <S : Segment<S>> cleanLeftmostPrev(from: S, to: S) {
     var cur = to
     // Find the leftmost segment on the sublist between `from` and `to` segments.
     while (!cur.isLeftmostOrProcessed && cur.id > from.id) {
