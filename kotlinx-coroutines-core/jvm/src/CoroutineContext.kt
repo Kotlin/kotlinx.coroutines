@@ -253,17 +253,25 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
         }
     }
 
+    override fun afterCompletionUndispatched() {
+        clearThreadLocal()
+    }
+
     override fun afterResume(state: Any?) {
+        clearThreadLocal()
+        // resume undispatched -- update context but stay on the same dispatcher
+        val result = recoverResult(state, uCont)
+        withContinuationContext(uCont, null) {
+            uCont.resumeWith(result)
+        }
+    }
+
+    private fun clearThreadLocal() {
         if (threadLocalIsSet) {
             threadStateToRecover.get()?.let { (ctx, value) ->
                 restoreThreadContext(ctx, value)
             }
             threadStateToRecover.remove()
-        }
-        // resume undispatched -- update context but stay on the same dispatcher
-        val result = recoverResult(state, uCont)
-        withContinuationContext(uCont, null) {
-            uCont.resumeWith(result)
         }
     }
 }
