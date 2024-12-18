@@ -35,20 +35,20 @@ class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
         override fun equals(other: Any?) = false
     }
 
-    @Test
+    @Test(timeout = 20_000L)
     fun testDefaultDispatcherNoSuspension() = ensureCoroutineContextGCed(Dispatchers.Default, suspend = false)
 
-    @Test
+    @Test(timeout = 20_000L)
     fun testDefaultDispatcher() = ensureCoroutineContextGCed(Dispatchers.Default, suspend = true)
 
 
-    @Test
+    @Test(timeout = 20_000L)
     fun testNonCoroutineDispatcher() = ensureCoroutineContextGCed(
         CustomContinuationInterceptor(Dispatchers.Default),
         suspend = true
     )
 
-    @Test
+    @Test(timeout = 20_000L)
     fun testNonCoroutineDispatcherSuspension() = ensureCoroutineContextGCed(
         CustomContinuationInterceptor(Dispatchers.Default),
         suspend = false
@@ -56,20 +56,23 @@ class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
 
     // Note asymmetric equals codepath never goes through the undispatched withContext, thus the separate test case
 
-    @Test
+    @Test(timeout = 20_000L)
     fun testNonCoroutineDispatcherAsymmetricEquals() =
         ensureCoroutineContextGCed(
             CustomNeverEqualContinuationInterceptor(Dispatchers.Default),
             suspend = true
         )
 
-    @Test
+    @Test(timeout = 20_000L)
     fun testNonCoroutineDispatcherAsymmetricEqualsSuspension() =
         ensureCoroutineContextGCed(
             CustomNeverEqualContinuationInterceptor(Dispatchers.Default),
             suspend = false
         )
 
+
+    @Volatile
+    private var letThatSinkIn: Any = "What is my purpose? To frag the garbage collctor"
 
     private fun ensureCoroutineContextGCed(coroutineContext: CoroutineContext, suspend: Boolean) {
         runTest {
@@ -85,11 +88,10 @@ class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
             }
             job.join()
 
-            // Twice is enough to ensure
-            System.gc()
-            System.gc()
-            assertNull(ref.get())
+            while (ref.get() != null) {
+                System.gc()
+                letThatSinkIn = LongArray(1024 * 1024)
+            }
         }
     }
-
 }
