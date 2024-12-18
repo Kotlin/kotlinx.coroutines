@@ -200,11 +200,11 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
      *
      * Returns `true`, if the node was physically removed, and `false` otherwise.
      */
-    open fun remove(): Boolean {
+    open fun remove() {
         assert { isRemoved || isTail } // The node should be logically removed at first.
         // The physical tail cannot be removed. Instead, we remove it when
         // a new segment is added and this segment is not the tail one anymore.
-        if (isTail) return false
+        if (isTail) return
         while (true) {
             // Read `next` and `prev` pointers ignoring logically removed nodes.
             val prev = aliveSegmentLeft
@@ -216,7 +216,7 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
             if (next.isRemoved && !next.isTail) continue
             if (prev !== null && prev.isRemoved) continue
             // This node is removed.
-            return true
+            return
         }
     }
 

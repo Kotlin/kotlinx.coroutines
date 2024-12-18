@@ -2512,8 +2512,8 @@ internal open class BufferedChannel<E>(
     This method is used in the physical removal of the segment. It helps to move pointers forward from
     the segment which was physically removed.
      */
-    internal fun movePointersForwardFrom(from: ChannelSegment<E>) {
-        check(from.isRemoved) { "Trying to move channel pointers from the alive segment." }
+    internal fun movePointersForwardFromRemovedSegment(from: ChannelSegment<E>) {
+        if (!from.isRemoved) return
         if (from == sendSegment.value) sendSegment.moveToSpecifiedOrLast(from.id, from)
         if (from == receiveSegment.value) receiveSegment.moveToSpecifiedOrLast(from.id, from)
         if (from == bufferEndSegment.value) bufferEndSegment.moveToSpecifiedOrLast(from.id, from)
@@ -2785,13 +2785,13 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
     /**
      * Removes the segment physically from the segment list.
      *
-     * If the physical removal was successful and there are channel pointers pointing on this segment,
-     * the [BufferedChannel.movePointersForwardFrom] method is invoked to move them further on the segment list.
+     * After the physical removal is finished and there are channel pointers referencing the removed segment,
+     * the [BufferedChannel.movePointersForwardFromRemovedSegment] method is invoked to move them further on the segment list.
      */
-    override fun remove(): Boolean =
-        super.remove().also {
-            if (it) channel.movePointersForwardFrom(this)
-        }
+    override fun remove() {
+        super.remove()
+        channel.movePointersForwardFromRemovedSegment(this)
+    }
 
     // ########################
     // # Cancellation Support #
