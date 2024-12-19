@@ -1,22 +1,12 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.scheduling.DefaultScheduler
 import kotlin.coroutines.*
-import kotlin.native.*
 
 internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher =
     MissingMainDispatcher
 
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultDispatcher
-
-private object DefaultDispatcher : CoroutineDispatcher() {
-    // Be consistent with JVM -- at least 2 threads to provide some liveness guarantees in case of improper uses
-    @OptIn(ExperimentalStdlibApi::class)
-    private val ctx = newFixedThreadPoolContext(Platform.getAvailableProcessors().coerceAtLeast(2), "Dispatchers.Default")
-
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        ctx.dispatch(context, block)
-    }
-}
+internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultScheduler
 
 private object MissingMainDispatcher : MainCoroutineDispatcher() {
     override val immediate: MainCoroutineDispatcher

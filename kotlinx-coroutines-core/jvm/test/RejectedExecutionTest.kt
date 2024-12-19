@@ -7,6 +7,7 @@ import kotlinx.coroutines.scheduling.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
+import java.util.concurrent.RejectedExecutionException
 import kotlin.test.*
 
 class RejectedExecutionTest : TestBase() {

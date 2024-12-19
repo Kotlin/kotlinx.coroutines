@@ -1,7 +1,6 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
-import kotlin.coroutines.*
+import kotlinx.coroutines.scheduling.DefaultIoScheduler
 
 
 public actual object Dispatchers {
@@ -21,29 +20,6 @@ public actual object Dispatchers {
 
     internal val IO: CoroutineDispatcher = DefaultIoScheduler
 }
-
-internal object DefaultIoScheduler : CoroutineDispatcher() {
-    // 2048 is an arbitrary KMP-friendly constant
-    private val unlimitedPool = newFixedThreadPoolContext(2048, "Dispatchers.IO")
-    private val io = unlimitedPool.limitedParallelism(64) // Default JVM size
-
-    override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
-        // See documentation to Dispatchers.IO for the rationale
-        return unlimitedPool.limitedParallelism(parallelism, name)
-    }
-
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        io.dispatch(context, block)
-    }
-
-    @InternalCoroutinesApi
-    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
-        io.dispatchYield(context, block)
-    }
-
-    override fun toString(): String = "Dispatchers.IO"
-}
-
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public actual val Dispatchers.IO: CoroutineDispatcher get() = IO

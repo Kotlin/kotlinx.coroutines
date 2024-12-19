@@ -41,7 +41,7 @@ class DispatcherKeyTest : TestBase() {
         val updated2 = updated + executor
         assertSame(Dispatchers.Default, updated2[ContinuationInterceptor])
         assertSame(Dispatchers.Default, updated2[CoroutineDispatcher])
-        assertSame(Dispatchers.Default as ExecutorCoroutineDispatcher, updated2[ExecutorCoroutineDispatcher])
+        assertSame(Dispatchers.Default as? ExecutorCoroutineDispatcher, updated2[ExecutorCoroutineDispatcher])
         assertEquals(name, updated2.minusKey(ContinuationInterceptor))
         assertEquals(name, updated2.minusKey(CoroutineDispatcher))
         assertEquals(name, updated2.minusKey(ExecutorCoroutineDispatcher))

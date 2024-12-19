@@ -1,12 +1,10 @@
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
-import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
 import kotlin.concurrent.*
-import kotlin.jvm.internal.*
 import kotlin.test.*
 
 class WorkQueueStressTest : TestBase() {
@@ -50,7 +48,7 @@ class WorkQueueStressTest : TestBase() {
 
         for (i in 0 until stealersCount) {
             threads += thread(name = "stealer $i") {
-                val ref = Ref.ObjectRef<Task?>()
+                val ref = ObjectRef<Task?>()
                 val myQueue = WorkQueue()
                 startLatch.await()
                 while (!producerFinished || producerQueue.size != 0) {
@@ -88,7 +86,7 @@ class WorkQueueStressTest : TestBase() {
         val stolen = GlobalQueue()
         threads += thread(name = "stealer") {
             val myQueue = WorkQueue()
-            val ref = Ref.ObjectRef<Task?>()
+            val ref = ObjectRef<Task?>()
             startLatch.await()
             while (stolen.size != offerIterations) {
                 if (producerQueue.trySteal(ref) != NOTHING_TO_STEAL) {

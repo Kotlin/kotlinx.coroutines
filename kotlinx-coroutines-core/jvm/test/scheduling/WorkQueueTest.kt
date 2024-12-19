@@ -4,7 +4,6 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
-import kotlin.jvm.internal.Ref.ObjectRef
 import kotlin.test.*
 
 class WorkQueueTest : TestBase() {

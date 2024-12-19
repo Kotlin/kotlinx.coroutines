@@ -13,3 +13,11 @@ internal expect class LocalAtomicInt(value: Int) {
     fun set(value: Int)
     fun decrementAndGet(): Int
 }
+
+internal expect class LocalAtomicRef<V>(initialValue: V) {
+    fun get(): V
+    fun set(value: V)
+    fun lazySet(value: V)
+    fun getAndSet(value: V): V
+    fun compareAndSet(expect: V, update: V): Boolean
+}

@@ -127,23 +127,22 @@ class CoroutineSchedulerTest : TestBase() {
 
     @Test
     fun testInterruptionCleanup() {
-        SchedulerCoroutineDispatcher(1, 1).use {
-            val executor = it.executor
+        SchedulerCoroutineDispatcher(1, 1).coroutineScheduler.use { executor ->
             var latch = CountDownLatch(1)
-            executor.execute {
+            executor.dispatch(Runnable {
                 Thread.currentThread().interrupt()
                 latch.countDown()
-            }
+            })
             latch.await()
             Thread.sleep(100) // I am really sorry
             latch = CountDownLatch(1)
-            executor.execute {
+            executor.dispatch(Runnable {
                 try {
                     assertFalse(Thread.currentThread().isInterrupted)
                 } finally {
                     latch.countDown()
                 }
-            }
+            })
             latch.await()
         }
     }

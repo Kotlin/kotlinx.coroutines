@@ -3,11 +3,10 @@ package kotlinx.coroutines.scheduling
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import java.io.*
-import java.util.concurrent.*
-import java.util.concurrent.locks.*
-import kotlin.jvm.internal.Ref.ObjectRef
+import kotlin.jvm.*
 import kotlin.math.*
+import kotlin.concurrent.Volatile
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Coroutine scheduler (pool of shared threads) with a primary target to distribute dispatched coroutines
@@ -94,7 +93,7 @@ internal class CoroutineScheduler(
     @JvmField val maxPoolSize: Int,
     @JvmField val idleWorkerKeepAliveNs: Long = IDLE_WORKER_KEEP_ALIVE_NS,
     @JvmField val schedulerName: String = DEFAULT_SCHEDULER_NAME
-) : Executor, Closeable {
+) : AutoCloseable {
     init {
         require(corePoolSize >= MIN_SUPPORTED_POOL_SIZE) {
             "Core pool size $corePoolSize should be at least $MIN_SUPPORTED_POOL_SIZE"
@@ -334,8 +333,6 @@ internal class CoroutineScheduler(
         private const val PARKED_VERSION_INC = 1L shl BLOCKING_SHIFT
     }
 
-    override fun execute(command: Runnable) = dispatch(command)
-
     override fun close() = shutdown(10_000L)
 
     // Shuts down current scheduler and waits until all work is done and all threads are stopped.
@@ -351,10 +348,7 @@ internal class CoroutineScheduler(
             val worker = workers[i]!!
             if (worker !== currentWorker) {
                 // Note: this is java.lang.Thread.getState() of type java.lang.Thread.State
-                while (worker.getState() != Thread.State.TERMINATED) {
-                    LockSupport.unpark(worker)
-                    worker.join(timeout)
-                }
+                worker.awaitTermination(timeout.milliseconds)
                 // Note: this is CoroutineScheduler.Worker.state of type CoroutineScheduler.WorkerState
                 assert { worker.state === WorkerState.TERMINATED } // Expected TERMINATED state
                 worker.localQueue.offloadAllWorkTo(globalBlockingQueue) // Doesn't actually matter which queue to use
@@ -462,7 +456,7 @@ internal class CoroutineScheduler(
         while (true) {
             val worker = parkedWorkersStackPop() ?: return false
             if (worker.workerCtl.compareAndSet(PARKED, CLAIMED)) {
-                LockSupport.unpark(worker)
+                worker.unpark()
                 return true
             }
         }
@@ -518,7 +512,8 @@ internal class CoroutineScheduler(
         return localQueue.add(task, fair = fair)
     }
 
-    private fun currentWorker(): Worker? = (Thread.currentThread() as? Worker)?.takeIf { it.scheduler == this }
+    private fun currentWorker(): Worker? =
+        (MultiplatformThread.currentThread() as? Worker)?.takeIf { it.scheduler == this }
 
     /**
      * Returns a string identifying the state of this scheduler for nicer debugging.
@@ -585,30 +580,22 @@ internal class CoroutineScheduler(
         try {
             task.run()
         } catch (e: Throwable) {
-            val thread = Thread.currentThread()
-            thread.uncaughtExceptionHandler.uncaughtException(thread, e)
+            val thread = MultiplatformThread.currentThread()
+            thread?.reportException(e)
         } finally {
             unTrackTask()
         }
     }
 
-    internal inner class Worker private constructor() : Thread() {
-        init {
-            isDaemon = true
-            /*
-             * `Dispatchers.Default` is used as *the* dispatcher in the containerized environments,
-             * isolated by their own classloaders. Workers are populated lazily, thus we are inheriting
-             * `Dispatchers.Default` context class loader here instead of using parent' thread one
-             * in order not to accidentally capture temporary application classloader.
-             */
-            contextClassLoader = this@CoroutineScheduler.javaClass.classLoader
-        }
+    internal inner class Worker private constructor() : MultiplatformThread(
+        isDaemon = true, contextClassLoaderSource = this@CoroutineScheduler
+    ) {
 
         // guarded by scheduler lock, index in workers array, 0 when not in array (terminated)
         @Volatile // volatile for push/pop operation into parkedWorkersStack
         var indexInArray = 0
             set(index) {
-                name = "$schedulerName-worker-${if (index == 0) "TERMINATED" else index.toString()}"
+                setName("$schedulerName-worker-${if (index == 0) "TERMINATED" else index.toString()}")
                 field = index
             }
 
@@ -669,7 +656,7 @@ internal class CoroutineScheduler(
          */
         private var rngState: Int = run {
             // This could've been Random.nextInt(), but we are shaving an extra initialization cost, see #4051
-            val seed = System.nanoTime().toInt()
+            val seed = actualNanoTime().toInt()
             // rngState shouldn't be zero, as required for the xorshift algorithm
             if (seed != 0) return@run seed
             42
@@ -737,8 +724,8 @@ internal class CoroutineScheduler(
                     } else {
                         rescanned = false
                         tryReleaseCpu(WorkerState.PARKING)
-                        interrupted()
-                        LockSupport.parkNanos(minDelayUntilStealableTaskNs)
+                        clearInterruptFlag()
+                        parkNanosCurrentThread(minDelayUntilStealableTaskNs)
                         minDelayUntilStealableTaskNs = 0L
                     }
                     continue
@@ -799,7 +786,7 @@ internal class CoroutineScheduler(
             while (inStack() && workerCtl.value == PARKED) { // Prevent spurious wakeups
                 if (isTerminated || state == WorkerState.TERMINATED) break
                 tryReleaseCpu(WorkerState.PARKING)
-                interrupted() // Cleanup interruptions
+                clearInterruptFlag()
                 park()
             }
         }
@@ -850,12 +837,12 @@ internal class CoroutineScheduler(
 
         private fun park() {
             // set termination deadline the first time we are here (it is reset in idleReset)
-            if (terminationDeadline == 0L) terminationDeadline = System.nanoTime() + idleWorkerKeepAliveNs
+            if (terminationDeadline == 0L) terminationDeadline = actualNanoTime() + idleWorkerKeepAliveNs
             // actually park
-            LockSupport.parkNanos(idleWorkerKeepAliveNs)
+            parkNanosCurrentThread(idleWorkerKeepAliveNs)
             // try terminate when we are idle past termination deadline
             // note that comparison is written like this to protect against potential nanoTime wraparound
-            if (System.nanoTime() - terminationDeadline >= 0) {
+            if (actualNanoTime() - terminationDeadline >= 0) {
                 terminationDeadline = 0L // if attempt to terminate worker fails we'd extend deadline again
                 tryTerminateWorker()
             }
@@ -1023,18 +1010,3 @@ internal class CoroutineScheduler(
         TERMINATED
     }
 }
-
-/**
- * Checks if the thread is part of a thread pool that supports coroutines.
- * This function is needed for integration with BlockHound.
- */
-@JvmName("isSchedulerWorker")
-internal fun isSchedulerWorker(thread: Thread) = thread is CoroutineScheduler.Worker
-
-/**
- * Checks if the thread is running a CPU-bound task.
- * This function is needed for integration with BlockHound.
- */
-@JvmName("mayNotBlock")
-internal fun mayNotBlock(thread: Thread) = thread is CoroutineScheduler.Worker &&
-    thread.state == CoroutineScheduler.WorkerState.CPU_ACQUIRED

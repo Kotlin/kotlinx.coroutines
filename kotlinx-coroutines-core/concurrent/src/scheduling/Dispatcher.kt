@@ -2,10 +2,11 @@ package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 // Instance of Dispatchers.Default
+@PublishedApi
 internal object DefaultScheduler : SchedulerCoroutineDispatcher(
     CORE_POOL_SIZE, MAX_POOL_SIZE,
     IDLE_WORKER_KEEP_ALIVE_NS, DEFAULT_SCHEDULER_NAME
@@ -17,16 +18,6 @@ internal object DefaultScheduler : SchedulerCoroutineDispatcher(
             return namedOrThis(name)
         }
         return super.limitedParallelism(parallelism, name)
-    }
-
-    // Shuts down the dispatcher, used only by Dispatchers.shutdown()
-    internal fun shutdown() {
-        super.close()
-    }
-
-    // Overridden in case anyone writes (Dispatchers.Default as ExecutorCoroutineDispatcher).close()
-    override fun close() {
-        throw UnsupportedOperationException("Dispatchers.Default cannot be closed")
     }
 
     override fun toString(): String = "Dispatchers.Default"
@@ -59,19 +50,13 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
 }
 
 // Dispatchers.IO
-internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor {
+internal object DefaultIoScheduler : CoroutineDispatcher() {
 
     private val default = UnlimitedIoScheduler.limitedParallelism(
-        systemProp(
-            IO_PARALLELISM_PROPERTY_NAME,
-            64.coerceAtLeast(AVAILABLE_PROCESSORS)
-        )
+        ioParallelism()
     )
 
-    override val executor: Executor
-        get() = this
-
-    override fun execute(command: java.lang.Runnable) = dispatch(EmptyCoroutineContext, command)
+    fun execute(command: Runnable) = dispatch(EmptyCoroutineContext, command)
 
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         // See documentation to Dispatchers.IO for the rationale
@@ -87,10 +72,6 @@ internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor {
         default.dispatchYield(context, block)
     }
 
-    override fun close() {
-        error("Cannot be invoked on Dispatchers.IO")
-    }
-
     override fun toString(): String = "Dispatchers.IO"
 }
 
@@ -100,20 +81,20 @@ internal open class SchedulerCoroutineDispatcher(
     private val maxPoolSize: Int = MAX_POOL_SIZE,
     private val idleWorkerKeepAliveNs: Long = IDLE_WORKER_KEEP_ALIVE_NS,
     private val schedulerName: String = "CoroutineScheduler",
-) : ExecutorCoroutineDispatcher() {
-
-    override val executor: Executor
-        get() = coroutineScheduler
+): CoroutineDispatcher() {
 
     // This is variable for test purposes, so that we can reinitialize from clean state
-    private var coroutineScheduler = createScheduler()
+    var coroutineScheduler = createScheduler()
+        private set
+
+    private val lock = SynchronizedObject()
 
     private fun createScheduler() =
         CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
 
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = coroutineScheduler.dispatch(block)
 
-    override fun dispatchYield(context: CoroutineContext, block: Runnable): Unit {
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
         /*
          * 'dispatchYield' implementation is needed to address the scheduler's scheduling policy.
          * By default, the scheduler dispatches tasks in a semi-LIFO order, meaning that for the
@@ -130,23 +111,28 @@ internal open class SchedulerCoroutineDispatcher(
         coroutineScheduler.dispatch(block, context, fair)
     }
 
-    override fun close() {
+    // Shuts down the dispatcher, used only by Dispatchers.shutdown()
+    fun close() {
         coroutineScheduler.close()
     }
 
     // fot tests only
-    @Synchronized
     internal fun usePrivateScheduler() {
-        coroutineScheduler.shutdown(1_000L)
-        coroutineScheduler = createScheduler()
+        synchronized(lock) {
+            coroutineScheduler.shutdown(1_000L)
+            coroutineScheduler = createScheduler()
+        }
     }
 
     // for tests only
-    @Synchronized
     internal fun shutdown(timeout: Long) {
-        coroutineScheduler.shutdown(timeout)
+        synchronized(lock) {
+            coroutineScheduler.shutdown(timeout)
+        }
     }
 
     // for tests only
     internal fun restore() = usePrivateScheduler() // recreate scheduler
 }
+
+internal class ObjectRef<T>(@JvmField var element: T? = null)

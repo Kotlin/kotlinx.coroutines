@@ -132,13 +132,15 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
             .count { it is CoroutineScheduler.Worker && it.name.contains("SomeTestName") }
         assertEquals(0, initialCount)
         val dispatcher = SchedulerCoroutineDispatcher(1, 1, IDLE_WORKER_KEEP_ALIVE_NS, "SomeTestName")
-        dispatcher.use {
+        try {
             launch(dispatcher) {
             }.join()
 
             val count = Thread.getAllStackTraces().keys.asSequence()
                 .count { it is CoroutineScheduler.Worker && it.name.contains("SomeTestName") }
             assertEquals(1, count)
+        } finally {
+            dispatcher.close()
         }
     }
 }

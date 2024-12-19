@@ -22,13 +22,13 @@ class CoroutineSchedulerLivenessStressTest : TestBase() {
         Assume.assumeTrue(CORE_POOL_SIZE >= 2)
         repeat(iterations) {
             val barrier = CyclicBarrier(CORE_POOL_SIZE + 1)
-            scheduler.value.execute {
+            scheduler.value.dispatch(Runnable {
                 repeat(CORE_POOL_SIZE) {
-                    scheduler.value.execute {
+                    scheduler.value.dispatch(Runnable {
                         barrier.await()
-                    }
+                    })
                 }
-            }
+            })
             barrier.await()
         }
     }
@@ -39,9 +39,9 @@ class CoroutineSchedulerLivenessStressTest : TestBase() {
         repeat(iterations) {
             val barrier = CyclicBarrier(CORE_POOL_SIZE + 1)
             repeat(CORE_POOL_SIZE) {
-                scheduler.value.execute {
+                scheduler.value.dispatch(Runnable {
                     barrier.await()
-                }
+                })
             }
             barrier.await()
         }

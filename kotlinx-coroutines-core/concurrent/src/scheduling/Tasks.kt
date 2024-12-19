@@ -2,7 +2,8 @@ package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import java.util.concurrent.*
+import kotlin.jvm.*
+import kotlin.time.Duration.Companion.seconds
 
 
 /**
@@ -41,9 +42,8 @@ internal val MAX_POOL_SIZE = systemProp(
 )
 
 @JvmField
-internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(
-    systemProp("kotlinx.coroutines.scheduler.keep.alive.sec", 60L)
-)
+internal val IDLE_WORKER_KEEP_ALIVE_NS =
+    systemProp("kotlinx.coroutines.scheduler.keep.alive.sec", 60L).seconds.inWholeNanoseconds
 
 @JvmField
 internal var schedulerTimeSource: SchedulerTimeSource = NanoTimeSource
@@ -102,5 +102,5 @@ internal abstract class SchedulerTimeSource {
 }
 
 internal object NanoTimeSource : SchedulerTimeSource() {
-    override fun nanoTime() = System.nanoTime()
+    override fun nanoTime() = actualNanoTime()
 }

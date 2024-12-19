@@ -2,7 +2,7 @@ package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.AVAILABLE_PROCESSORS
+import kotlinx.coroutines.scheduling.AVAILABLE_PROCESSORS
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -83,4 +83,3 @@ class CoroutineSchedulerInternalApiStressTest : TestBase() {
         }
     }
 }
-

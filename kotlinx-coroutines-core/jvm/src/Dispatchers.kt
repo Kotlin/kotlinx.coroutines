@@ -88,7 +88,7 @@ public actual object Dispatchers {
     public fun shutdown() {
         DefaultExecutor.shutdown()
         // Also shuts down Dispatchers.IO
-        DefaultScheduler.shutdown()
+        DefaultScheduler.close()
     }
 }
 

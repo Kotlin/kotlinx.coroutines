@@ -2,8 +2,7 @@ package kotlinx.coroutines.scheduling
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import java.util.concurrent.atomic.*
-import kotlin.jvm.internal.Ref.ObjectRef
+import kotlinx.coroutines.internal.*
 
 internal const val BUFFER_CAPACITY_BASE = 7
 internal const val BUFFER_CAPACITY = 1 shl BUFFER_CAPACITY_BASE
@@ -58,7 +57,7 @@ internal class WorkQueue {
      */
     private val bufferSize: Int get() = producerIndex.value - consumerIndex.value
     internal val size: Int get() = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
-    private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
+    private val buffer = Array<LocalAtomicRef<Task?>>(BUFFER_CAPACITY) { LocalAtomicRef(null) }
     private val lastScheduledTask = atomic<Task?>(null)
 
     private val producerIndex = atomic(0)
@@ -98,10 +97,10 @@ internal class WorkQueue {
          * This algorithm can still be wait-free for add, but if and only if tasks are not reusable, otherwise
          * nulling out the buffer wouldn't be possible.
          */
-        while (buffer[nextIndex] != null) {
-            Thread.yield()
+        while (buffer[nextIndex].get() != null) {
+            yieldThread()
         }
-        buffer.lazySet(nextIndex, task)
+        buffer[nextIndex].lazySet(task)
         producerIndex.incrementAndGet()
         return null
     }
@@ -177,8 +176,8 @@ internal class WorkQueue {
 
     private fun tryExtractFromTheMiddle(index: Int, onlyBlocking: Boolean): Task? {
         val arrayIndex = index and MASK
-        val value = buffer[arrayIndex]
-        if (value != null && value.isBlocking == onlyBlocking && buffer.compareAndSet(arrayIndex, value, null)) {
+        val value = buffer[arrayIndex].get()
+        if (value != null && value.isBlocking == onlyBlocking && buffer[arrayIndex].compareAndSet(value, null)) {
             if (onlyBlocking) blockingTasksInBuffer.decrementAndGet()
             return value
         }
@@ -234,7 +233,7 @@ internal class WorkQueue {
             val index = tailLocal and MASK
             if (consumerIndex.compareAndSet(tailLocal, tailLocal + 1)) {
                 // Nulls are allowed when blocking tasks are stolen from the middle of the queue.
-                val value = buffer.getAndSet(index, null) ?: continue
+                val value = buffer[index].getAndSet(null) ?: continue
                 value.decrementIfBlocking()
                 return value
             }

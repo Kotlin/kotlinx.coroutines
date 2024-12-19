@@ -2,6 +2,7 @@ package kotlinx.coroutines.testing
 
 import kotlin.test.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.scheduling.*
 
 actual val VERBOSE = false
 
@@ -10,6 +11,8 @@ actual typealias NoNative = Ignore
 public actual val isStressTest: Boolean = false
 public actual val stressTestMultiplier: Int = 1
 public actual val stressTestMultiplierSqrt: Int = 1
+
+private const val SHUTDOWN_TIMEOUT = 1_000L // 1s at most to wait per thread
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 public actual typealias TestResult = Unit
@@ -54,6 +57,29 @@ public actual open class TestBase actual constructor(): OrderedExecutionTestBase
         if (exCount < unhandled.size)
             error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
+
+
+    @BeforeTest
+    fun before() {
+        initPoolsBeforeTest()
+    }
+
+    @AfterTest
+    fun onCompletion() {
+        // Shutdown all thread pools
+        shutdownPoolsAfterTest()
+    }
+}
+
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+fun initPoolsBeforeTest() {
+    DefaultScheduler.usePrivateScheduler()
+}
+
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+fun shutdownPoolsAfterTest() {
+    DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
+    DefaultScheduler.restore()
 }
 
 public actual val isNative = true
