@@ -22,6 +22,22 @@ class BooleanTerminationTest : TestBase() {
     }
 
     @Test
+    fun testAnyInfinite() = runTest {
+        assertTrue(flow { while (true) { emit(5) } }.any { it == 5 })
+    }
+
+    @Test
+    fun testAnyShortCircuit() = runTest {
+        assertTrue(flow {
+            emit(1)
+            emit(2)
+            expectUnreached()
+        }.any {
+            it == 2
+        })
+    }
+
+    @Test
     fun testAllNominal() = runTest {
         val flow = flow {
             emit(1)
@@ -39,6 +55,22 @@ class BooleanTerminationTest : TestBase() {
     }
 
     @Test
+    fun testAllInfinite() = runTest {
+        assertFalse(flow { while (true) { emit(5) } }.all { it == 0 })
+    }
+
+    @Test
+    fun testAllShortCircuit() = runTest {
+        assertFalse(flow {
+            emit(1)
+            emit(2)
+            expectUnreached()
+        }.all {
+            it <= 1
+        })
+    }
+
+    @Test
     fun testNoneNominal() = runTest {
         val flow = flow {
             emit(1)
@@ -53,6 +85,22 @@ class BooleanTerminationTest : TestBase() {
     @Test
     fun testNoneEmpty() = runTest {
         assertTrue(emptyFlow<Int>().none { it > 0 })
+    }
+
+    @Test
+    fun testNoneInfinite() = runTest {
+        assertFalse(flow { while (true) { emit(5) } }.none { it == 5 })
+    }
+
+    @Test
+    fun testNoneShortCircuit() = runTest {
+        assertFalse(flow {
+            emit(1)
+            emit(2)
+            expectUnreached()
+        }.none {
+            it == 2
+        })
     }
 
 }
