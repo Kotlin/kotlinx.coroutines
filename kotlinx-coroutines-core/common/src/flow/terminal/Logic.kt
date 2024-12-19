@@ -31,7 +31,6 @@ import kotlin.jvm.*
  * @see Iterable.any
  * @see Sequence.any
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.any(predicate: suspend (T) -> Boolean): Boolean {
     var found = false
     collectWhile {
@@ -69,7 +68,6 @@ public suspend fun <T> Flow<T>.any(predicate: suspend (T) -> Boolean): Boolean {
  * @see Iterable.all
  * @see Sequence.all
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.all(predicate: suspend (T) -> Boolean): Boolean {
     var foundCounterExample = false
     collectWhile {
@@ -106,5 +104,4 @@ public suspend fun <T> Flow<T>.all(predicate: suspend (T) -> Boolean): Boolean {
  * @see Iterable.none
  * @see Sequence.none
  */
-@ExperimentalCoroutinesApi
 public suspend fun <T> Flow<T>.none(predicate: suspend (T) -> Boolean): Boolean = !any(predicate)
