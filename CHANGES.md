@@ -1,5 +1,20 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.10.0
+
+* Kotlin was updated to 2.1.0 (#4284).
+* Introduced `Flow.any`, `Flow.all`, and `Flow.none` (#4212). Thanks, @CLOVIS-AI!
+* Reorganized `kotlinx-coroutines-debug` and `kotlinx-coroutines-core` code to avoid a split package between the two artifacts (#4247). Note that directly referencing `kotlinx.coroutines.debug.AgentPremain` must now be replaced with `kotlinx.coroutines.debug.internal.AgentPremain`. Thanks, @sellmair!
+* No longer shade byte-buddy in `kotlinx-coroutines-debug`, reducing the artifact size and simplifying the build configuration of client code. Thanks, @sellmair!
+* Fixed `NullPointerException` when using Java-deserialized `kotlinx-coroutines-core` exceptions (#4291). Thanks, @AlexRiedler!
+* Properly report exceptions thrown by `CoroutineDispatcher.dispatch` instead of raising internal errors (#4091). Thanks, @zuevmaxim!
+* Fixed a bug that delayed scheduling of a `Dispatchers.Default` or `Dispatchers.IO` task after a `yield()` in rare scenarios (#4248).
+* Fixed a bug that prevented the `main()` coroutine on Wasm/WASI from executing after a `delay()` call in some scenarios (#4239).
+* Fixed scheduling of `runBlocking` tasks on Kotlin/Native that arrive after the `runBlocking` block was exited (#4245).
+* Fixed some terminal `Flow` operators sometimes resuming without taking cancellation into account (#4254). Thanks, @jxdabc!
+* Fixed a bug on the JVM that caused coroutine-bound `ThreadLocal` values not to get cleaned when using non-`CoroutineDispatcher` continuation interceptors (#4296).
+* Small tweaks, fixes, and documentation improvements.
+
 ## Version 1.9.0
 
 ### Features
