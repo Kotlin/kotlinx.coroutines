@@ -79,6 +79,7 @@ private inline fun <T> ScopeCoroutine<T>.undispatchedResult(
     if (result === COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED // (1)
     val state = makeCompletingOnce(result)
     if (state === COMPLETING_WAITING_CHILDREN) return COROUTINE_SUSPENDED // (2)
+    afterCompletionUndispatched()
     return if (state is CompletedExceptionally) { // (3)
         when {
             shouldThrow(state.cause) -> throw recoverStackTrace(state.cause, uCont)

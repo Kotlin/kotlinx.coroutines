@@ -185,7 +185,8 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
      * `withContext` for the sake of logging, MDC, tracing etc., meaning that there exists thousands of
      * undispatched coroutines.
      * Each access to Java's [ThreadLocal] leaves a footprint in the corresponding Thread's `ThreadLocalMap`
-     * that is cleared automatically as soon as the associated thread-local (-> UndispatchedCoroutine) is garbage collected.
+     * that is cleared automatically as soon as the associated thread-local (-> UndispatchedCoroutine) is garbage collected
+     * when either the corresponding thread is GC'ed or it cleans up its stale entries on other TL accesses.
      * When such coroutines are promoted to old generation, `ThreadLocalMap`s become bloated and an arbitrary accesses to thread locals
      * start to consume significant amount of CPU because these maps are open-addressed and cleaned up incrementally on each access.
      * (You can read more about this effect as "GC nepotism").
@@ -253,17 +254,25 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
         }
     }
 
+    override fun afterCompletionUndispatched() {
+        clearThreadLocal()
+    }
+
     override fun afterResume(state: Any?) {
+        clearThreadLocal()
+        // resume undispatched -- update context but stay on the same dispatcher
+        val result = recoverResult(state, uCont)
+        withContinuationContext(uCont, null) {
+            uCont.resumeWith(result)
+        }
+    }
+
+    private fun clearThreadLocal() {
         if (threadLocalIsSet) {
             threadStateToRecover.get()?.let { (ctx, value) ->
                 restoreThreadContext(ctx, value)
             }
             threadStateToRecover.remove()
-        }
-        // resume undispatched -- update context but stay on the same dispatcher
-        val result = recoverResult(state, uCont)
-        withContinuationContext(uCont, null) {
-            uCont.resumeWith(result)
         }
     }
 }

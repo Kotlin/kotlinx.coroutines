@@ -5,6 +5,7 @@ package kotlinx.coroutines
 import kotlinx.coroutines.CoroutineStart.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.internal.ScopeCoroutine
 
 /**
  * Abstract base class for implementation of coroutines in coroutine builders.
@@ -100,6 +101,15 @@ public abstract class AbstractCoroutine<in T>(
         afterResume(state)
     }
 
+    /**
+     * Invoked when the corresponding `AbstractCoroutine` was **conceptually** resumed, but not mechanically.
+     * Currently, this function only invokes `resume` on the underlying continuation for [ScopeCoroutine]
+     * or does nothing otherwise.
+     *
+     * Examples of resumes:
+     * - `afterCompletion` calls when the corresponding `Job` changed its state (i.e. got cancelled)
+     * - [AbstractCoroutine.resumeWith] was invoked
+     */
     protected open fun afterResume(state: Any?): Unit = afterCompletion(state)
 
     internal final override fun handleOnCompletionException(exception: Throwable) {

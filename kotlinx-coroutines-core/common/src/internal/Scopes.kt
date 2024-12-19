@@ -23,6 +23,13 @@ internal open class ScopeCoroutine<in T>(
         uCont.intercepted().resumeCancellableWith(recoverResult(state, uCont))
     }
 
+    /**
+     * Invoked when a scoped coorutine was completed in an undispatched manner directly
+     * at the place of its start because it never suspended.
+     */
+    open fun afterCompletionUndispatched() {
+    }
+
     override fun afterResume(state: Any?) {
         // Resume direct because scope is already in the correct context
         uCont.resumeWith(recoverResult(state, uCont))
