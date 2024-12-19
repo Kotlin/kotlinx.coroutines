@@ -1,4 +1,5 @@
 <!--- TEST_NAME ChannelsGuideTest -->
+<contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
 
 [//]: # (title: Channels)
 
@@ -30,10 +31,10 @@ fun main() = runBlocking {
 }
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-01.kt).
+<!--- KNIT example-channel-01.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-01.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -76,10 +77,10 @@ fun main() = runBlocking {
 }
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-02.kt).
+<!--- KNIT example-channel-02.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-02.kt).
 >
-{type="note"}
+{style="note"}
 
 <!--- TEST 
 1
@@ -117,10 +118,10 @@ fun main() = runBlocking {
 }
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-03.kt).
+<!--- KNIT example-channel-03.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-03.kt).
 >
-{type="note"}
+{style="note"}
 
 <!--- TEST 
 1
@@ -181,10 +182,10 @@ fun CoroutineScope.square(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = p
 }
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-04.kt).
+<!--- KNIT example-channel-04.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-04.kt).
 >
-{type="note"}
+{style="note"}
 
 <!--- TEST 
 1
@@ -199,7 +200,7 @@ Done!
 > so that we can rely on [structured concurrency](composing-suspending-functions.md#structured-concurrency-with-async) to make
 > sure that we don't have lingering global coroutines in our application.
 >
-{type="note"}
+{style="note"}
 
 ## Prime numbers with pipeline
 
@@ -225,7 +226,7 @@ fun CoroutineScope.filter(numbers: ReceiveChannel<Int>, prime: Int) = produce<In
 Now we build our pipeline by starting a stream of numbers from 2, taking a prime number from the current channel, 
 and launching new pipeline stage for each prime number found:
  
-```Plain Text
+```
 numbersFrom(2) -> filter(2) -> filter(3) -> filter(5) -> filter(7) ... 
 ```
  
@@ -265,10 +266,10 @@ fun CoroutineScope.filter(numbers: ReceiveChannel<Int>, prime: Int) = produce<In
 }
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-05.kt).
+<!--- KNIT example-channel-05.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-05.kt).
 >
-{type="note"}
+{style="note"}
 
 The output of this code is:
 
@@ -359,10 +360,10 @@ fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = laun
 }
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-06.kt).
+<!--- KNIT example-channel-06.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-06.kt).
 >
-{type="note"}
+{style="note"}
 
 The output will be similar to the following one, albeit the processor ids that receive
 each specific integer may be different:
@@ -434,10 +435,10 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
 }
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-07.kt).
+<!--- KNIT example-channel-07.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-07.kt).
 >
-{type="note"}
+{style="note"}
 
 The output is:
 
@@ -484,10 +485,10 @@ fun main() = runBlocking<Unit> {
 }
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-08.kt).
+<!--- KNIT example-channel-08.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-08.kt).
 >
-{type="note"}
+{style="note"}
 
 It prints "sending" _five_ times using a buffered channel with capacity of _four_:
 
@@ -537,10 +538,10 @@ suspend fun player(name: String, table: Channel<Ball>) {
 //sampleEnd
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-09.kt).
+<!--- KNIT example-channel-09.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-09.kt).
 >
-{type="note"}
+{style="note"}
 
 The "ping" coroutine is started first, so it is the first one to receive the ball. Even though "ping"
 coroutine immediately starts receiving the ball again after sending it back to the table, the ball gets
@@ -601,10 +602,10 @@ fun main() = runBlocking<Unit> {
 //sampleEnd
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-
-> You can get the full code [here](../../kotlinx-coroutines-core/jvm/test/guide/example-channel-10.kt).
+<!--- KNIT example-channel-10.kt -->
+> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-channel-10.kt).
 >
-{type="note"}
+{style="note"}
 
 It prints following lines:
 

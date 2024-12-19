@@ -1,3 +1,6 @@
+<contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
+
+
 [//]: # (title: Debug coroutines using IntelliJ IDEA – tutorial)
 
 This tutorial demonstrates how to create Kotlin coroutines and debug them using IntelliJ IDEA.
@@ -113,4 +116,4 @@ You can disable this behavior with the `-Xdebug` compiler option.
 
 > __Never use this flag in production__: `-Xdebug` can [cause memory leaks](https://youtrack.jetbrains.com/issue/KT-48678/Coroutine-debugger-disable-was-optimised-out-compiler-feature#focus=Comments-27-6015585.0-0).
 >
-{type="warning"}
+{style="warning"}
