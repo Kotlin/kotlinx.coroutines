@@ -16,11 +16,15 @@ import kotlin.jvm.*
  * @see Sequence.any
  */
 @ExperimentalCoroutinesApi
-public suspend fun <T> Flow<T>.any(predicate: suspend (T) -> Boolean): Boolean = this
-    .filter { predicate(it) }
-    .map { true }
-    .onEmpty { emit(false) }
-    .first()
+public suspend fun <T> Flow<T>.any(predicate: suspend (T) -> Boolean): Boolean {
+    var found = false
+    collectWhile {
+        predicate(it).also { satisfies ->
+            if (satisfies) found = true
+        }.let(Boolean::not)
+    }
+    return found
+}
 
 /**
  * Returns `true` if all elements match the given [predicate].
@@ -35,8 +39,15 @@ public suspend fun <T> Flow<T>.any(predicate: suspend (T) -> Boolean): Boolean =
  * @see Sequence.all
  */
 @ExperimentalCoroutinesApi
-public suspend fun <T> Flow<T>.all(predicate: suspend (T) -> Boolean): Boolean =
-    count { !predicate(it) } == 0
+public suspend fun <T> Flow<T>.all(predicate: suspend (T) -> Boolean): Boolean {
+    var foundCounterExample = false
+    collectWhile {
+        predicate(it).also { satisfies ->
+            if (!satisfies) foundCounterExample = true
+        }
+    }
+    return !foundCounterExample
+}
 
 /**
  * Returns `true` if none of the elements match the given [predicate].
@@ -47,5 +58,4 @@ public suspend fun <T> Flow<T>.all(predicate: suspend (T) -> Boolean): Boolean =
  * @see Sequence.none
  */
 @ExperimentalCoroutinesApi
-public suspend fun <T> Flow<T>.none(predicate: suspend (T) -> Boolean): Boolean =
-    count { predicate(it) } == 0
+public suspend fun <T> Flow<T>.none(predicate: suspend (T) -> Boolean): Boolean = !any(predicate)
