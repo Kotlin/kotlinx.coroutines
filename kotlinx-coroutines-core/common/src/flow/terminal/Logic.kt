@@ -34,9 +34,9 @@ import kotlin.jvm.*
 public suspend fun <T> Flow<T>.any(predicate: suspend (T) -> Boolean): Boolean {
     var found = false
     collectWhile {
-        predicate(it).also { satisfies ->
-            if (satisfies) found = true
-        }.let(Boolean::not)
+        val satisfies = predicate(it)
+        if (satisfies) found = true
+        !satisfies
     }
     return found
 }
@@ -71,9 +71,9 @@ public suspend fun <T> Flow<T>.any(predicate: suspend (T) -> Boolean): Boolean {
 public suspend fun <T> Flow<T>.all(predicate: suspend (T) -> Boolean): Boolean {
     var foundCounterExample = false
     collectWhile {
-        predicate(it).also { satisfies ->
-            if (!satisfies) foundCounterExample = true
-        }
+        val satisfies = predicate(it)
+        if (!satisfies) foundCounterExample = true
+        satisfies
     }
     return !foundCounterExample
 }
