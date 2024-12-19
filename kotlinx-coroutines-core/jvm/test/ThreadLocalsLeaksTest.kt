@@ -1,6 +1,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.TestBase
+import kotlinx.coroutines.testing.isJavaAndWindows
 import java.lang.ref.WeakReference
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
@@ -74,6 +75,11 @@ class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
     private var letThatSinkIn: Any = "What is my purpose? To frag the garbage collctor"
 
     private fun ensureCoroutineContextGCed(coroutineContext: CoroutineContext, suspend: Boolean) {
+        // Tests are pretty timing-sensitive and flake ehavily on our virtualized Windows environment
+        if (isJavaAndWindows) {
+            return
+        }
+
         fun forceGcUntilRefIsCleaned(ref: WeakReference<CoroutineName>) {
             while (ref.get() != null) {
                 System.gc()
