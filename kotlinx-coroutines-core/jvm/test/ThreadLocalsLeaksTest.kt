@@ -7,7 +7,6 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
-import kotlin.test.assertNull
 
 /*
  * This is an adapted verion of test from #4296.
@@ -75,6 +74,13 @@ class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
     private var letThatSinkIn: Any = "What is my purpose? To frag the garbage collctor"
 
     private fun ensureCoroutineContextGCed(coroutineContext: CoroutineContext, suspend: Boolean) {
+        fun forceGcUntilRefIsCleaned(ref: WeakReference<CoroutineName>) {
+            while (ref.get() != null) {
+                System.gc()
+                letThatSinkIn = LongArray(1024 * 1024)
+            }
+        }
+
         runTest {
             lateinit var ref: WeakReference<CoroutineName>
             val job = GlobalScope.launch(coroutineContext) {
@@ -88,10 +94,7 @@ class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
             }
             job.join()
 
-            while (ref.get() != null) {
-                System.gc()
-                letThatSinkIn = LongArray(1024 * 1024)
-            }
+            forceGcUntilRefIsCleaned(ref)
         }
     }
 }
