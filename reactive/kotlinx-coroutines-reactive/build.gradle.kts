@@ -32,7 +32,7 @@ tasks.check {
     dependsOn(testNG)
 }
 
-externalDocumentationLink(
+configureExternalLinks(
     url = "https://www.reactive-streams.org/reactive-streams-$reactiveStreamsVersion-javadoc/"
 )
 

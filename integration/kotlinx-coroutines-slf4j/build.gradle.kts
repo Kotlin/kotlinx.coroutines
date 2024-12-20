@@ -5,6 +5,6 @@ dependencies {
     testRuntimeOnly("ch.qos.logback:logback-core:1.2.7")
 }
 
-externalDocumentationLink(
+configureExternalLinks(
     url = "https://www.slf4j.org/apidocs/"
 )
