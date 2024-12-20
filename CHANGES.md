@@ -1,5 +1,9 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.10.1
+
+* Fixed binary incompatibility introduced for non-JVM targets in #4261 (#4309).
+
 ## Version 1.10.0
 
 * Kotlin was updated to 2.1.0 (#4284).
