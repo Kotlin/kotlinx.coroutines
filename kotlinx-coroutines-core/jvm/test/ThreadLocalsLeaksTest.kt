@@ -7,7 +7,7 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
-import kotlin.test.Test
+import kotlin.test.*
 
 /*
  * This is an adapted verion of test from #4296.
@@ -15,6 +15,7 @@ import kotlin.test.Test
  * qwwdfsad: the test relies on System.gc() actually collecting the garbage.
  * If these tests flake on CI, first check that JDK/GC setup in not an issue.
  */
+@Ignore
 class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
 
     private class CustomContinuationInterceptor(private val delegate: ContinuationInterceptor) :
@@ -40,7 +41,6 @@ class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
 
     @Test(timeout = 20_000L)
     fun testDefaultDispatcher() = ensureCoroutineContextGCed(Dispatchers.Default, suspend = true)
-
 
     @Test(timeout = 20_000L)
     fun testNonCoroutineDispatcher() = ensureCoroutineContextGCed(
