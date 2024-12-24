@@ -1,5 +1,4 @@
 import org.gradle.api.JavaVersion
-import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
 
@@ -50,17 +49,7 @@ tasks.named<Jar>("jar") {
             )
         )
     }
-
-    // add module-info.class to the META-INF/versions/9/ directory.
-    dependsOn(tasks.compileModuleInfoJava)
-    from(tasks.compileModuleInfoJava.get().outputs.files.asFileTree.matching {
-        include("module-info.class")
-    }) {
-        this.duplicatesStrategy = DuplicatesStrategy.INCLUDE
-        into("META-INF/versions/9")
-    }
 }
-
 
 kover {
     reports {
