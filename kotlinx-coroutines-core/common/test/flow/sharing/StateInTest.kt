@@ -3,6 +3,7 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 /**
@@ -87,5 +88,14 @@ class StateInTest : TestBase() {
     @Test
     fun testSubscriptionByFirstSuspensionInStateFlow() = runTest {
         testSubscriptionByFirstSuspensionInCollect(flowOf(1).stateIn(this@runTest)) { }
+    }
+
+    @Test
+    fun testRethrowsCEOnCancelledScope() = runTest {
+        val cancelledScope = CoroutineScope(EmptyCoroutineContext).apply { cancel("CancelMessageToken") }
+        val flow = flowOf(1, 2, 3)
+        assertFailsWith<CancellationException>("CancelMessageToken") {
+            flow.stateIn(cancelledScope)
+        }
     }
 }

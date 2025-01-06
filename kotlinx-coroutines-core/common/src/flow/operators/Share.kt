@@ -320,7 +320,7 @@ public fun <T> Flow<T>.stateIn(
  */
 public suspend fun <T> Flow<T>.stateIn(scope: CoroutineScope): StateFlow<T> {
     val config = configureSharing(1)
-    val result = CompletableDeferred<StateFlow<T>>()
+    val result = CompletableDeferred<StateFlow<T>>(scope.coroutineContext[Job])
     scope.launchSharingDeferred(config.context, config.upstream, result)
     return result.await()
 }
