@@ -165,7 +165,7 @@ val jvmJar by tasks.getting(Jar::class) { setupManifest(this) }
  * an explicit automatic module name has to be specified in the manifest.
  */
 val allMetadataJar by tasks.getting(Jar::class) {
-    setupManifest(this, "kotlinx.coroutines.core.trampoline")
+    setupManifest(this, "kotlinx.coroutines.core.artifact_disambiguating_module")
 }
 
 fun setupManifest(jar: Jar, autoModuleName: String? = null) {
@@ -175,7 +175,7 @@ fun setupManifest(jar: Jar, autoModuleName: String? = null) {
                 "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
                 "Can-Retransform-Classes" to "true"
         )
-        autoModuleName?.also {
+        autoModuleName?.let {
             attributes("Automatic-Module-Name" to it)
         }
     }
