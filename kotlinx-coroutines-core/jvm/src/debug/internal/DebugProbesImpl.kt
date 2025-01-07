@@ -6,7 +6,6 @@ import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
 import java.lang.StackTraceElement
 import java.text.*
-import java.util.concurrent.locks.*
 import kotlin.collections.ArrayList
 import kotlin.concurrent.*
 import kotlin.coroutines.*
@@ -185,18 +184,18 @@ internal object DebugProbesImpl {
         val coroutinesInfoAsJson = ArrayList<String>(size)
         for (info in coroutinesInfo) {
             val context = info.context
-            val name = context[CoroutineName.Key]?.name?.toStringRepr()
-            val dispatcher = context[CoroutineDispatcher.Key]?.toStringRepr()
+            val name = context[CoroutineName.Key]?.name
+            val dispatcher = context[CoroutineDispatcher.Key]
             coroutinesInfoAsJson.add(
                 """
                 {
-                    "name": $name,
+                    "name": "$name",
                     "id": ${context[CoroutineId.Key]?.id},
-                    "dispatcher": $dispatcher,
+                    "dispatcher": "$dispatcher",
                     "sequenceNumber": ${info.sequenceNumber},
                     "state": "${info.state}"
                 } 
-                """.trimIndent()
+                """
             )
             lastObservedFrames.add(info.lastObservedFrame)
             lastObservedThreads.add(info.lastObservedThread)
