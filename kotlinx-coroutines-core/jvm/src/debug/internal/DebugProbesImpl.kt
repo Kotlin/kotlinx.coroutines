@@ -184,14 +184,14 @@ internal object DebugProbesImpl {
         val coroutinesInfoAsJson = ArrayList<String>(size)
         for (info in coroutinesInfo) {
             val context = info.context
-            val name = context[CoroutineName.Key]?.name
-            val dispatcher = context[CoroutineDispatcher.Key]
+            val name = context[CoroutineName.Key]?.name?.toStringRepr()
+            val dispatcher = context[CoroutineDispatcher.Key]?.toStringRepr()
             coroutinesInfoAsJson.add(
                 """
                 {
-                    "name": "$name",
+                    "name": $name,
                     "id": ${context[CoroutineId.Key]?.id},
-                    "dispatcher": "$dispatcher",
+                    "dispatcher": $dispatcher,
                     "sequenceNumber": ${info.sequenceNumber},
                     "state": "${info.state}"
                 } 
