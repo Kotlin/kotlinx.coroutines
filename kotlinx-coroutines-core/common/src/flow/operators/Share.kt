@@ -317,6 +317,7 @@ public fun <T> Flow<T>.stateIn(
  * with multiple downstream subscribers. See the [StateFlow] documentation for the general concepts of state flows.
  *
  * @param scope the coroutine scope in which sharing is started.
+ * @throws NoSuchElementException if the upstream flow does not emit any value.
  */
 public suspend fun <T> Flow<T>.stateIn(scope: CoroutineScope): StateFlow<T> {
     val config = configureSharing(1)
@@ -339,6 +340,9 @@ private fun <T> CoroutineScope.launchSharingDeferred(
                         result.complete(ReadonlyStateFlow(it, coroutineContext.job))
                     }
                 }
+            }
+            if (state == null) {
+                result.completeExceptionally(NoSuchElementException("Flow is empty"))
             }
         } catch (e: Throwable) {
             // Notify the waiter that the flow has failed

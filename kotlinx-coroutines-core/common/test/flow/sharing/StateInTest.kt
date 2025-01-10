@@ -98,4 +98,12 @@ class StateInTest : TestBase() {
             flow.stateIn(cancelledScope)
         }
     }
+
+    @Test
+    fun testThrowsNoSuchElementExceptionOnEmptyFlow() = runTest {
+        val flow = emptyFlow<Any>()
+        assertFailsWith<NoSuchElementException> {
+            flow.stateIn(GlobalScope)
+        }
+    }
 }
