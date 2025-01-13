@@ -11,6 +11,7 @@ import kotlin.coroutines.*
 @BenchmarkMode(Mode.Throughput, Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
+@Threads(3)
 @Fork(1)
 open class BufferedChannelBenchmark {
     @Param("1", "2")
@@ -18,12 +19,12 @@ open class BufferedChannelBenchmark {
 
     @Benchmark
     fun channelPipeline(): Int = runBlocking {
-        run(Dispatchers.IO.limitedParallelism(3))
+        run(Dispatchers.Unconfined)
     }
 
-    private suspend inline fun run(context: CoroutineContext): Int =
-        Channel.range(100_000, context)
-            .filter(context) { it % 4 == 0 }
+    private suspend inline fun run(context: CoroutineContext) =
+        Channel
+            .range(100_000, context)
             .fold(0) { a, b -> a + b }
 
     private fun Channel.Factory.range(count: Int, context: CoroutineContext) = GlobalScope.produce(context, capacity) {
@@ -32,13 +33,6 @@ open class BufferedChannelBenchmark {
     }
 
     // Migrated from deprecated operators, are good only for stressing channels
-
-    private fun ReceiveChannel<Int>.filter(context: CoroutineContext = Dispatchers.Unconfined, predicate: suspend (Int) -> Boolean): ReceiveChannel<Int> =
-        GlobalScope.produce(context, onCompletion = { cancel() }) {
-            for (e in this@filter) {
-                if (predicate(e)) send(e)
-            }
-        }
 
     private suspend inline fun <E, R> ReceiveChannel<E>.fold(initial: R, operation: (acc: R, E) -> R): R {
         var accumulator = initial
