@@ -65,7 +65,17 @@ internal class LimitedDispatcher(
         // `runningWorkers` when they observed an empty queue.
         if (!tryAllocateWorker()) return
         val task = obtainTaskOrDeallocateWorker() ?: return
-        startWorker(Worker(task))
+        try {
+            startWorker(Worker(task))
+        } catch (e: Throwable) {
+            /* If we failed to start a worker, we should decrement the counter.
+            The queue is in an inconsistent state--it's non-empty despite the target parallelism not having been
+            reached--but at least a properly functioning worker will have a chance to correct this if some future
+            dispatch does succeed.
+            If we don't decrement the counter, it will be impossible to ever reach the target parallelism again. */
+            runningWorkers.decrementAndGet()
+            throw e
+        }
     }
 
     /**
