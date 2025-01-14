@@ -117,21 +117,29 @@ internal class LimitedDispatcher(
      */
     private inner class Worker(private var currentTask: Runnable) : Runnable {
         override fun run() {
-            var fairnessCounter = 0
-            while (true) {
-                try {
-                    currentTask.run()
-                } catch (e: Throwable) {
-                    handleCoroutineException(EmptyCoroutineContext, e)
+            try {
+                var fairnessCounter = 0
+                while (true) {
+                    try {
+                        currentTask.run()
+                    } catch (e: Throwable) {
+                        handleCoroutineException(EmptyCoroutineContext, e)
+                    }
+                    currentTask = obtainTaskOrDeallocateWorker() ?: return
+                    // 16 is our out-of-thin-air constant to emulate fairness. Used in JS dispatchers as well
+                    if (++fairnessCounter >= 16 && dispatcher.safeIsDispatchNeeded(this@LimitedDispatcher)) {
+                        // Do "yield" to let other views execute their runnable as well
+                        // Note that we do not decrement 'runningWorkers' as we are still committed to our part of work
+                        dispatcher.safeDispatch(this@LimitedDispatcher, this)
+                        return
+                    }
                 }
-                currentTask = obtainTaskOrDeallocateWorker() ?: return
-                // 16 is our out-of-thin-air constant to emulate fairness. Used in JS dispatchers as well
-                if (++fairnessCounter >= 16 && dispatcher.safeIsDispatchNeeded(this@LimitedDispatcher)) {
-                    // Do "yield" to let other views execute their runnable as well
-                    // Note that we do not decrement 'runningWorkers' as we are still committed to our part of work
-                    dispatcher.safeDispatch(this@LimitedDispatcher, this)
-                    return
+            } catch (e: Throwable) {
+                // If the worker failed, we should deallocate its slot
+                synchronized(workerAllocationLock) {
+                    runningWorkers.decrementAndGet()
                 }
+                throw e
             }
         }
     }
