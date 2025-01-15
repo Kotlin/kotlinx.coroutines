@@ -13,6 +13,9 @@ import kotlin.coroutines.*
 @State(Scope.Benchmark)
 @Fork(2)
 open class ChannelSinkDepthBenchmark {
+    @Param("${Channel.RENDEZVOUS}", "${Channel.BUFFERED}")
+    var capacity: Int = 0
+
     private val tl = ThreadLocal.withInitial({ 42 })
 
     private val unconfinedOneElement = Dispatchers.Unconfined + tl.asContextElement()
@@ -45,7 +48,7 @@ open class ChannelSinkDepthBenchmark {
     }
 
     private fun Channel.Factory.range(start: Int, count: Int, context: CoroutineContext) =
-        GlobalScope.produce(context) {
+        GlobalScope.produce(context, capacity) {
             for (i in start until (start + count))
                 send(i)
         }
@@ -57,7 +60,7 @@ open class ChannelSinkDepthBenchmark {
         context: CoroutineContext = Dispatchers.Unconfined,
         predicate: suspend (Int) -> Boolean
     ): ReceiveChannel<Int> =
-        GlobalScope.produce(context, onCompletion = { cancel() }) {
+        GlobalScope.produce(context, capacity, onCompletion = { cancel() }) {
             deeplyNestedFilter(this, callTraceDepth, predicate)
         }
 
