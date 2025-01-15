@@ -306,8 +306,16 @@ internal open class BufferedChannel<E>(
             // the channel is already closed, storing a waiter is illegal, so
             // the algorithm stores the `INTERRUPTED_SEND` token in this case.
             when (updateCellSend(segment, i, element, s, waiter, closed)) {
-                RESULT_BUFFERED, RESULT_RENDEZVOUS -> {
-                    // The element has been buffered or a rendezvous with a receiver has happened.
+                RESULT_RENDEZVOUS -> {
+                    // A rendezvous with a receiver has happened.
+                    // The previous segments are no longer needed
+                    // for the upcoming requests, so the algorithm
+                    // resets the link to the previous segment.
+                    segment.cleanPrev()
+                    return onRendezvousOrBuffered()
+                }
+                RESULT_BUFFERED -> {
+                    // The element has been buffered.
                     return onRendezvousOrBuffered()
                 }
                 RESULT_SUSPEND -> {
@@ -324,11 +332,17 @@ internal open class BufferedChannel<E>(
                 }
                 RESULT_CLOSED -> {
                     // This channel is closed.
+                    // In case this segment is already or going to be
+                    // processed by a receiver, ensure that all the
+                    // previous segments are unreachable.
+                    if (s < receiversCounter) segment.cleanPrev()
                     return onClosed()
                 }
                 RESULT_FAILED -> {
                     // Either the cell stores an interrupted receiver,
                     // or it was poisoned by a concurrent receiver.
+                    // In both cases, all the previous segments are already processed,
+                    segment.cleanPrev()
                     continue
                 }
                 RESULT_SUSPEND_NO_WAITER -> {
@@ -385,16 +399,22 @@ internal open class BufferedChannel<E>(
         // restarting the operation from the beginning on failure.
         // Check the `sendImpl(..)` function for the comments.
         when (updateCellSend(segment, index, element, s, waiter, false)) {
-            RESULT_RENDEZVOUS, RESULT_BUFFERED -> {
+            RESULT_RENDEZVOUS -> {
+                segment.cleanPrev()
+                onRendezvousOrBuffered()
+            }
+            RESULT_BUFFERED -> {
                 onRendezvousOrBuffered()
             }
             RESULT_SUSPEND -> {
                 waiter.prepareSenderForSuspension(segment, index)
             }
             RESULT_CLOSED -> {
+                if (s < receiversCounter) segment.cleanPrev()
                 onClosed()
             }
             RESULT_FAILED -> {
+                segment.cleanPrev()
                 sendImpl(
                     element = element,
                     waiter = waiter,
@@ -844,9 +864,14 @@ internal open class BufferedChannel<E>(
             when {
                 updCellResult === FAILED -> {
                     // The cell is poisoned; restart from the beginning.
+                    // To avoid memory leaks, we also need to reset
+                    // the `prev` pointer of the working segment.
+                    if (r < sendersCounter) segment.cleanPrev()
                 }
                 else -> { // element
                     // A buffered element was retrieved from the cell.
+                    // Clean the reference to the previous segment.
+                    segment.cleanPrev()
                     @Suppress("UNCHECKED_CAST")
                     onUndeliveredElement?.callUndeliveredElementCatchingException(updCellResult as E)?.let { throw it }
                 }
@@ -920,6 +945,9 @@ internal open class BufferedChannel<E>(
                     // but failed: either the opposite request has
                     // already been cancelled or the cell is poisoned.
                     // Restart from the beginning in this case.
+                    // To avoid memory leaks, we also need to reset
+                    // the `prev` pointer of the working segment.
+                    if (r < sendersCounter) segment.cleanPrev()
                     continue
                 }
                 updCellResult === SUSPEND_NO_WAITER -> {
@@ -930,6 +958,8 @@ internal open class BufferedChannel<E>(
                 else -> { // element
                     // Either a buffered element was retrieved from the cell
                     // or a rendezvous with a waiting sender has happened.
+                    // Clean the reference to the previous segment before finishing.
+                    segment.cleanPrev()
                     @Suppress("UNCHECKED_CAST")
                     onElementRetrieved(updCellResult as E)
                 }
@@ -964,6 +994,7 @@ internal open class BufferedChannel<E>(
                 waiter.prepareReceiverForSuspension(segment, index)
             }
             updCellResult === FAILED -> {
+                if (r < sendersCounter) segment.cleanPrev()
                 receiveImpl(
                     waiter = waiter,
                     onElementRetrieved = onElementRetrieved,
@@ -972,6 +1003,7 @@ internal open class BufferedChannel<E>(
                 )
             }
             else -> {
+                segment.cleanPrev()
                 @Suppress("UNCHECKED_CAST")
                 onElementRetrieved(updCellResult as E)
             }
@@ -2274,6 +2306,7 @@ internal open class BufferedChannel<E>(
                     // Otherwise, if the required segment is removed, the operation restarts.
                     if (receiveSegment.value.id < id) return false else continue
             }
+            segment.cleanPrev() // all the previous segments are no longer needed.
             // Does the `r`-th cell contain waiting sender or buffered element?
             val i = (r % SEGMENT_SIZE).toInt()
             if (isCellNonEmpty(segment, i, r)) return true

@@ -59,27 +59,11 @@ internal inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = 
     if (to.isRemoved) return false // Trying to move pointer to the logically removed segment
     if (compareAndSet(cur, to)) { // The segment is moved
         if (to.isRemoved) return false // The segment was removed in parallel during the `CAS` operation
-        cleanLeftmostPrev(cur, to)
+        // In case the segment is reached by both `sendSegment` and `receiveSegment`,
+        // clean its `prev` link to avoid memory leaks.
+        if (to.isLeftmostOrProcessed) to.cleanPrev()
         return true
     }
-}
-
-/**
- * Cleans the `prev` reference of the leftmost segment in the list. The method works with the sublist which
- * boundaries are specified by the given nodes [from] and [to]. It looks for the leftmost segment going from
- * the tail to the head of the sublist.
- *
- * The method is called when [moveForward] successfully updates the value stored in the `AtomicRef` reference.
- */
-private inline fun <S : Segment<S>> cleanLeftmostPrev(from: S, to: S) {
-    var cur = to
-    // Find the leftmost segment on the sublist between `from` and `to` segments.
-    while (!cur.isLeftmostOrProcessed && cur.id > from.id) {
-        cur = cur.prev ?:
-            // The `prev` reference was cleaned in parallel.
-            return
-    }
-    if (cur.isLeftmostOrProcessed) cur.cleanPrev() // The leftmost segment is found
 }
 
 /**
@@ -294,6 +278,7 @@ internal abstract class Segment<S : Segment<S>>(
      * Invoked on each slot clean-up; should not be invoked twice for the same slot.
      */
     fun onSlotCleaned() {
+        if (isLeftmostOrProcessed) cleanPrev()
         check(cleanedSlots.incrementAndGet() <= SEGMENT_SIZE) { "Some cell was interrupted twice." }
         if (isRemoved) remove()
     }
