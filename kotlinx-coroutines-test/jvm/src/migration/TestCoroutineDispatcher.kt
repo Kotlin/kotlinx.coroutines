@@ -45,18 +45,18 @@ public class TestCoroutineDispatcher(public override val scheduler: TestCoroutin
     private fun post(block: Runnable, context: CoroutineContext) =
         scheduler.registerEvent(this, 0, block, context) { false }
 
-    val currentTime: Long
+    public val currentTime: Long
         get() = scheduler.currentTime
 
-    fun advanceUntilIdle(): Long {
+    public fun advanceUntilIdle(): Long {
         val oldTime = scheduler.currentTime
         scheduler.advanceUntilIdle()
         return scheduler.currentTime - oldTime
     }
 
-    fun runCurrent(): Unit = scheduler.runCurrent()
+    public fun runCurrent(): Unit = scheduler.runCurrent()
 
-    fun cleanupTestCoroutines() {
+    public fun cleanupTestCoroutines() {
         // process any pending cancellations or completions, but don't advance time
         scheduler.runCurrent()
         if (!scheduler.isIdle(strict = false)) {

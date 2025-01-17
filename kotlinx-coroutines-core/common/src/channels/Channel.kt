@@ -1,5 +1,3 @@
-@file:Suppress("FunctionName")
-
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*

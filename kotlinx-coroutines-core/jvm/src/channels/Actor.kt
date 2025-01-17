@@ -119,6 +119,7 @@ public fun <E> CoroutineScope.actor(
     return coroutine
 }
 
+@Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE_DEPRECATION_WARNING")
 private open class ActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
