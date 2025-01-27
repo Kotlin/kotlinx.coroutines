@@ -66,7 +66,6 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
     var completed = false
     ThreadLocalKeepAlive.addCheck { !completed }
     try {
-
         coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
         return coroutine.joinBlocking()
     } finally {
