@@ -40,9 +40,14 @@ internal object DefaultIoScheduler : CoroutineDispatcher() {
         io.dispatchYield(context, block)
     }
 
+    internal fun dispatchToUnlimitedPool(block: Runnable) {
+        unlimitedPool.dispatch(EmptyCoroutineContext, block)
+    }
+
     override fun toString(): String = "Dispatchers.IO"
 }
 
+internal inline fun scheduleBackgroundIoTask(block: Runnable) = DefaultIoScheduler.dispatchToUnlimitedPool(block)
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public actual val Dispatchers.IO: CoroutineDispatcher get() = IO
