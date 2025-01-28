@@ -3,9 +3,6 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
-@PublishedApi
-internal actual val DefaultDelay: Delay = WorkerDispatcher(name = "DefaultDelay")
-
 internal expect fun createDefaultDispatcher(): CoroutineDispatcher
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
