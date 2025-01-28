@@ -3,7 +3,6 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
-import kotlinx.coroutines.scheduling.*
 import kotlinx.coroutines.scheduling.scheduleBackgroundIoTask
 import kotlin.coroutines.*
 import kotlin.time.Duration
