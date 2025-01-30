@@ -1186,7 +1186,7 @@ internal open class BufferedChannel<E>(
             if (s <= b) {
                 // Should `bufferEndSegment` be moved forward to avoid memory leaks?
                 if (segment.id < id && segment.next != null)
-                    bufferEndSegment.moveToSpecifiedOrLast(id, segment)
+                    moveSegmentBufferEndToSpecifiedOrLast(id, segment)
                 // Increment the number of completed `expandBuffer()`-s and finish.
                 incCompletedExpandBufferAttempts()
                 return
@@ -2422,7 +2422,7 @@ internal open class BufferedChannel<E>(
                 val segment = it.segment
                 // Advance the `bufferEnd` segment if required.
                 if (!isRendezvousOrUnlimited && id <= bufferEndCounter / SEGMENT_SIZE) {
-                    bufferEndSegment.moveToSpecifiedOrLast(id, bufferEndSegment.value)
+                    moveSegmentBufferEndToSpecifiedOrLast(id, bufferEndSegment.value)
                 }
                 // Is the required segment removed?
                 if (segment.id > id) {
@@ -2454,7 +2454,7 @@ internal open class BufferedChannel<E>(
                 completeCloseOrCancel()
                 // Update `bufferEndSegment` to the last segment
                 // in the linked list to avoid memory leaks.
-                bufferEndSegment.moveToSpecifiedOrLast(id, startFrom)
+                moveSegmentBufferEndToSpecifiedOrLast(id, startFrom)
                 // When this function does not find the requested segment,
                 // it should update the number of completed `expandBuffer()` attempts.
                 incCompletedExpandBufferAttempts()
@@ -2483,6 +2483,24 @@ internal open class BufferedChannel<E>(
                 }
             }
         }
+
+    /**
+     * Serves as a wrapper for an inline function [AtomicRef.moveToSpecifiedOrLast]
+     */
+    private fun moveSegmentBufferEndToSpecifiedOrLast(id: Long, startFrom: ChannelSegment<E>) =
+        bufferEndSegment.moveToSpecifiedOrLast(id, startFrom)
+
+    /**
+     * Serves as a wrapper for an inline function [AtomicRef.moveToSpecifiedOrLast]
+     */
+    private fun moveSegmentReceiveToSpecifiedOrLast(id: Long, startFrom: ChannelSegment<E>) =
+        receiveSegment.moveToSpecifiedOrLast(id, startFrom)
+
+    /**
+     * Serves as a wrapper for an inline function [AtomicRef.moveToSpecifiedOrLast]
+     */
+    private fun moveSegmentSendToSpecifiedOrLast(id: Long, startFrom: ChannelSegment<E>) =
+        sendSegment.moveToSpecifiedOrLast(id, startFrom)
 
     /**
      * Updates the `senders` counter if its value
@@ -2516,11 +2534,11 @@ internal open class BufferedChannel<E>(
     This method is used in the physical removal of the segment. It helps to move pointers forward from
     the segment which was physically removed.
      */
-    internal fun movePointersForwardFromRemovedSegment(from: ChannelSegment<E>) {
-        if (!from.isRemoved) return
-        if (from == sendSegment.value) sendSegment.moveToSpecifiedOrLast(from.id, from)
-        if (from == receiveSegment.value) receiveSegment.moveToSpecifiedOrLast(from.id, from)
-        if (from == bufferEndSegment.value) bufferEndSegment.moveToSpecifiedOrLast(from.id, from)
+    internal fun movePointersForwardFromRemovedSegment(removedSegment: ChannelSegment<E>) {
+        if (!removedSegment.isRemoved) return
+        if (removedSegment == sendSegment.value) moveSegmentSendToSpecifiedOrLast(removedSegment.id, removedSegment)
+        if (removedSegment == receiveSegment.value) moveSegmentReceiveToSpecifiedOrLast(removedSegment.id, removedSegment)
+        if (removedSegment == bufferEndSegment.value) moveSegmentBufferEndToSpecifiedOrLast(removedSegment.id, removedSegment)
     }
 
     // ###################
