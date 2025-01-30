@@ -90,7 +90,7 @@ internal open class BufferedChannel<E>(
     private val receiveSegment: AtomicRef<ChannelSegment<E>>
     private val bufferEndSegment: AtomicRef<ChannelSegment<E>>
 
-    /**
+    /*
       These values are used in [ChannelSegment.isLeftmostOrProcessed].
       They help to detect when the `prev` reference of the segment should be cleaned.
      */
@@ -306,7 +306,7 @@ internal open class BufferedChannel<E>(
             // the channel is already closed, storing a waiter is illegal, so
             // the algorithm stores the `INTERRUPTED_SEND` token in this case.
             when (updateCellSend(segment, i, element, s, waiter, closed)) {
-                RESULT_BUFFERED, RESULT_RENDEZVOUS -> {
+                RESULT_RENDEZVOUS, RESULT_BUFFERED -> {
                     // The element has been buffered or a rendezvous with a receiver has happened.
                     return onRendezvousOrBuffered()
                 }
@@ -2793,10 +2793,6 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
     internal fun casState(index: Int, from: Any?, to: Any?) = data[index * 2 + 1].compareAndSet(from, to)
 
     internal fun getAndSetState(index: Int, update: Any?) = data[index * 2 + 1].getAndSet(update)
-
-    // ###################################################
-    // # Manipulation with the structure of segment list #
-    // ###################################################
 
     /**
      * Shows if all segments going before this segment have been processed.

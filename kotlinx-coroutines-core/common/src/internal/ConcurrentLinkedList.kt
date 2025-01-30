@@ -274,6 +274,42 @@ internal abstract class Segment<S : Segment<S>>(
 
     /**
      * Shows if all nodes going before this node have been processed.
+     *
+     * The value depends on the position of only two pointers - `sendSegment`
+     * and `receiveSegment`. The `bufferEndSegment` does not influence it.
+     * ```
+     *             S R       EB
+     *             │ │       │
+     *             ▼ ▼       ▼
+     * ┌──────┐  ┌──────┐  ┌──────┐
+     * │  #1  │  │  #2  │  │  #3  │
+     * └──────┘  └──────┘  └──────┘
+     *
+     * #1 is a processed segment => isLeftmostOrProcessed=true
+     * #2 is the leftmost segment => isLeftmostOrProcessed=true
+     * #3: isLeftmostOrProcessed=false
+     * ```
+     *
+     * Normally, the `bufferEndSegment` pointer is located after `receiveSegment`
+     * on the segment list. However, there can be races when `expandBuffer()` of
+     * the existing `receive` request has not finished yet, but a new `receive`
+     * request has already come.
+     * In this case, the value still does not depend on the location  of the
+     * `bufferEndSegment` pointer, even though the pointer can be before both
+     * `sendSegment` and `receiveSegment`:
+     *
+     * ```
+     *   EB        S R
+     *   │         │ │
+     *   ▼         ▼ ▼
+     * ┌──────┐  ┌──────┐  ┌──────┐
+     * │  #1  │  │  #2  │  │  #3  │
+     * └──────┘  └──────┘  └──────┘
+     *
+     * #1 is a processed segment => isLeftmostOrProcessed=true
+     * #2 is the leftmost segment => isLeftmostOrProcessed=true
+     * #3: isLeftmostOrProcessed=false
+     * ```
      */
     abstract val isLeftmostOrProcessed: Boolean
 
