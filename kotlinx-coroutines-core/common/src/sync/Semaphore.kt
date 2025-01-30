@@ -137,7 +137,7 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
     init {
         require(permits > 0) { "Semaphore should have at least 1 permit, but had $permits" }
         require(acquiredPermits in 0..permits) { "The number of acquired permits should be in 0..$permits" }
-        val s = SemaphoreSegment(0, null, this)
+        val s = SemaphoreSegment(0, null)
         head = atomic(s)
         tail = atomic(s)
     }
@@ -355,51 +355,45 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         }
         else -> error("unexpected: $this")
     }
+
+    private inner class SemaphoreSegment(id: Long, prev: SemaphoreSegment?) : Segment<SemaphoreSegment>(id, prev) {
+        val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
+        override val numberOfSlots: Int get() = SEGMENT_SIZE
+        override val isLeftmostOrProcessed: Boolean get() = id <= headId
+
+        @Suppress("NOTHING_TO_INLINE")
+        inline fun get(index: Int): Any? = acquirers[index].value
+
+        @Suppress("NOTHING_TO_INLINE")
+        inline fun set(index: Int, value: Any?) {
+            acquirers[index].value = value
+        }
+
+        @Suppress("NOTHING_TO_INLINE")
+        inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers[index].compareAndSet(expected, value)
+
+        @Suppress("NOTHING_TO_INLINE")
+        inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
+
+        // Cleans the acquirer slot located by the specified index
+        // and removes this segment physically if all slots are cleaned.
+        override fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext) {
+            // Clean the slot
+            set(index, CANCELLED)
+            // Remove this segment if needed
+            onSlotCleaned()
+        }
+
+        override fun toString() = "SemaphoreSegment[id=$id, hashCode=${hashCode()}]"
+    }
+
+    private fun createSegment(id: Long, prev: SemaphoreSegment) = SemaphoreSegment(id = id, prev = prev)
 }
 
 private class SemaphoreImpl(
     permits: Int, acquiredPermits: Int
 ): SemaphoreAndMutexImpl(permits, acquiredPermits), Semaphore
 
-private fun createSegment(id: Long, prev: SemaphoreSegment) = SemaphoreSegment(
-    id = id,
-    prev = prev,
-    semaphore = prev.semaphore
-)
-
-private class SemaphoreSegment(
-    id: Long, prev: SemaphoreSegment?,
-    val semaphore: SemaphoreAndMutexImpl
-) : Segment<SemaphoreSegment>(id, prev) {
-    val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
-    override val numberOfSlots: Int get() = SEGMENT_SIZE
-    override val isLeftmostOrProcessed: Boolean get() = id <= semaphore.headId
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun get(index: Int): Any? = acquirers[index].value
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun set(index: Int, value: Any?) {
-        acquirers[index].value = value
-    }
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers[index].compareAndSet(expected, value)
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
-
-    // Cleans the acquirer slot located by the specified index
-    // and removes this segment physically if all slots are cleaned.
-    override fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext) {
-        // Clean the slot
-        set(index, CANCELLED)
-        // Remove this segment if needed
-        onSlotCleaned()
-    }
-
-    override fun toString() = "SemaphoreSegment[id=$id, hashCode=${hashCode()}]"
-}
 private val MAX_SPIN_CYCLES = systemProp("kotlinx.coroutines.semaphore.maxSpinCycles", 100)
 private val PERMIT = Symbol("PERMIT")
 private val TAKEN = Symbol("TAKEN")
