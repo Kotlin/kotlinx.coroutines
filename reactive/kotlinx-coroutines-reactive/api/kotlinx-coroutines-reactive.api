@@ -51,7 +51,7 @@ public final class kotlinx/coroutines/reactive/PublishKt {
 
 public final class kotlinx/coroutines/reactive/PublisherCoroutine : kotlinx/coroutines/AbstractCoroutine, kotlinx/coroutines/channels/ProducerScope, org/reactivestreams/Subscription {
 	public fun <init> (Lkotlin/coroutines/CoroutineContext;Lorg/reactivestreams/Subscriber;Lkotlin/jvm/functions/Function2;)V
-	public synthetic fun cancel ()V
+	public fun cancel ()V
 	public fun close (Ljava/lang/Throwable;)Z
 	public fun getChannel ()Lkotlinx/coroutines/channels/SendChannel;
 	public fun getOnSend ()Lkotlinx/coroutines/selects/SelectClause2;
