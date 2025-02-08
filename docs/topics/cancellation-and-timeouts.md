@@ -246,7 +246,7 @@ main: Now I can quit.
 
 Any attempt to use a suspending function in the `finally` block of the previous example causes
 [CancellationException], because the coroutine running this code is cancelled. Usually, this is not a 
-problem, since all well-behaving closing operations (closing a file, cancelling a job, or closing any kind of a 
+problem, since all well-behaved closing operations (closing a file, cancelling a job, or closing any kind of 
 communication channel) are usually non-blocking and do not involve any suspending functions. However, in the 
 rare case when you need to suspend in a cancelled coroutine you can wrap the corresponding code in
 `withContext(NonCancellable) {...}` using [withContext] function and [NonCancellable] context as the following example shows:
