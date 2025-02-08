@@ -7,8 +7,8 @@ This section covers coroutine cancellation and timeouts.
 
 ## Cancelling coroutine execution
 
-In a long-running application you might need fine-grained control on your background coroutines.
-For example, a user might have closed the page that launched a coroutine and now its result
+In a long-running application, you might need fine-grained control on your background coroutines.
+For example, a user might have closed the page that launched a coroutine, and now its result
 is no longer needed and its operation can be cancelled. 
 The [launch] function returns a [Job] that can be used to cancel the running coroutine:
 
