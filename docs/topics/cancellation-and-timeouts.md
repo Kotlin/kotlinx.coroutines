@@ -142,9 +142,12 @@ which does not rethrow [CancellationException].
 
 ## Making computation code cancellable
 
-There are two approaches to making computation code cancellable. The first one is to periodically 
-invoke a suspending function that checks for cancellation. There is a [yield] function that is a good choice for that purpose.
-The other one is to explicitly check the cancellation status. Let us try the latter approach. 
+There are two approaches to making computation code cancellable.
+The first one is periodically invoking a suspending function that checks for cancellation.
+There are the [yield] and [ensureActive](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/ensure-active.html)
+functions, which are great choices for that purpose.
+The other one is explicitly checking the cancellation status using [isActive].
+Let us try the latter approach.
 
 Replace `while (i < 5)` in the previous example with `while (isActive)` and rerun it. 
 
@@ -158,7 +161,7 @@ fun main() = runBlocking {
         var nextPrintTime = startTime
         var i = 0
         while (isActive) { // cancellable computation loop
-            // print a message twice a second
+            // prints a message twice a second
             if (System.currentTimeMillis() >= nextPrintTime) {
                 println("job: I'm sleeping ${i++} ...")
                 nextPrintTime += 500L
