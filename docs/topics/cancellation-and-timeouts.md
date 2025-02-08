@@ -332,7 +332,7 @@ Exception in thread "main" kotlinx.coroutines.TimeoutCancellationException: Time
 
 <!--- TEST STARTS_WITH -->
 
-The `TimeoutCancellationException` that is thrown by [withTimeout] is a subclass of [CancellationException].
+The [TimeoutCancellationException] that is thrown by [withTimeout] is a subclass of [CancellationException].
 We have not seen its stack trace printed on the console before. That is because
 inside a cancelled coroutine `CancellationException` is considered to be a normal reason for coroutine completion. 
 However, in this example we have used `withTimeout` right inside the `main` function. 
