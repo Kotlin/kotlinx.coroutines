@@ -246,9 +246,21 @@ fun main() {
 >
 {style="note"}
 
-It demonstrates several new techniques. One is using [runBlocking] with an explicitly specified context, and
-the other one is using the [withContext] function to change the context of a coroutine while still staying in the
-same coroutine, as you can see in the output below:
+The example above demonstrates two important techniques in coroutine usage.
+
+The first technique involves using [runBlocking] with an explicitly specified context.
+This ensures that the coroutine runs in a controlled environment,
+allowing you to define the execution context explicitly.
+
+The second technique uses the [withContext] function.
+When you call [withContext], it suspends the current coroutine and switches to a new context.
+This transition may involve changing the dispatcher or updating other context elements.
+
+After switching, the block of code executes within the newly specified context.
+Once it completes, the coroutine automatically reverts to its original context,
+ensuring a smooth and controlled execution flow.
+
+As a result, the output of the above code is:
 
 ```text
 [Ctx1 @coroutine#1] Started in ctx1
@@ -258,8 +270,13 @@ same coroutine, as you can see in the output below:
 
 <!--- TEST -->
 
-Note that this example also uses the `use` function from the Kotlin standard library to release threads
-created with [newSingleThreadContext] when they are no longer needed. 
+The example above uses the [use](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.io/use.html) function from the Kotlin standard library
+to properly release thread resources created by [newSingleThreadContext] when they're no longer needed.
+
+>Note that [withContext] doesn't create a new coroutine -
+>it merely provides a [CoroutineScope] with the specified context.
+>
+{style="note"}
 
 ## Job in the context
 
