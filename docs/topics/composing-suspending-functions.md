@@ -294,10 +294,10 @@ concurrency, as shown in the section below.
 
 ## Structured concurrency with async 
 
-Let us take the [Concurrent using async](#concurrent-using-async) example and extract a function that 
-concurrently performs `doSomethingUsefulOne` and `doSomethingUsefulTwo` and returns the sum of their results.
-Because the [async] coroutine builder is defined as an extension on [CoroutineScope], we need to have it in the 
-scope and that is what the [coroutineScope][_coroutineScope] function provides:
+Let's refactor the [Concurrent using async](#concurrent-using-async) example into a function that runs 
+`doSomethingUsefulOne` and `doSomethingUsefulTwo` concurrently and returns their combined results.
+Since [async] is a [CoroutineScope] extension,
+we'll use the [coroutineScope][_coroutineScope] function to provide the necessary scope:
 
 ```kotlin
 suspend fun concurrentSum(): Int = coroutineScope {
