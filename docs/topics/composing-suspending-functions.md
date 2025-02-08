@@ -182,11 +182,14 @@ So, here the two coroutines are defined but not executed as in the previous exam
 the programmer on when exactly to start the execution by calling [start][Job.start]. We first 
 start `one`, then start `two`, and then await for the individual coroutines to finish. 
 
-Note that if we just call [await][Deferred.await] in `println` without first calling [start][Job.start] on individual 
-coroutines, this will lead to sequential behavior, since [await][Deferred.await] starts the coroutine 
-execution and waits for its finish, which is not the intended use-case for laziness. 
-The use-case for `async(start = CoroutineStart.LAZY)` is a replacement for the 
-standard `lazy` function in cases when computation of the value involves suspending functions.
+> Note that if we just call [await][Deferred.await] in `println` without first calling [start][Job.start] on individual 
+> coroutines, this will lead to sequential behavior, since [await][Deferred.await] starts the coroutine 
+> execution and waits for its finish, which is not the intended use-case for laziness. 
+> The use-case for `async(start = CoroutineStart.LAZY)` is a replacement for the 
+> standard [lazy](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html) function in cases
+> when computation of the value involves suspending functions.
+>
+{style="note"}
 
 ## Async-style functions
 
