@@ -195,8 +195,10 @@ main: Now I can quit.
 ## Closing resources with finally
 
 Cancellable suspending functions throw [CancellationException] on cancellation, which can be handled in 
-the usual way. For example, the `try {...} finally {...}` expression and Kotlin's `use` function execute their
-finalization actions normally when a coroutine is cancelled:
+the usual way.
+For example,
+the `try {...} finally {...}` expression and Kotlin's [use](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.io/use.html)
+function execute their finalization actions normally when a coroutine is cancelled:
 
 ```kotlin
 import kotlinx.coroutines.*
