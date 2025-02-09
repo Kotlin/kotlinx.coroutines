@@ -374,7 +374,8 @@ job1: I am not affected by cancellation of the request
 
 ## Parental responsibilities 
 
-A parent coroutine always waits for completion of all its children. A parent does not have to explicitly track
+A parent coroutine always waits for the completion of all its children.
+A parent does not have to explicitly track
 all the children it launches, and it does not have to use [Job.join] to wait for them at the end:
 
 ```kotlin
