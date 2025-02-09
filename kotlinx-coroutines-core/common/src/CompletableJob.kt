@@ -32,12 +32,13 @@ public interface CompletableJob : Job {
      *
      * Subsequent invocations of this function have no effect and always produce `false`.
      *
-     * This function transitions this job into _cancelled_ state if it was not completed or cancelled yet.
-     * However, that if this job has children, then it transitions into _cancelling_ state and becomes _cancelled_
+     * This function transitions this job into the _cancelled_ state if it has not been _completed_ or _cancelled_ yet.
+     * However, if this job has children, then it transitions into the _cancelling_ state and becomes _cancelled_
      * once all its children are [complete][isCompleted]. See [Job] for details.
      *
-     * Its responsibility of the caller to properly handle and report the given [exception], all job's children will receive
-     * a [CancellationException] with the [exception] as a cause for the sake of diagnostic.
+     * It is the responsibility of the caller to properly handle and report the given [exception].
+     * All the job’s children will receive a [CancellationException] with
+     * the [exception] as a cause for the sake of diagnosis.
      */
     public fun completeExceptionally(exception: Throwable): Boolean
 }
