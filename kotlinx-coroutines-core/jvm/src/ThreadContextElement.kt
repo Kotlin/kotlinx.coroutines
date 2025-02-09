@@ -4,11 +4,12 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**
- * Defines elements in [CoroutineContext] that are installed into thread context
+ * Defines elements in a [CoroutineContext] that are installed into the thread context
  * every time the coroutine with this element in the context is resumed on a thread.
  *
  * Implementations of this interface define a type [S] of the thread-local state that they need to store on
- * resume of a coroutine and restore later on suspend. The infrastructure provides the corresponding storage.
+ * upon resuming a coroutine and restore later upon suspension.
+ * The infrastructure provides the corresponding storage.
  *
  * Example usage looks like this:
  *
