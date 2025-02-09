@@ -499,11 +499,14 @@ I'm working in thread DefaultDispatcher-worker-1 @test#2
 
 ## Coroutine scope
 
-Let us put our knowledge about contexts, children and jobs together. Assume that our application has
-an object with a lifecycle, but that object is not a coroutine. For example, we are writing an Android application
-and launch various coroutines in the context of an Android activity to perform asynchronous operations to fetch 
-and update data, do animations, etc. All of these coroutines must be cancelled when the activity is destroyed
-to avoid memory leaks. We, of course, can manipulate contexts and jobs manually to tie the lifecycles of the activity 
+Let us put our knowledge about contexts, children, and jobs together.
+Assume that our application has an object with a lifecycle, but that object is not a coroutine.
+For example,
+we are writing an Android application, 
+and we launched various coroutines in the context of an Android activity to perform asynchronous operations to fetch 
+and update data, do animations, etc. These coroutines must be cancelled when the activity is destroyed
+to avoid memory leaks.
+We, of course, can manipulate contexts and jobs manually to tie the lifecycles of the activity 
 and its coroutines, but `kotlinx.coroutines` provides an abstraction encapsulating that: [CoroutineScope].
 You should be already familiar with the coroutine scope as all coroutine builders are declared as extensions on it. 
 
@@ -540,8 +543,9 @@ For the demo, we launch ten coroutines that delay for a different time:
 ``` 
 
 In our main function we create the activity, call our test `doSomething` function, and destroy the activity after 500ms.
-This cancels all the coroutines that were launched from `doSomething`. We can see that because after the destruction 
-of the activity no more messages are printed, even if we wait a little longer.
+This cancels the coroutines that were launched from `doSomething`.
+We can see that because after the destruction 
+of the activity, no more messages are printed, even if we wait a little longer.
 
 <!--- CLEAR -->
 
