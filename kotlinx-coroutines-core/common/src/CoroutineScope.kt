@@ -158,14 +158,14 @@ public val CoroutineScope.isActive: Boolean
 
 /**
  * A global [CoroutineScope] not bound to any job.
- * Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
+ * Global scope is used to launch top-level coroutines operating on the application lifetime
  * and are not cancelled prematurely.
  *
  * Active coroutines launched in `GlobalScope` do not keep the process alive. They are like daemon threads.
  *
  * This is a **delicate** API. It is easy to accidentally create resource or memory leaks when
  * `GlobalScope` is used. A coroutine launched in `GlobalScope` is not subject to the principle of structured
- * concurrency, so if it hangs or gets delayed due to a problem (e.g. due to a slow network), it will stay working
+ * concurrency, so if it hangs or gets delayed due to a problem (e.g., due to a slow network), it will stay working
  * and consuming resources. For example, consider the following code:
  *
  * ```
@@ -177,13 +177,14 @@ public val CoroutineScope.isActive: Boolean
  * }
  * ```
  *
- * A call to `loadConfiguration` creates a coroutine in the `GlobalScope` that works in background without any
- * provision to cancel it or to wait for its completion. If a network is slow, it keeps waiting in background,
+ * A call to `loadConfiguration` creates a coroutine in the `GlobalScope` that works in the background without any
+ * provision to cancel it or to wait for its completion. If a network is slow, it keeps waiting in the background,
  * consuming resources. Repeated calls to `loadConfiguration` will consume more and more resources.
  *
  * ### Possible replacements
  *
- * In many cases uses of `GlobalScope` should be removed, marking the containing operation with `suspend`, for example:
+ * In many circumstances, uses of 'GlobalScope' should be removed,
+ * with the containing operation marked as 'suspend', for example:
  *
  * ```
  * suspend fun loadConfiguration() {
@@ -206,14 +207,15 @@ public val CoroutineScope.isActive: Boolean
  * ```
  *
  * In top-level code, when launching a concurrent operation from a non-suspending context, an appropriately
- * confined instance of [CoroutineScope] shall be used instead of a `GlobalScope`. See docs on [CoroutineScope] for
+ * confined instance of [CoroutineScope] shall be used instead of `GlobalScope`. See docs on [CoroutineScope] for
  * details.
  *
- * ### GlobalScope vs custom scope
+ * ### GlobalScope vs. Custom CoroutineScope
  *
  * Do not replace `GlobalScope.launch { ... }` with `CoroutineScope().launch { ... }` constructor function call.
  * The latter has the same pitfalls as `GlobalScope`. See [CoroutineScope] documentation on the intended usage of
- * `CoroutineScope()` constructor function.
+ * [CoroutineScope()](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope.html)
+ * constructor function.
  *
  * ### Legitimate use-cases
  *
