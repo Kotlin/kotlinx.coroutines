@@ -188,10 +188,10 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
 
 /**
  * Wraps [ThreadLocal] into [ThreadContextElement]. The resulting [ThreadContextElement]
- * maintains the given [value] of the given [ThreadLocal] for coroutine regardless of the actual thread its is resumed on.
- * By default [ThreadLocal.get] is used as a value for the thread-local variable, but it can be overridden with [value] parameter.
- * Beware that context element **does not track** modifications of the thread-local and accessing thread-local from coroutine
- * without the corresponding context element returns **undefined** value. See the examples for a detailed description.
+ * maintains the given [value] of the given [ThreadLocal] for a coroutine regardless of the actual thread it is resumed on.
+ * By default [ThreadLocal.get] is used as a value for the thread-local variable, but it can be overridden with the [value] parameter.
+ * Beware that the context element **does not track** modifications of the thread-local and accessing thread-local from a coroutine
+ * without the corresponding context element returns an **undefined** value. See the examples for a detailed description.
  *
  *
  * Example usage:
