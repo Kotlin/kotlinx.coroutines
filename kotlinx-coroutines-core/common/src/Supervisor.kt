@@ -20,7 +20,7 @@ import kotlin.jvm.*
  * - A failure of a child job that was created using [launch][CoroutineScope.launch] can be handled via [CoroutineExceptionHandler] in the context.
  * - A failure of a child job that was created using [async][CoroutineScope.async] can be handled via [Deferred.await] on the resulting deferred value.
  *
- * If a [parent] job is specified, then this supervisor job becomes a child job of [parent] and is cancelled when the
+ * If a [parent] job is specified, then this supervisor job becomes a child job of the [parent] and is cancelled when the
  * parent fails or is cancelled. All this supervisor's children are cancelled in this case, too.
  */
 @Suppress("FunctionName")
