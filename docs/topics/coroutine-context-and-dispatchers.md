@@ -298,7 +298,7 @@ fun main() = runBlocking<Unit> {
 > 
 {style="note"}
 
-In the [debug mode](#debugging-coroutines-and-threads), it outputs something like this:
+In [debug mode](#debugging-coroutines-and-threads), it outputs something like this:
 
 ```
 My job is "coroutine#1":BlockingCoroutine{Active}@6d311334
