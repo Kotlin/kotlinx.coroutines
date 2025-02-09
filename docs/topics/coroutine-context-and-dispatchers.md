@@ -609,7 +609,7 @@ by a single invocation of `job.cancel()` in `Activity.destroy()`.
 
 ### Thread-local data
 
-Sometimes it is convenient to have an ability to pass some thread-local data to or between coroutines. 
+Sometimes it is convenient to be able to pass some thread-local data to or between coroutines. 
 However, since they are not bound to any particular thread, this will likely lead to boilerplate if done manually.
 
 For [`ThreadLocal`](https://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html), 
@@ -643,8 +643,8 @@ fun main() = runBlocking<Unit> {
 >
 {style="note"}
 
-In this example we launch a new coroutine in a background thread pool using [Dispatchers.Default], so
-it works on a different thread from the thread pool, but it still has the value of the thread local variable
+In this example, we launch a new coroutine in a background thread pool using [Dispatchers.Default], so
+it works on a different threads from the thread pool, but it still has the value of the thread local variable
 that we specified using `threadLocal.asContextElement(value = "launch")`,
 no matter which thread the coroutine is executed on.
 Thus, the output (with [debug](#debugging-coroutines-and-threads)) is:
@@ -659,7 +659,7 @@ Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value:
 <!--- TEST FLEXIBLE_THREAD -->
 
 It's easy to forget to set the corresponding context element. The thread-local variable accessed from the coroutine may
-then have an unexpected value, if the thread running the coroutine is different.
+then have an unexpected value if the thread running the coroutine is different.
 To avoid such situations, it is recommended to use the [ensurePresent] method
 and fail-fast on improper usages.
 
@@ -669,11 +669,12 @@ It has one key limitation, though: when a thread-local is mutated, a new value i
 Use [withContext] to update the value of the thread-local in a coroutine, see [asContextElement] for more details. 
 
 Alternatively, a value can be stored in a mutable box like `class Counter(var i: Int)`, which is, in turn, 
-stored in a thread-local variable. However, in this case you are fully responsible to synchronize 
+stored in a thread-local variable.
+However, in this case, you are fully responsible to synchronize 
 potentially concurrent modifications to the variable in this mutable box.
 
-For advanced usage, for example for integration with logging MDC, transactional contexts or any other libraries
-which internally use thread-locals for passing data, see the documentation of the [ThreadContextElement] interface 
+For advanced usage, for example, for integration with logging MDC, transactional contexts or any other libraries
+that internally use thread-locals for passing data, see the documentation of the [ThreadContextElement] interface 
 that should be implemented. 
 
 <!--- MODULE kotlinx-coroutines-core -->
