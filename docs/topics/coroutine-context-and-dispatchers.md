@@ -600,9 +600,9 @@ Destroying activity!
 <!--- TEST -->
 
 As you can see, only the first two coroutines print a message and the others are cancelled 
-by a single invocation of `job.cancel()` in `Activity.destroy()`.
+by a single invocation of [`mainScope.cancel()`][CoroutineScope.cancel] in `Activity.destroy()`.
 
-> Note, that Android has first-party support for coroutine scope in all entities with the lifecycle.
+> Note that Android has first-party support for coroutine scope in all entities with the lifecycle.
 > See [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope).
 >
 {style="note"}
