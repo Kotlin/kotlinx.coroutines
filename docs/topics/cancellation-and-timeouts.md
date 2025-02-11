@@ -144,7 +144,7 @@ which does not rethrow [CancellationException].
 
 There are two approaches to making computation code cancellable.
 The first one is periodically invoking a suspending function that checks for cancellation.
-There are the [yield] and [ensureActive](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/ensure-active.html)
+There are the [yield] and [ensureActive]
 functions, which are great choices for that purpose.
 The other one is explicitly checking the cancellation status using [isActive].
 Let us try the latter approach.
@@ -197,7 +197,7 @@ main: Now I can quit.
 Cancellable suspending functions throw [CancellationException] on cancellation, which can be handled in 
 the usual way.
 For example,
-the `try {...} finally {...}` expression and Kotlin's [use](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.io/use.html)
+the `try {...} finally {...}` expression and Kotlin's [use]
 function execute their finalization actions normally when a coroutine is cancelled:
 
 ```kotlin
