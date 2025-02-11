@@ -58,6 +58,13 @@ kotlin {
                 implementation("org.openjdk.jol:jol-core:0.16")
             }
         }
+
+        create("jvmBenchmark") {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+            }
+            kotlin.srcDir("jvmBenchmark/kotlin")
+        }
     }
     /*
      * Configure two test runs for Native:

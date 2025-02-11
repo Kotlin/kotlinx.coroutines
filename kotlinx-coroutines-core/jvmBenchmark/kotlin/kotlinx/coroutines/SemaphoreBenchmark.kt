@@ -76,7 +76,7 @@ open class SemaphoreBenchmark {
 
 enum class SemaphoreBenchDispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
     FORK_JOIN({ parallelism -> ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-    DEFAULT({ parallelism -> ExperimentalCoroutineDispatcher(corePoolSize = parallelism, maxPoolSize = parallelism) })
+    DEFAULT({ parallelism -> CoroutineScheduler(corePoolSize = parallelism, maxPoolSize = parallelism).asCoroutineDispatcher() })
 }
 
 private const val WORK_INSIDE = 50
