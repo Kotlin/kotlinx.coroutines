@@ -321,15 +321,15 @@ public fun <T> Flow<T>.stateIn(
  */
 public suspend fun <T> Flow<T>.stateIn(scope: CoroutineScope): StateFlow<T> {
     val config = configureSharing(1)
-    val result = CompletableDeferred<StateFlow<T>>(scope.coroutineContext[Job])
+    val result = CompletableDeferred<Result<StateFlow<T>>>(scope.coroutineContext[Job])
     scope.launchSharingDeferred(config.context, config.upstream, result)
-    return result.await()
+    return result.await().getOrThrow()
 }
 
 private fun <T> CoroutineScope.launchSharingDeferred(
     context: CoroutineContext,
     upstream: Flow<T>,
-    result: CompletableDeferred<StateFlow<T>>
+    result: CompletableDeferred<Result<StateFlow<T>>>,
 ) {
     launch(context) {
         try {
@@ -337,12 +337,12 @@ private fun <T> CoroutineScope.launchSharingDeferred(
             upstream.collect { value ->
                 state?.let { it.value = value } ?: run {
                     state = MutableStateFlow(value).also {
-                        result.complete(ReadonlyStateFlow(it, coroutineContext.job))
+                        result.complete(Result.success(ReadonlyStateFlow(it, coroutineContext.job)))
                     }
                 }
             }
             if (state == null) {
-                result.completeExceptionally(NoSuchElementException("Flow is empty"))
+                result.complete(Result.failure(NoSuchElementException("Flow is empty")))
             }
         } catch (e: Throwable) {
             // Notify the waiter that the flow has failed

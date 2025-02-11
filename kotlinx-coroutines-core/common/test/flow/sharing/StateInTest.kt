@@ -103,7 +103,9 @@ class StateInTest : TestBase() {
     fun testThrowsNoSuchElementExceptionOnEmptyFlow() = runTest {
         val flow = emptyFlow<Any>()
         assertFailsWith<NoSuchElementException> {
-            flow.stateIn(GlobalScope)
+            flow.stateIn(this)
         }
+        // Ensure that the collecting scope is not cancelled by the NoSuchElementException
+        assertEquals(true, coroutineContext[Job]?.isActive)
     }
 }
