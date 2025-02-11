@@ -25,9 +25,8 @@ apply(plugin = "pub-conventions")
      wasmWasi --------------------> jsAndWasmShared ----------+
                                                               |
                                                               V
-     jvmCore\ --------> jvm ---------> concurrent -------> common
-     jdk8   /                           ^
-                                        |
+     jvm ----------------------------> concurrent -------> common
+                                        ^
      ios     \                          |
      macos   | ---> nativeDarwin ---> native ---+
      tvos    |                         ^
@@ -35,33 +34,6 @@ apply(plugin = "pub-conventions")
                                        |
      linux  \  ---> nativeOther -------+
      mingw  /
-
-
-Explanation of JVM source sets structure:
-
-The overall structure is just a hack to support the scenario we are interested in:
-
-* We would like to have two source-sets "core" and "jdk8"
-* "jdk8" is allowed to use API from Java 8 and from "core"
-* "core" is prohibited to use any API from "jdk8"
-* It is okay to have tests in a single test source-set
-* And we want to publish a **single** artifact kotlinx-coroutines-core.jar that contains classes from both source-sets
-* Current limitation: only classes from "core" are checked with animal-sniffer
-
-For that, we have following compilations:
-* jvmMain compilation: [jvmCoreMain, jdk8Main]
-* jvmCore compilation: [commonMain]
-* jdk8    compilation: [commonMain, jvmCoreMain]
-
-Theoretically, "jvmCore" could've been "jvmMain", it is not for technical reasons,
-here is the explanation from Seb:
-
-"""
-The jvmCore is theoretically not necessary. All code for jdk6 compatibility can be in jvmMain and jdk8 dependent code can be in jdk8Main.
-Effectively there is no reason for ever putting code into jvmCoreMain.
-However, when creating a new compilation, we have to take care of creating a defaultSourceSet. Without creating the jvmCoreMain source set,
- the creation of the compilation fails. That is the only reason for this source set.
-"""
  ========================================================================== */
 
 kotlin {
@@ -109,35 +81,7 @@ kotlin {
         }
     }
 
-    /**
-     * See: https://youtrack.jetbrains.com/issue/KTIJ-25959
-     * The introduction of jvmCore is only for CLI builds and not intended for the IDE.
-     * In the current setup there are two tooling unfriendly configurations used:
-     * 1: - jvmMain, despite being a platform source set, is not a leaf (jvmCoreMain and jdk8Main dependOn it)
-     * 2: - jvmMain effectively becomes a 'shared jvm' source set
-     *
-     * Using this kludge here, will prevent issue 2 from being visible to the IDE.
-     * Therefore jvmMain will resolve using the 'single' compilation it participates in (from the perspective of the IDE)
-     */
-    val jvmCoreMain = if (Idea.active) null else sourceSets.create("jvmCoreMain") {
-        dependsOn(sourceSets.jvmMain.get())
-    }
-    val jdk8Main = sourceSets.create("jdk8Main") {
-        dependsOn(sourceSets.jvmMain.get())
-    }
-
     jvm {
-        compilations.named("main") {
-            jvmCoreMain?.let { source(it) }
-            source(jdk8Main)
-        }
-
-        /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
-        compilations.create("CoreMain") {
-            /* jvmCore is automatically matched as 'defaultSourceSet' for the compilation, due to its name */
-            tasks.getByName("check").dependsOn(compileTaskProvider)
-        }
-
         // For animal sniffer
         withJava()
         compilations.create("benchmark") { associateWith(this@jvm.compilations.getByName("main")) }
