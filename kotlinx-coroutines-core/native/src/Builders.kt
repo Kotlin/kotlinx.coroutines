@@ -1,4 +1,6 @@
 @file:OptIn(ExperimentalContracts::class, ObsoleteWorkersApi::class)
+@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
+
 package kotlinx.coroutines
 
 import kotlinx.cinterop.*
@@ -64,7 +66,6 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
     var completed = false
     ThreadLocalKeepAlive.addCheck { !completed }
     try {
-        @Suppress("LEAKED_IN_PLACE_LAMBDA") // Contract is preserved, invoked immediately or throws
         coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
         return coroutine.joinBlocking()
     } finally {

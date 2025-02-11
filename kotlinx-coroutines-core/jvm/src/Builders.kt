@@ -1,6 +1,7 @@
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
 @file:OptIn(ExperimentalContracts::class)
+@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
 package kotlinx.coroutines
 

@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalContracts::class)
+@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
 package kotlinx.coroutines
 
@@ -40,7 +41,6 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
     }
     if (timeMillis <= 0L) throw TimeoutCancellationException("Timed out immediately")
     return suspendCoroutineUninterceptedOrReturn { uCont ->
-        @Suppress("LEAKED_IN_PLACE_LAMBDA") // Contract is preserved, invoked immediately or throws
         setupTimeout(TimeoutCoroutine(timeMillis, uCont), block)
     }
 }
