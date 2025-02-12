@@ -1,5 +1,7 @@
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -58,41 +60,7 @@ kotlin {
                 implementation("org.openjdk.jol:jol-core:0.16")
             }
         }
-
-        // Forgive me, Father, for I have sinned.
-        // Really, that is needed to have benchmark sourcesets be the part of the project, not a separate project
-        val benchmarkMain by creating {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
-            }
-            kotlin.srcDir("benchmarkMain/kotlin")
-        }
-
-        create("jvmBenchmark") {
-            kotlin.srcDir("jvmBenchmark/kotlin")
-        }
-
-        val bmm = sourceSets.getByName("benchmarkMain")
-        targets.matching {
-            it.name != "metadata"
-                // Doesn't work, don't want to figure it out for now
-                && !it.name.contains("wasm")
-                && !it.name.contains("js")
-        }.all {
-            compilations.create("benchmark") {
-                associateWith(this@all.compilations.getByName("main"))
-                defaultSourceSet {
-                    dependencies {
-                        implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
-                    }
-                    dependsOn(bmm)
-                }
-            }
-        }
-
-        targets.matching { it.name != "metadata" }.all {
-            benchmark.targets.register("${name}Benchmark")
-        }
+        setupBenchmarkSourceSets(this)
     }
     /*
      * Configure two test runs for Native:
@@ -122,8 +90,41 @@ kotlin {
     }
 }
 
-benchmark {
-    targets {
+private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomainObjectContainer<KotlinSourceSet>) {
+    // Forgive me, Father, for I have sinned.
+    // Really, that is needed to have benchmark sourcesets be the part of the project, not a separate project
+    @Suppress("UnusedVariable")
+    val benchmarkMain by ss.creating {
+        dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+        }
+        kotlin.srcDir("benchmarks/main/kotlin")
+    }
+
+    ss.create("jvmBenchmark") {
+        kotlin.srcDir("benchmarks/jvm/kotlin")
+    }
+
+    val bmm = sourceSets.getByName("benchmarkMain")
+    targets.matching {
+        it.name != "metadata"
+            // Doesn't work, don't want to figure it out for now
+            && !it.name.contains("wasm")
+            && !it.name.contains("js")
+    }.all {
+        compilations.create("benchmark") {
+            associateWith(this@all.compilations.getByName("main"))
+            defaultSourceSet {
+                dependencies {
+                    implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+                }
+                dependsOn(bmm)
+            }
+        }
+    }
+
+    targets.matching { it.name != "metadata" }.all {
+        benchmark.targets.register("${name}Benchmark")
     }
 }
 

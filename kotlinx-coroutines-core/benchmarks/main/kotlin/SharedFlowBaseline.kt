@@ -1,3 +1,5 @@
+package kotlinx.coroutines
+
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.benchmark.*
