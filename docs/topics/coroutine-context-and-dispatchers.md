@@ -538,7 +538,7 @@ For the demo, we launch ten coroutines that delay for a different time:
 ``` 
 
 In our main function we create the activity, call our test `doSomething` function, and destroy the activity after 500ms.
-This cancels the coroutines that were launched from `doSomething`.
+This cancels all the coroutines that were launched from `doSomething`.
 We can see that because after the destruction 
 of the activity, no more messages are printed, even if we wait a little longer.
 
