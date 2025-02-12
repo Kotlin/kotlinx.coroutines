@@ -94,7 +94,6 @@ kotlin {
 private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomainObjectContainer<KotlinSourceSet>) {
     // Forgive me, Father, for I have sinned.
     // Really, that is needed to have benchmark sourcesets be the part of the project, not a separate project
-    @Suppress("UnusedVariable")
     val benchmarkMain by ss.creating {
         dependencies {
             implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
