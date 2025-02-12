@@ -256,6 +256,9 @@ kover {
             // lincheck has NPE error on `ManagedStrategyStateHolder` class
             excludedClasses.addAll("org.jetbrains.kotlinx.lincheck.*")
         }
+        sources {
+            excludedSourceSets.addAll("benchmark")
+        }
     }
 
     reports {
