@@ -14,8 +14,8 @@ java {
 kotlin {
     jvm {
         compilations.all {
-            compilerOptions.configure {
-                jvmTarget = JvmTarget.JVM_1_8
+            compileTaskProvider.configure {
+                compilerOptions.jvmTarget = JvmTarget.JVM_1_8
             }
         }
     }
@@ -53,7 +53,7 @@ kotlin {
             api("org.jetbrains.kotlinx:atomicfu-js:${version("atomicfu")}")
         }
     }
-    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
         // Module name should be different from the one from JS
         // otherwise IC tasks that start clashing different modules with the same module name
@@ -63,15 +63,17 @@ kotlin {
             api("org.jetbrains.kotlinx:atomicfu-wasm-js:${version("atomicfu")}")
         }
     }
-    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmWasi {
         nodejs()
         compilations["main"]?.dependencies {
             api("org.jetbrains.kotlinx:atomicfu-wasm-wasi:${version("atomicfu")}")
         }
         compilations.configureEach {
-            compilerOptions.configure {
-                optIn.add("kotlin.wasm.internal.InternalWasmApi")
+            compileTaskProvider.configure {
+                compilerOptions {
+                    optIn.add("kotlin.wasm.internal.InternalWasmApi")
+                }
             }
         }
     }
