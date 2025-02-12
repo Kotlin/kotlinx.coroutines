@@ -497,8 +497,9 @@ Let us put our knowledge about contexts, children, and jobs together.
 Assume that our application has an object with a lifecycle, but that object is not a coroutine.
 For example,
 we are writing an Android application, 
-and we launched various coroutines in the context of an Android activity to perform asynchronous operations to fetch 
-and update data, do animations, etc. These coroutines must be cancelled when the activity is destroyed
+and launching various coroutines in the context of an Android activity
+to perform asynchronous operations to fetch and update data,
+do animations, etc. These coroutines must be cancelled when the activity is destroyed
 to avoid memory leaks.
 We, of course, can manipulate contexts and jobs manually to tie the lifecycles of the activity 
 and its coroutines, but `kotlinx.coroutines` provides an abstraction encapsulating that: [CoroutineScope].
