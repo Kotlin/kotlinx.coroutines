@@ -60,8 +60,9 @@ kotlin {
                 implementation("org.openjdk.jol:jol-core:0.16")
             }
         }
-        setupBenchmarkSourceSets(this)
     }
+    setupBenchmarkSourceSets(sourceSets)
+
     /*
      * Configure two test runs for Native:
      * 1) Main thread
@@ -98,14 +99,16 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
         dependencies {
             implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
         }
+        // For each source set we have to manually set path to the sources, otherwise lookup will fail
         kotlin.srcDir("benchmarks/main/kotlin")
     }
 
-    ss.create("jvmBenchmark") {
+    @Suppress("UnusedVariable")
+    val jvmBenchmark by ss.creating {
+        // For each source set we have to manually set path to the sources, otherwise lookup will fail
         kotlin.srcDir("benchmarks/jvm/kotlin")
     }
 
-    val bmm = sourceSets.getByName("benchmarkMain")
     targets.matching {
         it.name != "metadata"
             // Doesn't work, don't want to figure it out for now
@@ -118,7 +121,7 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
                 dependencies {
                     implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
                 }
-                dependsOn(bmm)
+                dependsOn(benchmarkMain)
             }
         }
     }
