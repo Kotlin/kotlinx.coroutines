@@ -106,6 +106,6 @@ class StateInTest : TestBase() {
             flow.stateIn(this)
         }
         // Ensure that the collecting scope is not cancelled by the NoSuchElementException
-        assertEquals(true, coroutineContext[Job]?.isActive)
+        assertTrue(coroutineContext[Job]?.isActive)
     }
 }
