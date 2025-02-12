@@ -316,7 +316,6 @@ However, this parent-child relation can be explicitly overridden in one of two w
 
 1. When a different scope is explicitly specified when launching a coroutine (for example, `GlobalScope.launch`), 
 it does not inherit a `Job` from the parent scope.
-
 2. When a different `Job` object is passed as the context for the new coroutine (as shown in the example below), 
 it overrides the `Job` of the parent scope.
    
