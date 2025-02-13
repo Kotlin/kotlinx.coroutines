@@ -56,7 +56,7 @@ import kotlin.jvm.*
  * [CoroutineStart.LAZY].
  * Such a job can be made _active_ by invoking [start] or [join].
  *
- * A job is in the _active_ state while the coroutine is working until the [CompletableJob] completes,
+ * A job is in the _active_ state while the coroutine is working or until the [CompletableJob] completes,
  * fails, or is cancelled.
  *
  * Failure of an _active_ job with an exception transitions the state to the _cancelling_ state.
