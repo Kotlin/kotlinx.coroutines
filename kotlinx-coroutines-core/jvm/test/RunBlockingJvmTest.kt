@@ -13,4 +13,3 @@ class RunBlockingJvmTest : TestBase() {
         rb.hashCode() // unused
     }
 }
-
