@@ -61,7 +61,7 @@ tasks.test {
     }
 }
 
-externalDocumentationLink(
+configureExternalLinks(
     url = "https://developer.android.com/reference/"
 )
 /*
