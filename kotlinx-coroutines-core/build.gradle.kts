@@ -1,5 +1,3 @@
-import org.gradle.api.tasks.testing.*
-import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -126,15 +124,23 @@ val jvmJar by tasks.getting(Jar::class) { setupManifest(this) }
  * This manifest contains reference to AgentPremain that belongs to
  * kotlinx-coroutines-core-jvm, but our resolving machinery guarantees that
  * any JVM project that depends on -core artifact also depends on -core-jvm one.
+ *
+ * To avoid a conflict with a JPMS module provided by kotlinx-coroutines-core-jvm,
+ * an explicit automatic module name has to be specified in the manifest.
  */
-val allMetadataJar by tasks.getting(Jar::class) { setupManifest(this) }
+val allMetadataJar by tasks.getting(Jar::class) {
+    setupManifest(this, "kotlinx.coroutines.core.artifact_disambiguating_module")
+}
 
-fun setupManifest(jar: Jar) {
+fun setupManifest(jar: Jar, autoModuleName: String? = null) {
     jar.manifest {
-        attributes(mapOf(
+        attributes(
             "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
-            "Can-Retransform-Classes" to "true",
-        ))
+            "Can-Retransform-Classes" to "true"
+        )
+        autoModuleName?.let {
+            attributes("Automatic-Module-Name" to it)
+        }
     }
 }
 

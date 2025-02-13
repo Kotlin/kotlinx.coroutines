@@ -85,7 +85,7 @@ Add dependencies (you can also add other modules that you need):
 ```xml
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
-    <artifactId>kotlinx-coroutines-core</artifactId>
+    <artifactId>kotlinx-coroutines-core-jvm</artifactId>
     <version>1.10.1</version>
 </dependency>
 ```
