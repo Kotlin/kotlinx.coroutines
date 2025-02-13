@@ -1,5 +1,7 @@
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -59,6 +61,8 @@ kotlin {
             }
         }
     }
+    setupBenchmarkSourceSets(sourceSets)
+
     /*
      * Configure two test runs for Native:
      * 1) Main thread
@@ -84,13 +88,45 @@ kotlin {
     jvm {
         // For animal sniffer
         withJava()
-        compilations.create("benchmark") { associateWith(this@jvm.compilations.getByName("main")) }
     }
 }
 
-benchmark {
-    targets {
-        register("jvmBenchmark")
+private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomainObjectContainer<KotlinSourceSet>) {
+    // Forgive me, Father, for I have sinned.
+    // Really, that is needed to have benchmark sourcesets be the part of the project, not a separate project
+    val benchmarkMain by ss.creating {
+        dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+        }
+        // For each source set we have to manually set path to the sources, otherwise lookup will fail
+        kotlin.srcDir("benchmarks/main/kotlin")
+    }
+
+    @Suppress("UnusedVariable")
+    val jvmBenchmark by ss.creating {
+        // For each source set we have to manually set path to the sources, otherwise lookup will fail
+        kotlin.srcDir("benchmarks/jvm/kotlin")
+    }
+
+    targets.matching {
+        it.name != "metadata"
+            // Doesn't work, don't want to figure it out for now
+            && !it.name.contains("wasm")
+            && !it.name.contains("js")
+    }.all {
+        compilations.create("benchmark") {
+            associateWith(this@all.compilations.getByName("main"))
+            defaultSourceSet {
+                dependencies {
+                    implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+                }
+                dependsOn(benchmarkMain)
+            }
+        }
+    }
+
+    targets.matching { it.name != "metadata" }.all {
+        benchmark.targets.register("${name}Benchmark")
     }
 }
 
@@ -131,10 +167,12 @@ val allMetadataJar by tasks.getting(Jar::class) { setupManifest(this) }
 
 fun setupManifest(jar: Jar) {
     jar.manifest {
-        attributes(mapOf(
-            "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
-            "Can-Retransform-Classes" to "true",
-        ))
+        attributes(
+            mapOf(
+                "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
+                "Can-Retransform-Classes" to "true",
+            )
+        )
     }
 }
 
@@ -187,9 +225,11 @@ fun Test.configureJvmForLincheck(segmentSize: Int = 1) {
     minHeapSize = "1g"
     maxHeapSize = "4g" // we may need more space for building an interleaving tree in the model checking mode
     // https://github.com/JetBrains/lincheck#java-9
-    jvmArgs = listOf("--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
+    jvmArgs = listOf(
+        "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
         "--add-exports", "java.base/sun.security.action=ALL-UNNAMED",
-        "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED") // in the model checking mode
+        "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED"
+    ) // in the model checking mode
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
     systemProperty("kotlinx.coroutines.semaphore.segmentSize", segmentSize)
     systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 1) // better for the model checking mode
@@ -214,6 +254,9 @@ kover {
 
             // lincheck has NPE error on `ManagedStrategyStateHolder` class
             excludedClasses.addAll("org.jetbrains.kotlinx.lincheck.*")
+        }
+        sources {
+            excludedSourceSets.addAll("benchmark")
         }
     }
 
