@@ -158,8 +158,8 @@ public val CoroutineScope.isActive: Boolean
 
 /**
  * A global [CoroutineScope] not bound to any job.
- * Global scope is used to launch top-level coroutines operating on the application lifetime
- * and are not cancelled prematurely.
+ * Global scope is used to launch top-level coroutines that operate
+ * throughout the application's lifetime and are not canceled prematurely.
  *
  * Active coroutines launched in `GlobalScope` do not keep the process alive. They are like daemon threads.
  *
