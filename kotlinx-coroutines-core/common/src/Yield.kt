@@ -6,8 +6,8 @@ import kotlin.coroutines.intrinsics.*
 /**
  * Suspends this coroutine and immediately schedules it for further execution.
  *
- * A coroutine run uninterrupted on a thread until the coroutine *suspend*,
- * giving other coroutines a chance to use that thread for their own computations.
+ * A coroutine runs uninterrupted on a thread until the coroutine suspends,
+ * giving other coroutines a chance to use that thread for their computations.
  * Normally, coroutines suspend whenever they wait for something to happen:
  * for example, trying to receive a value from a channel that's currently empty will suspend.
  * Sometimes, a coroutine does not need to wait for anything,

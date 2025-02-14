@@ -9,7 +9,7 @@ fun main() = runBlocking {
         var nextPrintTime = startTime
         var i = 0
         while (isActive) { // cancellable computation loop
-            // print a message twice a second
+            // prints a message twice a second
             if (currentTimeMillis() >= nextPrintTime) {
                 println("job: I'm sleeping ${i++} ...")
                 nextPrintTime += 500L
