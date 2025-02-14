@@ -14,7 +14,7 @@ import kotlin.coroutines.intrinsics.*
  * to automatically propagate all its elements and cancellation.
  *
  * The best ways to obtain a standalone instance of the scope are [CoroutineScope()] and [MainScope()] factory functions,
- * taking care to cancel these coroutine scopes when they are no longer needed (see section on custom usage below for
+ * taking care to cancel these coroutine scopes when they are no longer needed (see the section on custom usage below for
  * explanation and example).
  *
  * Additional context elements can be appended to the scope using the [plus][CoroutineScope.plus] operator.
