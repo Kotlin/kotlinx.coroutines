@@ -214,8 +214,7 @@ public val CoroutineScope.isActive: Boolean
  *
  * Do not replace `GlobalScope.launch { ... }` with `CoroutineScope().launch { ... }` constructor function call.
  * The latter has the same pitfalls as `GlobalScope`. See [CoroutineScope] documentation on the intended usage of
- * [CoroutineScope()](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope.html)
- * constructor function.
+ * `CoroutineScope()` constructor function.
  *
  * ### Legitimate use-cases
  *

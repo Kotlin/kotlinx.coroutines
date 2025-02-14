@@ -25,8 +25,7 @@ import kotlin.jvm.*
  *
  * - A **coroutine job** is created with the [launch][CoroutineScope.launch] coroutine builder.
  *   It runs a specified block of code and completes upon completion of this block.
- * - **[CompletableJob]** is created with a [Job()](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job.html)
- *   factory function.
+ * - **[CompletableJob]** is created with a `Job()` factory function.
  *   It is completed by calling [CompletableJob.complete].
  *
  * Conceptually, an execution of a job does not produce a result value.
