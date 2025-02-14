@@ -248,17 +248,11 @@ fun main() {
 
 The example above demonstrates new techniques in coroutine usage.
 
-The first technique involves using [runBlocking] with an explicitly specified context.
-This ensures that the coroutine runs in a controlled environment,
-allowing you to define the execution context explicitly.
-
-When you call [withContext], 
-it may suspend the current coroutine and switch to a new context 
-but only if it differs from the current one.
-In particular, if you specify a different [CoroutineDispatcher],
-additional dispatches are required:
-The block is scheduled on the new dispatcher, and once it is completed,
-execution returns to the original dispatcher.
+The first technique shows how to use [runBlocking] with a specified context.  
+The second technique involves calling [withContext],
+which may suspend the current coroutine and switch to a new context—provided the new context differs from the existing one.
+Specifically, if you specify a different [CoroutineDispatcher], extra dispatches are required:
+the block is scheduled on the new dispatcher, and once it finishes, execution returns to the original dispatcher.
 
 As a result, the output of the above code is:
 
