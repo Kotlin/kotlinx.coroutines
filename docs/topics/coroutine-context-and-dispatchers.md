@@ -264,7 +264,7 @@ As a result, the output of the above code is:
 
 <!--- TEST -->
 
-The example above uses the [use] function from the Kotlin standard library
+The example above uses the `use` function from the Kotlin standard library
 to properly release thread resources created by [newSingleThreadContext] when they're no longer needed.
 
 ## Job in the context
