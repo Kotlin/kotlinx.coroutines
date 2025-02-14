@@ -14,7 +14,7 @@ internal expect fun wrapContextWithDebug(context: CoroutineContext): CoroutineCo
 /**
  * Executes a block using a given coroutine context.
  */
-internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T {
+internal inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T {
     val oldValue = updateThreadContext(context, countOrElement)
     try {
         return block()
@@ -26,7 +26,7 @@ internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, c
 /**
  * Executes a block using a context of a given continuation.
  */
-internal actual inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T {
+internal inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T {
     val context = continuation.context
     val oldValue = updateThreadContext(context, countOrElement)
     val undispatchedCompletion = if (oldValue !== NO_THREAD_ELEMENTS) {
@@ -44,7 +44,7 @@ internal actual inline fun <T> withContinuationContext(continuation: Continuatio
     }
 }
 
-internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineContext, oldValue: Any?): UndispatchedCoroutine<*>? {
+private fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineContext, oldValue: Any?): UndispatchedCoroutine<*>? {
     if (this !is CoroutineStackFrame) return null
     /*
      * Fast-path to detect whether we have undispatched coroutine at all in our stack.
@@ -65,7 +65,7 @@ internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineCont
     return completion
 }
 
-internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedCoroutine<*>? {
+private tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedCoroutine<*>? {
     // Find direct completion of this continuation
     val completion: CoroutineStackFrame = when (this) {
         is DispatchedCoroutine<*> -> return null
@@ -79,7 +79,7 @@ internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedC
  * Marker indicating that [UndispatchedCoroutine] exists somewhere up in the stack.
  * Used as a performance optimization to avoid stack walking where it is not necessary.
  */
-private object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
+internal object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
     override val key: CoroutineContext.Key<*>
         get() = this
 }
