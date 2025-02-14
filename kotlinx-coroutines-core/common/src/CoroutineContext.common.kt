@@ -1,7 +1,11 @@
+@file:JvmMultifileClass
+@file:JvmName("CoroutineContextKt")
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.jvm.JvmMultifileClass
+import kotlin.jvm.JvmName
 
 @PublishedApi // to have unmangled name when using from other modules via suppress
 @Suppress("PropertyName")

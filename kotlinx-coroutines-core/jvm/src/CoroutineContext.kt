@@ -1,3 +1,5 @@
+@file:JvmMultifileClass
+@file:JvmName("CoroutineContextKt")
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
