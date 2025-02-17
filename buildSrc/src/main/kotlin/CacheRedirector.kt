@@ -4,7 +4,6 @@ import org.gradle.api.artifacts.repositories.*
 import org.gradle.api.initialization.dsl.*
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.*
 import org.jetbrains.kotlin.gradle.targets.js.yarn.*
 import java.net.*
 
@@ -100,6 +99,7 @@ private fun Project.checkRedirect(repositories: RepositoryHandler, containerName
     }
 }
 
+@Suppress("DEPRECATION", "DEPRECATION_ERROR") // KT-68597, KT-68597
 private fun Project.configureYarnAndNodeRedirects() {
     if (CacheRedirector.isEnabled) {
         val yarnRootExtension = extensions.findByType<YarnRootExtension>()
@@ -142,18 +142,6 @@ object CacheRedirector {
      * Temporary repositories to depend on until GC milestone 4 in KGP
      * and stable Node release. Safe to remove when its removal does not break WASM tests.
      */
-    @JvmStatic
-    fun configureWasmNodeRepositories(project: Project) {
-        val extension = project.extensions.findByType<NodeJsRootExtension>()
-        if (extension != null) {
-            extension.nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
-            extension.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
-        }
-
-        project.tasks.withType<KotlinNpmInstallTask>().configureEach {
-            args.add("--ignore-engines")
-        }
-    }
 
     @JvmStatic
     fun maybeRedirect(url: String): String {

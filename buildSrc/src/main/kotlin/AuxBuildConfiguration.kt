@@ -19,7 +19,6 @@ object AuxBuildConfiguration {
         }
 
         CacheRedirector.configureJsPackageManagers(rootProject)
-        CacheRedirector.configureWasmNodeRepositories(rootProject)
 
         // Sigh, there is no BuildScanExtension in classpath when there is no --scan
         rootProject.extensions.findByName("buildScan")?.withGroovyBuilder {

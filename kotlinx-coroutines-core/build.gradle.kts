@@ -130,8 +130,9 @@ kotlin {
 
     jvm {
         compilations.named("main") {
-            jvmCoreMain?.let { source(it) }
-            source(jdk8Main)
+            val jvmMain = defaultSourceSet
+            jvmCoreMain?.let { jvmMain.dependsOn(it) }
+            jvmMain.dependsOn(jdk8Main)
         }
 
         /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
