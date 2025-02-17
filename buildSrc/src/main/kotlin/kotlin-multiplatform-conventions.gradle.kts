@@ -56,6 +56,7 @@ kotlin {
         watchosDeviceArm64()
     }
     js {
+        @Suppress("DEPRECATION", "DEPRECATION_ERROR") // KT-68597, KT-68597
         outputModuleName = project.name
         nodejs()
         compilations["main"]?.dependencies {
@@ -66,6 +67,7 @@ kotlin {
     wasmJs {
         // Module name should be different from the one from JS
         // otherwise IC tasks that start clashing different modules with the same module name
+        @Suppress("DEPRECATION", "DEPRECATION_ERROR") // KT-68597, KT-68597
         outputModuleName = project.name + "Wasm"
         nodejs()
         compilations["main"]?.dependencies {
