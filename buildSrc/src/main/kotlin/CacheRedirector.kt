@@ -4,7 +4,6 @@ import org.gradle.api.artifacts.repositories.*
 import org.gradle.api.initialization.dsl.*
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.*
 import org.jetbrains.kotlin.gradle.targets.js.yarn.*
 import java.net.*
 
@@ -100,6 +99,7 @@ private fun Project.checkRedirect(repositories: RepositoryHandler, containerName
     }
 }
 
+@Suppress("DEPRECATION", "DEPRECATION_ERROR") // KT-68597, KT-68597
 private fun Project.configureYarnAndNodeRedirects() {
     if (CacheRedirector.isEnabled) {
         val yarnRootExtension = extensions.findByType<YarnRootExtension>()
