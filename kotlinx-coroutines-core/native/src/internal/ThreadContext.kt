@@ -1,3 +1,4 @@
 package kotlinx.coroutines.internal
 
-internal actual fun isZeroCount(countOrElement: Any?): Boolean = countOrElement is Int && countOrElement == 0
+@Suppress("NOTHING_TO_INLINE")
+internal actual inline fun isZeroCount(countOrElement: Any?): Boolean = countOrElement is Int && countOrElement == 0

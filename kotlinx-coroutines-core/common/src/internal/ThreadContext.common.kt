@@ -53,7 +53,7 @@ private val updateState =
         return state
     }
 
-internal expect fun isZeroCount(countOrElement: Any?): Boolean
+internal expect inline fun isZeroCount(countOrElement: Any?): Boolean
 
 // countOrElement is pre-cached in dispatched continuation
 // returns NO_THREAD_ELEMENTS if the contest does not have any ThreadContextElements

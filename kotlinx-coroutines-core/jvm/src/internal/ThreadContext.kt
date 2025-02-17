@@ -4,8 +4,8 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
 // identity comparison for speed, we know zero always has the same identity
-@Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS", "KotlinConstantConditions")
-internal actual fun isZeroCount(countOrElement: Any?): Boolean = countOrElement === 0
+@Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS", "KotlinConstantConditions", "NOTHING_TO_INLINE")
+internal actual inline fun isZeroCount(countOrElement: Any?): Boolean = countOrElement === 0
 
 // top-level data class for a nicer out-of-the-box toString representation and class name
 @PublishedApi
