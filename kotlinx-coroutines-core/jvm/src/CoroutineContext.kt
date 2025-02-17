@@ -1,3 +1,5 @@
+@file:JvmName("CoroutineContextKt")
+@file:JvmMultifileClass
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
@@ -50,15 +52,3 @@ internal data class CoroutineId(
         Thread.currentThread().name = oldState
     }
 }
-
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility with 1.10.0 and earlier, was experimental")
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-@kotlin.internal.LowPriorityInOverloadResolution
-public fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext =
-    newCoroutineContext(context)
-
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility with 1.10.0 and earlier, was internal")
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-@kotlin.internal.LowPriorityInOverloadResolution
-public fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext =
-    newCoroutineContext(addedContext)
