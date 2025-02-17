@@ -5,14 +5,13 @@ import kotlin.coroutines.*
 import kotlin.test.*
 import kotlinx.coroutines.internal.*
 
-class CommonThreadContextElementTest : TestBase() {
+class ThreadContextElementTest : TestBase() {
     interface TestThreadContextElement : ThreadContextElement<Int> {
         companion object Key : CoroutineContext.Key<TestThreadContextElement>
     }
 
     @Test
-    fun updatesAndRestores() = runTest {
-        expect(1)
+    fun testUpdatesAndRestores() = runTest {
         var updateCount = 0
         var restoreCount = 0
         val threadContextElement = object : TestThreadContextElement {
@@ -34,7 +33,6 @@ class CommonThreadContextElementTest : TestBase() {
         }
         assertEquals(1, updateCount)
         assertEquals(1, restoreCount)
-        finish(2)
     }
 
     @Test
@@ -77,6 +75,42 @@ class CommonThreadContextElementTest : TestBase() {
         job.join()
         assertNull(threadContextElementThreadLocal.get())
     }
+
+    @Test
+    fun testWithContextJobAccess() = runTest {
+        val captor = JobCaptor()
+        val manuallyCaptured = ArrayList<Job>()
+        withContext(captor) {
+            manuallyCaptured += coroutineContext.job
+            withContext(CoroutineName("undispatched")) {
+                manuallyCaptured += coroutineContext.job
+                withContext(Dispatchers.Default) {
+                    manuallyCaptured += coroutineContext.job
+                }
+                // Context restored, captured again
+                manuallyCaptured += coroutineContext.job
+            }
+            // Context restored, captured again
+            manuallyCaptured += coroutineContext.job
+        }
+        assertEquals(manuallyCaptured, captor.capturees)
+    }
+}
+
+private class JobCaptor() : ThreadContextElement<Unit> {
+
+    val capturees: MutableList<Job> = mutableListOf()
+
+    companion object Key : CoroutineContext.Key<MyElement>
+
+    override val key: CoroutineContext.Key<*> get() = Key
+
+    override fun updateThreadContext(context: CoroutineContext) {
+        capturees.add(context.job)
+    }
+
+    override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
+    }
 }
 
 internal class MyData
@@ -105,4 +139,3 @@ internal class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
         threadContextElementThreadLocal.set(oldState)
     }
 }
-

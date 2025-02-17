@@ -3,7 +3,7 @@ package kotlinx.coroutines
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
-class ThreadContextElementTest : TestBase() {
+class ThreadContextElementConcurrentTest : TestBase() {
     @Test
     fun testWithContext() = runTest {
         expect(1)

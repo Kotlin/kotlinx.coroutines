@@ -11,7 +11,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 
-class CommonThreadContextMutableCopiesTest : TestBase() {
+class ThreadContextMutableCopiesTest : TestBase() {
     companion object {
         internal val threadLocalData = commonThreadLocal<MutableList<String>>(Symbol("ThreadLocalData")).also {
             it.set(mutableListOf())
