@@ -100,6 +100,7 @@ private fun Project.checkRedirect(repositories: RepositoryHandler, containerName
     }
 }
 
+@Suppress("DEPRECATION", "DEPRECATION_ERROR") // KT-68597, KT-68597
 private fun Project.configureYarnRedirects() {
     if (CacheRedirector.isEnabled) {
         plugins.withType(YarnPlugin::class) {
