@@ -130,6 +130,38 @@ class ThreadContextMutableCopiesTest : TestBase() {
     }
 
     @Test
+    fun testDataIsNotResetOnSuspensions() = runTest {
+        val root = MyMutableElement(ArrayList())
+        withContext(root) {
+            threadLocalData.get().add("X")
+            assertEquals(listOf("X"), threadLocalData.get())
+            yield()
+            assertEquals(listOf("X"), threadLocalData.get())
+            threadLocalData.get().add("Y")
+            launch {
+                assertEquals(listOf("X", "Y"), threadLocalData.get())
+                threadLocalData.get().add("Z")
+                yield()
+                assertEquals(listOf("X", "Y", "Z"), threadLocalData.get())
+            }
+        }
+    }
+
+    @Test
+    fun testDataIsNotVisibleToUndispatchedCoroutines() = runTest {
+        threadLocalData.set(mutableListOf())
+        val root = MyMutableElement(ArrayList())
+        val anotherRootScope = CoroutineScope(Dispatchers.Unconfined + root)
+        withContext(root) {
+            threadLocalData.get().add("X")
+            assertEquals(listOf("X"), threadLocalData.get())
+            anotherRootScope.launch {
+                assertEquals(listOf(), threadLocalData.get())
+            }
+        }
+    }
+
+    @Test
     fun testDataIsCopiedThroughFlowOnUndispatched() = runTest {
         expect(1)
         val root = MyMutableElement(ArrayList())
