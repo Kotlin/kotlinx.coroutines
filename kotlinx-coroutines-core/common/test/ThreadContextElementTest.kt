@@ -1,5 +1,9 @@
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.test.*
@@ -76,18 +80,18 @@ class ThreadContextElementTest : TestBase() {
         assertNull(threadContextElementThreadLocal.get())
     }
 
-    class JobCaptor(val capturees: MutableList<String> = mutableListOf()) : ThreadContextElement<Unit> {
+    private class JobCaptor(val capturees: CopyOnWriteList<Event<Job>> = CopyOnWriteList()) : ThreadContextElement<Unit> {
 
         companion object Key : CoroutineContext.Key<MyElement>
 
         override val key: CoroutineContext.Key<*> get() = Key
 
         override fun updateThreadContext(context: CoroutineContext) {
-            capturees.add("Update: ${context.job}")
+            capturees.add(Event.Update(context.job))
         }
 
         override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
-            capturees.add("Restore: ${context.job}")
+            capturees.add(Event.Restore(context.job))
         }
     }
 
@@ -109,10 +113,10 @@ class ThreadContextElementTest : TestBase() {
         val dispatcher1 = dispatcher.limitedParallelism(1, "dispatcher1")
         val dispatcher2 = dispatcher.limitedParallelism(1, "dispatcher2")
         val captor = JobCaptor()
-        val manuallyCaptured = mutableListOf<String>()
+        val manuallyCaptured = mutableListOf<Event<Job?>>()
 
-        fun registerUpdate(job: Job?) = manuallyCaptured.add("Update: $job")
-        fun registerRestore(job: Job?) = manuallyCaptured.add("Restore: $job")
+        fun registerUpdate(job: Job?) = manuallyCaptured.add(Event.Update(job))
+        fun registerRestore(job: Job?) = manuallyCaptured.add(Event.Restore(job))
 
         var rootJob: Job? = null
         withContext(captor + dispatcher1) {
@@ -145,8 +149,8 @@ class ThreadContextElementTest : TestBase() {
         registerRestore(rootJob)
 
         // Restores may be called concurrently to the update calls in other threads, so their order is not checked.
-        val expected = manuallyCaptured.filter { it.startsWith("Update: ") }.joinToString(separator = "\n")
-        val actual = captor.capturees.filter { it.startsWith("Update: ") }.joinToString(separator = "\n")
+        val expected = manuallyCaptured.mapNotNull { (it as? Event.Update)?.value }.joinToString(separator = "\n")
+        val actual = captor.capturees.mapNotNull { (it as? Event.Update)?.value }.joinToString(separator = "\n")
         assertEquals(expected, actual)
     }
 }
@@ -176,4 +180,24 @@ internal class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
     override fun restoreThreadContext(context: CoroutineContext, oldState: MyData?) {
         threadContextElementThreadLocal.set(oldState)
     }
+}
+
+private sealed class Event<T> {
+    class Update<T>(val value: T): Event<T>()
+    class Restore<T>(val value: T): Event<T>()
+}
+
+private class CopyOnWriteList<T> private constructor(list: List<T>) {
+    private val field = atomic(list)
+
+    constructor() : this(emptyList())
+
+    fun add(value: T) {
+        field.loop { current ->
+            val new = current + value
+            if (field.compareAndSet(current, new)) return
+        }
+    }
+
+    fun <R> mapNotNull(transform: (T) -> R): List<R> = field.value.mapNotNull(transform)
 }
