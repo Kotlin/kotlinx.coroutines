@@ -67,7 +67,7 @@ private fun <T, R> ScopeCoroutine<T>.startUndspatched(
     } catch (e: DispatchException) {
         // Special codepath for failing CoroutineDispatcher: rethrow an exception
         // immediately without waiting for children to indicate something is wrong
-        dispatchException(e)
+        dispatchExceptionAndMakeCompleting(e)
     } catch (e: Throwable) {
         CompletedExceptionally(e)
     }
@@ -98,7 +98,7 @@ private fun ScopeCoroutine<*>.notOwnTimeout(cause: Throwable): Boolean {
     return cause !is TimeoutCancellationException || cause.coroutine !== this
 }
 
-private fun ScopeCoroutine<*>.dispatchException(e: DispatchException) {
+private fun ScopeCoroutine<*>.dispatchExceptionAndMakeCompleting(e: DispatchException): Nothing {
     makeCompleting(CompletedExceptionally(e.cause))
-    throw throw recoverStackTrace(e.cause, uCont)
+    throw recoverStackTrace(e.cause, uCont)
 }

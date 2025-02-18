@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.flowOn
 import org.junit.*
 import org.junit.Test
 import org.junit.rules.*
-import org.junit.runners.model.TestTimedOutException
-import java.util.concurrent.TimeoutException
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
@@ -91,10 +89,10 @@ class FailFastOnStartTest : TestBase() {
     }
 
     @Test
-    fun testFlowOn()  {
+    fun testFlowOn() {
         // See #4142, this test ensures that `coroutineScope { produce(failingDispatcher, ATOMIC) }`
         // rethrows an exception. It does not help with the completion of such a coroutine though.
-        // Hack to avoid waiting for test completion
+        // `suspend {}` + start coroutine with custom `completion` to avoid waiting for test completion
         expect(1)
         val caller = suspend {
             try {
