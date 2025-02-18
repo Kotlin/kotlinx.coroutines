@@ -34,7 +34,7 @@ class FailingCoroutinesMachineryTest(
     private val lazyOuterDispatcher = lazy { newFixedThreadPoolContext(1, "") }
 
     private object FailingUpdate : ThreadContextElement<Unit> {
-        private object Key : CoroutineContext.Key<MyElement>
+        private object Key : CoroutineContext.Key<ThreadContextElement<Unit>>
 
         override val key: CoroutineContext.Key<*> get() = Key
 
@@ -49,7 +49,7 @@ class FailingCoroutinesMachineryTest(
     }
 
     private object FailingRestore : ThreadContextElement<Unit> {
-        private object Key : CoroutineContext.Key<MyElement>
+        private object Key : CoroutineContext.Key<ThreadContextElement<Unit>>
 
         override val key: CoroutineContext.Key<*> get() = Key
 
