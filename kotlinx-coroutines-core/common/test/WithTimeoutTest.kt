@@ -138,7 +138,7 @@ class WithTimeoutTest : TestBase() {
     }
 
     @Test
-    fun testSuppressExceptionWithAnotherException() = runTest{
+    fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
         try {
             withTimeout(100) {

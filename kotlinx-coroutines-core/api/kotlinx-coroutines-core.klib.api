@@ -494,6 +494,8 @@ final class kotlinx.coroutines.channels/ClosedSendChannelException : kotlin/Ille
     constructor <init>(kotlin/String?) // kotlinx.coroutines.channels/ClosedSendChannelException.<init>|<init>(kotlin.String?){}[0]
 }
 
+final class kotlinx.coroutines.timeout/TimeoutException : kotlin/Exception // kotlinx.coroutines.timeout/TimeoutException|null[0]
+
 final class kotlinx.coroutines/CompletionHandlerException : kotlin/RuntimeException { // kotlinx.coroutines/CompletionHandlerException|null[0]
     constructor <init>(kotlin/String, kotlin/Throwable) // kotlinx.coroutines/CompletionHandlerException.<init>|<init>(kotlin.String;kotlin.Throwable){}[0]
 }
@@ -1019,6 +1021,8 @@ final suspend fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).kotlinx.c
 final suspend fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).kotlinx.coroutines.flow/toSet(kotlin.collections/MutableSet<#A> = ...): kotlin.collections/Set<#A> // kotlinx.coroutines.flow/toSet|toSet@kotlinx.coroutines.flow.Flow<0:0>(kotlin.collections.MutableSet<0:0>){0§<kotlin.Any?>}[0]
 final suspend fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/FlowCollector<#A>).kotlinx.coroutines.flow/emitAll(kotlinx.coroutines.channels/ReceiveChannel<#A>) // kotlinx.coroutines.flow/emitAll|emitAll@kotlinx.coroutines.flow.FlowCollector<0:0>(kotlinx.coroutines.channels.ReceiveChannel<0:0>){0§<kotlin.Any?>}[0]
 final suspend fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/FlowCollector<#A>).kotlinx.coroutines.flow/emitAll(kotlinx.coroutines.flow/Flow<#A>) // kotlinx.coroutines.flow/emitAll|emitAll@kotlinx.coroutines.flow.FlowCollector<0:0>(kotlinx.coroutines.flow.Flow<0:0>){0§<kotlin.Any?>}[0]
+final suspend fun <#A: kotlin/Any?> kotlinx.coroutines.timeout/withTimeout(kotlin.time/Duration, kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): #A // kotlinx.coroutines.timeout/withTimeout|withTimeout(kotlin.time.Duration;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}[0]
+final suspend fun <#A: kotlin/Any?> kotlinx.coroutines.timeout/withTimeout(kotlin/Long, kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): #A // kotlinx.coroutines.timeout/withTimeout|withTimeout(kotlin.Long;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}[0]
 final suspend fun <#A: kotlin/Any?> kotlinx.coroutines/awaitAll(kotlin/Array<out kotlinx.coroutines/Deferred<#A>>...): kotlin.collections/List<#A> // kotlinx.coroutines/awaitAll|awaitAll(kotlin.Array<out|kotlinx.coroutines.Deferred<0:0>>...){0§<kotlin.Any?>}[0]
 final suspend fun <#A: kotlin/Any?> kotlinx.coroutines/coroutineScope(kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): #A // kotlinx.coroutines/coroutineScope|coroutineScope(kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}[0]
 final suspend fun <#A: kotlin/Any?> kotlinx.coroutines/supervisorScope(kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): #A // kotlinx.coroutines/supervisorScope|supervisorScope(kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}[0]
