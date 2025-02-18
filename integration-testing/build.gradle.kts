@@ -30,23 +30,12 @@ buildscript {
         return usingSnapshotVersion
     }
 
-    fun fetchKotlinVersion(): String {
-        if (checkIsSnapshotTrainProperty()) {
-            val kotlinSnapshotVersion = rootProject.properties["kotlin_snapshot_version"]?.toString()
-                ?: throw IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
-            return kotlinSnapshotVersion
-        }
-        return rootProject.properties["kotlin_version"].toString()
-    }
-
     val usingSnapshotVersion = checkIsSnapshotVersion()
     val hasSnapshotTrainProperty = checkIsSnapshotTrainProperty()
-    val kotlinVersion = fetchKotlinVersion()
 
     extra.apply {
         set("using_snapshot_version", usingSnapshotVersion)
         set("build_snapshot_train", hasSnapshotTrainProperty)
-        set("kotlin_version", kotlinVersion)
     }
 
     if (usingSnapshotVersion) {
@@ -74,7 +63,13 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-val kotlinVersion = extra["kotlin_version"]
+val kotlinVersion = if (extra["build_snapshot_train"] == true) {
+    rootProject.properties["kotlin_snapshot_version"]?.toString()
+        ?: throw IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
+} else {
+    rootProject.properties["kotlin_version"].toString()
+}
+
 val asmVersion = property("asm_version")
 
 dependencies {
