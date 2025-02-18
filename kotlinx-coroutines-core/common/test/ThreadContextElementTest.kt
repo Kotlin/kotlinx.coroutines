@@ -76,40 +76,78 @@ class ThreadContextElementTest : TestBase() {
         assertNull(threadContextElementThreadLocal.get())
     }
 
+    class JobCaptor(val capturees: MutableList<String> = mutableListOf()) : ThreadContextElement<Unit> {
+
+        companion object Key : CoroutineContext.Key<MyElement>
+
+        override val key: CoroutineContext.Key<*> get() = Key
+
+        override fun updateThreadContext(context: CoroutineContext) {
+            capturees.add("Update: ${context.job}")
+        }
+
+        override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
+            capturees.add("Restore: ${context.job}")
+        }
+    }
+
+    /**
+     * For stability of the test, it is important to make sure that
+     * the parent job actually suspends when calling
+     * `withContext(dispatcher2 + CoroutineName("dispatched"))`.
+     *
+     * Here this requirement is fulfilled by forcing execution on a single thread.
+     * However, dispatching is performed with two non-equal dispatchers to force dispatching.
+     *
+     * Suspend of the parent coroutine [kotlinx.coroutines.DispatchedCoroutine.trySuspend] is out of the control of the test,
+     * while being executed concurrently with resume of the child coroutine [kotlinx.coroutines.DispatchedCoroutine.tryResume].
+     */
     @Test
     fun testWithContextJobAccess() = runTest {
+        // Emulate non-equal dispatchers
+        val dispatcher = Dispatchers.Default.limitedParallelism(1)
+        val dispatcher1 = dispatcher.limitedParallelism(1, "dispatcher1")
+        val dispatcher2 = dispatcher.limitedParallelism(1, "dispatcher2")
         val captor = JobCaptor()
-        val manuallyCaptured = ArrayList<Job>()
-        withContext(captor) {
-            manuallyCaptured += coroutineContext.job
+        val manuallyCaptured = mutableListOf<String>()
+
+        fun registerUpdate(job: Job?) = manuallyCaptured.add("Update: $job")
+        fun registerRestore(job: Job?) = manuallyCaptured.add("Restore: $job")
+
+        var rootJob: Job? = null
+        withContext(captor + dispatcher1) {
+            rootJob = coroutineContext.job
+            registerUpdate(rootJob)
+            var undispatchedJob: Job? = null
             withContext(CoroutineName("undispatched")) {
-                manuallyCaptured += coroutineContext.job
-                withContext(Dispatchers.Default) {
-                    manuallyCaptured += coroutineContext.job
+                undispatchedJob = coroutineContext.job
+                registerUpdate(undispatchedJob)
+                // These 2 restores and the corresponding next 2 updates happen only if the following `withContext`
+                // call actually suspends.
+                registerRestore(undispatchedJob)
+                registerRestore(rootJob)
+                // Without forcing of single backing thread the code inside `withContext`
+                // may already complete at the moment when the parent coroutine decides
+                // whether it needs to suspend or not.
+                var dispatchedJob: Job? = null
+                withContext(dispatcher2 + CoroutineName("dispatched")) {
+                    dispatchedJob = coroutineContext.job
+                    registerUpdate(dispatchedJob)
                 }
+                registerRestore(dispatchedJob)
                 // Context restored, captured again
-                manuallyCaptured += coroutineContext.job
+                registerUpdate(undispatchedJob)
             }
+            registerRestore(undispatchedJob)
             // Context restored, captured again
-            manuallyCaptured += coroutineContext.job
+            registerUpdate(rootJob)
         }
-        assertEquals(manuallyCaptured, captor.capturees)
-    }
-}
+        registerRestore(rootJob)
 
-private class JobCaptor() : ThreadContextElement<Unit> {
-
-    val capturees: MutableList<Job> = mutableListOf()
-
-    companion object Key : CoroutineContext.Key<MyElement>
-
-    override val key: CoroutineContext.Key<*> get() = Key
-
-    override fun updateThreadContext(context: CoroutineContext) {
-        capturees.add(context.job)
-    }
-
-    override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
+        // Restores may be called concurrently to the update calls in other threads, so their order is not checked.
+        val expected = manuallyCaptured.filter { it.startsWith("Update: ") }.joinToString(separator = "\n")
+        val actual = captor.capturees.filter { it.startsWith("Update: ") }.joinToString(separator = "\n")
+        assertEquals(expected, actual)
     }
 }
 

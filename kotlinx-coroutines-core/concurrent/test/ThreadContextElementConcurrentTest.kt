@@ -1,6 +1,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
 class ThreadContextElementConcurrentTest : TestBase() {
