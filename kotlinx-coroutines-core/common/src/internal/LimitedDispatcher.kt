@@ -42,14 +42,14 @@ internal class LimitedDispatcher(
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         dispatchInternal(block) { worker ->
-            dispatcher.safeDispatch(this, worker)
+            dispatcher.safeDispatch(context, worker)
         }
     }
 
     @InternalCoroutinesApi
     override fun dispatchYield(context: CoroutineContext, block: Runnable) {
         dispatchInternal(block) { worker ->
-            dispatcher.dispatchYield(this, worker)
+            dispatcher.dispatchYield(context, worker)
         }
     }
 

@@ -56,4 +56,18 @@ class LimitedParallelismSharedTest : TestBase() {
         }
         assertEquals(limit, workerQueue.size)
     }
+
+    @Test
+    fun testPropagateCoroutineContext() {
+        var coroutineContext: CoroutineContext = EmptyCoroutineContext
+        val limited = object : CoroutineDispatcher() {
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                coroutineContext = context
+            }
+        }.limitedParallelism(2)
+
+        limited.dispatch(CoroutineName("Hi!")) {}
+
+        assertEquals(CoroutineName("Hi!"), coroutineContext)
+    }
 }
