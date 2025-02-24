@@ -7,16 +7,15 @@ import io.reactivex.rxjava3.plugins.*
 import io.reactivex.rxjava3.schedulers.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
-import org.junit.*
-import org.junit.Test
 import java.lang.Runnable
-import java.util.concurrent.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.*
 import kotlin.test.*
 
 class SchedulerTest : TestBase() {
-    @Before
+    @BeforeTest
     fun setup() {
         ignoreLostThreads("RxCachedThreadScheduler-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
     }
@@ -164,7 +163,7 @@ class SchedulerTest : TestBase() {
                     cdl1.countDown()
                     try {
                         cdl2.await()
-                    } catch (e: InterruptedException) {
+                    } catch (_: InterruptedException) {
                         // this is the expected outcome
                         cdl3.countDown()
                     }

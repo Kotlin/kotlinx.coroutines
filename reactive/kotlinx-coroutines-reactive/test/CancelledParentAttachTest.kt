@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.*
 import org.junit.*
 
 
-class CancelledParentAttachTest : TestBase() {;
+class CancelledParentAttachTest : TestBase() {
 
     @Test
     fun testFlow() = runTest {

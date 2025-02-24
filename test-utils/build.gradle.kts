@@ -8,6 +8,10 @@ kotlin {
             api("org.jetbrains.kotlin:kotlin-test-common:${version("kotlin")}")
             api("org.jetbrains.kotlin:kotlin-test-annotations-common:${version("kotlin")}")
         }
+        val concurrentMain by creating {
+            configureDirectoryPaths()
+            dependsOn(commonMain.get())
+        }
         jvmMain.dependencies {
             api("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
             // Workaround to make addSuppressed work in tests
@@ -16,6 +20,8 @@ kotlin {
             api("org.jetbrains.kotlin:kotlin-test-junit:${version("kotlin")}")
             api("junit:junit:${version("junit")}")
         }
+        jvmMain { dependsOn(concurrentMain) }
+        nativeMain { dependsOn(concurrentMain) }
         jsMain.dependencies {
             api("org.jetbrains.kotlin:kotlin-test-js:${version("kotlin")}")
         }
