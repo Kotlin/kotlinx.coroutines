@@ -290,9 +290,9 @@ internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
  * [doYield] indicates whether current continuation is yielding (to provide fast-path if event-loop is empty).
  * Returns `true` if execution of continuation was queued (trampolined) or `false` otherwise.
  */
-private inline fun DispatchedContinuation<*>.executeUnconfined(
+private fun DispatchedContinuation<*>.executeUnconfined(
     contState: Any?, mode: Int, doYield: Boolean = false,
-    noinline block: () -> Unit
+    block: () -> Unit
 ): Boolean {
     assert { mode != MODE_UNINITIALIZED } // invalid execution mode
     val eventLoop = ThreadLocalEventLoop.unconfinedEventLoop
