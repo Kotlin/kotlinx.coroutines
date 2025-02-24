@@ -2,7 +2,6 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.sync.*
-import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.test.*
@@ -139,7 +138,7 @@ class ThreadLocalStressTest : TestBase() {
                     cancel()
                     semaphore.acquire()
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 // Ignore cancellation
             }
         }
@@ -154,7 +153,7 @@ class ThreadLocalStressTest : TestBase() {
                     cancel()
                     semaphore.acquire()
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 // Ignore cancellation
             }
         }
