@@ -1,7 +1,6 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
-import kotlin.native.concurrent.Worker
 
 
 public actual object Dispatchers {
@@ -48,7 +47,7 @@ internal object DefaultIoScheduler : CoroutineDispatcher() {
     override fun toString(): String = "Dispatchers.IO"
 }
 
-internal inline fun scheduleBackgroundIoTask(block: Runnable) = DefaultIoScheduler.dispatchToUnlimitedPool(block)
+internal fun scheduleBackgroundIoTask(block: Runnable) = DefaultIoScheduler.dispatchToUnlimitedPool(block)
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public actual val Dispatchers.IO: CoroutineDispatcher get() = IO
