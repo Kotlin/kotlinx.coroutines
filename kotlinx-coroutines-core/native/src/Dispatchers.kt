@@ -1,6 +1,7 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
+import kotlin.native.concurrent.Worker
 
 
 public actual object Dispatchers {

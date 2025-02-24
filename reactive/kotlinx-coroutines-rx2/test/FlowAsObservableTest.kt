@@ -109,7 +109,7 @@ class FlowAsObservableTest : TestBase() {
                 expect(3)
                 throw TestException()
             }
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             finish(5)
         }
     }

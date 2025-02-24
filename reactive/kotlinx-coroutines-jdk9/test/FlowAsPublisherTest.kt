@@ -82,7 +82,7 @@ class FlowAsPublisherTest : TestBase() {
         try {
             expect(1)
             publisher.awaitFirstOrNull()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             expect(3)
         }
         finish(4)

@@ -100,7 +100,7 @@ class RunBlockingTest : TestBase() {
                 }
             }
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             finish(4)
         }
     }
@@ -195,6 +195,22 @@ class RunBlockingTest : TestBase() {
         }
     }
 
+    /** Tests that tasks scheduled on a closed `runBlocking` event loop get processed in an I/O thread. */
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun testLeakedEventLoopGetsProcessedInIO() {
+        val dispatcher = runBlocking {
+            coroutineContext[CoroutineDispatcher.Key]
+        }!!
+        runBlocking {
+            GlobalScope.launch(dispatcher) {
+                assertTrue(runningOnIoThread())
+                delay(1.milliseconds)
+                assertTrue(runningOnIoThread())
+            }.join()
+        }
+    }
+
     /** Will not compile if [runBlocking] doesn't have the "runs exactly once" contract. */
     @Test
     fun testContract() {
@@ -205,3 +221,5 @@ class RunBlockingTest : TestBase() {
         rb.hashCode() // unused
     }
 }
+
+internal expect fun runningOnIoThread(): Boolean

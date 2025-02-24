@@ -182,3 +182,5 @@ class RunBlockingJvmTest : TestBase() {
         return result.get().getOrThrow()
     }
 }
+
+internal actual fun runningOnIoThread(): Boolean = Thread.currentThread().isIoDispatcherThread()

@@ -165,7 +165,7 @@ class SchedulerTest : TestBase() {
                     cdl1.countDown()
                     try {
                         cdl2.await()
-                    } catch (e: InterruptedException) {
+                    } catch (_: InterruptedException) {
                         // this is the expected outcome
                         cdl3.countDown()
                     }

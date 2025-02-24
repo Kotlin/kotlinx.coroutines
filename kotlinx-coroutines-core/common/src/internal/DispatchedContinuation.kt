@@ -299,6 +299,7 @@ internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
  * [doYield] indicates whether current continuation is yielding (to provide fast-path if event-loop is empty).
  * Returns `true` if execution of continuation was queued (trampolined) or `false` otherwise.
  */
+@Suppress("NOTHING_TO_INLINE")
 private inline fun DispatchedContinuation<*>.executeUnconfined(
     contState: Any?, mode: Int, doYield: Boolean = false,
     noinline block: () -> Unit

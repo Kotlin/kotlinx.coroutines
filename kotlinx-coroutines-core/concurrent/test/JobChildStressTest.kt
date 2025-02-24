@@ -6,6 +6,7 @@ import kotlinx.coroutines.testing.*
 import kotlin.concurrent.atomics.*
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.*
+import kotlinx.coroutines.testing.CountDownLatch
 
 /**
  * Testing the procedure of attaching a child to the parent job.

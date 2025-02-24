@@ -6,6 +6,7 @@ import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.*
+import kotlinx.coroutines.testing.CountDownLatch
 import kotlin.test.*
 
 class DefaultDispatchersTest : TestBase() {

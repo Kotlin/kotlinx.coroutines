@@ -5,9 +5,7 @@ import kotlinx.coroutines.testing.CountDownLatch
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import org.junit.*
-import org.junit.Test
-import java.util.concurrent.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 import kotlin.test.*
@@ -28,7 +26,7 @@ class CoroutineSchedulerStressTest : TestBase() {
     private val processed = AtomicInteger(0)
     private val finishLatch = CountDownLatch(1)
 
-    @After
+    @AfterTest
     fun tearDown() {
         dispatcher.close()
     }

@@ -10,7 +10,7 @@ import kotlin.test.*
 
 class ObservableExceptionHandlingTest : TestBase() {
 
-    @Before
+    @BeforeTest
     fun setup() {
         ignoreLostThreads("RxComputationThreadPool-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
     }
