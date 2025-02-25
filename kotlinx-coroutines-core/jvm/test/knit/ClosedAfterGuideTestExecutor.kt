@@ -7,9 +7,6 @@ import kotlin.coroutines.*
 
 internal fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher = ClosedAfterGuideTestDispatcher(1, name)
 
-internal fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher =
-    ClosedAfterGuideTestDispatcher(nThreads, name)
-
 private class ClosedAfterGuideTestDispatcher(
     private val nThreads: Int,
     private val name: String
