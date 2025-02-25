@@ -31,7 +31,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * [Asynchronous timeout and resources](https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources)
  * section of the coroutines guide for details.
  *
- * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  *
  * @param timeMillis timeout time in milliseconds.
  */
@@ -63,7 +63,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * [Asynchronous timeout and resources](https://kotlinlang.org/docs/reference/coroutines/cancellation-and-timeouts.html#asynchronous-timeout-and-resources)
  * section of the coroutines guide for details.
  *
- * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  */
 public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
     contract {
