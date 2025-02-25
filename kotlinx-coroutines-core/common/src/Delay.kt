@@ -117,7 +117,14 @@ public suspend fun awaitCancellation(): Nothing = suspendCancellableCoroutine {}
  *
  * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
+ * By default, on the JVM and Native, a `Dispatchers.IO` thread is used to calculate when the delay has passed,
+ * whereas on JS, the `Window.setTimeout` function is used, and on Wasm/WASI, `poll_oneoff` with the monotonic clock
+ * event type is used.
+ * It is possible for a [CoroutineDispatcher] to override this behavior and provide its own implementation
+ * of time tracking.
+ * For example, [Dispatchers.Main] typically uses the main thread's event loop to track time.
+ * However, the functionality of defining custom time tracking is not exposed to the public API.
+ *
  * @param timeMillis time in milliseconds.
  */
 public suspend fun delay(timeMillis: Long) {
@@ -143,7 +150,13 @@ public suspend fun delay(timeMillis: Long) {
  *
  * Note that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
+ * By default, on the JVM and Native, a `Dispatchers.IO` thread is used to calculate when the delay has passed,
+ * whereas on JS, the `Window.setTimeout` function is used, and on Wasm/WASI, `poll_oneoff` with the monotonic clock
+ * event type is used.
+ * It is possible for a [CoroutineDispatcher] to override this behavior and provide its own implementation
+ * of time tracking.
+ * For example, [Dispatchers.Main] typically uses the main thread's event loop to track time.
+ * However, the functionality of defining custom time tracking is not exposed to the public API.
  */
 public suspend fun delay(duration: Duration): Unit = delay(duration.toDelayMillis())
 
