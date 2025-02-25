@@ -19,6 +19,10 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * > Note: the behavior of this function can be different from [withTimeout] if [timeMillis] is greater than
  * `Long.MAX_VALUE / 2` milliseconds.
+ *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
+ *
+ * @param timeMillis timeout time in milliseconds.
  */
 public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
     contract {
@@ -40,8 +44,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * Cancellation on timeout runs concurrently the code running in the block and may happen at any time,
  * even after the [block] finishes executing but before the caller gets resumed with the result.
  *
- * > Implementation note: how the time is tracked exactly is an implementation detail of the [CoroutineDispatcher]
- * in the [currentCoroutineContext].
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  *
  * ## Structured Concurrency
  *
