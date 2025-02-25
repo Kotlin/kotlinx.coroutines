@@ -20,7 +20,7 @@ class DispatcherGuideTest {
         test("ExampleContext02") { kotlinx.coroutines.guide.exampleContext02.main() }.verifyLinesStart(
             "Unconfined      : I'm working in thread main",
             "main runBlocking: I'm working in thread main",
-            "Unconfined      : After delay in thread DefaultDispatcher oroutine#2",
+            "Unconfined      : After delay in thread DefaultDispatcher-worker-1 @coroutine#2",
             "main runBlocking: After delay in thread main"
         )
     }
