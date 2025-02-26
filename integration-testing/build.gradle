@@ -32,6 +32,7 @@ buildscript {
         repositories {
             mavenLocal()
             maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+            maven { url "https://redirector.kotlinlang.org/maven/dev" }
         }
     }
 
@@ -44,6 +45,7 @@ plugins {
 repositories {
     if (build_snapshot_train) {
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
+        maven { url "https://redirector.kotlinlang.org/maven/dev" }
     }
     mavenLocal()
     mavenCentral()
