@@ -14,5 +14,5 @@ public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): Execut
         t.isDaemon = true
         t
     }
-    return executor.asCoroutineDispatcher()
+    return Executors.unconfigurableExecutorService(executor).asCoroutineDispatcher()
 }
