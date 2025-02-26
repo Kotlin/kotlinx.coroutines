@@ -82,7 +82,7 @@ import kotlin.jvm.*
  * which effectively requests a buffer of any size. Multiple requests with a specified buffer
  * size produce a buffer with the sum of the requested buffer sizes.
  *
- * A `buffer` call with a non-default value of the [onBufferOverflow] parameter overrides all immediately preceding
+ * A `buffer` call with a non-[SUSPEND] value of the [onBufferOverflow] parameter overrides all immediately preceding
  * buffering operators, because it never suspends its upstream, and thus no upstream buffer would ever be used.
  *
  * ### Conceptual implementation
@@ -106,8 +106,8 @@ import kotlin.jvm.*
  * ### Conflation
  *
  * Usage of this function with [capacity] of [Channel.CONFLATED][Channel.CONFLATED] is a shortcut to
- * `buffer(onBufferOverflow = `[`BufferOverflow.DROP_OLDEST`][BufferOverflow.DROP_OLDEST]`)`, and is available via
- * a separate [conflate] operator. See its documentation for details.
+ * `buffer(capacity = 0, onBufferOverflow = `[`BufferOverflow.DROP_OLDEST`][BufferOverflow.DROP_OLDEST]`)`,
+ * and is available via a separate [conflate] operator.
  *
  * @param capacity type/capacity of the buffer between coroutines. Allowed values are the same as in `Channel(...)`
  *   factory function: [BUFFERED][Channel.BUFFERED] (by default), [CONFLATED][Channel.CONFLATED],
@@ -147,6 +147,9 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> = buffer(capaci
  * The effect of this is that emitter is never suspended due to a slow collector, but collector
  * always gets the most recent value emitted.
  *
+ * This is a shortcut for `buffer(capacity = 0, onBufferOverflow = BufferOverflow.DROP_OLDEST)`.
+ * See the [buffer] operator for other configuration options.
+ *
  * For example, consider the flow that emits integers from 1 to 30 with 100 ms delay between them:
  *
  * ```
@@ -174,7 +177,11 @@ public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED): Flow<T> = buffer(capaci
  *
  * Adjacent applications of `conflate`/[buffer], [channelFlow], [flowOn] and [produceIn] are
  * always fused so that only one properly configured channel is used for execution.
- * **Conflation takes precedence over `buffer()` calls with any other capacity.**
+ *
+ * If there was no explicit buffer size specified, then the buffer size is `0`.
+ * Otherwise, the buffer size is unchanged.
+ * The strategy for buffer overflow becomes [BufferOverflow.DROP_OLDEST] after the application of this operator,
+ * but can be overridden later.
  *
  * Note that any instance of [StateFlow] already behaves as if `conflate` operator is
  * applied to it, so applying `conflate` to a `StateFlow` has no effect.
