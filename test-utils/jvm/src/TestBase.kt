@@ -5,6 +5,7 @@ import java.io.*
 import java.util.*
 import kotlin.coroutines.*
 import kotlinx.coroutines.*
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.*
 
 actual val VERBOSE = try {
@@ -68,23 +69,9 @@ actual open class TestBase(
     private lateinit var threadsBefore: Set<Thread>
     private val uncaughtExceptions = Collections.synchronizedList(ArrayList<Throwable>())
     private var originalUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
-    /*
-     * System.out that we redefine in order to catch any debugging/diagnostics
-     * 'println' from main source set.
-     * NB: We do rely on the name 'previousOut' in the FieldWalker in order to skip its
-     * processing
-     */
-    private lateinit var previousOut: PrintStream
-
-    private object TestOutputStream : PrintStream(object : OutputStream() {
-        override fun write(b: Int) {
-            error("Detected unexpected call to 'println' from source code")
-        }
-    })
 
     actual fun println(message: Any?) {
-        if (disableOutCheck) kotlin.io.println(message)
-        else previousOut.println(message)
+        PrintlnStrategy.actualSystemOut.println(message)
     }
 
     @BeforeTest
@@ -97,20 +84,16 @@ actual open class TestBase(
             e.printStackTrace()
             uncaughtExceptions.add(e)
         }
-        if (!disableOutCheck) {
-            previousOut = System.out
-            System.setOut(TestOutputStream)
-        }
+        PrintlnStrategy.configure(disableOutCheck)
     }
 
     @AfterTest
     fun onCompletion() {
+        // Reset the output stream first
+        PrintlnStrategy.reset()
         // onCompletion should not throw exceptions before it finishes all cleanup, so that other tests always
         // start in a clear, restored state
         checkFinishCall()
-        if (!disableOutCheck) { // Restore global System.out first
-            System.setOut(previousOut)
-        }
         // Shutdown all thread pools
         shutdownPoolsAfterTest()
         // Check that are now leftover threads
@@ -162,6 +145,81 @@ actual open class TestBase(
     }
 
     protected suspend fun currentDispatcher() = coroutineContext[ContinuationInterceptor]!!
+}
+
+private object PrintlnStrategy {
+    /**
+     * Installs a custom [PrintStream] instead of [System.out] to capture all the output and throw an exception if
+     * any was detected.
+     *
+     * Removes the previously set println handler and throws the exceptions detected by it.
+     * If [disableOutCheck] is set, this is the only effect.
+     */
+    fun configure(disableOutCheck: Boolean) {
+        val systemOut = System.out
+        if (systemOut is TestOutputStream) {
+            try {
+                systemOut.remove()
+            } catch (e: AssertionError) {
+                throw AssertionError("The previous TestOutputStream contained ", e)
+            }
+        }
+        if (!disableOutCheck) {
+            // Invariant: at most one indirection level in `TestOutputStream`.
+            System.setOut(TestOutputStream(actualSystemOut))
+        }
+    }
+
+    /**
+     * Removes the custom [PrintStream] and throws an exception if any output was detected.
+     */
+    fun reset() {
+        (System.out as? TestOutputStream)?.remove()
+    }
+
+    /**
+     * The [PrintStream] representing the actual stdout, ignoring the replacement [TestOutputStream].
+     */
+    val actualSystemOut: PrintStream get() = when (val out = System.out) {
+        is TestOutputStream -> out.previousOut
+        else -> out
+    }
+
+    private class TestOutputStream(
+        /*
+         * System.out that we redefine in order to catch any debugging/diagnostics
+         * 'println' from main source set.
+         * NB: We do rely on the name 'previousOut' in the FieldWalker in order to skip its
+         * processing
+         */
+        val previousOut: PrintStream,
+        private val myOutputStream: MyOutputStream = MyOutputStream(),
+    ) : PrintStream(myOutputStream) {
+
+        fun remove() {
+            System.setOut(previousOut)
+            if (myOutputStream.firstPrintStacktace.get() != null) {
+                throw AssertionError(
+                    "Detected a println. The captured output is: <<<${myOutputStream.capturedOutput}>>>",
+                    myOutputStream.firstPrintStacktace.get()
+                )
+            }
+        }
+
+        private class MyOutputStream(): OutputStream() {
+            val capturedOutput = ByteArrayOutputStream()
+
+            val firstPrintStacktace = AtomicReference<Throwable?>(null)
+
+            override fun write(b: Int) {
+                if (firstPrintStacktace.get() == null) {
+                    firstPrintStacktace.compareAndSet(null, IllegalStateException())
+                }
+                capturedOutput.write(b)
+            }
+        }
+
+    }
 }
 
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
