@@ -9,24 +9,7 @@ import java.io.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class ToStringTest : TestBase() {
-
-    @Before
-    fun setUp() {
-        before()
-        DebugProbes.sanitizeStackTraces = false
-        DebugProbes.install()
-    }
-
-    @After
-    fun tearDown() {
-        try {
-            DebugProbes.uninstall()
-        } finally {
-            onCompletion()
-        }
-    }
-
+class ToStringTest : DebugTestBase() {
 
     private suspend fun CoroutineScope.launchNestedScopes(): Job {
         return launch {

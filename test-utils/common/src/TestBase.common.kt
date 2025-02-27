@@ -133,7 +133,9 @@ interface ErrorCatching {
         fun close() {
             synchronized(lock) {
                 if (closed) {
-                    lastResortReportException(IllegalStateException("ErrorCatching closed more than once"))
+                    val error = IllegalStateException("ErrorCatching closed more than once")
+                    lastResortReportException(error)
+                    errors.add(error)
                 }
                 closed = true
                 errors.firstOrNull()?.let {

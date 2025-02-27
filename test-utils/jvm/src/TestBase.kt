@@ -89,25 +89,28 @@ actual open class TestBase(
 
     @AfterTest
     fun onCompletion() {
-        // Reset the output stream first
-        PrintlnStrategy.reset()
         // onCompletion should not throw exceptions before it finishes all cleanup, so that other tests always
-        // start in a clear, restored state
-        checkFinishCall()
-        // Shutdown all thread pools
-        shutdownPoolsAfterTest()
-        // Check that are now leftover threads
-        runCatching {
-            checkTestThreads(threadsBefore)
-        }.onFailure {
-            reportError(it)
+        // start in a clear, restored state, so we postpone throwing the observed errors.
+        fun cleanupStep(block: () -> Unit) {
+            try {
+                block()
+            } catch (e: Throwable) {
+                reportError(e)
+            }
         }
+        cleanupStep { checkFinishCall() }
+        // Reset the output stream first
+        cleanupStep { PrintlnStrategy.reset() }
+        // Shutdown all thread pools
+        cleanupStep { shutdownPoolsAfterTest() }
+        // Check that are now leftover threads
+        cleanupStep { checkTestThreads(threadsBefore) }
         // Restore original uncaught exception handler after the main shutdown sequence
         Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler)
         if (uncaughtExceptions.isNotEmpty()) {
-            error("Expected no uncaught exceptions, but got $uncaughtExceptions")
+            reportError(IllegalStateException("Expected no uncaught exceptions, but got $uncaughtExceptions"))
         }
-        // The very last action -- throw error if any was detected
+        // The very last action -- throw all the detected errors
         errorCatching.close()
     }
 
