@@ -29,12 +29,12 @@ class DispatchersToStringTest {
             )
         }
         // Not overridden at all, limited parallelism returns `this`
-        assertEquals("DefaultExecutor", (DefaultDelay as CoroutineDispatcher).limitedParallelism(42).toString())
+        assertEquals("DefaultDelay", (DefaultDelay as CoroutineDispatcher).limitedParallelism(42).toString())
 
         assertEquals("filesDispatcher", Dispatchers.IO.limitedParallelism(1, "filesDispatcher").toString())
         assertEquals("json", Dispatchers.Default.limitedParallelism(2, "json").toString())
         assertEquals("\uD80C\uDE11", (DefaultDelay as CoroutineDispatcher).limitedParallelism(42, "\uD80C\uDE11").toString())
-        assertEquals("DefaultExecutor", (DefaultDelay as CoroutineDispatcher).limitedParallelism(42).toString())
+        assertEquals("DefaultDelay", (DefaultDelay as CoroutineDispatcher).limitedParallelism(42).toString())
 
         val limitedNamed = Dispatchers.IO.limitedParallelism(10, "limited")
         assertEquals("limited.limitedParallelism(2)", limitedNamed.limitedParallelism(2).toString())

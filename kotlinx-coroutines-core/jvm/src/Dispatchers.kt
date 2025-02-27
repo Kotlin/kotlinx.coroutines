@@ -2,7 +2,6 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
-import kotlin.coroutines.*
 
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.
@@ -20,7 +19,8 @@ public actual object Dispatchers {
     public actual val Main: MainCoroutineDispatcher get() = MainDispatcherLoader.dispatcher
 
     @JvmStatic
-    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
+    public actual val Unconfined: CoroutineDispatcher get() =
+        kotlinx.coroutines.Unconfined
 
     /**
      * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
@@ -67,8 +67,8 @@ public actual object Dispatchers {
     /**
      * Shuts down built-in dispatchers, such as [Default] and [IO],
      * stopping all the threads associated with them and making them reject all new tasks.
-     * Dispatcher used as a fallback for time-related operations (`delay`, `withTimeout`)
-     * and to handle rejected tasks from other dispatchers is also shut down.
+     * Dispatchers used as fallbacks for time-related operations (`delay`, `withTimeout`)
+     * and to handle rejected tasks from other dispatchers are also shut down.
      *
      * This is a **delicate** API. It is not supposed to be called from a general
      * application-level code and its invocation is irreversible.
@@ -86,7 +86,6 @@ public actual object Dispatchers {
      */
     @DelicateCoroutinesApi
     public fun shutdown() {
-        DefaultExecutor.shutdown()
         // Also shuts down Dispatchers.IO
         DefaultScheduler.shutdown()
     }

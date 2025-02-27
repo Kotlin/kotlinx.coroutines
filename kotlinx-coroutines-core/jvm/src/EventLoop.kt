@@ -1,27 +1,25 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.scheduling.*
 import kotlinx.coroutines.scheduling.CoroutineScheduler
 
 internal actual abstract class EventLoopImplPlatform: EventLoop() {
-
-    protected abstract val thread: Thread
+    /** Returns `null` if a thread was created and doesn't need to be awoken.
+     * Returns a thread to awaken if the thread already existed when this method was called. */
+    protected abstract fun startThreadOrObtainSleepingThread(): Thread?
 
     protected actual fun unpark() {
-        val thread = thread // atomic read
-        if (Thread.currentThread() !== thread)
-            unpark(thread)
+        startThreadOrObtainSleepingThread()?.let(::unpark)
     }
 
-    protected actual open fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
-        DefaultExecutor.schedule(now, delayedTask)
-    }
 }
 
 internal class BlockingEventLoop(
-    override val thread: Thread
-) : EventLoopImplBase()
+    private val thread: Thread
+) : EventLoopImplBase() {
+    override fun startThreadOrObtainSleepingThread(): Thread? =
+        if (Thread.currentThread() !== thread) thread else null
+
+}
 
 internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.currentThread())
 
@@ -48,7 +46,7 @@ internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.curr
 public fun processNextEventInCurrentThread(): Long =
     // This API is used in Ktor for serverless integration where a single thread awaits a blocking call
     // (and, to avoid actual blocking, does something via this call), see #850
-    ThreadLocalEventLoop.currentOrNull()?.processNextEvent() ?: Long.MAX_VALUE
+    ThreadLocalEventLoop.currentOrNull()?.tryUseAsEventLoop()?.processNextEvent() ?: Long.MAX_VALUE
 
 internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()
 
@@ -122,4 +120,3 @@ internal fun Thread.isIoDispatcherThread(): Boolean {
     if (this !is CoroutineScheduler.Worker) return false
     return isIo()
 }
-
