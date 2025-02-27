@@ -186,7 +186,7 @@ Note that if we just call [await][Deferred.await] in `println` without first cal
 coroutines, this will lead to sequential behavior, since [await][Deferred.await] starts the coroutine 
 execution and waits for its finish, which is not the intended use-case for laziness. 
 The use-case for `async(start = CoroutineStart.LAZY)` is a replacement for the 
-standard [lazy] function in cases
+standard [lazy](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html) function in cases
 when computation of the value involves suspending functions.
 
 

@@ -197,7 +197,7 @@ main: Now I can quit.
 Cancellable suspending functions throw [CancellationException] on cancellation, which can be handled in 
 the usual way.
 For example,
-the `try {...} finally {...}` expression and Kotlin's [use]
+the `try {...} finally {...}` expression and Kotlin's [use](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.io/use.html)
 function execute their finalization actions normally when a coroutine is cancelled:
 
 ```kotlin
