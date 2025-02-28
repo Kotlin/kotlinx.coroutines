@@ -134,6 +134,15 @@ sourceSets {
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
         }
     }
+
+    create("javaConsumersTest") {
+        compileClasspath += sourceSets.test.get().runtimeClasspath
+        runtimeClasspath += sourceSets.test.get().runtimeClasspath
+
+        dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+        }
+    }
 }
 
 kotlin {
@@ -199,6 +208,12 @@ tasks {
         classpath = sourceSet.runtimeClasspath
     }
 
+    create<Test>("javaConsumersTest") {
+        val sourceSet = sourceSets[name]
+        testClassesDirs = sourceSet.output.classesDirs
+        classpath = sourceSet.runtimeClasspath
+    }
+
     check {
         dependsOn(
             "jvmCoreTest",
@@ -206,9 +221,10 @@ tasks {
             "mavenTest",
             "debugAgentTest",
             "coreAgentTest",
+            "javaConsumersTest",
             ":jpmsTest:check",
             "smokeTest:build",
-            "java8Test:check"
+            "java8Test:check",
         )
     }
 
