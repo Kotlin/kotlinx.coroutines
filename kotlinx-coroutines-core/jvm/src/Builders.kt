@@ -5,6 +5,22 @@ package kotlinx.coroutines
 
 import kotlin.coroutines.*
 
+/**
+ * The same as [runBlocking], but for consumption from Java.
+ * From Kotlin's point of view, this function has the exact same signature as the regular [runBlocking].
+ * This is done so that it can not be called from Kotlin, despite the fact that it is public.
+ *
+ * We do not expose this [runBlocking] in the documentation, because it is not supposed to be used from Kotlin.
+ *
+ * @suppress
+ */
+@Throws(InterruptedException::class)
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@kotlin.internal.LowPriorityInOverloadResolution
+public fun <T> runBlocking(
+    context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T
+): T = runBlocking(context, block)
+
 @Throws(InterruptedException::class)
 internal actual fun <T> runBlockingImpl(
     newContext: CoroutineContext, eventLoop: EventLoop?, block: suspend CoroutineScope.() -> T

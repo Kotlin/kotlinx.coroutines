@@ -1,5 +1,3 @@
-@file:JvmMultifileClass
-@file:JvmName("BuildersKt")
 @file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
 package kotlinx.coroutines
@@ -8,8 +6,6 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.coroutines.*
-import kotlin.jvm.JvmMultifileClass
-import kotlin.jvm.JvmName
 
 /**
  * Runs a new coroutine and **blocks** the current thread until its completion.
