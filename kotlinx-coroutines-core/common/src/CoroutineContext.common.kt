@@ -3,34 +3,18 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
-/**
- * Creates a context for a new coroutine. It installs [Dispatchers.Default] when no other dispatcher or
- * [ContinuationInterceptor] is specified and adds optional support for debugging facilities (when turned on)
- * and copyable-thread-local facilities on JVM.
- */
-public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
-
-/**
- * Creates a context for coroutine builder functions that do not launch a new coroutine, e.g. [withContext].
- * @suppress
- */
-@InternalCoroutinesApi
-public expect fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext
-
 @PublishedApi // to have unmangled name when using from other modules via suppress
 @Suppress("PropertyName")
 internal expect val DefaultDelay: Delay
 
-// countOrElement -- pre-cached value for ThreadContext.kt
-internal expect inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T
-internal expect inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T
 internal expect fun Continuation<*>.toDebugString(): String
 internal expect val CoroutineContext.coroutineName: String?
+internal expect fun wrapContextWithDebug(context: CoroutineContext): CoroutineContext
 
 /**
  * Executes a block using a given coroutine context.
  */
-internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T {
+internal inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T {
     val oldValue = updateThreadContext(context, countOrElement)
     try {
         return block()
@@ -42,7 +26,7 @@ internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, c
 /**
  * Executes a block using a context of a given continuation.
  */
-internal actual inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T {
+internal inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T {
     val context = continuation.context
     val oldValue = updateThreadContext(context, countOrElement)
     val undispatchedCompletion = if (oldValue !== NO_THREAD_ELEMENTS) {
@@ -60,7 +44,7 @@ internal actual inline fun <T> withContinuationContext(continuation: Continuatio
     }
 }
 
-internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineContext, oldValue: Any?): UndispatchedCoroutine<*>? {
+private fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineContext, oldValue: Any?): UndispatchedCoroutine<*>? {
     if (this !is CoroutineStackFrame) return null
     /*
      * Fast-path to detect whether we have undispatched coroutine at all in our stack.
@@ -81,7 +65,7 @@ internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineCont
     return completion
 }
 
-internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedCoroutine<*>? {
+private tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedCoroutine<*>? {
     // Find direct completion of this continuation
     val completion: CoroutineStackFrame = when (this) {
         is DispatchedCoroutine<*> -> return null
@@ -95,7 +79,7 @@ internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedC
  * Marker indicating that [UndispatchedCoroutine] exists somewhere up in the stack.
  * Used as a performance optimization to avoid stack walking where it is not necessary.
  */
-private object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
+internal object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
     override val key: CoroutineContext.Key<*>
         get() = this
 }

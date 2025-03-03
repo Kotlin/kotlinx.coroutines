@@ -9,6 +9,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
+import kotlin.concurrent.Volatile
 import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -206,13 +207,7 @@ private class LazyStandaloneCoroutine(
 }
 
 // Used by withContext when context changes, but dispatcher stays the same
-internal expect class UndispatchedCoroutine<in T>(
-    context: CoroutineContext,
-    uCont: Continuation<T>
-) : ScopeCoroutine<T>
-
-// Used by withContext when context changes, but dispatcher stays the same
-internal actual class UndispatchedCoroutine<in T>actual constructor (
+internal class UndispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont) {
@@ -249,7 +244,7 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
      * - It's never accessed when we are sure there are no thread context elements
      * - It's cleaned up via [ThreadLocal.remove] as soon as the coroutine is suspended or finished.
      */
-    private val threadStateToRecover = ThreadLocal<Pair<CoroutineContext, Any?>>()
+    private val threadStateToRecover = commonThreadLocal<Pair<CoroutineContext, Any?>?>(Symbol("UndispatchedCoroutine"))
 
     /*
      * Indicates that a coroutine has at least one thread context element associated with it

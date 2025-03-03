@@ -1,5 +1,4 @@
 package kotlinx.coroutines.internal
 
-import kotlin.coroutines.*
-
-internal actual fun threadContextElements(context: CoroutineContext): Any = 0
+@Suppress("NOTHING_TO_INLINE")
+internal actual inline fun isZeroCount(countOrElement: Any?): Boolean = countOrElement is Int && countOrElement == 0

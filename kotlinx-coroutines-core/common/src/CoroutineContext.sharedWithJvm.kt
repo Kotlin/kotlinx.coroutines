@@ -1,19 +1,22 @@
+// This file should be a part of `CoroutineContext.common.kt`, but adding `JvmName` to that fails: KT-75248
+@file:JvmName("CoroutineContextKt")
+@file:JvmMultifileClass
 package kotlinx.coroutines
 
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-
+import kotlin.jvm.JvmMultifileClass
+import kotlin.jvm.JvmName
 
 /**
  * Creates a context for a new coroutine. It installs [Dispatchers.Default] when no other dispatcher or
- * [ContinuationInterceptor] is specified and adds optional support for debugging facilities (when turned on)
- * and copyable-thread-local facilities on JVM.
- * See [DEBUG_PROPERTY_NAME] for description of debugging facilities on JVM.
+ * [ContinuationInterceptor] is specified and
  */
 @ExperimentalCoroutinesApi
-public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
+public fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = foldCopies(coroutineContext, context, true)
-    val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
+    val debug = wrapContextWithDebug(combined)
     return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
         debug + Dispatchers.Default else debug
 }
@@ -23,7 +26,7 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
  * @suppress
  */
 @InternalCoroutinesApi
-public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
+public fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext {
     /*
      * Fast-path: we only have to copy/merge if 'addedContext' (which typically has one or two elements)
      * contains copyable elements.
