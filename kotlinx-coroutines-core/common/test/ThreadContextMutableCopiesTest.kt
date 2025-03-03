@@ -1,11 +1,15 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.testing.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.internal.Symbol
 import kotlinx.coroutines.internal.commonThreadLocal
-import kotlin.coroutines.*
-import kotlin.test.*
+import kotlinx.coroutines.testing.TestBase
+import kotlin.coroutines.CoroutineContext
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotSame
 
 class ThreadContextMutableCopiesTest : TestBase() {
     companion object {
@@ -115,15 +119,6 @@ class ThreadContextMutableCopiesTest : TestBase() {
     }
 
     @Test
-    fun testDataIsCopiedForRunBlocking() = runTest {
-        val root = MyMutableElement(ArrayList())
-        val originalData = root.mutableData
-        withContext(root) {
-            assertNotSame(originalData, threadLocalData.get())
-        }
-    }
-
-    @Test
     fun testDataIsCopiedForCoroutine() = runTest {
         val root = MyMutableElement(ArrayList())
         val originalData = root.mutableData
@@ -131,6 +126,38 @@ class ThreadContextMutableCopiesTest : TestBase() {
         launch(root) {
             assertNotSame(originalData, threadLocalData.get())
             finish(2)
+        }
+    }
+
+    @Test
+    fun testDataIsNotResetOnSuspensions() = runTest {
+        val root = MyMutableElement(ArrayList())
+        withContext(root) {
+            threadLocalData.get().add("X")
+            assertEquals(listOf("X"), threadLocalData.get())
+            yield()
+            assertEquals(listOf("X"), threadLocalData.get())
+            threadLocalData.get().add("Y")
+            launch {
+                assertEquals(listOf("X", "Y"), threadLocalData.get())
+                threadLocalData.get().add("Z")
+                yield()
+                assertEquals(listOf("X", "Y", "Z"), threadLocalData.get())
+            }
+        }
+    }
+
+    @Test
+    fun testDataIsNotVisibleToUndispatchedCoroutines() = runTest {
+        threadLocalData.set(mutableListOf())
+        val root = MyMutableElement(ArrayList())
+        val anotherRootScope = CoroutineScope(Dispatchers.Unconfined + root)
+        withContext(root) {
+            threadLocalData.get().add("X")
+            assertEquals(listOf("X"), threadLocalData.get())
+            anotherRootScope.launch {
+                assertEquals(listOf(), threadLocalData.get())
+            }
         }
     }
 

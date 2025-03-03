@@ -5,30 +5,29 @@ import kotlinx.coroutines.testing.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
-class ThreadContextElementConcurrentTest: TestBase() {
-
+class ThreadContextElementConcurrentTest : TestBase() {
     @Test
     fun testWithContext() = runTest {
         expect(1)
         newSingleThreadContext("withContext").use {
             val data = MyData()
-            GlobalScope.async(Dispatchers.Default + MyElement(data)) {
-                assertSame(data, myThreadLocal.get())
+            GlobalScope.async(Dispatchers.Default + threadContextElementThreadLocal.asCtxElement(data)) {
+                assertSame(data, threadContextElementThreadLocal.get())
                 expect(2)
 
                 val newData = MyData()
-                GlobalScope.async(it + MyElement(newData)) {
-                    assertSame(newData, myThreadLocal.get())
+                GlobalScope.async(it + threadContextElementThreadLocal.asCtxElement(newData)) {
+                    assertSame(newData, threadContextElementThreadLocal.get())
                     expect(3)
                 }.await()
 
-                withContext(it + MyElement(newData)) {
-                    assertSame(newData, myThreadLocal.get())
+                withContext(it + threadContextElementThreadLocal.asCtxElement(newData)) {
+                    assertSame(newData, threadContextElementThreadLocal.get())
                     expect(4)
                 }
 
                 GlobalScope.async(it) {
-                    assertNull(myThreadLocal.get())
+                    assertNull(threadContextElementThreadLocal.get())
                     expect(5)
                 }.await()
 
@@ -41,21 +40,24 @@ class ThreadContextElementConcurrentTest: TestBase() {
 
     @Test
     fun testNonCopyableElementReferenceInheritedOnLaunch() = runTest {
-        var parentElement: MyElement? = null
-        var inheritedElement: MyElement? = null
+        var parentElement: Any? = null
+        var inheritedElement: Any? = null
 
         newSingleThreadContext("withContext").use {
-            withContext(it + MyElement(MyData())) {
-                parentElement = coroutineContext[MyElement.Key]
+            val myElement = threadContextElementThreadLocal.asCtxElement(MyData())
+            withContext(it + myElement) {
+                parentElement = coroutineContext[myElement.key]
                 launch {
-                    inheritedElement = coroutineContext[MyElement.Key]
+                    inheritedElement = coroutineContext[myElement.key]
                 }
             }
         }
 
-        assertSame(inheritedElement, parentElement,
+        assertSame(
+            inheritedElement, parentElement,
             "Inner and outer coroutines did not have the same object reference to a" +
-                " ThreadContextElement that did not override `copyForChildCoroutine()`")
+                " ThreadContextElement that did not override `copyForChildCoroutine()`"
+        )
     }
 
     @Test
@@ -81,36 +83,35 @@ class ThreadContextElementConcurrentTest: TestBase() {
         newFixedThreadPoolContext(nThreads = 4, name = "withContext").use {
             withContext(it + CopyForChildCoroutineElement(MyData())) {
                 val forBlockData = MyData()
-                myThreadLocal.setForBlock(forBlockData) {
-                    assertSame(myThreadLocal.get(), forBlockData)
+                threadContextElementThreadLocal.setForBlock(forBlockData) {
+                    assertSame(threadContextElementThreadLocal.get(), forBlockData)
                     launch {
-                        assertSame(myThreadLocal.get(), forBlockData)
+                        assertSame(threadContextElementThreadLocal.get(), forBlockData)
                     }
                     launch {
-                        assertSame(myThreadLocal.get(), forBlockData)
+                        assertSame(threadContextElementThreadLocal.get(), forBlockData)
                         // Modify value in child coroutine. Writes to the ThreadLocal and
                         // the (copied) ThreadLocalElement's memory are not visible to peer or
                         // ancestor coroutines, so this write is both threadsafe and coroutinesafe.
                         val innerCoroutineData = MyData()
-                        myThreadLocal.setForBlock(innerCoroutineData) {
-                            assertSame(myThreadLocal.get(), innerCoroutineData)
+                        threadContextElementThreadLocal.setForBlock(innerCoroutineData) {
+                            assertSame(threadContextElementThreadLocal.get(), innerCoroutineData)
                         }
-                        assertSame(myThreadLocal.get(), forBlockData) // Asserts value was restored.
+                        assertSame(threadContextElementThreadLocal.get(), forBlockData) // Asserts value was restored.
                     }
                     launch {
                         val innerCoroutineData = MyData()
-                        myThreadLocal.setForBlock(innerCoroutineData) {
-                            assertSame(myThreadLocal.get(), innerCoroutineData)
+                        threadContextElementThreadLocal.setForBlock(innerCoroutineData) {
+                            assertSame(threadContextElementThreadLocal.get(), innerCoroutineData)
                         }
-                        assertSame(myThreadLocal.get(), forBlockData)
+                        assertSame(threadContextElementThreadLocal.get(), forBlockData)
                     }
                 }
-                assertNull(myThreadLocal.get()) // Asserts value was restored to its origin
+                assertNull(threadContextElementThreadLocal.get()) // Asserts value was restored to its origin
             }
         }
     }
 }
-
 
 /**
  * A [ThreadContextElement] that implements copy semantics in [copyForChild].
@@ -122,8 +123,8 @@ private class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadCo
         get() = Key
 
     override fun updateThreadContext(context: CoroutineContext): MyData? {
-        val oldState = myThreadLocal.get()
-        myThreadLocal.set(data)
+        val oldState = threadContextElementThreadLocal.get()
+        threadContextElementThreadLocal.set(data)
         return oldState
     }
 
@@ -132,7 +133,7 @@ private class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadCo
     }
 
     override fun restoreThreadContext(context: CoroutineContext, oldState: MyData?) {
-        myThreadLocal.set(oldState)
+        threadContextElementThreadLocal.set(oldState)
     }
 
     /**
@@ -147,14 +148,14 @@ private class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadCo
      * thread and calls [restoreThreadContext].
      */
     override fun copyForChild(): CopyForChildCoroutineElement {
-        return CopyForChildCoroutineElement(myThreadLocal.get())
+        return CopyForChildCoroutineElement(threadContextElementThreadLocal.get())
     }
 }
 
 /**
- * Calls [block], setting the value of [this] [ThreadLocal] for the duration of [block].
+ * Calls [block], setting the value of [this] [CommonThreadLocal] for the duration of [block].
  *
- * When a [CopyForChildCoroutineElement] for `this` [ThreadLocal] is used within a
+ * When a [CopyForChildCoroutineElement] for `this` [CommonThreadLocal] is used within a
  * [CoroutineContext], a ThreadLocal set this way will have the "correct" value expected lexically
  * at every statement reached, whether that statement is reached immediately, across suspend and
  * redispatch within one coroutine, or within a child coroutine. Writes made to the `ThreadLocal`
