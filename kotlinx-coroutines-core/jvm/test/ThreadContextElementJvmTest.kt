@@ -1,15 +1,11 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.testing.*
 import org.junit.Test
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class ThreadContextElementTest : TestBase() {
+class ThreadContextElementJvmTest : TestBase() {
 
     @Test
     fun testExample() = runTest {

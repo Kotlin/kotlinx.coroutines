@@ -1,6 +1,8 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.CommonThreadLocal
 import kotlinx.coroutines.testing.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
 class ThreadContextElementConcurrentTest: TestBase() {
@@ -113,7 +115,7 @@ class ThreadContextElementConcurrentTest: TestBase() {
 /**
  * A [ThreadContextElement] that implements copy semantics in [copyForChild].
  */
-class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextElement<MyData?> {
+private class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextElement<MyData?> {
     companion object Key : CoroutineContext.Key<CopyForChildCoroutineElement>
 
     override val key: CoroutineContext.Key<CopyForChildCoroutineElement>
@@ -160,7 +162,7 @@ class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextEle
  * by the parent coroutine _after_ launching a child coroutine will not be visible to that child
  * coroutine.
  */
-private inline fun <ThreadLocalT, OutputT> ThreadLocal<ThreadLocalT>.setForBlock(
+private inline fun <ThreadLocalT, OutputT> CommonThreadLocal<ThreadLocalT>.setForBlock(
     value: ThreadLocalT,
     crossinline block: () -> OutputT
 ) {

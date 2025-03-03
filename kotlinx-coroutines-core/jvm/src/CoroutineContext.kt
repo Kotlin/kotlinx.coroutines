@@ -1,8 +1,17 @@
+@file:JvmName("CoroutineContextKt")
+@file:JvmMultifileClass
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
-import kotlin.coroutines.jvm.internal.CoroutineStackFrame
+
+/**
+ *  Adds optional support for debugging facilities (when turned on)
+ *  and copyable-thread-local facilities on JVM.
+ *  See [DEBUG_PROPERTY_NAME] for description of debugging facilities on JVM.
+ */
+internal actual fun wrapContextWithDebug(context: CoroutineContext): CoroutineContext =
+    if (DEBUG) context + CoroutineId(COROUTINE_ID.incrementAndGet()) else context
 
 internal actual val CoroutineContext.coroutineName: String? get() {
     if (!DEBUG) return null

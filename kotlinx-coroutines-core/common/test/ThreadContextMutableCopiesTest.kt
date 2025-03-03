@@ -2,12 +2,16 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.internal.Symbol
+import kotlinx.coroutines.internal.commonThreadLocal
 import kotlin.coroutines.*
 import kotlin.test.*
 
 class ThreadContextMutableCopiesTest : TestBase() {
     companion object {
-        val threadLocalData: ThreadLocal<MutableList<String>> = ThreadLocal.withInitial { ArrayList() }
+        internal val threadLocalData = commonThreadLocal<MutableList<String>>(Symbol("ThreadLocalData")).also {
+            it.set(mutableListOf())
+        }
     }
 
     class MyMutableElement(
@@ -42,7 +46,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
     @Test
     fun testDataIsCopied() = runTest {
         val root = MyMutableElement(ArrayList())
-        runBlocking(root) {
+        launch(root) {
             val data = threadLocalData.get()
             expect(1)
             launch(root) {
@@ -56,7 +60,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
     @Test
     fun testDataIsNotOverwritten() = runTest {
         val root = MyMutableElement(ArrayList())
-        runBlocking(root) {
+        withContext(root) {
             expect(1)
             val originalData = threadLocalData.get()
             threadLocalData.get().add("X")
@@ -75,7 +79,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
     @Test
     fun testDataIsMerged() = runTest {
         val root = MyMutableElement(ArrayList())
-        runBlocking(root) {
+        withContext(root) {
             expect(1)
             val originalData = threadLocalData.get()
             threadLocalData.get().add("X")
@@ -94,7 +98,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
     @Test
     fun testDataIsNotOverwrittenWithContext() = runTest {
         val root = MyMutableElement(ArrayList())
-        runBlocking(root) {
+        withContext(root) {
             val originalData = threadLocalData.get()
             threadLocalData.get().add("X")
             expect(1)
@@ -114,7 +118,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
     fun testDataIsCopiedForRunBlocking() = runTest {
         val root = MyMutableElement(ArrayList())
         val originalData = root.mutableData
-        runBlocking(root) {
+        withContext(root) {
             assertNotSame(originalData, threadLocalData.get())
         }
     }

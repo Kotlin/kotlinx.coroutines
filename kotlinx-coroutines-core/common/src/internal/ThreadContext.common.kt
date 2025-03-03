@@ -4,8 +4,6 @@ import kotlinx.coroutines.ThreadContextElement
 import kotlin.coroutines.*
 import kotlin.jvm.JvmField
 
-internal expect fun threadContextElements(context: CoroutineContext): Any
-
 @JvmField
 internal val NO_THREAD_ELEMENTS = Symbol("NO_THREAD_ELEMENTS")
 
@@ -29,9 +27,9 @@ private class ThreadState(@JvmField val context: CoroutineContext, n: Int) {
 }
 
 // Counts ThreadContextElements in the context
-// Any? here is Int | ThreadContextElement (when count is one)
+// Any here is Int | ThreadContextElement (when count is one)
 private val countAll =
-    fun (countOrElement: Any?, element: CoroutineContext.Element): Any? {
+    fun (countOrElement: Any, element: CoroutineContext.Element): Any {
         if (element is ThreadContextElement<*>) {
             val inCount = countOrElement as? Int ?: 1
             return if (inCount == 0) element else inCount + 1
@@ -55,17 +53,15 @@ private val updateState =
         return state
     }
 
-internal actual fun threadContextElements(context: CoroutineContext): Any = context.fold(0, countAll)!!
+internal expect inline fun isZeroCount(countOrElement: Any?): Boolean
 
 // countOrElement is pre-cached in dispatched continuation
 // returns NO_THREAD_ELEMENTS if the contest does not have any ThreadContextElements
 internal fun updateThreadContext(context: CoroutineContext, countOrElement: Any?): Any? {
     @Suppress("NAME_SHADOWING")
     val countOrElement = countOrElement ?: threadContextElements(context)
-    @Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS")
     return when {
-        countOrElement === 0 -> NO_THREAD_ELEMENTS // very fast path when there are no active ThreadContextElements
-        //    ^^^ identity comparison for speed, we know zero always has the same identity
+        isZeroCount(countOrElement) -> NO_THREAD_ELEMENTS // very fast path when there are no active ThreadContextElements
         countOrElement is Int -> {
             // slow path for multiple active ThreadContextElements, allocates ThreadState for multiple old values
             context.fold(ThreadState(context, countOrElement), updateState)
@@ -94,3 +90,5 @@ internal fun restoreThreadContext(context: CoroutineContext, oldState: Any?) {
         }
     }
 }
+
+internal fun threadContextElements(context: CoroutineContext): Any = context.fold(0, countAll)
