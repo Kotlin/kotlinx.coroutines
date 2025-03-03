@@ -2,34 +2,85 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.loop
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.testing.*
-import kotlin.test.*
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.internal.CommonThreadLocal
-import kotlinx.coroutines.internal.Symbol
-import kotlinx.coroutines.internal.commonThreadLocal
 import kotlin.coroutines.*
+import kotlin.test.*
+import kotlinx.coroutines.internal.*
 
-class ThreadContextElementTest: TestBase() {
+class ThreadContextElementTest : TestBase() {
+    interface TestThreadContextElement : ThreadContextElement<Int> {
+        companion object Key : CoroutineContext.Key<TestThreadContextElement>
+    }
+
+    @Test
+    fun testUpdatesAndRestores() = runTest {
+        var updateCount = 0
+        var restoreCount = 0
+        val threadContextElement = object : TestThreadContextElement {
+            override fun updateThreadContext(context: CoroutineContext): Int {
+                updateCount++
+                return 0
+            }
+
+            override fun restoreThreadContext(context: CoroutineContext, oldState: Int) {
+                restoreCount++
+            }
+
+            override val key: CoroutineContext.Key<*>
+                get() = TestThreadContextElement.Key
+        }
+        launch(Dispatchers.Unconfined + threadContextElement) {
+            assertEquals(1, updateCount)
+            assertEquals(0, restoreCount)
+        }
+        assertEquals(1, updateCount)
+        assertEquals(1, restoreCount)
+    }
+
+    @Test
+    fun testDispatched() = runTest {
+        val mainDispatcher = coroutineContext[ContinuationInterceptor]!!
+        val data = MyData()
+        val element = threadContextElementThreadLocal.asCtxElement(data)
+        assertNull(threadContextElementThreadLocal.get())
+        val job = launch(Dispatchers.Default + element) {
+            assertSame(element, coroutineContext[element.key])
+            assertSame(data, threadContextElementThreadLocal.get())
+            withContext(mainDispatcher) {
+                assertSame(element, coroutineContext[element.key])
+                assertSame(data, threadContextElementThreadLocal.get())
+            }
+            assertSame(element, coroutineContext[element.key])
+            assertSame(data, threadContextElementThreadLocal.get())
+        }
+        assertNull(threadContextElementThreadLocal.get())
+        job.join()
+        assertNull(threadContextElementThreadLocal.get())
+    }
 
     @Test
     fun testUndispatched() = runTest {
         val exceptionHandler = coroutineContext[CoroutineExceptionHandler]!!
         val data = MyData()
-        val element = MyElement(data)
-        val job = GlobalScope.launch(
+        val element = threadContextElementThreadLocal.asCtxElement(data)
+        val job = launch(
             context = Dispatchers.Default + exceptionHandler + element,
             start = CoroutineStart.UNDISPATCHED
         ) {
-            assertSame(data, myThreadLocal.get())
+            assertSame(element, coroutineContext[element.key])
+            assertSame(data, threadContextElementThreadLocal.get())
             yield()
-            assertSame(data, myThreadLocal.get())
+            assertSame(element, coroutineContext[element.key])
+            assertSame(data, threadContextElementThreadLocal.get())
         }
-        assertNull(myThreadLocal.get())
+        assertNull(threadContextElementThreadLocal.get())
         job.join()
-        assertNull(myThreadLocal.get())
+        assertNull(threadContextElementThreadLocal.get())
     }
-    
+
     /**
      * For stability of the test, it is important to make sure that
      * the parent job actually suspends when calling
@@ -48,10 +99,10 @@ class ThreadContextElementTest: TestBase() {
         val dispatcher1 = dispatcher.limitedParallelism(1, "dispatcher1")
         val dispatcher2 = dispatcher.limitedParallelism(1, "dispatcher2")
         val captor = JobCaptor()
-        val manuallyCaptured = mutableListOf<String>()
+        val manuallyCaptured = mutableListOf<Event<Job?>>()
 
-        fun registerUpdate(job: Job?) = manuallyCaptured.add("Update: $job")
-        fun registerRestore(job: Job?) = manuallyCaptured.add("Restore: $job")
+        fun registerUpdate(job: Job?) = manuallyCaptured.add(Event.Update(job))
+        fun registerRestore(job: Job?) = manuallyCaptured.add(Event.Restore(job))
 
         var rootJob: Job? = null
         withContext(captor + dispatcher1) {
@@ -84,69 +135,47 @@ class ThreadContextElementTest: TestBase() {
         registerRestore(rootJob)
 
         // Restores may be called concurrently to the update calls in other threads, so their order is not checked.
-        val expected = manuallyCaptured.filter { it.startsWith("Update: ") }.joinToString(separator = "\n")
-        val actual = captor.capturees.filter { it.startsWith("Update: ") }.joinToString(separator = "\n")
+        val expected = manuallyCaptured.mapNotNull { (it as? Event.Update)?.value }.joinToString(separator = "\n")
+        val actual = captor.capturees.mapNotNull { (it as? Event.Update)?.value }.joinToString(separator = "\n")
         assertEquals(expected, actual)
     }
 
+    // #3787
     @Test
     fun testThreadLocalFlowOn() = runTest {
         val myData = MyData()
-        myThreadLocal.set(myData)
+        threadContextElementThreadLocal.set(myData)
         expect(1)
         flow {
-            assertEquals(myData, myThreadLocal.get())
+            assertEquals(myData, threadContextElementThreadLocal.get())
             emit(1)
         }
-            .flowOn(myThreadLocal.asCtxElement() + Dispatchers.Default)
+            .flowOn(threadContextElementThreadLocal.asCtxElement(threadContextElementThreadLocal.get()!!) + Dispatchers.Default)
             .single()
-        myThreadLocal.set(null)
+        threadContextElementThreadLocal.set(null)
         finish(2)
     }
 }
 
-class MyData
+internal class MyData
 
-private class JobCaptor(val capturees: CopyOnWriteList<String> = CopyOnWriteList()) : ThreadContextElement<Unit> {
+private class JobCaptor(val capturees: CopyOnWriteList<Event<Job>> = CopyOnWriteList()) : ThreadContextElement<Unit> {
 
-    companion object Key : CoroutineContext.Key<MyElement>
+    companion object Key : CoroutineContext.Key<CommonThreadLocalContextElement<*>>
 
     override val key: CoroutineContext.Key<*> get() = Key
 
     override fun updateThreadContext(context: CoroutineContext) {
-        capturees.add("Update: ${context.job}")
+        capturees.add(Event.Update(context.job))
     }
 
     override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
-        capturees.add("Restore: ${context.job}")
+        capturees.add(Event.Restore(context.job))
     }
 }
 
 // declare thread local variable holding MyData
-internal val myThreadLocal = commonThreadLocal<MyData?>(Symbol("myElement"))
-
-// declare context element holding MyData
-class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
-    // declare companion object for a key of this element in coroutine context
-    companion object Key : CoroutineContext.Key<MyElement>
-
-    // provide the key of the corresponding context element
-    override val key: CoroutineContext.Key<MyElement>
-        get() = Key
-
-    // this is invoked before coroutine is resumed on current thread
-    override fun updateThreadContext(context: CoroutineContext): MyData? {
-        val oldState = myThreadLocal.get()
-        myThreadLocal.set(data)
-        return oldState
-    }
-
-    // this is invoked after coroutine has suspended on current thread
-    override fun restoreThreadContext(context: CoroutineContext, oldState: MyData?) {
-        myThreadLocal.set(oldState)
-    }
-}
-
+internal val threadContextElementThreadLocal = commonThreadLocal<MyData?>(Symbol("ThreadContextElementTest"))
 
 private class CommonThreadLocalContextElement<T>(
     private val threadLocal: CommonThreadLocal<T>,
@@ -173,6 +202,11 @@ private class CommonThreadLocalContextElement<T>(
 internal fun <T> CommonThreadLocal<T>.asCtxElement(value: T = get()): ThreadContextElement<T> =
     CommonThreadLocalContextElement(this, value)
 
+private sealed class Event<T> {
+    class Update<T>(val value: T): Event<T>()
+    class Restore<T>(val value: T): Event<T>()
+}
+
 private class CopyOnWriteList<T> private constructor(list: List<T>) {
     private val field = atomic(list)
 
@@ -185,5 +219,5 @@ private class CopyOnWriteList<T> private constructor(list: List<T>) {
         }
     }
 
-    fun filter(predicate: (T) -> Boolean): List<T> = field.value.filter(predicate)
+    fun <R> mapNotNull(transform: (T) -> R): List<R> = field.value.mapNotNull(transform)
 }
