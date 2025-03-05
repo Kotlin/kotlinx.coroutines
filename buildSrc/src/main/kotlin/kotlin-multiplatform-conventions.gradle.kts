@@ -17,7 +17,7 @@ kotlin {
             compileTaskProvider.configure {
                 compilerOptions {
                     jvmTarget = JvmTarget.JVM_1_8
-                    freeCompilerArgs.addAll("-jvm-default=disable")
+                    freeCompilerArgs.addAll("-Xjvm-default=disable")
                 }
             }
         }
