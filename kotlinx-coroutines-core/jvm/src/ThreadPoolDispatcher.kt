@@ -10,9 +10,8 @@ public actual fun newFixedThreadPoolContext(nThreads: Int, name: String): Execut
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     val threadNo = AtomicInteger()
     val executor = Executors.newScheduledThreadPool(nThreads) { runnable ->
-        val t = Thread(runnable, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet())
-        t.isDaemon = true
-        t
+        Thread(runnable, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet())
+            .apply { isDaemon = true }
     }
     return Executors.unconfigurableExecutorService(executor).asCoroutineDispatcher()
 }
