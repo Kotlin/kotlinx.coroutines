@@ -412,6 +412,29 @@ private class SubscribedSharedFlow<T>(
         sharedFlow.collect(SubscribedFlowCollector(collector, action))
 }
 
+/**
+ * Returns a flow that invokes the given [action] **after** this state flow starts to be collected
+ * (after the subscription is registered).
+ *
+ * The [action] is called before any value is emitted from the upstream
+ * flow to this subscription but after the subscription is established. It is guaranteed that all emissions to
+ * the upstream flow that happen inside or immediately after this `onSubscription` action will be
+ * collected by this subscription.
+ *
+ * The receiver of the [action] is [FlowCollector], so `onSubscription` can emit additional elements.
+ */
+public fun <T> StateFlow<T>.onSubscription(action: suspend FlowCollector<T>.() -> Unit): StateFlow<T> =
+    SubscribedStateFlow(this, action)
+
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
+private class SubscribedStateFlow<T>(
+    private val stateFlow: StateFlow<T>,
+    private val action: suspend FlowCollector<T>.() -> Unit
+) : StateFlow<T> by stateFlow {
+    override suspend fun collect(collector: FlowCollector<T>) =
+        stateFlow.collect(SubscribedFlowCollector(collector, action))
+}
+
 internal class SubscribedFlowCollector<T>(
     private val collector: FlowCollector<T>,
     private val action: suspend FlowCollector<T>.() -> Unit
