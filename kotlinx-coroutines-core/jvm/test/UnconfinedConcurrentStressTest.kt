@@ -4,6 +4,7 @@ import kotlinx.coroutines.testing.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
+import kotlinx.coroutines.testing.CountDownLatch
 import kotlin.test.*
 
 class UnconfinedConcurrentStressTest : TestBase() {

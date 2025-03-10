@@ -194,4 +194,22 @@ class RunBlockingTest : TestBase() {
             }
         }
     }
+
+    /** Tests that tasks scheduled on a closed `runBlocking` event loop get processed in an I/O thread. */
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun testLeakedEventLoopGetsProcessedInIO() {
+        val dispatcher = runBlocking {
+            coroutineContext[CoroutineDispatcher.Key]
+        }!!
+        runBlocking {
+            GlobalScope.launch(dispatcher) {
+                assertTrue(runningOnIoThread())
+                delay(1.milliseconds)
+                assertTrue(runningOnIoThread())
+            }.join()
+        }
+    }
 }
+
+internal expect fun runningOnIoThread(): Boolean
