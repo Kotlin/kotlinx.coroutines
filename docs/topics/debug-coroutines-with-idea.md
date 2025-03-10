@@ -108,7 +108,7 @@ Using IntelliJ IDEA debugger, you can dig deeper into each coroutine to debug yo
 
 If you use `suspend` functions, in the debugger, you might see the "was optimized out" text next to a variable's name:
 
-![Variable "a" was optimized out](variable-optimised-out.png)
+![Variable "a" was optimized out](variable-optimised-out.png){width=480}
 
 This text means that the variable's lifetime was decreased, and the variable doesn't exist anymore.
 It is difficult to debug code with optimized variables because you don't see their values.
