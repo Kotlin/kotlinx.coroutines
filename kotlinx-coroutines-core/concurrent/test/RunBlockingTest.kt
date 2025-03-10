@@ -194,4 +194,14 @@ class RunBlockingTest : TestBase() {
             }
         }
     }
+
+    /** Will not compile if [runBlocking] doesn't have the "runs exactly once" contract. */
+    @Test
+    fun testContract() {
+        val rb: Int
+        runBlocking {
+            rb = 42
+        }
+        rb.hashCode() // unused
+    }
 }
