@@ -48,7 +48,7 @@ import kotlin.jvm.JvmName
  * @param block the coroutine code.
  */
 @OptIn(ExperimentalContracts::class)
-@JvmName("runBlockingForKotlinOnly")
+@JvmName("runBlockingK")
 public fun <T> runBlocking(
     context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T
 ): T {
