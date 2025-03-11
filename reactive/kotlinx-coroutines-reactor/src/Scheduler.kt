@@ -5,6 +5,7 @@ import reactor.core.Disposable
 import reactor.core.scheduler.Scheduler
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
 
 /**
  * Converts an instance of [Scheduler] to an implementation of [CoroutineDispatcher].
@@ -27,16 +28,16 @@ public class SchedulerCoroutineDispatcher(
     }
 
     /** @suppress */
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
         val disposable = scheduler.schedule({
             with(continuation) { resumeUndispatched(Unit) }
-        }, timeMillis, TimeUnit.MILLISECONDS)
+        }, time.inWholeNanoseconds, TimeUnit.NANOSECONDS)
         continuation.disposeOnCancellation(disposable.asDisposableHandle())
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        scheduler.schedule(block, timeMillis, TimeUnit.MILLISECONDS).asDisposableHandle()
+    override fun invokeOnTimeout(time: Duration, block: Runnable, context: CoroutineContext): DisposableHandle =
+        scheduler.schedule(block, time.inWholeNanoseconds, TimeUnit.NANOSECONDS).asDisposableHandle()
 
     /** @suppress */
     override fun toString(): String = scheduler.toString()
