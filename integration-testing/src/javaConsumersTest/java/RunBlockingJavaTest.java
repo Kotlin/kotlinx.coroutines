@@ -1,6 +1,7 @@
 import kotlinx.coroutines.BuildersKt;
 import kotlinx.coroutines.Dispatchers;
 import org.junit.Test;
+import org.junit.Assert;
 
 public class RunBlockingJavaTest {
     Boolean entered = false;
@@ -15,6 +16,6 @@ public class RunBlockingJavaTest {
             });
         } catch (InterruptedException e) {
         }
-        assert entered;
+        Assert.assertTrue(entered);
     }
 }
