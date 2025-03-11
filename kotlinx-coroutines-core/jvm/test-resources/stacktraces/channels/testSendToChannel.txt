@@ -17,5 +17,6 @@ Caused by: java.util.concurrent.CancellationException: Channel was cancelled
 	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt)
 	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt)
 	at kotlinx.coroutines.BuildersKt.runBlockingImpl(Unknown Source)
-	at kotlinx.coroutines.Builders_concurrentKt.runBlocking(Builders.concurrent.kt)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingForKotlinOnly(Builders.concurrent.kt)
+	at kotlinx.coroutines.BuildersKt.runBlockingForKotlinOnly(Unknown Source)
 	at kotlinx.coroutines.testing.TestBase.runTest(TestBase.kt)

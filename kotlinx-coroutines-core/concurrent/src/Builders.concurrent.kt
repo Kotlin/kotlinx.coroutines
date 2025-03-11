@@ -1,4 +1,6 @@
 @file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
+@file:JvmMultifileClass
+@file:JvmName("BuildersKt")
 
 package kotlinx.coroutines
 
@@ -6,6 +8,8 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.coroutines.*
+import kotlin.jvm.JvmMultifileClass
+import kotlin.jvm.JvmName
 
 /**
  * Runs a new coroutine and **blocks** the current thread until its completion.
@@ -44,6 +48,7 @@ import kotlin.coroutines.*
  * @param block the coroutine code.
  */
 @OptIn(ExperimentalContracts::class)
+@JvmName("runBlockingForKotlinOnly")
 public fun <T> runBlocking(
     context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T
 ): T {
