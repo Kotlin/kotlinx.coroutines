@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
@@ -130,8 +132,7 @@ kotlin {
 
     jvm {
         compilations.named("main") {
-            jvmCoreMain?.let { source(it) }
-            source(jdk8Main)
+            jvmCoreMain?.let { defaultSourceSet.dependsOn(it) }
         }
 
         /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
