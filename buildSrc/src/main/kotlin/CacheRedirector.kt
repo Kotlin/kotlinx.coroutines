@@ -150,7 +150,7 @@ object CacheRedirector {
             extension.nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
         }
 
-        project.tasks.withType<KotlinNpmInstallTask>().configureEach {
+        project.tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>().configureEach {
             args.add("--ignore-engines")
         }
     }
