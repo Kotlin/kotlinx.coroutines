@@ -369,7 +369,7 @@ public fun <T1, T2, T3, R> Flow<T1>.combineLatest(
     other: Flow<T2>,
     other2: Flow<T3>,
     transform: suspend (T1, T2, T3) -> R
-) = combine(this, other, other2, transform)
+): Flow<R> = combine(this, other, other2, transform)
 
 /** @suppress */
 @Deprecated(
@@ -382,7 +382,7 @@ public fun <T1, T2, T3, T4, R> Flow<T1>.combineLatest(
     other2: Flow<T3>,
     other3: Flow<T4>,
     transform: suspend (T1, T2, T3, T4) -> R
-) = combine(this, other, other2, other3, transform)
+): Flow<R> = combine(this, other, other2, other3, transform)
 
 /** @suppress */
 @Deprecated(
