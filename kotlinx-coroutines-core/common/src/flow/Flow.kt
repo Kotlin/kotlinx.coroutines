@@ -95,7 +95,7 @@ import kotlin.coroutines.*
  * ```
  *
  * From the implementation point of view, it means that all flow implementations should
- * only emit from the same coroutine.
+ * only emit from the same coroutine context.
  * This constraint is efficiently enforced by the default [flow] builder.
  * The [flow] builder should be used if the flow implementation does not start any coroutines.
  * Its implementation prevents most of the development mistakes:
