@@ -13,7 +13,7 @@ Drop a link to a specific page, unless you're reporting something that's missing
 
 **What can be improved?**
 
-Describe the problematic part. Does it mislead the reader? Is it completely wrong?
+Describe the problematic part. Is it misleading, unclear, or just something that didn’t work for you?
 
 **Is this explained better somewhere else?**
 
