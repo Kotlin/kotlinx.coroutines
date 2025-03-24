@@ -9,7 +9,7 @@ assignees: ''
 
 **Which page?**
 
-Drop a link to a specific page, if this is not about a page missing altogether.
+Drop a link to a specific page, unless you're reporting something that's missing entirely.
 
 **What can be improved?**
 
