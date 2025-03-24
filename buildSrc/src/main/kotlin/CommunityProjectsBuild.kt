@@ -4,6 +4,7 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import java.net.*
 import java.util.logging.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
@@ -146,4 +147,37 @@ fun shouldUseLocalMaven(project: Project): Boolean {
         }
     }
     return hasSnapshotDependency || isSnapshotTrainEnabled(project)
+}
+
+/**
+ * Returns a non-null value if the CI needs to override the default behavior of treating warnings as errors.
+ * Then, `true` means that warnings should be treated as errors, `false` means that they should not.
+ */
+private fun warningsAreErrorsOverride(project: Project): Boolean? =
+    when (val prop = project.rootProject.properties["kotlin_Werror_override"] as? String) {
+        null -> null
+        "enable" -> true
+        "disable" -> false
+        else -> error("Unknown value for 'kotlin_Werror_override': $prop")
+    }
+
+/**
+ * Set warnings as errors, but allow the Kotlin User Project configuration to take over. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
+    if (warningsAreErrorsOverride(project) != false) {
+        allWarningsAsErrors = true
+    } else {
+        freeCompilerArgs.addAll("-Wextra", "-Xuse-fir-experimental-checkers")
+    }
+}
+
+/**
+ * Compiler flags required of Kotlin User Projects. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.configureKotlinUserProject() {
+    freeCompilerArgs.addAll(
+        "-Xreport-all-warnings", // emit warnings even if there are also errors
+        "-Xrender-internal-diagnostic-names", // render the diagnostic names in CLI
+    )
 }
