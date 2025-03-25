@@ -6,7 +6,6 @@ import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
 import java.lang.StackTraceElement
 import java.text.*
-import java.util.concurrent.locks.*
 import kotlin.collections.ArrayList
 import kotlin.concurrent.*
 import kotlin.coroutines.*
@@ -196,7 +195,7 @@ internal object DebugProbesImpl {
                     "sequenceNumber": ${info.sequenceNumber},
                     "state": "${info.state}"
                 } 
-                """.trimIndent()
+                """
             )
             lastObservedFrames.add(info.lastObservedFrame)
             lastObservedThreads.add(info.lastObservedThread)
