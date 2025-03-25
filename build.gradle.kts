@@ -101,7 +101,6 @@ configure(subprojects) {
             && project.name !in androidNonCompatibleProjects
     // Skip JDK 8 projects or unpublished ones
     if (shouldSniff()) {
-        println("Configuring Animal Sniffer for $this")
         if (isMultiplatform) {
             apply(plugin = "animalsniffer-multiplatform-conventions")
         } else {
