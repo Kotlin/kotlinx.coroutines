@@ -5,6 +5,7 @@ import kotlinx.coroutines.internal.*
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.time.Duration
 
 /**
  * Extended by [CoroutineDispatcher] implementations that have event loop inside and can
@@ -144,23 +145,11 @@ private const val SCHEDULE_OK = 0
 private const val SCHEDULE_COMPLETED = 1
 private const val SCHEDULE_DISPOSED = 2
 
-private const val MS_TO_NS = 1_000_000L
-private const val MAX_MS = Long.MAX_VALUE / MS_TO_NS
-
 /**
  * First-line overflow protection -- limit maximal delay.
  * Delays longer than this one (~146 years) are considered to be delayed "forever".
  */
 private const val MAX_DELAY_NS = Long.MAX_VALUE / 2
-
-internal fun delayToNanos(timeMillis: Long): Long = when {
-    timeMillis <= 0 -> 0L
-    timeMillis >= MAX_MS -> Long.MAX_VALUE
-    else -> timeMillis * MS_TO_NS
-}
-
-internal fun delayNanosToMillis(timeNanos: Long): Long =
-    timeNanos / MS_TO_NS
 
 private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
@@ -224,8 +213,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         rescheduleAllDelayed()
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timeNanos = delayToNanos(timeMillis)
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
+        val timeNanos = time.inWholeNanoseconds
         if (timeNanos < MAX_DELAY_NS) {
             val now = nanoTime()
             DelayedResumeTask(now + timeNanos, continuation).also { task ->
@@ -240,8 +229,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         }
     }
 
-    protected fun scheduleInvokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
-        val timeNanos = delayToNanos(timeMillis)
+    protected fun scheduleInvokeOnTimeout(timeout: Duration, block: Runnable): DisposableHandle {
+        val timeNanos = timeout.inWholeNanoseconds
         return if (timeNanos < MAX_DELAY_NS) {
             val now = nanoTime()
             DelayedRunnableTask(now + timeNanos, block).also { task ->

@@ -115,7 +115,7 @@ class WithTimeoutTest : TestBase() {
                 "OK"
             }
         } catch (e: CancellationException) {
-            assertEquals("Timed out waiting for 100 ms", e.message)
+            assertEquals("Timed out waiting for 100ms", e.message)
             finish(3)
         }
     }
