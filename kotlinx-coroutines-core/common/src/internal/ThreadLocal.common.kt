@@ -3,6 +3,7 @@ package kotlinx.coroutines.internal
 internal expect class CommonThreadLocal<T> {
     fun get(): T
     fun set(value: T)
+    fun remove()
 }
 
 /**
