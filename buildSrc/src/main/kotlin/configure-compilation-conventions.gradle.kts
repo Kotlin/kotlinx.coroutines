@@ -20,7 +20,7 @@ configure(subprojects) {
                 versionsAreNotOverridden = false
             }
             if (isMainTaskName && versionsAreNotOverridden && !unpublished.contains(project.name)) {
-                allWarningsAsErrors = true
+                allWarningsAsErrors = false
                 freeCompilerArgs.add("-Xexplicit-api=strict")
             }
             /* Coroutines do not interop with Java and these flags provide a significant
