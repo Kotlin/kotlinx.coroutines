@@ -5,7 +5,6 @@
 
 package kotlinx.coroutines
 
-import java.util.concurrent.locks.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
 
@@ -39,6 +38,9 @@ import kotlin.coroutines.*
  * If this blocked thread is interrupted (see [Thread.interrupt]), then the coroutine job is cancelled and
  * this `runBlocking` invocation throws [InterruptedException].
  *
+ * If new tasks are submitted to the dispatcher created by [runBlocking] after this function returns,
+ * they are resubmitted to [Dispatchers.IO].
+ *
  * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available
  * for a newly created coroutine.
  *
@@ -56,13 +58,13 @@ public actual fun <T> runBlocking(context: CoroutineContext, block: suspend Coro
     val newContext: CoroutineContext
     if (contextInterceptor == null) {
         // create or use private event loop if no dispatcher is specified
-        eventLoop = ThreadLocalEventLoop.eventLoop
+        eventLoop = ThreadLocalEventLoop.unconfinedEventLoop.useAsEventLoopForRunBlockingOrFail()
         newContext = GlobalScope.newCoroutineContext(context + eventLoop)
     } else {
         // See if context's interceptor is an event loop that we shall use (to support TestContext)
         // or take an existing thread-local event loop if present to avoid blocking it (but don't create one)
         eventLoop = (contextInterceptor as? EventLoop)?.takeIf { it.shouldBeProcessedFromContext() }
-            ?: ThreadLocalEventLoop.currentOrNull()
+            ?: ThreadLocalEventLoop.currentOrNull()?.useAsEventLoopForRunBlockingOrFail()
         newContext = GlobalScope.newCoroutineContext(context)
     }
     val coroutine = BlockingCoroutine<T>(newContext, currentThread, eventLoop)

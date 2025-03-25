@@ -96,6 +96,8 @@ public fun interface SharingStarted {
          *
          * This function throws [IllegalArgumentException] when either [stopTimeoutMillis] or [replayExpirationMillis]
          * are negative.
+         *
+         * For a description of how waiting for a specific duration is implemented, see [delay].
          */
         @Suppress("FunctionName")
         public fun WhileSubscribed(
@@ -129,6 +131,8 @@ public fun interface SharingStarted {
  *
  * This function throws [IllegalArgumentException] when either [stopTimeout] or [replayExpiration]
  * are negative.
+ *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  */
 @Suppress("FunctionName")
 public fun SharingStarted.Companion.WhileSubscribed(

@@ -8,9 +8,13 @@ internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoro
 
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultDispatcher
 
+/**
+ * This is not just `private val DefaultDispatcher = newFixedThreadPoolContext(...)` to
+ * 1. Prevent casting [Dispatchers.Default] to [CloseableCoroutineDispatcher] and closing it
+ * 2. Make it non-[Delay]
+ */
 private object DefaultDispatcher : CoroutineDispatcher() {
     // Be consistent with JVM -- at least 2 threads to provide some liveness guarantees in case of improper uses
-    @OptIn(ExperimentalStdlibApi::class)
     private val ctx = newFixedThreadPoolContext(Platform.getAvailableProcessors().coerceAtLeast(2), "Dispatchers.Default")
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
