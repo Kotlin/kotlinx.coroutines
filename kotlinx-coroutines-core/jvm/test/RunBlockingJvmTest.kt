@@ -2,6 +2,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.test.*
 import kotlin.time.Duration
@@ -64,6 +65,79 @@ class RunBlockingJvmTest : TestBase() {
         finish(5)
     }
 
+    /**
+     * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted
+     * or if thread switches occur.
+     */
+    @Test
+    fun testNonInterruptibleRunBlocking() {
+        startInSeparateThreadAndInterrupt { mayInterrupt ->
+            val v = runBlockingNonInterruptible {
+                mayInterrupt()
+                repeat(10) {
+                    expect(it + 1)
+                    delay(1)
+                }
+                42
+            }
+            assertTrue(Thread.interrupted())
+            assertEquals(42, v)
+            expect(11)
+        }
+        finish(12)
+    }
+
+    /**
+     * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted
+     * or if thread switches occur, and then will rethrow the exception thrown by the job.
+     */
+    @Test
+    fun testNonInterruptibleRunBlockingFailure() {
+        val exception = AssertionError()
+        startInSeparateThreadAndInterrupt { mayInterrupt ->
+            val exception2 = assertFailsWith<AssertionError> {
+                runBlockingNonInterruptible {
+                    mayInterrupt()
+                    repeat(10) {
+                        expect(it + 1)
+                        // even thread switches should not be a problem
+                        withContext(Dispatchers.IO) {
+                            delay(1)
+                        }
+                    }
+                    throw exception
+                }
+            }
+            assertTrue(Thread.interrupted())
+            assertSame(exception, exception2)
+            expect(11)
+        }
+        finish(12)
+    }
+
+
+    /**
+     * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted
+     * or if thread switches occur.
+     */
+    @Test
+    fun testNonInterruptibleRunBlockingPropagatingInterruptions() {
+        val exception = AssertionError()
+        startInSeparateThreadAndInterrupt { mayInterrupt ->
+            runBlockingNonInterruptible {
+                mayInterrupt()
+                try {
+                    Thread.sleep(Long.MAX_VALUE)
+                } catch (_: InterruptedException) {
+                    expect(1)
+                }
+            }
+            expect(2)
+            assertFalse(Thread.interrupted())
+        }
+        finish(3)
+    }
+
     private fun startInSeparateThreadAndInterrupt(action: (mayInterrupt: () -> Unit) -> Unit) {
         val latch = CountDownLatch(1)
         val thread = thread {
@@ -72,5 +146,19 @@ class RunBlockingJvmTest : TestBase() {
         latch.await()
         thread.interrupt()
         thread.join()
+    }
+
+    private fun <T> runBlockingNonInterruptible(action: suspend () -> T): T {
+        val result = AtomicReference<Result<T>>()
+        try {
+            runBlocking {
+                withContext(NonCancellable) {
+                    result.set(runCatching { action() })
+                }
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt() // restore the interrupted flag
+        }
+        return result.get().getOrThrow()
     }
 }
