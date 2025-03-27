@@ -292,7 +292,7 @@ tasks.named("dokkaHtmlPartial") {
 }
 
 // Specific files so nothing from core is accidentally skipped
-tasks.withType<AnimalSniffer>().configureEach {
+tasks.withType<AnimalSniffer> {
     exclude("**/future/FutureKt*")
     exclude("**/future/ContinuationHandler*")
     exclude("**/future/CompletableFutureCoroutine*")
@@ -301,4 +301,8 @@ tasks.withType<AnimalSniffer>().configureEach {
     exclude("**/stream/StreamFlow*")
 
     exclude("**/time/TimeKt*")
+}
+
+animalsniffer {
+    defaultTargets = setOf("jvmMain")
 }
