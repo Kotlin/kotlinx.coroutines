@@ -1,4 +1,5 @@
 import org.gradle.api.publish.maven.internal.publication.DefaultMavenPublication
+import java.util.Locale
 
 plugins {
     id("java-platform")
@@ -38,7 +39,9 @@ publishing {
         forEach { pub ->
             pub as DefaultMavenPublication
             pub.unsetModuleDescriptorGenerator()
-            tasks.matching { it.name == "generateMetadataFileFor${pub.name.capitalize()}Publication" }.all {
+            tasks.matching {
+                it.name == "generateMetadataFileFor${ pub.name.replaceFirstChar { it.uppercaseChar() } }Publication"
+            }.all {
                 onlyIf { false }
             }
         }

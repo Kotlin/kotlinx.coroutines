@@ -18,7 +18,7 @@ tasks.withType(DokkaTaskPartial::class) {
 
 val testNG by tasks.registering(Test::class) {
     useTestNG()
-    reports.html.outputLocation = file("$buildDir/reports/testng")
+    reports.html.outputLocation = file("${layout.buildDirectory.get()}/reports/testng")
     include("**/*ReactiveStreamTckTest.*")
     // Skip testNG when tests are filtered with --tests, otherwise it simply fails
     onlyIf {
@@ -32,5 +32,5 @@ val testNG by tasks.registering(Test::class) {
 
 val test by tasks.getting(Test::class) {
     dependsOn(testNG)
-    reports.html.outputLocation = file("$buildDir/reports/junit")
+    reports.html.outputLocation = file("${layout.buildDirectory.get()}/reports/junit")
 }

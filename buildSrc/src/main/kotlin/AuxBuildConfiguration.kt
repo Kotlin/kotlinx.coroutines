@@ -13,7 +13,6 @@ object AuxBuildConfiguration {
     @JvmStatic
     fun configure(rootProject: Project) {
         rootProject.allprojects {
-            workaroundForCleanTask()
             CacheRedirector.configure(this)
             workaroundForCoroutinesLeakageToClassPath()
         }
@@ -24,18 +23,6 @@ object AuxBuildConfiguration {
         rootProject.extensions.findByName("buildScan")?.withGroovyBuilder {
             setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
             setProperty("termsOfServiceAgree", "yes")
-        }
-    }
-
-    private fun Project.workaroundForCleanTask() {
-        // the 'clean' task cannot delete expanded.lock file on Windows as it is still held by Gradle, failing the build
-        // Gradle issue: https://github.com/gradle/gradle/issues/25752
-        tasks {
-            val clean by existing(Delete::class) {
-                setDelete(fileTree(layout.buildDirectory) {
-                    exclude("tmp/.cache/expanded/expanded.lock")
-                })
-            }
         }
     }
 

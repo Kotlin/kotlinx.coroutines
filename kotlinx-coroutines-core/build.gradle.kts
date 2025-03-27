@@ -1,11 +1,13 @@
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.testing.*
+import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 
 plugins {
     kotlin("multiplatform")
@@ -83,11 +85,6 @@ kotlin {
                 }
             }
         }
-    }
-
-    jvm {
-        // For animal sniffer
-        withJava()
     }
 }
 
@@ -292,4 +289,20 @@ artifacts {
 // Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
 tasks.named("dokkaHtmlPartial") {
     dependsOn(jvmJar)
+}
+
+// Specific files so nothing from core is accidentally skipped
+tasks.withType<AnimalSniffer> {
+    exclude("**/future/FutureKt*")
+    exclude("**/future/ContinuationHandler*")
+    exclude("**/future/CompletableFutureCoroutine*")
+
+    exclude("**/stream/StreamKt*")
+    exclude("**/stream/StreamFlow*")
+
+    exclude("**/time/TimeKt*")
+}
+
+animalsniffer {
+    defaultTargets = setOf("jvmMain")
 }
