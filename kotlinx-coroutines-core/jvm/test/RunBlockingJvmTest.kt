@@ -65,6 +65,23 @@ class RunBlockingJvmTest : TestBase() {
         finish(5)
     }
 
+    /** Tests that [runBlocking] does not check for interruptions before the first attempt to suspend,
+     * as no blocking actually happens. */
+    @Test
+    fun testInitialPortionRunningDespiteInterruptions() {
+        Thread.currentThread().interrupt()
+        runBlocking {
+            expect(1)
+            try {
+                Thread.sleep(Long.MAX_VALUE)
+            } catch (_: InterruptedException) {
+                expect(2)
+            }
+        }
+        assertFalse(Thread.interrupted())
+        finish(3)
+    }
+
     /**
      * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted
      * or if thread switches occur.
@@ -136,6 +153,17 @@ class RunBlockingJvmTest : TestBase() {
             assertFalse(Thread.interrupted())
         }
         finish(3)
+    }
+
+    /**
+     * Tests that starting [runBlockingNonInterruptible] in an interrupted thread does not affect the result.
+     */
+    @Test
+    fun testNonInterruptibleRunBlockingStartingInterrupted() {
+        Thread.currentThread().interrupt()
+        val v = runBlockingNonInterruptible { 42 }
+        assertEquals(42, v)
+        assertTrue(Thread.interrupted())
     }
 
     private fun startInSeparateThreadAndInterrupt(action: (mayInterrupt: () -> Unit) -> Unit) {
