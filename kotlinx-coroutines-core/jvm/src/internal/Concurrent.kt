@@ -28,6 +28,8 @@ private val REMOVE_FUTURE_ON_CANCEL: Method? = try {
     null
 }
 
+/* We can not simply call `setRemoveOnCancelPolicy`, even though the code would compile and tests would pass,
+ * because older Android versions don't support it. */
 @Suppress("NAME_SHADOWING")
 internal fun removeFutureOnCancel(executor: Executor): Boolean {
     try {
