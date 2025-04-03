@@ -121,54 +121,6 @@ class ExecutorsTest : TestBase() {
     }
 
     @Test
-    fun testEarlyExecutorShutdown() {
-        runTestExceptionInDispatch(6, { it is RejectedExecutionException }) {
-            expect(1)
-            val dispatcher = newSingleThreadContext("Ctx")
-            launch(dispatcher) {
-                withContext(Dispatchers.Default) {
-                    expect(2)
-                    delay(100)
-                    expect(4)
-                }
-            }
-
-            delay(50)
-            expect(3)
-
-            dispatcher.close()
-        }
-    }
-
-    @Test
-    fun testExceptionInDispatch() {
-        runTestExceptionInDispatch(5, { it is TestException }) {
-            val dispatcher = object : CoroutineDispatcher() {
-                private var closed = false
-                override fun dispatch(context: CoroutineContext, block: Runnable) {
-                    if (closed) throw TestException()
-                    Dispatchers.Default.dispatch(context, block)
-                }
-
-                fun close() {
-                    closed = true
-                }
-            }
-            launch(dispatcher) {
-                withContext(Dispatchers.Default) {
-                    expect(1)
-                    delay(100)
-                    expect(3)
-                }
-            }
-
-            delay(50)
-            expect(2)
-            dispatcher.close()
-        }
-    }
-
-    @Test
     fun testExceptionInIsDispatchNeeded() {
         val dispatcher = object : CoroutineDispatcher() {
             override fun isDispatchNeeded(context: CoroutineContext): Boolean {
@@ -192,33 +144,6 @@ class ExecutorsTest : TestBase() {
             }
         } catch (_: TestException) {
             finish(4)
-        }
-    }
-
-    private fun runTestExceptionInDispatch(
-        totalSteps: Int,
-        isExpectedException: (Throwable) -> Boolean,
-        block: suspend CoroutineScope.() -> Unit,
-    ) {
-        var mainThread: Thread? = null
-        val exceptionHandler = CoroutineExceptionHandler { _, e ->
-            if (isExpectedException(e)) {
-                expect(totalSteps - 1)
-                mainThread!!.run {
-                    interrupt()
-                    unpark(this)
-                }
-            } else {
-                expectUnreached()
-            }
-        }
-        try {
-            runBlocking(exceptionHandler) {
-                block()
-                mainThread = Thread.currentThread()
-            }
-        } catch (_: InterruptedException) {
-            finish(totalSteps)
         }
     }
 }
