@@ -181,3 +181,13 @@ fun KotlinCommonCompilerOptions.configureKotlinUserProject() {
         "-Xrender-internal-diagnostic-names", // render the diagnostic names in CLI
     )
 }
+
+/**
+ * Additional compiler flags passed on a case-by-case basis. Should be applied after the other flags.
+ * See <https://github.com/Kotlin/kotlinx.coroutines/pull/4392#issuecomment-2775630200>
+ */
+fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
+    (project.rootProject.properties["kotlin_additional_cli_options"] as? String)?.split(" ")?.forEach {
+        if (it.isNotEmpty()) freeCompilerArgs.add(it)
+    }
+}
