@@ -1,5 +1,4 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.targets.js.dsl.*
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 kotlin {
     sourceSets {

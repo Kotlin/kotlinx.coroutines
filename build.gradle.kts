@@ -95,7 +95,19 @@ allprojects {
 }
 
 // needs to be before evaluationDependsOn due to weird Gradle ordering
-apply(plugin = "animalsniffer-conventions")
+configure(subprojects) {
+    fun Project.shouldSniff(): Boolean =
+        platformOf(project) == "jvm" && project.name !in unpublished && project.name !in sourceless
+            && project.name !in androidNonCompatibleProjects
+    // Skip JDK 8 projects or unpublished ones
+    if (shouldSniff()) {
+        if (isMultiplatform) {
+            apply(plugin = "animalsniffer-multiplatform-conventions")
+        } else {
+            apply(plugin = "animalsniffer-jvm-conventions")
+        }
+    }
+}
 
 configure(subprojects.filter { !sourceless.contains(it.name) }) {
     if (isMultiplatform) {
@@ -157,4 +169,3 @@ rootProject.registerTopLevelDeployTask()
 
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
-
