@@ -22,15 +22,11 @@ publishing {
         apply(plugin = "java-library")
 
         // MPP projects pack their sources automatically, java libraries need to explicitly pack them
-        val sources = tasks.register("sourcesJar", Jar::class) {
-            archiveClassifier = "sources"
-            from(sourceSets.named("main").get().allSource)
-        }
+        project.extensions.getByType(JavaPluginExtension::class.java).withSourcesJar()
 
         publications {
             register("mavenJava", MavenPublication::class) {
                 from(components["java"])
-                artifact(sources)
             }
         }
     }
