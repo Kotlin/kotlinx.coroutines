@@ -27,7 +27,8 @@ configure(subprojects) {
                 freeCompilerArgs.addAll(
                     "-Xno-param-assertions",
                     "-Xno-call-assertions",
-                    "-Xno-receiver-assertions"
+                    "-Xno-receiver-assertions",
+                    "-Xjvm-default=disable",
                 )
             }
             if (this@configureEach is KotlinNativeCompile) {
@@ -37,6 +38,7 @@ configure(subprojects) {
                     "kotlin.experimental.ExperimentalNativeApi",
                 )
             }
+            addExtraCompilerFlags(project)
         }
 
     }
