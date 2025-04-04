@@ -246,9 +246,15 @@ fun main() {
 >
 {style="note"}
 
-It demonstrates several new techniques. One is using [runBlocking] with an explicitly specified context, and
-the other one is using the [withContext] function to change the context of a coroutine while still staying in the
-same coroutine, as you can see in the output below:
+The example above demonstrates new techniques in coroutine usage.
+
+The first technique shows how to use [runBlocking] with a specified context.  
+The second technique involves calling [withContext],
+which may suspend the current coroutine and switch to a new context—provided the new context differs from the existing one.
+Specifically, if you specify a different [CoroutineDispatcher], extra dispatches are required:
+the block is scheduled on the new dispatcher, and once it finishes, execution returns to the original dispatcher.
+
+As a result, the output of the above code is:
 
 ```text
 [Ctx1 @coroutine#1] Started in ctx1
@@ -258,8 +264,8 @@ same coroutine, as you can see in the output below:
 
 <!--- TEST -->
 
-Note that this example also uses the `use` function from the Kotlin standard library to release threads
-created with [newSingleThreadContext] when they are no longer needed. 
+The example above uses the `use` function from the Kotlin standard library
+to properly release thread resources created by [newSingleThreadContext] when they're no longer needed.
 
 ## Job in the context
 
@@ -281,7 +287,7 @@ fun main() = runBlocking<Unit> {
 > 
 {style="note"}
 
-In the [debug mode](#debugging-coroutines-and-threads), it outputs something like this:
+In [debug mode](#debugging-coroutines-and-threads), it outputs something like this:
 
 ```
 My job is "coroutine#1":BlockingCoroutine{Active}@6d311334
@@ -300,12 +306,12 @@ the [Job] of the new coroutine becomes
 a _child_ of the parent coroutine's job. When the parent coroutine is cancelled, all its children
 are recursively cancelled, too. 
 
-However, this parent-child relation can be explicitly overriden in one of two ways:
+However, this parent-child relation can be explicitly overridden in one of two ways:
 
 1. When a different scope is explicitly specified when launching a coroutine (for example, `GlobalScope.launch`), 
-   then it does not inherit a `Job` from the parent scope.
-2. When a different `Job` object is passed as the context for the new coroutine (as shown in the example below),
-   then it overrides the `Job` of the parent scope.
+it does not inherit a `Job` from the parent scope.
+2. When a different `Job` object is passed as the context for the new coroutine (as shown in the example below), 
+it overrides the `Job` of the parent scope.
    
 In both cases, the launched coroutine is not tied to the scope it was launched from and operates independently.
 
@@ -356,7 +362,8 @@ job1: I am not affected by cancellation of the request
 
 ## Parental responsibilities 
 
-A parent coroutine always waits for completion of all its children. A parent does not have to explicitly track
+A parent coroutine always waits for the completion of all its children.
+A parent does not have to explicitly track
 all the children it launches, and it does not have to use [Job.join] to wait for them at the end:
 
 ```kotlin
@@ -480,11 +487,15 @@ I'm working in thread DefaultDispatcher-worker-1 @test#2
 
 ## Coroutine scope
 
-Let us put our knowledge about contexts, children and jobs together. Assume that our application has
-an object with a lifecycle, but that object is not a coroutine. For example, we are writing an Android application
-and launch various coroutines in the context of an Android activity to perform asynchronous operations to fetch 
-and update data, do animations, etc. All of these coroutines must be cancelled when the activity is destroyed
-to avoid memory leaks. We, of course, can manipulate contexts and jobs manually to tie the lifecycles of the activity 
+Let us put our knowledge about contexts, children, and jobs together.
+Assume that our application has an object with a lifecycle, but that object is not a coroutine.
+For example,
+we are writing an Android application, 
+and launching various coroutines in the context of an Android activity
+to perform asynchronous operations to fetch and update data,
+do animations, etc. These coroutines must be cancelled when the activity is destroyed
+to avoid memory leaks.
+We, of course, can manipulate contexts and jobs manually to tie the lifecycles of the activity 
 and its coroutines, but `kotlinx.coroutines` provides an abstraction encapsulating that: [CoroutineScope].
 You should be already familiar with the coroutine scope as all coroutine builders are declared as extensions on it. 
 
@@ -521,8 +532,9 @@ For the demo, we launch ten coroutines that delay for a different time:
 ``` 
 
 In our main function we create the activity, call our test `doSomething` function, and destroy the activity after 500ms.
-This cancels all the coroutines that were launched from `doSomething`. We can see that because after the destruction 
-of the activity no more messages are printed, even if we wait a little longer.
+This cancels all the coroutines that were launched from `doSomething`.
+We can see that because after the destruction 
+of the activity, no more messages are printed, even if we wait a little longer.
 
 <!--- CLEAR -->
 
@@ -577,16 +589,16 @@ Destroying activity!
 <!--- TEST -->
 
 As you can see, only the first two coroutines print a message and the others are cancelled 
-by a single invocation of `job.cancel()` in `Activity.destroy()`.
+by a single invocation of [`mainScope.cancel()`][CoroutineScope.cancel] in `Activity.destroy()`.
 
-> Note, that Android has first-party support for coroutine scope in all entities with the lifecycle.
+> Note that Android has first-party support for coroutine scope in all entities with the lifecycle.
 > See [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines#lifecyclescope).
 >
 {style="note"}
 
 ### Thread-local data
 
-Sometimes it is convenient to have an ability to pass some thread-local data to or between coroutines. 
+Sometimes it is convenient to be able to pass some thread-local data to or between coroutines. 
 However, since they are not bound to any particular thread, this will likely lead to boilerplate if done manually.
 
 For [`ThreadLocal`](https://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html), 
@@ -620,8 +632,8 @@ fun main() = runBlocking<Unit> {
 >
 {style="note"}
 
-In this example we launch a new coroutine in a background thread pool using [Dispatchers.Default], so
-it works on a different thread from the thread pool, but it still has the value of the thread local variable
+In this example, we launch a new coroutine in a background thread pool using [Dispatchers.Default], so
+it works on different threads from the thread pool, but it still has the value of the thread local variable
 that we specified using `threadLocal.asContextElement(value = "launch")`,
 no matter which thread the coroutine is executed on.
 Thus, the output (with [debug](#debugging-coroutines-and-threads)) is:
@@ -636,7 +648,7 @@ Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value:
 <!--- TEST FLEXIBLE_THREAD -->
 
 It's easy to forget to set the corresponding context element. The thread-local variable accessed from the coroutine may
-then have an unexpected value, if the thread running the coroutine is different.
+then have an unexpected value if the thread running the coroutine is different.
 To avoid such situations, it is recommended to use the [ensurePresent] method
 and fail-fast on improper usages.
 
@@ -646,11 +658,12 @@ It has one key limitation, though: when a thread-local is mutated, a new value i
 Use [withContext] to update the value of the thread-local in a coroutine, see [asContextElement] for more details. 
 
 Alternatively, a value can be stored in a mutable box like `class Counter(var i: Int)`, which is, in turn, 
-stored in a thread-local variable. However, in this case you are fully responsible to synchronize 
+stored in a thread-local variable.
+However, in this case, you are fully responsible to synchronize 
 potentially concurrent modifications to the variable in this mutable box.
 
-For advanced usage, for example for integration with logging MDC, transactional contexts or any other libraries
-which internally use thread-locals for passing data, see the documentation of the [ThreadContextElement] interface 
+For advanced usage, for example, for integration with logging MDC, transactional contexts or any other libraries
+that internally use thread-locals for passing data, see the documentation of the [ThreadContextElement] interface 
 that should be implemented. 
 
 <!--- MODULE kotlinx-coroutines-core -->
@@ -676,6 +689,7 @@ that should be implemented.
 [CoroutineScope()]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope.html
 [MainScope()]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-main-scope.html
 [Dispatchers.Main]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
+[CoroutineScope.cancel]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/cancel.html
 [asContextElement]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/as-context-element.html
 [ensurePresent]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/ensure-present.html
 [ThreadContextElement]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-thread-context-element/index.html

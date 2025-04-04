@@ -186,7 +186,9 @@ Note that if we just call [await][Deferred.await] in `println` without first cal
 coroutines, this will lead to sequential behavior, since [await][Deferred.await] starts the coroutine 
 execution and waits for its finish, which is not the intended use-case for laziness. 
 The use-case for `async(start = CoroutineStart.LAZY)` is a replacement for the 
-standard `lazy` function in cases when computation of the value involves suspending functions.
+standard [lazy](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html) function in cases
+when computation of the value involves suspending functions.
+
 
 ## Async-style functions
 
@@ -291,10 +293,10 @@ concurrency, as shown in the section below.
 
 ## Structured concurrency with async 
 
-Let us take the [Concurrent using async](#concurrent-using-async) example and extract a function that 
-concurrently performs `doSomethingUsefulOne` and `doSomethingUsefulTwo` and returns the sum of their results.
-Because the [async] coroutine builder is defined as an extension on [CoroutineScope], we need to have it in the 
-scope and that is what the [coroutineScope][_coroutineScope] function provides:
+Let's refactor the [Concurrent using async](#concurrent-using-async) example into a function that runs 
+`doSomethingUsefulOne` and `doSomethingUsefulTwo` concurrently and returns their combined results.
+Since [async] is a [CoroutineScope] extension,
+we'll use the [coroutineScope][_coroutineScope] function to provide the necessary scope:
 
 ```kotlin
 suspend fun concurrentSum(): Int = coroutineScope {

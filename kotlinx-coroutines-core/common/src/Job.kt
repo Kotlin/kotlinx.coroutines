@@ -11,23 +11,27 @@ import kotlin.jvm.*
 // --------------- core job interfaces ---------------
 
 /**
- * A background job. Conceptually, a job is a cancellable thing with a life-cycle that
- * culminates in its completion.
+ * A background job.
+ * Conceptually, a job is a cancellable thing with a lifecycle that
+ * concludes in its completion.
  *
- * Jobs can be arranged into parent-child hierarchies where cancellation
- * of a parent leads to immediate cancellation of all its [children] recursively.
+ * Jobs can be arranged into parent-child hierarchies where the cancellation
+ * of a parent leads to the immediate cancellation of all its [children] recursively.
  * Failure of a child with an exception other than [CancellationException] immediately cancels its parent and,
- * consequently, all its other children. This behavior can be customized using [SupervisorJob].
+ * consequently, all its other children.
+ * This behavior can be customized using [SupervisorJob].
  *
- * The most basic instances of `Job` interface are created like this:
+ * The most basic instances of the `Job` interface are created like this:
  *
- * - **Coroutine job** is created with [launch][CoroutineScope.launch] coroutine builder.
- *   It runs a specified block of code and completes on completion of this block.
+ * - A **coroutine job** is created with the [launch][CoroutineScope.launch] coroutine builder.
+ *   It runs a specified block of code and completes upon completion of this block.
  * - **[CompletableJob]** is created with a `Job()` factory function.
  *   It is completed by calling [CompletableJob.complete].
  *
- * Conceptually, an execution of a job does not produce a result value. Jobs are launched solely for their
- * side effects. See [Deferred] interface for a job that produces a result.
+ * Conceptually, an execution of a job does not produce a result value.
+ * Jobs are launched solely for their
+ * side effects.
+ * See the [Deferred] interface for a job that produces a result.
  *
  * ### Job states
  *
@@ -42,22 +46,30 @@ import kotlin.jvm.*
  * | _Cancelled_ (final state)        | `false`    | `true`        | `true`        |
  * | _Completed_ (final state)        | `false`    | `true`        | `false`       |
  *
- * Usually, a job is created in the _active_ state (it is created and started). However, coroutine builders
+ *
+ * Note that these states are mentioned in italics below to make them easier to distinguish.
+ *
+ * Usually, a job is created in the _active_ state (it is created and started).
+ * However, coroutine builders
  * that provide an optional `start` parameter create a coroutine in the _new_ state when this parameter is set to
- * [CoroutineStart.LAZY]. Such a job can be made _active_ by invoking [start] or [join].
+ * [CoroutineStart.LAZY].
+ * Such a job can be made _active_ by invoking [start] or [join].
  *
- * A job is _active_ while the coroutine is working or until [CompletableJob] is completed,
- * or until it fails or cancelled.
+ * A job is in the _active_ state while the coroutine is working or until the [CompletableJob] completes,
+ * fails, or is cancelled.
  *
- * Failure of an _active_ job with an exception makes it _cancelling_.
- * A job can be cancelled at any time with [cancel] function that forces it to transition to
- * the _cancelling_ state immediately. The job becomes _cancelled_  when it finishes executing its work and
+ * Failure of an _active_ job with an exception transitions the state to the _cancelling_ state.
+ * A job can be cancelled at any time with the [cancel] function that forces it to transition to
+ * the _cancelling_ state immediately.
+ * The job becomes _cancelled_ when it finishes executing its work and
  * all its children complete.
  *
  * Completion of an _active_ coroutine's body or a call to [CompletableJob.complete] transitions the job to
- * the _completing_ state. It waits in the _completing_ state for all its children to complete before
+ * the _completing_ state.
+ * It waits in the _completing_ state for all its children to complete before
  * transitioning to the _completed_ state.
- * Note that _completing_ state is purely internal to the job. For an outside observer a _completing_ job is still
+ * Note that _completing_ state is purely internal to the job.
+ * For an outside observer, a _completing_ job is still
  * active, while internally it is waiting for its children.
  *
  * ```
@@ -82,18 +94,21 @@ import kotlin.jvm.*
  *
  * A coroutine job is said to _complete exceptionally_ when its body throws an exception;
  * a [CompletableJob] is completed exceptionally by calling [CompletableJob.completeExceptionally].
- * An exceptionally completed job is cancelled and the corresponding exception becomes the _cancellation cause_ of the job.
+ * An exceptionally completed job is cancelled,
+ * and the corresponding exception becomes the _cancellation cause_ of the job.
  *
- * Normal cancellation of a job is distinguished from its failure by the type of this exception that caused its cancellation.
- * A coroutine that threw [CancellationException] is considered to be _cancelled normally_.
- * If a cancellation cause is a different exception type, then the job is considered to have _failed_.
- * When a job has _failed_, then its parent gets cancelled with the exception of the same type,
+ * Normal cancellation of a job is distinguished from its failure by the exception
+ * that caused its cancellation.
+ * A coroutine that throws a [CancellationException] is considered to be _cancelled_ normally.
+ * If a different exception causes the cancellation, then the job has _failed_.
+ * When a job has _failed_, its parent gets cancelled with the same type of exception,
  * thus ensuring transparency in delegating parts of the job to its children.
  *
- * Note, that [cancel] function on a job only accepts [CancellationException] as a cancellation cause, thus
+ * Note, that the [cancel] function on a job only accepts a [CancellationException] as a cancellation cause, thus
  * calling [cancel] always results in a normal cancellation of a job, which does not lead to cancellation
- * of its parent. This way, a parent can [cancel] its own children (cancelling all their children recursively, too)
- * without cancelling itself.
+ * of its parent.
+ * This way, a parent can [cancel] his children (cancelling all their children recursively, too)
+ * without cancelling himself.
  *
  * ### Concurrency and synchronization
  *

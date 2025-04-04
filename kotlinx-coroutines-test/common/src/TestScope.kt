@@ -139,9 +139,9 @@ public val TestScope.testTimeSource: TimeSource.WithComparableMarks get() = test
  * It ensures that all the test module machinery is properly initialized.
  * - If [context] doesn't provide a [TestCoroutineScheduler] for orchestrating the virtual time used for delay-skipping,
  *   a new one is created, unless either
- *   - a [TestDispatcher] is provided, in which case [TestDispatcher.scheduler] is used;
- *   - at the moment of the creation of the scope, [Dispatchers.Main] is delegated to a [TestDispatcher], in which case
- *     its [TestCoroutineScheduler] is used.
+ *     - a [TestDispatcher] is provided, in which case [TestDispatcher.scheduler] is used;
+ *     - at the moment of the creation of the scope, [Dispatchers.Main] is delegated to a [TestDispatcher], in which case
+ *       its [TestCoroutineScheduler] is used.
  * - If [context] doesn't have a [TestDispatcher], a [StandardTestDispatcher] is created.
  * - A [CoroutineExceptionHandler] is created that makes [TestCoroutineScope.cleanupTestCoroutines] throw if there were
  *   any uncaught exceptions, or forwards the exceptions further in a platform-specific manner if the cleanup was
