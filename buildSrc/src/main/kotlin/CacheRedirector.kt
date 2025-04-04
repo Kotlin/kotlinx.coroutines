@@ -108,8 +108,8 @@ private fun Project.configureYarnAndNodeRedirects() {
         }
 
         val nodeJsExtension = rootProject.extensions.findByType<NodeJsRootExtension>()
-        nodeJsExtension?.nodeDownloadBaseUrl?.let {
-            nodeJsExtension.nodeDownloadBaseUrl = CacheRedirector.maybeRedirect(it)
+        nodeJsExtension?.downloadBaseUrl?.let {
+            nodeJsExtension.downloadBaseUrl = CacheRedirector.maybeRedirect(it)
         }
     }
 }

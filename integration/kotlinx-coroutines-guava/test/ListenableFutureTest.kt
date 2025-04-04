@@ -627,7 +627,7 @@ class ListenableFutureTest : TestBase() {
     fun testFutureIsDoneAfterChildrenCompleted() = runTest {
         expect(1)
         val testException = TestException()
-        val latch = CountDownLatch(1)
+        val futureIsAllowedToFinish = CountDownLatch(1)
         // Don't propagate exception to the test and use different dispatchers as we are going to block test thread.
         val future = future(context = NonCancellable + Dispatchers.Default) {
             val foo = async(start = CoroutineStart.UNDISPATCHED) {
@@ -635,18 +635,16 @@ class ListenableFutureTest : TestBase() {
                     delay(Long.MAX_VALUE)
                     42
                 } finally {
-                    latch.await()
+                    futureIsAllowedToFinish.await()
+                    expect(3)
                 }
-            }
-            foo.invokeOnCompletion {
-                expect(3)
             }
             val bar = async<Int> { throw testException }
             foo.await() + bar.await()
         }
         yield()
         expect(2)
-        latch.countDown()
+        futureIsAllowedToFinish.countDown()
         // Blocking get should succeed after internal coroutine completes.
         val thrown = assertFailsWith<ExecutionException> { future.get() }
         expect(4)

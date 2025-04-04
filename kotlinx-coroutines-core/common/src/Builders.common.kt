@@ -1,6 +1,7 @@
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
 @file:OptIn(ExperimentalContracts::class)
+@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
 package kotlinx.coroutines
 
@@ -153,7 +154,6 @@ public suspend fun <T> withContext(
         // FAST PATH #1 -- new context is the same as the old one
         if (newContext === oldContext) {
             val coroutine = ScopeCoroutine(newContext, uCont)
-            @Suppress("LEAKED_IN_PLACE_LAMBDA") // Contract is preserved, invoked immediately or throws
             return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
         }
         // FAST PATH #2 -- the new dispatcher is the same as the old one (something else changed)
@@ -162,13 +162,11 @@ public suspend fun <T> withContext(
             val coroutine = UndispatchedCoroutine(newContext, uCont)
             // There are changes in the context, so this thread needs to be updated
             withCoroutineContext(coroutine.context, null) {
-                @Suppress("LEAKED_IN_PLACE_LAMBDA") // Contract is preserved, invoked immediately or throws
                 return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
             }
         }
         // SLOW PATH -- use new dispatcher
         val coroutine = DispatchedCoroutine(newContext, uCont)
-        @Suppress("LEAKED_IN_PLACE_LAMBDA")  // Contract is preserved, invoked immediately or throws
         block.startCoroutineCancellable(coroutine, coroutine)
         coroutine.getResult()
     }

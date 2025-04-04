@@ -1,9 +1,13 @@
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.testing.*
+import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 
 plugins {
     kotlin("multiplatform")
@@ -25,9 +29,8 @@ apply(plugin = "pub-conventions")
      wasmWasi --------------------> jsAndWasmShared ----------+
                                                               |
                                                               V
-     jvmCore\ --------> jvm ---------> concurrent -------> common
-     jdk8   /                           ^
-                                        |
+     jvm ----------------------------> concurrent -------> common
+                                        ^
      ios     \                          |
      macos   | ---> nativeDarwin ---> native ---+
      tvos    |                         ^
@@ -35,33 +38,6 @@ apply(plugin = "pub-conventions")
                                        |
      linux  \  ---> nativeOther -------+
      mingw  /
-
-
-Explanation of JVM source sets structure:
-
-The overall structure is just a hack to support the scenario we are interested in:
-
-* We would like to have two source-sets "core" and "jdk8"
-* "jdk8" is allowed to use API from Java 8 and from "core"
-* "core" is prohibited to use any API from "jdk8"
-* It is okay to have tests in a single test source-set
-* And we want to publish a **single** artifact kotlinx-coroutines-core.jar that contains classes from both source-sets
-* Current limitation: only classes from "core" are checked with animal-sniffer
-
-For that, we have following compilations:
-* jvmMain compilation: [jvmCoreMain, jdk8Main]
-* jvmCore compilation: [commonMain]
-* jdk8    compilation: [commonMain, jvmCoreMain]
-
-Theoretically, "jvmCore" could've been "jvmMain", it is not for technical reasons,
-here is the explanation from Seb:
-
-"""
-The jvmCore is theoretically not necessary. All code for jdk6 compatibility can be in jvmMain and jdk8 dependent code can be in jdk8Main.
-Effectively there is no reason for ever putting code into jvmCoreMain.
-However, when creating a new compilation, we have to take care of creating a defaultSourceSet. Without creating the jvmCoreMain source set,
- the creation of the compilation fails. That is the only reason for this source set.
-"""
  ========================================================================== */
 
 kotlin {
@@ -87,6 +63,8 @@ kotlin {
             }
         }
     }
+    setupBenchmarkSourceSets(sourceSets)
+
     /*
      * Configure two test runs for Native:
      * 1) Main thread
@@ -108,45 +86,44 @@ kotlin {
             }
         }
     }
-
-    /**
-     * See: https://youtrack.jetbrains.com/issue/KTIJ-25959
-     * The introduction of jvmCore is only for CLI builds and not intended for the IDE.
-     * In the current setup there are two tooling unfriendly configurations used:
-     * 1: - jvmMain, despite being a platform source set, is not a leaf (jvmCoreMain and jdk8Main dependOn it)
-     * 2: - jvmMain effectively becomes a 'shared jvm' source set
-     *
-     * Using this kludge here, will prevent issue 2 from being visible to the IDE.
-     * Therefore jvmMain will resolve using the 'single' compilation it participates in (from the perspective of the IDE)
-     */
-    val jvmCoreMain = if (Idea.active) null else sourceSets.create("jvmCoreMain") {
-        dependsOn(sourceSets.jvmMain.get())
-    }
-    val jdk8Main = sourceSets.create("jdk8Main") {
-        dependsOn(sourceSets.jvmMain.get())
-    }
-
-    jvm {
-        compilations.named("main") {
-            jvmCoreMain?.let { source(it) }
-            source(jdk8Main)
-        }
-
-        /* Create compilation for jvmCore to prove that jvmMain does not rely on jdk8 */
-        compilations.create("CoreMain") {
-            /* jvmCore is automatically matched as 'defaultSourceSet' for the compilation, due to its name */
-            tasks.getByName("check").dependsOn(compileTaskProvider)
-        }
-
-        // For animal sniffer
-        withJava()
-        compilations.create("benchmark") { associateWith(this@jvm.compilations.getByName("main")) }
-    }
 }
 
-benchmark {
-    targets {
-        register("jvmBenchmark")
+private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomainObjectContainer<KotlinSourceSet>) {
+    // Forgive me, Father, for I have sinned.
+    // Really, that is needed to have benchmark sourcesets be the part of the project, not a separate project
+    val benchmarkMain by ss.creating {
+        dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+        }
+        // For each source set we have to manually set path to the sources, otherwise lookup will fail
+        kotlin.srcDir("benchmarks/main/kotlin")
+    }
+
+    @Suppress("UnusedVariable")
+    val jvmBenchmark by ss.creating {
+        // For each source set we have to manually set path to the sources, otherwise lookup will fail
+        kotlin.srcDir("benchmarks/jvm/kotlin")
+    }
+
+    targets.matching {
+        it.name != "metadata"
+            // Doesn't work, don't want to figure it out for now
+            && !it.name.contains("wasm")
+            && !it.name.contains("js")
+    }.all {
+        compilations.create("benchmark") {
+            associateWith(this@all.compilations.getByName("main"))
+            defaultSourceSet {
+                dependencies {
+                    implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+                }
+                dependsOn(benchmarkMain)
+            }
+        }
+    }
+
+    targets.matching { it.name != "metadata" }.all {
+        benchmark.targets.register("${name}Benchmark")
     }
 }
 
@@ -187,10 +164,12 @@ val allMetadataJar by tasks.getting(Jar::class) { setupManifest(this) }
 
 fun setupManifest(jar: Jar) {
     jar.manifest {
-        attributes(mapOf(
-            "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
-            "Can-Retransform-Classes" to "true",
-        ))
+        attributes(
+            mapOf(
+                "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
+                "Can-Retransform-Classes" to "true",
+            )
+        )
     }
 }
 
@@ -243,9 +222,11 @@ fun Test.configureJvmForLincheck(segmentSize: Int = 1) {
     minHeapSize = "1g"
     maxHeapSize = "4g" // we may need more space for building an interleaving tree in the model checking mode
     // https://github.com/JetBrains/lincheck#java-9
-    jvmArgs = listOf("--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
+    jvmArgs = listOf(
+        "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
         "--add-exports", "java.base/sun.security.action=ALL-UNNAMED",
-        "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED") // in the model checking mode
+        "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED"
+    ) // in the model checking mode
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
     systemProperty("kotlinx.coroutines.semaphore.segmentSize", segmentSize)
     systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 1) // better for the model checking mode
@@ -270,6 +251,9 @@ kover {
 
             // lincheck has NPE error on `ManagedStrategyStateHolder` class
             excludedClasses.addAll("org.jetbrains.kotlinx.lincheck.*")
+        }
+        sources {
+            excludedSourceSets.addAll("benchmark")
         }
     }
 
@@ -305,4 +289,20 @@ artifacts {
 // Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
 tasks.named("dokkaHtmlPartial") {
     dependsOn(jvmJar)
+}
+
+// Specific files so nothing from core is accidentally skipped
+tasks.withType<AnimalSniffer> {
+    exclude("**/future/FutureKt*")
+    exclude("**/future/ContinuationHandler*")
+    exclude("**/future/CompletableFutureCoroutine*")
+
+    exclude("**/stream/StreamKt*")
+    exclude("**/stream/StreamFlow*")
+
+    exclude("**/time/TimeKt*")
+}
+
+animalsniffer {
+    defaultTargets = setOf("jvmMain")
 }

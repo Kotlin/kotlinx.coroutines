@@ -158,6 +158,7 @@ class ParentCancellationTest : TestBase() {
         }
         if (expectParentActive) {
             assertTrue(parent.isActive)
+            parent.cancelAndJoin()
         } else {
             parent.join()
             assertFalse(parent.isActive)

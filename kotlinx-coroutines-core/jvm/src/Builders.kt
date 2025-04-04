@@ -1,6 +1,7 @@
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
 @file:OptIn(ExperimentalContracts::class)
+@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
 package kotlinx.coroutines
 
@@ -90,12 +91,11 @@ private class BlockingCoroutine<T>(
             eventLoop?.incrementUseCount()
             try {
                 while (true) {
-                    @Suppress("DEPRECATION")
-                    if (Thread.interrupted()) throw InterruptedException().also { cancelCoroutine(it) }
                     val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                     // note: process next even may loose unpark flag, so check if completed before parking
                     if (isCompleted) break
                     parkNanos(this, parkNanos)
+                    if (Thread.interrupted()) cancelCoroutine(InterruptedException())
                 }
             } finally { // paranoia
                 eventLoop?.decrementUseCount()

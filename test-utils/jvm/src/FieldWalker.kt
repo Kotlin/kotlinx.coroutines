@@ -127,6 +127,9 @@ object FieldWalker {
             element is AtomicLongFieldUpdater<*> -> {
                 /* filter it out here to suppress its subclasses too */
             }
+            element is ExecutorService && type.name == "java.util.concurrent.Executors\$DelegatedExecutorService" -> {
+                /* can't access anything in the executor */
+            }
             // All the other classes are reflectively scanned
             else -> fields(type, statics).forEach { field ->
                 push(field.get(element), visited, stack) { Ref.FieldRef(element, field.name) }

@@ -201,6 +201,7 @@ public abstract class CoroutineDispatcher :
      *
      * This method should generally be exception-safe. An exception thrown from this method
      * may leave the coroutines that use this dispatcher in an inconsistent and hard-to-debug state.
+     * It is assumed that if any exceptions do get thrown from this method, then [block] will not be executed.
      *
      * This method must not immediately call [block]. Doing so may result in `StackOverflowError`
      * when `dispatch` is invoked repeatedly, for example when [yield] is called in a loop.

@@ -244,6 +244,7 @@ public class FlowSubscription<T>(
         }
     }
 
+    @Deprecated("Since 1.2.0, binary compatibility with versions <= 1.1.x", level = DeprecationLevel.HIDDEN)
     override fun cancel() {
         cancellationRequested = true
         cancel(null)

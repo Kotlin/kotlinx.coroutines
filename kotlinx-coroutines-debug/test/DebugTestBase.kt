@@ -14,7 +14,6 @@ open class DebugTestBase : TestBase() {
 
     @Before
     open fun setUp() {
-        before()
         DebugProbes.sanitizeStackTraces = false
         DebugProbes.enableCreationStackTraces = false
         DebugProbes.install()
@@ -22,10 +21,6 @@ open class DebugTestBase : TestBase() {
 
     @After
     fun tearDown() {
-        try {
-            DebugProbes.uninstall()
-        } finally {
-            onCompletion()
-        }
+        DebugProbes.uninstall()
     }
 }
