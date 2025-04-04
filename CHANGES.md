@@ -1,5 +1,13 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.10.2
+
+* Fixed the `kotlinx-coroutines-debug` JAR file including the `module-info.class` file twice, resulting in failures in various tooling (#4314). Thanks, @RyuNen344!
+* Fixed `Flow.stateIn` hanging when the scope is cancelled in advance or the flow is empty (#4322). Thanks, @francescotescari!
+* Improved handling of dispatcher failures in `.limitedParallelism` (#4330) and during flow collection (#4272).
+* Fixed `runBlocking` failing to run its coroutine to completion in some cases if its JVM thread got interrupted (#4399).
+* Small tweaks, fixes, and documentation improvements.
+
 ## Version 1.10.1
 
 * Fixed binary incompatibility introduced for non-JVM targets in #4261 (#4309).
