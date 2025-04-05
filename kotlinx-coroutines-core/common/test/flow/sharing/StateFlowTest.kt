@@ -111,6 +111,67 @@ class StateFlowTest : TestBase() {
     }
 
     @Test
+    fun testOnSubscription() = runTest {
+        expect(1)
+        val state = MutableStateFlow("initial") // "initial" gets lost, replaced by "D"
+        state
+            .onSubscription {
+                emit("collector->A")
+                state.value = "A" // gets lost, replaced by "B"
+            }
+            .onSubscription {
+                emit("collector->B")
+                state.value = "B"
+            }
+            .onStart {
+                emit("collector->C")
+                state.value = "C" // gets lost, replaced by "A"
+            }
+            .onStart {
+                emit("collector->D")
+                state.value = "D" // gets lost, replaced by "C"
+            }
+            .onEach {
+                when (it) {
+                    "collector->D" -> expect(2)
+                    "collector->C" -> expect(3)
+                    "collector->A" -> expect(4)
+                    "collector->B" -> expect(5)
+                    "B" -> {
+                        expect(6)
+                        currentCoroutineContext().cancel()
+                    }
+                    else -> expectUnreached()
+                }
+            }
+            .launchIn(this)
+            .join()
+        finish(7)
+    }
+
+    @Test
+    @Suppress("DEPRECATION") // 'catch'
+    fun testOnSubscriptionThrows() = runTest {
+        expect(1)
+        val state = MutableStateFlow("initial")
+        state
+            .onSubscription {
+                expect(2)
+                throw TestException()
+            }
+            .catch { e ->
+                assertIs<TestException>(e)
+                expect(3)
+            }
+            .collect {
+                // onSubscription throws before "initial" is emitted, so no value is collected
+                expectUnreached()
+            }
+        assertEquals(0, state.subscriptionCount.value)
+        finish(4)
+    }
+
+    @Test
     public fun testOnSubscriptionWithException() = runTest {
         expect(1)
         val state = MutableStateFlow("A")
