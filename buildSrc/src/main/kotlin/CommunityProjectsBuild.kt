@@ -103,7 +103,7 @@ fun Project.configureCommunityBuildTweaks() {
         }
     }
 
-    println("Manifest of kotlin-compiler-embeddable.jar for coroutines")
+    LOGGER.info("Manifest of kotlin-compiler-embeddable.jar for coroutines")
     val coreProject = subprojects.single { it.name == coreModule }
     configure(listOf(coreProject)) {
         configurations.matching { it.name == "kotlinCompilerClasspath" }.configureEach {
@@ -187,7 +187,11 @@ fun KotlinCommonCompilerOptions.configureKotlinUserProject() {
  * See <https://github.com/Kotlin/kotlinx.coroutines/pull/4392#issuecomment-2775630200>
  */
 fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
-    (project.rootProject.properties["kotlin_additional_cli_options"] as? String)?.split(" ")?.forEach {
-        if (it.isNotEmpty()) freeCompilerArgs.add(it)
+    val extraOptions = project.rootProject.properties["kotlin_additional_cli_options"] as? String
+    if (extraOptions != null) {
+        LOGGER.info("""Adding extra compiler flags '$extraOptions' for a compilation in the project $${project.name}""")
+        extraOptions.split(" ")?.forEach {
+            if (it.isNotEmpty()) freeCompilerArgs.add(it)
+        }
     }
 }
