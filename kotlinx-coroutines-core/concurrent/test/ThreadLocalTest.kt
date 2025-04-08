@@ -239,8 +239,8 @@ class ThreadLocalTest : TestBase() {
     }
 }
 
-internal suspend inline fun CommonThreadLocal<*>.isPresent(): Boolean =
+internal suspend fun CommonThreadLocal<*>.isPresent(): Boolean =
     coroutineContext[CommonThreadLocalKey(this)] !== null
 
-internal suspend inline fun CommonThreadLocal<*>.ensurePresent(): Unit =
+internal suspend fun CommonThreadLocal<*>.ensurePresent(): Unit =
     check(isPresent()) { "ThreadLocal $this is missing from context $coroutineContext" }

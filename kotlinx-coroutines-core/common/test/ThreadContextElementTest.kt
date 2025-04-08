@@ -177,10 +177,14 @@ private class JobCaptor(val capturees: CopyOnWriteList<Event<Job>> = CopyOnWrite
 // declare thread local variable holding MyData
 internal val threadContextElementThreadLocal = commonThreadLocal<MyData?>(Symbol("ThreadContextElementTest"))
 
-internal data class CommonThreadLocalKey(private val threadLocal: CommonThreadLocal<*>)
+class CommonThreadLocalKey internal constructor(private val threadLocal: CommonThreadLocal<*>)
     : CoroutineContext.Key<CommonThreadLocalContextElement<*>>
+{
+    override fun equals(other: Any?): Boolean = other is CommonThreadLocalKey && threadLocal == other.threadLocal
+    override fun hashCode(): Int = threadLocal.hashCode()
+}
 
-private class CommonThreadLocalContextElement<T>(
+class CommonThreadLocalContextElement<T> internal constructor(
     private val threadLocal: CommonThreadLocal<T>,
     private val value: T = threadLocal.get()
 ): ThreadContextElement<T>, CoroutineContext.Key<CommonThreadLocalContextElement<T>> {
