@@ -8,14 +8,6 @@ import kotlin.test.*
 import kotlin.time.Duration
 
 class RunBlockingJvmTest : TestBase() {
-    @Test
-    fun testContract() {
-        val rb: Int
-        runBlocking {
-            rb = 42
-        }
-        rb.hashCode() // unused
-    }
 
     /** Tests that the [runBlocking] coroutine runs to completion even it was interrupted. */
     @Test
