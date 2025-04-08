@@ -2,7 +2,6 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.internal.*
-import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -11,11 +10,11 @@ class ThreadContextOrderTest : TestBase() {
      * The test verifies that two thread context elements are correctly nested:
      * The restoration order is the reverse of update order.
      */
-    private val transactionalContext = ThreadLocal<String>()
-    private val loggingContext = ThreadLocal<String>()
+    private val transactionalContext = commonThreadLocal<String>(Symbol("ThreadContextOrderTest#transactionalContext"))
+    private val loggingContext = commonThreadLocal<String>(Symbol("ThreadContextOrderTest#loggingContext"))
 
     private val transactionalElement = object : ThreadContextElement<String> {
-        override val key = ThreadLocalKey(transactionalContext)
+        override val key = CommonThreadLocalKey(transactionalContext)
 
         override fun updateThreadContext(context: CoroutineContext): String {
             assertEquals("test", loggingContext.get())
@@ -32,7 +31,7 @@ class ThreadContextOrderTest : TestBase() {
     }
 
     private val loggingElement = object : ThreadContextElement<String> {
-        override val key = ThreadLocalKey(loggingContext)
+        override val key = CommonThreadLocalKey(loggingContext)
 
         override fun updateThreadContext(context: CoroutineContext): String {
             val previous = loggingContext.get()

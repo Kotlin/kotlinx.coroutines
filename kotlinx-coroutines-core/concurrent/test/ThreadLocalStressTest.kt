@@ -1,8 +1,11 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.internal.Symbol
+import kotlinx.coroutines.internal.commonThreadLocal
+import kotlinx.coroutines.internal.propagateExceptionFinalResort
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.sync.*
-import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.test.*
@@ -10,12 +13,12 @@ import kotlin.test.*
 
 class ThreadLocalStressTest : TestBase() {
 
-    private val threadLocal = ThreadLocal<String>()
+    private val threadLocal = commonThreadLocal<String?>(Symbol("ThreadLocalStressTest"))
 
     // See the comment in doStress for the machinery
     @Test
     fun testStress() = runTest {
-        repeat (100 * stressTestMultiplierSqrt) {
+        repeat(100 * stressTestMultiplierSqrt) {
             withContext(Dispatchers.Default) {
                 repeat(100) {
                     launch {
@@ -28,8 +31,8 @@ class ThreadLocalStressTest : TestBase() {
 
     @Test
     fun testStressWithOuterValue() = runTest {
-        repeat (100 * stressTestMultiplierSqrt) {
-            withContext(Dispatchers.Default + threadLocal.asContextElement("bar")) {
+        repeat(100 * stressTestMultiplierSqrt) {
+            withContext(Dispatchers.Default + threadLocal.asCtxElement("bar")) {
                 repeat(100) {
                     launch {
                         doStress("bar")
@@ -61,7 +64,7 @@ class ThreadLocalStressTest : TestBase() {
              * T2 now executes the dispatched cancellation and concurrently mutates the state of the undispatched completion.
              * All bets are off, now both threads can leave the thread locals state inconsistent.
              */
-            withContext(threadLocal.asContextElement("foo")) {
+            withContext(threadLocal.asCtxElement("foo")) {
                 yield()
                 cancel()
                 suspendCancellableCoroutineReusable<Unit> { }
@@ -118,35 +121,32 @@ class ThreadLocalStressTest : TestBase() {
 
     private fun doTestWithPreparation(testBody: suspend () -> Unit, setup: () -> Unit, isValid: () -> Boolean) {
         setup()
-        val latch = CountDownLatch(1)
+        val latch = Channel<Unit>(1)
         testBody.startCoroutineUninterceptedOrReturn(Continuation(EmptyCoroutineContext) {
             if (!isValid()) {
-                Thread.currentThread().uncaughtExceptionHandler.uncaughtException(
-                    Thread.currentThread(),
-                    IllegalStateException("Unexpected error: thread local was not cleaned")
-                )
+                propagateExceptionFinalResort(IllegalStateException("Unexpected error: thread local was not cleaned"))
             }
-            latch.countDown()
+            latch.trySend(Unit)
         })
-        latch.await()
+        runBlocking { latch.receive() }
     }
 
     private suspend fun doTest() {
-        withContext(threadLocal.asContextElement("foo")) {
+        withContext(threadLocal.asCtxElement("foo")) {
             try {
                 coroutineScope {
                     val semaphore = Semaphore(1, 1)
                     cancel()
                     semaphore.acquire()
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 // Ignore cancellation
             }
         }
     }
 
     private suspend fun doTestWithContextSwitch() {
-        withContext(threadLocal.asContextElement("foo")) {
+        withContext(threadLocal.asCtxElement("foo")) {
             try {
                 coroutineScope {
                     val semaphore = Semaphore(1, 1)
@@ -154,7 +154,7 @@ class ThreadLocalStressTest : TestBase() {
                     cancel()
                     semaphore.acquire()
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 // Ignore cancellation
             }
         }

@@ -1,26 +1,27 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.Symbol
+import kotlinx.coroutines.internal.commonThreadLocal
 import kotlinx.coroutines.testing.*
-import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
 class ThreadContextElementRestoreTest : TestBase() {
-    private val tl = ThreadLocal<String?>()
+    private val tl = commonThreadLocal<String?>(Symbol("ThreadContextElementRestoreTest"))
 
     // Checks that ThreadLocal context is properly restored after executing the given block inside
     // withContext(tl.asContextElement("OK")) code running in different outer contexts
     private inline fun check(crossinline block: suspend () -> Unit) = runTest {
         val mainDispatcher = coroutineContext[ContinuationInterceptor] as CoroutineDispatcher
         // Scenario #1: withContext(ThreadLocal) direct from runTest
-        withContext(tl.asContextElement("OK")) {
+        withContext(tl.asCtxElement("OK")) {
             block()
             assertEquals("OK", tl.get())
         }
         assertEquals(null, tl.get())
         // Scenario #2: withContext(ThreadLocal) from coroutineScope
         coroutineScope {
-            withContext(tl.asContextElement("OK")) {
+            withContext(tl.asCtxElement("OK")) {
                 block()
                 assertEquals("OK", tl.get())
             }
@@ -28,7 +29,7 @@ class ThreadContextElementRestoreTest : TestBase() {
         }
         // Scenario #3: withContext(ThreadLocal) from undispatched withContext
         withContext(CoroutineName("NAME")) {
-            withContext(tl.asContextElement("OK")) {
+            withContext(tl.asCtxElement("OK")) {
                 block()
                 assertEquals("OK", tl.get())
             }
@@ -36,15 +37,15 @@ class ThreadContextElementRestoreTest : TestBase() {
         }
         // Scenario #4: withContext(ThreadLocal) from dispatched withContext
         withContext(wrapperDispatcher()) {
-            withContext(tl.asContextElement("OK")) {
+            withContext(tl.asCtxElement("OK")) {
                 block()
                 assertEquals("OK", tl.get())
             }
             assertEquals(null, tl.get())
         }
         // Scenario #5: withContext(ThreadLocal) from withContext(ThreadLocal)
-        withContext(tl.asContextElement(null)) {
-            withContext(tl.asContextElement("OK")) {
+        withContext(tl.asCtxElement(null)) {
+            withContext(tl.asCtxElement("OK")) {
                 block()
                 assertEquals("OK", tl.get())
             }
@@ -52,7 +53,7 @@ class ThreadContextElementRestoreTest : TestBase() {
         }
         // Scenario #6: withContext(ThreadLocal) from withTimeout
         withTimeout(1000) {
-            withContext(tl.asContextElement("OK")) {
+            withContext(tl.asCtxElement("OK")) {
                 block()
                 assertEquals("OK", tl.get())
             }
@@ -60,7 +61,7 @@ class ThreadContextElementRestoreTest : TestBase() {
         }
         // Scenario #7: withContext(ThreadLocal) from withContext(Unconfined)
         withContext(Dispatchers.Unconfined) {
-            withContext(tl.asContextElement("OK")) {
+            withContext(tl.asCtxElement("OK")) {
                 block()
                 assertEquals("OK", tl.get())
             }
@@ -68,7 +69,7 @@ class ThreadContextElementRestoreTest : TestBase() {
         }
         // Scenario #8: withContext(ThreadLocal) from withContext(Default)
         withContext(Dispatchers.Default) {
-            withContext(tl.asContextElement("OK")) {
+            withContext(tl.asCtxElement("OK")) {
                 block()
                 assertEquals("OK", tl.get())
             }
@@ -76,7 +77,7 @@ class ThreadContextElementRestoreTest : TestBase() {
         }
         // Scenario #9: withContext(ThreadLocal) from withContext(mainDispatcher)
         withContext(mainDispatcher) {
-            withContext(tl.asContextElement("OK")) {
+            withContext(tl.asCtxElement("OK")) {
                 block()
                 assertEquals("OK", tl.get())
             }

@@ -1,18 +1,19 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.CommonThreadLocal
+import kotlinx.coroutines.internal.Symbol
+import kotlinx.coroutines.internal.commonThreadLocal
 import kotlinx.coroutines.testing.*
-import org.junit.*
-import org.junit.Test
-import java.lang.IllegalStateException
+import kotlin.coroutines.coroutineContext
 import kotlin.test.*
 
 @Suppress("RedundantAsync")
 class ThreadLocalTest : TestBase() {
-    private val stringThreadLocal = ThreadLocal<String?>()
-    private val intThreadLocal = ThreadLocal<Int?>()
+    private val stringThreadLocal = commonThreadLocal<String?>(Symbol("ThreadLocalTest#stringThreadLocal"))
+    private val intThreadLocal = commonThreadLocal<Int?>(Symbol("ThreadLocalTest#intThreadLocal"))
     private val executor = newFixedThreadPoolContext(1, "threadLocalTest")
 
-    @After
+    @AfterTest
     fun tearDown() {
         executor.close()
     }
@@ -21,7 +22,7 @@ class ThreadLocalTest : TestBase() {
     fun testThreadLocal() = runTest {
         assertNull(stringThreadLocal.get())
         assertFalse(stringThreadLocal.isPresent())
-        val deferred = async(Dispatchers.Default + stringThreadLocal.asContextElement("value")) {
+        val deferred = async(Dispatchers.Default + stringThreadLocal.asCtxElement("value")) {
             assertEquals("value", stringThreadLocal.get())
             assertTrue(stringThreadLocal.isPresent())
             withContext(executor) {
@@ -43,7 +44,7 @@ class ThreadLocalTest : TestBase() {
     fun testThreadLocalInitialValue() = runTest {
         intThreadLocal.set(42)
         assertFalse(intThreadLocal.isPresent())
-        val deferred = async(Dispatchers.Default + intThreadLocal.asContextElement(239)) {
+        val deferred = async(Dispatchers.Default + intThreadLocal.asCtxElement(239)) {
             assertEquals(239, intThreadLocal.get())
             withContext(executor) {
                 intThreadLocal.ensurePresent()
@@ -62,7 +63,7 @@ class ThreadLocalTest : TestBase() {
         intThreadLocal.set(314)
 
         val deferred = async(Dispatchers.Default
-                + intThreadLocal.asContextElement(value = 239) + stringThreadLocal.asContextElement(value = "pew")) {
+                + intThreadLocal.asCtxElement(value = 239) + stringThreadLocal.asCtxElement(value = "pew")) {
             assertEquals(239, intThreadLocal.get())
             assertEquals("pew", stringThreadLocal.get())
 
@@ -86,16 +87,16 @@ class ThreadLocalTest : TestBase() {
     fun testConflictingThreadLocals() = runTest {
         intThreadLocal.set(42)
 
-        val deferred = GlobalScope.async(intThreadLocal.asContextElement(1)) {
+        val deferred = GlobalScope.async(intThreadLocal.asCtxElement(1)) {
             assertEquals(1, intThreadLocal.get())
 
-            withContext(executor + intThreadLocal.asContextElement(42)) {
+            withContext(executor + intThreadLocal.asCtxElement(42)) {
                 assertEquals(42, intThreadLocal.get())
             }
 
             assertEquals(1, intThreadLocal.get())
 
-            val deferred = async(intThreadLocal.asContextElement(53)) {
+            val deferred = async(intThreadLocal.asCtxElement(53)) {
                 assertEquals(53, intThreadLocal.get())
             }
 
@@ -116,7 +117,7 @@ class ThreadLocalTest : TestBase() {
 
     @Test
     fun testWritesLostOnSuspensions() = runTest {
-        withContext(intThreadLocal.asContextElement(1)) {
+        withContext(intThreadLocal.asCtxElement(1)) {
             assertEquals(1, intThreadLocal.get())
             intThreadLocal.set(5)
             yield()
@@ -129,16 +130,16 @@ class ThreadLocalTest : TestBase() {
         stringThreadLocal.set("main")
 
         val deferred = async(Dispatchers.Default
-                + stringThreadLocal.asContextElement("initial")) {
+                + stringThreadLocal.asCtxElement("initial")) {
             assertEquals("initial", stringThreadLocal.get())
 
             stringThreadLocal.set("overridden") // <- this value is not reflected in the context, so it's not restored
 
-            withContext(executor + stringThreadLocal.asContextElement("ctx")) {
+            withContext(executor + stringThreadLocal.asCtxElement("ctx")) {
                 assertEquals("ctx", stringThreadLocal.get())
             }
 
-            val deferred = async(stringThreadLocal.asContextElement("async")) {
+            val deferred = async(stringThreadLocal.asCtxElement("async")) {
                 assertEquals("async", stringThreadLocal.get())
             }
 
@@ -154,25 +155,25 @@ class ThreadLocalTest : TestBase() {
 
 
     private data class Counter(var cnt: Int)
-    private val myCounterLocal = ThreadLocal<Counter>()
+    private val myCounterLocal = commonThreadLocal<Counter>(Symbol("ThreadLocalTest#myCounterLocal"))
 
     @Test
     fun testThreadLocalModificationMutableBox() = runTest {
         myCounterLocal.set(Counter(42))
 
         val deferred = async(Dispatchers.Default
-                + myCounterLocal.asContextElement(Counter(0))) {
+                + myCounterLocal.asCtxElement(Counter(0))) {
             assertEquals(0, myCounterLocal.get().cnt)
 
             // Mutate
             myCounterLocal.get().cnt = 71
 
-            withContext(executor + myCounterLocal.asContextElement(Counter(-1))) {
+            withContext(executor + myCounterLocal.asCtxElement(Counter(-1))) {
                 assertEquals(-1, myCounterLocal.get().cnt)
                 ++myCounterLocal.get().cnt
             }
 
-            val deferred = async(myCounterLocal.asContextElement(Counter(31))) {
+            val deferred = async(myCounterLocal.asCtxElement(Counter(31))) {
                 assertEquals(31, myCounterLocal.get().cnt)
                 ++myCounterLocal.get().cnt
             }
@@ -190,17 +191,17 @@ class ThreadLocalTest : TestBase() {
         expect(1)
         newSingleThreadContext("withContext").use {
             val data = 42
-            GlobalScope.async(Dispatchers.Default + intThreadLocal.asContextElement(42)) {
+            GlobalScope.async(Dispatchers.Default + intThreadLocal.asCtxElement(42)) {
 
                 assertEquals(data, intThreadLocal.get())
                 expect(2)
 
-                GlobalScope.async(it + intThreadLocal.asContextElement(31)) {
+                GlobalScope.async(it + intThreadLocal.asCtxElement(31)) {
                     assertEquals(31, intThreadLocal.get())
                     expect(3)
                 }.await()
 
-                withContext(it + intThreadLocal.asContextElement(2)) {
+                withContext(it + intThreadLocal.asCtxElement(2)) {
                     assertEquals(2, intThreadLocal.get())
                     expect(4)
                 }
@@ -220,16 +221,15 @@ class ThreadLocalTest : TestBase() {
     @Test
     fun testScope() = runTest {
         intThreadLocal.set(42)
-        val mainThread = Thread.currentThread()
-        GlobalScope.async {
-          assertNull(intThreadLocal.get())
-            assertNotSame(mainThread, Thread.currentThread())
-        }.await()
+        newSingleThreadContext("testScope").use {
+            GlobalScope.async(it) {
+                assertNull(intThreadLocal.get())
+            }.await()
 
-        GlobalScope.async(intThreadLocal.asContextElement()) {
-            assertEquals(42, intThreadLocal.get())
-            assertNotSame(mainThread, Thread.currentThread())
-        }.await()
+            GlobalScope.async(it + intThreadLocal.asCtxElement()) {
+                assertEquals(42, intThreadLocal.get())
+            }.await()
+        }
     }
 
     @Test
@@ -238,3 +238,9 @@ class ThreadLocalTest : TestBase() {
         assertFailsWith<IllegalStateException> { intThreadLocal.ensurePresent() }
     }
 }
+
+internal suspend inline fun CommonThreadLocal<*>.isPresent(): Boolean =
+    coroutineContext[CommonThreadLocalKey(this)] !== null
+
+internal suspend inline fun CommonThreadLocal<*>.ensurePresent(): Unit =
+    check(isPresent()) { "ThreadLocal $this is missing from context $coroutineContext" }
