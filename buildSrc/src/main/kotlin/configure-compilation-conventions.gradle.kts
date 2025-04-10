@@ -14,16 +14,21 @@ configure(subprojects) {
                 apiVersion = it
             }
             if (isMainTaskName && !unpublished.contains(project.name)) {
-                allWarningsAsErrors = true
-                freeCompilerArgs.addAll("-Xexplicit-api=strict", "-Xdont-warn-on-error-suppression")
+                setWarningsAsErrors(project)
+                freeCompilerArgs.addAll(
+                    "-Xexplicit-api=strict",
+                    "-Xdont-warn-on-error-suppression",
+                )
             }
+            configureKotlinUserProject()
             /* Coroutines do not interop with Java and these flags provide a significant
              * (i.e. close to double-digit) reduction in both bytecode and optimized dex size */
             if (this@configureEach is KotlinJvmCompile) {
                 freeCompilerArgs.addAll(
                     "-Xno-param-assertions",
                     "-Xno-call-assertions",
-                    "-Xno-receiver-assertions"
+                    "-Xno-receiver-assertions",
+                    "-Xjvm-default=disable",
                 )
             }
             if (this@configureEach is KotlinNativeCompile) {
@@ -33,6 +38,7 @@ configure(subprojects) {
                     "kotlin.experimental.ExperimentalNativeApi",
                 )
             }
+            addExtraCompilerFlags(project)
         }
 
     }
