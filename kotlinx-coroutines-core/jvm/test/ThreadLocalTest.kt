@@ -115,6 +115,16 @@ class ThreadLocalTest : TestBase() {
     }
 
     @Test
+    fun testWritesLostOnSuspensions() = runTest {
+        withContext(intThreadLocal.asContextElement(1)) {
+            assertEquals(1, intThreadLocal.get())
+            intThreadLocal.set(5)
+            yield()
+            assertEquals(1, intThreadLocal.get())
+        }
+    }
+
+    @Test
     fun testThreadLocalModification() = runTest {
         stringThreadLocal.set("main")
 
