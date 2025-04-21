@@ -87,6 +87,7 @@ public interface SendChannel<in E> {
      * ```
      * val channel = Channel<Int>()
      * launch {
+     *     delay(100)
      *     check(channel.receive() == 5)
      * }
      * channel.send(5) // suspends until 5 is received
