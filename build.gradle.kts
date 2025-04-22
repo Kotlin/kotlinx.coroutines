@@ -167,5 +167,7 @@ configure(subprojects.filter {
 AuxBuildConfiguration.configure(rootProject)
 rootProject.registerTopLevelDeployTask()
 
-// Report Kotlin compiler version when building project
-println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
+if (isSnapshotTrainEnabled(rootProject)) {
+    // Report Kotlin compiler version when building project
+    println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
+}
