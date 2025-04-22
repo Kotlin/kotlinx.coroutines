@@ -19,13 +19,19 @@ buildscript {
         return !buildSnapshotTrain.isNullOrEmpty()
     }
 
+    val firstPartyDependencies = listOf(
+        "kotlin",
+        "atomicfu",
+    )
+
     fun checkIsSnapshotVersion(): Boolean {
         var usingSnapshotVersion = checkIsSnapshotTrainProperty()
-        rootProject.properties.forEach { (key, value) ->
-            if (key.endsWith("_version") && value is String && value.endsWith("-SNAPSHOT")) {
-                println("NOTE: USING SNAPSHOT VERSION: $key=$value")
-                usingSnapshotVersion = true
-            }
+        for (key in firstPartyDependencies) {
+            val value = providers.gradleProperty("${key}_version").orNull
+                ?.takeIf { it.endsWith("-SNAPSHOT") }
+                ?: continue
+            println("NOTE: USING SNAPSHOT VERSION: $key=$value")
+            usingSnapshotVersion = true
         }
         return usingSnapshotVersion
     }
