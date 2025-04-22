@@ -114,7 +114,7 @@ fun Project.configureCommunityBuildTweaks() {
             }.files.single()
 
             manifest.readLines().forEach {
-                println(it)
+                LOGGER.info(it)
             }
         }
     }
@@ -154,7 +154,7 @@ fun shouldUseLocalMaven(project: Project): Boolean {
         val key = "${dependencyName}_version"
         val value = project.providers.gradleProperty(key).orNull
         if (value != null && value.endsWith("-SNAPSHOT")) {
-            println("NOTE: USING SNAPSHOT VERSION: $key=$value")
+            LOGGER.info("NOTE: USING SNAPSHOT VERSION: $key=$value")
             true
         } else {
             false
