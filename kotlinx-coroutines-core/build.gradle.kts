@@ -140,7 +140,7 @@ val jvmTest by tasks.getting(Test::class) {
     maxHeapSize = "1g"
     enableAssertions = true
     // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
-    if (!Idea.active && rootProject.properties["stress"] == null) {
+    if (!Idea.active && !providers.gradleProperty("stress").isPresent) {
         exclude("**/*LincheckTest*")
         exclude("**/*StressTest.*")
     }

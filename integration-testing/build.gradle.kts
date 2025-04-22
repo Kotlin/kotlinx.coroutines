@@ -15,7 +15,7 @@ buildscript {
         DO NOT change the name of these properties without adapting kotlinx.train build chain.
     */
     fun checkIsSnapshotTrainProperty(): Boolean {
-        val buildSnapshotTrain = rootProject.properties["build_snapshot_train"]?.toString()
+        val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull
         return !buildSnapshotTrain.isNullOrEmpty()
     }
 
@@ -64,10 +64,10 @@ java {
 }
 
 val kotlinVersion = if (extra["build_snapshot_train"] == true) {
-    rootProject.properties["kotlin_snapshot_version"]?.toString()
+    providers.gradleProperty("kotlin_snapshot_version").orNull
         ?: throw IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
 } else {
-    rootProject.properties["kotlin_version"].toString()
+    providers.gradleProperty("kotlin_version").get()
 }
 
 val asmVersion = property("asm_version")

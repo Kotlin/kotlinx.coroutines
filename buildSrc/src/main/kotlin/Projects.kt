@@ -10,14 +10,16 @@ fun Project.version(target: String): String {
     return property("${target}_version") as String
 }
 
-val Project.jdkToolchainVersion: Int get() = property("jdk_toolchain_version").toString().toInt()
+val Project.jdkToolchainVersion: Int get() =
+    providers.gradleProperty("jdk_toolchain_version").get().toInt()
 
 /**
  * TODO: check if this is still relevant.
  * It was introduced in <https://github.com/Kotlin/kotlinx.coroutines/pull/2389>, and the project for which this was
  * done is already long finished.
  */
-val Project.nativeTargetsAreEnabled: Boolean get() = rootProject.properties["disable_native_targets"] == null
+val Project.nativeTargetsAreEnabled: Boolean get() =
+    !providers.gradleProperty("disable_native_targets").isPresent
 
 val Project.sourceSets: SourceSetContainer
     get() = extensions.getByName("sourceSets") as SourceSetContainer

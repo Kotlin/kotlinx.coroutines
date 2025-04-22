@@ -40,7 +40,7 @@ allprojects {
     if (deployVersion != null) version = deployVersion
 
     if (isSnapshotTrainEnabled(rootProject)) {
-        val skipSnapshotChecks = rootProject.properties["skip_snapshot_checks"] != null
+        val skipSnapshotChecks = providers.gradleProperty("skip_snapshot_checks").isPresent
         if (!skipSnapshotChecks && version != version("atomicfu")) {
             throw IllegalStateException("Current deploy version is $version, but atomicfu version is not overridden (${version("atomicfu")}) for $this")
         }
