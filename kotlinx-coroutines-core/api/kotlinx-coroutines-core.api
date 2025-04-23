@@ -27,6 +27,8 @@ public final class kotlinx/coroutines/BuildersKt {
 	public static synthetic fun launch$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 	public static final fun runBlocking (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static synthetic fun runBlocking$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun runBlockingK (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static synthetic fun runBlockingK$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun withContext (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -122,6 +124,7 @@ public final class kotlinx/coroutines/CompletableDeferredKt {
 	public static final fun CompletableDeferred (Ljava/lang/Object;)Lkotlinx/coroutines/CompletableDeferred;
 	public static final fun CompletableDeferred (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableDeferred;
 	public static synthetic fun CompletableDeferred$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableDeferred;
+	public static final fun asDeferred (Lkotlinx/coroutines/CompletableDeferred;)Lkotlinx/coroutines/Deferred;
 	public static final fun completeWith (Lkotlinx/coroutines/CompletableDeferred;Ljava/lang/Object;)Z
 }
 
@@ -1096,6 +1099,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static synthetic fun onErrorReturn$default (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onStart (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onSubscription (Lkotlinx/coroutines/flow/SharedFlow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/SharedFlow;
+	public static final fun onSubscription (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/StateFlow;
 	public static final fun produceIn (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/channels/ReceiveChannel;
 	public static final fun publish (Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun publish (Lkotlinx/coroutines/flow/Flow;I)Lkotlinx/coroutines/flow/Flow;

@@ -4,6 +4,7 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import java.net.*
 import java.util.logging.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
@@ -102,7 +103,7 @@ fun Project.configureCommunityBuildTweaks() {
         }
     }
 
-    println("Manifest of kotlin-compiler-embeddable.jar for coroutines")
+    LOGGER.info("Manifest of kotlin-compiler-embeddable.jar for coroutines")
     val coreProject = subprojects.single { it.name == coreModule }
     configure(listOf(coreProject)) {
         configurations.matching { it.name == "kotlinCompilerClasspath" }.configureEach {
@@ -146,4 +147,51 @@ fun shouldUseLocalMaven(project: Project): Boolean {
         }
     }
     return hasSnapshotDependency || isSnapshotTrainEnabled(project)
+}
+
+/**
+ * Returns a non-null value if the CI needs to override the default behavior of treating warnings as errors.
+ * Then, `true` means that warnings should be treated as errors, `false` means that they should not.
+ */
+private fun warningsAreErrorsOverride(project: Project): Boolean? =
+    when (val prop = project.rootProject.properties["kotlin_Werror_override"] as? String) {
+        null -> null
+        "enable" -> true
+        "disable" -> false
+        else -> error("Unknown value for 'kotlin_Werror_override': $prop")
+    }
+
+/**
+ * Set warnings as errors, but allow the Kotlin User Project configuration to take over. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
+    if (warningsAreErrorsOverride(project) != false) {
+        allWarningsAsErrors = true
+    } else {
+        freeCompilerArgs.addAll("-Wextra", "-Xuse-fir-experimental-checkers")
+    }
+}
+
+/**
+ * Compiler flags required of Kotlin User Projects. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.configureKotlinUserProject() {
+    freeCompilerArgs.addAll(
+        "-Xreport-all-warnings", // emit warnings even if there are also errors
+        "-Xrender-internal-diagnostic-names", // render the diagnostic names in CLI
+    )
+}
+
+/**
+ * Additional compiler flags passed on a case-by-case basis. Should be applied after the other flags.
+ * See <https://github.com/Kotlin/kotlinx.coroutines/pull/4392#issuecomment-2775630200>
+ */
+fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
+    val extraOptions = project.rootProject.properties["kotlin_additional_cli_options"] as? String
+    if (extraOptions != null) {
+        LOGGER.info("""Adding extra compiler flags '$extraOptions' for a compilation in the project $${project.name}""")
+        extraOptions.split(" ")?.forEach {
+            if (it.isNotEmpty()) freeCompilerArgs.add(it)
+        }
+    }
 }
