@@ -15,17 +15,23 @@ buildscript {
         DO NOT change the name of these properties without adapting kotlinx.train build chain.
     */
     fun checkIsSnapshotTrainProperty(): Boolean {
-        val buildSnapshotTrain = rootProject.properties["build_snapshot_train"]?.toString()
+        val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull
         return !buildSnapshotTrain.isNullOrEmpty()
     }
 
+    val firstPartyDependencies = listOf(
+        "kotlin",
+        "atomicfu",
+    )
+
     fun checkIsSnapshotVersion(): Boolean {
         var usingSnapshotVersion = checkIsSnapshotTrainProperty()
-        rootProject.properties.forEach { (key, value) ->
-            if (key.endsWith("_version") && value is String && value.endsWith("-SNAPSHOT")) {
-                println("NOTE: USING SNAPSHOT VERSION: $key=$value")
-                usingSnapshotVersion = true
-            }
+        for (key in firstPartyDependencies) {
+            val value = providers.gradleProperty("${key}_version").orNull
+                ?.takeIf { it.endsWith("-SNAPSHOT") }
+                ?: continue
+            println("NOTE: USING SNAPSHOT VERSION: $key=$value")
+            usingSnapshotVersion = true
         }
         return usingSnapshotVersion
     }
@@ -64,10 +70,10 @@ java {
 }
 
 val kotlinVersion = if (extra["build_snapshot_train"] == true) {
-    rootProject.properties["kotlin_snapshot_version"]?.toString()
+    providers.gradleProperty("kotlin_snapshot_version").orNull
         ?: throw IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
 } else {
-    rootProject.properties["kotlin_version"].toString()
+    providers.gradleProperty("kotlin_version").get()
 }
 
 val asmVersion = property("asm_version")
