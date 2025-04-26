@@ -3,6 +3,7 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
 
 private val defaultMainDelayOptIn = systemProp("kotlinx.coroutines.main.delay", false)
 
@@ -91,8 +92,8 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
      * Livelock is possible only if `runBlocking` is called on internal default executed (which is used by default [delay]),
      * but it's not exposed as public API.
      */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        scheduleInvokeOnTimeout(timeMillis, block)
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle =
+        scheduleInvokeOnTimeout(timeout, block)
 
     override fun run() {
         ThreadLocalEventLoop.setEventLoop(this)
