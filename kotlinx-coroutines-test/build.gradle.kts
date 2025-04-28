@@ -1,5 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.targets.js.dsl.*
 
 kotlin {
     targets.withType(KotlinNativeTargetWithTests::class.java).configureEach {

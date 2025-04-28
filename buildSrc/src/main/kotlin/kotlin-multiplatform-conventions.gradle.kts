@@ -54,7 +54,6 @@ kotlin {
             api("org.jetbrains.kotlinx:atomicfu-js:${version("atomicfu")}")
         }
     }
-    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
     wasmJs {
         // Module name should be different from the one from JS
         // otherwise IC tasks that start clashing different modules with the same module name
