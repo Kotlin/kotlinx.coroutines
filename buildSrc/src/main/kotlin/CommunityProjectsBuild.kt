@@ -201,11 +201,12 @@ fun KotlinCommonCompilerOptions.configureKotlinUserProject() {
  * See <https://github.com/Kotlin/kotlinx.coroutines/pull/4392#issuecomment-2775630200>
  */
 fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
-    val extraOptions = project.providers.gradleProperty("kotlin_additional_cli_options").orNull
-    if (extraOptions != null) {
-        LOGGER.info("""Adding extra compiler flags '$extraOptions' for a compilation in the project $${project.name}""")
-        extraOptions.split(" ").forEach {
-            if (it.isNotEmpty()) freeCompilerArgs.add(it)
+    val extraOptions = project.providers.gradleProperty("kotlin_additional_cli_options")
+        .orNull?.let { options ->
+            options.removeSurrounding("\"").split(" ").filter { it.isNotBlank() }
         }
+    extraOptions?.forEach { option ->
+        freeCompilerArgs.add(option)
+        LOGGER.info("""Adding extra compiler flag '$option' for a compilation in the project $${project.name}""")
     }
 }
