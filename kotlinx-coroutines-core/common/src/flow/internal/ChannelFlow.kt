@@ -217,12 +217,11 @@ internal suspend fun <T, V> withContextUndispatched(
     value: V,
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
     block: suspend (V) -> T
-): T =
+): T = withCoroutineContext(newContext, countOrElement) {
     suspendCoroutineUninterceptedOrReturn { uCont ->
-        withCoroutineContext(newContext, countOrElement) {
-            block.startCoroutineUninterceptedOrReturn(value, StackFrameContinuation(uCont, newContext))
-        }
+        block.startCoroutineUninterceptedOrReturn(value, StackFrameContinuation(uCont, newContext))
     }
+}
 
 // Continuation that links the caller with uCont with walkable CoroutineStackFrame
 private class StackFrameContinuation<T>(
