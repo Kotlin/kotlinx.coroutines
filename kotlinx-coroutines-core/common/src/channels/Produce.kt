@@ -266,6 +266,7 @@ public fun <E> CoroutineScope.produce(
     produce(context, capacity, BufferOverflow.SUSPEND, start, onCompletion, block)
 
 // Internal version of produce that is maximally flexible, but is not exposed through public API (too many params)
+// (scope + context1).produce(context2) == scope.produce(context1 + context2)
 internal fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,

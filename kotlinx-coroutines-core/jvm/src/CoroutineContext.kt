@@ -9,6 +9,13 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
  * [ContinuationInterceptor] is specified and adds optional support for debugging facilities (when turned on)
  * and copyable-thread-local facilities on JVM.
  * See [DEBUG_PROPERTY_NAME] for description of debugging facilities on JVM.
+ *
+ * When [CopyableThreadContextElement] values are used, the logic for processing them is as follows:
+ * - If [this] or [context] has a copyable thread-local value whose key is absent in [context] or [this],
+ *   it is [copied][CopyableThreadContextElement.copyForChild] to the new context.
+ * - If [this] has a copyable thread-local value whose key is present in [context],
+ *   it is [merged][CopyableThreadContextElement.mergeForChild] with the one from [context].
+ * - The other values are added to the new context as is, with [context] values taking precedence.
  */
 @ExperimentalCoroutinesApi
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
@@ -37,13 +44,14 @@ private fun CoroutineContext.hasCopyableElements(): Boolean =
 
 /**
  * Folds two contexts properly applying [CopyableThreadContextElement] rules when necessary.
- * The rules are the following:
- * - If neither context has CTCE, the sum of two contexts is returned
- * - Every CTCE from the left-hand side context that does not have a matching (by key) element from right-hand side context
- *   is [copied][CopyableThreadContextElement.copyForChild] if [isNewCoroutine] is `true`.
- * - Every CTCE from the left-hand side context that has a matching element in the right-hand side context is [merged][CopyableThreadContextElement.mergeForChild]
- * - Every CTCE from the right-hand side context that hasn't been merged is copied
- * - Everything else is added to the resulting context as is.
+
+ * The rules are as follows:
+ * - If both contexts have the same (by key) CTCE, they are [merged][CopyableThreadContextElement.mergeForChild].
+ * - If [isNewCoroutine] is `true`, the CTCEs that one context has and the other does not are
+ *   [copied][CopyableThreadContextElement.copyForChild].
+ * - If [isNewCoroutine] is `false`, then the CTCEs that the right context has and the left does not are copied,
+ *   but those that only the left context has are not copied but added to the resulting context as is.
+ * - Every non-CTCE is added to the resulting context as is.
  */
 private fun foldCopies(originalContext: CoroutineContext, appendContext: CoroutineContext, isNewCoroutine: Boolean): CoroutineContext {
     // Do we have something to copy left-hand side?
