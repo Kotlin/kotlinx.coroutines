@@ -132,29 +132,27 @@ class ThreadContextMutableCopiesTest : TestBase() {
 
     @Test
     fun testDataIsCopiedThroughFlowOnUndispatched() = runTest {
-        expect(1)
-        val root = MyMutableElement(ArrayList())
-        val originalData = root.mutableData
+        val originalData = mutableListOf("X")
+        val root = MyMutableElement(originalData)
         flow {
             assertNotSame(originalData, threadLocalData.get())
+            assertEquals(originalData, threadLocalData.get())
             emit(1)
         }
             .flowOn(root)
             .single()
-        finish(2)
     }
 
     @Test
     fun testDataIsCopiedThroughFlowOnDispatched() = runTest {
-        expect(1)
-        val root = MyMutableElement(ArrayList())
-        val originalData = root.mutableData
+        val originalData = mutableListOf("X")
+        val root = MyMutableElement(originalData)
         flow {
             assertNotSame(originalData, threadLocalData.get())
+            assertEquals(originalData, threadLocalData.get())
             emit(1)
         }
             .flowOn(root + Dispatchers.Default)
             .single()
-        finish(2)
     }
 }

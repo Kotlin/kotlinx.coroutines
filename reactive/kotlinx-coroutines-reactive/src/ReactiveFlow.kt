@@ -69,11 +69,12 @@ private class PublisherAsFlow<T : Any>(
 
     override suspend fun collect(collector: FlowCollector<T>) {
         val collectContext = coroutineContext
-        val newDispatcher = context[ContinuationInterceptor]
-        if (newDispatcher == null || newDispatcher == collectContext[ContinuationInterceptor]) {
-            // fast path -- subscribe directly in this dispatcher
-            return collectImpl(collectContext + context, collector)
+        val newContext = collectContext.newCoroutineContext(context)
+        // quickest path: if the context has not changed, just subscribe inline
+        if (newContext == collectContext) {
+            return collectImpl(collectContext, collector)
         }
+        // TODO: copy-paste/share the ChannelFlowOperatorImpl implementation for the same-dispatcher quick path
         // slow path -- produce in a separate dispatcher
         super.collect(collector)
     }
