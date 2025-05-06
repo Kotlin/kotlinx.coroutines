@@ -75,13 +75,7 @@ private class PublisherAsFlow<T : Any>(
             return collectImpl(collectContext + context, collector)
         }
         // slow path -- produce in a separate dispatcher
-        collectSlowPath(collector)
-    }
-
-    private suspend fun collectSlowPath(collector: FlowCollector<T>) {
-        coroutineScope {
-            collector.emitAll(produceImpl(this + context))
-        }
+        super.collect(collector)
     }
 
     private suspend fun collectImpl(injectContext: CoroutineContext, collector: FlowCollector<T>) {
