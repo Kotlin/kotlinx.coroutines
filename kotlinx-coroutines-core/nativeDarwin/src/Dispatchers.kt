@@ -46,7 +46,7 @@ private class DarwinMainDispatcher(
         val timer = Timer()
         val timerBlock: TimerBlock = {
             timer.dispose()
-            continuation.resume(Unit)
+            with(continuation) { resumeUndispatched(Unit) }
         }
         timer.start(timeMillis, timerBlock)
         continuation.disposeOnCancellation(timer)

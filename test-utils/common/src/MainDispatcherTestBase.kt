@@ -1,6 +1,7 @@
 package kotlinx.coroutines.testing
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
 abstract class MainDispatcherTestBase: TestBase() {
@@ -148,6 +149,25 @@ abstract class MainDispatcherTestBase: TestBase() {
                 checkIsMainThread()
                 delay(Long.MAX_VALUE)
             }.join()
+        }
+    }
+
+    /** Tests that [delay] runs the task inline instead of explicitly scheduling it
+     * (which can be observed by the event loop's ordering). */
+    @Test
+    fun testUndispatchedAfterDelay() = runTestOrSkip {
+        launch(Dispatchers.Main.immediate) {
+            val channel = Channel<Unit>()
+            expect(1)
+            launch {
+                channel.receive()
+                expect(3)
+            }
+            delay(100)
+            checkIsMainThread()
+            expect(2)
+            channel.send(Unit)
+            finish(4)
         }
     }
 
