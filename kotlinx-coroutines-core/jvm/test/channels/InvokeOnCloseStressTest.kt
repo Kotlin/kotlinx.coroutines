@@ -4,7 +4,6 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
-import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 import kotlin.test.*

@@ -23,7 +23,7 @@ class LeakedExceptionTest : TestBase() {
             val flow = rxSingle<Unit>(dispatcher) { throw TestException() }.toFlowable().asFlow()
             runBlocking {
                 repeat(10000) {
-                    combine(flow, flow) { _, _ -> Unit }
+                    combine(flow, flow) { _, _ -> }
                         .catch {}
                         .collect {}
                 }
@@ -39,7 +39,7 @@ class LeakedExceptionTest : TestBase() {
                 .asFlow()
             runBlocking {
                 repeat(10000) {
-                    combine(flow, flow) { _, _ -> Unit }
+                    combine(flow, flow) { _, _ -> }
                         .catch {}
                         .collect {}
                 }
@@ -53,7 +53,7 @@ class LeakedExceptionTest : TestBase() {
             val flow = rxFlowable<Unit>(dispatcher) { throw TestException() }.asFlow()
             runBlocking {
                 repeat(10000) {
-                    combine(flow, flow) { _, _ -> Unit }
+                    combine(flow, flow) { _, _ -> }
                         .catch {}
                         .collect {}
                 }
@@ -82,7 +82,7 @@ class LeakedExceptionTest : TestBase() {
                 throw TestException()
             }.asFlow()
             runBlocking {
-                combine(flow, flow) { _, _ -> Unit }
+                combine(flow, flow) { _, _ -> }
                     .catch {}
                     .collect {}
             }
