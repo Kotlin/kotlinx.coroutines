@@ -391,11 +391,9 @@ internal class CoroutineScheduler(
      *   - Concurrent [close] that effectively shutdowns the worker thread.
      * Used for [yield].
      */
-    fun dispatch(
-        block: Runnable, taskContext: TaskContext = NonBlockingContext, fair: Boolean = false, track: Boolean = true
-    ) {
+    fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, fair: Boolean = false) {
         val task = createTask(block, taskContext)
-        if (track) trackTask(task) // this is needed for virtual time support
+        trackTask(task) // this is needed for virtual time support
         val isBlockingTask = task.isBlocking
         // Invariant: we increment counter **before** publishing the task
         // so executing thread can safely decrement the number of blocking tasks

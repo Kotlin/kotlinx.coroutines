@@ -98,5 +98,7 @@ private fun defaultDelayRunningUnconfinedLoop(): Nothing {
 
 /** A view separate from [Dispatchers.IO].
  * [Int.MAX_VALUE] instead of `1` to avoid needlessly using the [LimitedDispatcher] machinery. */
+// Without `lazy`, there is a cycle between `ioView` and `DefaultDelay` initialization, leading to a segfault:
+// `ioView` attempts to create a `LimitedDispatcher`, which `by`-delegates to `DefaultDelay`,
+// which is a `val` in this same file, leading to the initialization of `ioView`, forming a cycle.
 private val ioView by lazy { Dispatchers.IO.limitedParallelism(Int.MAX_VALUE) }
-// Without `lazy`, there is a cycle between `ioView` and `DefaultDelay` initialization, leading to a segfault.

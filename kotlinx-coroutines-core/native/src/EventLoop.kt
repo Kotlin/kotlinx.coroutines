@@ -12,7 +12,7 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
 
     protected actual fun unpark() {
         startThreadOrObtainSleepingThread()?.let {
-            it.executeAfter(0L, {})
+            it.executeAfter(0L) {} // send an empty task to unpark the waiting event loop
         }
     }
 }
