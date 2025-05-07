@@ -155,6 +155,7 @@ abstract class MainDispatcherTestBase: TestBase() {
     /** Tests that [delay] runs the task inline instead of explicitly scheduling it
      * (which can be observed by the event loop's ordering). */
     @Test
+    @NoJs @NoWasmWasi @NoWasmJs // This test does not work for environments with a single always-on event loop
     fun testUndispatchedAfterDelay() = runTestOrSkip {
         launch(Dispatchers.Main.immediate) {
             val channel = Channel<Unit>()
