@@ -37,11 +37,11 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
 
     @InternalCoroutinesApi
     override fun dispatchYield(context: CoroutineContext, block: Runnable) {
-        DefaultScheduler.dispatchWithContext(block, BlockingContext, fair = true, track = true)
+        DefaultScheduler.dispatchWithContext(block, BlockingContext, fair = true)
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        DefaultScheduler.dispatchWithContext(block, BlockingContext, fair = false, track = true)
+        DefaultScheduler.dispatchWithContext(block, BlockingContext, fair = false)
     }
 
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
@@ -59,7 +59,7 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
 }
 
 internal fun scheduleBackgroundIoTask(block: Runnable) {
-    DefaultScheduler.dispatchWithContext(block, BlockingContext, fair = false, track = false)
+    DefaultScheduler.dispatchWithContext(UntrackableTask(block), BlockingContext, fair = false)
 }
 
 // Dispatchers.IO
@@ -130,8 +130,8 @@ internal open class SchedulerCoroutineDispatcher(
         coroutineScheduler.dispatch(block, fair = true)
     }
 
-    internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean, track: Boolean) {
-        coroutineScheduler.dispatch(block, context, fair = fair, track = track)
+    internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean) {
+        coroutineScheduler.dispatch(block, context, fair = fair)
     }
 
     override fun close() {
