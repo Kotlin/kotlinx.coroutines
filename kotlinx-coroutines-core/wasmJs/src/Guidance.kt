@@ -16,9 +16,10 @@ import kotlin.js.Promise
         "This pattern should be avoided. " +
         "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING)
-public fun <T> CoroutineScope.promise(
+@OptIn(ExperimentalWasmJsInterop::class)
+public fun <T: JsAny?> CoroutineScope.promise(
     context: Job,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
-): Promise<JsAny?> =
+): Promise<T> =
     promise(context as CoroutineContext, start, block)
