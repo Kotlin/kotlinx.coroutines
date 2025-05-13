@@ -182,7 +182,7 @@ public abstract class CoroutineDispatcher :
      *
      * This means that coroutines are not guaranteed to run to completion before the dispatcher starts executing
      * code from another coroutine.
-     * The only guarantee in this example is that two `println` calls in several threads simultaneously.
+     * The only guarantee in this example is that two `println` calls will not occur in several threads simultaneously.
      *
      * Use a [kotlinx.coroutines.sync.Mutex] or a [kotlinx.coroutines.sync.Semaphore] for limiting concurrency.
      *
