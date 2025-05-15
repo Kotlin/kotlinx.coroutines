@@ -8,7 +8,7 @@ import java.net.*
 /**
  * Package-list by external URL for documentation generation.
  */
-fun Project.configureExternalLinks(
+fun Project.externalDocumentationLink(
     url: String,
     packageList: File = projectDir.resolve("package.list")
 ) {
