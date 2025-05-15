@@ -327,7 +327,7 @@ import kotlin.coroutines.intrinsics.*
  * job.join() // finishes normally
  * ```
  *
- * If a coroutine fails with an exception,
+ * If a coroutine fails with a non-[CancellationException] exception,
  * is not a coroutine created with lexically scoped coroutine builders like [coroutineScope] or [withContext],
  * *and* its parent is a normal [Job] (not a [SupervisorJob]),
  * the parent fails with that exception, too (and the same logic applies recursively to the parent of the parent, etc.):
@@ -374,10 +374,13 @@ import kotlin.coroutines.intrinsics.*
  * the first one to fail will be propagated, and the rest will be attached to it as
  * [suppressed exceptions][Throwable.suppressedExceptions].
  *
- * If a coroutine fails with an exception and cannot cancel its parent
+ * If a coroutine fails with a non-[CancellationException] exception and cannot cancel its parent
  * (because its parent is a [SupervisorJob] or there is none at all),
  * the failure is reported through other channels.
  * See [CoroutineExceptionHandler] for details.
+ *
+ * Failing with a [CancellationException] only cancels the coroutine itself and its children.
+ * It does not affect the parent or any other coroutines and is not considered a failure.
  *
  * ### How-to: stop failures of child coroutines from cancelling other coroutines
  *
