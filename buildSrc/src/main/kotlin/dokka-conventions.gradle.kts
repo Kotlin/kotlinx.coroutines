@@ -58,11 +58,6 @@ private fun Project.condigureDokkaSetup() {
                 remoteUrl = URI("https://github.com/kotlin/kotlinx.coroutines/tree/master")
             }
         }
-
-        // TODO: WA for KT-71784
-        dokkaSourceSets.matching { it.name == "commonMain" }.configureEach {
-            suppress.set(true)
-        }
     }
 }
 
