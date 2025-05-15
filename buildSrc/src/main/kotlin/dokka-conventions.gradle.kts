@@ -1,6 +1,3 @@
-import org.gradle.api.Project
-import org.jetbrains.dokka.gradle.*
-import java.io.File
 import java.net.*
 
 
@@ -9,28 +6,23 @@ plugins {
 }
 
 val knit_version: String by project
-private val projetsWithoutDokka = unpublished + "kotlinx-coroutines-bom" + jdk8ObsoleteModule
-private val coreModuleDocsUrl = "https://kotlinlang.org/api/kotlinx.coroutines/$coreModule/"
-private val coreModuleDocsPackageList = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
+private val projectsWithoutDokka = unpublished + "kotlinx-coroutines-bom" + jdk8ObsoleteModule
+private val subprojectWithDokka = subprojects.filterNot { projectsWithoutDokka.contains(it.name) }
 
-configure(subprojects.filterNot { projetsWithoutDokka.contains(it.name) }) {
+configure(subprojectWithDokka) {
     apply(plugin = "org.jetbrains.dokka")
     configurePathsaver()
+    configureDokkaTemplatesDir()
     condigureDokkaSetup()
-    configureExternalLinks()
 }
 
 // For top-level multimodule collection
-dokka {
-    setupDokkaTemplatesDir()
-}
-dependencies {
-    dokkaPlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+configurePathsaver()
+configureDokkaTemplatesDir()
 
-    subprojects.forEach {
-        if (it.name !in projetsWithoutDokka) {
-            dokka(it)
-        }
+dependencies {
+    subprojectWithDokka.forEach {
+        dokka(it)
     }
 }
 
@@ -47,26 +39,12 @@ private fun Project.condigureDokkaSetup() {
         dokkaPublications.configureEach {
             suppressInheritedMembers = true
         }
-
-        setupDokkaTemplatesDir()
-
         dokkaSourceSets.configureEach {
             jdkVersion = 11
             includes.from("README.md")
             sourceLink {
                 localDirectory = rootDir
-                remoteUrl = URI("https://github.com/kotlin/kotlinx.coroutines/tree/master")
-            }
-        }
-    }
-}
-
-private fun Project.configureExternalLinks() {
-    dokka {
-        dokkaSourceSets.configureEach {
-            externalDocumentationLinks.register("kotlinx-coroutines-core") {
-                url = URI(coreModuleDocsUrl)
-                packageListUrl = File(coreModuleDocsPackageList).toURI()
+                remoteUrl("https://github.com/kotlin/kotlinx.coroutines/tree/master")
             }
         }
     }
@@ -81,8 +59,10 @@ private fun Project.configureExternalLinks() {
  * - Template setup: https://github.com/JetBrains/kotlin-web-site/blob/master/.teamcity/builds/apiReferences/kotlinx/coroutines/KotlinxCoroutinesPrepareDokkaTemplates.kt
  * - Templates repository: https://github.com/JetBrains/kotlin-web-site/tree/master/dokka-templates
  */
-private fun DokkaExtension.setupDokkaTemplatesDir() {
-    pluginsConfiguration.html {
-        templatesDir = rootDir.resolve("dokka-templates")
+private fun Project.configureDokkaTemplatesDir() {
+    dokka {
+        pluginsConfiguration.html {
+            templatesDir = rootDir.resolve("dokka-templates")
+        }
     }
 }
