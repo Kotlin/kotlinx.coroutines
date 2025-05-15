@@ -83,6 +83,6 @@ private fun Project.configureExternalLinks() {
  */
 private fun DokkaExtension.setupDokkaTemplatesDir() {
     pluginsConfiguration.html {
-        templatesDir = file(rootDir.toString().replace('\\', '/') + "/dokka-templates")
+        templatesDir = rootDir.resolve("dokka-templates")
     }
 }
