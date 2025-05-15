@@ -45,7 +45,7 @@ import kotlin.coroutines.intrinsics.*
  *   Some commonly used dispatchers are provided in the [Dispatchers] object.
  * - [CoroutineExceptionHandler] that defines how failures of child coroutines should be reported whenever
  *   structured concurrency does not provide a way to propagate the failure to the parent
- *   (that is, a [SupervisorJob] is used).
+ *   (typically, because the root scope of the ancestry tree is not lexically scoped).
  * - A [CoroutineName] element that can be used to name coroutines for debugging purposes.
  * - On the JVM, a `ThreadContextElement` ensures that a specific thread-local value gets set on the thread
  *   that executes the coroutine.
@@ -183,7 +183,11 @@ import kotlin.coroutines.intrinsics.*
  * `by`-delegation to implement the interface:
  *
  * ```
- * class MyEntity : CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.Main)
+ * class MyEntity : CoroutineScope by CoroutineScope(
+ *     SupervisorJob() + Dispatchers.Main + CoroutineExceptionHandler { _, e ->
+ *         println("Error in coroutine: $e")
+ *     }
+ * )
  * ```
  *
  * ## Structured concurrency in detail
@@ -323,8 +327,10 @@ import kotlin.coroutines.intrinsics.*
  * job.join() // finishes normally
  * ```
  *
- * If a coroutine fails with an exception *and* its parent is a normal [Job] (not a [SupervisorJob]),
- * the parent fails with that exception, too:
+ * If a coroutine fails with an exception,
+ * is not a coroutine created with lexically scoped coroutine builders like [coroutineScope] or [withContext],
+ * *and* its parent is a normal [Job] (not a [SupervisorJob]),
+ * the parent fails with that exception, too (and the same logic applies recursively to the parent of the parent, etc.):
  *
  * ```
  * check(
@@ -340,6 +346,11 @@ import kotlin.coroutines.intrinsics.*
  *     }.exceptionOrNull()
  *     is IllegalStateException
  * )
+ * // the calling coroutine will *not* be cancelled,
+ * // even though the caller is a parent of the failed `coroutineScope`,
+ * // because `coroutineScope` is a lexically scoped coroutine builder,
+ * // which propagate their exceptions by rethrowing them.
+ * check(currentCoroutineContext().isActive)
  * ```
  *
  * Child jobs can lead to the failure of the parent even if the parent has already finished its work
@@ -359,9 +370,13 @@ import kotlin.coroutines.intrinsics.*
  * )
  * ```
  *
- * If a coroutine fails with an exception and its parent is a [SupervisorJob],
- * the parent is not cancelled (and therefore, the other children are also not affected),
- * but the failure is reported through other channels.
+ * If several coroutines fail with non-[CancellationException] exceptions,
+ * the first one to fail will be propagated, and the rest will be attached to it as
+ * [suppressed exceptions][Throwable.suppressedExceptions].
+ *
+ * If a coroutine fails with an exception and cannot cancel its parent
+ * (because its parent is a [SupervisorJob] or there is none at all),
+ * the failure is reported through other channels.
  * See [CoroutineExceptionHandler] for details.
  *
  * ### How-to: stop failures of child coroutines from cancelling other coroutines
@@ -485,8 +500,8 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * If you want to append additional elements to the main scope, use the [CoroutineScope.plus] operator:
  * `val scope = MainScope() + CoroutineName("MyActivity")`.
  *
- * **Pitfall**: by default, this scope does not include a [CoroutineExceptionHandler], but uses a [SupervisorJob].
- * Together, this means that if a child coroutine created with [launch ]fails with an exception,
+ * **Pitfall**: this scope does not include a [CoroutineExceptionHandler] and creates a job without a parent.
+ * Together, this means that if a child coroutine created with [launch] fails with an exception,
  * the failure will be reported in a platform-specific manner (e.g., a crash on Android).
  * Always supply a [CoroutineExceptionHandler] to [MainScope] using the [plus] operator if there is a chance
  * that a child coroutine may fail with an exception,
@@ -539,6 +554,8 @@ public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatch
  *     // ...
  * }
  * ```
+ *
+ * @see CoroutineScope.ensureActive for a function that throws an exception instead of returning a boolean value.
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public val CoroutineScope.isActive: Boolean
@@ -717,44 +734,63 @@ public val CoroutineScope.isActive: Boolean
 public object GlobalScope : CoroutineScope {
     /**
      * Returns [EmptyCoroutineContext].
+     *
+     * Note that, unlike other [CoroutineScope] implementations, this scope does not have a [Job] in its context.
      */
     override val coroutineContext: CoroutineContext
         get() = EmptyCoroutineContext
 }
 
 /**
- * Creates a [CoroutineScope] and calls the specified suspend block with this scope.
- * The provided scope inherits its [coroutineContext][CoroutineScope.coroutineContext] from the outer scope, using the
- * [Job] from that context as the parent for a new [Job].
+ * Runs the given [block] in-place in a new [CoroutineScope] based on the caller coroutine context,
+ * returning its result.
  *
- * This function is designed for _concurrent decomposition_ of work. When any child coroutine in this scope fails,
- * this scope fails, cancelling all the other children (for a different behavior, see [supervisorScope]).
- * This function returns as soon as the given block and all its child coroutines are completed.
- * A usage of a scope looks like this:
+ * The lifecycle of the new [Job] begins with starting the [block] and completes when both the [block] and
+ * all the coroutines launched in the scope complete.
+ *
+ * The context of the new scope is obtained by combining the [currentCoroutineContext] with a new [Job]
+ * whose parent is the [Job] of the caller [currentCoroutineContext] (if any).
+ * The [Job] of the new scope is not a normal child of the caller coroutine but a lexically scoped one,
+ * meaning that the failure of the [Job] will not affect the parent [Job].
+ * Instead, the exception leading to the failure will be rethrown to the caller of this function.
+ *
+ * If any child coroutine in this scope fails with an exception,
+ * the scope fails, cancelling all the other children and its own [block].
+ * See [supervisorScope] for a similar function that allows child coroutines to fail independently.
+ *
+ * Together, this makes [coroutineScope] suitable for representing a task
+ * that can be split into several subtasks,
+ * which can be executed concurrently but have their results combined at some point,
+ * all in the span of running a single function:
  *
  * ```
- * suspend fun showSomeData() = coroutineScope {
- *     val data = async(Dispatchers.IO) { // <- extension on current scope
- *      ... load some UI data for the Main thread ...
+ * // If the current coroutine is cancelled, `firstFile`, `secondFile`,
+ * // and `await()` get cancelled.
+ * fun downloadAndCompareTwoFiles() = coroutineScope {
+ *     val firstFile = async {
+ *         // If this fails, `secondFile` and `await()` get cancelled,
+ *         // and `downloadAndCompareTwoFiles` rethrows the exception,
+ *         // but does not cancel the calling coroutine,
+ *         // giving it a chance to recover
+ *         downloadFile("1.txt")
  *     }
- *
- *     withContext(Dispatchers.Main) {
- *         doSomeWork()
- *         val result = data.await()
- *         display(result)
+ *     val secondFile = async {
+ *         downloadFile("2.txt")
  *     }
+ *     firstFile.await().contentEquals(secondFile.await())
  * }
  * ```
  *
- * The scope in this example has the following semantics:
- * 1) `showSomeData` returns as soon as the data is loaded and displayed in the UI.
- * 2) If `doSomeWork` throws an exception, then the `async` task is cancelled and `showSomeData` rethrows that exception.
- * 3) If the outer scope of `showSomeData` is cancelled, both started `async` and `withContext` blocks are cancelled.
- * 4) If the `async` block fails, `withContext` will be cancelled.
- *
- * The method may throw a [CancellationException] if the current job was cancelled externally,
- * rethrow the exception thrown by [block], or throw an unhandled [Throwable] if there is one
- * (for example, from a crashed coroutine that was started with [launch][CoroutineScope.launch] in this scope).
+ * Rephrasing this in more practical terms, the specific list of structured concurrency interactions is as follows:
+ * - Cancelling the caller's [currentCoroutineContext] leads to cancellation of the new [CoroutineScope]
+ *   (corresponding to the code running in the [block]), which in turn cancels all the coroutines launched in it.
+ * - If the new [CoroutineScope] fails with an exception
+ *   (which happens if either its [block] or any child coroutine fails with an exception),
+ *   the exception is rethrown to the caller,
+ *   without directly affecting the caller's [Job].
+ *   Note that this happens on any child coroutine's failure even if [block] finishes successfully.
+ * - [coroutineScope] will only finish when all the coroutines launched in it finish.
+ *   If all of them complete without failing, the [coroutineScope] returns the result of the [block] to the caller.
  */
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
     contract {
@@ -767,11 +803,242 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
 }
 
 /**
- * Creates a [CoroutineScope] that wraps the given coroutine [context].
+ * Creates a [CoroutineScope] with the given coroutine [context].
  *
- * If the given [context] does not contain a [Job] element, then a default `Job()` is created.
- * This way, failure of any child coroutine in this scope or [cancellation][CoroutineScope.cancel] of the scope itself
- * cancels all the scope's children, just like inside [coroutineScope] block.
+ * The provided [context] should contain a [Job], which will represent the lifecycle of the scope and become the parent
+ * of any coroutines launched in this scope.
+ *
+ * If a [Job] is not passed, a new `Job()` is created and added to the context.
+ * This is error-prone and should be avoided; it is only provided for backward compatibility.
+ *
+ * ## Intended usage
+ *
+ * ### Non-lexically-scoped [supervisorScope]
+ *
+ * The most common pattern of the `CoroutineScope()` builder function usage is to obtain a scope whose lifetime
+ * matches the lifetime of some object, with child coroutines performing operations on that object.
+ * Once the object gets destroyed, the coroutines in this scope must be cancelled.
+ * This is achieved with this pattern:
+ *
+ * ```
+ * class ThingWithItsOwnLifetime(scope: CoroutineScope? = null): AutoCloseable {
+ *     private val scope = scope ?: CoroutineScope(
+ *         SupervisorJob() + Dispatchers.Main +
+ *         CoroutineExceptionHandler { _, e ->
+ *             // handle uncaught coroutine exceptions appropriately
+ *         }
+ *     )
+ *
+ *     fun doSomethingWithThing() = scope.launch {
+ *         // this computation gets cancelled when the thing gets destroyed
+ *     }
+ *
+ *     override fun close() {
+ *         // the computations should all stop running
+ *         scope.cancel()
+ *     }
+ * }
+ * ```
+ *
+ * The `scope` parameter is needed to support injecting coroutine scopes for testing.
+ *
+ * ### Non-lexically-scoped [coroutineScope]
+ *
+ * An equivalent to [coroutineScope] represents a group of tasks that work together to achieve one goal and should
+ * succeed or fail together.
+ *
+ * ```
+ * class SubtaskPool(scope: CoroutineScope? = null) {
+ *     private val job = CompletableDeferred<Unit>()
+ *     private val scope = scope ?: CoroutineScope(job + Dispatchers.IO)
+ *
+ *     fun addPieceOfWork() = scope.launch {
+ *         // this coroutine will be cancelled when the pool is closed.
+ *         // if this coroutine fails, the pool will fail too
+ *     }
+ *
+ *     fun cancel() {
+ *         // this will cancel all the coroutines launched in this scope
+ *         job.cancel()
+ *     }
+ *
+ *     suspend fun await() {
+ *         job.complete(Unit)
+ *         job.await()
+ *     }
+ * }
+ * ```
+ *
+ * ## Pitfalls
+ *
+ * ### No memoization
+ *
+ * Every call to this function creates a new instance of [CoroutineScope].
+ * If a [Job] instance is passed in the [context], it is less efficient, but is not a bug, as then,
+ * the different [CoroutineScope] instances will still represent the same lifecycle and will be cancelled together.
+ * However, if the [context] does not contain a [Job], then every created [CoroutineScope]
+ * will be unrelated to the previous ones.
+ *
+ * ```
+ * // // 1) ANTIPATTERN! DO NOT WRITE: creates an independent scope every time
+ * // val myScope: CoroutineScope get() = CoroutineScope(Dispatchers.Main)
+ * // // 2) Write this instead:
+ * // val myScope: CoroutineScope       = CoroutineScope(Dispatchers.Main)
+ * myScope.launch {
+ *     try {
+ *         awaitCancellation()
+ *     } finally {
+ *         println("This line will only be printed in scenario 2)")
+ *     }
+ * }
+ * myScope.cancel()
+ * ```
+ *
+ * ### Forgetting to propagate or handle exceptions
+ *
+ * Every [CoroutineScope] without an explicit [Job] in its context is a potential source of crashes or degraded
+ * performance due to logging unhandled exceptions.
+ * `CoroutineScope(Dispatchers.Default).launch { error("") }` is enough to crash
+ * an Android or Kotlin/Native application.
+ * The reason for this is that the [Job] created for this scope does not have a parent,
+ * and therefore, there is no way to propagate the exception up the ancestry chain or to the caller of some function.
+ *
+ * One way to avoid this is to use a [CoroutineExceptionHandler] in the context of the scope:
+ *
+ * ```
+ * val scope = CoroutineScope(
+ *     Dispatchers.Default +
+ *     CoroutineExceptionHandler { _, e ->
+ *         // handle uncaught coroutine exceptions appropriately
+ *     }
+ * )
+ *
+ * scope.launch {
+ *     error("This is okay") // this will not crash the application
+ * }
+ * ```
+ *
+ * Another way is to provide a [Job] that knows how to propagate the exception.
+ * See [CoroutineExceptionHandler] for details of how exceptions are propagated.
+ * Here is an example of using a [CompletableDeferred] in the scope's [context] to properly handle exceptions:
+ *
+ * ```
+ * val myDeferred = CompletableDeferred<Unit>()
+ * try {
+ *     val scope = CoroutineScope(myDeferred + Dispatchers.Default)
+ *     scope.launch {
+ *         error("This is okay") // this will not crash the application
+ *     }
+ * } finally {
+ *     // Do not forget to complete and await the deferred to check for exceptions!
+ *     myDeferred.complete(Unit)
+ *     // The exceptions from child coroutines will be thrown here:
+ *     myDeferred.await()
+ * }
+ * ```
+ *
+ * This specific example is not recommended, as it is easier to use [coroutineScope] to achieve a similar effect.
+ * However, it is more flexible, as it allows invoking the `finally` block separately.
+ *
+ * ### Surprising interactions between failing children
+ *
+ * If a [Job] is not passed in the context of this function explicitly,
+ * one is created using the `Job()` constructor function.
+ * As opposed to a [SupervisorJob], this [Job] will fail if any of its children fail.
+ *
+ * ```
+ * val scope = CoroutineScope(Dispatchers.Main + CoroutineExceptionHandler { _, e ->
+ *    println("Coroutine failed with exception $e")
+ * })
+ * scope.launch {
+ *     updateUI("Operation started!")
+ *     // this coroutine will be cancelled
+ *     // when the other coroutine fails
+ *     delay(2.seconds)
+ *     // this line will not be executed
+ *     updateUI("Operation finished!")
+ * }
+ * scope.launch {
+ *     error("This will cancel the other coroutines")
+ * }
+ * ```
+ *
+ * This behavior is suitable for cases where one task is decomposed into several subtasks,
+ * and one failure means the whole operation can no longer succeed and will have to be cancelled.
+ * However, in the far more common scenarios where `CoroutineScope()` represents the lifecycle of some entity
+ * that supports multiple independent concurrent operations,
+ * this is not the desired behavior.
+ *
+ * Explicitly using a [SupervisorJob] in the context of the scope is the recommended way to avoid this.
+ *
+ * ### Unintentionally passing a [Job] in the context
+ *
+ * Sometimes, a [Job] is passed in the context of this function unintentionally,
+ * leading to unpredictable interactions between several scopes.
+ *
+ * Examples of this include `CoroutineScope(currentCoroutineContext())`, `CoroutineScope(coroutineContext)`,
+ * `CoroutineScope(scope.coroutineContext)`, or any variations thereof that add new elements or remove existing ones.
+ *
+ * In all of these cases, the [Job] in the context of the new scope will be used as the parent job of all the
+ * coroutines in the newly created scope, meaning this scope will essentially be a view of some other scope,
+ * similar to what the [CoroutineScope.plus] operation produces.
+ *
+ * ```
+ * // ANTIPATTERN! DO NOT WRITE SUCH CODE
+ * suspend fun foo() {
+ *     val scope = CoroutineScope(currentCoroutineContext())
+ *     scope.launch {
+ *         delay(1.seconds)
+ *         println("foo()'s child coroutine finished")
+ *     }
+ * }
+ *
+ * suspend fun bar() {
+ *     coroutineScope {
+ *         foo()
+ *         println("foo() finished, but the new coroutine is still running")
+ *     }
+ * }
+ * ```
+ *
+ * In this example, the new coroutine will be launched in the scope *of the caller*,
+ * and `foo()` will not await the completion of this coroutine.
+ * To await the completion, use [coroutineScope] instead:
+ *
+ * ```
+ * suspend fun foo() = coroutineScope {
+ *     launch {
+ *         delay(1.seconds)
+ *         println("foo()'s child coroutine finished")
+ *     }
+ * } // `foo()` will only return when the child coroutine completes
+ *
+ * suspend fun bar() {
+ *     coroutineScope {
+ *         foo()
+ *         println("foo() finished, along with its child coroutine")
+ *     }
+ * }
+ * ```
+ *
+ * If launching a coroutine in the context of the caller is the desired behavior,
+ * make it explicit by passing the context:
+ *
+ * ```
+ * fun foo(scope: CoroutineScope) {
+ *     scope.launch {
+ *         delay(1.seconds)
+ *         println("foo()'s child coroutine finished")
+ *     }
+ * }
+ *
+ * suspend fun bar() {
+ *     coroutineScope {
+ *         foo(this)
+ *         println("foo() created a child coroutine in `this` scope")
+ *     }
+ * }
+ * ```
  */
 @Suppress("FunctionName")
 public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
@@ -779,9 +1046,114 @@ public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
 
 /**
  * Cancels this scope, including its job and all its children with an optional cancellation [cause].
+ *
  * A cause can be used to specify an error message or to provide other details on
  * a cancellation reason for debugging purposes.
+ *
  * Throws [IllegalStateException] if the scope does not have a job in it.
+ *
+ * This function is shorthand for `coroutineContext[Job]?.cancel(cause) ?: throw IllegalStateException()`.
+ *
+ * ## Usage
+ *
+ * ### Cancelling non-lexically scoped coroutines
+ *
+ * The primary purpose of this function is to cancel a manually created [CoroutineScope] when its lifecycle ends.
+ *
+ * ```
+ * class ThingWithItsOwnLifetime(scope: CoroutineScope? = null): AutoCloseable {
+ *     private val scope = scope ?: CoroutineScope(
+ *         SupervisorJob() + Dispatchers.Main +
+ *         CoroutineExceptionHandler { _, e ->
+ *             // handle uncaught coroutine exceptions appropriately
+ *         }
+ *     )
+ *
+ *     override fun close() {
+ *         // the computations should all stop running
+ *         scope.cancel()
+ *     }
+ * ```
+ *
+ * Failing to cancel the scope when it is no longer needed will lead to resource leaks
+ * and can also potentially crash the program if some object used by the child coroutines becomes destroyed.
+ *
+ * ### Cancelling lexical [CoroutineScope]
+ *
+ * For lexically scoped coroutines, such as those created with [coroutineScope] or [withContext],
+ * canceling the scope explicitly is very rarely required.
+ *
+ * If no child coroutines were started, but it became obvious that the computation won't be needed,
+ * the scope can simply be exited:
+ *
+ * ```
+ * coroutineScope {
+ *     if (computationNotNeeded) return@coroutineScope
+ *     // Start some child coroutines
+ *     // ...
+ * }
+ * ```
+ *
+ * Also, if the caller is cancelled, the scope will be cancelled as well, so there is no need to cancel it explicitly.
+ *
+ * [cancel] may be useful in cases when one child coroutine detects that the whole parent scope is no longer needed
+ * and wants to cancel it:
+ *
+ * ```
+ * coroutineScope {
+ *     val parentScope = this
+ *     launch {
+ *         val userRequest = getUserRequest()
+ *         if (userRequest == TERMINATE) {
+ *             parentScope.cancel()
+ *         }
+ *         // Do something with the request
+ *         // ...
+ *     }
+ *     // Start other child coroutines...
+ * }
+ * ```
+ *
+ * ## Pitfalls
+ *
+ * ### Cancelling oneself
+ *
+ * Cancelling a scope does not mean the computation finishes immediately,
+ * as coroutine cancellation [is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative).
+ * Only the next suspension point will observe the cancellation.
+ * For example:
+ *
+ * ```
+ * try {
+ *     coroutineScope {
+ *         cancel()
+ *         println("Will be printed anyway!")
+ *     }
+ * } catch (e: CancellationException) {
+ *     println(
+ *         "The scope was cancelled " +
+ *         "(the parent coroutine is still active: ${currentCoroutineContext().isActive})"
+ *     )
+ *     throw e
+ * }
+ * ```
+ *
+ * will output
+ *
+ * ```
+ * Will be printed anyway!
+ * The scope was cancelled (the parent coroutine is still active: true)
+ * ```
+ *
+ * Use `return` to immediately return from the scope after cancelling it:
+ *
+ * ```
+ * coroutineScope {
+ *     cancel()
+ *     return@coroutineScope
+ *     println("Will not be printed")
+ * }
+ * ```
  */
 public fun CoroutineScope.cancel(cause: CancellationException? = null) {
     val job = coroutineContext[Job] ?: error("Scope cannot be cancelled because it does not have a job: $this")
@@ -789,23 +1161,24 @@ public fun CoroutineScope.cancel(cause: CancellationException? = null) {
 }
 
 /**
- * Cancels this scope, including its job and all its children with a specified diagnostic error [message].
- * A [cause] can be specified to provide additional details on a cancellation reason for debugging purposes.
- * Throws [IllegalStateException] if the scope does not have a job in it.
+ * Cancels this scope with a [CancellationException] with the given [message] and [cause].
+ *
+ * Shorthand for `cancel(CancellationException(message, cause))`.
  */
 public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Unit = cancel(CancellationException(message, cause))
 
 /**
- * Throws the [CancellationException] that was the scope's cancellation cause if the scope is no longer [active][CoroutineScope.isActive].
+ * Throws the [CancellationException] that was the scope's cancellation cause
+ * if the scope is no longer [active][CoroutineScope.isActive].
  *
- * Coroutine cancellation [is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative)
+ * Coroutine cancellation [is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative),
  * and normally, it's checked if a coroutine is cancelled when it *suspends*, for example,
  * when trying to read from a [channel][kotlinx.coroutines.channels.Channel] that is empty.
  *
- * Sometimes, a coroutine does not need to perform suspending operations, but still wants to be cooperative
+ * Sometimes, a coroutine does not need to perform suspending operations but still wants to be cooperative
  * and respect cancellation.
  *
- * [ensureActive] function is inteded to be used for these scenarios and immediately bubble up the cancellation exception:
+ * [ensureActive] function is intended to be used for these scenarios and immediately bubble up the cancellation exception:
  * ```
  * val watchdogDispatcher = Dispatchers.IO.limitParallelism(1)
  * fun backgroundWork() {
@@ -816,7 +1189,7 @@ public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Uni
  * // Part of some non-trivial CoroutineScope-confined lifecycle
  * launch(watchdogDispatcher) {
  *     while (true) {
- *         // Repeatatively do some background work that is non-suspending
+ *         // Repeatedly do some background work that is non-suspending
  *         backgroundWork()
  *         ensureActive() // Bail out if the scope was cancelled
  *         postBackgroundCleanup() // Won't be invoked if the scope was cancelled
@@ -825,17 +1198,28 @@ public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Uni
  * ```
  * This function does not do anything if there is no [Job] in the scope's [coroutineContext][CoroutineScope.coroutineContext].
  *
- * @see CoroutineScope.isActive
- * @see CoroutineContext.ensureActive
+ * For ensuring that the [current coroutine context][currentCoroutineContext] and not some scope's context
+ * [is active][CoroutineContext.isActive], the following form can be used instead:
+ *
+ * ```
+ * suspend fun doSomething() {
+ *     // throw if we are not allowed to suspend
+ *     currentCoroutineContext().ensureActive()
+ *     // ...
+ * }
+ * ```
+ *
+ * @see CoroutineScope.isActive for a version that returns a boolean value instead of throwing an exception.
  */
 public fun CoroutineScope.ensureActive(): Unit = coroutineContext.ensureActive()
 
 /**
  * Returns the current [CoroutineContext] retrieved by using [kotlin.coroutines.coroutineContext].
+ *
  * This function is an alias to avoid name clash with [CoroutineScope.coroutineContext]:
  *
  * ```
- * // ANTIPATTERN! DO NOT WRITE SUCH A CODE
+ * // ANTIPATTERN! DO NOT WRITE SUCH CODE
  * suspend fun CoroutineScope.suspendFunWithScope() {
  *     // Name of the CoroutineScope.coroutineContext in 'this' position, same as `this.coroutineContext`
  *     println(coroutineContext[CoroutineName])
@@ -845,10 +1229,21 @@ public fun CoroutineScope.ensureActive(): Unit = coroutineContext.ensureActive()
  *
  * withContext(CoroutineName("Caller")) {
  *     // Will print 'CoroutineName("Receiver")' and 'CoroutineName("Caller")'
- *     CoroutineScope("Receiver").suspendFunWithScope()
+ *     CoroutineScope(CoroutineName("Receiver")).suspendFunWithScope()
  * }
  * ```
  *
- * This function should always be preferred over [kotlin.coroutines.coroutineContext] property even when there is no explicit clash.
+ * This function should always be preferred over [kotlin.coroutines.coroutineContext] property
+ * even when there is no explicit clash.
+ *
+ * Usage example:
+ *
+ * ```
+ * // log an event while specifying the current coroutine
+ * println("[${currentCoroutineContext()[Job]}] Hello, World!")
+ * ```
+ *
+ * Consider using [coroutineScope] instead of this function to obtain not only the current context
+ * but also a new [CoroutineScope] that allows easily launching coroutines and waiting for their completion.
  */
 public suspend inline fun currentCoroutineContext(): CoroutineContext = coroutineContext
