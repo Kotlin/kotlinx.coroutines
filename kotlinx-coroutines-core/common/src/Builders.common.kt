@@ -17,25 +17,168 @@ import kotlin.jvm.*
 // --------------- launch ---------------
 
 /**
- * Launches a new coroutine without blocking the current thread and returns a reference to the coroutine as a [Job].
- * The coroutine is cancelled when the resulting job is [cancelled][Job.cancel].
+ * Launches a new *child coroutine* of [CoroutineScope] without blocking the current thread
+ * and returns a reference to the coroutine as a [Job].
  *
- * The coroutine context is inherited from a [CoroutineScope]. Additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
- * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with a corresponding [context] element.
+ * [block] is the computation of the new coroutine that will run concurrently.
+ * The coroutine is considered active until the block and all the child coroutines created in it finish.
  *
- * By default, the coroutine is immediately scheduled for execution.
- * Other start options can be specified via `start` parameter. See [CoroutineStart] for details.
- * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,
- * the coroutine [Job] is created in _new_ state. It can be explicitly started with [start][Job.start] function
- * and will be started implicitly on the first invocation of [join][Job.join].
+ * [context] specifies the additional context elements for the coroutine to combine with
+ * the elements already present in the [CoroutineScope.coroutineContext].
+ * It is incorrect to pass a [Job] element there, as this breaks structured concurrency.
  *
- * Uncaught exceptions in this coroutine cancel the parent job in the context by default
- * (unless [CoroutineExceptionHandler] is explicitly specified), which means that when `launch` is used with
- * the context of another coroutine, then any uncaught exception leads to the cancellation of the parent coroutine.
+ * By default, the coroutine is scheduled for execution on its [ContinuationInterceptor].
+ * There is no guarantee that it will start immediately: this is decided by the [ContinuationInterceptor].
+ * It is possible that the new coroutine will be cancelled before starting, in which case its code will not be executed.
+ * The [start] parameter can be used to adjust this behavior. See [CoroutineStart] for details.
  *
- * See [newCoroutineContext] for a description of debugging facilities that are available for a newly created coroutine.
+ * ## Structured Concurrency
+ *
+ * [launch] creates a *child coroutine* of `this` [CoroutineScope].
+ *
+ * The context of the new coroutine is created like this:
+ * - First, the context of the [CoroutineScope] is combined with the [context] argument
+ *   using the [newCoroutineContext] function.
+ *   In most cases, this means that elements from [context] simply override
+ *   the elements in the [CoroutineScope.coroutineContext].
+ *   If no [ContinuationInterceptor] is present in the resulting context,
+ *   then [Dispatchers.Default] is added there.
+ * - Then, the [Job] in the [CoroutineScope.coroutineContext] is used as the *parent* of the new coroutine,
+ *   unless overridden.
+ *   Overriding the [Job] is forbidden; see a separate subsection below for details.
+ *   The new coroutine's [Job] is added to the resulting context.
+ *
+ * The resulting coroutine context is the [coroutineContext] of the [CoroutineScope]
+ * passed to the [block] as its receiver.
+ *
+ * The new coroutine is considered [active][isActive] until the [block] and all its child coroutines finish.
+ * If the [block] throws a [CancellationException], the coroutine is considered cancelled,
+ * and if it throws any other exception, the coroutine is considered failed.
+ *
+ * The details of structured concurrency are described in the [CoroutineScope] interface documentation.
+ * Here is a restatement of some main points as they relate to `launch`:
+ *
+ * - The lifecycle of the parent [CoroutineScope] can not end until this coroutine
+ *   (as well as all its children) completes.
+ * - If the parent [CoroutineScope] is cancelled, this coroutine is cancelled as well.
+ * - If this coroutine fails with a non-[CancellationException] exception
+ *   and the parent [CoroutineScope] has a non-supervisor [Job] in its context,
+ *   the parent [Job] is cancelled with this exception.
+ * - If this coroutine fails with an exception and the parent [CoroutineScope] has a supervisor [Job] or no job at all
+ *   (as is the case with [GlobalScope] or malformed scopes),
+ *   the exception is considered uncaught and is propagated as the [CoroutineExceptionHandler] documentation describes.
+ * - The lifecycle of the [CoroutineScope] passed as the receiver to the [block]
+ *   will not end until the [block] completes (or gets cancelled before ever having a chance to run).
+ * - If the [block] throws a [CancellationException], the coroutine is considered cancelled,
+ *   cancelling all its children in turn, but the parent does not get notified.
+ *
+ * ### Overriding the parent job
+ *
+ * Passing a [Job] in the [context] argument breaks structured concurrency and is not a supported pattern.
+ * It does not throw an exception only for backward compatibility reasons, as a lot of code was written this way.
+ * Always structure your coroutines such that the lifecycle of the child coroutine is
+ * contained in the lifecycle of the [CoroutineScope] it is launched in.
+ *
+ * To help with migrating to structured concurrency, the specific behaviour of passing a [Job] in the [context] argument
+ * is described here.
+ * **Do not rely on this behaviour in new code.**
+ *
+ * If [context] contains a [Job] element, it will be the *parent* of the new coroutine,
+ * and the lifecycle of the new coroutine will not be tied to the [CoroutineScope] at all.
+ *
+ * In specific terms:
+ *
+ * - If the [CoroutineScope] is cancelled, the new coroutine will not be affected.
+ * - If the new coroutine fails with an exception, it will not cancel the [CoroutineScope].
+ *   Instead, the exception will be propagated to the [Job] passed in the [context] argument.
+ *   If that [Job] is a [SupervisorJob], the exception will be unhandled,
+ *   and will be propagated as the [CoroutineExceptionHandler] documentation describes.
+ *   If that [Job] is not a [SupervisorJob], it will be cancelled with the exception thrown by [launch].
+ * - If the [CoroutineScope] is lexically scoped (for example, created by [coroutineScope] or [withContext]),
+ *   the function defining the scope will not wait for the new coroutine to finish.
+ *
+ * ## Communicating with the coroutine
+ *
+ * [Job.cancel] can be used to cancel the coroutine, and [Job.join] can be used to block until its completion
+ * without blocking the current thread.
+ * Note that [Job.join] succeeds even if the coroutine was cancelled or failed with an exception.
+ * [Job.cancelAndJoin] is a convenience function that combines cancellation and joining.
+ *
+ * If the coroutine was started with [start] set to [CoroutineStart.LAZY], the coroutine will not be scheduled
+ * to run on its [ContinuationInterceptor] immediately.
+ * [Job.start] can be used to start the coroutine explicitly,
+ * and awaiting its completion using [Job.join] also causes the coroutine to start executing.
+ *
+ * A coroutine created with [launch] does not return a result, and if it fails with an exception,
+ * there is no reliable way to learn about that exception in general.
+ * [async] is a better choice if the result of the coroutine needs to be accessed from another coroutine.
+ *
+ * ## Pitfalls
+ *
+ * ### [CancellationException] silently stopping computations
+ *
+ * ```
+ * val deferred = GlobalScope.async {
+ *     awaitCancellation()
+ * }
+ * deferred.cancel()
+ * coroutineScope {
+ *     val job = launch {
+ *         val result = deferred.await()
+ *         println("Got $result")
+ *     }
+ *     job.join()
+ *     println("Am I still not cancelled? $isActive")
+ * }
+ * ```
+ *
+ * will output
+ *
+ * ```
+ * Am I still not cancelled? true
+ * ```
+ *
+ * This may be surprising, because the `launch`ed coroutine failed with an exception,
+ * but the parent still was not cancelled.
+ *
+ * The reason for this is that any [CancellationException] thrown in the coroutine is treated as a signal to cancel
+ * the coroutine, but not the parent.
+ * In this scenario, this is unlikely to be the desired behaviour:
+ * this was a failure and not a cancellation and should be propagated to the parent.
+ *
+ * This is a legacy behavior that cannot be changed in a backward-compatible way.
+ * Use [ensureActive] and [isActive] to distinguish between cancellation and failure:
+ *
+ * ```
+ * launch {
+ *     try {
+ *         val result = deferred.await()
+ *     } catch (e: CancellationException) {
+ *         if (isActive) {
+ *             // we were not cancelled, this is a failure
+ *             println("`result` was cancelled")
+ *             throw IllegalStateException("$result was cancelled", e)
+ *         } else {
+ *             println("I was cancelled")
+ *             // throw again to finish the coroutine
+ *             ensureActive()
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * In simpler scenarios, this form can be used:
+ *
+ * ```
+ * launch {
+ *     try {
+ *         // operation that may throw its own CancellationException
+ *     } catch (e: CancellationException) {
+ *         ensureActive()
+ *         throw IllegalStateException(e)
+ *     }
+ * }
+ * ```
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
