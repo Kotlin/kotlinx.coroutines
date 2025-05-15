@@ -791,6 +791,9 @@ public object GlobalScope : CoroutineScope {
  *   Note that this happens on any child coroutine's failure even if [block] finishes successfully.
  * - [coroutineScope] will only finish when all the coroutines launched in it finish.
  *   If all of them complete without failing, the [coroutineScope] returns the result of the [block] to the caller.
+ *
+ * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
+ * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  */
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
     contract {
