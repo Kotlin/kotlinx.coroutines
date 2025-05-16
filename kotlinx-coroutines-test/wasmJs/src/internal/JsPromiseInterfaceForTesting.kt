@@ -7,7 +7,7 @@ a parametric class. So, we make a non-parametric class just for this. */
  * @suppress
  */
 @JsName("Promise")
-public external class JsPromiseInterfaceForTesting {
+public external class JsPromiseInterfaceForTesting : JsAny {
     /**
      * @suppress
      */
