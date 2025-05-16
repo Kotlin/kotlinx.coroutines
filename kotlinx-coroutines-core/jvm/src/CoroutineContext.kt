@@ -5,10 +5,21 @@ import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 
 /**
- * Creates a context for a new coroutine. It installs [Dispatchers.Default] when no other dispatcher or
- * [ContinuationInterceptor] is specified and adds optional support for debugging facilities (when turned on)
- * and copyable-thread-local facilities on JVM.
- * See [DEBUG_PROPERTY_NAME] for description of debugging facilities on JVM.
+ * Creates a context for a new coroutine.
+ *
+ * See the documentation of this function's common-code implementation for a general overview.
+ * Here, the JVM-specific details are described.
+ *
+ * - If the [debug mode][DEBUG_PROPERTY_NAME] is enabled,
+ *   [newCoroutineContext] assigns a unique identifier to every coroutine for tracking it.
+ *   The ID is visible in [toString] of the coroutine context or its job and in the thread name,
+ *   as well as in the dumps produced by the `kotlinx-coroutines-debug` module.
+ * - [CopyableThreadContextElement] values are combined.
+ *   If both the parent and [context] have the same [CopyableThreadContextElement]
+ *   (when their [key][CoroutineContext.Key] is equal),
+ *   the values are [merged][CopyableThreadContextElement.mergeForChild].
+ *   If only the parent or only the [context] has the [CopyableThreadContextElement],
+ *   the value is [copied][CopyableThreadContextElement.copyForChild].
  */
 @ExperimentalCoroutinesApi
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
