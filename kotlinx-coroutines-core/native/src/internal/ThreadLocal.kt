@@ -6,6 +6,7 @@ internal actual class CommonThreadLocal<T>(private val name: Symbol) {
     @Suppress("UNCHECKED_CAST")
     actual fun get(): T = Storage[name] as T
     actual fun set(value: T) { Storage[name] = value }
+    actual fun remove() { Storage.remove(name) }
 }
 
 internal actual fun <T> commonThreadLocal(name: Symbol): CommonThreadLocal<T> = CommonThreadLocal(name)
