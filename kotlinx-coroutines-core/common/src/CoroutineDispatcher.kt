@@ -134,7 +134,8 @@ public abstract class CoroutineDispatcher :
      *
      * One of the common patterns is confining the execution of specific tasks to a sequential execution in background
      * with `limitedParallelism(1)` invocation.
-     * For that purpose, the implementation guarantees that tasks are executed sequentially and that a happens-before relation
+     * For that purpose, the implementation guarantees that sections of code between suspensions
+     * are executed sequentially and that a happens-before relation
      * is established between them:
      *
      * ```
@@ -148,6 +149,42 @@ public abstract class CoroutineDispatcher :
      * }
      * ```
      * Note that there is no guarantee that the underlying system thread will always be the same.
+     *
+     * #### It is not a mutex!
+     *
+     * **Pitfall**: [limitedParallelism] limits how many threads can execute some code in parallel,
+     * but does not limit how many coroutines execute concurrently!
+     *
+     * For example:
+     *
+     * ```
+     * val notAMutex = Dispatchers.Default.limitedParallelism(1)
+     *
+     * repeat(3) {
+     *     launch(notAMutex) {
+     *         println("Coroutine $it entering...")
+     *         delay(20.milliseconds)
+     *         println("Coroutine $it leaving.")
+     *     }
+     * }
+     * ```
+     *
+     * The output will be similar to this:
+     *
+     * ```
+     * Coroutine 0 entering...
+     * Coroutine 1 entering...
+     * Coroutine 2 entering...
+     * Coroutine 0 leaving.
+     * Coroutine 1 leaving.
+     * Coroutine 2 leaving.
+     * ```
+     *
+     * This means that coroutines are not guaranteed to run to completion before the dispatcher starts executing
+     * code from another coroutine.
+     * The only guarantee in this example is that two `println` calls will not occur in several threads simultaneously.
+     *
+     * Use a [kotlinx.coroutines.sync.Mutex] or a [kotlinx.coroutines.sync.Semaphore] for limiting concurrency.
      *
      * ### Dispatchers.IO
      *
