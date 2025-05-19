@@ -69,7 +69,7 @@ public fun launch(
  * ### Avoid cancelling other children
  *
  * Occasionally, the failure of one child does not mean the work of the other children is also unneeded.
- * `launch(Job()) { failure() }` makes sure that the only effect of `failure()` is to make *this* `async` finish
+ * `launch(Job()) { failure() }` makes sure that the only effect of `failure()` is to make *this* `launch` finish
  * with an error, while the other coroutines continue executing.
  *
  * If *all* coroutines in a scope should fail independently, this suggests that the scope
@@ -121,13 +121,13 @@ public fun launch(
  *         // failures in this coroutine will affect everyone
  *     }
  *     supervisorScope {
- *         val deferred = launch(
+ *         val job = launch(
  *             CoroutineExceptionHandler { _, e ->
  *                 // some individual mechanism of processing exceptions
  *             }
  *         ) {
  *             // failures in this coroutine
- *             // are only available through `deferred`
+ *             // are only available through `job`
  *         }
  *     }
  *     // this line will only be reached when `launch` completes
