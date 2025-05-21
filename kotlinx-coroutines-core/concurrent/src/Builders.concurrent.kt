@@ -22,3 +22,18 @@ import kotlin.coroutines.*
  * block, potentially leading to thread starvation issues.
  */
 public expect fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T
+
+/**
+ * Runs the given coroutine on the current thread, blocking until completion.
+ *
+ * This is like [runBlocking], but returns [Unit] which is a useful utility to run coroutines for their side effect
+ * when [Unit] is expected.
+ *
+ * Example:
+ * ```kt
+ * fun foobar() = runBlocking { ... }
+ * ```
+ */
+public fun <T> doBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit) {
+  runBlocking(context, block)
+}
