@@ -34,6 +34,6 @@ public expect fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineCont
  * fun foobar() = runBlocking { ... }
  * ```
  */
-public fun <T> doBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit) {
+public fun doBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit) {
   runBlocking(context, block)
 }
