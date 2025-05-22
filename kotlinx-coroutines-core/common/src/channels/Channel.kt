@@ -939,10 +939,12 @@ public value class ChannelResult<out T>
      */
     public fun exceptionOrNull(): Throwable? = (holder as? Closed)?.cause
 
+    @PublishedApi
     internal open class Failed {
         override fun toString(): String = "Failed"
     }
 
+    @PublishedApi
     internal class Closed(@JvmField val cause: Throwable?): Failed() {
         override fun equals(other: Any?): Boolean = other is Closed && cause == other.cause
         override fun hashCode(): Int = cause.hashCode()

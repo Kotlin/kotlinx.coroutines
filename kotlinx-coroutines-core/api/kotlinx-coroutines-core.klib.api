@@ -546,6 +546,23 @@ final value class <#A: out kotlin/Any?> kotlinx.coroutines.channels/ChannelResul
     final fun hashCode(): kotlin/Int // kotlinx.coroutines.channels/ChannelResult.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // kotlinx.coroutines.channels/ChannelResult.toString|toString(){}[0]
 
+    final class Closed : kotlinx.coroutines.channels/ChannelResult.Failed { // kotlinx.coroutines.channels/ChannelResult.Closed|null[0]
+        constructor <init>(kotlin/Throwable?) // kotlinx.coroutines.channels/ChannelResult.Closed.<init>|<init>(kotlin.Throwable?){}[0]
+
+        final val cause // kotlinx.coroutines.channels/ChannelResult.Closed.cause|{}cause[0]
+            final fun <get-cause>(): kotlin/Throwable? // kotlinx.coroutines.channels/ChannelResult.Closed.cause.<get-cause>|<get-cause>(){}[0]
+
+        final fun equals(kotlin/Any?): kotlin/Boolean // kotlinx.coroutines.channels/ChannelResult.Closed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // kotlinx.coroutines.channels/ChannelResult.Closed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // kotlinx.coroutines.channels/ChannelResult.Closed.toString|toString(){}[0]
+    }
+
+    open class Failed { // kotlinx.coroutines.channels/ChannelResult.Failed|null[0]
+        constructor <init>() // kotlinx.coroutines.channels/ChannelResult.Failed.<init>|<init>(){}[0]
+
+        open fun toString(): kotlin/String // kotlinx.coroutines.channels/ChannelResult.Failed.toString|toString(){}[0]
+    }
+
     final object Companion { // kotlinx.coroutines.channels/ChannelResult.Companion|null[0]
         final fun <#A2: kotlin/Any?> closed(kotlin/Throwable?): kotlinx.coroutines.channels/ChannelResult<#A2> // kotlinx.coroutines.channels/ChannelResult.Companion.closed|closed(kotlin.Throwable?){0§<kotlin.Any?>}[0]
         final fun <#A2: kotlin/Any?> failure(): kotlinx.coroutines.channels/ChannelResult<#A2> // kotlinx.coroutines.channels/ChannelResult.Companion.failure|failure(){0§<kotlin.Any?>}[0]
