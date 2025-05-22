@@ -742,10 +742,23 @@ public final class kotlinx/coroutines/channels/ChannelResult {
 	public final synthetic fun unbox-impl ()Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/channels/ChannelResult$Closed : kotlinx/coroutines/channels/ChannelResult$Failed {
+	public final field cause Ljava/lang/Throwable;
+	public fun <init> (Ljava/lang/Throwable;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class kotlinx/coroutines/channels/ChannelResult$Companion {
 	public final fun closed-JP2dKIU (Ljava/lang/Throwable;)Ljava/lang/Object;
 	public final fun failure-PtdJZtk ()Ljava/lang/Object;
 	public final fun success-JP2dKIU (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public class kotlinx/coroutines/channels/ChannelResult$Failed {
+	public fun <init> ()V
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class kotlinx/coroutines/channels/ChannelsKt {
