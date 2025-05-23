@@ -244,6 +244,23 @@ abstract interface <#A: out kotlin/Any?> kotlinx.coroutines/Deferred : kotlinx.c
     abstract suspend fun await(): #A // kotlinx.coroutines/Deferred.await|await(){}[0]
 }
 
+abstract interface kotlinx.coroutines.internal/MainDispatcherFactory { // kotlinx.coroutines.internal/MainDispatcherFactory|null[0]
+    abstract val loadPriority // kotlinx.coroutines.internal/MainDispatcherFactory.loadPriority|{}loadPriority[0]
+        abstract fun <get-loadPriority>(): kotlin/Int // kotlinx.coroutines.internal/MainDispatcherFactory.loadPriority.<get-loadPriority>|<get-loadPriority>(){}[0]
+
+    abstract fun createDispatcher(kotlin.collections/List<kotlinx.coroutines.internal/MainDispatcherFactory>): kotlinx.coroutines/MainCoroutineDispatcher // kotlinx.coroutines.internal/MainDispatcherFactory.createDispatcher|createDispatcher(kotlin.collections.List<kotlinx.coroutines.internal.MainDispatcherFactory>){}[0]
+    open fun hintOnError(): kotlin/String? // kotlinx.coroutines.internal/MainDispatcherFactory.hintOnError|hintOnError(){}[0]
+}
+
+abstract interface kotlinx.coroutines.internal/ThreadSafeHeapNode { // kotlinx.coroutines.internal/ThreadSafeHeapNode|null[0]
+    abstract var heap // kotlinx.coroutines.internal/ThreadSafeHeapNode.heap|{}heap[0]
+        abstract fun <get-heap>(): kotlinx.coroutines.internal/ThreadSafeHeap<*>? // kotlinx.coroutines.internal/ThreadSafeHeapNode.heap.<get-heap>|<get-heap>(){}[0]
+        abstract fun <set-heap>(kotlinx.coroutines.internal/ThreadSafeHeap<*>?) // kotlinx.coroutines.internal/ThreadSafeHeapNode.heap.<set-heap>|<set-heap>(kotlinx.coroutines.internal.ThreadSafeHeap<*>?){}[0]
+    abstract var index // kotlinx.coroutines.internal/ThreadSafeHeapNode.index|{}index[0]
+        abstract fun <get-index>(): kotlin/Int // kotlinx.coroutines.internal/ThreadSafeHeapNode.index.<get-index>|<get-index>(){}[0]
+        abstract fun <set-index>(kotlin/Int) // kotlinx.coroutines.internal/ThreadSafeHeapNode.index.<set-index>|<set-index>(kotlin.Int){}[0]
+}
+
 abstract interface kotlinx.coroutines.sync/Mutex { // kotlinx.coroutines.sync/Mutex|null[0]
     abstract val isLocked // kotlinx.coroutines.sync/Mutex.isLocked|{}isLocked[0]
         abstract fun <get-isLocked>(): kotlin/Boolean // kotlinx.coroutines.sync/Mutex.isLocked.<get-isLocked>|<get-isLocked>(){}[0]
@@ -633,6 +650,75 @@ open class <#A: kotlin/Any?> kotlinx.coroutines.selects/UnbiasedSelectImplementa
     open suspend fun doSelect(): #A // kotlinx.coroutines.selects/UnbiasedSelectImplementation.doSelect|doSelect(){}[0]
 }
 
+open class kotlinx.coroutines.internal/LockFreeLinkedListHead : kotlinx.coroutines.internal/LockFreeLinkedListNode { // kotlinx.coroutines.internal/LockFreeLinkedListHead|null[0]
+    constructor <init>() // kotlinx.coroutines.internal/LockFreeLinkedListHead.<init>|<init>(){}[0]
+
+    final fun remove(): kotlin/Nothing // kotlinx.coroutines.internal/LockFreeLinkedListHead.remove|remove(){}[0]
+    final inline fun forEach(kotlin/Function1<kotlinx.coroutines.internal/LockFreeLinkedListNode, kotlin/Unit>) // kotlinx.coroutines.internal/LockFreeLinkedListHead.forEach|forEach(kotlin.Function1<kotlinx.coroutines.internal.LockFreeLinkedListNode,kotlin.Unit>){}[0]
+
+    // Targets: [native]
+    open val isRemoved // kotlinx.coroutines.internal/LockFreeLinkedListHead.isRemoved|{}isRemoved[0]
+        open fun <get-isRemoved>(): kotlin/Boolean // kotlinx.coroutines.internal/LockFreeLinkedListHead.isRemoved.<get-isRemoved>|<get-isRemoved>(){}[0]
+}
+
+open class kotlinx.coroutines.internal/LockFreeLinkedListNode { // kotlinx.coroutines.internal/LockFreeLinkedListNode|null[0]
+    constructor <init>() // kotlinx.coroutines.internal/LockFreeLinkedListNode.<init>|<init>(){}[0]
+
+    final val nextNode // kotlinx.coroutines.internal/LockFreeLinkedListNode.nextNode|{}nextNode[0]
+        // Targets: [native]
+        final fun <get-nextNode>(): kotlinx.coroutines.internal/LockFreeLinkedListNode // kotlinx.coroutines.internal/LockFreeLinkedListNode.nextNode.<get-nextNode>|<get-nextNode>(){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final inline fun <get-nextNode>(): kotlinx.coroutines.internal/LockFreeLinkedListNode // kotlinx.coroutines.internal/LockFreeLinkedListNode.nextNode.<get-nextNode>|<get-nextNode>(){}[0]
+    final val prevNode // kotlinx.coroutines.internal/LockFreeLinkedListNode.prevNode|{}prevNode[0]
+        // Targets: [native]
+        final fun <get-prevNode>(): kotlinx.coroutines.internal/LockFreeLinkedListNode // kotlinx.coroutines.internal/LockFreeLinkedListNode.prevNode.<get-prevNode>|<get-prevNode>(){}[0]
+
+        // Targets: [js, wasmJs, wasmWasi]
+        final inline fun <get-prevNode>(): kotlinx.coroutines.internal/LockFreeLinkedListNode // kotlinx.coroutines.internal/LockFreeLinkedListNode.prevNode.<get-prevNode>|<get-prevNode>(){}[0]
+
+    final fun addLast(kotlinx.coroutines.internal/LockFreeLinkedListNode, kotlin/Int): kotlin/Boolean // kotlinx.coroutines.internal/LockFreeLinkedListNode.addLast|addLast(kotlinx.coroutines.internal.LockFreeLinkedListNode;kotlin.Int){}[0]
+    final fun addOneIfEmpty(kotlinx.coroutines.internal/LockFreeLinkedListNode): kotlin/Boolean // kotlinx.coroutines.internal/LockFreeLinkedListNode.addOneIfEmpty|addOneIfEmpty(kotlinx.coroutines.internal.LockFreeLinkedListNode){}[0]
+    final fun close(kotlin/Int) // kotlinx.coroutines.internal/LockFreeLinkedListNode.close|close(kotlin.Int){}[0]
+    open fun remove(): kotlin/Boolean // kotlinx.coroutines.internal/LockFreeLinkedListNode.remove|remove(){}[0]
+
+    // Targets: [native]
+    final val next // kotlinx.coroutines.internal/LockFreeLinkedListNode.next|{}next[0]
+        final fun <get-next>(): kotlin/Any // kotlinx.coroutines.internal/LockFreeLinkedListNode.next.<get-next>|<get-next>(){}[0]
+
+    // Targets: [native]
+    open val isRemoved // kotlinx.coroutines.internal/LockFreeLinkedListNode.isRemoved|{}isRemoved[0]
+        open fun <get-isRemoved>(): kotlin/Boolean // kotlinx.coroutines.internal/LockFreeLinkedListNode.isRemoved.<get-isRemoved>|<get-isRemoved>(){}[0]
+
+    // Targets: [native]
+    final fun addNext(kotlinx.coroutines.internal/LockFreeLinkedListNode, kotlinx.coroutines.internal/LockFreeLinkedListNode): kotlin/Boolean // kotlinx.coroutines.internal/LockFreeLinkedListNode.addNext|addNext(kotlinx.coroutines.internal.LockFreeLinkedListNode;kotlinx.coroutines.internal.LockFreeLinkedListNode){}[0]
+
+    // Targets: [native]
+    final fun removeOrNext(): kotlinx.coroutines.internal/LockFreeLinkedListNode? // kotlinx.coroutines.internal/LockFreeLinkedListNode.removeOrNext|removeOrNext(){}[0]
+
+    // Targets: [native]
+    open fun toString(): kotlin/String // kotlinx.coroutines.internal/LockFreeLinkedListNode.toString|toString(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final val isRemoved // kotlinx.coroutines.internal/LockFreeLinkedListNode.isRemoved|{}isRemoved[0]
+        final inline fun <get-isRemoved>(): kotlin/Boolean // kotlinx.coroutines.internal/LockFreeLinkedListNode.isRemoved.<get-isRemoved>|<get-isRemoved>(){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final var _next // kotlinx.coroutines.internal/LockFreeLinkedListNode._next|{}_next[0]
+        final fun <get-_next>(): kotlinx.coroutines.internal/LockFreeLinkedListNode // kotlinx.coroutines.internal/LockFreeLinkedListNode._next.<get-_next>|<get-_next>(){}[0]
+        final fun <set-_next>(kotlinx.coroutines.internal/LockFreeLinkedListNode) // kotlinx.coroutines.internal/LockFreeLinkedListNode._next.<set-_next>|<set-_next>(kotlinx.coroutines.internal.LockFreeLinkedListNode){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final var _prev // kotlinx.coroutines.internal/LockFreeLinkedListNode._prev|{}_prev[0]
+        final fun <get-_prev>(): kotlinx.coroutines.internal/LockFreeLinkedListNode // kotlinx.coroutines.internal/LockFreeLinkedListNode._prev.<get-_prev>|<get-_prev>(){}[0]
+        final fun <set-_prev>(kotlinx.coroutines.internal/LockFreeLinkedListNode) // kotlinx.coroutines.internal/LockFreeLinkedListNode._prev.<set-_prev>|<set-_prev>(kotlinx.coroutines.internal.LockFreeLinkedListNode){}[0]
+
+    // Targets: [js, wasmJs, wasmWasi]
+    final var _removed // kotlinx.coroutines.internal/LockFreeLinkedListNode._removed|{}_removed[0]
+        final fun <get-_removed>(): kotlin/Boolean // kotlinx.coroutines.internal/LockFreeLinkedListNode._removed.<get-_removed>|<get-_removed>(){}[0]
+        final fun <set-_removed>(kotlin/Boolean) // kotlinx.coroutines.internal/LockFreeLinkedListNode._removed.<set-_removed>|<set-_removed>(kotlin.Boolean){}[0]
+}
+
 open class kotlinx.coroutines/JobImpl : kotlinx.coroutines/CompletableJob, kotlinx.coroutines/JobSupport { // kotlinx.coroutines/JobImpl|null[0]
     constructor <init>(kotlinx.coroutines/Job?) // kotlinx.coroutines/JobImpl.<init>|<init>(kotlinx.coroutines.Job?){}[0]
 
@@ -837,6 +923,7 @@ final fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).
 final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlinx.coroutines.flow/asFlow(): kotlinx.coroutines.flow/Flow<#A> // kotlinx.coroutines.flow/asFlow|asFlow@kotlin.collections.Iterable<0:0>(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<kotlinx.coroutines.flow/Flow<#A>>).kotlinx.coroutines.flow/merge(): kotlinx.coroutines.flow/Flow<#A> // kotlinx.coroutines.flow/merge|merge@kotlin.collections.Iterable<kotlinx.coroutines.flow.Flow<0:0>>(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlin.collections/Iterator<#A>).kotlinx.coroutines.flow/asFlow(): kotlinx.coroutines.flow/Flow<#A> // kotlinx.coroutines.flow/asFlow|asFlow@kotlin.collections.Iterator<0:0>(){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Any?> (kotlin.coroutines/Continuation<#A>).kotlinx.coroutines.internal/resumeCancellableWith(kotlin/Result<#A>) // kotlinx.coroutines.internal/resumeCancellableWith|resumeCancellableWith@kotlin.coroutines.Continuation<0:0>(kotlin.Result<0:0>){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlin.coroutines/SuspendFunction0<#A>).kotlinx.coroutines.flow/asFlow(): kotlinx.coroutines.flow/Flow<#A> // kotlinx.coroutines.flow/asFlow|asFlow@kotlin.coroutines.SuspendFunction0<0:0>(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlin.coroutines/SuspendFunction0<#A>).kotlinx.coroutines.intrinsics/startCoroutineCancellable(kotlin.coroutines/Continuation<#A>) // kotlinx.coroutines.intrinsics/startCoroutineCancellable|startCoroutineCancellable@kotlin.coroutines.SuspendFunction0<0:0>(kotlin.coroutines.Continuation<0:0>){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlin.sequences/Sequence<#A>).kotlinx.coroutines.flow/asFlow(): kotlinx.coroutines.flow/Flow<#A> // kotlinx.coroutines.flow/asFlow|asFlow@kotlin.sequences.Sequence<0:0>(){0§<kotlin.Any?>}[0]
@@ -945,6 +1032,7 @@ final fun <#A: kotlin/Any?> kotlinx.coroutines.flow/merge(kotlin/Array<out kotli
 final fun <#A: kotlin/Any?> kotlinx.coroutines/CompletableDeferred(#A): kotlinx.coroutines/CompletableDeferred<#A> // kotlinx.coroutines/CompletableDeferred|CompletableDeferred(0:0){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> kotlinx.coroutines/CompletableDeferred(kotlinx.coroutines/Job? = ...): kotlinx.coroutines/CompletableDeferred<#A> // kotlinx.coroutines/CompletableDeferred|CompletableDeferred(kotlinx.coroutines.Job?){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> kotlinx.coroutines/async(kotlin.coroutines/CoroutineContext = ..., kotlinx.coroutines/CoroutineStart = ..., kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): kotlinx.coroutines/Deferred<#A> // kotlinx.coroutines/async|async(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.CoroutineStart;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin/Throwable> kotlinx.coroutines.internal/unwrap(#A): #A // kotlinx.coroutines.internal/unwrap|unwrap(0:0){0§<kotlin.Throwable>}[0]
 final fun kotlinx.coroutines.channels/consumesAll(kotlin/Array<out kotlinx.coroutines.channels/ReceiveChannel<*>>...): kotlin/Function1<kotlin/Throwable?, kotlin/Unit> // kotlinx.coroutines.channels/consumesAll|consumesAll(kotlin.Array<out|kotlinx.coroutines.channels.ReceiveChannel<*>>...){}[0]
 final fun kotlinx.coroutines.sync/Mutex(kotlin/Boolean = ...): kotlinx.coroutines.sync/Mutex // kotlinx.coroutines.sync/Mutex|Mutex(kotlin.Boolean){}[0]
 final fun kotlinx.coroutines.sync/Semaphore(kotlin/Int, kotlin/Int = ...): kotlinx.coroutines.sync/Semaphore // kotlinx.coroutines.sync/Semaphore|Semaphore(kotlin.Int;kotlin.Int){}[0]
@@ -1073,6 +1161,28 @@ final suspend inline fun kotlinx.coroutines.selects/whileSelect(crossinline kotl
 final suspend inline fun kotlinx.coroutines/currentCoroutineContext(): kotlin.coroutines/CoroutineContext // kotlinx.coroutines/currentCoroutineContext|currentCoroutineContext(){}[0]
 
 // Targets: [native]
+open class <#A: kotlin/Comparable<#A> & kotlinx.coroutines.internal/ThreadSafeHeapNode> kotlinx.coroutines.internal/ThreadSafeHeap : kotlinx.atomicfu.locks/SynchronizedObject { // kotlinx.coroutines.internal/ThreadSafeHeap|null[0]
+    constructor <init>() // kotlinx.coroutines.internal/ThreadSafeHeap.<init>|<init>(){}[0]
+
+    final val isEmpty // kotlinx.coroutines.internal/ThreadSafeHeap.isEmpty|{}isEmpty[0]
+        final fun <get-isEmpty>(): kotlin/Boolean // kotlinx.coroutines.internal/ThreadSafeHeap.isEmpty.<get-isEmpty>|<get-isEmpty>(){}[0]
+
+    final var size // kotlinx.coroutines.internal/ThreadSafeHeap.size|{}size[0]
+        final fun <get-size>(): kotlin/Int // kotlinx.coroutines.internal/ThreadSafeHeap.size.<get-size>|<get-size>(){}[0]
+
+    final fun addImpl(#A) // kotlinx.coroutines.internal/ThreadSafeHeap.addImpl|addImpl(1:0){}[0]
+    final fun addLast(#A) // kotlinx.coroutines.internal/ThreadSafeHeap.addLast|addLast(1:0){}[0]
+    final fun find(kotlin/Function1<#A, kotlin/Boolean>): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.find|find(kotlin.Function1<1:0,kotlin.Boolean>){}[0]
+    final fun firstImpl(): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.firstImpl|firstImpl(){}[0]
+    final fun peek(): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.peek|peek(){}[0]
+    final fun remove(#A): kotlin/Boolean // kotlinx.coroutines.internal/ThreadSafeHeap.remove|remove(1:0){}[0]
+    final fun removeAtImpl(kotlin/Int): #A // kotlinx.coroutines.internal/ThreadSafeHeap.removeAtImpl|removeAtImpl(kotlin.Int){}[0]
+    final fun removeFirstOrNull(): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.removeFirstOrNull|removeFirstOrNull(){}[0]
+    final inline fun addLastIf(#A, kotlin/Function1<#A?, kotlin/Boolean>): kotlin/Boolean // kotlinx.coroutines.internal/ThreadSafeHeap.addLastIf|addLastIf(1:0;kotlin.Function1<1:0?,kotlin.Boolean>){}[0]
+    final inline fun removeFirstIf(kotlin/Function1<#A, kotlin/Boolean>): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.removeFirstIf|removeFirstIf(kotlin.Function1<1:0,kotlin.Boolean>){}[0]
+}
+
+// Targets: [native]
 final val kotlinx.coroutines/IO // kotlinx.coroutines/IO|@kotlinx.coroutines.Dispatchers{}IO[0]
     final fun (kotlinx.coroutines/Dispatchers).<get-IO>(): kotlinx.coroutines/CoroutineDispatcher // kotlinx.coroutines/IO.<get-IO>|<get-IO>@kotlinx.coroutines.Dispatchers(){}[0]
 
@@ -1090,6 +1200,45 @@ final fun kotlinx.coroutines/newFixedThreadPoolContext(kotlin/Int, kotlin/String
 
 // Targets: [native]
 final fun kotlinx.coroutines/newSingleThreadContext(kotlin/String): kotlinx.coroutines/CloseableCoroutineDispatcher // kotlinx.coroutines/newSingleThreadContext|newSingleThreadContext(kotlin.String){}[0]
+
+// Targets: [native]
+final inline fun <#A: kotlin/Any?> kotlinx.coroutines.internal/synchronized(kotlinx.atomicfu.locks/SynchronizedObject, kotlin/Function0<#A>): #A // kotlinx.coroutines.internal/synchronized|synchronized(kotlinx.atomicfu.locks.SynchronizedObject;kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+
+// Targets: [native]
+final inline fun <#A: kotlin/Any?> kotlinx.coroutines.internal/synchronizedImpl(kotlinx.atomicfu.locks/SynchronizedObject, kotlin/Function0<#A>): #A // kotlinx.coroutines.internal/synchronizedImpl|synchronizedImpl(kotlinx.atomicfu.locks.SynchronizedObject;kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+
+// Targets: [js, wasmJs, wasmWasi]
+open class <#A: kotlin/Comparable<#A> & kotlinx.coroutines.internal/ThreadSafeHeapNode> kotlinx.coroutines.internal/ThreadSafeHeap : kotlinx.coroutines.internal/SynchronizedObject { // kotlinx.coroutines.internal/ThreadSafeHeap|null[0]
+    constructor <init>() // kotlinx.coroutines.internal/ThreadSafeHeap.<init>|<init>(){}[0]
+
+    final val isEmpty // kotlinx.coroutines.internal/ThreadSafeHeap.isEmpty|{}isEmpty[0]
+        final fun <get-isEmpty>(): kotlin/Boolean // kotlinx.coroutines.internal/ThreadSafeHeap.isEmpty.<get-isEmpty>|<get-isEmpty>(){}[0]
+
+    final var size // kotlinx.coroutines.internal/ThreadSafeHeap.size|{}size[0]
+        final fun <get-size>(): kotlin/Int // kotlinx.coroutines.internal/ThreadSafeHeap.size.<get-size>|<get-size>(){}[0]
+
+    final fun addImpl(#A) // kotlinx.coroutines.internal/ThreadSafeHeap.addImpl|addImpl(1:0){}[0]
+    final fun addLast(#A) // kotlinx.coroutines.internal/ThreadSafeHeap.addLast|addLast(1:0){}[0]
+    final fun find(kotlin/Function1<#A, kotlin/Boolean>): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.find|find(kotlin.Function1<1:0,kotlin.Boolean>){}[0]
+    final fun firstImpl(): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.firstImpl|firstImpl(){}[0]
+    final fun peek(): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.peek|peek(){}[0]
+    final fun remove(#A): kotlin/Boolean // kotlinx.coroutines.internal/ThreadSafeHeap.remove|remove(1:0){}[0]
+    final fun removeAtImpl(kotlin/Int): #A // kotlinx.coroutines.internal/ThreadSafeHeap.removeAtImpl|removeAtImpl(kotlin.Int){}[0]
+    final fun removeFirstOrNull(): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.removeFirstOrNull|removeFirstOrNull(){}[0]
+    final inline fun addLastIf(#A, kotlin/Function1<#A?, kotlin/Boolean>): kotlin/Boolean // kotlinx.coroutines.internal/ThreadSafeHeap.addLastIf|addLastIf(1:0;kotlin.Function1<1:0?,kotlin.Boolean>){}[0]
+    final inline fun removeFirstIf(kotlin/Function1<#A, kotlin/Boolean>): #A? // kotlinx.coroutines.internal/ThreadSafeHeap.removeFirstIf|removeFirstIf(kotlin.Function1<1:0,kotlin.Boolean>){}[0]
+}
+
+// Targets: [js, wasmJs, wasmWasi]
+open class kotlinx.coroutines.internal/SynchronizedObject { // kotlinx.coroutines.internal/SynchronizedObject|null[0]
+    constructor <init>() // kotlinx.coroutines.internal/SynchronizedObject.<init>|<init>(){}[0]
+}
+
+// Targets: [js, wasmJs, wasmWasi]
+final inline fun <#A: kotlin/Any?> kotlinx.coroutines.internal/synchronized(kotlinx.coroutines.internal/SynchronizedObject, kotlin/Function0<#A>): #A // kotlinx.coroutines.internal/synchronized|synchronized(kotlinx.coroutines.internal.SynchronizedObject;kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+
+// Targets: [js, wasmJs, wasmWasi]
+final inline fun <#A: kotlin/Any?> kotlinx.coroutines.internal/synchronizedImpl(kotlinx.coroutines.internal/SynchronizedObject, kotlin/Function0<#A>): #A // kotlinx.coroutines.internal/synchronizedImpl|synchronizedImpl(kotlinx.coroutines.internal.SynchronizedObject;kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
 
 // Targets: [js]
 final fun (org.w3c.dom/Window).kotlinx.coroutines/asCoroutineDispatcher(): kotlinx.coroutines/CoroutineDispatcher // kotlinx.coroutines/asCoroutineDispatcher|asCoroutineDispatcher@org.w3c.dom.Window(){}[0]
@@ -1120,3 +1269,6 @@ final fun <#A: kotlin/Any?> (kotlinx.coroutines/Deferred<#A>).kotlinx.coroutines
 
 // Targets: [wasmJs]
 final suspend fun <#A: kotlin/Any?> (kotlin.js/Promise<kotlin.js/JsAny?>).kotlinx.coroutines/await(): #A // kotlinx.coroutines/await|await@kotlin.js.Promise<kotlin.js.JsAny?>(){0§<kotlin.Any?>}[0]
+
+// Targets: [wasmWasi]
+final fun kotlinx.coroutines.internal/runTestCoroutine(kotlin.coroutines/CoroutineContext, kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, kotlin/Unit>) // kotlinx.coroutines.internal/runTestCoroutine|runTestCoroutine(kotlin.coroutines.CoroutineContext;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,kotlin.Unit>){}[0]
