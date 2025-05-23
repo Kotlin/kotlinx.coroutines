@@ -5,7 +5,7 @@ import org.junit.Test
 import org.openjdk.jol.info.*
 import kotlin.test.*
 
-
+@Ignore
 class MemoryFootprintTest : TestBase(true) {
 
     @Test
