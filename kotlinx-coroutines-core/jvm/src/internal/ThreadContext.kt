@@ -96,6 +96,7 @@ internal fun restoreThreadContext(context: CoroutineContext, oldState: Any?) {
 @PublishedApi
 internal data class ThreadLocalKey(private val threadLocal: ThreadLocal<*>) : CoroutineContext.Key<ThreadLocalElement<*>>
 
+@PublishedApi
 internal class ThreadLocalElement<T>(
     private val value: T,
     private val threadLocal: ThreadLocal<T>
