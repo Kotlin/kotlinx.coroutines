@@ -19,7 +19,7 @@ import kotlin.coroutines.intrinsics.*
  * An instance of `CancellableContinuation` can only be obtained by the [suspendCancellableCoroutine] function.
  * The interface itself is public for use and private for implementation.
  *
- * A typical usages of this function is to suspend a coroutine while waiting for a result
+ * A typical usage of this function is to suspend a coroutine while waiting for a result
  * from a callback or an external source of values that optionally supports cancellation:
  *
  * ```
@@ -45,7 +45,7 @@ import kotlin.coroutines.intrinsics.*
  * [CancellableContinuation] allows concurrent invocations of the [cancel] and [resume] pair, guaranteeing
  * that only one of these operations will succeed.
  * Concurrent invocations of [resume] methods lead to a [IllegalStateException] and are considered a programmatic error.
- * Concurrent invocations of [cancel] methods is permitted, and at most one of them succeeds.
+ * Concurrent invocations of [cancel] methods are permitted, and at most one of them succeeds.
  *
  * ### Prompt cancellation guarantee
  *
@@ -88,7 +88,7 @@ import kotlin.coroutines.intrinsics.*
  * | ----------------------------------- | ---------- | ------------- | ------------- |
  * | _Active_ (initial state)            | `true`     | `false`       | `false`       |
  * | _Resumed_ (final _completed_ state) | `false`    | `true`        | `false`       |
- * | _Canceled_ (final _completed_ state)| `false`    | `true`        | `true`        |
+ * | _Cancelled_ (final _completed_ state)| `false`    | `true`        | `true`        |
  *
  * For a detailed description of each state, see the corresponding properties' documentation.
  *
@@ -188,7 +188,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Internal function that setups cancellation behavior in [suspendCancellableCoroutine].
      * It's illegal to call this function in any non-`kotlinx.coroutines` code and
      * such calls lead to undefined behaviour.
-     * Exposed in our ABI since 1.0.0 withing `suspendCancellableCoroutine` body.
+     * Exposed in our ABI since 1.0.0 within `suspendCancellableCoroutine` body.
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
