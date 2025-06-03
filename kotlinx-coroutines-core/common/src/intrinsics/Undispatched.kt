@@ -40,14 +40,14 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, c
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(
     receiver: R, block: suspend R.() -> T
-): Any? = startUndspatched(alwaysRethrow = true, receiver, block)
+): Any? = startUndispatched(alwaysRethrow = true, receiver, block)
 
 /**
  * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
     receiver: R, block: suspend R.() -> T
-): Any? = startUndspatched(alwaysRethrow = false, receiver, block)
+): Any? = startUndispatched(alwaysRethrow = false, receiver, block)
 
 /**
  * Starts and handles the result of an undispatched coroutine, potentially with children.
@@ -58,7 +58,7 @@ internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
  *     It is a tweak for 'withTimeout' in order to successfully return values when the block was cancelled:
  *     i.e. `withTimeout(1ms) { Thread.sleep(1000); 42 }` should not fail.
  */
-private fun <T, R> ScopeCoroutine<T>.startUndspatched(
+private fun <T, R> ScopeCoroutine<T>.startUndispatched(
     alwaysRethrow: Boolean,
     receiver: R, block: suspend R.() -> T
 ): Any? {
