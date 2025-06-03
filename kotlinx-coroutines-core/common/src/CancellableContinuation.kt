@@ -84,10 +84,10 @@ import kotlin.coroutines.intrinsics.*
  *
  * A cancellable continuation has three observable states:
  *
- * | **State**                           | [isActive] | [isCompleted] | [isCancelled] |
- * | ----------------------------------- | ---------- | ------------- | ------------- |
- * | _Active_ (initial state)            | `true`     | `false`       | `false`       |
- * | _Resumed_ (final _completed_ state) | `false`    | `true`        | `false`       |
+ * | **State**                            | [isActive] | [isCompleted] | [isCancelled] |
+ * | ------------------------------------ | ---------- | ------------- | ------------- |
+ * | _Active_ (initial state)             | `true`     | `false`       | `false`       |
+ * | _Resumed_ (final _completed_ state)  | `false`    | `true`        | `false`       |
  * | _Cancelled_ (final _completed_ state)| `false`    | `true`        | `true`        |
  *
  * For a detailed description of each state, see the corresponding properties' documentation.
