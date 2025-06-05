@@ -112,7 +112,7 @@ import kotlin.jvm.*
  *
  * ### Concurrency and synchronization
  *
- * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
+ * All functions on this interface and all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  */
 @OptIn(ExperimentalSubclassOptIn::class)
@@ -421,7 +421,7 @@ public interface ChildJob : Job {
     /**
      * Parent is cancelling its child by invoking this method.
      * Child finds the cancellation cause using [ParentJob.getChildJobCancellationCause].
-     * This method does nothing is the child is already being cancelled.
+     * This method does nothing if the child is already being cancelled.
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
