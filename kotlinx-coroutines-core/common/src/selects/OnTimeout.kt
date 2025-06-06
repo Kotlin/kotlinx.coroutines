@@ -2,6 +2,7 @@ package kotlinx.coroutines.selects
 
 import kotlinx.coroutines.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Clause that selects the given [block] after a specified timeout passes.
@@ -14,7 +15,7 @@ import kotlin.time.*
 @ExperimentalCoroutinesApi
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public fun <R> SelectBuilder<R>.onTimeout(timeMillis: Long, block: suspend () -> R): Unit =
-    OnTimeout(timeMillis).selectClause.invoke(block)
+    onTimeout(timeMillis.milliseconds, block)
 
 /**
  * Clause that selects the given [block] after the specified [timeout] passes.
@@ -24,15 +25,15 @@ public fun <R> SelectBuilder<R>.onTimeout(timeMillis: Long, block: suspend () ->
  */
 @ExperimentalCoroutinesApi
 public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -> R): Unit =
-    onTimeout(timeout.toDelayMillis(), block)
+    OnTimeout(timeout).selectClause.invoke(block)
 
 /**
  * We implement [SelectBuilder.onTimeout] as a clause, so each invocation creates
  * an instance of [OnTimeout] that specifies the registration part according to
- * the [timeout][timeMillis] parameter.
+ * the [timeout] parameter.
  */
 private class OnTimeout(
-    private val timeMillis: Long
+    private val timeout: Duration
 ) {
     @Suppress("UNCHECKED_CAST")
     val selectClause: SelectClause0
@@ -44,7 +45,7 @@ private class OnTimeout(
     @Suppress("UNUSED_PARAMETER")
     private fun register(select: SelectInstance<*>, ignoredParam: Any?) {
         // Should this clause complete immediately?
-        if (timeMillis <= 0) {
+        if (timeout <= Duration.ZERO) {
             select.selectInRegistrationPhase(Unit)
             return
         }
@@ -54,7 +55,7 @@ private class OnTimeout(
         }
         select as SelectImplementation<*>
         val context = select.context
-        val disposableHandle = context.delay.invokeOnTimeout(timeMillis, action, context)
+        val disposableHandle = context.delay.invokeOnTimeout(timeout, action, context)
         // Do not forget to clean-up when this `select` is completed or cancelled.
         select.disposeOnCompletion(disposableHandle)
     }
