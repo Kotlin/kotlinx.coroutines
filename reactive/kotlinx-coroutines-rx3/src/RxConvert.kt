@@ -21,6 +21,7 @@ import kotlin.coroutines.*
  *    in the future to account for the concept of structured concurrency.
  *
  * @param context -- the coroutine context from which the resulting completable is going to be signalled
+ * @throws IllegalArgumentException if the [context] contains a [Job] instance.
  */
 public fun Job.asCompletable(context: CoroutineContext): Completable = rxCompletable(context) {
     this@asCompletable.join()
@@ -37,6 +38,7 @@ public fun Job.asCompletable(context: CoroutineContext): Completable = rxComplet
  *    in the future to account for the concept of structured concurrency.
  *
  * @param context -- the coroutine context from which the resulting maybe is going to be signalled
+ * @throws IllegalArgumentException if the [context] contains a [Job] instance.
  */
 public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T & Any> = rxMaybe(context) {
     this@asMaybe.await()
@@ -53,6 +55,7 @@ public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T & Any> =
  *    in the future to account for the concept of structured concurrency.
  *
  * @param context -- the coroutine context from which the resulting single is going to be signalled
+ * @throws IllegalArgumentException if the [context] contains a [Job] instance.
  */
 public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = rxSingle(context) {
     this@asSingle.await()
