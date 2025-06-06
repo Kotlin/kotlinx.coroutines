@@ -165,7 +165,7 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, undispatche
 }
 
 private fun DispatchedTask<*>.resumeUnconfined() {
-    val eventLoop = ThreadLocalEventLoop.eventLoop
+    val eventLoop = ThreadLocalEventLoop.unconfinedEventLoop
     if (eventLoop.isUnconfinedLoopActive) {
         // When unconfined loop is active -- dispatch continuation for execution to avoid stack overflow
         eventLoop.dispatchUnconfined(this)
@@ -177,25 +177,18 @@ private fun DispatchedTask<*>.resumeUnconfined() {
     }
 }
 
-internal inline fun DispatchedTask<*>.runUnconfinedEventLoop(
-    eventLoop: EventLoop,
+internal fun DispatchedTask<*>.runUnconfinedEventLoop(
+    eventLoop: UnconfinedEventLoop,
     block: () -> Unit
 ) {
-    eventLoop.incrementUseCount(unconfined = true)
     try {
-        block()
-        while (true) {
-            // break when all unconfined continuations where executed
-            if (!eventLoop.processUnconfinedEvent()) break
-        }
+        eventLoop.runUnconfinedEventLoop(block)
     } catch (e: Throwable) {
         /*
          * This exception doesn't happen normally, only if we have a bug in implementation.
          * Report it as a fatal exception.
          */
         handleFatalException(e)
-    } finally {
-        eventLoop.decrementUseCount(unconfined = true)
     }
 }
 

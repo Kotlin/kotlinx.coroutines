@@ -56,6 +56,8 @@ fun main() = runBlocking {
  *
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeoutMillis] milliseconds.
+ *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  */
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
@@ -104,6 +106,8 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeoutMillis] milliseconds.
  *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
+ *
  * @param timeoutMillis [T] is the emitted value and the return value is timeout in milliseconds.
  */
 @FlowPreview
@@ -142,6 +146,8 @@ public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
  *
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeout] milliseconds.
+ *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  */
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
@@ -186,6 +192,8 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
  *
  * Note that the resulting flow does not emit anything as long as the original flow emits
  * items faster than every [timeout] unit.
+ *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  *
  * @param timeout [T] is the emitted value and the return value is timeout in [Duration].
  */
@@ -264,6 +272,8 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long): Fl
  * <!--- TEST -->
  *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
+ *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  */
 @FlowPreview
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
@@ -335,6 +345,8 @@ internal fun CoroutineScope.fixedPeriodTicker(
  * <!--- TEST -->
  *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
+ *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  */
 @FlowPreview
 public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
@@ -376,6 +388,8 @@ public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelay
  * <!--- TEST -->
  *
  * Note that delaying on the downstream doesn't trigger the timeout.
+ *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  *
  * @param timeout Timeout duration. If non-positive, the flow is timed out immediately
  */
