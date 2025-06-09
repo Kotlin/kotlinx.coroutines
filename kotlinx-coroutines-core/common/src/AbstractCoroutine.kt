@@ -26,7 +26,7 @@ import kotlinx.coroutines.internal.ScopeCoroutine
  * @param initParentJob specifies whether the parent-child relationship should be instantiated directly
  *               in `AbstractCoroutine` constructor. If set to `false`, it's the responsibility of the child class
  *               to invoke [initParentJob] manually.
- * @param active when `true` (by default), the coroutine is created in the _active_ state, otherwise it is created in the _new_ state.
+ * @param active when `true`, the coroutine is created in the _active_ state, otherwise it is created in the _new_ state.
  *               See [Job] for details.
  *
  * @suppress **This an internal API and should not be used from general code.**
