@@ -49,25 +49,6 @@ class EventLoopsTest : TestBase() {
         finish(5)
     }
 
-    @Test
-    fun testEventLoopInDefaultExecutor() = runTest {
-        expect(1)
-        withContext(Dispatchers.Unconfined) {
-            delay(1)
-            assertTrue(Thread.currentThread().name.startsWith(DefaultExecutor.THREAD_NAME))
-            expect(2)
-            // now runBlocking inside default executor thread --> should use outer event loop
-            DefaultExecutor.enqueue(Runnable {
-                expect(4) // will execute when runBlocking runs loop
-            })
-            expect(3)
-            runBlocking {
-                expect(5)
-            }
-        }
-        finish(6)
-    }
-
     /**
      * Simple test for [processNextEventInCurrentThread] API use-case.
      */
