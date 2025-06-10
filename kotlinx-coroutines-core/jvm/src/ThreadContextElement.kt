@@ -191,9 +191,9 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
  * Wraps [ThreadLocal] into [ThreadContextElement]. The resulting [ThreadContextElement]
  * maintains the given [value] of the given [ThreadLocal] for a coroutine regardless of the actual thread it is resumed on.
  * By default [ThreadLocal.get] is used as a value for the thread-local variable, but it can be overridden with the [value] parameter.
- * Beware that the context element **does not track** modifications of the thread-local and accessing thread-local from a coroutine
- * without the corresponding context element returns an **undefined** value. See the examples for a detailed description.
- *
+ * Beware that the context element **does not track** manual `.set` modifications of the thread-local,
+ * and changing the value without the corresponding context element returns an **undefined** value.
+ * See the examples below.
  *
  * Example usage:
  * ```
@@ -209,39 +209,21 @@ public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
  * println(myThreadLocal.get()) // Prints "null"
  * ```
  *
- * The context element does not track modifications of the thread-local variable, for example:
+ * The context element does not track manual `.set` modifications of the thread-local variable, for example:
  *
  * ```
- * myThreadLocal.set("main")
- * withContext(Dispatchers.Main) {
- *     println(myThreadLocal.get()) // Prints "main"
- *     myThreadLocal.set("UI")
- * }
- * println(myThreadLocal.get()) // Prints "main", not "UI"
- * ```
- *
- * Use `withContext` to update the corresponding thread-local variable to a different value, for example:
- * ```
- * withContext(myThreadLocal.asContextElement("foo")) {
- *     println(myThreadLocal.get()) // Prints "foo"
+ * val myThreadLocal = ThreadLocal<String?>()
+ * ...
+ * withContext(myThreadLocal.asContextElement(value = "initial")) {
+ *     println(myThreadLocal.get())  // prints "initial"
+ *     myThreadLocal.set("modified") // untracked modification
+ *     println(myThreadLocal.get())  // prints "modified"
+ *     yield()                       // potential suspension point (might or might not suspend)
+ *     println(myThreadLocal.get())  // WARN: can print either "initial" or "modified"
  * }
  * ```
  *
- * Accessing the thread-local without corresponding context element leads to undefined value:
- * ```
- * val tl = ThreadLocal.withInitial { "initial" }
- *
- * runBlocking {
- *     println(tl.get()) // Will print "initial"
- *     // Change context
- *     withContext(tl.asContextElement("modified")) {
- *         println(tl.get()) // Will print "modified"
- *     }
- *     // Context is changed again
- *     println(tl.get()) // <- WARN: can print either "modified" or "initial"
- * }
- * ```
- * to fix this behaviour use `runBlocking(tl.asContextElement())`
+ * to fix this behavior, all modifications to the thread-local must go through `withContext(myThreadLocal.asContextElement(<new-value>))`.
  */
 public fun <T> ThreadLocal<T>.asContextElement(value: T = get()): ThreadContextElement<T> =
     ThreadLocalElement(value, this)
