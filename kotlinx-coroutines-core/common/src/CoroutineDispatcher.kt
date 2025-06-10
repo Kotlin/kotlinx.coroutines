@@ -128,7 +128,7 @@ public abstract class CoroutineDispatcher :
      *
      * Note that this example was structured in such a way that it illustrates the parallelism guarantees.
      * In practice, it is usually better to use `Dispatchers.IO` or [Dispatchers.Default] instead of creating a
-     * `backgroundDispatcher`.
+     * `dispatcher`.
      *
      * ### `limitedParallelism(1)` pattern
      *
