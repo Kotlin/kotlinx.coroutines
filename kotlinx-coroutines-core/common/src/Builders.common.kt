@@ -34,6 +34,8 @@ import kotlin.jvm.*
  *
  * ## Structured Concurrency
  *
+ * ### Coroutine context
+ *
  * [launch] creates a *child coroutine* of `this` [CoroutineScope].
  *
  * The context of the new coroutine is created like this:
@@ -55,8 +57,10 @@ import kotlin.jvm.*
  * If the [block] throws a [CancellationException], the coroutine is considered cancelled,
  * and if it throws any other exception, the coroutine is considered failed.
  *
+ * ### Interactions between coroutines
+ *
  * The details of structured concurrency are described in the [CoroutineScope] interface documentation.
- * Here is a restatement of some main points as they relate to `launch`:
+ * Here is a restatement of some main points as they relate to [launch]:
  *
  * - The lifecycle of the parent [CoroutineScope] can not end until this coroutine
  *   (as well as all its children) completes.
@@ -112,6 +116,16 @@ import kotlin.jvm.*
  * A coroutine created with [launch] does not return a result, and if it fails with an exception,
  * there is no reliable way to learn about that exception in general.
  * [async] is a better choice if the result of the coroutine needs to be accessed from another coroutine.
+ *
+ * ## Differences from [async]
+ *
+ * [launch] is similar to [async] whose block returns a [Unit] value.
+ *
+ * The only difference is the handling of uncaught coroutine exceptions:
+ * if an [async] coroutine fails with an exception, then even if the exception can not be propagated to the parent,
+ * a [CoroutineExceptionHandler] will not be invoked.
+ * Instead, the user of [async] must call [Deferred.await] to get the result of the coroutine,
+ * which will be the uncaught exception.
  *
  * ## Pitfalls
  *
@@ -182,7 +196,7 @@ import kotlin.jvm.*
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param block the coroutine code which will be invoked in the context of the provided scope.
+ * @param block the coroutine code which will be invoked in the child coroutine.
  **/
 public fun CoroutineScope.launch(
     context: CoroutineContext = EmptyCoroutineContext,
@@ -200,24 +214,73 @@ public fun CoroutineScope.launch(
 // --------------- async ---------------
 
 /**
- * Creates a coroutine and returns its future result as an implementation of [Deferred].
- * The running coroutine is cancelled when the resulting deferred is [cancelled][Job.cancel].
- * The resulting coroutine has a key difference compared with similar primitives in other languages
- * and frameworks: it cancels the parent job (or outer scope) on failure to enforce *structured concurrency* paradigm.
- * To change that behaviour, supervising parent ([SupervisorJob] or [supervisorScope]) can be used.
+ * Launches a new *child coroutine* of [CoroutineScope] without blocking the current thread
+ * and returns a reference to the coroutine as a [Deferred] that can be used to access the final value.
  *
- * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
- * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [context] element.
+ * [block] is the computation of the new coroutine that will run concurrently.
+ * The coroutine is considered active until the block and all the child coroutines created in it finish.
+ * The result of executing the [block] is available via the returned [Deferred].
  *
- * By default, the coroutine is immediately scheduled for execution.
- * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
- * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,
- * the resulting [Deferred] is created in _new_ state. It can be explicitly started with [start][Job.start]
- * function and will be started implicitly on the first invocation of [join][Job.join], [await][Deferred.await] or [awaitAll].
+ * [context] specifies the additional context elements for the coroutine to combine with
+ * the elements already present in the [CoroutineScope.coroutineContext].
+ * It is incorrect to pass a [Job] element there, as this breaks structured concurrency.
  *
- * @param block the coroutine code.
+ * By default, the coroutine is scheduled for execution on its [ContinuationInterceptor].
+ * There is no guarantee that it will start immediately: this is decided by the [ContinuationInterceptor].
+ * It is possible that the new coroutine will be cancelled before starting, in which case its code will not be executed.
+ * The [start] parameter can be used to adjust this behavior. See [CoroutineStart] for details.
+ *
+ * ## Structured Concurrency
+ *
+ * ### Coroutine context
+ *
+ * [async] creates a *child coroutine* of `this` [CoroutineScope].
+ *
+ * See the corresponding subsection in the [launch] documentation for details on how the coroutine context is created.
+ * In essence, the elements of [context] are combined with the elements of the [CoroutineScope.coroutineContext],
+ * typically overriding them. It is incorrect to pass a [Job] element there, as this breaks structured concurrency.
+ *
+ * ### Interactions between coroutines
+ *
+ * The details of structured concurrency are described in the [CoroutineScope] interface documentation.
+ * Here is a restatement of some main points as they relate to [async]:
+ *
+ * - The lifecycle of the parent [CoroutineScope] can not end until this coroutine
+ *   (as well as all its children) completes.
+ * - If the parent [CoroutineScope] is cancelled, this coroutine is cancelled as well.
+ * - If this coroutine fails with a non-[CancellationException] exception
+ *   and the parent [CoroutineScope] has a non-supervisor [Job] in its context,
+ *   the parent [Job] is cancelled with this exception.
+ * - If this coroutine fails with an exception and the parent [CoroutineScope] has a supervisor [Job] or no job at all
+ *   (as is the case with [GlobalScope] or malformed scopes),
+ *   the exception is considered uncaught and is only available through the returned [Deferred].
+ * - The lifecycle of the [CoroutineScope] passed as the receiver to the [block]
+ *   will not end until the [block] completes (or gets cancelled before ever having a chance to run).
+ * - If the [block] throws a [CancellationException], the coroutine is considered cancelled,
+ *   cancelling all its children in turn, but the parent does not get notified.
+ *
+ * ## Communicating with the coroutine
+ *
+ * [Deferred.await] can be used to suspend the current coroutine until the result of the [async] coroutine is available.
+ * It returns the result of the [block] executed in the [async] coroutine.
+ * Note that if the [async] coroutine fails with an exception, [Deferred.await] will also throw that exception,
+ * including [CancellationException] if the coroutine was cancelled.
+ * See the "CancellationException silently stopping computations" pitfall in the [launch] documentation.
+ *
+ * [Deferred.cancel] can be used to cancel the coroutine, and [Deferred.join] can be used to block until its completion
+ * without blocking the current thread or accessing its result.
+ * Note that [Deferred.join] succeeds even if the coroutine was cancelled or failed with an exception.
+ * [Deferred.cancelAndJoin] is a convenience function that combines cancellation and joining.
+ *
+ * If the coroutine was started with [start] set to [CoroutineStart.LAZY], the coroutine will not be scheduled
+ * to run on its [ContinuationInterceptor] immediately.
+ * [Deferred.start] can be used to start the coroutine explicitly,
+ * and awaiting its result using [Deferred.await] or [awaitAll] or its completion using [Deferred.join]
+ * also causes the coroutine to start executing.
+ *
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
+ * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
+ * @param block the coroutine code which will be invoked in the child coroutine.
  */
 public fun <T> CoroutineScope.async(
     context: CoroutineContext = EmptyCoroutineContext,
