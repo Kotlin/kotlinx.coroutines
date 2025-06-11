@@ -20,6 +20,63 @@ import kotlin.coroutines.*
  * if you write `launch(NonCancellable) { ... }` then not only the newly launched job will not be cancelled
  * when the parent is cancelled, the whole parent-child relation between parent and child is severed.
  * The parent will not wait for the child's completion, nor will be cancelled when the child crashed.
+ *
+ * ## Pitfalls
+ *
+ * ### Combining with other elements
+ *
+ * The typical usage of [NonCancellable] is to ensure that cleanup code is executed even if the parent job is cancelled.
+ * Example:
+ *
+ * ```
+ * try {
+ *     // some code using a resource
+ * } finally {
+ *     withContext(NonCancellable) {
+ *         // cleanup code that should not be cancelled
+ *     }
+ * }
+ * ```
+ *
+ * However, it is easy to get this pattern wrong if the cleanup code needs to run on some specific dispatcher:
+ *
+ * ```
+ * // DO NOT DO THIS
+ * withContext(Dispatchers.Main) {
+ *     try {
+ *         // some code using a resource
+ *     } finally {
+ *         // THIS IS INCORRECT
+ *         withContext(NonCancellable + Dispatchers.Default) {
+ *             // cleanup code that should not be cancelled
+ *         } // this line may throw a `CancellationException`!
+ *     }
+ * }
+ * ```
+ *
+ * In this case, if the parent job is cancelled, [withContext] will throw a [CancellationException] as soon
+ * as it tries to switch back from the [Dispatchers.Default] dispatcher back to the original one.
+ * The reason for this is that [withContext] obeys the **prompt cancellation** principle,
+ * which means that dispatching back from it to the original context will fail with a [CancellationException]
+ * even if the block passed to [withContext] finished successfully,
+ * overriding the original exception thrown by the `try` block, if any.
+ *
+ * To avoid this, you should use [NonCancellable] as the only element in the context of the `withContext` call,
+ * and then inside the block, you can switch to any dispatcher you need:
+ *
+ * ```
+ * withContext(Dispatchers.Main) {
+ *     try {
+ *         // some code using a resource
+ *     } finally {
+ *         withContext(NonCancellable) {
+ *             withContext(Dispatchers.Default) {
+ *                 // cleanup code that should not be cancelled
+ *             }
+ *         }
+ *     }
+ * }
+ * ```
  */
 @OptIn(InternalForInheritanceCoroutinesApi::class)
 @Suppress("DeprecatedCallableAddReplaceWith")
