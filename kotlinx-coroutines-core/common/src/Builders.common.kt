@@ -320,28 +320,131 @@ private class LazyDeferredCoroutine<T>(
 // --------------- withContext ---------------
 
 /**
- * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
+ * Calls the specified suspending [block] with an updated coroutine context, suspends until it completes, and returns
  * the result.
  *
- * The resulting context for the [block] is derived by merging the current [coroutineContext] with the
- * specified [context] using `coroutineContext + context` (see [CoroutineContext.plus]).
- * This suspending function is cancellable. It immediately checks for cancellation of
- * the resulting context and throws [CancellationException] if it is not [active][CoroutineContext.isActive].
+ * [context] specifies the additional context elements for the coroutine to combine with
+ * the elements already present in the [CoroutineScope.coroutineContext].
+ * It is incorrect to pass a [Job] element there, as this breaks structured concurrency,
+ * unless it is [NonCancellable].
  *
- * Calls to [withContext] whose [context] argument provides a [CoroutineDispatcher] that is
- * different from the current one, by necessity, perform additional dispatches: the [block]
- * can not be executed immediately and needs to be dispatched for execution on
- * the passed [CoroutineDispatcher], and then when the [block] completes, the execution
- * has to shift back to the original dispatcher.
+ * If the resulting [CoroutineScope.coroutineContext] is cancelled before the [block] starts running,
+ * [block] will immediately finish with a [CancellationException],
+ * possibly without even being scheduled for execution.
  *
- * Note that the result of `withContext` invocation is dispatched into the original context in a cancellable way
+ * ## Structured Concurrency
+ *
+ * The behavior of [withContext] is similar to [coroutineScope], as it, too, creates a new *scoped child coroutine*.
+ * Refer to the documentation of that function for details.
+ *
+ * The difference is that [withContext] does not simply call the [block] in a new coroutine
+ * but updates the [currentCoroutineContext] used for running it.
+ *
+ * The context of the new scope is created like this:
+ * - First, [currentCoroutineContext] is combined with the [context] argument.
+ *   In most cases, this means that elements from [context] simply override
+ *   the elements in the [currentCoroutineContext],
+ *   but if they are `CopyableThreadContextElement`s, they are copied and combined as needed.
+ * - Then, the [Job] in the [currentCoroutineContext], if any, is used as the *parent* of the new scope,
+ *   unless overridden.
+ *   Overriding the [Job] is forbidden with the notable exception of [NonCancellable];
+ *   see a separate subsection below for details.
+ *   The new scope's [Job] is added to the resulting context.
+ *
+ * The context of the new scope is obtained by combining the [currentCoroutineContext] with a new [Job]
+ * whose parent is the [Job] of the caller [currentCoroutineContext] (if any).
+ * The [Job] of the new scope is not a normal child of the caller coroutine but a lexically scoped one,
+ * meaning that the failure of the [Job] will not affect the parent [Job].
+ * Instead, the exception leading to the failure will be rethrown to the caller of this function.
+ *
+ * ### Overriding the parent job
+ *
+ * #### [NonCancellable]
+ *
+ * Passing [NonCancellable] in the [context] argument is a special case that allows
+ * the [block] to run even if the parent coroutine is cancelled.
+ *
+ * This is useful in particular for performing cleanup operations
+ * if the cleanup procedure is itself a `suspend` function.
+ *
+ * Example:
+ *
+ * ```
+ * class Connection {
+ *     suspend fun terminate()
+ * }
+ *
+ * val connection = Connection()
+ * try {
+ *     // some cancellable operations...
+ * } finally {
+ *     withContext(NonCancellable) {
+ *         // this block will run even if the parent coroutine is cancelled
+ *         connection.terminate()
+ *     }
+ * }
+ * ```
+ *
+ * Beware that combining [NonCancellable] with context elements that change the dispatcher
+ * will make this cleanup code incorrect. See the [NonCancellable] documentation for details.
+ *
+ * #### Other [Job] elements
+ *
+ * Passing a [Job] in the [context] argument breaks structured concurrency and is not a supported pattern.
+ * It does not throw an exception only for backward compatibility reasons, as a lot of code was written this way.
+ * Always structure your coroutines such that the lifecycle of the child coroutine is
+ * contained in the lifecycle of the [CoroutineScope] it is launched in.
+ *
+ * To help with migrating to structured concurrency, the specific behaviour of passing a [Job] in the [context] argument
+ * is described here.
+ * **Do not rely on this behaviour in new code.**
+ *
+ * If [context] contains a [Job] element, it will be the *parent* of the new coroutine,
+ * and the lifecycle of the new coroutine will not be tied to the [CoroutineScope] at all.
+ *
+ * In specific terms:
+ *
+ * - If the [Job] passed to the [context] is cancelled, the new coroutine will be cancelled.
+ * - However, because [withContext] creates a scoped child coroutine, the failure of [block]
+ *   will not cancel the parent [Job].
+ * - If the [currentCoroutineContext] is cancelled, the new coroutine will not be affected.
+ * - In particular, if [withContext] avoided a dispatch (see "Dispatching behavior" below)
+ *   and its block finished without an exception, [withContext] itself will not throw a [CancellationException].
+ *   This means that the block execution will continue even if the parent coroutine was cancelled.
+ *
+ * ## Dispatching behavior
+ *
+ * If [context] provides a [ContinuationInterceptor] other than the one used by the caller,
+ * the [block] can not simply be called inline with the updated context and has to go through a dispatch,
+ * that is, get scheduled on the new [ContinuationInterceptor].
+ * It is up to the [ContinuationInterceptor] to actually run the [block],
+ * and it may take arbitrarily long for that to happen.
+ * After the [block] has completed, the computation has to be dispatched back to the original
+ * [ContinuationInterceptor].
+ *
+ * If the resulting context in which [block] should run has the same [ContinuationInterceptor]
+ * as the caller, no dispatch is performed.
+ * In that case, no dispatch happens on exiting the [block] either, unless child coroutines have to be awaited.
+ *
+ * Note that the result of [withContext] invocation is dispatched into the original context in a cancellable way
  * with a **prompt cancellation guarantee**, which means that if the original [coroutineContext]
- * in which `withContext` was invoked is cancelled by the time its dispatcher starts to execute the code,
- * it discards the result of `withContext` and throws [CancellationException].
+ * in which [withContext] was invoked is cancelled by the time its dispatcher starts to execute the code,
+ * it discards the result of [withContext] and throws a [CancellationException].
  *
- * The cancellation behaviour described above is enabled if and only if the dispatcher is being changed.
- * For example, when using `withContext(NonCancellable) { ... }` there is no change in dispatcher and
- * this call will not be cancelled neither on entry to the block inside `withContext` nor on exit from it.
+ * Note that if the dispatch from [withContext] back to the original context does not need to happen
+ * (because of having the same dispatcher and not having to wait for the children)
+ * *and* the [context] passed to [withContext] contains [NonCancellable],
+ * then cancellation of the caller will not prevent a value from being successfully returned.
+ *
+ * ## Pitfalls
+ *
+ * ### Returning closeable resources
+ *
+ * Values returned from [withContext] will typically be lost if the caller is cancelled.
+ * The exception is the `withContext(NonCancellable)` pattern.
+ *
+ * See the corresponding section in the [coroutineScope] documentation for details,
+ * as well as the [NonCancellable] documentation.
  */
 public suspend fun <T> withContext(
     context: CoroutineContext,

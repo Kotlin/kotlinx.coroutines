@@ -797,6 +797,61 @@ public object GlobalScope : CoroutineScope {
  *
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+ *
+ * ## Pitfall: returning closeable resources from a scoped coroutine
+ *
+ * [R] must be a value that can safely be dropped. For example, this code is incorrect:
+ *
+ * ```
+ * // DO NOT DO THIS
+ * val closeableResource = coroutineScope {
+ *     // calculate the closeable resource somehow
+ *     obtainResource()
+ * }
+ * closeableResource.use { resource ->
+ *     // use the resource
+ * }
+ * ```
+ *
+ * The problem is that, if the caller gets cancelled before [coroutineScope] completes,
+ * then even if the calculation of the closeable resource does not suspend at all,
+ * [coroutineScope] will throw [CancellationException] instead of returning any value.
+ *
+ * This pitfall applies to all [coroutineScope]-like functions, like [withContext], [withTimeout], or [supervisorScope].
+ * For this discussion, we call them collectively `myLexicalScope`.
+ *
+ * If it is necessary to process a value returned from a lexical coroutine scope, the following pattern should be used:
+ *
+ * ```
+ * var resource: MyResource? = null
+ * try {
+ *     // note: do not simply return the resource here!
+ *     myLexicalScope {
+ *         resource = obtainResource()
+ *     }
+ *     // the resource is available here
+ * } finally {
+ *     resource?.close()
+ * }
+ * ```
+ *
+ * If cancellation during the acquisition of the resource is also undesired, the following pattern can be used
+ * ([coroutineScope] is not needed here, as [withContext] defines its own [CoroutineScope], but :
+ *
+ * ```
+ * withContext(NonCancellable) {
+ *     myLexicalScope {
+ *         obtainResource()
+ *     }
+ * }.use { resource ->
+ * }
+ * ```
+ *
+ * Be aware, however, that like any [NonCancellable] usage, this creates the risk of accessing values past the point
+ * where they are valid.
+ * For example, if the caller coroutine scope is tied to the lifecycle of a UI element, with cancellation meaning
+ * that the UI element was already disposed of, accessing it during the acquisition of a resource or
+ * before the first suspension point in [use] is not allowed and may lead to crashes.
  */
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
     contract {

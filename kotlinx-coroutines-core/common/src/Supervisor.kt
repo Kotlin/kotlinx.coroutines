@@ -77,7 +77,11 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  *
- * **Pitfall**: [supervisorScope] does not install a [CoroutineExceptionHandler] in the new scope.
+ * ## Pitfalls
+ *
+ * ### Uncaught exceptions in child coroutines
+ *
+ * [supervisorScope] does not install a [CoroutineExceptionHandler] in the new scope.
  * This means that if a child coroutine started with [launch] fails, its exception will be unhandled,
  * possibly crashing the program. Use the following pattern to avoid this:
  *
@@ -92,6 +96,11 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  * ```
  *
  * Alternatively, the [CoroutineExceptionHandler] can be supplied to the newly launched coroutines themselves.
+ *
+ * ### Returning closeable resources
+ *
+ * Values returned from [supervisorScope] will be lost if the caller is cancelled.
+ * See the corresponding section in the [coroutineScope] documentation for details.
  */
 public suspend fun <R> supervisorScope(block: suspend CoroutineScope.() -> R): R {
     contract {
