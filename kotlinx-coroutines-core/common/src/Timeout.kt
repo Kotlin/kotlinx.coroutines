@@ -46,15 +46,11 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
 }
 
 /**
- * Runs a given suspending [block] of code inside a coroutine with the specified [timeout] and throws
- * a [TimeoutCancellationException] if the timeout was exceeded.
- * If the given [timeout] is non-positive, [TimeoutCancellationException] is thrown immediately.
+ * Calls the specified suspending [block] with the specified [timeout], suspends until it completes,
+ * and returns the result.
  *
- * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * the cancellable suspending function inside the block throws a [TimeoutCancellationException].
- *
- * The sibling function that does not throw an exception on timeout is [withTimeoutOrNull].
- * Note that the timeout action can be specified for a [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ * If the [block] execution times out, it is cancelled with a [TimeoutCancellationException].
+ * If the [timeout] is non-positive, this happens immediately and the [block] is not executed.
  *
  * **The timeout event is asynchronous with respect to the code running in the block** and may happen at any time,
  * even right before the return from inside the timeout [block]. Keep this in mind if you open or acquire some
@@ -64,6 +60,97 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * section of the coroutines guide for details.
  *
  * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ *
+ * ## Structured Concurrency
+ *
+ * [withTimeout] behaves like [coroutineScope], as it, too, creates a new *scoped child coroutine*.
+ * Refer to the documentation of [coroutineScope] for details.
+ *
+ * ## Pitfalls
+ *
+ * ### Cancellation is cooperative
+ *
+ * [withTimeout] will not automatically stop all code inside it from being executed once the timeout gets triggered.
+ * It only cancels the running [block], but it's up to the [block] to notice that it was cancelled, for example,
+ * using [ensureActive], checking [isActive], or using [suspendCancellableCoroutine].
+ *
+ * For example, this JVM code will run to completion, taking 10 seconds to do so:
+ *
+ * ```
+ * withTimeout(1.seconds) {
+ *     Thread.sleep(10_000)
+ * }
+ * ```
+ *
+ * On the JVM, use the `runInterruptible` function to propagate cancellations
+ * to blocking JVM code as thread interruptions.
+ *
+ * See the [Cancellation is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative).
+ * section of the coroutines guide for details.
+ *
+ * ### [TimeoutCancellationException] is not considered an error
+ *
+ * Consider this code:
+ *
+ * ```
+ * coroutineScope {
+ *     launch {
+ *         withTimeout(10.milliseconds) {
+ *             // Some operation that is going to time out
+ *             awaitCancellation()
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * Here, the timeout will be triggered, and [withTimeout] will finish with a [TimeoutCancellationException].
+ * However, [coroutineScope] will finish normally.
+ * The reason is that when coroutines finish with a [CancellationException],
+ * the error does not get propagated to the parent, just like it doesn't when a child actually gets cancelled.
+ *
+ * For ensuring that timeouts are treated as true errors that should cause the parent to fail,
+ * use [withTimeoutOrNull] and check the return value:
+ *
+ * ```
+ * coroutineScope {
+ *     launch {
+ *         withTimeoutOrNull(10.milliseconds) {
+ *             // Some operation that is going to time out
+ *             awaitCancellation()
+ *         } ?: error("Timed out!")
+ *     }
+ * }
+ * ```
+ *
+ * If [withTimeout] has to return a nullable value and [withTimeoutOrNull] can not be used,
+ * this pattern can help instead:
+ *
+ * ```
+ * coroutineScope {
+ *     launch {
+ *         try {
+ *             withTimeoutOrNull(10.milliseconds) {
+ *                 // Some operation that is going to time out
+ *                 awaitCancellation()
+ *             }
+ *         } catch (e: TimeoutCancellationException) {
+ *             error("Timed out!")
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * Another option is to specify the timeout action in a [select] invocation
+ * with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * ### Returning closeable resources
+ *
+ * Values returned from [withTimeout] will typically be lost if the caller is cancelled.
+ *
+ * See the corresponding section in the [coroutineScope] documentation for details.
+ *
+ * @see withTimeoutOrNull
+ * @see SelectBuilder.onTimeout
  */
 public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
     contract {
