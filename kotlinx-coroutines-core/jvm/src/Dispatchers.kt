@@ -25,7 +25,7 @@ public actual object Dispatchers {
      * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
      *
      * Additional threads in this pool are created and are shutdown on demand.
-     * The number of threads used by tasks in this dispatcher is limited by the value of
+     * The parallelism of tasks in this dispatcher is limited by the value of
      * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
      * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
      *
