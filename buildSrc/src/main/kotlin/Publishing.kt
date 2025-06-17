@@ -65,16 +65,24 @@ fun mavenRepositoryUri(): URI {
 
 fun configureMavenPublication(rh: RepositoryHandler, project: Project) {
     rh.maven {
-        url = mavenRepositoryUri()
-        credentials {
-            if (spacePublicationEnabled) {
-                // Configure space credentials
-                username = project.getSensitiveProperty("libs.space.user")
-                password = project.getSensitiveProperty("libs.space.password")
-            } else {
-                // Configure sonatype credentials
-                username = project.getSensitiveProperty("libs.sonatype.user")
-                password = project.getSensitiveProperty("libs.sonatype.password")
+        if (project.getSensitiveProperty("libs.publication_repository") == "central") {
+            url = URI(project.getSensitiveProperty("libs.repo.url")!!)
+            credentials {
+                username = project.getSensitiveProperty("libs.repo.user")
+                password = project.getSensitiveProperty("libs.repo.password")
+            }
+        } else {
+            url = mavenRepositoryUri()
+            credentials {
+                if (spacePublicationEnabled) {
+                    // Configure space credentials
+                    username = project.getSensitiveProperty("libs.space.user")
+                    password = project.getSensitiveProperty("libs.space.password")
+                } else {
+                    // Configure sonatype credentials
+                    username = project.getSensitiveProperty("libs.sonatype.user")
+                    password = project.getSensitiveProperty("libs.sonatype.password")
+                }
             }
         }
     }
