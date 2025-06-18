@@ -7,6 +7,8 @@ import kotlin.time.*
  * Clause that selects the given [block] after a specified timeout passes.
  * If timeout is negative or zero, [block] is selected immediately.
  *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
+ *
  * **Note: This is an experimental api.** It may be replaced with light-weight timer/timeout channels in the future.
  *
  * @param timeMillis timeout time in milliseconds.
@@ -19,6 +21,8 @@ public fun <R> SelectBuilder<R>.onTimeout(timeMillis: Long, block: suspend () ->
 /**
  * Clause that selects the given [block] after the specified [timeout] passes.
  * If timeout is negative or zero, [block] is selected immediately.
+ *
+ * For a description of how waiting for a specific duration is implemented, see [delay].
  *
  * **Note: This is an experimental api.** It may be replaced with light-weight timer/timeout channels in the future.
  */
