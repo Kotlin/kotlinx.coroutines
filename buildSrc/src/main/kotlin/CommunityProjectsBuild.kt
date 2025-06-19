@@ -146,6 +146,7 @@ fun isSnapshotTrainEnabled(project: Project): Boolean {
 val firstPartyDependencies = listOf(
     "kotlin",
     "atomicfu",
+    "lincheck"
 )
 
 fun shouldUseLocalMaven(project: Project): Boolean {

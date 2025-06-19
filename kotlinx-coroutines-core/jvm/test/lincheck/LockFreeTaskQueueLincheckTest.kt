@@ -4,12 +4,9 @@ package kotlinx.coroutines.lincheck
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import org.jetbrains.kotlinx.lincheck.*
-import org.jetbrains.kotlinx.lincheck.annotations.*
-import org.jetbrains.kotlinx.lincheck.annotations.Operation
-import org.jetbrains.kotlinx.lincheck.paramgen.*
-import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
-import org.jetbrains.kotlinx.lincheck.verifier.quiescent.*
+import org.jetbrains.lincheck.datastructures.*
+import org.jetbrains.lincheck.datastructures.verifier.QuiescentConsistencyVerifier
+import org.jetbrains.lincheck.datastructures.verifier.QuiescentConsistent
 
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
 internal abstract class AbstractLockFreeTaskQueueWithoutRemoveLincheckTest(
