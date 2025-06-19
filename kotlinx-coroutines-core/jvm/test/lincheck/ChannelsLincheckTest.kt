@@ -2,18 +2,13 @@
 
 package kotlinx.coroutines.lincheck
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.selects.*
-import org.jetbrains.kotlinx.lincheck.*
-import org.jetbrains.kotlinx.lincheck.annotations.*
-import org.jetbrains.kotlinx.lincheck.annotations.Operation
-import org.jetbrains.kotlinx.lincheck.paramgen.*
-import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
+import org.jetbrains.lincheck.datastructures.*
 
 class RendezvousChannelLincheckTest : ChannelLincheckTestBaseWithOnSend(
     c = Channel(RENDEZVOUS),
@@ -80,7 +75,7 @@ abstract class ChannelLincheckTestBaseWithOnSend(
     sequentialSpecification: Class<*>,
     obstructionFree: Boolean = true
 ) : ChannelLincheckTestBase(c, sequentialSpecification, obstructionFree) {
-    @Operation(allowExtraSuspension = true, blocking = true)
+    @Operation(blocking = true)
     suspend fun sendViaSelect(@Param(name = "value") value: Int): Any = try {
         select<Unit> { c.onSend(value) {} }
     } catch (e: NumberedCancellationException) {
@@ -98,7 +93,7 @@ abstract class ChannelLincheckTestBase(
     private val obstructionFree: Boolean = true
 ) : AbstractLincheckTest() {
 
-    @Operation(allowExtraSuspension = true, blocking = true)
+    @Operation(blocking = true)
     suspend fun send(@Param(name = "value") value: Int): Any = try {
         c.send(value)
     } catch (e: NumberedCancellationException) {
@@ -114,14 +109,14 @@ abstract class ChannelLincheckTestBase(
             else false
         }
 
-    @Operation(allowExtraSuspension = true, blocking = true)
+    @Operation(blocking = true)
     suspend fun receive(): Any = try {
         c.receive()
     } catch (e: NumberedCancellationException) {
         e.testResult
     }
 
-    @Operation(allowExtraSuspension = true, blocking = true)
+    @Operation(blocking = true)
     suspend fun receiveCatching(): Any = c.receiveCatching()
         .onSuccess { return it }
         .onClosed { e -> return (e as NumberedCancellationException).testResult }
@@ -132,17 +127,17 @@ abstract class ChannelLincheckTestBase(
             .onSuccess { return it }
             .onFailure { return if (it is NumberedCancellationException) it.testResult else null }
 
-    @Operation(allowExtraSuspension = true, blocking = true)
+    @Operation(blocking = true)
     suspend fun receiveViaSelect(): Any = try {
         select<Int> { c.onReceive { it } }
     } catch (e: NumberedCancellationException) {
         e.testResult
     }
 
-    @Operation(causesBlocking = true, blocking = true)
+    @Operation(blocking = true)
     fun close(@Param(name = "closeToken") token: Int): Boolean = c.close(NumberedCancellationException(token))
 
-    @Operation(causesBlocking = true, blocking = true)
+    @Operation(blocking = true)
     fun cancel(@Param(name = "closeToken") token: Int) = c.cancel(NumberedCancellationException(token))
 
     // @Operation TODO non-linearizable in BufferedChannel
@@ -153,9 +148,6 @@ abstract class ChannelLincheckTestBase(
 
     // @Operation TODO non-linearizable in BufferedChannel
     open fun isEmpty() = c.isEmpty
-
-    @StateRepresentation
-    fun state() = (c as? BufferedChannel<*>)?.toStringDebug() ?: c.toString()
 
     @Validate
     fun validate() {

@@ -1,12 +1,9 @@
 @file:Suppress("unused")
 package kotlinx.coroutines.lincheck
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
-import org.jetbrains.kotlinx.lincheck.*
-import org.jetbrains.kotlinx.lincheck.annotations.Operation
-import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
+import org.jetbrains.lincheck.datastructures.*
 
 abstract class SemaphoreLincheckTestBase(permits: Int) : AbstractLincheckTest() {
     private val semaphore = SemaphoreAndMutexImpl(permits = permits, acquiredPermits = 0)
@@ -14,10 +11,10 @@ abstract class SemaphoreLincheckTestBase(permits: Int) : AbstractLincheckTest() 
     @Operation
     fun tryAcquire() = semaphore.tryAcquire()
 
-    @Operation(promptCancellation = true, allowExtraSuspension = true)
+    @Operation(promptCancellation = true)
     suspend fun acquire() = semaphore.acquire()
 
-    @Operation(handleExceptionsAsResult = [IllegalStateException::class])
+    @Operation
     fun release() = semaphore.release()
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O =

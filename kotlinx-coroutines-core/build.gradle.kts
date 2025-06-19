@@ -57,7 +57,7 @@ kotlin {
         }
         jvmTest {
             dependencies {
-                api("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
+                api("org.jetbrains.lincheck:lincheck:${version("lincheck")}")
                 api("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
                 implementation(project(":android-unit-tests"))
                 implementation("org.openjdk.jol:jol-core:0.16")
@@ -252,6 +252,7 @@ kover {
 
             // lincheck has NPE error on `ManagedStrategyStateHolder` class
             excludedClasses.addAll("org.jetbrains.kotlinx.lincheck.*")
+            excludedClasses.addAll("org.jetbrains.lincheck.*")
         }
         sources {
             excludedSourceSets.addAll("benchmark")
