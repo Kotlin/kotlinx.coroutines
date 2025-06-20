@@ -38,6 +38,12 @@ fun version(target: String): String {
     return properties[version]?.let{"$it"} ?: gradleProperties.getProperty(version)
 }
 
+kotlin {
+    compilerOptions {
+        allWarningsAsErrors = true
+    }
+}
+
 dependencies {
     implementation(kotlin("gradle-plugin", version("kotlin")))
     /*

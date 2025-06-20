@@ -63,7 +63,7 @@ private fun Project.condigureDokkaSetup() {
         dokkaSourceSets.configureEach {
             sourceLink {
                 localDirectory = rootDir
-                remoteUrl = URL("https://github.com/kotlin/kotlinx.coroutines/tree/master")
+                remoteUrl = URI("https://github.com/kotlin/kotlinx.coroutines/tree/master").toURL()
                 remoteLineSuffix ="#L"
             }
         }
@@ -74,7 +74,7 @@ private fun Project.configureExternalLinks() {
     tasks.withType<DokkaTaskPartial>() {
         dokkaSourceSets.configureEach {
             externalDocumentationLink {
-                url = URL(coreModuleDocsUrl)
+                url = URI(coreModuleDocsUrl).toURL()
                 packageListUrl = File(coreModuleDocsPackageList).toURI().toURL()
             }
         }
