@@ -14,7 +14,7 @@ fun Project.externalDocumentationLink(
     tasks.withType<AbstractDokkaLeafTask>().configureEach {
         dokkaSourceSets.configureEach {
             externalDocumentationLink {
-                this.url = URL(url)
+                this.url = URI(url).toURL()
                 packageListUrl = packageList.toPath().toUri().toURL()
             }
         }

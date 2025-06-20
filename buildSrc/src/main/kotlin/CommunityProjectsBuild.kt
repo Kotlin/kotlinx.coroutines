@@ -2,12 +2,11 @@
 
 import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
-import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.*
 import java.net.*
 import java.util.logging.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
 
@@ -107,7 +106,7 @@ fun Project.configureCommunityBuildTweaks() {
     val coreProject = subprojects.single { it.name == coreModule }
     configure(listOf(coreProject)) {
         configurations.matching { it.name == "kotlinCompilerClasspath" }.configureEach {
-            val config = resolvedConfiguration.files.single { it.name.contains("kotlin-compiler-embeddable") }
+            val config = incoming.files.single { it.name.contains("kotlin-compiler-embeddable") }
 
             val manifest = zipTree(config).matching {
                 include("META-INF/MANIFEST.MF")
