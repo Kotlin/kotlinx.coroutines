@@ -1,10 +1,10 @@
+
 import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.artifacts.repositories.*
 import org.gradle.api.initialization.dsl.*
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.*
 import org.jetbrains.kotlin.gradle.targets.js.yarn.*
 import java.net.*
 
@@ -100,16 +100,28 @@ private fun Project.checkRedirect(repositories: RepositoryHandler, containerName
     }
 }
 
-private fun Project.configureYarnAndNodeRedirects() {
+private fun Project.configureYarnRedirects() {
     if (CacheRedirector.isEnabled) {
-        val yarnRootExtension = extensions.findByType<YarnRootExtension>()
-        yarnRootExtension?.downloadBaseUrl?.let {
-            yarnRootExtension.downloadBaseUrl = CacheRedirector.maybeRedirect(it)
+        plugins.withType(YarnPlugin::class) {
+            extensions.configure(YarnRootEnvSpec::class.java) {
+                // no API to modify the value in-place keeping it lazy: https://github.com/gradle/gradle/issues/27227
+                downloadBaseUrl.orNull?.let {
+                    downloadBaseUrl = CacheRedirector.maybeRedirect(it)
+                }
+            }
         }
+    }
+}
 
-        val nodeJsExtension = rootProject.extensions.findByType<NodeJsRootExtension>()
-        nodeJsExtension?.downloadBaseUrl?.let {
-            nodeJsExtension.downloadBaseUrl = CacheRedirector.maybeRedirect(it)
+private fun Project.configureNodeJsRedirects() {
+    if (CacheRedirector.isEnabled) {
+        plugins.withType(NodeJsPlugin::class) {
+            extensions.configure(NodeJsEnvSpec::class.java) {
+                // no API to modify the value in-place keeping it lazy: https://github.com/gradle/gradle/issues/27227
+                downloadBaseUrl.orNull?.let {
+                    downloadBaseUrl = CacheRedirector.maybeRedirect(it)
+                }
+            }
         }
     }
 }
@@ -128,14 +140,16 @@ object CacheRedirector {
     @JvmStatic
     fun configure(project: Project) {
         project.checkRedirect(project.repositories, project.displayName)
+        project.configureNodeJsRedirects()
     }
 
     /**
-     * Configures JS-specific extensions to use
+     * Configures JS-specific extensions defined on the root project to use cache redirector
+     * For example, KGP provides Yarn configuration only globally for the entire build via the root project.
      */
     @JvmStatic
-    fun configureJsPackageManagers(project: Project) {
-        project.configureYarnAndNodeRedirects()
+    fun configureRootJsPackageManagers(rootProject: Project) {
+        rootProject.configureYarnRedirects()
     }
 
     @JvmStatic

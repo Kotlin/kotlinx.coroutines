@@ -1,6 +1,4 @@
-import CacheRedirector.configure
-import org.gradle.api.Project
-import org.gradle.api.tasks.*
+import org.gradle.api.*
 import org.gradle.kotlin.dsl.*
 
 /**
@@ -17,7 +15,7 @@ object AuxBuildConfiguration {
             workaroundForCoroutinesLeakageToClassPath()
         }
 
-        CacheRedirector.configureJsPackageManagers(rootProject)
+        CacheRedirector.configureRootJsPackageManagers(rootProject)
 
         // Sigh, there is no BuildScanExtension in classpath when there is no --scan
         rootProject.extensions.findByName("buildScan")?.withGroovyBuilder {
