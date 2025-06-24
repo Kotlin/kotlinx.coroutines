@@ -50,7 +50,7 @@ Generate a new GitHub token to use the GitHub API with [your account](https://gi
 
 ### Run the code
 
-The program loads the contributors for all of the repositories under the given organization (named “kotlin” by default).
+The program loads the contributors for all of the repositories under the given organization (named "kotlin" by default).
 Later you'll add logic to sort the users by the number of their contributions.
 
 1. Open the `src/contributors/main.kt` file and run the `main()` function. You'll see the following window:
@@ -264,7 +264,7 @@ which uses callbacks instead of blocking calls.
     happens on the main UI thread (AWT event dispatching thread).
 
 However, if you try to load the contributors via the `BACKGROUND` option, you can see that the list is updated but
-nothing changes.
+nothing changes in UI.
 
 ### Task 2
 
@@ -570,7 +570,7 @@ The coroutine resumes only after the corresponding response is received:
 While the response is waiting to be received, the thread is free to be occupied by other tasks. The UI stays responsive,
 despite all the requests taking place on the main UI thread:
 
-1. Run the program using the _SUSPEND_ option. The log confirms that all of the requests are sent to the main UI thread:
+1. Run the program using the _SUSPEND_ option. The log confirms that all of the requests are sent from the main UI thread:
 
     ```text
     2538 [AWT-EventQueue-0 @coroutine#1] INFO  Contributors - kotlin: loaded 30 repos
@@ -854,7 +854,7 @@ corresponding to the parent coroutine.
 It's possible to create a new scope without starting a new coroutine, by using the `coroutineScope` function.
 To start new coroutines in a structured way inside a `suspend` function without access to the outer scope, you can create
 a new coroutine scope that automatically becomes a child of the outer scope that this `suspend` function is called from.
-`loadContributorsConcurrent()`is a good example.
+`loadContributorsConcurrent()` is a good example.
 
 You can also start a new coroutine from the global scope using `GlobalScope.async` or `GlobalScope.launch`.
 This will create a top-level "independent" coroutine.
@@ -1165,7 +1165,7 @@ consumers. Once an element is handled, it is immediately removed from the channe
 
 You can think of a channel as similar to a collection of elements, or more precisely, a queue, in which elements are added
 to one end and received from the other. However, there's an important difference: unlike collections, even in their
-synchronized versions, a channel can _suspend_ `send()`and `receive()` operations. This happens when the channel is empty
+synchronized versions, a channel can _suspend_ `send()` and `receive()` operations. This happens when the channel is empty
 or full. The channel can be full if the channel size has an upper bound.
 
 `Channel` is represented by three different interfaces: `SendChannel`, `ReceiveChannel`, and `Channel`, with the latter
@@ -1195,7 +1195,7 @@ For all of the channel types, the `receive()` call behaves similarly: it receive
 otherwise, it is suspended.
 
 <deflist collapsible="true">
-   <def title="Unlimited channel">
+   <def title="Unlimited channel" id="unlimited-channel">
        <p>An unlimited channel is the closest analog to a queue: producers can send elements to this channel and it will
 keep growing indefinitely. The <code>send()</code> call will never be suspended.
 If the program runs out of memory, you'll get an <code>OutOfMemoryException</code>.
@@ -1203,13 +1203,13 @@ The difference between an unlimited channel and a queue is that when a consumer 
 it becomes suspended until some new elements are sent.</p>
        <img src="unlimited-channel.png" alt="Unlimited channel" width="500"/>
    </def>
-   <def title="Buffered channel">
+   <def title="Buffered channel" id="buffered-channel">
        <p>The size of a buffered channel is constrained by the specified number.
 Producers can send elements to this channel until the size limit is reached. All of the elements are internally stored.
-When the channel is full, the next `send` call on it is suspended until more free space becomes available.</p>
+When the channel is full, the next <code>send()</code> call on it is suspended until more free space becomes available.</p>
        <img src="buffered-channel.png" alt="Buffered channel" width="500"/>
    </def>
-   <def title="Rendezvous channel">
+   <def title="Rendezvous channel" id="rendezvous-channel">
        <p>The "Rendezvous" channel is a channel without a buffer, the same as a buffered channel with zero size.
 One of the functions (<code>send()</code> or <code>receive()</code>) is always suspended until the other is called. </p>
        <p>If the <code>send()</code> function is called and there's no suspended <code>receive()</code> call ready to process the element, then <code>send()</code>
@@ -1219,7 +1219,7 @@ suspended <code>send()</code> call ready to send the element, the <code>receive(
 should "meet on time".</p>
        <img src="rendezvous-channel.png" alt="Rendezvous channel" width="500"/>
    </def>
-   <def title="Conflated channel">
+   <def title="Conflated channel" id="conflated-channel">
        <p>A new element sent to the conflated channel will overwrite the previously sent element, so the receiver will always
 get only the latest element. The <code>send()</code> call is never suspended.</p>
        <img src="conflated-channel.gif" alt="Conflated channel" width="500"/>
@@ -1481,10 +1481,10 @@ In the project corresponding to this tutorial, the compiler argument has already
 
 Refactor the following tests in `tests/tasks/` to use virtual time instead of real time:
 
-* Request4SuspendKtTest.kt
-* Request5ConcurrentKtTest.kt
-* Request6ProgressKtTest.kt
-* Request7ChannelsKtTest.kt
+* `Request4SuspendKtTest.kt`
+* `Request5ConcurrentKtTest.kt`
+* `Request6ProgressKtTest.kt`
+* `Request7ChannelsKtTest.kt`
 
 Compare the total running times before and after applying your refactoring.
 
