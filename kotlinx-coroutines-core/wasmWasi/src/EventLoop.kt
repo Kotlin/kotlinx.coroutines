@@ -13,7 +13,7 @@ private external fun wasiRawClockTimeGet(clockId: Int, precision: Long, resultPt
 
 private const val CLOCKID_MONOTONIC = 1
 
-internal actual fun createEventLoop(): EventLoop = DefaultExecutor
+internal actual fun createEventLoop(): EventLoop = GlobalEventLoop
 
 internal actual fun nanoTime(): Long = withScopedMemoryAllocator { allocator: MemoryAllocator ->
     val ptrTo8Bytes = allocator.allocate(8)
@@ -38,7 +38,7 @@ private fun sleep(nanos: Long, ptrTo32Bytes: Pointer, ptrTo8Bytes: Pointer, ptrT
     check(returnCode == 0) { "poll_oneoff failed with the return code $returnCode" }
 }
 
-internal actual object DefaultExecutor : EventLoopImplBase() {
+private object GlobalEventLoop : EventLoopImplBase() {
 
     init {
         if (kotlin.wasm.internal.onExportedFunctionExit == null) {
@@ -59,12 +59,6 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
         // do nothing: in WASI, no external callbacks can be invoked while `poll_oneoff` is running,
         // so it is both impossible and unnecessary to unpark the event loop
     }
-
-    protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
-        // throw; on WASI, the event loop is the default executor, we can't shut it down or reschedule tasks
-        // to anyone else
-        throw UnsupportedOperationException("runBlocking event loop is not supported")
-    }
 }
 
 internal actual inline fun platformAutoreleasePool(crossinline block: () -> Unit) = block()
@@ -74,7 +68,7 @@ internal fun runEventLoop() {
         val ptrToSubscription = initializeSubscriptionPtr(allocator)
         val ptrTo32Bytes = allocator.allocate(32)
         val ptrTo8Bytes = allocator.allocate(8)
-        val eventLoop = DefaultExecutor
+        val eventLoop = GlobalEventLoop
         eventLoop.incrementUseCount()
         try {
             while (true) {
@@ -117,4 +111,7 @@ private fun initializeSubscriptionPtr(allocator: MemoryAllocator): Pointer {
     return ptrToSubscription
 }
 
-internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultExecutor
+internal actual fun createDefaultDispatcher(): CoroutineDispatcher = GlobalEventLoop
+
+internal actual fun rescheduleTaskFromClosedDispatcher(task: Runnable) =
+    GlobalEventLoop.enqueue(task)

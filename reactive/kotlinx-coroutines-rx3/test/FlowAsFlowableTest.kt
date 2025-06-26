@@ -3,9 +3,7 @@ package kotlinx.coroutines.rx3
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.junit.Test
 import org.reactivestreams.*
-import java.util.concurrent.*
 import kotlin.test.*
 
 @Suppress("ReactiveStreamsSubscriberImplementation")
