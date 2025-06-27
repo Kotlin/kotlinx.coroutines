@@ -71,7 +71,7 @@ class CancellationGuideTest {
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
-            "Exception in thread \"main\" kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 1300 ms"
+            "Exception in thread \"main\" kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 1.3s"
         )
     }
 
