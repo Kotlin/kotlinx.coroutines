@@ -34,8 +34,7 @@ public inline fun <T, R> Flow<T>.transform(
     @BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit
 ): Flow<R> = flow { // Note: safe flow is used here, because collector is exposed to transform on each operation
     collect { value ->
-        // kludge, without it Unit will be returned and TCE won't kick in, KT-28938
-        return@collect transform(value)
+        transform(value)
     }
 }
 
@@ -45,8 +44,7 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
     @BuilderInference crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit
 ): Flow<R> = unsafeFlow { // Note: unsafe flow is used here, because unsafeTransform is only for internal use
     collect { value ->
-        // kludge, without it Unit will be returned and TCE won't kick in, KT-28938
-        return@collect transform(value)
+        transform(value)
     }
 }
 
