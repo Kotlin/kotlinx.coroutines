@@ -186,3 +186,15 @@ public suspend inline fun <T> SharedFlow<T>.toSet(destination: MutableSet<T>): N
 @InlineOnly
 public suspend inline fun <T> SharedFlow<T>.count(): Int =
     (this as Flow<T>).count()
+
+/**
+ * @suppress
+ */
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(
+    level = DeprecationLevel.WARNING,
+    message = "SharedFlow never completes, so this terminal operation never completes. Use 'replayCache.last()' for reading the last emitted item in the replay cache.",
+    replaceWith = ReplaceWith("replayCache.last()")
+)
+@InlineOnly
+public fun <T> SharedFlow<T>.last(): T = noImpl()
