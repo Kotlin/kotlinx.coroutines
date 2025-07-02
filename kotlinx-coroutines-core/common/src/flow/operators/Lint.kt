@@ -192,9 +192,10 @@ public suspend inline fun <T> SharedFlow<T>.count(): Int =
  */
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(
+    message = "SharedFlow never completes, so this terminal operation never completes. " +
+        "If you are using last() to imitate a subscriber, use collect() instead.",
     level = DeprecationLevel.WARNING,
-    message = "SharedFlow never completes, so this terminal operation never completes. Use 'replayCache.last()' for reading the last emitted item in the replay cache.",
-    replaceWith = ReplaceWith("replayCache.last()")
 )
 @InlineOnly
-public fun <T> SharedFlow<T>.last(): T = noImpl()
+public suspend inline fun <T> SharedFlow<T>.last(): T =
+    (this as Flow<T>).last()
