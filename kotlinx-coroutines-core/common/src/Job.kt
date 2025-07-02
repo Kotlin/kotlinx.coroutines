@@ -338,8 +338,7 @@ public interface Job : CoroutineContext.Element {
      * Job is a coroutine context element and `+` is a set-sum operator for coroutine contexts.
      * The job to the right of `+` just replaces the job the left of `+`.
      */
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @Deprecated(message = "Operator '+' on two Job objects is meaningless. " +
+        @Deprecated(message = "Operator '+' on two Job objects is meaningless. " +
         "Job is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
         "The job to the right of `+` just replaces the job the left of `+`.",
         level = DeprecationLevel.ERROR)

@@ -134,7 +134,6 @@ public inline fun <T> SharedFlow<T>.retryWhen(noinline predicate: suspend FlowCo
 /**
  * @suppress
  */
-@Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(
     message = "SharedFlow never completes, so this terminal operation never completes.",
     level = DeprecationLevel.WARNING
@@ -156,7 +155,6 @@ public suspend inline fun <T> SharedFlow<T>.toList(destination: MutableList<T>):
 /**
  * @suppress
  */
-@Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(
     message = "SharedFlow never completes, so this terminal operation never completes.",
     level = DeprecationLevel.WARNING
@@ -178,7 +176,6 @@ public suspend inline fun <T> SharedFlow<T>.toSet(destination: MutableSet<T>): N
 /**
  * @suppress
  */
-@Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(
     message = "SharedFlow never completes, so this terminal operation never completes.",
     level = DeprecationLevel.WARNING
@@ -190,7 +187,6 @@ public suspend inline fun <T> SharedFlow<T>.count(): Int =
 /**
  * @suppress
  */
-@Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(
     message = "SharedFlow never completes, so this terminal operation never completes. " +
         "If you are using last() to imitate a subscriber, use collect() instead.",
