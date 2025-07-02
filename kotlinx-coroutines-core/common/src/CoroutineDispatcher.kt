@@ -254,7 +254,7 @@ public abstract class CoroutineDispatcher :
      * CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts.
      * The dispatcher to the right of `+` just replaces the dispatcher to the left.
      */
-        @Deprecated(
+    @Deprecated(
         message = "Operator '+' on two CoroutineDispatcher objects is meaningless. " +
             "CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
             "The dispatcher to the right of `+` just replaces the dispatcher to the left.",
