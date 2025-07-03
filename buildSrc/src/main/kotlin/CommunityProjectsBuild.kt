@@ -2,11 +2,11 @@
 
 import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
-import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.*
 import java.net.*
 import java.util.logging.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
 
@@ -32,7 +32,7 @@ private val LOGGER: Logger = Logger.getLogger("Kotlin settings logger")
  * @return a Kotlin API version parametrized from command line nor gradle.properties, null otherwise
  */
 fun getOverriddenKotlinApiVersion(project: Project): KotlinVersion? {
-    val apiVersion = project.rootProject.properties["kotlin_api_version"] as? String
+    val apiVersion = project.providers.gradleProperty("kotlin_api_version").orNull
     return if (apiVersion != null) {
         LOGGER.info("""Configured Kotlin API version: '$apiVersion' for project $${project.name}""")
         KotlinVersion.fromVersion(apiVersion)
@@ -47,7 +47,7 @@ fun getOverriddenKotlinApiVersion(project: Project): KotlinVersion? {
  * @return a Kotlin Language version parametrized from command line nor gradle.properties, null otherwise
  */
 fun getOverriddenKotlinLanguageVersion(project: Project): KotlinVersion? {
-    val languageVersion = project.rootProject.properties["kotlin_language_version"] as? String
+    val languageVersion = project.providers.gradleProperty("kotlin_language_version").orNull
     return if (languageVersion != null) {
         LOGGER.info("""Configured Kotlin Language version: '$languageVersion' for project ${project.name}""")
         KotlinVersion.fromVersion(languageVersion)
@@ -65,7 +65,7 @@ fun getOverriddenKotlinLanguageVersion(project: Project): KotlinVersion? {
  * @return an url for a kotlin compiler repository parametrized from command line nor gradle.properties, empty string otherwise
  */
 fun getKotlinDevRepositoryUrl(project: Project): URI? {
-    val url: String? = project.rootProject.properties["kotlin_repo_url"] as? String
+    val url: String? = project.providers.gradleProperty("kotlin_repo_url").orNull
     if (url != null) {
         LOGGER.info("""Configured Kotlin Compiler repository url: '$url' for project ${project.name}""")
         return URI.create(url)
@@ -102,18 +102,18 @@ fun Project.configureCommunityBuildTweaks() {
         }
     }
 
-    println("Manifest of kotlin-compiler-embeddable.jar for coroutines")
+    LOGGER.info("Manifest of kotlin-compiler-embeddable.jar for coroutines")
     val coreProject = subprojects.single { it.name == coreModule }
     configure(listOf(coreProject)) {
         configurations.matching { it.name == "kotlinCompilerClasspath" }.configureEach {
-            val config = resolvedConfiguration.files.single { it.name.contains("kotlin-compiler-embeddable") }
+            val config = incoming.files.single { it.name.contains("kotlin-compiler-embeddable") }
 
             val manifest = zipTree(config).matching {
                 include("META-INF/MANIFEST.MF")
             }.files.single()
 
             manifest.readLines().forEach {
-                println(it)
+                LOGGER.info(it)
             }
         }
     }
@@ -124,9 +124,8 @@ fun Project.configureCommunityBuildTweaks() {
  */
 fun getOverriddenKotlinVersion(project: Project): String? =
     if (isSnapshotTrainEnabled(project)) {
-        val snapshotVersion = project.rootProject.properties["kotlin_snapshot_version"]
+        project.providers.gradleProperty("kotlin_snapshot_version").orNull
             ?: error("'kotlin_snapshot_version' should be defined when building with a snapshot compiler")
-        snapshotVersion.toString()
     } else {
         null
     }
@@ -135,15 +134,77 @@ fun getOverriddenKotlinVersion(project: Project): String? =
  * Checks if the project is built with a snapshot version of Kotlin compiler.
  */
 fun isSnapshotTrainEnabled(project: Project): Boolean {
-    val buildSnapshotTrain = project.rootProject.properties["build_snapshot_train"] as? String
+    val buildSnapshotTrain = project.providers.gradleProperty("build_snapshot_train").orNull
     return !buildSnapshotTrain.isNullOrBlank()
 }
 
+/**
+ * The list of projects snapshot versions of which we may want to use with `kotlinx.coroutines`.
+ *
+ * In `gradle.properties`, these properties are defined as `<name>_version`, e.g. `kotlin_version`.
+ */
+val firstPartyDependencies = listOf(
+    "kotlin",
+    "atomicfu",
+)
+
 fun shouldUseLocalMaven(project: Project): Boolean {
-    val hasSnapshotDependency = project.rootProject.properties.any { (key, value) ->
-        key.endsWith("_version") && value is String && value.endsWith("-SNAPSHOT").also {
-            if (it) println("NOTE: USING SNAPSHOT VERSION: $key=$value")
+    val hasSnapshotDependency = firstPartyDependencies.any { dependencyName ->
+        val key = "${dependencyName}_version"
+        val value = project.providers.gradleProperty(key).orNull
+        if (value != null && value.endsWith("-SNAPSHOT")) {
+            LOGGER.info("NOTE: USING SNAPSHOT VERSION: $key=$value")
+            true
+        } else {
+            false
         }
     }
     return hasSnapshotDependency || isSnapshotTrainEnabled(project)
+}
+
+/**
+ * Returns a non-null value if the CI needs to override the default behavior of treating warnings as errors.
+ * Then, `true` means that warnings should be treated as errors, `false` means that they should not.
+ */
+private fun warningsAreErrorsOverride(project: Project): Boolean? =
+    when (val prop = project.providers.gradleProperty("kotlin_Werror_override").orNull) {
+        null -> null
+        "enable" -> true
+        "disable" -> false
+        else -> error("Unknown value for 'kotlin_Werror_override': $prop")
+    }
+
+/**
+ * Set warnings as errors, but allow the Kotlin User Project configuration to take over. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
+    if (warningsAreErrorsOverride(project) != false) {
+        allWarningsAsErrors = true
+    } else {
+        freeCompilerArgs.addAll("-Wextra", "-Xuse-fir-experimental-checkers")
+    }
+}
+
+/**
+ * Compiler flags required of Kotlin User Projects. See KT-75078.
+ */
+fun KotlinCommonCompilerOptions.configureKotlinUserProject() {
+    freeCompilerArgs.addAll(
+        "-Xreport-all-warnings", // emit warnings even if there are also errors
+        "-Xrender-internal-diagnostic-names", // render the diagnostic names in CLI
+    )
+}
+
+/**
+ * Additional compiler flags passed on a case-by-case basis. Should be applied after the other flags.
+ * See <https://github.com/Kotlin/kotlinx.coroutines/pull/4392#issuecomment-2775630200>
+ */
+fun KotlinCommonCompilerOptions.addExtraCompilerFlags(project: Project) {
+    val extraOptions = project.providers.gradleProperty("kotlin_additional_cli_options").orNull
+    if (extraOptions != null) {
+        LOGGER.info("""Adding extra compiler flags '$extraOptions' for a compilation in the project $${project.name}""")
+        extraOptions.split(" ").forEach {
+            if (it.isNotEmpty()) freeCompilerArgs.add(it)
+        }
+    }
 }

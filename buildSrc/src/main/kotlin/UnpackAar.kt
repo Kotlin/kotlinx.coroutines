@@ -16,12 +16,12 @@ import java.util.zip.ZipFile
 val artifactType = Attribute.of("artifactType", String::class.java)
 val unpackedAar = Attribute.of("unpackedAar", Boolean::class.javaObjectType)
 
-fun Project.configureAar() = configurations.configureEach {
-    afterEvaluate {
-        if (isCanBeResolved && !isCanBeConsumed) {
+fun Project.configureAar() {
+    configurations
+        .matching { it.isCanBeResolved && !it.isCanBeConsumed }
+        .configureEach {
             attributes.attribute(unpackedAar, true) // request all AARs to be unpacked
         }
-    }
 }
 
 fun DependencyHandlerScope.configureAarUnpacking() {

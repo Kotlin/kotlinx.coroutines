@@ -3,6 +3,7 @@ import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.dokka.gradle.tasks.DokkaBaseTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -140,7 +141,7 @@ val jvmTest by tasks.getting(Test::class) {
     maxHeapSize = "1g"
     enableAssertions = true
     // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
-    if (!Idea.active && rootProject.properties["stress"] == null) {
+    if (!Idea.active && !providers.gradleProperty("stress").isPresent) {
         exclude("**/*LincheckTest*")
         exclude("**/*StressTest.*")
     }
@@ -287,7 +288,7 @@ artifacts {
 }
 
 // Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
-tasks.named("dokkaHtmlPartial") {
+tasks.withType<DokkaBaseTask>() {
     dependsOn(jvmJar)
 }
 

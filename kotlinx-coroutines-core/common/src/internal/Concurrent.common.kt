@@ -1,9 +1,6 @@
 package kotlinx.coroutines.internal
 
-internal expect class ReentrantLock() {
-    fun tryLock(): Boolean
-    fun unlock()
-}
+internal expect class ReentrantLock()
 
 internal expect inline fun <T> ReentrantLock.withLock(action: () -> T): T
 

@@ -40,7 +40,7 @@ allprojects {
     if (deployVersion != null) version = deployVersion
 
     if (isSnapshotTrainEnabled(rootProject)) {
-        val skipSnapshotChecks = rootProject.properties["skip_snapshot_checks"] != null
+        val skipSnapshotChecks = providers.gradleProperty("skip_snapshot_checks").isPresent
         if (!skipSnapshotChecks && version != version("atomicfu")) {
             throw IllegalStateException("Current deploy version is $version, but atomicfu version is not overridden (${version("atomicfu")}) for $this")
         }
@@ -71,10 +71,6 @@ apply(plugin = "kover-conventions")
 
 apiValidation {
     ignoredProjects += unpublished + listOf("kotlinx-coroutines-bom")
-    if (isSnapshotTrainEnabled(rootProject)) {
-        ignoredProjects += coreModule
-    }
-    ignoredPackages += "kotlinx.coroutines.internal"
     @OptIn(kotlinx.validation.ExperimentalBCVApi::class)
     klib {
         enabled = true
@@ -94,6 +90,18 @@ allprojects {
     }
 }
 
+configure(subprojects.filter { !sourceless.contains(it.name) }) {
+    if (isMultiplatform) {
+        apply(plugin = "kotlin-multiplatform")
+        apply(plugin = "kotlin-multiplatform-conventions")
+    } else if (platformOf(this) == "jvm") {
+        apply(plugin = "kotlin-jvm-conventions")
+    } else {
+        val platform = platformOf(this)
+        throw IllegalStateException("No configuration rules for $platform")
+    }
+}
+
 // needs to be before evaluationDependsOn due to weird Gradle ordering
 configure(subprojects) {
     fun Project.shouldSniff(): Boolean =
@@ -106,18 +114,6 @@ configure(subprojects) {
         } else {
             apply(plugin = "animalsniffer-jvm-conventions")
         }
-    }
-}
-
-configure(subprojects.filter { !sourceless.contains(it.name) }) {
-    if (isMultiplatform) {
-        apply(plugin = "kotlin-multiplatform")
-        apply(plugin = "kotlin-multiplatform-conventions")
-    } else if (platformOf(this) == "jvm") {
-        apply(plugin = "kotlin-jvm-conventions")
-    } else {
-        val platform = platformOf(this)
-        throw IllegalStateException("No configuration rules for $platform")
     }
 }
 
@@ -167,5 +163,7 @@ configure(subprojects.filter {
 AuxBuildConfiguration.configure(rootProject)
 rootProject.registerTopLevelDeployTask()
 
-// Report Kotlin compiler version when building project
-println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
+if (isSnapshotTrainEnabled(rootProject)) {
+    // Report Kotlin compiler version when building project
+    println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
+}

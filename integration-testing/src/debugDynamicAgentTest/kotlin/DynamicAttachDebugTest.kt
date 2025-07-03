@@ -5,6 +5,7 @@ import org.junit.Test
 import java.io.*
 import java.lang.IllegalStateException
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class DynamicAttachDebugTest {
 
     @Test

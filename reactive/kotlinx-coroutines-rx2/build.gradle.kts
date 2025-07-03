@@ -1,20 +1,10 @@
-import org.jetbrains.dokka.gradle.DokkaTaskPartial
-import java.net.*
-
 dependencies {
     api(project(":kotlinx-coroutines-reactive"))
     testImplementation("org.reactivestreams:reactive-streams-tck:${version("reactive_streams")}")
     api("io.reactivex.rxjava2:rxjava:${version("rxjava2")}")
 }
 
-tasks.withType(DokkaTaskPartial::class) {
-    dokkaSourceSets.configureEach {
-        externalDocumentationLink {
-            url = URL("http://reactivex.io/RxJava/2.x/javadoc/")
-            packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
-        }
-    }
-}
+externalDocumentationLink("http://reactivex.io/RxJava/2.x/javadoc/")
 
 val testNG by tasks.registering(Test::class) {
     useTestNG()

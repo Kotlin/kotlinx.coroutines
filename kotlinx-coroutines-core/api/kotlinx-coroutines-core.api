@@ -27,6 +27,8 @@ public final class kotlinx/coroutines/BuildersKt {
 	public static synthetic fun launch$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 	public static final fun runBlocking (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static synthetic fun runBlocking$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun runBlockingK (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static synthetic fun runBlockingK$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun withContext (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -122,6 +124,7 @@ public final class kotlinx/coroutines/CompletableDeferredKt {
 	public static final fun CompletableDeferred (Ljava/lang/Object;)Lkotlinx/coroutines/CompletableDeferred;
 	public static final fun CompletableDeferred (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableDeferred;
 	public static synthetic fun CompletableDeferred$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableDeferred;
+	public static final fun asDeferred (Lkotlinx/coroutines/CompletableDeferred;)Lkotlinx/coroutines/Deferred;
 	public static final fun completeWith (Lkotlinx/coroutines/CompletableDeferred;Ljava/lang/Object;)Z
 }
 
@@ -739,10 +742,23 @@ public final class kotlinx/coroutines/channels/ChannelResult {
 	public final synthetic fun unbox-impl ()Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/channels/ChannelResult$Closed : kotlinx/coroutines/channels/ChannelResult$Failed {
+	public final field cause Ljava/lang/Throwable;
+	public fun <init> (Ljava/lang/Throwable;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class kotlinx/coroutines/channels/ChannelResult$Companion {
 	public final fun closed-JP2dKIU (Ljava/lang/Throwable;)Ljava/lang/Object;
 	public final fun failure-PtdJZtk ()Ljava/lang/Object;
 	public final fun success-JP2dKIU (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public class kotlinx/coroutines/channels/ChannelResult$Failed {
+	public fun <init> ()V
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class kotlinx/coroutines/channels/ChannelsKt {
@@ -1096,6 +1112,7 @@ public final class kotlinx/coroutines/flow/FlowKt {
 	public static synthetic fun onErrorReturn$default (Lkotlinx/coroutines/flow/Flow;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onStart (Lkotlinx/coroutines/flow/Flow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun onSubscription (Lkotlinx/coroutines/flow/SharedFlow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/SharedFlow;
+	public static final fun onSubscription (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/StateFlow;
 	public static final fun produceIn (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/channels/ReceiveChannel;
 	public static final fun publish (Lkotlinx/coroutines/flow/Flow;)Lkotlinx/coroutines/flow/Flow;
 	public static final fun publish (Lkotlinx/coroutines/flow/Flow;I)Lkotlinx/coroutines/flow/Flow;
@@ -1262,6 +1279,121 @@ public final class kotlinx/coroutines/future/FutureKt {
 	public static final fun await (Ljava/util/concurrent/CompletionStage;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun future (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/CompletableFuture;
 	public static synthetic fun future$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+}
+
+public final class kotlinx/coroutines/internal/ConcurrentLinkedListKt {
+	public static final synthetic fun findSegmentAndMoveForward$atomicfu$ATOMIC_ARRAY$Any (Ljava/util/concurrent/atomic/AtomicReferenceArray;IJLkotlinx/coroutines/internal/Segment;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static final synthetic fun findSegmentAndMoveForward$atomicfu$ATOMIC_FIELD_UPDATER$Any (Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;Ljava/lang/Object;JLkotlinx/coroutines/internal/Segment;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static final synthetic fun findSegmentAndMoveForward$atomicfu$BOXED_ATOMIC$Any (Ljava/util/concurrent/atomic/AtomicReference;JLkotlinx/coroutines/internal/Segment;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static final synthetic fun moveForward$atomicfu$ATOMIC_ARRAY$Any (Ljava/util/concurrent/atomic/AtomicReferenceArray;ILkotlinx/coroutines/internal/Segment;)Z
+	public static final synthetic fun moveForward$atomicfu$ATOMIC_FIELD_UPDATER$Any (Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;Ljava/lang/Object;Lkotlinx/coroutines/internal/Segment;)Z
+	public static final synthetic fun moveForward$atomicfu$BOXED_ATOMIC$Any (Ljava/util/concurrent/atomic/AtomicReference;Lkotlinx/coroutines/internal/Segment;)Z
+}
+
+public final class kotlinx/coroutines/internal/DispatchedContinuationKt {
+	public static final fun resumeCancellableWith (Lkotlin/coroutines/Continuation;Ljava/lang/Object;)V
+}
+
+public class kotlinx/coroutines/internal/LockFreeLinkedListHead : kotlinx/coroutines/internal/LockFreeLinkedListNode {
+	public fun <init> ()V
+	public final fun forEach (Lkotlin/jvm/functions/Function1;)V
+	public fun isRemoved ()Z
+	public final fun remove ()Ljava/lang/Void;
+	public synthetic fun remove ()Z
+}
+
+public class kotlinx/coroutines/internal/LockFreeLinkedListNode {
+	public fun <init> ()V
+	public final fun addLast (Lkotlinx/coroutines/internal/LockFreeLinkedListNode;I)Z
+	public final fun addNext (Lkotlinx/coroutines/internal/LockFreeLinkedListNode;Lkotlinx/coroutines/internal/LockFreeLinkedListNode;)Z
+	public final fun addOneIfEmpty (Lkotlinx/coroutines/internal/LockFreeLinkedListNode;)Z
+	public final fun close (I)V
+	public final fun getNext ()Ljava/lang/Object;
+	public final fun getNextNode ()Lkotlinx/coroutines/internal/LockFreeLinkedListNode;
+	public final fun getPrevNode ()Lkotlinx/coroutines/internal/LockFreeLinkedListNode;
+	public fun isRemoved ()Z
+	public fun remove ()Z
+	public final fun removeOrNext ()Lkotlinx/coroutines/internal/LockFreeLinkedListNode;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class kotlinx/coroutines/internal/MainDispatcherFactory {
+	public abstract fun createDispatcher (Ljava/util/List;)Lkotlinx/coroutines/MainCoroutineDispatcher;
+	public abstract fun getLoadPriority ()I
+	public abstract fun hintOnError ()Ljava/lang/String;
+}
+
+public final class kotlinx/coroutines/internal/MainDispatcherFactory$DefaultImpls {
+	public static fun hintOnError (Lkotlinx/coroutines/internal/MainDispatcherFactory;)Ljava/lang/String;
+}
+
+public final class kotlinx/coroutines/internal/MainDispatchersKt {
+	public static final fun isMissing (Lkotlinx/coroutines/MainCoroutineDispatcher;)Z
+	public static final fun tryCreateDispatcher (Lkotlinx/coroutines/internal/MainDispatcherFactory;Ljava/util/List;)Lkotlinx/coroutines/MainCoroutineDispatcher;
+}
+
+public final class kotlinx/coroutines/internal/MissingMainCoroutineDispatcherFactory : kotlinx/coroutines/internal/MainDispatcherFactory {
+	public static final field INSTANCE Lkotlinx/coroutines/internal/MissingMainCoroutineDispatcherFactory;
+	public fun createDispatcher (Ljava/util/List;)Lkotlinx/coroutines/MainCoroutineDispatcher;
+	public fun getLoadPriority ()I
+	public fun hintOnError ()Ljava/lang/String;
+}
+
+public final class kotlinx/coroutines/internal/StackTraceRecoveryKt {
+	public static final fun unwrap (Ljava/lang/Throwable;)Ljava/lang/Throwable;
+	public static final fun unwrapImpl (Ljava/lang/Throwable;)Ljava/lang/Throwable;
+}
+
+public final class kotlinx/coroutines/internal/SynchronizedKt {
+	public static final fun synchronizedImpl (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/internal/Synchronized_commonKt {
+	public static final fun synchronized (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/internal/ThreadLocalElement : kotlinx/coroutines/ThreadContextElement {
+	public fun <init> (Ljava/lang/Object;Ljava/lang/ThreadLocal;)V
+	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+	public fun restoreThreadContext (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Object;)V
+	public fun toString ()Ljava/lang/String;
+	public fun updateThreadContext (Lkotlin/coroutines/CoroutineContext;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/internal/ThreadLocalKey : kotlin/coroutines/CoroutineContext$Key {
+	public fun <init> (Ljava/lang/ThreadLocal;)V
+	public final fun copy (Ljava/lang/ThreadLocal;)Lkotlinx/coroutines/internal/ThreadLocalKey;
+	public static synthetic fun copy$default (Lkotlinx/coroutines/internal/ThreadLocalKey;Ljava/lang/ThreadLocal;ILjava/lang/Object;)Lkotlinx/coroutines/internal/ThreadLocalKey;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public class kotlinx/coroutines/internal/ThreadSafeHeap {
+	public fun <init> ()V
+	public final fun addImpl (Lkotlinx/coroutines/internal/ThreadSafeHeapNode;)V
+	public final fun addLast (Lkotlinx/coroutines/internal/ThreadSafeHeapNode;)V
+	public final fun addLastIf (Lkotlinx/coroutines/internal/ThreadSafeHeapNode;Lkotlin/jvm/functions/Function1;)Z
+	public final fun find (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/internal/ThreadSafeHeapNode;
+	public final fun firstImpl ()Lkotlinx/coroutines/internal/ThreadSafeHeapNode;
+	public final fun getSize ()I
+	public final fun isEmpty ()Z
+	public final fun peek ()Lkotlinx/coroutines/internal/ThreadSafeHeapNode;
+	public final fun remove (Lkotlinx/coroutines/internal/ThreadSafeHeapNode;)Z
+	public final fun removeAtImpl (I)Lkotlinx/coroutines/internal/ThreadSafeHeapNode;
+	public final fun removeFirstIf (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/internal/ThreadSafeHeapNode;
+	public final fun removeFirstOrNull ()Lkotlinx/coroutines/internal/ThreadSafeHeapNode;
+}
+
+public abstract interface class kotlinx/coroutines/internal/ThreadSafeHeapNode {
+	public abstract fun getHeap ()Lkotlinx/coroutines/internal/ThreadSafeHeap;
+	public abstract fun getIndex ()I
+	public abstract fun setHeap (Lkotlinx/coroutines/internal/ThreadSafeHeap;)V
+	public abstract fun setIndex (I)V
 }
 
 public final class kotlinx/coroutines/intrinsics/CancellableKt {

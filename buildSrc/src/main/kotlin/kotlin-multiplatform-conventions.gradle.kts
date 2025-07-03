@@ -1,4 +1,3 @@
-import org.gradle.api.*
 import org.gradle.api.tasks.testing.logging.*
 import org.jetbrains.kotlin.gradle.dsl.*
 
@@ -15,10 +14,7 @@ kotlin {
     jvm {
         compilations.all {
             compileTaskProvider.configure {
-                compilerOptions {
-                    jvmTarget = JvmTarget.JVM_1_8
-                    freeCompilerArgs.addAll("-Xjvm-default=disable")
-                }
+                compilerOptions.jvmTarget = JvmTarget.JVM_1_8
             }
         }
     }
@@ -50,7 +46,7 @@ kotlin {
         watchosDeviceArm64()
     }
     js {
-        moduleName = project.name
+        outputModuleName = project.name
         nodejs()
         compilations["main"]?.dependencies {
             api("org.jetbrains.kotlinx:atomicfu-js:${version("atomicfu")}")
@@ -60,7 +56,7 @@ kotlin {
     wasmJs {
         // Module name should be different from the one from JS
         // otherwise IC tasks that start clashing different modules with the same module name
-        moduleName = project.name + "Wasm"
+        outputModuleName = project.name + "Wasm"
         nodejs()
         compilations["main"]?.dependencies {
             api("org.jetbrains.kotlinx:atomicfu-wasm-js:${version("atomicfu")}")

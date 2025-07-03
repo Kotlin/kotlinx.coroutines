@@ -70,6 +70,37 @@ public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> 
 public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = CompletableDeferredImpl<T>(null).apply { complete(value) }
 
 /**
+ * Creates a view of this [CompletableDeferred] as a [Deferred], which prevents downcasting to a completable version.
+ *
+ * ```
+ * class MyClass(val scope: CoroutineScope) {
+ *     // can be completed
+ *     private val actualDeferred: CompletableDeferred<String> = CompletableDeferred()
+ *
+ *     // can not be completed from outside
+ *     public val operationCompleted: Deferred<String> = actualDeferred.asDeferred()
+ *
+ *     fun startOperation() = scope.launch {
+ *         // do some work
+ *         delay(2.seconds)
+ *         actualDeferred.complete("Done")
+ *     }
+ * }
+ *
+ * // (myClass.operationCompleted as CompletableDeferred<*>) will fail
+ * ```
+ */
+@ExperimentalCoroutinesApi
+public fun <T> CompletableDeferred<T>.asDeferred(): Deferred<T> = ReadonlyDeferred(this)
+
+@OptIn(InternalForInheritanceCoroutinesApi::class)
+private class ReadonlyDeferred<T>(
+    val deferred: CompletableDeferred<T>,
+) : Deferred<T> by deferred {
+    override fun toString(): String = "ReadonlyDeferred($deferred)"
+}
+
+/**
  * Concrete implementation of [CompletableDeferred].
  */
 @OptIn(InternalForInheritanceCoroutinesApi::class)

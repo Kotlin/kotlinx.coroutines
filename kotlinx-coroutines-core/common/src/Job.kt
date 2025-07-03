@@ -107,8 +107,8 @@ import kotlin.jvm.*
  * Note, that the [cancel] function on a job only accepts a [CancellationException] as a cancellation cause, thus
  * calling [cancel] always results in a normal cancellation of a job, which does not lead to cancellation
  * of its parent.
- * This way, a parent can [cancel] his children (cancelling all their children recursively, too)
- * without cancelling himself.
+ * This way, a parent can [cancel] its children (cancelling all their children recursively, too)
+ * without cancelling itself.
  *
  * ### Concurrency and synchronization
  *

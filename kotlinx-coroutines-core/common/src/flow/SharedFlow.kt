@@ -519,9 +519,9 @@ internal open class SharedFlowImpl<T>(
     }
 
     private fun cancelEmitter(emitter: Emitter) = synchronized(this) {
-        if (emitter.index < head) return // already skipped past this index
+        if (emitter.index < head) return@synchronized // already skipped past this index
         val buffer = buffer!!
-        if (buffer.getBufferAt(emitter.index) !== emitter) return // already resumed
+        if (buffer.getBufferAt(emitter.index) !== emitter) return@synchronized // already resumed
         buffer.setBufferAt(emitter.index, NO_VALUE)
         cleanupTailLocked()
     }

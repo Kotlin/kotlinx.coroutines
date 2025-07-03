@@ -6,7 +6,7 @@ plugins {
 
 val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
 val buildSnapshotTrain = properties["build_snapshot_train"]?.toString()?.toBoolean() == true
-val kotlinDevUrl = project.rootProject.properties["kotlin_repo_url"] as? String
+val kotlinDevUrl = project.providers.gradleProperty("kotlin_repo_url").orNull
 
 repositories {
     mavenCentral()
@@ -36,6 +36,12 @@ fun version(target: String): String {
     val version = "${target}_version"
     // Read from CLI first, used in aggregate builds
     return properties[version]?.let{"$it"} ?: gradleProperties.getProperty(version)
+}
+
+kotlin {
+    compilerOptions {
+        allWarningsAsErrors = true
+    }
 }
 
 dependencies {
