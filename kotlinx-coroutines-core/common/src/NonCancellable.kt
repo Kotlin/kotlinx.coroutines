@@ -22,7 +22,6 @@ import kotlin.coroutines.*
  * The parent will not wait for the child's completion, nor will be cancelled when the child crashed.
  */
 @OptIn(InternalForInheritanceCoroutinesApi::class)
-@Suppress("DeprecatedCallableAddReplaceWith")
 public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
 
     private const val message = "NonCancellable can be used only as an argument for 'withContext', direct usages of its API are prohibited"
