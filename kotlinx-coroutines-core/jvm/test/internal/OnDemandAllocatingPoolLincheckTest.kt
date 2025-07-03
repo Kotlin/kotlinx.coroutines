@@ -2,8 +2,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import org.jetbrains.kotlinx.lincheck.*
-import org.jetbrains.kotlinx.lincheck.annotations.*
+import org.jetbrains.lincheck.datastructures.*
 
 /**
  * Test that:

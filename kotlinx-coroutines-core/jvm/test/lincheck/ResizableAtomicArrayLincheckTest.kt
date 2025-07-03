@@ -2,8 +2,7 @@ package kotlinx.coroutines.lincheck
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import org.jetbrains.kotlinx.lincheck.annotations.*
-import org.jetbrains.kotlinx.lincheck.paramgen.*
+import org.jetbrains.lincheck.datastructures.*
 
 @Param(name = "index", gen = IntGen::class, conf = "0:4")
 @Param(name = "value", gen = IntGen::class, conf = "1:5")
