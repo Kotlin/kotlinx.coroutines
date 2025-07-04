@@ -3,10 +3,10 @@ public final class kotlinx/coroutines/javafx/JavaFxConvertKt {
 }
 
 public abstract class kotlinx/coroutines/javafx/JavaFxDispatcher : kotlinx/coroutines/MainCoroutineDispatcher, kotlinx/coroutines/Delay {
-	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
-	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
-	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
+	public fun invokeOnTimeout-KLykuaI (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
+	public fun scheduleResumeAfterDelay-VtjQ1oo (JLkotlinx/coroutines/CancellableContinuation;)V
+	public fun timeoutMessage-LRDsOJo (J)Ljava/lang/String;
 }
 
 public final class kotlinx/coroutines/javafx/JavaFxDispatcherKt {

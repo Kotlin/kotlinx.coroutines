@@ -4,6 +4,7 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
 
 /**
  * The testable main dispatcher used by kotlinx-coroutines-test.
@@ -41,11 +42,11 @@ internal class TestMainDispatcher(createInnerMain: () -> CoroutineDispatcher):
         delegate.value = null
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
-        delay.scheduleResumeAfterDelay(timeMillis, continuation)
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) =
+        delay.scheduleResumeAfterDelay(time, continuation)
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        delay.invokeOnTimeout(timeMillis, block, context)
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle =
+        delay.invokeOnTimeout(timeout, block, context)
 
     companion object {
         internal val currentTestDispatcher
