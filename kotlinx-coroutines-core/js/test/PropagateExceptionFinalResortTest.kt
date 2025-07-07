@@ -6,7 +6,7 @@ import kotlin.test.*
 
 class PropagateExceptionFinalResortTest : TestBase() {
     @BeforeTest
-    fun setupExceptionListenerOnly() {
+    fun removeListeners() {
         // Remove a Node.js's internal listener, which prints the exception to stdout.
         js("""
             globalThis.originalListeners = process.listeners('uncaughtException');
