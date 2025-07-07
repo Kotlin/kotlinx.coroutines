@@ -22,7 +22,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
             throw IllegalStateException("My ISE")
         }
         job.join()
-        delay(1) // Give time for the error handler to execute
+        delay(1)
         assertTrue(exceptionCaught())
     }
 }
