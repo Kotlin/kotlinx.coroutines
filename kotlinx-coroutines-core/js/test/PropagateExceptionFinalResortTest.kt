@@ -26,6 +26,11 @@ class PropagateExceptionFinalResortTest : TestBase() {
         """)
     }
 
+    /*
+     * Test that `propagateExceptionFinalResort` re-throws the exception on JS.
+     *
+     * It is checked by setting up an exception handler within JS.
+     */
     @Test
     fun testThrows() = runTest {
         js("""
@@ -38,7 +43,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
             throw IllegalStateException("My ISE")
         }
         job.join()
-        delay(1)
+        delay(1)  // Let the exception be re-thrown and handled.
         val exceptionCaught = js("globalThis.exceptionCaught") as Boolean
         assertTrue(exceptionCaught)
     }
