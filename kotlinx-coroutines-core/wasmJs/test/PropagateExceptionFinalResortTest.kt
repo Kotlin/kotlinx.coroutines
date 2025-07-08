@@ -10,7 +10,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
      * It is checked by setting up an exception handler within Wasm/JS.
      */
     @Test
-    fun testThrows() = runTest {
+    fun testPropagateExceptionFinalResortReThrowsOnWasmJS() = runTest {
         addUncaughtExceptionHandler()
         val job = GlobalScope.launch {
             throw IllegalStateException("My ISE")

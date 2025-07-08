@@ -32,7 +32,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
      * It is checked by setting up an exception handler within JS.
      */
     @Test
-    fun testThrows() = runTest {
+    fun testPropagateExceptionFinalResortReThrowsOnNodeJS() = runTest {
         js("""
             globalThis.exceptionCaught = false;
             process.on('uncaughtException', function(e) {
