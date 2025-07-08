@@ -85,7 +85,6 @@ public expect class TestResult
  * }
  * ```
  *
- *
  * If the results of children coroutines computations are not needed in the runTest scope,
  * there is no need to wait for children coroutines to finish, they are awaited for automatically
  * by runTest parent coroutine.
@@ -231,6 +230,7 @@ public fun runTest(
  *     // 2
  *     job.join() // the main test coroutine suspends here, so the child is executed
  *     // 4
+ *     // use the results here
  * }
  *
  * @Test
@@ -242,7 +242,29 @@ public fun runTest(
  *     // 2
  *     advanceUntilIdle() // runs the tasks until their queue is empty
  *     // 4
+ *     // use the results here
  * }
+ * ```
+ *
+ * If the results of children coroutines computations are not needed in the runTest scope,
+ * there is no need to wait for children coroutines to finish, they are awaited for automatically
+ * by runTest parent coroutine.
+ * ```
+ * @Test
+ * fun exampleWaitingForAsyncTasks3() = runTest {
+ *     val x = 0
+ *     val y = 1
+ *     // 1
+ *     launch {
+ *         // 3
+ *         assertEquals(0, x)
+ *     }
+ *     launch {
+ *         // 4
+ *         assertEquals(1, y)
+ *     }
+ *     // 2
+ * }  // 5
  * ```
  *
  * ### Task scheduling
