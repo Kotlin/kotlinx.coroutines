@@ -50,8 +50,8 @@ public expect class TestResult
  * }
  * ```
  *
- * The platform difference entails that, in order to use this function correctly in common code, one must always
- * immediately return the produced [TestResult] from the test method, without doing anything else afterwards. See
+ * The platform difference entails that, to use this function correctly in common code, one must always
+ * immediately return the produced [TestResult] from the test method, without doing anything else afterward. See
  * [TestResult] for details on this.
  *
  * The test is run on a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
@@ -69,6 +69,7 @@ public expect class TestResult
  *     // 2
  *     job.join() // the main test coroutine suspends here, so the child is executed
  *     // 4
+ *     // use the results here
  * }
  *
  * @Test
@@ -80,7 +81,29 @@ public expect class TestResult
  *     // 2
  *     testScheduler.advanceUntilIdle() // runs the tasks until their queue is empty
  *     // 4
+ *     // use the results here
  * }
+ * ```
+ *
+ * If the results of children coroutines computations are not needed in the runTest scope,
+ * there is no need to wait for children coroutines to finish, they are awaited for automatically
+ * by runTest parent coroutine.
+ * ```
+ * @Test
+ * fun exampleWaitingForAsyncTasks3() = runTest {
+ *     val x = 0
+ *     val y = 1
+ *     // 1
+ *     launch {
+ *         // 3
+ *         assertEquals(0, x)
+ *     }
+ *     launch {
+ *         // 4
+ *         assertEquals(1, y)
+ *     }
+ *     // 2
+ * }  // 5
  * ```
  *
  * ### Task scheduling
@@ -188,8 +211,8 @@ public fun runTest(
  * }
  * ```
  *
- * The platform difference entails that, in order to use this function correctly in common code, one must always
- * immediately return the produced [TestResult] from the test method, without doing anything else afterwards. See
+ * The platform difference entails that, to use this function correctly in common code, one must always
+ * immediately return the produced [TestResult] from the test method, without doing anything else afterward. See
  * [TestResult] for details on this.
  *
  * The test is run in a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
@@ -207,6 +230,7 @@ public fun runTest(
  *     // 2
  *     job.join() // the main test coroutine suspends here, so the child is executed
  *     // 4
+ *     // use the results here
  * }
  *
  * @Test
@@ -218,7 +242,29 @@ public fun runTest(
  *     // 2
  *     advanceUntilIdle() // runs the tasks until their queue is empty
  *     // 4
+ *     // use the results here
  * }
+ * ```
+ *
+ * If the results of children coroutines computations are not needed in the runTest scope,
+ * there is no need to wait for children coroutines to finish, they are awaited for automatically
+ * by runTest parent coroutine.
+ * ```
+ * @Test
+ * fun exampleWaitingForAsyncTasks3() = runTest {
+ *     val x = 0
+ *     val y = 1
+ *     // 1
+ *     launch {
+ *         // 3
+ *         assertEquals(0, x)
+ *     }
+ *     launch {
+ *         // 4
+ *         assertEquals(1, y)
+ *     }
+ *     // 2
+ * }  // 5
  * ```
  *
  * ### Task scheduling
