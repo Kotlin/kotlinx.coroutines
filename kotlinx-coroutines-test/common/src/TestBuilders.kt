@@ -50,8 +50,8 @@ public expect class TestResult
  * }
  * ```
  *
- * The platform difference entails that, in order to use this function correctly in common code, one must always
- * immediately return the produced [TestResult] from the test method, without doing anything else afterwards. See
+ * The platform difference entails that, to use this function correctly in common code, one must always
+ * immediately return the produced [TestResult] from the test method, without doing anything else afterward. See
  * [TestResult] for details on this.
  *
  * The test is run on a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
@@ -211,8 +211,8 @@ public fun runTest(
  * }
  * ```
  *
- * The platform difference entails that, in order to use this function correctly in common code, one must always
- * immediately return the produced [TestResult] from the test method, without doing anything else afterwards. See
+ * The platform difference entails that, to use this function correctly in common code, one must always
+ * immediately return the produced [TestResult] from the test method, without doing anything else afterward. See
  * [TestResult] for details on this.
  *
  * The test is run in a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
