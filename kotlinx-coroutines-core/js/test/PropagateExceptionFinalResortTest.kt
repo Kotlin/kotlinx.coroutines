@@ -6,7 +6,7 @@ import kotlin.test.*
 
 class PropagateExceptionFinalResortTest : TestBase() {
     @BeforeTest
-    fun removeListeners() {
+    private fun removeListeners() {
         // Remove a Node.js's internal listener, which prints the exception to stdout.
         js("""
             globalThis.originalListeners = process.listeners('uncaughtException');
@@ -15,7 +15,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
     }
 
     @AfterTest
-    fun restoreListeners() {
+    private fun restoreListeners() {
         js("""
             if (globalThis.originalListeners) {
                 process.removeAllListeners('uncaughtException');

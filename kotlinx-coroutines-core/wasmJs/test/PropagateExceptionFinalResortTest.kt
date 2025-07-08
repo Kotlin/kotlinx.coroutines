@@ -4,6 +4,16 @@ import kotlinx.coroutines.testing.TestBase
 import kotlin.test.*
 
 class PropagateExceptionFinalResortTest : TestBase() {
+    @BeforeTest
+    private fun addUncaughtExceptionHandler() {
+        addUncaughtExceptionHandlerHelper()
+    }
+
+    @AfterTest
+    private fun removeHandler() {
+        removeHandlerHelper()
+    }
+
     /*
      * Test that `propagateExceptionFinalResort` re-throws the exception on Wasm/JS.
      *
@@ -11,7 +21,6 @@ class PropagateExceptionFinalResortTest : TestBase() {
      */
     @Test
     fun testPropagateExceptionFinalResortReThrowsOnWasmJS() = runTest {
-        addUncaughtExceptionHandler()
         val job = GlobalScope.launch {
             throw IllegalStateException("My ISE")
         }
@@ -21,13 +30,20 @@ class PropagateExceptionFinalResortTest : TestBase() {
     }
 }
 
-private fun addUncaughtExceptionHandler() {
+private fun addUncaughtExceptionHandlerHelper() {
     js("""
-        globalThis.exceptionCaught = false;
-        process.on('uncaughtException', function(e) {
-            globalThis.exceptionCaught = true;
-        });
-    """)
+            globalThis.exceptionCaught = false;
+            globalThis.exceptionHandler = function(e) {
+                globalThis.exceptionCaught = true;
+            };
+            process.on('uncaughtException', globalThis.exceptionHandler);
+        """)
+}
+
+private fun removeHandlerHelper() {
+    js("""
+            process.removeListener('uncaughtException', globalThis.exceptionHandler);
+        """)
 }
 
 private fun exceptionCaught(): Boolean = js("globalThis.exceptionCaught")
