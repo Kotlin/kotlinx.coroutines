@@ -43,7 +43,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
             throw IllegalStateException("My ISE")
         }
         job.join()
-        delay(1)  // Let the exception be re-thrown and handled.
+        delay(1) // Let the exception be re-thrown and handled.
         val exceptionCaught = js("globalThis.exceptionCaught") as Boolean
         assertTrue(exceptionCaught)
     }
