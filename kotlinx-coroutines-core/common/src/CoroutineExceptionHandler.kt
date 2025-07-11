@@ -67,7 +67,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * with the corresponding exception when the handler is called. Normally, the handler is used to
  * log the exception, show some kind of error message, terminate, and/or restart the application.
  *
- * If you need to handle exception in a specific part of the code, it is recommended to use `try`/`catch` around
+ * If you need to handle the exception in a specific part of the code, it is recommended to use `try`/`catch` around
  * the corresponding code inside your coroutine. This way you can prevent completion of the coroutine
  * with the exception (exception is now _caught_), retry the operation, and/or take other arbitrary actions:
  *
@@ -83,14 +83,15 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  *
  * ### Uncaught exceptions with no handler
  *
- * When no handler is installed, exception are handled in the following way:
- * - If exception is [CancellationException], it is ignored, as these exceptions are used to cancel coroutines.
+ * When no handler is installed, an exception is handled in the following way:
+ * - If the exception is [CancellationException], it is ignored, as these exceptions are used to cancel coroutines.
  * - Otherwise, if there is a [Job] in the context, then [Job.cancel] is invoked.
  * - Otherwise, as a last resort, the exception is processed in a platform-specific manner:
  *   - On JVM, all instances of [CoroutineExceptionHandler] found via [ServiceLoader], as well as
  *     the current thread's [Thread.uncaughtExceptionHandler], are invoked.
  *   - On Native, the whole application crashes with the exception.
- *   - On JS, the exception is logged via the Console API.
+ *   - On JS and Wasm/JS, the exception is propagated into the event loop
+ *     and is processed in a platform-specific way determined by the platform itself.
  *
  * [CoroutineExceptionHandler] can be invoked from an arbitrary thread.
  */
@@ -102,7 +103,7 @@ public interface CoroutineExceptionHandler : CoroutineContext.Element {
 
     /**
      * Handles uncaught [exception] in the given [context]. It is invoked
-     * if coroutine has an uncaught exception.
+     * if the coroutine has an uncaught exception.
      */
     public fun handleException(context: CoroutineContext, exception: Throwable)
 }
