@@ -15,7 +15,7 @@ class CancellableContinuationJvmTest : TestBase() {
             it.resume(Unit)
             assertTrue(it.toString().contains("kotlinx.coroutines.CancellableContinuationJvmTest.checkToString(CancellableContinuationJvmTest.kt"))
         }
-        suspend {}() // Eliminate tail-call optimization
+        yield() // Eliminate tail-call optimization
     }
 
     @Test
