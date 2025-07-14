@@ -3,14 +3,11 @@ package kotlinx.coroutines.rx3
 import kotlinx.coroutines.testing.*
 import io.reactivex.rxjava3.exceptions.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Test
-import java.util.concurrent.*
 import kotlin.test.*
 
 class ObservableExceptionHandlingTest : TestBase() {
 
-    @Before
+    @BeforeTest
     fun setup() {
         ignoreLostThreads("RxComputationThreadPool-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
     }
