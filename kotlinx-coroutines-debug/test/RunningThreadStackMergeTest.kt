@@ -9,6 +9,7 @@ import kotlin.test.*
 
 class RunningThreadStackMergeTest : DebugTestBase() {
 
+    private var coroutineThread: Thread? = null
     private val testMainBlocker = CountDownLatch(1) // Test body blocks on it
     private val coroutineBlocker = CyclicBarrier(2) // Launched coroutine blocks on it
 
@@ -39,6 +40,10 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         while (coroutineBlocker.numberWaiting != 1) {
             Thread.sleep(10)
         }
+        // Wait for the coroutine to actually call `LockSupport.park`
+        while (coroutineThread?.state != Thread.State.WAITING) {
+            Thread.sleep(10)
+        }
     }
 
     private fun CoroutineScope.launchCoroutine() {
@@ -59,6 +64,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     }
 
     private fun nonSuspendingFun() {
+        coroutineThread = Thread.currentThread()
         testMainBlocker.countDown()
         coroutineBlocker.await()
     }
@@ -67,7 +73,6 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     fun testStackMergeEscapeSuspendMethod() = runTest {
         launchEscapingCoroutine()
         awaitCoroutineStarted()
-        Thread.sleep(10)
         verifyDump(
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@3aea3c67, state: RUNNING\n" +
                 "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" +
