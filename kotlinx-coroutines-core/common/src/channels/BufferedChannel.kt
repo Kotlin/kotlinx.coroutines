@@ -764,7 +764,7 @@ internal open class BufferedChannel<E>(
         index: Int,
         r: Long
     ) = suspendCancellableCoroutineReusable { cont ->
-        val waiter = ReceiveCatching(cont as CancellableContinuationImpl<ChannelResult<E>>)
+        val waiter = ReceiveCatching(cont)
         receiveImplOnNoWaiter(
             segment, index, r,
             waiter = waiter,
