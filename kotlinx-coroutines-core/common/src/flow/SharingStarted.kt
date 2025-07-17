@@ -1,6 +1,7 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.internal.unsafeFlow
 import kotlinx.coroutines.internal.IgnoreJreRequirement
 import kotlin.time.*
 
@@ -146,7 +147,7 @@ private class StartedEagerly : SharingStarted {
 }
 
 private class StartedLazily : SharingStarted {
-    override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> = flow {
+    override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> = unsafeFlow {
         var started = false
         subscriptionCount.collect { count ->
             if (count > 0 && !started) {
