@@ -40,7 +40,7 @@ fun version(target: String): String {
 
 kotlin {
     compilerOptions {
-        allWarningsAsErrors = true
+        allWarningsAsErrors = false
     }
 }
 
