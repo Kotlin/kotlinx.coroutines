@@ -179,7 +179,7 @@ private fun warningsAreErrorsOverride(project: Project): Boolean? =
  */
 fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
     if (warningsAreErrorsOverride(project) != false) {
-        allWarningsAsErrors = true
+        allWarningsAsErrors = false
     } else {
         freeCompilerArgs.addAll("-Wextra", "-Xuse-fir-experimental-checkers")
     }
