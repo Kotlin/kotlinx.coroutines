@@ -6,6 +6,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import org.junit.After
 import org.junit.Test
+import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.atomic.AtomicLongArray
 import kotlin.test.*
 
@@ -17,6 +18,7 @@ class ChannelSelectStressTest : TestBase() {
     private val received = atomic(0)
     private val receivedArray = AtomicLongArray(elementsToSend / Long.SIZE_BITS)
     private val channel = Channel<Int>()
+    private val senderFinished = CyclicBarrier(pairedCoroutines)
 
     @After
     fun tearDown() {
@@ -51,6 +53,7 @@ class ChannelSelectStressTest : TestBase() {
                 if (element >= elementsToSend) break
                 select<Unit> { channel.onSend(element) {} }
             }
+            senderFinished.await()
             channel.close(CancellationException())
         }
     }
