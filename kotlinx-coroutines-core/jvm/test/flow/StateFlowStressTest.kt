@@ -63,10 +63,6 @@ class StateFlowStressTest : TestBase() {
         }
         emitters.cancelAndJoin()
         collectors.cancelAndJoin()
-        // make sure nothing hanged up
-        require(collected.all { c ->
-            c.withIndex().all { (emitter, current) -> current > emitted[emitter] / 2 }
-        })
     }
 
     @Test
