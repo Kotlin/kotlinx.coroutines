@@ -7,6 +7,7 @@ plugins {
 }
 
 val knit_version: String by project
+val storytale_version: String by project
 private val projetsWithoutDokka = unpublished + "kotlinx-coroutines-bom" + jdk8ObsoleteModule
 private val coreModuleDocsUrl = "https://kotlinlang.org/api/kotlinx.coroutines/$coreModule/"
 private val coreModuleDocsPackageList = "$projectDir/kotlinx-coroutines-core/build/dokka/htmlPartial/package-list"
@@ -14,6 +15,7 @@ private val coreModuleDocsPackageList = "$projectDir/kotlinx-coroutines-core/bui
 configure(subprojects.filterNot { projetsWithoutDokka.contains(it.name) }) {
     apply(plugin = "org.jetbrains.dokka")
     configurePathsaver()
+    configureStorytale()
     condigureDokkaSetup()
     configureExternalLinks()
 }
@@ -34,6 +36,12 @@ private fun Project.configurePathsaver() {
         dependencies {
             plugins("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
         }
+    }
+}
+
+private fun Project.configureStorytale() {
+    dependencies {
+        dokkaPlugin("org.jetbrains.compose.storytale:storytale-dokka-plugin:$storytale_version")
     }
 }
 
@@ -91,9 +99,13 @@ private fun Project.configureExternalLinks() {
  * - Templates repository: https://github.com/JetBrains/kotlin-web-site/tree/master/dokka-templates
  */
 private fun Project.setupDokkaTemplatesDir(dokkaTask: AbstractDokkaTask) {
-    dokkaTask.pluginsMapConfiguration = mapOf(
-        "org.jetbrains.dokka.base.DokkaBase" to """{ "templatesDir" : "${
-            project.rootProject.projectDir.toString().replace('\\', '/')
-        }/dokka-templates" }"""
-    )
+    val rootDir = project.rootProject.projectDir.toString().replace('\\', '/')
+    //language=JSON
+    val dokkaBaseConfiguration = """
+    {
+      "customStyleSheets": ["$rootDir/dokka-templates/styles/storytale-styles.css"],
+      "templatesDir": "$rootDir/dokka-templates"
+    }
+    """
+    dokkaTask.pluginsMapConfiguration = mapOf("org.jetbrains.dokka.base.DokkaBase" to dokkaBaseConfiguration)
 }
