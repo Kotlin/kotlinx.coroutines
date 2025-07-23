@@ -178,11 +178,7 @@ private fun warningsAreErrorsOverride(project: Project): Boolean? =
  * Set warnings as errors, but allow the Kotlin User Project configuration to take over. See KT-75078.
  */
 fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
-    if (warningsAreErrorsOverride(project) != false) {
-        allWarningsAsErrors = true
-    } else {
-        freeCompilerArgs.addAll("-Wextra", "-Xuse-fir-experimental-checkers")
-    }
+    allWarningsAsErrors = warningsAreErrorsOverride(project) ?: true
 }
 
 /**
