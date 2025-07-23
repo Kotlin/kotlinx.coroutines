@@ -9,7 +9,7 @@
 [![Slack channel](https://img.shields.io/badge/chat-slack-green.svg?logo=slack)](https://kotlinlang.slack.com/messages/coroutines/)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for the Kotlin `2.0.0` release.
+This is a companion version for the Kotlin `2.2.0` release.
 
 ```kotlin
 suspend fun main() = coroutineScope {
@@ -94,7 +94,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>2.0.0</kotlin.version>
+    <kotlin.version>2.2.0</kotlin.version>
 </properties>
 ```
 
@@ -113,10 +113,10 @@ And make sure that you use the latest Kotlin version:
 ```kotlin
 plugins {
     // For build.gradle.kts (Kotlin DSL)
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm") version "2.2.0"
     
     // For build.gradle (Groovy DSL)
-    id "org.jetbrains.kotlin.jvm" version "2.0.0"
+    id "org.jetbrains.kotlin.jvm" version "2.2.0"
 }
 ```
 
