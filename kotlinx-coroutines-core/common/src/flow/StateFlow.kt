@@ -258,7 +258,7 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
      * ===
      * This should be `atomic<Any?>(null)` instead of the atomic reference, but because of #3820
      * it is used as a **temporary** solution starting from 1.8.1 version.
-     * Depending on the fix rollout on Android, it will be removed in 1.9.0 or 2.0.0.
+     * Depending on the fix rollout on Android, it will be removed in 1.9.0 or 1.10.0.
      * See https://issuetracker.google.com/issues/325123736
      */
     private val _state = WorkaroundAtomicReference<Any?>(null)
