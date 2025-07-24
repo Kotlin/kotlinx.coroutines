@@ -316,7 +316,6 @@ public class PublisherCoroutine<in T>(
         signalCompleted(cause, handled)
     }
 
-    @Suppress("OVERRIDE_DEPRECATION") // Remove after 2.2.0
     override fun cancel() {
         // Specification requires that after cancellation publisher stops signalling
         // This flag distinguishes subscription cancellation request from the job crash
