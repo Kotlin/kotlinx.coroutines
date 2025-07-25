@@ -204,4 +204,25 @@ class ChannelFlowTest : TestBase() {
         myFlow.collect()
         finish(4)
     }
+
+    @Test
+    fun testDoesntDispatchWhenUnnecessarilyWhenCollected() = runTest {
+        expect(1)
+        var subscribed = false
+        val myFlow = flow<Int> {
+            expect(3)
+            subscribed = true
+            yield()
+            expect(5)
+        }
+        launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            myFlow.collectLatest {
+                expectUnreached()
+            }
+            finish(6)
+        }
+        expect(4)
+        assertTrue(subscribed)
+    }
 }
