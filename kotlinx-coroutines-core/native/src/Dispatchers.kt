@@ -3,9 +3,6 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
-public fun foo() {
-
-}
 
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()

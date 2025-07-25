@@ -26,10 +26,6 @@ import kotlinx.coroutines.internal.*
 public fun <T : Any> Publisher<T>.asFlow(): Flow<T> =
     PublisherAsFlow(this)
 
-public fun foo() {
-
-}
-
 /**
  * Transforms the given flow into a reactive specification compliant [Publisher].
  *
