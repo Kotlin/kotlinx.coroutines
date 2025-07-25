@@ -37,6 +37,8 @@ val unpublished = setOf("kotlinx.coroutines", "benchmarks", "android-unit-tests"
 val Project.isMultiplatform: Boolean get() = name in setOf(coreModule, "kotlinx-coroutines-test", testUtilsModule)
 val Project.isBom: Boolean get() = name == "kotlinx-coroutines-bom"
 
+val Project.abiCheckEnabled get() = name !in unpublished + "kotlinx-coroutines-bom"
+
 // Projects that we do not check for Android API level 14 check due to various limitations
 val androidNonCompatibleProjects = setOf(
     "kotlinx-coroutines-debug",
