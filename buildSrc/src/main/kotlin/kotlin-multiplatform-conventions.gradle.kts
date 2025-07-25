@@ -160,3 +160,7 @@ tasks.named("jvmTest", Test::class) {
     }
     project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
 }
+
+tasks.check {
+   dependsOn(tasks.checkLegacyAbi)
+}

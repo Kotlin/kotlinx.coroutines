@@ -43,3 +43,7 @@ tasks.withType<Test> {
     val stressTest = project.properties["stressTest"]
     if (stressTest != null) systemProperties["stressTest"] = stressTest
 }
+
+tasks.check {
+   dependsOn(tasks.checkLegacyAbi)
+}
