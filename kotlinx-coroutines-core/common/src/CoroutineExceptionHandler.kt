@@ -90,7 +90,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  *   - On JVM, all instances of [CoroutineExceptionHandler] found via [ServiceLoader], as well as
  *     the current thread's [Thread.uncaughtExceptionHandler], are invoked.
  *   - On Native, the whole application crashes with the exception.
- *   - On JS and Wasm/JS, the exception is propagated into the event loop
+ *   - On JS and Wasm JS, the exception is propagated into the JavaScript's runtime event loop
  *     and is processed in a platform-specific way determined by the platform itself.
  *
  * [CoroutineExceptionHandler] can be invoked from an arbitrary thread.
