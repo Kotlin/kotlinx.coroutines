@@ -15,7 +15,7 @@ internal expect val platformExceptionHandlers: Collection<CoroutineExceptionHand
 internal expect fun ensurePlatformExceptionHandlerLoaded(callback: CoroutineExceptionHandler)
 
 /**
- * The platform-dependent global exception handler, used so that the exception is logged at least *somewhere*.
+ * The platform-dependent global exception handler, used so that the exception is processed at least *somewhere*.
  */
 internal expect fun propagateExceptionFinalResort(exception: Throwable)
 
