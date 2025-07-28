@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.*
 import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     kotlin("multiplatform")
@@ -11,6 +12,15 @@ java {
 }
 
 kotlin {
+    @OptIn(ExperimentalAbiValidation::class)
+    abiValidation {
+        enabled = abiCheckEnabled
+
+        klib {
+            enabled = true
+        }
+    }
+
     jvm {
         compilations.all {
             compileTaskProvider.configure {
@@ -149,4 +159,8 @@ tasks.named("jvmTest", Test::class) {
         events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
     }
     project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
+}
+
+tasks.check {
+   dependsOn(tasks.checkLegacyAbi)
 }

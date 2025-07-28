@@ -2,6 +2,7 @@
 
 import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     kotlin("jvm")
@@ -13,6 +14,11 @@ java {
 }
 
 kotlin {
+    @OptIn(ExperimentalAbiValidation::class)
+    abiValidation {
+        enabled = abiCheckEnabled
+    }
+
     compilerOptions {
         jvmTarget = JvmTarget.JVM_1_8
         configureGlobalKotlinArgumentsAndOptIns()
@@ -36,4 +42,8 @@ tasks.withType<Test> {
     }
     val stressTest = project.properties["stressTest"]
     if (stressTest != null) systemProperties["stressTest"] = stressTest
+}
+
+tasks.check {
+   dependsOn(tasks.checkLegacyAbi)
 }
