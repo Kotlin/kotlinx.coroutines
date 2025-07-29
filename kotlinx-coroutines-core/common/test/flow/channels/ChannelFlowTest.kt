@@ -227,13 +227,14 @@ class ChannelFlowTest : TestBase() {
     fun testDispatchesToDifferentDispatcherWhenCollected() = runTest {
         expect(1)
         val myFlow = flow<Int> {
-            finish(4)
+            expect(4)
         }.flowOn(wrapperDispatcher())
         launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             myFlow.collectLatest {
                 expectUnreached()
             }
+            finish(5)
         }
         expect(3)
     }
