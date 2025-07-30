@@ -285,15 +285,15 @@ suspend fun main() = coroutineScope {
 
 // Doesn't declare CoroutineScope as the receiver
 suspend fun launchAll() {
-    // Error: 'launch' is unresolved
+    // Error: launch is unresolved
     launch { println("1") }
     launch { println("2") }
 }
 
 // Declares CoroutineScope as the receiver
 suspend fun CoroutineScope.launchAll() {
-   launch { println("1") }
-   launch { println("2") }
+    launch { println("1") }
+    launch { println("2") }
 }
 ```
 
