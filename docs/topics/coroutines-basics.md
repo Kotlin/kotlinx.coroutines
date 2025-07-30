@@ -8,7 +8,7 @@ Kotlin uses coroutines. Coroutines let you write concurrent code in a clear and 
 The most basic building block of coroutines is the suspending function.
 It makes it possible to pause a running operation and resume it later without losing the structure of your code.
 
-To mark a function as suspendable, use the `suspend` keyword:
+To mark a function as a suspending function, use the `suspend` keyword:
 
 ```kotlin
 suspend fun greet() {
@@ -17,7 +17,7 @@ suspend fun greet() {
 ```
 
 You can only call a suspending function from another suspending function.
-To call suspending functions at the entry point of a Kotlin application, mark the `main()` function as suspendable:
+To call suspending functions at the entry point of a Kotlin application, mark the `main()` function with the `suspend` keyword:
 
 ```kotlin
 suspend fun main() {
@@ -261,6 +261,43 @@ You can specify the wait time in milliseconds, so `delay(1000L)` suspends the co
 > Use [`kotlin.time.Duration`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.time/-duration/) from the Kotlin standard library to express durations like `delay(1.seconds)` instead of using milliseconds.
 > 
 {style="tip"}
+
+### Extract coroutine builders from the coroutine scope
+
+The `coroutineScope()` function takes a lambda with a `CoroutineScope` receiver.
+Inside this lambda, you can call coroutine builder functions like `.launch()` and `.async()` because they are extension
+functions on `CoroutineScope`.
+
+```kotlin
+suspend fun main() = coroutineScope {
+    launch { println("1") }
+    launch { println("2") }
+}
+```
+
+To extract the coroutine builders into another function, that function must declare a `CoroutineScope` receiver:
+
+```kotlin
+suspend fun main() = coroutineScope {
+    // Calls this.launchAll() on the CoroutineScope receiver
+    launchAll()
+}
+
+// Doesn't declare CoroutineScope as the receiver
+suspend fun launchAll() {
+    // Error: 'launch' is unresolved
+    launch { println("1") }
+    launch { println("2") }
+}
+
+// Declares CoroutineScope as the receiver
+suspend fun CoroutineScope.launchAll() {
+   launch { println("1") }
+   launch { println("2") }
+}
+```
+
+For more information on how lambdas with receivers work in Kotlin, see [Function literals with receiver](lambdas.md#function-literals-with-receiver).
 
 ## Coroutine builder functions
 
