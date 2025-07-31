@@ -133,7 +133,7 @@ class FluxTest : TestBase() {
         // Test exception is not reported to global handler
         val flow = flux<Unit> { throw TestException() }.asFlow()
         repeat(2000) {
-            combine(flow, flow) { _, _ -> Unit }
+            combine(flow, flow) { _, _ -> }
                 .catch {}
                 .collect { }
         }
