@@ -39,11 +39,29 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /** This counter establishes some order on the events that happen at the same virtual time. */
     private val count = atomic(0L)
 
+    private val _timeSource = TestTimeSource()
+    private val startMark = _timeSource.markNow()
+
+    // may only be called under the lock
+    private fun setVirtualTime(time: ComparableTimeMark) {
+        val toWait = time - _timeSource.markNow()
+        when {
+            toWait < Duration.ZERO -> currentTimeAheadOfEvents()
+            toWait > Duration.ZERO -> try {
+                _timeSource += toWait
+            } catch (_: IllegalStateException) {
+                throw IllegalStateException(
+                    "The test scheduler encountered too large a value: at ${timeSource.markNow()}, " +
+                        "we tried to advance by $toWait, but the maximum value is ${Long.MAX_VALUE / 2} ms."
+                )
+            }
+        }
+    }
+
     /** The current virtual time in milliseconds. */
     @ExperimentalCoroutinesApi
-    public var currentTime: Long = 0
-        get() = synchronized(lock) { field }
-        private set
+    public val currentTime: Long
+        get() = synchronized(lock) { startMark.elapsedNow().inWholeMilliseconds }
 
     /** A channel for notifying about the fact that a foreground work dispatch recently happened. */
     private val dispatchEventsForeground: Channel<Unit> = Channel(CONFLATED)
@@ -52,25 +70,28 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     private val dispatchEvents: Channel<Unit> = Channel(CONFLATED)
 
     /**
-     * Registers a request for the scheduler to notify [dispatcher] at a virtual moment [timeDeltaMillis] milliseconds
+     * Registers a request for the scheduler to notify [dispatcher] at a virtual moment [timeDelta] milliseconds
      * later via [TestDispatcher.processEvent], which will be called with the provided [marker] object.
      *
      * Returns the handler which can be used to cancel the registration.
      */
     internal fun <T : Any> registerEvent(
         dispatcher: TestDispatcher,
-        timeDeltaMillis: Long,
+        timeDelta: Duration,
         marker: T,
         context: CoroutineContext,
         isCancelled: (T) -> Boolean
     ): DisposableHandle {
-        require(timeDeltaMillis >= 0) { "Attempted scheduling an event earlier in time (with the time delta $timeDeltaMillis)" }
+        require(timeDelta >= Duration.ZERO) {
+            "Attempted scheduling an event earlier in time (with the time delta $timeDelta)"
+        }
         checkSchedulerInContext(this, context)
         val count = count.getAndIncrement()
         val isForeground = context[BackgroundWork] === null
         return synchronized(lock) {
-            val time = addClamping(currentTime, timeDeltaMillis)
-            val event = TestDispatchEvent(dispatcher, count, time, marker as Any, isForeground) { isCancelled(marker) }
+            val event = TestDispatchEvent(
+                dispatcher, count, _timeSource.markNow() + timeDelta, marker as Any, isForeground
+            ) { isCancelled(marker) }
             events.addLast(event)
             /** can't be moved above: otherwise, [onDispatchEventForeground] or [onDispatchEvent] could consume the
              * token sent here before there's actually anything in the event queue. */
@@ -91,9 +112,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
         val event = synchronized(lock) {
             if (condition()) return false
             val event = events.removeFirstOrNull() ?: return false
-            if (currentTime > event.time)
-                currentTimeAheadOfEvents()
-            currentTime = event.time
+            setVirtualTime(event.time)
             event
         }
         event.dispatcher.processEvent(event.marker)
@@ -124,7 +143,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * Runs the tasks that are scheduled to execute at this moment of virtual time.
      */
     public fun runCurrent() {
-        val timeMark = synchronized(lock) { currentTime }
+        val timeMark = synchronized(lock) { _timeSource.markNow() }
         while (true) {
             val event = synchronized(lock) {
                 events.removeFirstIf { it.time <= timeMark } ?: return
@@ -160,20 +179,19 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      */
     public fun advanceTimeBy(delayTime: Duration) {
         require(!delayTime.isNegative()) { "Can not advance time by a negative delay: $delayTime" }
-        val startingTime = currentTime
-        val targetTime = addClamping(startingTime, delayTime.inWholeMilliseconds)
+        val targetTime = synchronized(lock) { _timeSource.markNow() } + delayTime
         while (true) {
             val event = synchronized(lock) {
-                val timeMark = currentTime
+                val timeMark = _timeSource.markNow()
                 val event = events.removeFirstIf { targetTime > it.time }
                 when {
                     event == null -> {
-                        currentTime = targetTime
+                        setVirtualTime(targetTime)
                         return
                     }
                     timeMark > event.time -> currentTimeAheadOfEvents()
                     else -> {
-                        currentTime = event.time
+                        setVirtualTime(event.time)
                         event
                     }
                 }
@@ -219,6 +237,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /**
      * Returns the [TimeSource] representation of the virtual time of this scheduler.
      */
+    // this is a wrapper around `_timeSource` to prevent external modifications
     public val timeSource: TimeSource.WithComparableMarks = object : AbstractLongTimeSource(DurationUnit.MILLISECONDS) {
         override fun read(): Long = currentTime
     }
@@ -234,7 +253,7 @@ private fun invalidSchedulerState(): Nothing =
 private class TestDispatchEvent<T>(
     @JvmField val dispatcher: TestDispatcher,
     private val count: Long,
-    @JvmField val time: Long,
+    @JvmField val time: ComparableTimeMark,
     @JvmField val marker: T,
     @JvmField val isForeground: Boolean,
     // TODO: remove once the deprecated API is gone
@@ -248,9 +267,6 @@ private class TestDispatchEvent<T>(
 
     override fun toString() = "TestDispatchEvent(time=$time, dispatcher=$dispatcher${if (isForeground) "" else ", background"})"
 }
-
-// works with positive `a`, `b`
-private fun addClamping(a: Long, b: Long): Long = (a + b).let { if (it >= 0) it else Long.MAX_VALUE }
 
 internal fun checkSchedulerInContext(scheduler: TestCoroutineScheduler, context: CoroutineContext) {
     context[TestCoroutineScheduler]?.let {
