@@ -188,7 +188,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Internal function that setups cancellation behavior in [suspendCancellableCoroutine].
      * It's illegal to call this function in any non-`kotlinx.coroutines` code and
      * such calls lead to undefined behaviour.
-     * Exposed in our ABI since 1.0.0 withing `suspendCancellableCoroutine` body.
+     * Exposed in our ABI since 1.0.0 within `suspendCancellableCoroutine` body.
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
