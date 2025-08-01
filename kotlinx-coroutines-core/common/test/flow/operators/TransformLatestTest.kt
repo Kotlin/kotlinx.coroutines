@@ -7,8 +7,8 @@ import kotlin.test.*
 class TransformLatestTest : TestBase() {
 
     @Test
-    fun testTransformLatest() = runTest {
-        val flow = flowOf(1, 2, 3).transformLatest { value ->
+    fun testTransformLatestSuspension() = runTest {
+        val flow = flowOfYielding(1, 2, 3).transformLatest { value ->
             emit(value)
             emit(value + 1)
         }
@@ -19,6 +19,7 @@ class TransformLatestTest : TestBase() {
     fun testEmission() = runTest {
         val list = flow {
             repeat(5) {
+                yield()
                 emit(it)
             }
         }.transformLatest {
@@ -29,7 +30,7 @@ class TransformLatestTest : TestBase() {
 
     @Test
     fun testSwitchIntuitiveBehaviour() = runTest {
-        val flow = flowOf(1, 2, 3, 4, 5)
+        val flow = flowOfYielding(1, 2, 3, 4, 5)
         flow.transformLatest {
             expect(it)
             emit(it)
@@ -42,28 +43,48 @@ class TransformLatestTest : TestBase() {
 
     @Test
     fun testSwitchRendezvousBuffer() = runTest {
-        val flow = flowOf(1, 2, 3, 4, 5)
+        val flow = flowOfYielding(1, 2, 3, 4, 5)
         flow.transformLatest {
             emit(it)
             // Reach here every uneven element because of channel's unfairness
             expect(it)
-        }.buffer(0).onEach { expect(it + 1) }.collect()
+        }.buffer(0).collect {
+            expect(it + 1)
+            yield() // give the `flowOfYielding` a chance to cancel the previous flow
+        }
         finish(7)
     }
 
     @Test
     fun testSwitchBuffer() = runTest {
-        val flow = flowOf(1, 2, 3, 42, 4)
+        val allowCollecting = CompletableDeferred<Unit>()
+        val flow = flow<Int> {
+            emit(-1)
+            repeat(10) {
+                yield()
+                emit(it)
+            }
+            allowCollecting.complete(Unit)
+        }
         flow.transformLatest {
             emit(it)
-            expect(it)
-        }.buffer(2).collect()
-        finish(5)
+        }.buffer(2).collect {
+            when(it) {
+                -1 -> {
+                    // a start signal. Now we emulate a slow collector.
+                    allowCollecting.await() // sleep for a long time
+                }
+                0 -> expect(1)
+                1 -> expect(2)
+                9 -> expect(3)
+            }
+        }
+        finish(4)
     }
 
     @Test
     fun testHangFlows() = runTest {
-        val flow = listOf(1, 2, 3, 4).asFlow()
+        val flow = listOf(1, 2, 3, 4).asFlow().onEach { yield() }
         val result = flow.transformLatest { value ->
             if (value != 4) hang { expect(value) }
             emit(42)
@@ -83,27 +104,27 @@ class TransformLatestTest : TestBase() {
         val flow = flow {
             assertEquals("source", NamedDispatchers.name())
             expect(1)
-            emit(4)
+            emit(-1) // will be cancelled by the later value
             expect(2)
-            emit(5)
+            emit(4)
             expect(3)
-        }.flowOn(NamedDispatchers("source")).transformLatest<Int, Int> { value ->
+        }.flowOn(NamedDispatchers("source")).transformLatest { value ->
             emitAll(flow<Int> {
                 assertEquals("switch$value", NamedDispatchers.name())
                 expect(value)
                 emit(value)
             }.flowOn(NamedDispatchers("switch$value")))
         }.onEach {
-            expect(it + 2)
+            expect(it + 1)
             assertEquals("main", NamedDispatchers.nameOr("main"))
         }
-        assertEquals(2, flow.count())
-        finish(8)
+        assertEquals(1, flow.count())
+        finish(6)
     }
 
     @Test
     fun testFailureInTransform() = runTest {
-        val flow = flowOf(1, 2).transformLatest { value ->
+        val flow = flowOfYielding(1, 2).transformLatest { value ->
             if (value == 1) {
                 emit(1)
                 hang { expect(1) }
@@ -151,7 +172,20 @@ class TransformLatestTest : TestBase() {
 
     @Test
     fun testTake() = runTest {
-        val flow = flowOf(1, 2, 3, 4, 5).transformLatest { emit(it) }
+        val flow = flowOfYielding(1, 2, 3, 4, 5).transformLatest { emit(it) }
         assertEquals(listOf(1), flow.take(1).toList())
+    }
+}
+
+/**
+ * The same as [flowOf] but yields before each emission.
+ *
+ * This is useful for testing the behavior of operators that cancel the previous emission
+ * when a new value is emitted, such as [transformLatest].
+ */
+internal fun flowOfYielding(vararg values: Int): Flow<Int> = flow {
+    for (value in values) {
+        yield()
+        emit(value)
     }
 }

@@ -17,7 +17,7 @@ internal class ChannelFlowTransformLatest<T, R>(
         ChannelFlowTransformLatest(transform, flow, context, capacity, onBufferOverflow)
 
     override suspend fun flowCollect(collector: FlowCollector<R>) {
-        assert { collector is SendingCollector } // So cancellation behaviour is not leaking into the downstream
+        assert { collector is SendingCollector } // So cancellation behavior is not leaking into the downstream
         coroutineScope {
             var previousFlow: Job? = null
             flow.collect { value ->
@@ -25,8 +25,8 @@ internal class ChannelFlowTransformLatest<T, R>(
                     cancel(ChildCancelledException())
                     join()
                 }
-                // Do not pay for dispatch here, it's never necessary
-                previousFlow = launch(start = CoroutineStart.UNDISPATCHED) {
+                // Dispatch to avoid blocking the upstream flow, which may produce more values immediately
+                previousFlow = launch {
                     collector.transform(value)
                 }
             }
