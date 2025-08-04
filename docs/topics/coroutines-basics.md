@@ -88,7 +88,7 @@ Add the following dependency to your `pom.xml` file.
 <project>
     <dependencies>
         <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
+            <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-core</artifactId>
             <version>%coroutinesVersion%</version>
         </dependency>
@@ -104,7 +104,7 @@ A coroutine is a suspendable computation that can run concurrently with other co
 
 On the JVM and in Kotlin/Native, all concurrent code, such as coroutines, runs on _threads_, which are managed by the operating system.
 Coroutines can suspend their execution instead of blocking a thread.
-This allows one coroutine to suspend while waiting for a network response and another to run on the same thread, ensuring effective resource utilization.
+This allows one coroutine to suspend while waiting for some data to arrive and another to run on the same thread, ensuring effective resource utilization.
 
 ![Comparing parallel and concurrent threads](parallelism-and-concurrency.svg){width="700"}
 
@@ -213,7 +213,7 @@ This example demonstrates simple multithreading with coroutines on a shared thre
 When you run many coroutines in an application, you need a way to manage them as a group.
 Kotlin coroutines rely on a principle called _structured concurrency_ to provide this structure.
 
-This principle connects coroutines into a hierarchy of parent and child tasks that share the same lifecycle.
+This principle groups coroutines into a hierarchy of parent and child tasks with linked lifecycles.
 A parent coroutine waits for its children to complete before finishing.
 If the parent coroutine fails or is canceled, all its child coroutines are canceled too.
 Keeping coroutines connected this way makes cancellation, error handling, and resource cleanup predictable and safe.
@@ -223,8 +223,6 @@ Keeping coroutines connected this way makes cancellation, error handling, and re
 {style="tip"}
 
 To maintain structured concurrency, new coroutines can only be launched in a [`CoroutineScope`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/) that defines and manages their lifecycle.
-
-[Coroutine builder functions](#coroutine-builder-functions) are extension functions on `CoroutineScope`.
 When you start a coroutine inside another coroutine, it automatically becomes a child of its parent scope.
 The parent coroutine's scope waits for all its children to finish before it completes.
 
@@ -301,18 +299,17 @@ For more information on how lambdas with receivers work in Kotlin, see [Function
 
 ## Coroutine builder functions
 
+A coroutine builder function is a function that accepts a `suspend` [lambda](lambdas.md) that defines a coroutine to run.
+
 Coroutine builder functions create new coroutines inside an existing [coroutine scope](#coroutine-scope-and-structured-concurrency).
 They require a `CoroutineScope` to run in, either one that is already available,
-or one you create using helper functions such as `coroutineScope()` or [`runBlocking()`](#runblocking).
+or one you create using helper functions such as `coroutineScope()`, [`runBlocking()`](#runblocking), or [`withContext()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html#).
 Each builder defines how the coroutine starts and how you interact with its result.
-
-> The `withContext()` function doesn't create a new scope but provides access to the current one.
-> 
-{style="tip"}
 
 ### .launch()
 
-The [`.launch()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html#) coroutine builder function starts a new coroutine without blocking the rest of the scope.
+The [`.launch()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html#) coroutine builder function is an extension function on `CoroutineScope`.
+It starts a new coroutine without blocking the rest of the scope.
 Use `.launch()` to run a task alongside other work when the result isn't needed or you don't want to wait for it:
 
 ```kotlin
@@ -339,7 +336,8 @@ After running this example, you can see that the `main()` function isn't blocked
 
 ### .async()
 
-Use the [`.async()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html) builder function to start an asynchronous computation that runs alongside other code and returns a result you can access later.
+The [`.async()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html) coroutine builder function is an extension function on `CoroutineScope`.
+Use it to start an asynchronous computation that runs alongside other code and returns a result you can access later.
 The result is wrapped in a [`Deferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/) object, which you can access by calling the `.await()` function:
 
 ```kotlin
@@ -372,7 +370,6 @@ suspend fun main() = withContext(Dispatchers.Default) {
 
 The [`runBlocking()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html) coroutine builder function creates coroutine scope and blocks the current [thread](#comparing-coroutines-and-jvm-threads) until
 the coroutines launched in that scope finish.
-Unlike other coroutine builders, `runBlocking()` doesn't use a shared thread pool.
 
 Use `runBlocking()` only when there is no other option to call suspending code from non-suspending code:
 
@@ -467,7 +464,7 @@ suspend fun main() = withContext(Dispatchers.Default) {
 {kotlin-runnable="true"}
 
 > Even though coroutines can suspend and resume on different threads,
-> values written before the coroutine suspends are still available within the same coroutine when it resumes.
+> values written before the coroutine suspends are still guaranteed to be available within the same coroutine when it resumes.
 > 
 {style="tip"}
 
