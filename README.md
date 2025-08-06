@@ -21,7 +21,7 @@ suspend fun main() = coroutineScope {
 }
 ```
 
-> Play with coroutines online [here](https://pl.kotl.in/9zva88r7S)
+> Play with coroutines online [here](https://pl.kotl.in/Wf3HxgZvx)
 
 ## Modules
 
