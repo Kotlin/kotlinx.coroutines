@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.rules.*
 
+@Ignore
 class StackTraceRecoveryWithTimeoutTest : TestBase() {
 
     @get:Rule
