@@ -40,25 +40,25 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, c
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(
     receiver: R, block: suspend R.() -> T
-): Any? = startUndspatched(alwaysRethrow = true, receiver, block)
+): Any? = startUndispatched(alwaysRethrow = true, receiver, block)
 
 /**
  * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
     receiver: R, block: suspend R.() -> T
-): Any? = startUndspatched(alwaysRethrow = false, receiver, block)
+): Any? = startUndispatched(alwaysRethrow = false, receiver, block)
 
 /**
  * Starts and handles the result of an undispatched coroutine, potentially with children.
  * For example, it handles `coroutineScope { ...suspend of throw, maybe start children... }`
  * and `launch(start = UNDISPATCHED) { ... }`
  *
- * @param alwaysRethrow specifies whether an exception should be unconditioanlly rethrown.
+ * @param alwaysRethrow specifies whether an exception should be unconditionally rethrown.
  *     It is a tweak for 'withTimeout' in order to successfully return values when the block was cancelled:
  *     i.e. `withTimeout(1ms) { Thread.sleep(1000); 42 }` should not fail.
  */
-private fun <T, R> ScopeCoroutine<T>.startUndspatched(
+private fun <T, R> ScopeCoroutine<T>.startUndispatched(
     alwaysRethrow: Boolean,
     receiver: R, block: suspend R.() -> T
 ): Any? {
@@ -77,7 +77,7 @@ private fun <T, R> ScopeCoroutine<T>.startUndspatched(
      * 1) The coroutine just suspended. I.e. `coroutineScope { .. suspend here }`.
      *   Then just suspend
      * 2) The coroutine completed with something, but has active children. Wait for them, also suspend
-     * 3) The coroutine succesfully completed. Return or rethrow its result.
+     * 3) The coroutine successfully completed. Return or rethrow its result.
      */
     if (result === COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED // (1)
     val state = makeCompletingOnce(result)
