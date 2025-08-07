@@ -2,6 +2,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import java.io.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
@@ -56,5 +57,26 @@ class RunInterruptibleTest : TestBase() {
             job.cancelAndJoin()
         }.join()
         finish(5)
+    }
+
+    /**
+     * Tests that [collectLatest] reacts to new elements even if its thread is blocked by [runInterruptible].
+     */
+    @Test
+    fun testCollectLatestCancellation() = runTest {
+        withContext(Dispatchers.IO) {
+            flow {
+                repeat(10) {
+                    emit(it)
+                    yield()
+                }
+            }.collectLatest { value ->
+                if (value != 9) {
+                    runInterruptible {
+                        Thread.sleep(Long.MAX_VALUE)
+                    }
+                }
+            }
+        }
     }
 }
