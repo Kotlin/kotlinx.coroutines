@@ -1,8 +1,8 @@
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -75,7 +75,7 @@ class ProduceTest : TestBase() {
         try {
             c.receive()
             expectUnreached()
-        } catch (e: TestCancellationException) {
+        } catch (_: TestCancellationException) {
             expect(5)
         }
         yield() // to produce
@@ -196,7 +196,7 @@ class ProduceTest : TestBase() {
         assertFailsWith<IllegalStateException> { (channel as ProducerScope<*>).awaitClose() }
         callbackFlow<Unit> {
             expect(1)
-            launch {
+            launch(start = CoroutineStart.UNDISPATCHED) {
                 expect(2)
                 assertFailsWith<IllegalStateException> {
                     awaitClose { expectUnreached() }
@@ -286,7 +286,7 @@ class ProduceTest : TestBase() {
         produced.cancel()
         try {
             source.receive()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             finish(4)
         }
     }
