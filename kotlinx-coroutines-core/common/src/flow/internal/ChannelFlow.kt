@@ -114,7 +114,8 @@ public abstract class ChannelFlow<T>(
     public open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
         produceImplInternal(scope, CoroutineStart.ATOMIC)
 
-    internal open fun produceImplInternal(scope: CoroutineScope, start: CoroutineStart): ReceiveChannel<T> = scope.produce(context, produceCapacity, onBufferOverflow, start = start, block = collectToFun)
+    internal open fun produceImplInternal(scope: CoroutineScope, start: CoroutineStart): ReceiveChannel<T> =
+        scope.produce(context, produceCapacity, onBufferOverflow, start = start, block = collectToFun)
 
     override suspend fun collect(collector: FlowCollector<T>): Unit =
         coroutineScope {
