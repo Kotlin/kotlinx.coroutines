@@ -16,6 +16,7 @@ import kotlin.coroutines.*
  *    in the future to account for the concept of structured concurrency.
  *
  * @param context -- the coroutine context from which the resulting mono is going to be signalled
+ * @throws IllegalArgumentException if the [context] contains a [Job] instance.
  */
 public fun Job.asMono(context: CoroutineContext): Mono<Unit> = mono(context) { this@asMono.join() }
 /**
@@ -29,6 +30,7 @@ public fun Job.asMono(context: CoroutineContext): Mono<Unit> = mono(context) { t
  *    in the future to account for the concept of structured concurrency.
  *
  * @param context -- the coroutine context from which the resulting mono is going to be signalled
+ * @throws IllegalArgumentException if the [context] contains a [Job] instance.
  */
 public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = mono(context) { this@asMono.await() }
 
