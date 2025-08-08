@@ -54,7 +54,7 @@ internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
  * For example, it handles `coroutineScope { ...suspend of throw, maybe start children... }`
  * and `launch(start = UNDISPATCHED) { ... }`
  *
- * @param alwaysRethrow specifies whether an exception should be unconditioanlly rethrown.
+ * @param alwaysRethrow specifies whether an exception should be unconditionally rethrown.
  *     It is a tweak for 'withTimeout' in order to successfully return values when the block was cancelled:
  *     i.e. `withTimeout(1ms) { Thread.sleep(1000); 42 }` should not fail.
  */
@@ -77,7 +77,7 @@ private fun <T, R> ScopeCoroutine<T>.startUndispatched(
      * 1) The coroutine just suspended. I.e. `coroutineScope { .. suspend here }`.
      *   Then just suspend
      * 2) The coroutine completed with something, but has active children. Wait for them, also suspend
-     * 3) The coroutine succesfully completed. Return or rethrow its result.
+     * 3) The coroutine successfully completed. Return or rethrow its result.
      */
     if (result === COROUTINE_SUSPENDED) return COROUTINE_SUSPENDED // (1)
     val state = makeCompletingOnce(result)
