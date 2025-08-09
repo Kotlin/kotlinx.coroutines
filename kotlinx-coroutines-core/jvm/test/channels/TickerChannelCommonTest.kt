@@ -14,7 +14,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
         fun params(): Collection<Array<Any>> =
-            Channel.values().map { arrayOf<Any>(it) }
+            Channel.entries.map { arrayOf<Any>(it) }
     }
 
     enum class Channel {
@@ -35,13 +35,13 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
     fun testDelay() = withVirtualTimeSource {
         runTest {
             val delayChannel = channelFactory(delay = 10000)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
             delayChannel.checkEmpty()
 
             delay(5000)
             delayChannel.checkEmpty()
             delay(5100)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
 
             delayChannel.cancel()
             delay(5100)
@@ -57,13 +57,13 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
             delay(500)
             delayChannel.checkEmpty()
             delay(300)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
 
             // Regular delay
             delay(750)
             delayChannel.checkEmpty()
             delay(260)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
             delayChannel.cancel()
         }
     }
@@ -72,7 +72,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
     fun testReceive() = withVirtualTimeSource {
         runTest {
             val delayChannel = channelFactory(delay = 1000)
-            delayChannel.checkNotEmpty()
+            delayChannel.receiveSingle()
             var value = withTimeoutOrNull(750) {
                 delayChannel.receive()
                 1
@@ -93,6 +93,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
     fun testComplexOperator() = withVirtualTimeSource {
         runTest {
             val producer = GlobalScope.produce {
+                delay(1) // ensure that the ordering of dispatches doesn't affect the result
                 for (i in 1..7) {
                     send(i)
                     delay(1000)
@@ -158,7 +159,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
 
 fun ReceiveChannel<Unit>.checkEmpty() = assertNull(tryReceive().getOrNull())
 
-fun ReceiveChannel<Unit>.checkNotEmpty() {
-    assertNotNull(tryReceive().getOrNull())
+suspend fun ReceiveChannel<Unit>.receiveSingle() {
+    receive()
     assertNull(tryReceive().getOrNull())
 }

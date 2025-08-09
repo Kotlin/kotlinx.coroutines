@@ -14,6 +14,7 @@ import kotlin.concurrent.withLock
 import kotlin.coroutines.*
 import kotlin.reflect.*
 import kotlin.test.*
+import kotlinx.coroutines.testing.CountDownLatch
 
 class FutureTest : TestBase() {
     @Before

@@ -5,9 +5,10 @@ import org.junit.*
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
-import java.util.concurrent.*
+import java.util.concurrent.Executors
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
 class FailingCoroutinesMachineryTest(
@@ -139,7 +140,7 @@ class FailingCoroutinesMachineryTest(
     }
 
     private fun checkException() {
-        latch.await(2, TimeUnit.SECONDS)
+        latch.await(2.seconds)
         val e = caught
         assertNotNull(e)
         // First condition -- failure in context element
