@@ -14,6 +14,8 @@ buildscript {
         maven(url = "https://plugins.gradle.org/m2/")
         addDevRepositoryIfEnabled(this, project)
         mavenLocal()
+        // temporary solution because ABI Validation uses asm-all from intellij-deps. Remove after merging https://jetbrains.team/p/kt/reviews/23039/timeline
+        maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     }
 
     dependencies {
@@ -74,6 +76,9 @@ allprojects {
         google()
         mavenCentral()
         addDevRepositoryIfEnabled(this, project)
+
+        // temporary solution because ABI Validation uses asm-all from intellij-deps. Remove after merging https://jetbrains.team/p/kt/reviews/23039/timeline
+        maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     }
 }
 
