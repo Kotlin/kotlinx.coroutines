@@ -279,6 +279,10 @@ You can specify the wait time in milliseconds, so `delay(1000L)` suspends the co
 
 ### Extract coroutine builders from the coroutine scope
 
+> For more information on how lambdas with receivers work in Kotlin, see [Function literals with receiver](lambdas.md#function-literals-with-receiver).
+>
+{style="tip"}
+
 The `coroutineScope()` function takes a lambda with a `CoroutineScope` receiver.
 Inside this lambda, the implicit receiver is a `CoroutineScope`, so builder functions like `.launch()` and `.async()` resolve as
 [extension functions](extensions.md#extension-functions) on that receiver:
@@ -315,8 +319,7 @@ suspend fun launchAll() = coroutineScope { // this: CoroutineScope #2
     this.launch { println("2") } 
 }
 ```
-
-For more information on how lambdas with receivers work in Kotlin, see [Function literals with receiver](lambdas.md#function-literals-with-receiver).
+{kotlin-runnable="true"}
 
 ## Coroutine builder functions
 
