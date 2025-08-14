@@ -319,7 +319,6 @@ suspend fun launchAll() = coroutineScope { // this: CoroutineScope #2
     this.launch { println("2") } 
 }
 ```
-{kotlin-runnable="true"}
 
 ## Coroutine builder functions
 
