@@ -203,6 +203,7 @@ Let's look at an example that uses multiple coroutines in a multithreaded enviro
         // Delays for 1 second
         delay(1.seconds) 
         // The delay function simulates a suspending API call here
+        // You can add suspending API calls here like a network request
     }
 
     suspend fun main() {
@@ -210,7 +211,6 @@ Let's look at an example that uses multiple coroutines in a multithreaded enviro
         withContext(Dispatchers.Default) {
             launch() {
                 greet()
-                // You can add suspending API calls here, such as a network request
             }
    
             // Starts another coroutine
@@ -218,7 +218,7 @@ Let's look at an example that uses multiple coroutines in a multithreaded enviro
                 println("Another coroutine on thread: ${Thread.currentThread().name}")
                 delay(1.seconds)
                 // The delay function simulates a suspending API call here
-                // You can add your own suspending code here, such as a network request
+                // You can add suspending API calls here like a network request
             }
     
             println("This runs concurrently and possibly in parallel with the launched coroutines on thread: ${Thread.currentThread().name}")
