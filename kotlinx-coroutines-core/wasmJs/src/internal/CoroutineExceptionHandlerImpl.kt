@@ -2,7 +2,9 @@ package kotlinx.coroutines.internal
 
 internal actual typealias JsAny = kotlin.js.JsAny
 
-internal external val reportError: ((error: JsAny) -> Unit)?
+internal external object globalThis : JsAny {
+    val reportError: ((error: JsAny) -> Unit)?
+}
 
 internal actual fun Throwable.toJsException(): JsAny =
     toJsError(message, this::class.simpleName, stackTraceToString())
@@ -19,10 +21,11 @@ internal fun toJsError(message: String?, className: String?, stack: String?): Js
 
 internal actual fun propagateExceptionFinalResort(exception: Throwable) {
     val jsException = exception.toJsException()
-    if (reportError != null) {
-        // In Node.js runtime, use reportError.
-        reportError(jsException)
+    if (globalThis.reportError != null) {
+        // modern browsers, Deno
+        globalThis.reportError(jsException)
     } else {
+        // Node.js, old Safari
         throwAsync(jsException)
     }
 }
