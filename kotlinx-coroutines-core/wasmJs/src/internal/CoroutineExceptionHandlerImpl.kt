@@ -18,10 +18,11 @@ internal fun toJsError(message: String?, className: String?, stack: String?): Js
 }
 
 internal actual fun propagateExceptionFinalResort(exception: Throwable) {
+    val jsException = exception.toJsException()
     if (reportError != null) {
         // In Node.js runtime, use reportError.
-        reportError(exception.toJsException())
+        reportError(jsException)
     } else {
-        throwAsync(exception.toJsException())
+        throwAsync(jsException)
     }
 }
