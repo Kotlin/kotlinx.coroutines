@@ -70,7 +70,7 @@ class CombineParametersTest : TestBase() {
 
     @Test
     fun testVararg() = runTest {
-        val flow = combine(
+        val flow = combine<Any?, String>(
             flowOf("1"),
             flowOf(2),
             flowOf("3"),
@@ -83,7 +83,7 @@ class CombineParametersTest : TestBase() {
 
     @Test
     fun testVarargTransform() = runTest {
-        val flow = combineTransform(
+        val flow = combineTransform<Any?, String>(
             flowOf("1"),
             flowOf(2),
             flowOf("3"),
