@@ -1,7 +1,7 @@
 # Change log for kotlinx.coroutines
 
 ## Version 1.10.3
-* `propagateExceptionFinalResort` now throws instead of logging on the `js` and `wasmJS` targets.
+* Unhandled exceptions in Kotlin coroutines are now re-thrown into the environment instead of being logged into the console on the `js` and `wasmJS` targets.
 
 ## Version 1.10.2
 
