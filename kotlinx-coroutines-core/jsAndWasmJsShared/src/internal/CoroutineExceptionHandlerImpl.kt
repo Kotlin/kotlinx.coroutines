@@ -11,7 +11,3 @@ internal expect fun Throwable.toJsException(): JsAny
  * rather than in the current execution branch.
  */
 internal fun throwAsync(e: JsAny): Unit = js("setTimeout(function () { throw e }, 0)")
-
-internal actual fun propagateExceptionFinalResort(exception: Throwable) {
-    throwAsync(exception.toJsException())
-}
