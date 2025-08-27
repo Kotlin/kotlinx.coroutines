@@ -1,5 +1,8 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.10.3
+* `propagateExceptionFinalResort` now throws instead of logging on the `js` and `wasmJS` targets.
+
 ## Version 1.10.2
 
 * Fixed the `kotlinx-coroutines-debug` JAR file including the `module-info.class` file twice, resulting in failures in various tooling (#4314). Thanks, @RyuNen344!
