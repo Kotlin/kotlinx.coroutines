@@ -21,11 +21,12 @@ internal fun toJsError(message: String?, className: String?, stack: String?): Js
 
 internal actual fun propagateExceptionFinalResort(exception: Throwable) {
     val jsException = exception.toJsException()
+    // https://github.com/JetBrains/kotlin-wrappers/blob/master/kotlin-browser/src/webMain/generated/web/errors/reportError.kt
     if (globalThis.reportError != null) {
-        // modern browsers, Deno
+        // Modern browsers, Deno, Bun, etc.
         globalThis.reportError(jsException)
     } else {
-        // Node.js, old Safari
+        // Old Safari, Node.js
         throwAsync(jsException)
     }
 }
