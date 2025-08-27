@@ -14,7 +14,7 @@ import kotlin.time.*
  *   the virtual time.
  */
 @Suppress("INVISIBLE_REFERENCE")
-public abstract class TestDispatcher internal constructor() : CoroutineDispatcher(), Delay, DelayWithTimeoutDiagnostics {
+public abstract class TestDispatcher internal constructor() : CoroutineDispatcher(), Delay {
     /** The scheduler that this dispatcher is linked to. */
     public abstract val scheduler: TestCoroutineScheduler
 
@@ -25,11 +25,11 @@ public abstract class TestDispatcher internal constructor() : CoroutineDispatche
     }
 
     /** @suppress */
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
         val timedRunnable = CancellableContinuationRunnable(continuation, this)
         val handle = scheduler.registerEvent(
             this,
-            timeMillis,
+            time,
             timedRunnable,
             continuation.context,
             ::cancellableRunnableIsCancelled
@@ -38,8 +38,8 @@ public abstract class TestDispatcher internal constructor() : CoroutineDispatche
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        scheduler.registerEvent(this, timeMillis, block, context) { false }
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle =
+        scheduler.registerEvent(this, timeout, block, context) { false }
 
     /** @suppress */
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
