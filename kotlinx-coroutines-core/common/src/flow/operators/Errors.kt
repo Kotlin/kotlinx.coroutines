@@ -164,7 +164,7 @@ internal suspend fun <T> Flow<T>.catchImpl(
          * First check ensures that we catch an original exception, not one rethrown by an operator.
          * Seconds check ignores cancellation causes, they cannot be caught.
          */
-        if (e.isSameExceptionAs(fromDownstream) || e.isCancellationCause(coroutineContext)) {
+        if (e.isSameExceptionAs(fromDownstream) || e.isCancellationCause(currentCoroutineContext())) {
             throw e // Rethrow exceptions from downstream and cancellation causes
         } else {
             /*
