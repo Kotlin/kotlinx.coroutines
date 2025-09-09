@@ -267,7 +267,7 @@ Inside the builder's block, the [receiver](lambdas.md#function-literals-with-rec
 
 While the `withContext()` function creates a scope for your coroutines,
 you can use the [`coroutineScope()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html) function when you want to create a new coroutine scope without changing the context.
-The _coroutine context_ defines a dispatcher to be used and other execution properties.
+The _coroutine context_ defines which dispatcher is used and other execution properties.
 
 The `coroutineScope()` function executes the suspending block and waits until the block and any coroutines launched in it complete.
 Here's an example:
