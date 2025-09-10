@@ -162,40 +162,8 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
     }
 
 /**
- * Returns a [List] containing all the elements sent to this channel, preserving their order.
- *
- * This function will attempt to receive elements and put them into the list until the channel is
- * [closed][SendChannel.close].
- * Calling [toList] on channels that are not eventually closed is always incorrect:
- * - It will suspend indefinitely if the channel is not closed, but no new elements arrive.
- * - If new elements do arrive and the channel is not eventually closed, [toList] will use more and more memory
- *   until exhausting it.
- *
- * If the channel is [closed][SendChannel.close] with a cause, [toList] will rethrow that cause.
- *
- * The operation is _terminal_.
- * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
- *
- * Example:
- * ```
- * val values = listOf(1, 5, 2, 9, 3, 3, 1)
- * // start a new coroutine that creates a channel,
- * // sends elements to it, and closes it
- * // once the coroutine's body finishes
- * val channel = produce {
- *     values.forEach { send(it) }
- * }
- * check(channel.toList() == values)
- * ```
- */
-public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
-    consumeEach {
-        add(it)
-    }
-}
-
-/**
  * Consumes the elements of this channel into the given [destination] mutable list.
+ * If none is provided, a new [ArrayList] will be created.
  *
  * This function will attempt to receive elements and put them into the list until the channel is
  * [closed][SendChannel.close].
@@ -220,16 +188,11 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
  * val channel = produce {
  *    values.forEach { send(it) }
  * }
- * val destination = mutableListOf<Int>()
- * channel.toList(destination)
- * check(destination == values)
+ * check(channel.toList() == values)
  * ```
  */
-public suspend inline fun <T> ReceiveChannel<T>.toList(destination: MutableList<T>) {
-    consumeEach {
-        destination.add(it)
-    }
-}
+public suspend inline fun <T> ReceiveChannel<T>.toList(destination: MutableList<T> = ArrayList()): List<T> =
+    consumeEach(destination::add).let { destination }
 
 @PublishedApi
 internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {
@@ -238,3 +201,5 @@ internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {
     })
 }
 
+@Deprecated("Preserving binary compatibility, was stable", level = DeprecationLevel.HIDDEN)
+public suspend fun <T> ReceiveChannel<T>.toList(): List<T> = toList(ArrayList())
