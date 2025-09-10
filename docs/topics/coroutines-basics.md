@@ -259,17 +259,17 @@ If the parent coroutine fails or is canceled, all its child coroutines are recur
 Keeping coroutines connected this way makes cancellation and error handling predictable and safe.
 
 To maintain structured concurrency, new coroutines can only be launched in a [`CoroutineScope`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/) that defines and manages their lifecycle.
+The `CoroutineScope` includes the _coroutine context_, which defines the dispatcher and other execution properties.
 When you start a coroutine inside another coroutine, it automatically becomes a child of its parent scope.
 The parent coroutine's scope waits for all its children to finish before it completes.
 
 Calling a [coroutine builder function](#coroutine-builder-functions) such as `CoroutineScope.launch()` on a `CoroutineScope` starts a child coroutine of the coroutine associated with that scope.
 Inside the builder's block, the [receiver](lambdas.md#function-literals-with-receiver) is a nested `CoroutineScope`, so any coroutines you launch there become its children.
 
-While the `withContext()` function creates a scope for your coroutines,
-you can use the [`coroutineScope()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html) function when you want to create a new coroutine scope without changing the context.
-The _coroutine context_ defines which dispatcher is used and other execution properties.
+To create a new coroutine scope in the current coroutine context, use the
+[`coroutineScope()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html) function.
+This function executes the suspending block and waits until the block and any coroutines launched in it complete.
 
-The `coroutineScope()` function executes the suspending block and waits until the block and any coroutines launched in it complete.
 Here's an example:
 
 ```kotlin
