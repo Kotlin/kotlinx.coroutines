@@ -162,7 +162,7 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
     }
 
 /**
- * Consumes the elements of this channel into the given [destination] mutable list.
+ * [Consumes][consume] the elements of this channel into the given [destination] mutable list.
  * If none is provided, a new [ArrayList] will be created.
  *
  * This function will attempt to receive elements and put them into the list until the channel is
@@ -186,12 +186,12 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
  * // sends elements to it, and closes it
  * // once the coroutine's body finishes
  * val channel = produce {
- *    values.forEach { send(it) }
+ *     values.forEach { send(it) }
  * }
  * check(channel.toList() == values)
  * ```
  */
-public suspend inline fun <T> ReceiveChannel<T>.toList(destination: MutableList<T> = ArrayList()): List<T> =
+public suspend fun <T> ReceiveChannel<T>.toList(destination: MutableList<T> = ArrayList()): List<T> =
     consumeEach(destination::add).let { destination }
 
 @PublishedApi
