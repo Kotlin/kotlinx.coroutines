@@ -185,7 +185,6 @@ private class StartedWhileSubscribed(
         .dropWhile { it != SharingCommand.START } // don't emit any STOP/RESET_BUFFER to start with, only START
         .distinctUntilChanged() // just in case somebody forgets it, don't leak our multiple sending of START
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun toString(): String {
         val params = buildList(2) {
             if (stopTimeout > 0) add("stopTimeout=${stopTimeout}ms")

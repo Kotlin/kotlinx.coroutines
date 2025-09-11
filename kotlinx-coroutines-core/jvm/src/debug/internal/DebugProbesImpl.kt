@@ -176,7 +176,6 @@ internal object DebugProbesImpl {
      * Internal (JVM-public) method used by IDEA debugger as of 1.6.0-RC.
      * See KTIJ-24102.
      */
-    @OptIn(ExperimentalStdlibApi::class)
     fun dumpCoroutinesInfoAsJsonAndReferences(): Array<Any> {
         val coroutinesInfo = dumpCoroutinesInfo()
         val size = coroutinesInfo.size
@@ -186,7 +185,7 @@ internal object DebugProbesImpl {
         for (info in coroutinesInfo) {
             val context = info.context
             val name = context[CoroutineName.Key]?.name?.toStringRepr()
-            val dispatcher = context[CoroutineDispatcher.Key]?.toStringRepr()
+            val dispatcher = context[ContinuationInterceptor.Key]?.toStringRepr()
             coroutinesInfoAsJson.add(
                 """
                 {

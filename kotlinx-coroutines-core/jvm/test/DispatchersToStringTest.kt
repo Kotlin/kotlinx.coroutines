@@ -1,9 +1,8 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.scheduling.CORE_POOL_SIZE
 import kotlinx.coroutines.scheduling.MAX_POOL_SIZE
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.test.*
 
 class DispatchersToStringTest {
@@ -44,7 +43,7 @@ class DispatchersToStringTest {
         assertEquals("12", limitedNamed.limitedParallelism(12, "12").toString())
 
         runBlocking {
-            val d = coroutineContext[CoroutineDispatcher]!!
+            val d = coroutineContext[ContinuationInterceptor] as CoroutineDispatcher
             assertContains(d.toString(), "BlockingEventLoop")
             val limited = d.limitedParallelism(2)
             assertContains(limited.toString(), "BlockingEventLoop")
