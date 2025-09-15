@@ -69,3 +69,25 @@ internal object AgentPremain {
         }
     }
 }
+
+/**
+ * This class is loaded if and only if kotlinx-coroutines-core was used as a javaagent argument.
+ * It serves as a "safe" wrapper around [AgentPremain] that does not require any kotlin-stdlib classes to be loaded for its initialization.
+ *
+ * Initialization of [AgentPremain] may fail, e.g., because it started before the required kotlin-stdlib classes were loaded.
+ * If `kotlinx.coroutines.apply.debug.agent` is set to `false`, the coroutine debug agent will not be applied.
+ */
+@Suppress("unused")
+internal object SafeAgentPremain {
+    @JvmStatic
+    fun premain(args: String?, instrumentation: Instrumentation) {
+        try {
+            AgentPremain.premain(args, instrumentation)
+        } catch (t: Throwable) {
+            error("Something went wrong while loading kotlinx.coroutines debug agent.\n" +
+                "Please ensure that Kotlin Stdlib is present in the classpath.\n" +
+                "Alternatively, to disable coroutines debug agent you can remove `-javaagent=/path/kotlinx-coroutines-core.jar` from your VM arguments.\n" +
+                t.cause)
+        }
+    }
+}

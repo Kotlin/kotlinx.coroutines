@@ -167,7 +167,7 @@ fun setupManifest(jar: Jar) {
     jar.manifest {
         attributes(
             mapOf(
-                "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
+                "Premain-Class" to "kotlinx.coroutines.debug.internal.SafeAgentPremain",
                 "Can-Retransform-Classes" to "true",
             )
         )
