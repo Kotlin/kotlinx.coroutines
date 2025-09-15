@@ -266,9 +266,13 @@ The parent coroutine's scope waits for all its children to finish before it comp
 Calling a [coroutine builder function](#coroutine-builder-functions) such as `CoroutineScope.launch()` on a `CoroutineScope` starts a child coroutine of the coroutine associated with that scope.
 Inside the builder's block, the [receiver](lambdas.md#function-literals-with-receiver) is a nested `CoroutineScope`, so any coroutines you launch there become its children.
 
-To create a new coroutine scope in the current coroutine context, use the
+### Create a coroutine scope with the `coroutineScope()` function
+
+To create a new coroutine scope with the current coroutine context, use the
 [`coroutineScope()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html) function.
-This function executes the suspending block and waits until the block and any coroutines launched in it complete.
+This function creates a root coroutine of the coroutine subtree.
+It's the direct parent of coroutines launched inside the block and the indirect parent of any coroutines they launch.
+`coroutineScope()` executes the suspending block and waits until the block and any coroutines launched in it complete.
 
 Here's an example:
 
@@ -280,18 +284,18 @@ import kotlinx.coroutines.*
 
 //sampleStart
 suspend fun main() {
-    coroutineScope { // this: CoroutineScope #1
+    // Root of the coroutine subtree
+    coroutineScope { // this: CoroutineScope
         this.launch {
-            delay(1.seconds)
             this.launch {
                 delay(2.seconds)
-                println("The nested coroutine completed")
+                println("Child of the enclosing coroutine completed")
             }
-            println("The first coroutine completed")
+            println("Child coroutine 1 completed")
         }
         this.launch {
-            delay(2.seconds)
-            println("The second coroutine completed")
+            delay(1.seconds)
+            println("Child coroutine 2 completed")
         }
     }
     // Runs only after all children in the coroutineScope have completed
@@ -301,8 +305,7 @@ suspend fun main() {
 ```
 {kotlin-runnable="true"}
 
-This example shows how the parent coroutine created by `coroutineScope()` waits for its child coroutines to finish.
-Since no [dispatcher](#coroutine-dispatchers) is specified here, the `CoroutineScope.launch()` builder functions in the `coroutineScope()` block inherit the current context.
+Since no [dispatcher](#coroutine-dispatchers) is specified in this example, the `CoroutineScope.launch()` builder functions in the `coroutineScope()` block inherit the current context.
 If that context doesn't have a specified dispatcher, coroutine builders use `Dispatchers.Default`, which runs on a shared pool of threads.
 
 ### Extract coroutine builders from the coroutine scope
@@ -357,8 +360,8 @@ This includes the following:
 * [`CoroutineScope.launch()`](#coroutinescope-launch)
 * [`CoroutineScope.async()`](#coroutinescope-async)
 * [`runBlocking()`](#runblocking)
-* `withContext()`
-* `coroutineScope()`
+* [`withContext()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html)
+* [`coroutineScope()`](#create-a-coroutine-scope-with-the-coroutinescope-function)
 
 Coroutine builder functions create new coroutines inside an existing [coroutine scope](#coroutine-scope-and-structured-concurrency).
 They require a `CoroutineScope` to run in, either one that is already available,
