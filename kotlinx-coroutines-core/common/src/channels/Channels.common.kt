@@ -162,7 +162,8 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
     }
 
 /**
- * Returns a [List] containing all the elements sent to this channel, preserving their order.
+ * [Consumes][consume] the elements of this channel into the given [destination] mutable list.
+ * If none is provided, a new [ArrayList] will be created.
  *
  * This function will attempt to receive elements and put them into the list until the channel is
  * [closed][SendChannel.close].
@@ -172,6 +173,8 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
  *   until exhausting it.
  *
  * If the channel is [closed][SendChannel.close] with a cause, [toList] will rethrow that cause.
+ * However, the [destination] list is left in a consistent state containing all the elements received from the channel
+ * up to that point.
  *
  * The operation is _terminal_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
@@ -188,11 +191,8 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
  * check(channel.toList() == values)
  * ```
  */
-public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
-    consumeEach {
-        add(it)
-    }
-}
+public suspend fun <T> ReceiveChannel<T>.toList(destination: MutableList<T> = ArrayList()): List<T> =
+    consumeEach(destination::add).let { destination }
 
 @PublishedApi
 internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {
@@ -201,3 +201,5 @@ internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {
     })
 }
 
+@Deprecated("Preserving binary compatibility, was stable", level = DeprecationLevel.HIDDEN)
+public suspend fun <T> ReceiveChannel<T>.toList(): List<T> = toList(ArrayList())

@@ -85,14 +85,13 @@ class ChannelsTest: TestBase() {
     }
 
     @Test
-    fun testEmptyList() = runTest {
+    fun testEmptyToList() = runTest {
         assertTrue(emptyList<Nothing>().asReceiveChannel().toList().isEmpty())
     }
 
     @Test
     fun testToList() = runTest {
         assertEquals(testList, testList.asReceiveChannel().toList())
-
     }
 
     @Test
@@ -102,6 +101,39 @@ class ChannelsTest: TestBase() {
         assertFailsWith<TestException> {
             channel.toList()
         }
+    }
+
+    @Test
+    fun testEmptyToListWithDestination() = runTest {
+        val initialList = listOf(-1, -2, -3)
+        val destination = initialList.toMutableList()
+        emptyList<Nothing>().asReceiveChannel().toList(destination)
+        assertEquals(initialList, destination)
+    }
+
+    @Test
+    fun testToListWithDestination() = runTest {
+        val initialList = listOf(-1, -2, -3)
+        val destination = initialList.toMutableList()
+        testList.asReceiveChannel().toList(destination)
+        assertEquals(initialList + testList, destination)
+    }
+
+    @Test
+    fun testToListWithDestinationOnFailedChannel() = runTest {
+        val initialList = listOf(-1, -2, -3)
+        val destination = initialList.toMutableList()
+        val channel = Channel<Int>(10)
+        val elementsToSend = (1..5).toList()
+        elementsToSend.forEach {
+            val result = channel.trySend(it)
+            assertTrue(result.isSuccess)
+        }
+        channel.close(TestException())
+        assertFailsWith<TestException> {
+            channel.toList(destination)
+        }
+        assertEquals(initialList + elementsToSend, destination)
     }
 
     private fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
