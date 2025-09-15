@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
 import org.jetbrains.kotlin.gradle.dsl.jvm.JvmTargetValidationMode
+import java.io.*
 
 buildscript {
     /*
@@ -212,6 +213,7 @@ tasks {
         jvmArgs("-javaagent:$coroutinesDebugJar")
         testClassesDirs = sourceSet.output.classesDirs
         classpath = sourceSet.runtimeClasspath
+        System.setProperty("coroutines.debug.agent.path", coroutinesDebugJar.absolutePath) // todo: fixme
     }
 
     create<Test>("javaConsumersTest") {
@@ -231,6 +233,7 @@ tasks {
             ":jpmsTest:check",
             "smokeTest:build",
             "java8Test:check",
+            "safeDebugAgentTest"
         )
     }
 

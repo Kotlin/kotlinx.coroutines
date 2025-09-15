@@ -3,6 +3,7 @@ package kotlinx.coroutines.debug.internal
 import android.annotation.*
 import org.codehaus.mojo.animal_sniffer.*
 import sun.misc.*
+import java.lang.IllegalStateException
 import java.lang.instrument.*
 import java.lang.instrument.ClassFileTransformer
 import java.security.*
@@ -15,6 +16,25 @@ import java.security.*
 @SuppressLint("all")
 @IgnoreJRERequirement // Never touched on Android
 internal object AgentPremain {
+
+    // This should be the first property to ensure the check happens first! Add new properties only below!
+    private val dummy = checkIfStdlibIsAvailable()
+
+    /**
+     * This check ensures that kotlin-stdlib classes are loaded by the time AgentPremain is initialized;
+     * otherwise the debug session would fail with `java.lang.NoClassDefFoundError: kotlin/Result`.
+     */
+    private fun checkIfStdlibIsAvailable() {
+        try {
+            Result.success(42)
+        } catch (t: Throwable) {
+            throw IllegalStateException("kotlinx.coroutines debug agent failed to load.\n" +
+                "Please ensure that the Kotlin standard library is present in the classpath.\n" +
+                "Alternatively, you can disable kotlinx.coroutines debug agent by removing `-javaagent=/path/kotlinx-coroutines-core.jar` from your VM arguments.\n" +
+                t.cause
+            )
+        }
+    }
 
     private val enableCreationStackTraces = runCatching {
         System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()
