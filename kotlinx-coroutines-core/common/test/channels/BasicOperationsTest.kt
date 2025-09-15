@@ -8,31 +8,31 @@ class BasicOperationsTest : TestBase() {
     @Test
     fun testSimpleSendReceive() = runTest {
         // Parametrized common test :(
-        TestChannelKind.values().forEach { kind -> testSendReceive(kind, 20) }
+        TestChannelKind.entries.forEach { kind -> testSendReceive(kind, 20) }
     }
 
     @Test
     fun testTrySendToFullChannel() = runTest {
-        TestChannelKind.values().forEach { kind -> testTrySendToFullChannel(kind) }
+        TestChannelKind.entries.forEach { kind -> testTrySendToFullChannel(kind) }
     }
 
     @Test
     fun testTrySendAfterClose() = runTest {
-        TestChannelKind.values().forEach { kind -> testTrySendAfterClose(kind) }
+        TestChannelKind.entries.forEach { kind -> testTrySendAfterClose(kind) }
     }
 
     @Test
     fun testSendAfterClose() = runTest {
-        TestChannelKind.values().forEach { kind -> testSendAfterClose(kind) }
+        TestChannelKind.entries.forEach { kind -> testSendAfterClose(kind) }
     }
 
     @Test
     fun testReceiveCatching() = runTest {
-        TestChannelKind.values().forEach { kind -> testReceiveCatching(kind) }
+        TestChannelKind.entries.forEach { kind -> testReceiveCatching(kind) }
     }
 
     @Test
-    fun testInvokeOnClose() = TestChannelKind.values().forEach { kind ->
+    fun testInvokeOnClose() = TestChannelKind.entries.forEach { kind ->
         reset()
         val channel = kind.create<Int>()
         channel.invokeOnClose {
@@ -48,7 +48,7 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
-    fun testInvokeOnClosed() = TestChannelKind.values().forEach { kind ->
+    fun testInvokeOnClosed() = TestChannelKind.entries.forEach { kind ->
         reset()
         expect(1)
         val channel = kind.create<Int>()
@@ -59,7 +59,7 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
-    fun testMultipleInvokeOnClose() = TestChannelKind.values().forEach { kind ->
+    fun testMultipleInvokeOnClose() = TestChannelKind.entries.forEach { kind ->
         reset()
         val channel = kind.create<Int>()
         channel.invokeOnClose { expect(3) }
@@ -71,14 +71,16 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
-    fun testIterator() = runTest {
-        TestChannelKind.values().forEach { kind ->
+    fun testIteratorHasNextMustPrecedeNext() = runTest {
+        TestChannelKind.entries.forEach { kind ->
             val channel = kind.create<Int>()
             val iterator = channel.iterator()
             assertFailsWith<IllegalStateException> { iterator.next() }
             channel.close()
             assertFailsWith<IllegalStateException> { iterator.next() }
             assertFalse(iterator.hasNext())
+            assertFailsWith<NoSuchElementException> { iterator.next() }
+            assertFailsWith<IllegalStateException> { iterator.next() }
         }
     }
 
@@ -109,7 +111,7 @@ class BasicOperationsTest : TestBase() {
             try {
                 expect(2)
                 channel.close()
-            } catch (e: TestException) {
+            } catch (_: TestException) {
                 expect(4)
             }
         }
