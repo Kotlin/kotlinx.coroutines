@@ -119,7 +119,6 @@ class ShareInTest : TestBase() {
     fun testWhileSubscribedCustomAtLeast2() =
         testWhileSubscribed(2, SharingStarted.WhileSubscribedAtLeast(2))
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun testWhileSubscribed(threshold: Int, started: SharingStarted) = runTest {
         expect(1)
         val flowState = FlowState()

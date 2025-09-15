@@ -61,6 +61,10 @@ public abstract class CoroutineDispatcher :
     AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
 
     /** @suppress */
+    @Deprecated("Use ContinuationInterceptor.Key and attempt " +
+        "casting the context element to CoroutineDispatcher instead",
+        level = DeprecationLevel.WARNING)
+    // WARNING since 1.11, ERROR since 1.12, remove in 1.13
     @ExperimentalStdlibApi
     public companion object Key : AbstractCoroutineContextKey<ContinuationInterceptor, CoroutineDispatcher>(
         ContinuationInterceptor,
