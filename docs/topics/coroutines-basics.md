@@ -252,7 +252,7 @@ When you run many coroutines in an application, you need a way to manage them as
 Kotlin coroutines rely on a principle called _structured concurrency_ to provide this structure.
 
 According to this principle, coroutines form a tree hierarchy of parent and child tasks with linked lifecycles.
-A coroutine’s lifecycle is the sequence of states it goes through from creation until it completes, fails, or is canceled.
+A coroutine's lifecycle is the sequence of states it goes through from creation until it completes, fails, or is canceled.
 
 A parent coroutine waits for its children to complete before it completes.
 If the parent coroutine fails or is canceled, all its child coroutines are recursively canceled too.
@@ -306,13 +306,12 @@ suspend fun main() {
 {kotlin-runnable="true"}
 
 Since no [dispatcher](#coroutine-dispatchers) is specified in this example, the `CoroutineScope.launch()` builder functions in the `coroutineScope()` block inherit the current context.
-If that context doesn't have a specified dispatcher, coroutine builders use `Dispatchers.Default`, which runs on a shared pool of threads.
+If that context doesn't have a specified dispatcher, `CoroutineScope.launch()` uses `Dispatchers.Default`, which runs on a shared pool of threads.
 
 ### Extract coroutine builders from the coroutine scope
 
-The `coroutineScope()` function takes a lambda with a `CoroutineScope` receiver.
-Inside this lambda, the implicit receiver is a `CoroutineScope`, so builder functions like [`CoroutineScope.launch()`](#coroutinescope-launch) and [`CoroutineScope.async()`](#coroutinescope-async) resolve as
-[extension functions](extensions.md#extension-functions) on that receiver:
+You can extract coroutine builder calls such as [`CoroutineScope.launch()`](#coroutinescope-launch) into separate functions to organize concurrency logic and make your code easier to read.
+Consider the following example:
 
 ```kotlin
 suspend fun main() = coroutineScope { // this: CoroutineScope
@@ -323,13 +322,17 @@ suspend fun main() = coroutineScope { // this: CoroutineScope
 ```
 
 > You can also write `this.launch` without the explicit `this` expression, as `launch`.
-> These examples use explicit `this` expressions to highlight that it’s an extension function on `CoroutineScope`.
-> 
+> These examples use explicit `this` expressions to highlight that it's an extension function on `CoroutineScope`.
+>
 > For more information on how lambdas with receivers work in Kotlin, see [Function literals with receiver](lambdas.md#function-literals-with-receiver).
 >
 {style="tip"}
 
-To extract the coroutine builders into another function, that function must declare a `CoroutineScope` receiver:
+The `coroutineScope()` function takes a lambda with a `CoroutineScope` receiver.
+Inside this lambda, the implicit receiver is a `CoroutineScope`, so builder functions like `CoroutineScope.launch()` and [`CoroutineScope.async()`](#coroutinescope-async) resolve as
+[extension functions](extensions.md#extension-functions) on that receiver:
+
+To extract the coroutine builders into another function, that function must declare a `CoroutineScope` receiver, otherwise a compilation error occurs:
 
 ```kotlin
 suspend fun main() {
