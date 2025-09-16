@@ -8,6 +8,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
     @BeforeTest
     private fun removeListeners() {
         // Remove a Node.js's internal listener, which prints the exception to stdout.
+        // https://nodejs.org/api/process.html#event-uncaughtexception
         js("""
             globalThis.originalListeners = process.listeners('uncaughtException');
             process.removeAllListeners('uncaughtException');
