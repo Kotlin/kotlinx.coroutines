@@ -28,7 +28,17 @@ internal actual fun ensurePlatformExceptionHandlerLoaded(callback: CoroutineExce
 internal actual fun propagateExceptionFinalResort(exception: Throwable) {
     // use the thread's handler
     val currentThread = Thread.currentThread()
-    currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
+    val exceptionHandler = currentThread.uncaughtExceptionHandler
+    try {
+        exceptionHandler.uncaughtException(currentThread, exception)
+    } catch (_: Throwable) {
+        /* Do nothing.
+         * From https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.UncaughtExceptionHandler.html :
+         * > Any exception thrown by this method will be ignored by the Java Virtual Machine.
+         *
+         * This means the authors of the thread exception handlers have the right to throw exceptions indiscriminately.
+         * We have no further channels for propagating the fatal exception, so we give up. */
+    }
 }
 
 // This implementation doesn't store a stacktrace, which is good because a stacktrace doesn't make sense for this.

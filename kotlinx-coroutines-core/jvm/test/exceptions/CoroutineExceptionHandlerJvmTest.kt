@@ -8,28 +8,15 @@ import kotlin.test.*
 
 class CoroutineExceptionHandlerJvmTest : TestBase() {
 
-    private val exceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
-    private lateinit var caughtException: Throwable
-
-    @Before
-    fun setUp() {
-        Thread.setDefaultUncaughtExceptionHandler({ _, e -> caughtException = e })
-    }
-
-    @After
-    fun tearDown() {
-        Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
-    }
-
     @Test
     fun testFailingHandler() = runBlocking {
         expect(1)
-        val job = GlobalScope.launch(CoroutineExceptionHandler { _, _ -> throw AssertionError() }) {
-            expect(2)
-            throw TestException()
+        val caughtException = catchingUncaughtException {
+            GlobalScope.launch(CoroutineExceptionHandler { _, _ -> throw AssertionError() }) {
+                expect(2)
+                throw TestException()
+            }.join()
         }
-
-        job.join()
         assertIs<RuntimeException>(caughtException)
         assertIs<AssertionError>(caughtException.cause)
         assertIs<TestException>(caughtException.suppressed[0])
@@ -40,12 +27,47 @@ class CoroutineExceptionHandlerJvmTest : TestBase() {
     @Test
     fun testLastDitchHandlerContainsContextualInformation() = runBlocking {
         expect(1)
-        GlobalScope.launch(CoroutineName("last-ditch")) {
-            expect(2)
-            throw TestException()
-        }.join()
+        val caughtException = catchingUncaughtException {
+            GlobalScope.launch(CoroutineName("last-ditch")) {
+                expect(2)
+                throw TestException()
+            }.join()
+        }
         assertIs<TestException>(caughtException)
         assertContains(caughtException.suppressed[0].toString(), "last-ditch")
         finish(3)
+    }
+
+    @Test
+    fun testFailingUncaughtExceptionHandler() = runBlocking {
+        expect(1)
+        withUncaughtExceptionHandler({ _, e ->
+            expect(3)
+            throw TestException("uncaught")
+        }) {
+            launch(Job()) {
+                expect(2)
+                throw TestException("to be reported")
+            }.join()
+        }
+        finish(4)
+    }
+}
+
+private inline fun catchingUncaughtException(action: () -> Unit): Throwable? {
+    var caughtException: Throwable? = null
+    withUncaughtExceptionHandler({ _, e -> caughtException = e }) {
+        action()
+    }
+    return caughtException
+}
+
+private inline fun <T> withUncaughtExceptionHandler(handler: Thread.UncaughtExceptionHandler, action: () -> T): T {
+    val exceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+    Thread.setDefaultUncaughtExceptionHandler(handler)
+    try {
+        return action()
+    } finally {
+        Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
     }
 }
