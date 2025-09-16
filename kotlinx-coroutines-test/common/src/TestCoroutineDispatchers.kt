@@ -5,6 +5,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.internal.TestMainDispatcher
 import kotlin.coroutines.*
+import kotlin.time.Duration
 
 /**
  * Creates an instance of an unconfined [TestDispatcher].
@@ -147,7 +148,7 @@ private class StandardTestDispatcherImpl(
 ) : TestDispatcher() {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        scheduler.registerEvent(this, 0, block, context) { false }
+        scheduler.registerEvent(this, Duration.ZERO, block, context) { false }
     }
 
     override fun toString(): String = "${name ?: "StandardTestDispatcher"}[scheduler=$scheduler]"

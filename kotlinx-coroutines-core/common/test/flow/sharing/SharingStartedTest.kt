@@ -4,6 +4,8 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Functional tests for [SharingStarted] using [withVirtualTime] and a DSL to describe
@@ -55,7 +57,7 @@ class SharingStartedTest : TestBase() {
             subscriptions(1) // resubscribe again
             rampUpAndDown()
             subscriptions(0)
-            afterTime(100, SharingCommand.STOP)
+            afterTime(100.milliseconds, SharingCommand.STOP)
             delay(100)
         }
 
@@ -69,7 +71,7 @@ class SharingStartedTest : TestBase() {
             subscriptions(1, SharingCommand.START)
             rampUpAndDown()
             subscriptions(0, SharingCommand.STOP)
-            afterTime(200, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
+            afterTime(200.milliseconds, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
         }
 
     @Test
@@ -82,13 +84,13 @@ class SharingStartedTest : TestBase() {
             subscriptions(1)
             rampUpAndDown()
             subscriptions(0)
-            afterTime(400, SharingCommand.STOP)
+            afterTime(400.milliseconds, SharingCommand.STOP)
             delay(250) // don't give it time to reset cache
             subscriptions(1, SharingCommand.START)
             rampUpAndDown()
             subscriptions(0)
-            afterTime(400, SharingCommand.STOP)
-            afterTime(300, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
+            afterTime(400.milliseconds, SharingCommand.STOP)
+            afterTime(300.milliseconds, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
             delay(100)
         }
 
@@ -129,9 +131,8 @@ class SharingStartedTest : TestBase() {
         val subscriptionCount = MutableStateFlow(0)
         var previousCommand: SharingCommand? = null
         var expectedCommand: SharingCommand? = initialCommand
-        var expectedTime = 0L
-
         val dispatcher = coroutineContext[ContinuationInterceptor] as VirtualTimeDispatcher
+        var expectedTime = dispatcher.currentTime
         val scope = CoroutineScope(coroutineContext + Job())
 
         suspend fun launch() {
@@ -153,24 +154,24 @@ class SharingStartedTest : TestBase() {
             expectedTime = dispatcher.currentTime
             subscriptionCount.value = count
             if (command != null) {
-                afterTime(0, command)
+                afterTime(Duration.ZERO, command)
             } else {
                 letItRun()
             }
         }
 
-        suspend fun afterTime(time: Long = 0, command: SharingCommand) {
+        suspend fun afterTime(time: Duration, command: SharingCommand) {
             expectedCommand = command
-            val remaining = (time - 1).coerceAtLeast(0) // previous letItRun delayed 1ms
+            val remaining = (time - 1.milliseconds).coerceAtLeast(Duration.ZERO) // previous letItRun delayed 1ms
             expectedTime += remaining
             delay(remaining)
             letItRun()
         }
 
         private suspend fun letItRun() {
-            delay(1)
+            delay(1.milliseconds)
             assertEquals(expectedCommand, previousCommand) // make sure expected command was emitted
-            expectedTime++ // make one more time tick we've delayed
+            expectedTime += 1.milliseconds // make one more time tick we've delayed
         }
 
         fun stop() {

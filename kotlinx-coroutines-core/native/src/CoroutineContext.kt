@@ -2,6 +2,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
 
 internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
@@ -11,12 +12,12 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
         delegate.dispatch(context, block)
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        delegate.scheduleResumeAfterDelay(timeMillis, continuation)
+    override fun scheduleResumeAfterDelay(timeout: Duration, continuation: CancellableContinuation<Unit>) {
+        delegate.scheduleResumeAfterDelay(timeout, continuation)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        return delegate.invokeOnTimeout(timeMillis, block, context)
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle {
+        return delegate.invokeOnTimeout(timeout, block, context)
     }
 
     actual fun enqueue(task: Runnable): Unit {
