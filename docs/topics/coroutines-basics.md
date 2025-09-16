@@ -330,7 +330,7 @@ suspend fun main() = coroutineScope { // this: CoroutineScope
 
 The `coroutineScope()` function takes a lambda with a `CoroutineScope` receiver.
 Inside this lambda, the implicit receiver is a `CoroutineScope`, so builder functions like `CoroutineScope.launch()` and [`CoroutineScope.async()`](#coroutinescope-async) resolve as
-[extension functions](extensions.md#extension-functions) on that receiver:
+[extension functions](extensions.md#extension-functions) on that receiver.
 
 To extract the coroutine builders into another function, that function must declare a `CoroutineScope` receiver, otherwise a compilation error occurs:
 
