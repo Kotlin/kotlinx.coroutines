@@ -310,7 +310,7 @@ If that context doesn't have a specified dispatcher, `CoroutineScope.launch()` u
 
 ### Extract coroutine builders from the coroutine scope
 
-You can extract coroutine builder calls such as [`CoroutineScope.launch()`](#coroutinescope-launch) into separate functions to organize concurrency logic and make your code easier to read.
+You can extract coroutine builder calls, such as [`CoroutineScope.launch()`](#coroutinescope-launch), into separate functions to organize concurrency logic and make your code easier to read.
 Consider the following example:
 
 ```kotlin
