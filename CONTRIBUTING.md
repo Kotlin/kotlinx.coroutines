@@ -19,7 +19,11 @@ The more experiences, concerns, or suggestions get shared, the better!
 If you feel that something you know hasn't been said (or even if the issue discussion is too long to actually
 make sure of it), please do not hesitate to drop a line.
 
-On the other hand, "+1"-style remarks or questions about the progress on an issue do not bring anything new
+If you feel like your case was already described and you have nothing to add, please still let us know about
+your interest by leaving a smiley (👍)! We use these as indicators of demand.
+
+Plese not that there is no need to leave a comment in this case, though.
+"+1"-style remarks or questions about the progress on an issue do not bring anything new
 and only create noise, complicating the job of finding insight in the discussion.
 Please avoid this. We reserve the right to delete such comments.
 
