@@ -343,23 +343,23 @@ To extract the coroutine builders into another function, that function must decl
 import kotlinx.coroutines.*
 //sampleStart
 suspend fun main() {
-    // The launchAll() function creates its own child CoroutineScope
-    launchAll()
+    coroutineScope {
+        launchAll()
+    }
 }
 
-// Creates a new CoroutineScope as the receiver for the .launch() coroutine builders
-suspend fun launchAll() = coroutineScope { // this: CoroutineScope
+fun CoroutineScope.launchAll() { // this: CoroutineScope
     // Calls .launch() on CoroutineScope
     this.launch { println("1") }
     this.launch { println("2") } 
 }
 //sampleEnd
-/* -- Without declaring CoroutineScope as the receiver
+/* -- Calling launch without declaring CoroutineScope as the receiver results in a compilation error --
 
-suspend fun launchAll() {
-   // Compilation error: this is not defined
-   this.launch { println("1") }
-   this.launch { println("2") }
+fun launchAll() {
+    // Compilation error: this is not defined
+    this.launch { println("1") }
+    this.launch { println("2") }
 }
  */
 ```
