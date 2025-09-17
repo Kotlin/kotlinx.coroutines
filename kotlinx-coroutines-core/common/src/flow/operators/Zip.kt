@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.flow as safeFlow
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/Combine
+ *
  * Returns a [Flow] whose values are generated with [transform] function by combining
  * the most recently emitted values by each flow.
  *
@@ -306,6 +308,8 @@ public inline fun <reified T, R> combineTransform(
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/Zip
+ *
  * Zips values from the current flow (`this`) with [other] flow using provided [transform] function applied to each pair of values.
  * The resulting flow completes as soon as one of the flows completes and cancel is called on the remaining flow.
  *
