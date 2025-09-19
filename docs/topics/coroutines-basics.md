@@ -19,8 +19,7 @@ For more information about the differences between coroutines and threads, see [
 The most basic building block of coroutines is the _suspending function_.
 It allows a running operation to pause and resume later without affecting the structure of your code.
 
-
-To mark a function as a suspending function, use the `suspend` keyword:
+To declare a suspending function, use the `suspend` keyword:
 
 ```kotlin
 suspend fun greet() {
@@ -121,14 +120,7 @@ To create a coroutine in Kotlin, you need the following:
 * A [suspending function](#suspending-functions).
 * A [coroutine scope](#coroutine-scope-and-structured-concurrency) in which it can run, for example inside the `withContext()` function.
 * A [coroutine builder](#coroutine-builder-functions) like `CoroutineScope.launch()` to start it.
-* A [dispatcher](#coroutine-dispatchers) to control which threads it uses. 
-
-> You can display coroutine names next to thread names in the output of your code for additional information.
-> To do so, pass the `-Dkotlinx.coroutines.debug` VM option in your build tool or IDE run configuration.
->
-> See [Debugging coroutines](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/topics/debugging.md) for more information.
->
-{style="tip"}
+* A [dispatcher](#coroutine-dispatchers) to control which threads it uses.
 
 Let's look at an example that uses multiple coroutines in a multithreaded environment:
 
@@ -240,6 +232,13 @@ Let's look at an example that uses multiple coroutines in a multithreaded enviro
 Try running the example multiple times. 
 You may notice that the output order and thread names may change each time you run the program, because the OS decides when threads run.
 
+> You can display coroutine names next to thread names in the output of your code for additional information.
+> To do so, pass the `-Dkotlinx.coroutines.debug` VM option in your build tool or IDE run configuration.
+>
+> See [Debugging coroutines](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/topics/debugging.md) for more information.
+>
+{style="tip"}
+
 ## Coroutine scope and structured concurrency
 
 When you run many coroutines in an application, you need a way to manage them as groups.
@@ -248,7 +247,7 @@ Kotlin coroutines rely on a principle called _structured concurrency_ to provide
 According to this principle, coroutines form a tree hierarchy of parent and child tasks with linked lifecycles.
 A coroutine's lifecycle is the sequence of states from its creation until completion, failure, or cancellation.
 
-A parent coroutine waits for its children to complete before it completes.
+A parent coroutine waits for its children to complete before it finishes.
 If the parent coroutine fails or gets canceled, all its child coroutines are recursively canceled too.
 Keeping coroutines connected this way makes cancellation and error handling predictable and safe.
 
