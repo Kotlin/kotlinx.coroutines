@@ -60,7 +60,7 @@ kotlin {
         outputModuleName = project.name
         nodejs()
         compilations["main"]?.dependencies {
-            api("org.jetbrains.kotlinx:atomicfu-js:${version("atomicfu")}")
+            api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
         }
     }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
@@ -71,14 +71,14 @@ kotlin {
         outputModuleName = project.name + "Wasm"
         nodejs()
         compilations["main"]?.dependencies {
-            api("org.jetbrains.kotlinx:atomicfu-wasm-js:${version("atomicfu")}")
+            api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
         }
     }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmWasi {
         nodejs()
         compilations["main"]?.dependencies {
-            api("org.jetbrains.kotlinx:atomicfu-wasm-wasi:${version("atomicfu")}")
+            api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
         }
         compilations.configureEach {
             compileTaskProvider.configure {
@@ -92,8 +92,7 @@ kotlin {
     sourceSets {
         commonTest {
             dependencies {
-                api("org.jetbrains.kotlin:kotlin-test-common:${version("kotlin")}")
-                api("org.jetbrains.kotlin:kotlin-test-annotations-common:${version("kotlin")}")
+                api("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
             }
         }
         jvmMain.dependencies {
@@ -102,7 +101,6 @@ kotlin {
             api("org.jetbrains:annotations:23.0.0")
         }
         jvmTest.dependencies {
-            api("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
             // Workaround to make addSuppressed work in tests
             api("org.jetbrains.kotlin:kotlin-reflect:${version("kotlin")}")
             api("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${version("kotlin")}")
@@ -114,24 +112,13 @@ kotlin {
             api("org.jetbrains.kotlinx:atomicfu:0.23.1")
         }
         jsMain { }
-        jsTest {
-            dependencies {
-                api("org.jetbrains.kotlin:kotlin-test-js:${version("kotlin")}")
-            }
-        }
         val wasmJsMain by getting {
         }
         val wasmJsTest by getting {
-            dependencies {
-                api("org.jetbrains.kotlin:kotlin-test-wasm-js:${version("kotlin")}")
-            }
         }
         val wasmWasiMain by getting {
         }
         val wasmWasiTest by getting {
-            dependencies {
-                api("org.jetbrains.kotlin:kotlin-test-wasm-wasi:${version("kotlin")}")
-            }
         }
         groupSourceSets("jsAndWasmJsShared", listOf("js", "wasmJs"), emptyList())
         groupSourceSets("jsAndWasmShared", listOf("jsAndWasmJsShared", "wasmWasi"), listOf("common"))

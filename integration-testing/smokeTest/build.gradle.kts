@@ -50,17 +50,17 @@ kotlin {
         }
         jsTest {
             dependencies {
-                implementation(kotlin("test-js"))
+                implementation(kotlin("test"))
             }
         }
         wasmJsTest {
             dependencies {
-                implementation(kotlin("test-wasm-js"))
+                implementation(kotlin("test"))
             }
         }
         wasmWasiTest {
             dependencies {
-                implementation(kotlin("test-wasm-wasi"))
+                implementation(kotlin("test"))
             }
         }
         jvmTest {
