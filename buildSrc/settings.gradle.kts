@@ -10,6 +10,7 @@ pluginManagement {
         }
         if (build_snapshot_train?.toBoolean() == true) {
             mavenLocal()
+            maven("https://packages.jetbrains.team/maven/p/kt/dev")
         }
     }
 }

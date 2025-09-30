@@ -20,6 +20,7 @@ repositories {
     }
     if (buildSnapshotTrain) {
         mavenLocal()
+        maven("https://packages.jetbrains.team/maven/p/kt/dev")
     }
 }
 
