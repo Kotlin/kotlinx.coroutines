@@ -53,10 +53,6 @@ kotlin {
         moduleName = project.name
         nodejs()
         compilations["main"]?.dependencies {
-            // In the past coroutines had an api dependency on "atomicfu-js" which made "atomicfu-js" klib come in front
-            // of stdlib in the compilation classpath and affected the "depends" klib manifest ordering. Remove the
-            // compileOnly dependency in the future if the ordering of "depends" doesn't matter.
-            compileOnly("org.jetbrains.kotlinx:atomicfu-js:${version("atomicfu")}")
             api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
         }
     }
@@ -67,7 +63,6 @@ kotlin {
         moduleName = project.name + "Wasm"
         nodejs()
         compilations["main"]?.dependencies {
-            compileOnly("org.jetbrains.kotlinx:atomicfu-wasm-js:${version("atomicfu")}")
             api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
         }
     }
@@ -75,7 +70,6 @@ kotlin {
     wasmWasi {
         nodejs()
         compilations["main"]?.dependencies {
-            compileOnly("org.jetbrains.kotlinx:atomicfu-wasm-wasi:${version("atomicfu")}")
             api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
         }
         compilations.configureEach {
