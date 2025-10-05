@@ -44,7 +44,18 @@ public suspend fun <T> Collection<Deferred<T>>.awaitAll(): List<T> =
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  */
-public suspend fun joinAll(vararg jobs: Job): Unit = jobs.forEach { it.join() }
+public suspend fun joinAll(vararg jobs: Job): Unit = jobs.joinAll()
+
+/**
+ * Suspends current coroutine until all given jobs are complete.
+ * This method is semantically equivalent to joining all given jobs one by one with `forEach { it.join() }`.
+ *
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
+ * suspending function is waiting, this function immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
+ * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+ */
+public suspend fun Array<out Job>.joinAll(): Unit = forEach { it.join() }
 
 /**
  * Suspends current coroutine until all given jobs are complete.
