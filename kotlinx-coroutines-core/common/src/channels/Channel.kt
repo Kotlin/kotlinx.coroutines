@@ -1050,7 +1050,36 @@ public inline fun <T> ChannelResult<T>.onClosed(action: (exception: Throwable?) 
 
 /**
  * Iterator for a [ReceiveChannel].
- * Instances of this interface are *not thread-safe* and shall not be used from concurrent coroutines.
+ * Instances of this interface are *not thread-safe*.
+ * Each iterator instance should be used by a single coroutine.
+ *
+ * An example usage:
+ *
+ * ```
+ * val channel = Channel<Int>()
+ * launch {
+ *      channel.send(1)
+ *      channel.send(2)
+ *      channel.send(3)
+ *      channel.close()  // NB: must close for iterators to finish
+ * }
+ * launch {
+ *      for (element in channel) {
+ *          println("Consumer A got $element")
+ *      }
+ * }
+ * launch {
+ *      for (element in channel) {
+ *          println("Consumer B got $element")
+ *      }
+ * }
+ * ```
+ * Possible output:
+ * ```text
+ * Consumer A got 1
+ * Consumer A got 2
+ * Consumer B got 3
+ * ```
  */
 public interface ChannelIterator<out E> {
     /**
