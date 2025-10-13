@@ -353,6 +353,15 @@ private fun <T> CoroutineScope.launchSharingDeferred(
     }
 }
 
+// -------------------------------- asFlow --------------------------------
+
+/**
+ * Represents this shared flow as a flow.
+ */
+@ExperimentalCoroutinesApi
+public fun <T> SharedFlow<T>.asFlow(): Flow<T> =
+    transform { value -> emit(value) }
+
 // -------------------------------- asSharedFlow/asStateFlow --------------------------------
 
 /**
