@@ -356,7 +356,26 @@ private fun <T> CoroutineScope.launchSharingDeferred(
 // -------------------------------- asFlow --------------------------------
 
 /**
- * Represents this shared flow as a flow.
+ * Represents this shared flow and its subtypes as a plain flow,
+ * hiding its hot flow characteristics.
+ *
+ * Unlike simple upcasting, the returned flow prevents casting back to the original
+ * hot flow type, ensuring that implementation details remain encapsulated.
+ *
+ * Example:
+ * ```
+ * class Repository {
+ *     private val _updates = MutableStateFlow("initial")
+ *
+ *     // Exposes Flow interface without leaking MutableStateFlow implementation
+ *     val updates: Flow<String> = _updates.asFlow()
+ * }
+ *
+ * // Usage
+ * val flow = repository.updates
+ * val mutableStateFlow = flow as? MutableStateFlow // null - cast prevented
+ * val stateFlow = flow as? StateFlow // null - cast prevented
+ * ```
  */
 @ExperimentalCoroutinesApi
 public fun <T> SharedFlow<T>.asFlow(): Flow<T> =
