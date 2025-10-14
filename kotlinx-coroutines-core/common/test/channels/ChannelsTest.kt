@@ -104,34 +104,34 @@ class ChannelsTest: TestBase() {
     }
 
     @Test
-    fun testEmptyToListWithDestination() = runTest {
+    fun testEmptyConsumeToWithDestination() = runTest {
         val initialList = listOf(-1, -2, -3)
         val destination = initialList.toMutableList()
-        emptyList<Nothing>().asReceiveChannel().toList(destination)
+        emptyList<Nothing>().asReceiveChannel().consumeTo(destination)
         assertEquals(initialList, destination)
     }
 
     @Test
-    fun testToListWithDestination() = runTest {
+    fun testConsumeToWithDestination() = runTest {
         val initialList = listOf(-1, -2, -3)
         val destination = initialList.toMutableList()
-        testList.asReceiveChannel().toList(destination)
+        testList.asReceiveChannel().consumeTo(destination)
         assertEquals(initialList + testList, destination)
     }
 
     @Test
-    fun testToListWithDestinationOnFailedChannel() = runTest {
+    fun testConsumeToWithDestinationOnFailedChannel() = runTest {
         val initialList = listOf(-1, -2, -3)
         val destination = initialList.toMutableList()
         val channel = Channel<Int>(10)
-        val elementsToSend = (1..5).toList()
+        val elementsToSend = (1..5)
         elementsToSend.forEach {
             val result = channel.trySend(it)
             assertTrue(result.isSuccess)
         }
         channel.close(TestException())
         assertFailsWith<TestException> {
-            channel.toList(destination)
+            channel.consumeTo(destination)
         }
         assertEquals(initialList + elementsToSend, destination)
     }
