@@ -47,7 +47,7 @@ so do familiarize yourself with the following guidelines.
     PRs that add new API without a corresponding issue with positive feedback about the proposed implementation are
     unlikely to be approved or reviewed.
   * All new APIs must come with documentation and tests.
-  * All new APIs are initially released with the `@ExperimentalCoroutineApi` annotation and graduate later.
+  * All new APIs are initially released with the `@ExperimentalCoroutinesApi` annotation and graduate later.
   * [Update the public API dumps](#updating-the-public-api-dump) and commit the resulting changes as well. 
     It will not pass the tests otherwise.
   * If you plan large API additions, then please start by submitting an issue with the proposed API design
