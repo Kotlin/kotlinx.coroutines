@@ -29,7 +29,7 @@ import kotlin.internal.*
  */
 public fun <T: Any> rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Flowable<T> {
     require(context[Job] === null) { "Flowable context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
@@ -45,7 +45,7 @@ public fun <T: Any> rxFlowable(
 @LowPriorityInOverloadResolution
 public fun <T: Any> CoroutineScope.rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Flowable<T> = Flowable.fromPublisher(publishInternal(this, context, RX_HANDLER, block))
 
 private val RX_HANDLER: (Throwable, CoroutineContext) -> Unit = ::handleUndeliverableException

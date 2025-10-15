@@ -87,7 +87,7 @@ public fun <T> Flow<T>.onEach(action: suspend (T) -> Unit): Flow<T> = transform 
  *
  * This function is an alias to [runningFold] operator.
  */
-public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = runningFold(initial, operation)
+public fun <T, R> Flow<T>.scan(initial: R, operation: suspend (accumulator: R, value: T) -> R): Flow<R> = runningFold(initial, operation)
 
 /**
  * Folds the given flow with [operation], emitting every intermediate result, including [initial] value.
@@ -98,7 +98,7 @@ public fun <T, R> Flow<T>.scan(initial: R, @BuilderInference operation: suspend 
  * ```
  * will produce `[[], [1], [1, 2], [1, 2, 3]]`.
  */
-public fun <T, R> Flow<T>.runningFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
+public fun <T, R> Flow<T>.runningFold(initial: R, operation: suspend (accumulator: R, value: T) -> R): Flow<R> = flow {
     var accumulator: R = initial
     emit(accumulator)
     collect { value ->

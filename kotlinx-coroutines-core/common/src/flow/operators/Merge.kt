@@ -159,7 +159,7 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY
  * and size of its output buffer can be changed by applying subsequent [buffer] operator.
  */
 @ExperimentalCoroutinesApi
-public fun <T, R> Flow<T>.transformLatest(@BuilderInference transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> =
+public fun <T, R> Flow<T>.transformLatest(transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> =
     ChannelFlowTransformLatest(transform, this)
 
 /**
@@ -185,7 +185,7 @@ public fun <T, R> Flow<T>.transformLatest(@BuilderInference transform: suspend F
  * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
  */
 @ExperimentalCoroutinesApi
-public inline fun <T, R> Flow<T>.flatMapLatest(@BuilderInference crossinline transform: suspend (value: T) -> Flow<R>): Flow<R> =
+public inline fun <T, R> Flow<T>.flatMapLatest(crossinline transform: suspend (value: T) -> Flow<R>): Flow<R> =
     transformLatest { emitAll(transform(it)) }
 
 /**
@@ -209,5 +209,5 @@ public inline fun <T, R> Flow<T>.flatMapLatest(@BuilderInference crossinline tra
  * This operator is [buffered][buffer] by default and size of its output buffer can be changed by applying subsequent [buffer] operator.
  */
 @ExperimentalCoroutinesApi
-public fun <T, R> Flow<T>.mapLatest(@BuilderInference transform: suspend (value: T) -> R): Flow<R> =
+public fun <T, R> Flow<T>.mapLatest(transform: suspend (value: T) -> R): Flow<R> =
     transformLatest { emit(transform(it)) }

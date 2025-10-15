@@ -30,5 +30,5 @@ import org.reactivestreams.FlowAdapters
  */
 public fun <T> flowPublish(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Flow.Publisher<T> = FlowAdapters.toFlowPublisher(publish(context, block))

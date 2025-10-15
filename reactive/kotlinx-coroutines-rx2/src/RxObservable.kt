@@ -28,7 +28,7 @@ import kotlin.coroutines.*
  */
 public fun <T : Any> rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> {
     require(context[Job] === null) { "Observable context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
@@ -212,5 +212,5 @@ private class RxObservableCoroutine<T : Any>(
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
 public fun <T : Any> CoroutineScope.rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> = rxObservableInternal(this, context, block)

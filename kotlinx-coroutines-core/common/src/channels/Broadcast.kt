@@ -39,7 +39,7 @@ public fun <E> CoroutineScope.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY,
     onCompletion: CompletionHandler? = null,
-    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
+    block: suspend ProducerScope<E>.() -> Unit
 ): BroadcastChannel<E> {
     val newContext = newCoroutineContext(context)
     val channel = BroadcastChannel<E>(capacity)
