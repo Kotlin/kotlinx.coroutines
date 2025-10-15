@@ -130,6 +130,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
                     unpark(_thread.value ?: return)
                     val toWait = end - System.currentTimeMillis()
                     check(toWait > 0) { "Timeout waiting for DefaultExecutor to shutdown" }
+                    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
                     (this as Object).wait(toWait)
                 }
             }
@@ -137,6 +138,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
     }
 
     private fun notifyAboutThreadExiting() {
+        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
         synchronized(this) { (this as Object).notifyAll() }
     }
 

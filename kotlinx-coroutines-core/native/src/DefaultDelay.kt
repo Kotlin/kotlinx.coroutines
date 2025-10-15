@@ -15,7 +15,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
         incrementUseCount() // this event loop is never completed
     }
 
-    private val _thread = atomic<Worker?>(null)
+    private val _thread = atomic<WorkerWrapper?>(null)
 
     /** Can only happen when tests close the default executor */
     override fun reschedule(now: Long, delayedTask: DelayedTask) {
@@ -37,7 +37,8 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
     override fun run() {
         val currentThread = Worker.current
         // Identity comparisons do not work for value classes, but comparing `null` with non-null should still work
-        if (!_thread.compareAndSet(null, currentThread)) return // some other thread won the race to start the thread
+        if (!_thread.compareAndSet(null, WorkerWrapper(currentThread)))
+            return // some other thread won the race to start the thread
         ThreadLocalEventLoop.setEventLoop(DelegatingUnconfinedEventLoop)
         try {
             while (true) {
@@ -59,7 +60,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
 
     override fun startThreadOrObtainSleepingThread(): Worker? {
         // Check if the thread is already running
-        _thread.value?.let { return it }
+        _thread.value?.let { return it.worker }
         /* Now we know that at the moment of this call the thread was not initially running.
         This means that whatever thread is going to be running by the end of this function,
         it's going to notice the tasks it's supposed to run.
@@ -102,3 +103,12 @@ private fun defaultDelayRunningUnconfinedLoop(): Nothing {
 // `ioView` attempts to create a `LimitedDispatcher`, which `by`-delegates to `DefaultDelay`,
 // which is a `val` in this same file, leading to the initialization of `ioView`, forming a cycle.
 private val ioView by lazy { Dispatchers.IO.limitedParallelism(Int.MAX_VALUE) }
+
+/**
+ * A workaround for `Worker` being a value class without its own identity.
+ * This wrapper can be removed once we migrate to the atomicfu Thread API.
+ */
+@OptIn(ObsoleteWorkersApi::class)
+private class WorkerWrapper(val worker: Worker) {
+    override fun toString(): String = worker.toString()
+}
