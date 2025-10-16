@@ -753,28 +753,6 @@ internal class CoroutineScheduler(
             tryReleaseCpu(WorkerState.TERMINATED)
         }
 
-        /**
-         * See [runSingleTaskFromCurrentSystemDispatcher] for rationale and details.
-         * This is a fine-tailored method for a specific use-case not expected to be used widely.
-         */
-        fun runSingleTask(): Long {
-            val stateSnapshot = state
-            val isCpuThread = state == WorkerState.CPU_ACQUIRED
-            val task = if (isCpuThread) {
-                findCpuTask()
-            } else {
-                findBlockingTask()
-            }
-            if (task == null) {
-                if (minDelayUntilStealableTaskNs == 0L) return -1L
-                return minDelayUntilStealableTaskNs
-            }
-            runSafely(task)
-            if (!isCpuThread) decrementBlockingTasks()
-            assert { state == stateSnapshot }
-            return 0L
-        }
-
         fun isIo() = state == WorkerState.BLOCKING
 
         // Counterpart to "tryUnpark"
@@ -927,18 +905,10 @@ internal class CoroutineScheduler(
             return findBlockingTask()
         }
 
-        // NB: ONLY for runSingleTask method
         private fun findBlockingTask(): Task? {
             return localQueue.pollBlocking()
                 ?: globalBlockingQueue.removeFirstOrNull()
                 ?: trySteal(STEAL_BLOCKING_ONLY)
-        }
-
-        // NB: ONLY for runSingleTask method
-        private fun findCpuTask(): Task? {
-            return localQueue.pollCpu()
-                ?: globalBlockingQueue.removeFirstOrNull()
-                ?: trySteal(STEAL_CPU_ONLY)
         }
 
         private fun findAnyTask(scanLocalQueue: Boolean): Task? {

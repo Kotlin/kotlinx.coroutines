@@ -13,7 +13,7 @@ import kotlin.coroutines.intrinsics.*
  */
 @InternalCoroutinesApi
 public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>): Unit = runSafely(completion) {
-    createCoroutineUnintercepted(completion).intercepted().resumeCancellableWith(Result.success(Unit))
+    createCoroutineUnintercepted(completion).intercepted().resumeCancellableWithInternal(Result.success(Unit))
 }
 
 /**
@@ -23,7 +23,7 @@ public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuat
 internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(
     receiver: R, completion: Continuation<T>,
 ) = runSafely(completion) {
-    createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellableWith(Result.success(Unit))
+    createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellableWithInternal(Result.success(Unit))
 }
 
 /**
@@ -32,7 +32,7 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(
  */
 internal fun Continuation<Unit>.startCoroutineCancellable(fatalCompletion: Continuation<*>) =
     runSafely(fatalCompletion) {
-        intercepted().resumeCancellableWith(Result.success(Unit))
+        intercepted().resumeCancellableWithInternal(Result.success(Unit))
     }
 
 /**
