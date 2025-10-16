@@ -352,7 +352,7 @@ public fun TestScope.runTest(
                         }
                         timeoutError = UncompletedCoroutinesError(message)
                         cancellationException = CancellationException("The test timed out")
-                        (scope as Job).cancel(cancellationException!!)
+                        (scope as Job).cancel(cancellationException)
                     }
                 }
                 scope.join()

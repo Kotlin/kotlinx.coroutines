@@ -1,10 +1,9 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.testing.*
-import junit.framework.Assert.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.*
-import org.junit.*
+import kotlin.test.*
 
 class ConcurrentWeakMapTest : TestBase() {
     @Test
@@ -14,9 +13,9 @@ class ConcurrentWeakMapTest : TestBase() {
         // repeat adding/removing a few times
         repeat(5) {
             assertEquals(0, m.size)
-            assertEquals(emptySet<Int>(), m.keys)
+            assertEquals(emptySet<String>(), m.keys)
             assertEquals(emptyList<String>(), m.values.toList())
-            assertEquals(emptySet<Map.Entry<Int, String>>(), m.entries)
+            assertEquals(emptySet<Map.Entry<String, String>>(), m.entries)
             for ((k, v) in expect) {
                 assertNull(m.put(k, v))
             }

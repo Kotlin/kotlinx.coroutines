@@ -1,10 +1,8 @@
 package kotlinx.coroutines.reactor
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.*
-import org.junit.*
-import org.junit.Test
+import kotlinx.coroutines.testing.*
 import reactor.core.publisher.*
 import java.io.*
 import kotlin.test.*
@@ -35,8 +33,8 @@ class FluxMultiTest : TestBase() {
             jobs.forEach { it.join() }
         }
         checkMonoValue(flux.collectList()) { list ->
-            assertEquals(n, list.size)
-            assertEquals((0 until n).toList(), list.sorted())
+            assertEquals(n, list?.size)
+            assertEquals((0 until n).toList(), list?.sorted())
         }
     }
 

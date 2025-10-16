@@ -47,7 +47,7 @@ class CancellableContinuationResumeCloseStressTest : TestBase() {
     private suspend fun resumeClose() = suspendCancellableCoroutine<String> { cont ->
         dispatcher.executor.execute {
             startBarrier.await() // (2) resume at the same time
-            cont.resume("OK") {
+            cont.resume("OK") { _, _, _ ->
                 close()
             }
             doneBarrier.await()

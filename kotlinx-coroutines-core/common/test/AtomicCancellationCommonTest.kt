@@ -131,6 +131,7 @@ class AtomicCancellationCommonTest : TestBase() {
         finish(4)
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testSelectLockCancellable() = runTest {
         expect(1)

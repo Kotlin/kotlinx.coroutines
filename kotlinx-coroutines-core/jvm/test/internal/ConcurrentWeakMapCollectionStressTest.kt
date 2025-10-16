@@ -1,11 +1,10 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.testing.*
-import junit.framework.Assert.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.*
-import org.junit.*
 import kotlin.concurrent.*
+import kotlin.test.*
 
 class ConcurrentWeakMapCollectionStressTest : TestBase() {
     private data class Key(val i: Int)

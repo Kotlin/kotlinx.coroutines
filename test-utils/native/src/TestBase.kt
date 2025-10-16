@@ -7,27 +7,26 @@ actual val VERBOSE = false
 
 actual typealias NoNative = Ignore
 
-public actual val isStressTest: Boolean = false
-public actual val stressTestMultiplier: Int = 1
-public actual val stressTestMultiplierSqrt: Int = 1
+actual val isStressTest: Boolean = false
+actual val stressTestMultiplier: Int = 1
+actual val stressTestMultiplierSqrt: Int = 1
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
-public actual typealias TestResult = Unit
+actual typealias TestResult = Unit
 
 internal actual fun lastResortReportException(error: Throwable) {
     println(error)
 }
 
-public actual open class TestBase actual constructor(): OrderedExecutionTestBase(), ErrorCatching by ErrorCatching.Impl() {
+actual open class TestBase actual constructor(): OrderedExecutionTestBase(), ErrorCatching by ErrorCatching.Impl() {
     actual fun println(message: Any?) {
         kotlin.io.println(message)
     }
 
-    public actual fun runTest(
+    actual fun runTest(
         expected: ((Throwable) -> Boolean)?,
         unhandled: List<(Throwable) -> Boolean>,
         block: suspend CoroutineScope.() -> Unit
-    ): TestResult {
+    ) {
         var exCount = 0
         var ex: Throwable? = null
         try {
@@ -56,10 +55,10 @@ public actual open class TestBase actual constructor(): OrderedExecutionTestBase
     }
 }
 
-public actual val isNative = true
+actual val isNative = true
 
-public actual val isBoundByJsTestTimeout = false
+actual val isBoundByJsTestTimeout = false
 
-public actual val isJavaAndWindows: Boolean get() = false
+actual val isJavaAndWindows: Boolean get() = false
 
 actual val usesSharedEventLoop: Boolean = false

@@ -1,6 +1,3 @@
-
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -171,7 +168,7 @@ class WithTimeoutOrNullTest : TestBase() {
             expect(2)
             try {
                 delay(1000)
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 expect(3)
             }
             "OK"
@@ -188,7 +185,7 @@ class WithTimeoutOrNullTest : TestBase() {
                 expect(2)
                 try {
                     delay(1000)
-                } catch (e: CancellationException) {
+                } catch (_: CancellationException) {
                     expect(3)
                     throw TestException()
                 }
@@ -196,7 +193,7 @@ class WithTimeoutOrNullTest : TestBase() {
                 "OK"
             }
             expectUnreached()
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             // catches TestException
             finish(4)
 
@@ -227,7 +224,7 @@ class WithTimeoutOrNullTest : TestBase() {
                 throw TestException()
             }
             expectUnreached()
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             finish(4)
         }
     }
