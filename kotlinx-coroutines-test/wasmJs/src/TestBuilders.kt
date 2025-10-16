@@ -6,6 +6,7 @@ import kotlin.js.*
 
 public actual typealias TestResult = JsPromiseInterfaceForTesting
 
+@OptIn(ExperimentalWasmJsInterop::class)
 internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() -> Unit): TestResult =
     GlobalScope.promise {
         testProcedure()
