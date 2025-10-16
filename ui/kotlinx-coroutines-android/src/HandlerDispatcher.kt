@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import java.lang.reflect.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
 
 /**
  * Dispatches execution onto Android [Handler].
@@ -136,24 +137,28 @@ internal class HandlerContext private constructor(
         }
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
         val block = Runnable {
             with(continuation) { resumeUndispatched(Unit) }
         }
-        if (handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))) {
+        if (schedule(time, block)) {
             continuation.invokeOnCancellation { handler.removeCallbacks(block) }
         } else {
             cancelOnRejection(continuation.context, block)
         }
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        if (handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))) {
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle {
+        if (schedule(timeout, block)) {
             return DisposableHandle { handler.removeCallbacks(block) }
         }
         cancelOnRejection(context, block)
         return NonDisposableHandle
     }
+
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+    private fun schedule(time: Duration, block: Runnable): Boolean =
+        handler.postDelayed(block, time.toDelayMillis().coerceAtMost(MAX_DELAY))
 
     private fun cancelOnRejection(context: CoroutineContext, block: Runnable) {
         context.cancel(CancellationException("The task was rejected, the handler underlying the dispatcher '${toString()}' was closed"))

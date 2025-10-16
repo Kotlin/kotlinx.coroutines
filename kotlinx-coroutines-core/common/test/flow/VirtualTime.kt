@@ -1,15 +1,25 @@
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.internal.ThreadSafeHeap
+import kotlinx.coroutines.internal.ThreadSafeHeapNode
 import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.nanoseconds
 
 internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : CoroutineDispatcher(), Delay {
     private val originalDispatcher = enclosingScope.coroutineContext[ContinuationInterceptor] as CoroutineDispatcher
-    private val heap = ArrayList<TimedTask>() // TODO use MPP heap/ordered set implementation (commonize ThreadSafeHeap)
+    private val heap = ThreadSafeHeap<TimedTask>()
 
-    var currentTime = 0L
-        private set
+    /** This counter establishes some order on the events that happen at the same virtual time. */
+    private val count = atomic(0)
+
+    private val timeSource = TestTimeSource()
+
+    val currentTime: ComparableTimeMark
+        get() = timeSource.markNow()
 
     init {
         /*
@@ -24,22 +34,20 @@ internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : Coroutine
                 if (delayNanos <= 0) continue
                 if (delayNanos > 0 && delayNanos != Long.MAX_VALUE) {
                     if (usesSharedEventLoop) {
-                        val targetTime = currentTime + delayNanos
+                        val targetTime = currentTime + delayNanos.nanoseconds
                         while (currentTime < targetTime) {
-                            val nextTask = heap.minByOrNull { it.deadline } ?: break
-                            if (nextTask.deadline > targetTime) break
-                            heap.remove(nextTask)
-                            currentTime = nextTask.deadline
+                            val nextTask = heap.removeFirstIf { it.deadline <= targetTime } ?: break
+                            timeSource += nextTask.deadline - currentTime
                             nextTask.run()
                         }
-                        currentTime = maxOf(currentTime, targetTime)
+                        if (targetTime > currentTime) timeSource += targetTime - currentTime
                     } else {
                         error("Unexpected external delay: $delayNanos")
                     }
                 }
-                val nextTask = heap.minByOrNull { it.deadline } ?: return@launch
+                val nextTask = heap.removeFirstOrNull() ?: return@launch
                 heap.remove(nextTask)
-                currentTime = nextTask.deadline
+                timeSource += nextTask.deadline - currentTime
                 nextTask.run()
             }
         }
@@ -47,11 +55,17 @@ internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : Coroutine
 
     private inner class TimedTask(
         private val runnable: Runnable,
-        @JvmField val deadline: Long
-    ) : DisposableHandle, Runnable by runnable {
+        val deadline: ComparableTimeMark,
+        @JvmField val count: Int,
+    ) : DisposableHandle, Runnable by runnable, Comparable<TimedTask>, ThreadSafeHeapNode {
+        override var heap: ThreadSafeHeap<*>? = null
+        override var index: Int = 0
+
+        override fun compareTo(other: TimedTask): Int =
+            compareValuesBy(this, other, TimedTask::deadline, TimedTask::count)
 
         override fun dispose() {
-            heap.remove(this)
+            this@VirtualTimeDispatcher.heap.remove(this)
         }
     }
 
@@ -61,20 +75,18 @@ internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : Coroutine
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = originalDispatcher.isDispatchNeeded(context)
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val task = TimedTask(block, deadline(timeMillis))
-        heap += task
-        return task
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle =
+        schedule(timeout, block)
+
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
+        schedule(time, Runnable {
+            with(continuation) { resumeUndispatched(Unit) }
+        }).also { continuation.disposeOnCancellation(it) }
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val task = TimedTask(Runnable { with(continuation) { resumeUndispatched(Unit) } }, deadline(timeMillis))
-        heap += task
-        continuation.invokeOnCancellation { task.dispose() }
-    }
+    private fun schedule(time: Duration, block: Runnable): DisposableHandle =
+        TimedTask(block, currentTime + time, count.getAndIncrement()).also { heap.addLast(it) }
 
-    private fun deadline(timeMillis: Long) =
-        if (timeMillis == Long.MAX_VALUE) Long.MAX_VALUE else currentTime + timeMillis
 }
 
 /**

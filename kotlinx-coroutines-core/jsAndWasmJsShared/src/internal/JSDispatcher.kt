@@ -2,6 +2,8 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 internal expect abstract class W3CWindow
 internal expect fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int
@@ -20,11 +22,6 @@ internal expect class WindowMessageQueue(window: W3CWindow) : MessageQueue {
     override fun reschedule()
 }
 
-private const val MAX_DELAY = Int.MAX_VALUE.toLong()
-
-private fun delayToInt(timeMillis: Long): Int =
-    timeMillis.coerceIn(0, MAX_DELAY).toInt()
-
 internal abstract class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
     internal val messageQueue = ScheduledMessageQueue(this)
 
@@ -39,13 +36,14 @@ internal abstract class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay 
         messageQueue.enqueue(block)
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val handle = w3cSetTimeout({ block.run() }, delayToInt(timeMillis))
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle {
+        val handle = w3cSetTimeout({ block.run() }, timeout.toInt(DurationUnit.MILLISECONDS))
         return ClearTimeout(handle)
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val handle = w3cSetTimeout({ with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
+        val handle =
+            w3cSetTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.toInt(DurationUnit.MILLISECONDS))
         continuation.invokeOnCancellation(handler = ClearTimeout(handle))
     }
 }
@@ -55,13 +53,17 @@ internal class WindowDispatcher(private val window: W3CWindow) : CoroutineDispat
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = queue.enqueue(block)
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val handle = w3cSetTimeout(window, { with(continuation) { resumeUndispatched(Unit) } }, delayToInt(timeMillis))
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
+        val handle = w3cSetTimeout(
+            window,
+            { with(continuation) { resumeUndispatched(Unit) } },
+            time.toInt(DurationUnit.MILLISECONDS)
+        )
         continuation.invokeOnCancellation(handler = WindowClearTimeout(handle))
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val handle = w3cSetTimeout(window, block::run, delayToInt(timeMillis))
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle {
+        val handle = w3cSetTimeout(window, block::run, timeout.toInt(DurationUnit.MILLISECONDS))
         return WindowClearTimeout(handle)
     }
 

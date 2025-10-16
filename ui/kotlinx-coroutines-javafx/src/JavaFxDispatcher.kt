@@ -3,13 +3,15 @@ package kotlinx.coroutines.javafx
 import javafx.animation.*
 import javafx.application.*
 import javafx.event.*
-import javafx.util.*
+import javafx.util.Duration as jfxDuration
+import kotlin.time.Duration
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import java.lang.UnsupportedOperationException
 import java.lang.reflect.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
+import kotlin.time.DurationUnit
 
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
@@ -29,23 +31,23 @@ public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = Platform.runLater(block)
 
     /** @suppress */
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val timeline = schedule(timeMillis) {
+    override fun scheduleResumeAfterDelay(time: Duration, continuation: CancellableContinuation<Unit>) {
+        val timeline = schedule(time) {
             with(continuation) { resumeUndispatched(Unit) }
         }
         continuation.invokeOnCancellation { timeline.stop() }
     }
 
     /** @suppress */
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle {
-        val timeline = schedule(timeMillis) {
+    override fun invokeOnTimeout(timeout: Duration, block: Runnable, context: CoroutineContext): DisposableHandle {
+        val timeline = schedule(timeout) {
             block.run()
         }
         return DisposableHandle { timeline.stop() }
     }
 
-    private fun schedule(timeMillis: Long, handler: EventHandler<ActionEvent>): Timeline =
-        Timeline(KeyFrame(Duration.millis(timeMillis.toDouble()), handler)).apply { play() }
+    private fun schedule(time: Duration, handler: EventHandler<ActionEvent>): Timeline =
+        Timeline(KeyFrame(jfxDuration.millis(time.toDouble(DurationUnit.MILLISECONDS)), handler)).apply { play() }
 }
 
 internal class JavaFxDispatcherFactory : MainDispatcherFactory {
