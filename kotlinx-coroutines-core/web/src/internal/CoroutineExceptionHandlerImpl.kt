@@ -7,7 +7,7 @@ import kotlin.js.*
  * rather than in the current execution branch.
  */
 @OptIn(ExperimentalWasmJsInterop::class)
-internal fun throwAsyncJsError(message: String?, className: String?, stack: String?) {
+internal fun throwAsyncJsError(message: String?, className: String?, stack: String) {
     js("""
         var error = new Error();
         error.message = message;
