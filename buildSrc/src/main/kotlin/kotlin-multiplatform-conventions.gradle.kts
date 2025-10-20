@@ -131,8 +131,7 @@ kotlin {
                 api("org.jetbrains.kotlin:kotlin-test-wasm-wasi:${version("kotlin")}")
             }
         }
-        groupSourceSets("jsAndWasmJsShared", listOf("js", "wasmJs"), emptyList())
-        groupSourceSets("jsAndWasmShared", listOf("jsAndWasmJsShared", "wasmWasi"), listOf("common"))
+        groupSourceSets("jsAndWasmShared", listOf("web", "wasmWasi"), listOf("common"))
     }
 
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)

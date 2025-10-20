@@ -11,6 +11,7 @@ private const val STDERR = 2
 /**
  * Write to a file descriptor. Note: This is similar to `writev` in POSIX.
  */
+@OptIn(ExperimentalWasmInterop::class)
 @WasmImport("wasi_snapshot_preview1", "fd_write")
 private external fun wasiRawFdWrite(descriptor: Int, scatterPtr: Int, scatterSize: Int, errorPtr: Int): Int
 
@@ -47,6 +48,7 @@ private fun printlnErrorStream(message: String): Int = withScopedMemoryAllocator
 /*
 * Terminate the process normally with an exit code.
  */
+@OptIn(ExperimentalWasmInterop::class)
 @WasmImport("wasi_snapshot_preview1", "proc_exit")
 private external fun wasiProcExit(exitCode: Int)
 
