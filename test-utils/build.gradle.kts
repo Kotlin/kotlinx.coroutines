@@ -5,29 +5,14 @@
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            api("org.jetbrains.kotlin:kotlin-test-common:${version("kotlin")}")
-            api("org.jetbrains.kotlin:kotlin-test-annotations-common:${version("kotlin")}")
+            api(kotlin("test"))
         }
         jvmMain.dependencies {
-            api("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
             // Workaround to make addSuppressed work in tests
             api("org.jetbrains.kotlin:kotlin-reflect:${version("kotlin")}")
             api("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${version("kotlin")}")
             api("org.jetbrains.kotlin:kotlin-test-junit:${version("kotlin")}")
             api("junit:junit:${version("junit")}")
-        }
-        jsMain.dependencies {
-            api("org.jetbrains.kotlin:kotlin-test-js:${version("kotlin")}")
-        }
-        val wasmJsMain by getting {
-            dependencies {
-                api("org.jetbrains.kotlin:kotlin-test-wasm-js:${version("kotlin")}")
-            }
-        }
-        val wasmWasiMain by getting {
-            dependencies {
-                api("org.jetbrains.kotlin:kotlin-test-wasm-wasi:${version("kotlin")}")
-            }
         }
     }
 }
