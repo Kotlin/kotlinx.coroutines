@@ -177,10 +177,25 @@ public suspend fun <T> withContext(
  * completes, and returns the result.
  *
  * This inline function calls [withContext].
+ *
+ * Example usage:
+ * ```
+ * Dispatchers.IO { someFile.exists() } // Checking the file system is blocking I/O.
+ * ```
+ * 
+ * The code above is a shorthand to `withContext(Dispatchers.IO) { someFile.exists() }`,
+ * with the added safety that **only the dispatcher** can be replaced, i.e. it's not possible
+ * to do `randomCoroutineContext { someFile.exists() }` as it would be possible using
+ * `withContext`, so it's not possible to unintendedly break structured concurrency with this operator.
  */
 public suspend inline operator fun <T> CoroutineDispatcher.invoke(
     noinline block: suspend CoroutineScope.() -> T
-): T = withContext(this, block)
+): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return withContext(this, block)
+}
 
 // --------------- implementation ---------------
 
