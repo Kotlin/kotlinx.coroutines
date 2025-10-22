@@ -19,7 +19,6 @@ java {
 tasks.named<KotlinCompile>("compileJmhKotlin") {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_1_8
-        freeCompilerArgs.add("-Xjvm-default=all")
     }
 }
 

@@ -28,7 +28,6 @@ configure(subprojects) {
                     "-Xno-param-assertions",
                     "-Xno-call-assertions",
                     "-Xno-receiver-assertions",
-                    "-Xjvm-default=disable",
                 )
             }
             if (this@configureEach is KotlinNativeCompile) {
