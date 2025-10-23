@@ -14,14 +14,14 @@ This is a companion version for the Kotlin `2.2.20` release.
 ```kotlin
 suspend fun main() = coroutineScope {
     launch { 
-       delay(1000)
+       delay(1.seconds)
        println("Kotlin Coroutines World!") 
     }
     println("Hello")
 }
 ```
 
-> Play with coroutines online [here](https://pl.kotl.in/Wf3HxgZvx)
+> Play with coroutines online [here](https://pl.kotl.in/xdbDf0NNk)
 
 ## Modules
 
