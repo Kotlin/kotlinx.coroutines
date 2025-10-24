@@ -20,28 +20,24 @@ application {
 tasks.register<Test>("runWithExpectedFailure") {
     val agentJar = System.getProperty("coroutines.debug.agent.path")
     val errorOutputStream = ByteArrayOutputStream()
-    var exitValue = 0
+    val standardOutputStream = ByteArrayOutputStream()
 
-    try {
-        project.javaexec {
-            mainClass.set("Main")
-            classpath = sourceSets.main.get().runtimeClasspath
-            jvmArgs = listOf("-javaagent:$agentJar")
-            errorOutput = errorOutputStream
-        }
-    } catch (e: Exception) {
-        exitValue = -1
+    project.javaexec {
+        mainClass.set("Main")
+        classpath = sourceSets.main.get().runtimeClasspath
+        jvmArgs = listOf("-javaagent:$agentJar")
+        errorOutput = errorOutputStream
+        standardOutput = standardOutputStream
+        isIgnoreExitValue = true
     }
 
-    if (exitValue == 0) {
-        throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' was expected to fail with an error during initialization of the debug agent, but completed successfully.")
-    }
     val expectedAgentError =
         "kotlinx.coroutines debug agent failed to load.\n" +
             "Please ensure that the Kotlin standard library is present in the classpath.\n" +
             "Alternatively, you can disable kotlinx.coroutines debug agent by removing `-javaagent=/path/kotlinx-coroutines-core.jar` from your VM arguments.\n"
     val errorOutput = errorOutputStream.toString()
+    val standardOutput = standardOutputStream.toString()
     if (!errorOutput.contains(expectedAgentError)) {
-        throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' failed with an unexpected error:\n" + errorOutput)
+        throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' completed with an unexpected output:\n" + standardOutput + "\n" + errorOutput)
     }
 }
