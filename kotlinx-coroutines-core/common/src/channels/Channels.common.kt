@@ -183,9 +183,12 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
  *
  * If the channel is [closed][SendChannel.close] with a cause, [toList] will rethrow that cause.
  *
- * Since this function is implemented using [consume], the function is _terminal_.
- * In practice, this means that if adding new elements to the list fails with an exception,
- * that exception will be used for [cancelling][ReceiveChannel.cancel] the channel and rethrown.
+ * Since this function is implemented using [consume], it is _terminal_,
+ * meaning that [toList] will [cancel][ReceiveChannel.cancel] the channel before exiting.
+ * A [toList] call can finish before the sender closes the channel
+ * if it gets cancelled while waiting for the next element,
+ * or if [MutableList.add] fails with an exception.
+ * In both cases, the exception will be used for cancelling the channel and then rethrown.
  *
  * Example:
  * ```
@@ -217,9 +220,12 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
  * If the channel is [closed][SendChannel.close] with a cause, [consumeTo] will rethrow that cause.
  * However, the elements already received up to that point will remain in the collection.
  *
- * Since this function is implemented using [consume], the function is _terminal_.
- * In practice, this means that if adding new elements to the collection fails with an exception,
- * that exception will be used for [cancelling][ReceiveChannel.cancel] the channel and rethrown.
+ * Since this function is implemented using [consume], it is _terminal_,
+ * meaning that [consumeTo] will [cancel][ReceiveChannel.cancel] the channel before exiting.
+ * A [consumeTo] call can finish before the sender closes the channel
+ * if it gets cancelled while waiting for the next element,
+ * or if [MutableCollection.add] fails with an exception.
+ * In both cases, the exception will be used for cancelling the channel and then rethrown.
  *
  * The intended use case for this function is collecting the remaining elements of a closed channel
  * and processing them in a single batch.
@@ -242,11 +248,12 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
  * launch {
  *     // Read elements until we suddenly decide to stop
  *     // or until the channel is closed.
- *     while (Random.nextInt() % 100 != 42) {
+ *     while (Random.nextInt() % 100 != 0) {
  *         val nextElement = channel.receiveCatching()
  *         if (nextElement.isClosed) return@launch
  *         println("Received ${nextElement.getOrNull()}")
  *     }
+ *     delay(100.milliseconds)
  *     doContinue.store(false)
  *     delay(100.milliseconds)
  *     val remainingElements = mutableListOf<Int>()
