@@ -68,7 +68,7 @@ open class ChannelBenchmark {
         runSendReceive(count, Channel.UNLIMITED, cores / 2, cores / 2)
     }
 
-    private suspend fun send(count: Int, channel: Channel<Int>) = coroutineScope {
+    private suspend fun sendManyItems(count: Int, channel: Channel<Int>) = coroutineScope {
         for (i in 1..count) {
             channel.send(list[i])
         }
@@ -76,7 +76,7 @@ open class ChannelBenchmark {
 
     private suspend fun runSend(count: Int, capacity: Int) {
         Channel<Int>(capacity).also {
-            send(count, it)
+            sendManyItems(count, it)
         }
     }
 
@@ -97,7 +97,7 @@ open class ChannelBenchmark {
             coroutineScope {
                 repeat(senders) {
                     launch {
-                        send(count / senders, channel)
+                        sendManyItems(count / senders, channel)
                     }
                 }
             }
