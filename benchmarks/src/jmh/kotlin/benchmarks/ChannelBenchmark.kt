@@ -69,7 +69,9 @@ open class ChannelBenchmark {
     }
 
     private suspend fun send(count: Int, channel: Channel<Int>) = coroutineScope {
-        list.take(count).forEach { channel.send(it) }
+        for (i in 1..count) {
+            channel.send(list[i])
+        }
     }
 
     private suspend fun runSend(count: Int, capacity: Int) {
