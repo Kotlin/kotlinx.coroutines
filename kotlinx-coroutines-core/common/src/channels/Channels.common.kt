@@ -151,13 +151,6 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
  *
  * In this example, several coroutines put elements into a single channel, and a single consumer processes the elements.
  * Once it finds the elements it's looking for, it stops [consumeEach] by making an early return.
- *
- * **Pitfall**: even though the name says "each", some elements could be left unprocessed if they are added after
- * this function decided to close the channel.
- * In this case, the elements will simply be lost.
- * If the elements of the channel are resources that must be closed (like file handles, sockets, etc.),
- * an `onUndeliveredElement` must be passed to the [Channel] on construction.
- * It will be called for each element left in the channel at the point of cancellation.
  */
 public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit): Unit =
     consume {
