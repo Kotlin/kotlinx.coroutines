@@ -65,7 +65,10 @@ actual open class TestBase(
         if (lastTestPromise != null) {
             error("Attempt to run multiple asynchronous test within one @Test method")
         }
-        val result = GlobalScope.promise(block = block, context = CoroutineExceptionHandler { _, e ->
+        val result = GlobalScope.promise(block = {
+            block()
+            null
+        }, context = CoroutineExceptionHandler { _, e ->
             if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
             exCount++
             when {
