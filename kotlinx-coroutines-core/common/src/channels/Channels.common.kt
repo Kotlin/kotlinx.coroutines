@@ -248,7 +248,7 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
  * launch {
  *     // Read elements until we suddenly decide to stop
  *     // or until the channel is closed.
- *     while (Random.nextInt() % 100 != 0) {
+ *     while (Random.nextInt(100) != 0) {
  *         val nextElement = channel.receiveCatching()
  *         if (nextElement.isClosed) return@launch
  *         println("Received ${nextElement.getOrNull()}")
