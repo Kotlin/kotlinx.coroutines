@@ -39,8 +39,9 @@ suspend fun main() = coroutineScope {
   * [Dispatchers.IO] dispatcher for blocking coroutines;
   * [Executor.asCoroutineDispatcher][asCoroutineDispatcher] extension, custom thread pools, and more;
   * Integrations with `CompletableFuture` and JVM-specific extensions.
+* [core/web](kotlinx-coroutines-core/web/) &mdash; additional core features available on Kotlin/JS and Kotlin/Wasm/JS:
+  * Integration with `Promise` via `Promise.await` and [promise] builder.
 * [core/js](kotlinx-coroutines-core/js/) &mdash; additional core features available on Kotlin/JS:
-  * Integration with `Promise` via [Promise.await] and [promise] builder;
   * Integration with `Window` via [Window.asCoroutineDispatcher], etc.
 * [test](kotlinx-coroutines-test/README.md) &mdash; test utilities for coroutines:
   * [Dispatchers.setMain] to override [Dispatchers.Main] in tests;
@@ -213,8 +214,7 @@ See [Contributing Guidelines](CONTRIBUTING.md).
 [CoroutineExceptionHandler]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/index.html
 [Dispatchers.IO]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-i-o.html
 [asCoroutineDispatcher]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/as-coroutine-dispatcher.html
-[Promise.await]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await.html
-[promise]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/[js]promise.html
+[promise]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/promise.html
 [Window.asCoroutineDispatcher]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/as-coroutine-dispatcher.html
 
 <!--- INDEX kotlinx.coroutines.flow -->
