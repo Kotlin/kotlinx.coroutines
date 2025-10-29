@@ -55,12 +55,12 @@ open class ChannelBenchmark {
 
     @Benchmark
     fun oneSenderManyReceivers() = runBlocking {
-        runSendReceive(count, Channel.UNLIMITED, 1, cores)
+        runSendReceive(count, Channel.UNLIMITED, 1, cores - 1)
     }
 
     @Benchmark
     fun manySendersOneReceiver() = runBlocking {
-        runSendReceive(count, Channel.UNLIMITED, cores, 1)
+        runSendReceive(count, Channel.UNLIMITED, cores - 1, 1)
     }
 
     @Benchmark
@@ -83,10 +83,10 @@ open class ChannelBenchmark {
     // NB: not all parameter combinations make sense in general.
     // E.g., for the rendezvous channel, senders should be equal to receivers.
     // If they are non-equal, it's a special case of performance under contention.
-    private suspend inline fun runSendReceive(count: Int, capacity: Int, senders: Int = 1, receivers: Int = 1) =
+    private suspend inline fun runSendReceive(count: Int, capacity: Int, senders: Int = 1, receivers: Int = 1) {
+        require(senders > 0 && receivers > 0)
+        require(senders + receivers <= cores)
         withContext(Dispatchers.Default) {
-            require(senders > 0 && receivers > 0)
-
             val channel = Channel<Int>(capacity)
             repeat(receivers) {
                 launch {
@@ -103,4 +103,5 @@ open class ChannelBenchmark {
             }
             channel.close()
         }
+    }
 }
