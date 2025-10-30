@@ -137,7 +137,7 @@ class StackTraceRecoveryTest : TestBase() {
         deferred.join()
     }
 
-    public class TrickyException() : Throwable() {
+    class TrickyException() : Throwable() {
         // To be sure ctor is never invoked
         @Suppress("UNUSED", "UNUSED_PARAMETER")
         private constructor(message: String, cause: Throwable): this() {

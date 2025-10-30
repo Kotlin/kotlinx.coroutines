@@ -19,7 +19,7 @@ class FailFastOnStartTest : TestBase() {
 
     @Rule
     @JvmField
-    public val timeout: Timeout = Timeout.seconds(5)
+    val timeout: Timeout = Timeout.seconds(5)
 
     @Test
     fun testLaunch() = runTest(expected = ::mainException) {

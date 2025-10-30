@@ -9,7 +9,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class SampleTest : TestBase() {
     @Test
-    public fun testBasic() = withVirtualTime {
+    fun testBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)
