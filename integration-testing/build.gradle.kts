@@ -234,6 +234,7 @@ tasks {
             "smokeTest:build",
             "java8Test:check",
             "safeDebugAgentTest:runWithExpectedFailure"
+            "safeDebugAgentTest:runWithIgnoredError"
         )
     }
 
