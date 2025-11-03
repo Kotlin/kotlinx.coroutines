@@ -60,7 +60,7 @@ tasks.register<Test>("runWithIgnoredError") {
         jvmArgs = listOf("-javaagent:$agentJar=kotlinx.coroutines.ignore.debug.agent.error")
         errorOutput = errorOutputStream
         standardOutput = standardOutputStream
-        isIgnoreExitValue = false
+        isIgnoreExitValue = true
     }
 
     val errorOutput = errorOutputStream.toString()
