@@ -42,6 +42,9 @@ tasks.register<Test>("runWithExpectedFailure") {
     if (!errorOutput.contains(expectedAgentError)) {
         throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' completed with an unexpected output:\n" + standardOutput + "\n" + errorOutput)
     }
+    if (standardOutput.contains("OK!")) {
+        throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' was expected to throw the agent initializaion error, but Main was executed:\n" + standardOutput + "\n" + errorOutput)
+    }
 }
 
 // This test checks, that if the argument `kotlinx.coroutines.ignore.debug.agent.error` is passed to the javaagent,
