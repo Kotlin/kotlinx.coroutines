@@ -27,7 +27,7 @@ import kotlin.coroutines.*
  */
 public fun <T> flux(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> {
     require(context[Job] === null) { "Flux context cannot contain job in it." +
         "Its lifecycle should be managed via Disposable handle. Had $context" }
@@ -37,7 +37,7 @@ public fun <T> flux(
 private fun <T> reactorPublish(
     scope: CoroutineScope,
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher onSubscribe@{ subscriber: Subscriber<in T>? ->
     if (subscriber !is CoreSubscriber) {
         subscriber.reject(IllegalArgumentException("Subscriber is not an instance of CoreSubscriber, context can not be extracted."))
@@ -89,6 +89,6 @@ private fun <T> Subscriber<T>?.reject(t: Throwable) {
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
 public fun <T> CoroutineScope.flux(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> =
     Flux.from(reactorPublish(this, context, block))

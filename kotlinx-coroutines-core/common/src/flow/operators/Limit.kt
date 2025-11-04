@@ -110,7 +110,7 @@ public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
  * ```
  */
 public fun <T, R> Flow<T>.transformWhile(
-    @BuilderInference transform: suspend FlowCollector<R>.(value: T) -> Boolean
+    transform: suspend FlowCollector<R>.(value: T) -> Boolean
 ): Flow<R> =
     safeFlow { // Note: safe flow is used here, because collector is exposed to transform on each operation
         // This return is needed to work around a bug in JS BE: KT-39227

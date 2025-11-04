@@ -269,7 +269,7 @@ public fun <T> Flow<T>.forEach(action: suspend (value: T) -> Unit): Unit = noImp
     message = "Flow has less verbose 'scan' shortcut",
     replaceWith = ReplaceWith("scan(initial, operation)")
 )
-public fun <T, R> Flow<T>.scanFold(initial: R, @BuilderInference operation: suspend (accumulator: R, value: T) -> R): Flow<R> =
+public fun <T, R> Flow<T>.scanFold(initial: R, operation: suspend (accumulator: R, value: T) -> R): Flow<R> =
     noImpl()
 
 /**

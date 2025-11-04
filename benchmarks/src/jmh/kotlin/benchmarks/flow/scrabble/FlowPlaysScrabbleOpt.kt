@@ -181,7 +181,7 @@ public fun <T, R> Flow<T>.flatMapConcatIterable(transformer: (T) -> Iterable<R>)
     }
 }
 
-public inline fun <T> flow(@BuilderInference crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+public inline fun <T> flow(crossinline block: suspend FlowCollector<T>.() -> Unit): Flow<T> {
     return object : Flow<T> {
         override suspend fun collect(collector: FlowCollector<T>) {
             collector.block()

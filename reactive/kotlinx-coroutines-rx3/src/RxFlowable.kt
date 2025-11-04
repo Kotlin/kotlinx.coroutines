@@ -26,7 +26,7 @@ import kotlin.coroutines.*
  */
 public fun <T: Any> rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Flowable<T> {
     require(context[Job] === null) { "Flowable context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }

@@ -28,7 +28,7 @@ import kotlinx.coroutines.internal.*
  */
 public fun <T : Any> rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> {
     require(context[Job] === null) { "Observable context cannot contain job in it." +
             "Its lifecycle should be managed via Disposable handle. Had $context" }
