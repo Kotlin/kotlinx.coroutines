@@ -22,9 +22,33 @@ open class ChannelBenchmark {
 
     // 1. Preallocate.
     // 2. Different values to avoid helping the cache.
-    val list = ArrayList<Int>(100000000).apply {
-        repeat(100000000) { add(it) }
+    val maxCount = 100000000
+    val list = ArrayList<Int>(maxCount).apply {
+        repeat(maxCount) { add(it) }
     }
+
+    @State(Scope.Benchmark)
+    open class UnlimitedChannelWrapper {
+        //                0,      4 MB,      40 MB,      400 MB
+        @Param("0", "1000000", "10000000", "100000000")
+        private var prefill = 0
+
+        lateinit var channel: Channel<Int>
+
+        val maxCount = 100000000
+        val list = ArrayList<Int>(maxCount).apply {
+            repeat(maxCount) { add(it) }
+        }
+
+        @Setup(Level.Invocation)
+        fun createPrefilledChannel() {
+            channel = Channel(Channel.UNLIMITED)
+            repeat(prefill) {
+                channel.trySend(list[it])
+            }
+        }
+    }
+
 
     @Benchmark
     fun sendUnlimited() = runBlocking {
@@ -37,35 +61,35 @@ open class ChannelBenchmark {
     }
 
     @Benchmark
-    fun sendReceiveUnlimited() = runBlocking(Dispatchers.Default) {
-        runSendReceive(count, Channel.UNLIMITED)
+    fun sendReceiveUnlimited(wrapper: UnlimitedChannelWrapper) = runBlocking(Dispatchers.Default) {
+        runSendReceive(wrapper.channel, count)
     }
 
     @Benchmark
     fun sendReceiveConflated() = runBlocking(Dispatchers.Default) {
-        runSendReceive(count, Channel.CONFLATED)
+        runSendReceive(Channel(Channel.CONFLATED), count)
     }
 
     @Benchmark
     fun sendReceiveRendezvous() = runBlocking(Dispatchers.Default) {
         // NB: Rendezvous is partly benchmarking the scheduler, not the channel alone.
         // So don't trust the Rendezvous results too much.
-        runSendReceive(count, Channel.RENDEZVOUS)
+        runSendReceive(Channel(Channel.RENDEZVOUS), count)
     }
 
     @Benchmark
-    fun oneSenderManyReceivers() = runBlocking {
-        runSendReceive(count, Channel.UNLIMITED, 1, cores - 1)
+    fun oneSenderManyReceivers(wrapper: UnlimitedChannelWrapper) = runBlocking {
+        runSendReceive(wrapper.channel, count, 1, cores - 1)
     }
 
     @Benchmark
-    fun manySendersOneReceiver() = runBlocking {
-        runSendReceive(count, Channel.UNLIMITED, cores - 1, 1)
+    fun manySendersOneReceiver(wrapper: UnlimitedChannelWrapper) = runBlocking {
+        runSendReceive(wrapper.channel, count, cores - 1, 1)
     }
 
     @Benchmark
-    fun manySendersManyReceivers() = runBlocking {
-        runSendReceive(count, Channel.UNLIMITED, cores / 2, cores / 2)
+    fun manySendersManyReceivers(wrapper: UnlimitedChannelWrapper) = runBlocking {
+        runSendReceive(wrapper.channel, count, cores / 2, cores / 2)
     }
 
     private suspend fun sendManyItems(count: Int, channel: Channel<Int>) = coroutineScope {
@@ -83,21 +107,34 @@ open class ChannelBenchmark {
     // NB: not all parameter combinations make sense in general.
     // E.g., for the rendezvous channel, senders should be equal to receivers.
     // If they are non-equal, it's a special case of performance under contention.
-    private suspend inline fun runSendReceive(count: Int, capacity: Int, senders: Int = 1, receivers: Int = 1) {
+    private suspend inline fun runSendReceive(channel: Channel<Int>, count: Int, senders: Int = 1, receivers: Int = 1) {
         require(senders > 0 && receivers > 0)
+        // Can be used with more than num cores but needs thinking it through,
+        // e.g., what would it measure?
         require(senders + receivers <= cores)
+        // if the channel is prefilled, do not consume the prefilled items
+        val consumeAll = channel.isEmpty
+        // send almost `count` items, up to `senders - 1` items will not be sent (negligible)
+        val countPerSender = count / senders
+        // for prefilled channel only: up to `receivers - 1` items of the sent items will not be received (negligible)
+        val countPerReceiverAtLeast = countPerSender * senders / receivers
         withContext(Dispatchers.Default) {
-            val channel = Channel<Int>(capacity)
             repeat(receivers) {
                 launch {
-                    channel.consumeEach { }
+                    if (consumeAll) {
+                        channel.consumeEach { }
+                    } else {
+                       repeat(countPerReceiverAtLeast) {
+                            channel.receive()
+                        }
+                    }
                 }
             }
 
             coroutineScope {
                 repeat(senders) {
                     launch {
-                        sendManyItems(count / senders, channel)
+                        sendManyItems(countPerSender, channel)
                     }
                 }
             }
