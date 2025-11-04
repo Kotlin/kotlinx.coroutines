@@ -105,6 +105,12 @@ open class ChannelBenchmark {
         }
     }
 
+    suspend fun <E> Channel<E>.forEach(action: (E) -> Unit) {
+        for (element in this) {
+            action(element)
+        }
+    }
+
     // NB: not all parameter combinations make sense in general.
     // E.g., for the rendezvous channel, senders should be equal to receivers.
     // If they are non-equal, it's a special case of performance under contention.
@@ -113,8 +119,8 @@ open class ChannelBenchmark {
         // Can be used with more than num cores but needs thinking it through,
         // e.g., what would it measure?
         require(senders + receivers <= cores)
-        // if the channel is prefilled, do not consume the prefilled items
-        val consumeAll = channel.isEmpty
+        // if the channel is prefilled, do not receive the prefilled items
+        val receiveAll = channel.isEmpty
         // send almost `count` items, up to `senders - 1` items will not be sent (negligible)
         val countPerSender = count / senders
         // for prefilled channel only: up to `receivers - 1` items of the sent items will not be received (negligible)
@@ -122,8 +128,8 @@ open class ChannelBenchmark {
         withContext(Dispatchers.Default) {
             repeat(receivers) {
                 launch {
-                    if (consumeAll) {
-                        channel.consumeEach { }
+                    if (receiveAll) {
+                        channel.forEach { }
                     } else {
                        repeat(countPerReceiverAtLeast) {
                             channel.receive()
