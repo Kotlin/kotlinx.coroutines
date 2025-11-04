@@ -8,7 +8,7 @@ import java.util.concurrent.*
 @Warmup(iterations = 7, time = 1)
 @Measurement(iterations = 10, time = 1)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)
 @Fork(1)
 open class ChannelBenchmark {
