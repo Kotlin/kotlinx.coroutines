@@ -92,9 +92,10 @@ open class ChannelBenchmark {
         runSendReceive(wrapper.channel, count, cores / 2, cores / 2)
     }
 
-    private suspend fun sendManyItems(count: Int, channel: Channel<Int>) = coroutineScope {
-        for (i in 1..count) {
-            channel.send(list[i])
+    private suspend fun sendManyItems(count: Int, channel: Channel<Int>) {
+        repeat(count) {
+            // NB: it is `send`, not `trySend`, on purpose, since we are testing the `send` performance here.
+            channel.send(list[it])
         }
     }
 
