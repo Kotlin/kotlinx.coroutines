@@ -61,7 +61,7 @@ open class ChannelBenchmark {
     }
 
     @Benchmark
-    fun sendReceiveUnlimited(wrapper: UnlimitedChannelWrapper) = runBlocking(Dispatchers.Default) {
+    fun sendReceiveUnlimited(wrapper: UnlimitedChannelWrapper) = runBlocking {
         runSendReceive(wrapper.channel, count)
     }
 
