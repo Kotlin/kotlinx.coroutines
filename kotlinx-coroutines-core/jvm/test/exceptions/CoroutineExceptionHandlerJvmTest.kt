@@ -9,45 +9,47 @@ import kotlin.test.*
 class CoroutineExceptionHandlerJvmTest : TestBase() {
 
     @Test
-    fun testFailingHandler() = runBlocking {
+    fun testThrowingHandler() = runBlocking {
         expect(1)
         val caughtException = catchingUncaughtException {
-            GlobalScope.launch(CoroutineExceptionHandler { _, _ -> throw AssertionError() }) {
+            GlobalScope.launch(CoroutineExceptionHandler { _, _ -> throw TestException2() }) {
                 expect(2)
                 throw TestException()
             }.join()
         }
         assertIs<RuntimeException>(caughtException)
-        assertIs<AssertionError>(caughtException.cause)
+        assertIs<TestException2>(caughtException.cause)
         assertIs<TestException>(caughtException.suppressed[0])
 
         finish(3)
     }
 
     @Test
-    fun testLastDitchHandlerContainsContextualInformation() = runBlocking {
+    fun testLastResortHandlerContainsContextualInformation() = runBlocking {
         expect(1)
         val caughtException = catchingUncaughtException {
-            GlobalScope.launch(CoroutineName("last-ditch")) {
+            GlobalScope.launch(CoroutineName("last-resort")) {
                 expect(2)
                 throw TestException()
             }.join()
         }
         assertIs<TestException>(caughtException)
-        assertContains(caughtException.suppressed[0].toString(), "last-ditch")
+        assertContains(caughtException.suppressed[0].toString(), "last-resort")
         finish(3)
     }
 
     @Test
-    fun testFailingUncaughtExceptionHandler() = runBlocking {
+    fun testThrowingUncaughtExceptionHandler() = runBlocking {
         expect(1)
         withUncaughtExceptionHandler({ _, e ->
+            // should be above the `expect` so that we can observe the failure
+            assertIs<TestException>(e)
             expect(3)
-            throw TestException("uncaught")
+            throw TestException("will not be reported")
         }) {
             launch(Job()) {
                 expect(2)
-                throw TestException("to be reported")
+                throw TestException("will be passed to the uncaught exception handler")
             }.join()
         }
         finish(4)

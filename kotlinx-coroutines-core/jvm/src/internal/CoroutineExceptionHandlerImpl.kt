@@ -38,6 +38,7 @@ internal actual fun propagateExceptionFinalResort(exception: Throwable) {
          *
          * This means the authors of the thread exception handlers have the right to throw exceptions indiscriminately.
          * We have no further channels for propagating the fatal exception, so we give up. */
+        val breakpoint = "Put a breakpoint here"
     }
 }
 
