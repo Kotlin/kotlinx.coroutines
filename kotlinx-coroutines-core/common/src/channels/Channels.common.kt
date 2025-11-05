@@ -5,6 +5,9 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.toCollection
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
 import kotlin.jvm.*
@@ -148,13 +151,6 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
  *
  * In this example, several coroutines put elements into a single channel, and a single consumer processes the elements.
  * Once it finds the elements it's looking for, it stops [consumeEach] by making an early return.
- *
- * **Pitfall**: even though the name says "each", some elements could be left unprocessed if they are added after
- * this function decided to close the channel.
- * In this case, the elements will simply be lost.
- * If the elements of the channel are resources that must be closed (like file handles, sockets, etc.),
- * an `onUndeliveredElement` must be passed to the [Channel] on construction.
- * It will be called for each element left in the channel at the point of cancellation.
  */
 public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit): Unit =
     consume {
@@ -162,9 +158,16 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
     }
 
 /**
- * Returns a [List] containing all the elements sent to this channel, preserving their order.
+ * [Consumes][consume] the elements of this channel into a list, preserving their order.
  *
- * This function will attempt to receive elements and put them into the list until the channel is
+ * This is a convenience function equivalent to calling [consumeAsFlow] followed by [kotlinx.coroutines.flow.toList].
+ * It is useful for testing code that uses channels to observe the elements the channel contains at the end of the test.
+ *
+ * There is no way to recover channel elements if the channel gets closed with an exception
+ * or to apply additional transformations to the elements before building the resulting collection.
+ * Please use [consumeAsFlow] and [kotlinx.coroutines.flow.toCollection] for such advanced use-cases.
+ *
+ * [toList] attempts to receive elements and put them into the list until the channel is
  * [closed][SendChannel.close].
  * Calling [toList] on channels that are not eventually closed is always incorrect:
  * - It will suspend indefinitely if the channel is not closed, but no new elements arrive.
@@ -173,8 +176,12 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
  *
  * If the channel is [closed][SendChannel.close] with a cause, [toList] will rethrow that cause.
  *
- * The operation is _terminal_.
- * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
+ * Since this function is implemented using [consume], it is _terminal_,
+ * meaning that [toList] will [cancel][ReceiveChannel.cancel] the channel before exiting.
+ * A [toList] call can finish before the sender closes the channel
+ * if it gets cancelled while waiting for the next element,
+ * or if [MutableList.add] fails with an exception.
+ * In both cases, the exception will be used for cancelling the channel and then rethrown.
  *
  * Example:
  * ```
@@ -189,10 +196,71 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
  * ```
  */
 public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
-    consumeEach {
-        add(it)
-    }
+    consumeEach(::add)
 }
+
+/**
+ * [Consumes][consume] the elements of this channel into the provided mutable collection.
+ *
+ * This is a convenience function equivalent to calling [consumeAsFlow]
+ * followed by [kotlinx.coroutines.flow.toCollection].
+ * Please use [consumeAsFlow] directly in scenarios where elements should undergo additional transformations
+ * before being added to the resulting collection.
+ *
+ * [consumeTo] attempts to receive elements and put them into the collection until the channel is
+ * [closed][SendChannel.close].
+ *
+ * If the channel is [closed][SendChannel.close] with a cause, [consumeTo] will rethrow that cause.
+ * However, the elements already received up to that point will remain in the collection.
+ *
+ * Since this function is implemented using [consume], it is _terminal_,
+ * meaning that [consumeTo] will [cancel][ReceiveChannel.cancel] the channel before exiting.
+ * A [consumeTo] call can finish before the sender closes the channel
+ * if it gets cancelled while waiting for the next element,
+ * or if [MutableCollection.add] fails with an exception.
+ * In both cases, the exception will be used for cancelling the channel and then rethrown.
+ *
+ * The intended use case for this function is collecting the remaining elements of a closed channel
+ * and processing them in a single batch.
+ *
+ * Example:
+ * ```
+ * val doContinue = AtomicBoolean(true)
+ *
+ * // Start the sender
+ * val channel = produce {
+ *     var i = 0
+ *     while (doContinue.load()) {
+ *         send(i++)
+ *         delay(10.milliseconds)
+ *         if (i == 42) break
+ *     }
+ * }
+ *
+ * // Start the consumer
+ * launch {
+ *     // Read elements until we suddenly decide to stop
+ *     // or until the channel is closed.
+ *     while (Random.nextInt(100) != 0) {
+ *         val nextElement = channel.receiveCatching()
+ *         if (nextElement.isClosed) return@launch
+ *         println("Received ${nextElement.getOrNull()}")
+ *     }
+ *     delay(100.milliseconds)
+ *     doContinue.store(false)
+ *     delay(100.milliseconds)
+ *     val remainingElements = mutableListOf<Int>()
+ *     try {
+ *         channel.consumeTo(remainingElements)
+ *     } finally {
+ *         println("Remaining elements: $remainingElements")
+ *     }
+ * }
+ * ```
+ */
+public suspend fun <E, C: MutableCollection<E>> ReceiveChannel<E>.consumeTo(collection: C): C =
+    consumeEach(collection::add).let { collection }
+
 
 @PublishedApi
 internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {
