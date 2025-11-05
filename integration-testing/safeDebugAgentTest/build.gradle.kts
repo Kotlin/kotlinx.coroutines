@@ -23,52 +23,60 @@ val expectedAgentError =
 // to a pure Java project (safeDebugAgentTest) with no Kotlin stdlib dependency.
 // In this case the error should be thrown from AgetnPremain class:
 // "java.lang.IllegalStateException: kotlinx.coroutines debug agent failed to load."
-tasks.register<Test>("runWithExpectedFailure") {
+tasks.register<Task>("runWithExpectedFailure") {
+    dependsOn("compileJava")
     val agentJar = System.getProperty("coroutines.debug.agent.path")
-    val errorOutputStream = ByteArrayOutputStream()
-    val standardOutputStream = ByteArrayOutputStream()
 
-    project.javaexec {
-        mainClass.set("Main")
-        classpath = sourceSets.main.get().runtimeClasspath
-        jvmArgs = listOf("-javaagent:$agentJar")
-        errorOutput = errorOutputStream
-        standardOutput = standardOutputStream
-        isIgnoreExitValue = true
-    }
+    doFirst {
+        val errorOutputStream = ByteArrayOutputStream()
+        val standardOutputStream = ByteArrayOutputStream()
 
-    val errorOutput = errorOutputStream.toString()
-    val standardOutput = standardOutputStream.toString()
-    if (!errorOutput.contains(expectedAgentError)) {
-        throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' completed with an unexpected output:\n" + standardOutput + "\n" + errorOutput)
-    }
-    if (standardOutput.contains("OK!")) {
-        throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' was expected to throw the agent initializaion error, but Main was executed:\n" + standardOutput + "\n" + errorOutput)
+        project.javaexec {
+            mainClass.set("Main")
+            classpath = sourceSets.main.get().runtimeClasspath
+            jvmArgs = listOf("-javaagent:$agentJar")
+            errorOutput = errorOutputStream
+            standardOutput = standardOutputStream
+            isIgnoreExitValue = true
+        }
+
+        val errorOutput = errorOutputStream.toString()
+        val standardOutput = standardOutputStream.toString()
+        if (!errorOutput.contains(expectedAgentError)) {
+            throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' completed with an unexpected output:\n" + standardOutput + "\n" + errorOutput)
+        }
+        if (standardOutput.contains("OK!")) {
+            throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' was expected to throw the agent initializaion error, but Main was executed:\n" + standardOutput + "\n" + errorOutput)
+        }
     }
 }
 
 // This test checks, that if the argument `kotlinx.coroutines.ignore.debug.agent.error` is passed to the javaagent,
 // then the initialization error will be just logged to the stderr and the execution will continue.
-tasks.register<Test>("runWithIgnoredError") {
+tasks.register<Task>("runWithIgnoredError") {
+    dependsOn("compileJava")
     val agentJar = System.getProperty("coroutines.debug.agent.path")
-    val errorOutputStream = ByteArrayOutputStream()
-    val standardOutputStream = ByteArrayOutputStream()
 
-    project.javaexec {
-        mainClass.set("Main")
-        classpath = sourceSets.main.get().runtimeClasspath
-        jvmArgs = listOf("-javaagent:$agentJar=kotlinx.coroutines.ignore.debug.agent.error")
-        errorOutput = errorOutputStream
-        standardOutput = standardOutputStream
-        isIgnoreExitValue = true
-    }
+    doFirst {
+        val errorOutputStream = ByteArrayOutputStream()
+        val standardOutputStream = ByteArrayOutputStream()
 
-    val errorOutput = errorOutputStream.toString()
-    val standardOutput = standardOutputStream.toString()
-    if (!errorOutput.contains(expectedAgentError)) {
-        throw GradleException("':safeDebugAgentTest:runWithIgnoredError' completed with an unexpected output:\n" + standardOutput + "\n" + errorOutput)
-    }
-    if (!standardOutput.contains("OK!")) {
-        throw GradleException("':safeDebugAgentTest:runWithIgnoredError' was expected to log the agent initialization error and proceed with the execution of Main, but it completed with an unexpected output:\n" + standardOutput + "\n" + errorOutput)
+        project.javaexec {
+            mainClass.set("Main")
+            classpath = sourceSets.main.get().runtimeClasspath
+            jvmArgs = listOf("-javaagent:$agentJar=kotlinx.coroutines.ignore.debug.agent.error")
+            errorOutput = errorOutputStream
+            standardOutput = standardOutputStream
+            isIgnoreExitValue = true
+        }
+
+        val errorOutput = errorOutputStream.toString()
+        val standardOutput = standardOutputStream.toString()
+        if (!errorOutput.contains(expectedAgentError)) {
+            throw GradleException("':safeDebugAgentTest:runWithIgnoredError' completed with an unexpected output:\n" + standardOutput + "\n" + errorOutput)
+        }
+        if (!standardOutput.contains("OK!")) {
+            throw GradleException("':safeDebugAgentTest:runWithIgnoredError' was expected to log the agent initialization error and proceed with the execution of Main, but it completed with an unexpected output:\n" + standardOutput + "\n" + errorOutput)
+        }
     }
 }
