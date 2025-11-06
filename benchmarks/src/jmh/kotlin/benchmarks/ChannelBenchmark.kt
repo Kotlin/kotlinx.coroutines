@@ -17,7 +17,7 @@ open class ChannelBenchmark {
     val cores = Runtime.getRuntime().availableProcessors()
 
     //                4 KB,   40 KB,   400 KB,      4 MB,      40 MB,      400 MB
-    @Param("1000", "10000", "100000", "1000000", "10000000", "100000000")
+    @Param(value = ["1000", "10000", "100000", "1000000", "10000000", "100000000"])
     var count: Int = 0
 
     // 1. Preallocate.
