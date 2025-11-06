@@ -160,6 +160,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Implementation note: current implementation always returns RESUME_TOKEN or `null`
      *
      * @suppress  **This is unstable API and it is subject to change.**
+     * Used in ktor.
      */
     @InternalCoroutinesApi
     public fun <R: T> tryResume(
@@ -172,6 +173,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * [completeResume] must be invoked with it.
      *
      * @suppress **This is unstable API and it is subject to change.**
+     * Used in ktor.
      */
     @InternalCoroutinesApi
     public fun tryResumeWithException(exception: Throwable): Any?
@@ -180,6 +182,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Completes the execution of [tryResume] or [tryResumeWithException] on its non-null result.
      *
      * @suppress **This is unstable API and it is subject to change.**
+     * Used in ktor.
      */
     @InternalCoroutinesApi
     public fun completeResume(token: Any)
@@ -191,6 +194,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Exposed in our ABI since 1.0.0 within `suspendCancellableCoroutine` body.
      *
      * @suppress **This is unstable API and it is subject to change.**
+     * Used in ktor.
      */
     @InternalCoroutinesApi
     public fun initCancellability()

@@ -11,11 +11,8 @@ import kotlin.contracts.*
 @InternalCoroutinesApi
 public expect open class SynchronizedObject() // marker abstract class
 
-/**
- * @suppress **This an internal API and should not be used from general code.**
- */
-@InternalCoroutinesApi
-public expect inline fun <T> synchronizedImpl(lock: SynchronizedObject, block: () -> T): T
+@PublishedApi
+internal expect inline fun <T> synchronizedImpl(lock: SynchronizedObject, block: () -> T): T
 
 /**
  * @suppress **This an internal API and should not be used from general code.**

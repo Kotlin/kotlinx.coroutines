@@ -11,5 +11,5 @@ public actual open class SynchronizedObject
 /**
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public actual inline fun <T> synchronizedImpl(lock: SynchronizedObject, block: () -> T): T = block()
+@PublishedApi
+internal actual inline fun <T> synchronizedImpl(lock: SynchronizedObject, block: () -> T): T = block()
