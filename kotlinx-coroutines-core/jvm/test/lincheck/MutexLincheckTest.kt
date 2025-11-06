@@ -4,16 +4,13 @@ package kotlinx.coroutines.lincheck
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
-import org.jetbrains.kotlinx.lincheck.*
-import org.jetbrains.kotlinx.lincheck.annotations.*
-import org.jetbrains.kotlinx.lincheck.annotations.Operation
-import org.jetbrains.kotlinx.lincheck.paramgen.*
+import org.jetbrains.lincheck.datastructures.*
 
 @Param(name = "owner", gen = IntGen::class, conf = "0:2")
 class MutexLincheckTest : AbstractLincheckTest() {
     private val mutex = Mutex()
 
-    @Operation(handleExceptionsAsResult = [IllegalStateException::class])
+    @Operation
     fun tryLock(@Param(name = "owner") owner: Int) = mutex.tryLock(owner.asOwnerOrNull)
 
     // TODO: `lock()` with non-null owner is non-linearizable
@@ -22,10 +19,10 @@ class MutexLincheckTest : AbstractLincheckTest() {
 
     // TODO: `onLock` with non-null owner is non-linearizable
     // onLock may suspend in case of clause re-registration.
-    @Operation(allowExtraSuspension = true, promptCancellation = true)
+    @Operation(promptCancellation = true)
     suspend fun onLock() = select<Unit> { mutex.onLock(null) {} }
 
-    @Operation(handleExceptionsAsResult = [IllegalStateException::class])
+    @Operation
     fun unlock(@Param(name = "owner") owner: Int) = mutex.unlock(owner.asOwnerOrNull)
 
     @Operation
