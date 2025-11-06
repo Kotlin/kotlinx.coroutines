@@ -27,7 +27,7 @@ open class ChannelBenchmark {
     @State(Scope.Benchmark)
     open class UnlimitedChannelWrapper {
         //                0,      4 MB,      40 MB,      400 MB
-        @Param("0", "1000000", "10000000", "100000000")
+        @Param(value = ["0", "1000000", "10000000", "100000000"])
         private var prefill = 0
 
         lateinit var channel: Channel<Int>
