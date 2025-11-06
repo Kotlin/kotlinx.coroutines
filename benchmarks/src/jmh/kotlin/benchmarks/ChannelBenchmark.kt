@@ -105,13 +105,15 @@ open class ChannelBenchmark {
     private suspend inline fun runSendReceive(channel: Channel<Int>, count: Int, senders: Int = 1, receivers: Int = 1) {
         //require (senders > 0 && receivers > 0)
         //require (senders + receivers <= cores) // Can be used with more than num cores, but what would it measure?
-        // if the channel is prefilled, only receive the items that were sent by this function
+        // If the channel is prefilled with N items, it should have (at least) N items by the end of the benchmark.
+        // We roughly send as many items as we receive, within this function.
         val receiveAll = channel.isEmpty
         // send almost `count` items, up to `senders - 1` items will not be sent (negligible)
         val countPerSender = count / senders
-        // for prefilled channel only: up to `receivers - 1` items of the sent items will not be received
-        // (on top of the prefilled items which we do not aim to receive at all) (negligible)
-        val countPerReceiverAtLeast = countPerSender * senders / receivers
+        val countSent = countPerSender * senders
+        // for prefilled channel only: up to `receivers - 1` number of items will not be received
+        // (on top of the number of prefilled items, which we do not aim to receive at all) (negligible)
+        val countPerReceiverAtLeast = countSent / receivers
         withContext(Dispatchers.Default) {
             repeat(receivers) {
                 launch {
