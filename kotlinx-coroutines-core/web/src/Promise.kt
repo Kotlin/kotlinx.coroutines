@@ -3,6 +3,18 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 import kotlin.js.*
 
+@OptIn(ExperimentalWasmJsInterop::class)
+@Suppress("UNUSED_PARAMETER")
+internal fun promiseSetDeferred(promise: Promise<JsAny?>, deferred: JsAny): Unit =
+    js("promise.deferred = deferred")
+
+@OptIn(ExperimentalWasmJsInterop::class)
+@Suppress("UNUSED_PARAMETER")
+internal fun promiseGetDeferred(promise: Promise<JsAny?>): JsAny? = js("""{
+    console.assert(promise instanceof Promise, "promiseGetDeferred must receive a promise, but got ", promise);
+    return promise.deferred == null ? null : promise.deferred;
+}""")
+
 /**
  * Starts new coroutine and returns its result as an implementation of [Promise].
  *
@@ -18,7 +30,8 @@ import kotlin.js.*
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param block the coroutine code.
  */
-public fun <T> CoroutineScope.promise(
+@OptIn(ExperimentalWasmJsInterop::class)
+public fun <T: JsAny?> CoroutineScope.promise(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
@@ -28,28 +41,30 @@ public fun <T> CoroutineScope.promise(
 /**
  * Converts this deferred value to the instance of [Promise].
  */
-public fun <T> Deferred<T>.asPromise(): Promise<T> {
+@OptIn(ExperimentalWasmJsInterop::class)
+public fun <T: JsAny?> Deferred<T>.asPromise(): Promise<T> {
     val promise = Promise<T> { resolve, reject ->
         invokeOnCompletion {
             val e = getCompletionExceptionOrNull()
             if (e != null) {
-                reject(e)
+                reject(e.toJsPromiseError())
             } else {
                 resolve(getCompleted())
             }
         }
     }
-    promise.asDynamic().deferred = this
+    promiseSetDeferred(promise, this.toJsReference())
     return promise
 }
 
 /**
  * Converts this promise value to the instance of [Deferred].
  */
-public fun <T> Promise<T>.asDeferred(): Deferred<T> {
-    val deferred = asDynamic().deferred
-    @Suppress("UnsafeCastFromDynamic")
-    return deferred ?: GlobalScope.async(start = CoroutineStart.UNDISPATCHED) { await() }
+@OptIn(ExperimentalWasmJsInterop::class)
+public fun <T: JsAny?> Promise<T>.asDeferred(): Deferred<T> {
+    @Suppress("UNCHECKED_CAST", "UNCHECKED_CAST_TO_EXTERNAL_INTERFACE")
+    val deferred = promiseGetDeferred(this) as? JsReference<Deferred<T>>
+    return deferred?.get() ?: GlobalScope.async(start = CoroutineStart.UNDISPATCHED) { await() }
 }
 
 /**
@@ -60,8 +75,15 @@ public fun <T> Promise<T>.asDeferred(): Deferred<T> {
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  */
-public suspend fun <T> Promise<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
+@OptIn(ExperimentalWasmJsInterop::class)
+public suspend fun <T: JsAny?> Promise<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     this@await.then(
-        onFulfilled = { cont.resume(it) },
-        onRejected = { cont.resumeWithException(it as? Throwable ?: Exception("Non-Kotlin exception $it")) })
+        onFulfilled = { cont.resume(it); null },
+        onRejected = { cont.resumeWithException(it.toThrowable()); null })
 }
+
+@OptIn(ExperimentalWasmJsInterop::class)
+internal expect fun JsPromiseError.toThrowable(): Throwable
+
+@OptIn(ExperimentalWasmJsInterop::class)
+internal expect fun Throwable.toJsPromiseError(): JsPromiseError

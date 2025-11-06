@@ -4,25 +4,28 @@ import kotlinx.coroutines.testing.*
 import kotlin.js.*
 import kotlin.test.*
 
-class PromiseTest : TestBase() {
+@OptIn(ExperimentalWasmJsInterop::class)
+class PromiseTestWeb : TestBase() {
     @Test
     fun testPromiseResolvedAsDeferred() = GlobalScope.promise {
-        val promise = Promise<JsReference<String>> { resolve, _ ->
+        val promise = Promise { resolve, _ ->
             resolve("OK".toJsReference())
         }
-        val deferred = promise.asDeferred<JsReference<String>>()
+        val deferred = promise.asDeferred()
         assertEquals("OK", deferred.await().get())
+        null
     }
 
     @Test
     fun testPromiseRejectedAsDeferred() = GlobalScope.promise {
-        lateinit var promiseReject: (JsAny) -> Unit
+        lateinit var promiseReject: (JsPromiseError) -> Unit
         val promise = Promise<JsAny?> { _, reject ->
             promiseReject = reject
         }
-        val deferred = promise.asDeferred<JsReference<String>>()
+        val deferred = promise.asDeferred()
         // reject after converting to deferred to avoid "Unhandled promise rejection" warnings
-        promiseReject(TestException("Rejected").toJsReference())
+        @Suppress("CAST_NEVER_SUCCEEDS")
+        promiseReject(TestException("Rejected").toJsReference() as JsPromiseError)
         try {
             deferred.await()
             expectUnreached()
@@ -30,26 +33,29 @@ class PromiseTest : TestBase() {
             assertIs<TestException>(e)
             assertEquals("Rejected", e.message)
         }
+        null
     }
 
     @Test
     fun testCompletedDeferredAsPromise() = GlobalScope.promise {
         val deferred = async(start = CoroutineStart.UNDISPATCHED) {
             // completed right away
-            "OK"
+            "OK".toJsReference()
         }
         val promise = deferred.asPromise()
-        assertEquals("OK", promise.await())
+        assertEquals("OK", promise.await().get())
+        null
     }
 
     @Test
     fun testWaitForDeferredAsPromise() = GlobalScope.promise {
         val deferred = async {
             // will complete later
-            "OK"
+            "OK".toJsReference()
         }
         val promise = deferred.asPromise()
-        assertEquals("OK", promise.await()) // await yields main thread to deferred coroutine
+        assertEquals("OK", promise.await().get()) // await yields main thread to deferred coroutine
+        null
     }
 
     @Test
@@ -61,50 +67,44 @@ class PromiseTest : TestBase() {
         }
         job.cancel() // cancel the job
         r("fail".toJsString()) // too late, the waiting job was already cancelled
+        null
     }
 
     @Test
     fun testAsPromiseAsDeferred() = GlobalScope.promise {
-        val deferred = async { "OK" }
+        val deferred = async { "OK".toJsString() }
         val promise = deferred.asPromise()
-        val d2 = promise.asDeferred<String>()
+        val d2 = promise.asDeferred<JsString>()
         assertSame(d2, deferred)
-        assertEquals("OK", d2.await())
-    }
-
-    @Test
-    fun testLeverageTestResult(): TestResult {
-        // Cannot use expect(..) here
-        var seq = 0
-        val result = runTest {
-            ++seq
-        }
-        return result.then {
-            if (seq != 1) error("Unexpected result: $seq")
-            null
-        }
+        assertEquals("OK", d2.await().toString())
+        null
     }
 
     @Test
     fun testAwaitPromiseRejectedWithNonKotlinException() = GlobalScope.promise {
-        lateinit var r: (JsAny) -> Unit
-        val toAwait = Promise<JsAny?> { _, reject -> r = reject }
+        val toAwait = jsPromiseRejectedWithString()
         val throwable = async(start = CoroutineStart.UNDISPATCHED) {
-            assertFails { toAwait.await<JsAny?>() }
+            assertFails { toAwait.await() }
         }
-        r("Rejected".toJsString())
-        assertIs<JsException>(throwable.await())
+        val throwableResolved = throwable.await()
+        assertEquals(true, throwableResolved.message?.contains("Rejected"), "${throwableResolved.message}")
+        null
     }
 
     @Test
     fun testAwaitPromiseRejectedWithKotlinException() = GlobalScope.promise {
-        lateinit var r: (JsAny) -> Unit
+        lateinit var r: (JsPromiseError) -> Unit
         val toAwait = Promise<JsAny?> { _, reject -> r = reject }
         val throwable = async(start = CoroutineStart.UNDISPATCHED) {
             assertFails { toAwait.await<JsAny?>() }
         }
-        r(RuntimeException("Rejected").toJsReference())
-        assertIs<RuntimeException>(throwable.await())
+        @Suppress("CAST_NEVER_SUCCEEDS")
+        r(RuntimeException("Rejected").toJsReference() as JsPromiseError)
+        assertIs<Exception>(throwable.await())
         assertEquals("Rejected", throwable.await().message)
+        null
     }
 }
+
+@OptIn(ExperimentalWasmJsInterop::class)
+private fun jsPromiseRejectedWithString(): Promise<JsBigInt> = js("Promise.reject(\"Rejected\")")

@@ -101,6 +101,6 @@ final class kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting { // k
 final class kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting : kotlin.js/JsAny { // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting|null[0]
     constructor <init>() // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting.<init>|<init>(){}[0]
 
-    final fun then(kotlin/Function1<kotlin.js/JsAny, kotlin/Unit>): kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting.then|then(kotlin.Function1<kotlin.js.JsAny,kotlin.Unit>){}[0]
-    final fun then(kotlin/Function1<kotlin.js/JsAny, kotlin/Unit>, kotlin/Function1<kotlin.js/JsAny, kotlin/Unit>): kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting.then|then(kotlin.Function1<kotlin.js.JsAny,kotlin.Unit>;kotlin.Function1<kotlin.js.JsAny,kotlin.Unit>){}[0]
+    final fun then(kotlin/Function1<kotlin.js/JsAny, kotlin.js/JsAny>): kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting.then|then(kotlin.Function1<kotlin.js.JsAny,kotlin.js.JsAny>){}[0]
+    final fun then(kotlin/Function1<kotlin.js/JsAny, kotlin.js/JsAny>, kotlin/Function1<kotlin.js/JsAny, kotlin.js/JsAny>): kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting.then|then(kotlin.Function1<kotlin.js.JsAny,kotlin.js.JsAny>;kotlin.Function1<kotlin.js.JsAny,kotlin.js.JsAny>){}[0]
 }

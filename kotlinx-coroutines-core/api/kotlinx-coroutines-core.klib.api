@@ -1263,16 +1263,16 @@ final suspend fun (org.w3c.dom/Window).kotlinx.coroutines/awaitAnimationFrame():
 final suspend fun <#A: kotlin/Any?> (kotlin.js/Promise<#A>).kotlinx.coroutines/await(): #A // kotlinx.coroutines/await|await@kotlin.js.Promise<0:0>(){0§<kotlin.Any?>}[0]
 
 // Targets: [wasmJs]
-final fun <#A: kotlin/Any?> (kotlin.js/Promise<kotlin.js/JsAny?>).kotlinx.coroutines/asDeferred(): kotlinx.coroutines/Deferred<#A> // kotlinx.coroutines/asDeferred|asDeferred@kotlin.js.Promise<kotlin.js.JsAny?>(){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin.js/JsAny?> (kotlin.js/Promise<#A>).kotlinx.coroutines/asDeferred(): kotlinx.coroutines/Deferred<#A> // kotlinx.coroutines/asDeferred|asDeferred@kotlin.js.Promise<0:0>(){0§<kotlin.js.JsAny?>}[0]
 
 // Targets: [wasmJs]
-final fun <#A: kotlin/Any?> (kotlinx.coroutines/CoroutineScope).kotlinx.coroutines/promise(kotlin.coroutines/CoroutineContext = ..., kotlinx.coroutines/CoroutineStart = ..., kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): kotlin.js/Promise<kotlin.js/JsAny?> // kotlinx.coroutines/promise|promise@kotlinx.coroutines.CoroutineScope(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.CoroutineStart;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin.js/JsAny?> (kotlinx.coroutines/CoroutineScope).kotlinx.coroutines/promise(kotlin.coroutines/CoroutineContext = ..., kotlinx.coroutines/CoroutineStart = ..., kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): kotlin.js/Promise<#A> // kotlinx.coroutines/promise|promise@kotlinx.coroutines.CoroutineScope(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.CoroutineStart;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.js.JsAny?>}[0]
 
 // Targets: [wasmJs]
-final fun <#A: kotlin/Any?> (kotlinx.coroutines/Deferred<#A>).kotlinx.coroutines/asPromise(): kotlin.js/Promise<kotlin.js/JsAny?> // kotlinx.coroutines/asPromise|asPromise@kotlinx.coroutines.Deferred<0:0>(){0§<kotlin.Any?>}[0]
+final fun <#A: kotlin.js/JsAny?> (kotlinx.coroutines/Deferred<#A>).kotlinx.coroutines/asPromise(): kotlin.js/Promise<#A> // kotlinx.coroutines/asPromise|asPromise@kotlinx.coroutines.Deferred<0:0>(){0§<kotlin.js.JsAny?>}[0]
 
 // Targets: [wasmJs]
-final suspend fun <#A: kotlin/Any?> (kotlin.js/Promise<kotlin.js/JsAny?>).kotlinx.coroutines/await(): #A // kotlinx.coroutines/await|await@kotlin.js.Promise<kotlin.js.JsAny?>(){0§<kotlin.Any?>}[0]
+final suspend fun <#A: kotlin.js/JsAny?> (kotlin.js/Promise<#A>).kotlinx.coroutines/await(): #A // kotlinx.coroutines/await|await@kotlin.js.Promise<0:0>(){0§<kotlin.js.JsAny?>}[0]
 
 // Targets: [wasmWasi]
 final fun kotlinx.coroutines.internal/runTestCoroutine(kotlin.coroutines/CoroutineContext, kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, kotlin/Unit>) // kotlinx.coroutines.internal/runTestCoroutine|runTestCoroutine(kotlin.coroutines.CoroutineContext;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,kotlin.Unit>){}[0]

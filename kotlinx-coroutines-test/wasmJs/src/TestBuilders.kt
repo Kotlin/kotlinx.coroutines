@@ -10,6 +10,7 @@ public actual typealias TestResult = JsPromiseInterfaceForTesting
 internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() -> Unit): TestResult =
     GlobalScope.promise {
         testProcedure()
+        Unit.toJsReference()
     }.unsafeCast()
 
 internal actual fun dumpCoroutines() { }
