@@ -14,7 +14,7 @@ import java.util.concurrent.*
 open class ChannelBenchmark {
     // max coroutines launched per benchmark
     // to allow for true parallelism
-    val cores = 4
+    val cores = Runtime.getRuntime().availableProcessors()
 
     //                4 KB,   40 KB,   400 KB,      4 MB,      40 MB,      400 MB
     @Param("1000", "10000", "100000", "1000000", "10000000", "100000000")
@@ -22,10 +22,7 @@ open class ChannelBenchmark {
 
     // 1. Preallocate.
     // 2. Different values to avoid helping the cache.
-    val maxCount = 100000000
-    val list = ArrayList<Int>(maxCount).apply {
-        repeat(maxCount) { add(it) }
-    }
+    val list = List(100000000) { it }
 
     @State(Scope.Benchmark)
     open class UnlimitedChannelWrapper {
@@ -35,10 +32,7 @@ open class ChannelBenchmark {
 
         lateinit var channel: Channel<Int>
 
-        val maxCount = 100000000
-        val list = ArrayList<Int>(maxCount).apply {
-            repeat(maxCount) { add(it) }
-        }
+        val list = List(100000000) { it }
 
         @Setup(Level.Invocation)
         fun createPrefilledChannel() {
@@ -92,16 +86,10 @@ open class ChannelBenchmark {
         runSendReceive(wrapper.channel, count, cores / 2, cores / 2)
     }
 
-    private suspend fun sendManyItems(count: Int, channel: Channel<Int>) {
-        repeat(count) {
-            // NB: it is `send`, not `trySend`, on purpose, since we are testing the `send` performance here.
-            channel.send(list[it])
-        }
-    }
-
     private suspend fun runSend(count: Int, capacity: Int) {
-        Channel<Int>(capacity).also {
-            sendManyItems(count, it)
+        val channel = Channel<Int>(capacity)
+        repeat(count) {
+            channel.send(list[it])
         }
     }
 
@@ -115,25 +103,27 @@ open class ChannelBenchmark {
     // E.g., for the rendezvous channel, senders should be equal to receivers.
     // If they are non-equal, it's a special case of performance under contention.
     private suspend inline fun runSendReceive(channel: Channel<Int>, count: Int, senders: Int = 1, receivers: Int = 1) {
-        require(senders > 0 && receivers > 0)
-        // Can be used with more than num cores but needs thinking it through,
-        // e.g., what would it measure?
-        require(senders + receivers <= cores)
-        // if the channel is prefilled, do not receive the prefilled items
+        //require (senders > 0 && receivers > 0)
+        //require (senders + receivers <= cores) // Can be used with more than num cores, but what would it measure?
+        // if the channel is prefilled, only receive the items that were sent by this function
         val receiveAll = channel.isEmpty
         // send almost `count` items, up to `senders - 1` items will not be sent (negligible)
         val countPerSender = count / senders
-        // for prefilled channel only: up to `receivers - 1` items of the sent items will not be received (negligible)
+        // for prefilled channel only: up to `receivers - 1` items of the sent items will not be received
+        // (on top of the prefilled items which we do not aim to receive at all) (negligible)
         val countPerReceiverAtLeast = countPerSender * senders / receivers
         withContext(Dispatchers.Default) {
             repeat(receivers) {
                 launch {
                     if (receiveAll) {
-                        channel.forEach { }
+                        channel.forEach {
+                            // possibly receive into the blackhole
+                        }
                     } else {
                        repeat(countPerReceiverAtLeast) {
-                            channel.receive()
-                        }
+                           // possibly receive into the blackhole
+                           channel.receive()
+                       }
                     }
                 }
             }
@@ -141,7 +131,9 @@ open class ChannelBenchmark {
             coroutineScope {
                 repeat(senders) {
                     launch {
-                        sendManyItems(countPerSender, channel)
+                        repeat(countPerSender) {
+                            channel.send(list[it])
+                        }
                     }
                 }
             }
