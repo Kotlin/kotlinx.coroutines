@@ -1051,7 +1051,15 @@ public inline fun <T> ChannelResult<T>.onClosed(action: (exception: Throwable?) 
 /**
  * Iterator for a [ReceiveChannel].
  * Instances of this interface are *not thread-safe*.
- * Each iterator instance should be created and used by a single coroutine.
+ * A coroutine is only allowed to call methods on the iterator instances which it instantiated.
+ *
+ * Typically, an iterator is used indirectly in the `for` loop and is not instantiated explicitly.
+ *
+ * ```
+ * for (element in channel) {
+ *     // process element
+ * }
+ * ```
  *
  * An example usage:
  *
