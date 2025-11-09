@@ -132,13 +132,19 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
     val deferred = CompletableDeferred<T>()
     Futures.addCallback(this, object : FutureCallback<T> {
         override fun onSuccess(result: T) {
-            runCatching { deferred.complete(result) }
-                .onFailure { handleCoroutineException(EmptyCoroutineContext, it) }
+            try {
+                deferred.complete(result)
+            } catch (e: Exception) {
+                handleCoroutineException(EmptyCoroutineContext, e)
+            }
         }
 
         override fun onFailure(t: Throwable) {
-            runCatching { deferred.completeExceptionally(t) }
-                .onFailure { handleCoroutineException(EmptyCoroutineContext, it) }
+            try {
+                deferred.completeExceptionally(t)
+            } catch (e: Exception) {
+                handleCoroutineException(EmptyCoroutineContext, e)
+            }
         }
     }, MoreExecutors.directExecutor())
 
@@ -268,6 +274,8 @@ private class ToContinuation<T>(
                 // Future. Anything else showing up here indicates a very fundamental bug in a
                 // Future implementation.
                 continuation.resumeWithException(e.nonNullCause())
+            } catch (e: CancellationException) {
+                continuation.cancel(e)
             }
         }
     }
