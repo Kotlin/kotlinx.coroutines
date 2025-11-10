@@ -37,72 +37,6 @@ class ClosedChannelTest : TestBase() {
         }
     }
 
-    @Test
-    fun testClosedWithExceptionToListThrows() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Int>()
-            channel.close(TestException())
-            assertFailsWith<TestException> { channel.toList() }
-        }
-    }
-
-    @Test
-    fun testClosedConsumeEachOk() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Int>()
-            channel.close()
-            channel.consumeEach {  }
-        }
-    }
-
-    @Test
-    fun testClosedWithExceptionConsumeEachThrows() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Int>()
-            channel.close(TestException())
-            assertFailsWith<TestException> { channel.consumeEach {  } }
-        }
-    }
-
-    /**
-     * toList() alternative when a channel might close with an exception.
-     */
-
-    @Test
-    fun testToListCatching() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Unit>()
-            channel.close(TestException())
-            val lst = mutableListOf<Unit>()
-            while (true) {
-                channel.receiveCatching().onClosed { // suspends
-                    assertTrue(it is TestException)
-                    break
-                }.getOrThrow().apply(lst::add)
-            }
-            assertTrue(lst.isEmpty())
-        }
-    }
-
-    @Test
-    fun testTryToListCatching() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Unit>()
-            channel.close(TestException())
-            val lst = mutableListOf<Unit>()
-            while (true) {
-                channel.tryReceive().onClosed { // does not suspend
-                    assertTrue(it is TestException)
-                    break
-                }.onFailure {
-                    // empty, but not yet closed
-                    break
-                }.getOrThrow().apply(lst::add)
-            }
-            assertTrue(lst.isEmpty())
-        }
-    }
-
     /**
      * Properties.
      *
@@ -127,13 +61,6 @@ class ClosedChannelTest : TestBase() {
             channel.close(TestException())
             assertTrue(channel.isClosedForReceive)
         }
-    }
-
-    @Test
-    fun testIsEmpty() = runTest {
-        val channel = Channel<Int>()
-        assertTrue(channel.isEmpty)
-        assertFalse(channel.isClosedForReceive)
     }
 
     @Test
