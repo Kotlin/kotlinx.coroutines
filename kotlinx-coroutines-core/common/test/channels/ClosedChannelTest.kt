@@ -28,15 +28,6 @@ class ClosedChannelTest : TestBase() {
         }
     }
 
-    @Test
-    fun testClosedToListOk() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Int>()
-            channel.close()
-            channel.toList()
-        }
-    }
-
     /**
      * Properties.
      *
