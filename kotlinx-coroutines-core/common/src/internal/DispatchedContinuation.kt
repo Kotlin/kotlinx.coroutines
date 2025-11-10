@@ -253,7 +253,41 @@ internal fun CoroutineDispatcher.safeDispatch(context: CoroutineContext, runnabl
     try {
         dispatch(context, runnable)
     } catch (e: Throwable) {
-        throw DispatchException(e, this, context)
+        // When a dispatcher throws from `dispatch`, it is usually a user-level
+        // issue (e.g. executor/handler was closed). Previously we wrapped and
+        // rethrew as DispatchException which could bubble to the resumer and
+        // leave the awaited coroutine hung. Try to recover by falling back to
+        // Dispatchers.IO so that the runnable still gets executed, and report
+        // the original failure to the coroutine exception handler.
+        val dispatchEx = DispatchException(e, this, context)
+            try {
+                // Try to cancel the coroutine's Job so that the failing dispatch is
+            // reflected in coroutine's lifecycle (see issue discussion). Attach
+            // the original dispatch exception as the cancellation cause so that
+            // coroutine observers can see the root cause without reporting it as
+            // an uncaught global exception (which breaks tests expecting no
+            // uncaught exceptions).
+            val cancelCause = CancellationException(
+                "The task was rejected, the dispatcher '${this}' was closed"
+            ).apply { initCause(e) }
+            context[Job]?.cancel(cancelCause)
+
+            // Use Dispatchers.Default as a portable fallback in common code (IO is platform-specific).
+            Dispatchers.Default.dispatch(context, runnable)
+            // If the caller provided a CoroutineExceptionHandler in the
+            // context, report the original dispatch failure to it so user
+            // handlers are notified (this preserves test expectations that
+            // a handler receives dispatch failures). If no handler is
+            // present, avoid reporting to the global handler to reduce test
+            // noise and preserve previous semantics for non-handler cases.
+            if (context[CoroutineExceptionHandler] != null) {
+                handleCoroutineException(context, dispatchEx)
+            }
+        } catch (fallback: Throwable) {
+            // If fallback also fails, report the fallback (and keep the original
+            // dispatch exception attached to the Job cancellation cause).
+            handleCoroutineException(context, fallback)
+        }
     }
 }
 

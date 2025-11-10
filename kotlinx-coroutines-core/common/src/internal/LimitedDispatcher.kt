@@ -41,15 +41,31 @@ internal class LimitedDispatcher(
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        dispatchInternal(block) { worker ->
-            dispatcher.safeDispatch(this, worker)
+        dispatchInternal(context, block) { worker ->
+            // Call underlying dispatcher directly. If it throws, wrap into
+            // DispatchException so callers can handle failures uniformly.
+            // Note: do NOT decrement runningWorkers here - that's handled by
+            // dispatchInternal's catch block which already allocated the worker.
+            try {
+                dispatcher.dispatch(context, worker)
+            } catch (e: Throwable) {
+                // Wrap exception but let dispatchInternal's catch block handle
+                // the worker counter decrement
+                if (e is DispatchException) throw e
+                throw DispatchException(e, dispatcher, context)
+            }
         }
     }
 
     @InternalCoroutinesApi
     override fun dispatchYield(context: CoroutineContext, block: Runnable) {
-        dispatchInternal(block) { worker ->
-            dispatcher.dispatchYield(this, worker)
+        dispatchInternal(context, block) { worker ->
+            try {
+                dispatcher.dispatchYield(context, worker)
+            } catch (e: Throwable) {
+                if (e is DispatchException) throw e
+                throw DispatchException(e, dispatcher, context)
+            }
         }
     }
 
@@ -57,7 +73,7 @@ internal class LimitedDispatcher(
      * Tries to dispatch the given [block].
      * If there are not enough workers, it starts a new one via [startWorker].
      */
-    private inline fun dispatchInternal(block: Runnable, startWorker: (Worker) -> Unit) {
+    private inline fun dispatchInternal(context: CoroutineContext, block: Runnable, startWorker: (Worker) -> Unit) {
         // Add task to queue so running workers will be able to see that
         queue.addLast(block)
         if (runningWorkers.value >= parallelism) return
@@ -74,7 +90,12 @@ internal class LimitedDispatcher(
             dispatch does succeed.
             If we don't decrement the counter, it will be impossible to ever reach the target parallelism again. */
             runningWorkers.decrementAndGet()
-            throw e
+            // Normalize thrown exceptions into DispatchException so callers
+            // (and tests) can uniformly catch DispatchException regardless of
+            // whether the underlying dispatcher threw a raw exception or an
+            // already-wrapped DispatchException.
+            if (e is DispatchException) throw e
+            throw DispatchException(e, dispatcher, context)
         }
     }
 
@@ -127,10 +148,15 @@ internal class LimitedDispatcher(
                     }
                     currentTask = obtainTaskOrDeallocateWorker() ?: return
                     // 16 is our out-of-thin-air constant to emulate fairness. Used in JS dispatchers as well
-                    if (++fairnessCounter >= 16 && dispatcher.safeIsDispatchNeeded(this@LimitedDispatcher)) {
+                    if (++fairnessCounter >= 16 && dispatcher.isDispatchNeeded(this@LimitedDispatcher)) {
                         // Do "yield" to let other views execute their runnable as well
                         // Note that we do not decrement 'runningWorkers' as we are still committed to our part of work
-                        dispatcher.safeDispatch(this@LimitedDispatcher, this)
+                        // Use direct dispatch here (not safeDispatch) to preserve original semantics:
+                        // if underlying dispatch throws synchronously, we want the exception to bubble
+                        // so worker allocation can be deallocated by the caller. Swallowing the
+                        // exception here (via safeDispatch) would keep the worker slot reserved and
+                        // break limited-parallelism guarantees.
+                        dispatcher.dispatch(this@LimitedDispatcher, this)
                         return
                     }
                 }
