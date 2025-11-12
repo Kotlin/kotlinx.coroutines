@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -13,10 +11,10 @@ class CancellableContinuationTest : TestBase() {
         val job = launch {
             try {
                 expect(2)
-                suspendCancellableCoroutine<Unit> { c ->
+                suspendCancellableCoroutine { c ->
                     continuation = c
                 }
-            } catch (e: TestException) {
+            } catch (_: TestException) {
                 expect(3)
             }
         }
@@ -24,7 +22,7 @@ class CancellableContinuationTest : TestBase() {
         yield()
         continuation!!.resumeWithException(TestException())
         yield()
-        assertFailsWith<IllegalStateException> { continuation!!.resumeWithException(TestException()) }
+        assertFailsWith<IllegalStateException> { continuation.resumeWithException(TestException()) }
         job.join()
         finish(4)
     }
@@ -34,7 +32,7 @@ class CancellableContinuationTest : TestBase() {
         var continuation: Continuation<Unit>? = null
         val job = launch {
             expect(2)
-            suspendCancellableCoroutine<Unit> { c ->
+            suspendCancellableCoroutine { c ->
                 continuation = c
             }
             expect(3)
@@ -43,7 +41,7 @@ class CancellableContinuationTest : TestBase() {
         yield()
         continuation!!.resume(Unit)
         job.join()
-        assertFailsWith<IllegalStateException> { continuation!!.resumeWithException(TestException()) }
+        assertFailsWith<IllegalStateException> { continuation.resumeWithException(TestException()) }
         finish(4)
     }
 
@@ -52,7 +50,7 @@ class CancellableContinuationTest : TestBase() {
         var continuation: Continuation<Unit>? = null
         val job = launch {
             expect(2)
-            suspendCancellableCoroutine<Unit> { c ->
+            suspendCancellableCoroutine { c ->
                 continuation = c
             }
             expect(3)
@@ -61,12 +59,12 @@ class CancellableContinuationTest : TestBase() {
         yield()
         continuation!!.resume(Unit)
         job.join()
-        assertFailsWith<IllegalStateException> { continuation!!.resume(Unit) }
+        assertFailsWith<IllegalStateException> { continuation.resume(Unit) }
         finish(4)
     }
 
     /**
-     * Cancelling outer job may, in practise, race with attempt to resume continuation and resumes
+     * Cancelling the outer job may, in practice, race with an attempt to resume continuation and resumes
      * should be ignored. Here suspended coroutine is cancelled but then resumed with exception.
      */
     @Test
@@ -75,10 +73,10 @@ class CancellableContinuationTest : TestBase() {
         val job = launch {
             try {
                 expect(2)
-                suspendCancellableCoroutine<Unit> { c ->
+                suspendCancellableCoroutine { c ->
                     continuation = c
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 expect(3)
             }
         }
@@ -100,10 +98,10 @@ class CancellableContinuationTest : TestBase() {
         val job = launch {
             try {
                 expect(2)
-                suspendCancellableCoroutine<Unit> { c ->
+                suspendCancellableCoroutine { c ->
                     continuation = c
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 expect(3)
             }
         }

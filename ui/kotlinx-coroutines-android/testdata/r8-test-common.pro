@@ -15,4 +15,4 @@
 }
 
 # We are cheating a bit by not having android.jar on R8's library classpath. Ignore those warnings.
--ignorewarnings
+-dontwarn

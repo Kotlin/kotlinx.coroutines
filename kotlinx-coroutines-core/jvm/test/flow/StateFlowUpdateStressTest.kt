@@ -10,7 +10,7 @@ class StateFlowUpdateStressTest : TestBase() {
     private val iterations = 1_000_000 * stressTestMultiplier
 
     @get:Rule
-    public val executor = ExecutorRule(2)
+    val executor = ExecutorRule(2)
 
     @Test
     fun testUpdate() = doTest { update { it + 1 } }

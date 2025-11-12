@@ -100,7 +100,7 @@ class ReactorContextTest : TestBase() {
 
     private fun bar(): Flow<String> = flux {
         val ctx = reactorContext()
-        (1..3).forEach { send(ctx.getOrDefault(it, "noValue")) }
+        (1..3).forEach { send(ctx.getOrDefault(it, "noValue")!!) }
     }.asFlow()
 
     private suspend fun reactorContext() =

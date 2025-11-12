@@ -1,11 +1,8 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines.selects
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
-import kotlin.time.Duration.Companion.seconds
 
 class SelectDeferredTest : TestBase() {
     @Test
@@ -16,7 +13,7 @@ class SelectDeferredTest : TestBase() {
             42
         }
         expect(2)
-        val res = select<String> {
+        val res = select {
             d1.onAwait { v ->
                 expect(4)
                 assertEquals(42, v)
@@ -41,7 +38,7 @@ class SelectDeferredTest : TestBase() {
             expect(6)
         }
         expect(2)
-        val res = select<String> {
+        val res = select {
             d1.onAwait { v ->
                 expect(5)
                 assertEquals(42, v)
@@ -63,7 +60,7 @@ class SelectDeferredTest : TestBase() {
         }
         launch {
             expect(3)
-            val res = select<String> {
+            val res = select {
                 d1.onAwait { v ->
                     expect(7)
                     assertEquals(42, v)
@@ -98,7 +95,7 @@ class SelectDeferredTest : TestBase() {
             "d2" // returns result
         }
         expect(2)
-        val res = select<String> {
+        val res = select {
             d1.onAwait {
                 expectUnreached()
                 "FAIL"
@@ -143,7 +140,7 @@ class SelectDeferredTest : TestBase() {
             d.cancel() // will cancel after select starts
         }
         expect(2)
-        select<Unit> {
+        select {
             d.onAwait {
                 expectUnreached() // will not select
             }
@@ -154,7 +151,7 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSelectIncomplete() = runTest {
         val deferred = async { Wrapper("OK") }
-        val result = select<Wrapper> {
+        val result = select {
             assertFalse(deferred.isCompleted)
             assertTrue(deferred.isActive)
             deferred.onAwait {
@@ -168,7 +165,7 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSelectIncompleteFastPath() = runTest {
         val deferred = async(Dispatchers.Unconfined) { Wrapper("OK") }
-        val result = select<Wrapper> {
+        val result = select {
             assertTrue(deferred.isCompleted)
             assertFalse(deferred.isActive)
             deferred.onAwait {

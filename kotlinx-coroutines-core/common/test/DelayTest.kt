@@ -1,6 +1,3 @@
-
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "DEPRECATION") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*

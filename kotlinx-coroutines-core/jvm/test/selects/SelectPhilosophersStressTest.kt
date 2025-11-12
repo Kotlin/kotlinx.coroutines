@@ -6,6 +6,7 @@ import kotlinx.coroutines.sync.*
 import org.junit.Test
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class SelectPhilosophersStressTest : TestBase() {
     private val TEST_DURATION = 3000L * stressTestMultiplierSqrt
 

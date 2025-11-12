@@ -35,9 +35,9 @@ object FieldWalker {
      * Reflectively starts to walk through object graph and returns identity set of all reachable objects.
      * Use [walkRefs] if you need a path from root for debugging.
      */
-    public fun walk(root: Any?): Set<Any> = walkRefs(root, false).keys
+    fun walk(root: Any?): Set<Any> = walkRefs(root, false).keys
 
-    public fun assertReachableCount(expected: Int, root: Any?, rootStatics: Boolean = false, predicate: (Any) -> Boolean) {
+    fun assertReachableCount(expected: Int, root: Any?, rootStatics: Boolean = false, predicate: (Any) -> Boolean) {
         val visited = walkRefs(root, rootStatics)
         val actual = visited.keys.filter(predicate)
         if (actual.size != expected) {
@@ -86,9 +86,6 @@ object FieldWalker {
                     cur = ref.parent
                     path += "[${ref.index}]"
                 }
-                else -> {
-                    // Nothing, kludge for IDE
-                }
             }
         }
         path.reverse()
@@ -127,7 +124,7 @@ object FieldWalker {
             element is AtomicLongFieldUpdater<*> -> {
                 /* filter it out here to suppress its subclasses too */
             }
-            element is ExecutorService && type.name == "java.util.concurrent.Executors\$DelegatedExecutorService" -> {
+            element is ExecutorService && type.name == $$"java.util.concurrent.Executors$DelegatedExecutorService" -> {
                 /* can't access anything in the executor */
             }
             // All the other classes are reflectively scanned

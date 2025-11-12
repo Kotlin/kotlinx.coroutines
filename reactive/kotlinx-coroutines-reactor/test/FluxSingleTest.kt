@@ -176,7 +176,7 @@ class FluxSingleTest : TestBase() {
 
         checkErroneous(flux) {
             assert(it is IllegalStateException)
-            assertEquals("OK", it.message)
+            assertEquals("OK", it?.message)
         }
     }
 

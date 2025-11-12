@@ -9,7 +9,7 @@ class CoroutinesTimeoutDisabledTracesTest : TestBase(disableOutCheck = true) {
 
     @Rule
     @JvmField
-    public val validation = TestFailureValidation(
+    val validation = TestFailureValidation(
         500, true, false,
         TestResultSpec(
             "hangingTest", expectedOutParts = listOf(

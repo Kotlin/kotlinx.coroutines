@@ -9,7 +9,7 @@ import kotlin.test.Test
 
 class CancellableContinuationResumeCloseStressTest : TestBase() {
     @get:Rule
-    public val dispatcher = ExecutorRule(2)
+    val dispatcher = ExecutorRule(2)
 
     private val startBarrier = CyclicBarrier(3)
     private val doneBarrier = CyclicBarrier(2)
@@ -47,7 +47,7 @@ class CancellableContinuationResumeCloseStressTest : TestBase() {
     private suspend fun resumeClose() = suspendCancellableCoroutine<String> { cont ->
         dispatcher.executor.execute {
             startBarrier.await() // (2) resume at the same time
-            cont.resume("OK") {
+            cont.resume("OK") { _, _, _ ->
                 close()
             }
             doneBarrier.await()

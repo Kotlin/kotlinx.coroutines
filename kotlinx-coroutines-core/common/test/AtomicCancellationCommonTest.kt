@@ -131,13 +131,14 @@ class AtomicCancellationCommonTest : TestBase() {
         finish(4)
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testSelectLockCancellable() = runTest {
         expect(1)
         val mutex = Mutex(true) // locked mutex
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            select<String> { // suspends
+            select { // suspends
                 mutex.onLock {
                     expect(4)
                     "OK"
