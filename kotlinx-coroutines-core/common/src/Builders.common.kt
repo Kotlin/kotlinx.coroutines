@@ -159,6 +159,17 @@ public suspend fun <T> withContext(
         // FAST PATH #2 -- the new dispatcher is the same as the old one (something else changed)
         // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
         if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
+            val dispatcher = newContext[ContinuationInterceptor] as? CoroutineDispatcher
+            // Check if we need to dispatch despite having the same dispatcher.
+            // This is critical for CoroutineStart.UNDISPATCHED cases where the coroutine
+            // may be running on the wrong thread even though the dispatcher is "the same".
+            // We only force dispatch for dispatchers that reliably check the current thread.
+            if (dispatcher != null && shouldCheckDispatchNeeded(dispatcher) && dispatcher.isDispatchNeeded(newContext)) {
+                // Dispatcher indicates we're not on the correct thread, force dispatch
+                val coroutine = DispatchedCoroutine(newContext, uCont)
+                block.startCoroutineCancellable(coroutine, coroutine)
+                return@sc coroutine.getResult()
+            }
             val coroutine = UndispatchedCoroutine(newContext, uCont)
             // There are changes in the context, so this thread needs to be updated
             withCoroutineContext(coroutine.context, null) {
@@ -170,6 +181,11 @@ public suspend fun <T> withContext(
         block.startCoroutineCancellable(coroutine, coroutine)
         coroutine.getResult()
     }
+}
+
+private fun shouldCheckDispatchNeeded(dispatcher: CoroutineDispatcher): Boolean {
+    if (dispatcher === Dispatchers.Unconfined) return false
+    return true
 }
 
 /**
