@@ -75,13 +75,16 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * and returns a reference to the coroutine as a [ReceiveChannel]. This resulting
  * object can be used to [receive][ReceiveChannel.receive] elements produced by this coroutine.
  *
- * The scope of the coroutine contains the [ProducerScope] interface, which implements
- * both [CoroutineScope] and [SendChannel], so that the coroutine can invoke [send][SendChannel.send] directly.
+ * The receiver of [block] is a [ProducerScope], which implements both [SendChannel] and [CoroutineScope].
+ * This allows invoking [send][SendChannel.send] directly from the [block] to send elements to the channel
+ * while treating [block] as a coroutine.
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter.
  * See the [Channel] interface documentation for details.
  * By default, an unbuffered channel is created.
  * If an invalid [capacity] value is specified, an [IllegalArgumentException] is thrown.
+ *
+ * ## Behavior specifics
  *
  * ### Behavior on termination
  *
@@ -130,6 +133,19 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * check(produceJob.isCancelled == true)
  * // prints 0, 1, 2, 3, 4, then throws `TestException`
  * for (value in channel) { println(value) }
+ * ```
+ *
+ * The exception will not be considered uncaught even if the parent coroutine does not react to it
+ * (for example, because it has a [SupervisorJob]).
+ * This means that, in the following code, the exception will not be reported anywhere and needs to be handled
+ * manually by receiving from the resulting channel:
+ *
+ * ```
+ * supervisorScope {
+ *     produce<Int> {
+ *         throw IllegalStateException()
+ *     }
+ * }
  * ```
  *
  * When the coroutine is cancelled via structured concurrency and not the `cancel` function,
@@ -182,7 +198,36 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * If this is unsuitable, please create a [Channel] manually and pass the `onUndeliveredElement` callback to the
  * constructor: [Channel(onUndeliveredElement = ...)][Channel].
  *
- * ### Usage example
+ * ## Structured concurrency
+ *
+ * ### Coroutine context
+ *
+ * [produce] creates a *child coroutine* of `this` [CoroutineScope].
+ *
+ * See the corresponding subsection in the [launch] documentation for details on how the coroutine context is created.
+ * In essence, the elements of [context] are combined with the elements of the [CoroutineScope.coroutineContext],
+ * typically overriding them. It is incorrect to pass a [Job] element there, as this breaks structured concurrency.
+ *
+ * ### Interactions between coroutines
+ *
+ * The details of structured concurrency are described in the [CoroutineScope] interface documentation.
+ * Here is a restatement of some main points as they relate to [async]:
+ *
+ * - The lifecycle of the parent [CoroutineScope] can not end until this coroutine
+ *   (as well as all its children) completes.
+ * - If the parent [CoroutineScope] is cancelled, this coroutine is cancelled as well.
+ * - If this coroutine fails with a non-[CancellationException] exception
+ *   and the parent [CoroutineScope] has a non-supervisor [Job] in its context,
+ *   the parent [Job] is cancelled with this exception.
+ * - If this coroutine fails with an exception and the parent [CoroutineScope] has a supervisor [Job] or no job at all
+ *   (as is the case with [GlobalScope] or malformed scopes),
+ *   the exception is considered uncaught and is only available through the returned [Channel].
+ * - The lifecycle of the [CoroutineScope] passed as the receiver to the [block]
+ *   will not end until the [block] completes (or gets cancelled before ever having a chance to run).
+ * - If the [block] throws a [CancellationException], the coroutine is considered cancelled,
+ *   cancelling all its children in turn, but the parent does not get notified.
+ *
+ * ## Usage example
  *
  * ```
  * /* Generate random integers until we find the square root of 9801.

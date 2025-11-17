@@ -836,7 +836,8 @@ public object GlobalScope : CoroutineScope {
  * ```
  *
  * If cancellation during the acquisition of the resource is also undesired, the following pattern can be used
- * ([coroutineScope] is not needed here, as [withContext] defines its own [CoroutineScope], but :
+ * ([coroutineScope] would be meaningless here, as [withContext] defines its own [CoroutineScope],
+ * but another lexical scope like [supervisorScope] or [withContext] can be useful as part of this pattern):
  *
  * ```
  * withContext(NonCancellable) {
