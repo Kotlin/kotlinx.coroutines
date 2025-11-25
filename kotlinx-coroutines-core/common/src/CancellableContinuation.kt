@@ -1,6 +1,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
@@ -424,10 +425,12 @@ internal fun <T> CancellableContinuation<T>.invokeOnCancellation(handler: Cancel
  * [CoroutineDispatcher] class, then there is no prompt cancellation guarantee. A custom continuation interceptor
  * can resume execution of a previously suspended coroutine even if its job was already cancelled.
  */
+@OptIn(ExperimentalContracts::class)
 public suspend inline fun <T> suspendCancellableCoroutine(
     crossinline block: (CancellableContinuation<T>) -> Unit
-): T =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
+): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
         val cancellable = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_CANCELLABLE)
         /*
          * For non-atomic cancellation we setup parent-child relationship immediately
@@ -438,6 +441,7 @@ public suspend inline fun <T> suspendCancellableCoroutine(
         block(cancellable)
         cancellable.getResult()
     }
+}
 
 /**
  * Suspends the coroutine similar to [suspendCancellableCoroutine], but an instance of
