@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION_ERROR")
+
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
@@ -190,6 +192,7 @@ internal class DispatchedContinuation<in T>(
         if (dispatcher.safeIsDispatchNeeded(context)) {
             _state = state
             resumeMode = MODE_ATOMIC
+            (context[Job] as? JobSupport)?.markInitialDispatchDone()
             dispatcher.safeDispatch(context, this)
         } else {
             executeUnconfined(state, MODE_ATOMIC) {
@@ -208,6 +211,7 @@ internal class DispatchedContinuation<in T>(
         if (dispatcher.safeIsDispatchNeeded(context)) {
             _state = state
             resumeMode = MODE_CANCELLABLE
+            (context[Job] as? JobSupport)?.markInitialDispatchDone()
             dispatcher.safeDispatch(context, this)
         } else {
             executeUnconfined(state, MODE_CANCELLABLE) {

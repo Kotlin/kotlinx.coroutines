@@ -363,6 +363,30 @@ class WithContextTest : TestBase() {
         finish(4)
     }
 
+    @Test
+    fun testUndispatchedWithContextSwitchesToCorrectThread() = runTest {
+        val dispatcher = newSingleThreadContext("TestThread")
+        try {
+            val mainThread = Thread.currentThread()
+            var withinThread: Thread? = null
+            
+            val job = launch(dispatcher, start = CoroutineStart.UNDISPATCHED) {
+                val startThread = Thread.currentThread()
+                assertEquals(mainThread, startThread, "UNDISPATCHED coroutine should start on main thread")
+                
+                withContext(dispatcher) {
+                    withinThread = Thread.currentThread()
+                }
+            }
+            
+            job.join()
+            assertNotNull(withinThread, "withContext block should have executed")
+            assertNotEquals(mainThread, withinThread, "withContext must switch to dispatcher thread")
+        } finally {
+            dispatcher.close()
+        }
+    }
+
     private class Wrapper(val value: String) : Incomplete {
         override val isActive: Boolean
             get() =  error("")

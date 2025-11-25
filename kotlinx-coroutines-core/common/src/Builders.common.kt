@@ -1,7 +1,7 @@
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
 @file:OptIn(ExperimentalContracts::class)
-@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
+@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND", "DEPRECATION_ERROR")
 
 package kotlinx.coroutines
 
@@ -158,7 +158,19 @@ public suspend fun <T> withContext(
         }
         // FAST PATH #2 -- the new dispatcher is the same as the old one (something else changed)
         // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
-        if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
+        val newInterceptor = newContext[ContinuationInterceptor]
+        if (newInterceptor == oldContext[ContinuationInterceptor]) {
+            val job = newContext[Job] as? JobSupport
+            // If the user explicitly specified a dispatcher in withContext (not inherited via coroutineContext + ...)
+            // and this coroutine was started UNDISPATCHED, we need to force dispatch to respect the explicit dispatcher change
+            // We detect explicit dispatcher by checking if context IS a ContinuationInterceptor (not compound context)
+            if (job != null && !job.isInitialDispatchDone && 
+                context is ContinuationInterceptor &&
+                newInterceptor is CoroutineDispatcher && newInterceptor.isDispatchNeeded(newContext)) {
+                val coroutine = DispatchedCoroutine(newContext, uCont)
+                block.startCoroutineCancellable(coroutine, coroutine)
+                return@sc coroutine.getResult()
+            }
             val coroutine = UndispatchedCoroutine(newContext, uCont)
             // There are changes in the context, so this thread needs to be updated
             withCoroutineContext(coroutine.context, null) {

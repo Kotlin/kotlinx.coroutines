@@ -129,6 +129,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         get() = _parentHandle.value
         set(value) { _parentHandle.value = value }
 
+    private val _initialDispatchDone = atomic(false)
+    internal val isInitialDispatchDone: Boolean get() = _initialDispatchDone.value
+    internal fun markInitialDispatchDone() { _initialDispatchDone.value = true }
+
     override val parent: Job?
         get() = parentHandle?.parent
 

@@ -9,14 +9,14 @@ import kotlin.test.*
 class MemoryFootprintTest : TestBase(true) {
 
     @Test
-    fun testJobLayout() = assertLayout(Job().javaClass, 24)
+    fun testJobLayout() = assertLayout(Job().javaClass, 32)
 
     @Test
     fun testJobSize() {
-        assertTotalSize(jobWithChildren(1), 112)
-        assertTotalSize(jobWithChildren(2), 192) // + 80
-        assertTotalSize(jobWithChildren(3), 248) // + 56
-        assertTotalSize(jobWithChildren(4), 304) // + 56
+        assertTotalSize(jobWithChildren(1), 128) // + 8
+        assertTotalSize(jobWithChildren(2), 216) // + 16
+        assertTotalSize(jobWithChildren(3), 280) // + 32
+        assertTotalSize(jobWithChildren(4), 344) // + 40
     }
 
     private fun jobWithChildren(numberOfChildren: Int): Job {
