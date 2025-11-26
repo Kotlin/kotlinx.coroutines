@@ -3,37 +3,10 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
-class ClosedChannelTest : TestBase() {
-    /**
-     * Iterator.
-     */
-
-    @Test
-    fun testIteratorClosedHasNextFalse() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Int>()
-            val iterator = channel.iterator()
-            channel.close()
-            assertFalse(iterator.hasNext())
-        }
-    }
-
-    @Test
-    fun testIteratorClosedWithExceptionHasNextThrows() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Int>()
-            val iterator = channel.iterator()
-            channel.close(TestException())
-            assertFailsWith<TestException> { (iterator.hasNext()) }
-        }
-    }
-
-    /**
-     * Properties.
-     *
-     * Properties stay the same regardless of whether the channel was closed with or without exception.
-     */
-
+/**
+ * Properties stay the same regardless of whether the channel was closed with or without exception.
+ */
+class ChannelPropertiesTest : TestBase() {
     @Test
     fun testClosedIsClosedForReceive() = runTest {
         TestChannelKind.entries.forEach { kind ->
@@ -110,5 +83,4 @@ class ClosedChannelTest : TestBase() {
         assertFalse(channel.isEmpty)
         assertTrue(channel.isClosedForReceive)
     }
-
 }
