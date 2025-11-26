@@ -3,24 +3,20 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
-class ChannelIteratorTest : TestBase() {
+class ChannelIteratorTest : ChannelTestBase() {
     @Test
-    fun testIteratorClosedHasNextFalse() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Int>()
-            val iterator = channel.iterator()
-            channel.close()
-            assertFalse(iterator.hasNext())
-        }
+    fun testIteratorClosedHasNextFalse() = runTestForEach { kind ->
+        val channel = kind.create<Int>()
+        val iterator = channel.iterator()
+        channel.close()
+        assertFalse(iterator.hasNext())
     }
 
     @Test
-    fun testIteratorClosedWithExceptionHasNextThrows() = runTest {
-        TestChannelKind.entries.forEach { kind ->
-            val channel = kind.create<Int>()
-            val iterator = channel.iterator()
-            channel.close(TestException())
-            assertFailsWith<TestException> { (iterator.hasNext()) }
-        }
+    fun testIteratorClosedWithExceptionHasNextThrows() = runTestForEach { kind ->
+        val channel = kind.create<Int>()
+        val iterator = channel.iterator()
+        channel.close(TestException())
+        assertFailsWith<TestException> { (iterator.hasNext()) }
     }
 }

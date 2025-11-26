@@ -27,6 +27,8 @@ enum class TestChannelKind(
 
     val isConflated get() = capacity == Channel.CONFLATED
     override fun toString(): String = description
+
+    companion object
 }
 
 internal class ChannelViaBroadcast<E>(
