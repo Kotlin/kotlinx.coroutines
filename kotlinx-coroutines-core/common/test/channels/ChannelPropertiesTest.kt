@@ -6,7 +6,7 @@ import kotlin.test.*
 /**
  * Properties stay the same regardless of whether the channel was closed with or without exception.
  */
-class ChannelPropertiesTest : TestBase() {
+class ChannelPropertiesAfterClosingTest : TestBase() {
     @Test
     fun testClosedIsClosedForReceive() = runTest {
         TestChannelKind.entries.forEach { kind ->
