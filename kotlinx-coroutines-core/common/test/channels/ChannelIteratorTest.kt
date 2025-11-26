@@ -20,7 +20,7 @@ class ChannelIteratorTest : TestBase() {
             val channel = kind.create<Int>()
             val iterator = channel.iterator()
             channel.close(TestException())
-            assertFailsWith<TestException> { (iterator.hasNext()) }
+            assertFailsWith<TestException> { iterator.hasNext() }
         }
     }
 }
