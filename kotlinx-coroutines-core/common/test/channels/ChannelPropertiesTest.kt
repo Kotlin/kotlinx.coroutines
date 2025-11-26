@@ -6,42 +6,50 @@ import kotlin.test.*
 /**
  * Properties stay the same regardless of whether the channel was closed with or without exception.
  */
-class ChannelPropertiesTest : ChannelTestBase() {
+class ChannelPropertiesTest : TestBase() {
     @Test
-    fun testClosedIsClosedForReceive() = runTestForEach { kind ->
-        val channel = kind.create<Int>()
-        assertFalse(channel.isClosedForReceive)
-        channel.close()
-        assertTrue(channel.isClosedForReceive)
+    fun testClosedIsClosedForReceive() = runTest {
+        TestChannelKind.entries.forEach { kind ->
+            val channel = kind.create<Int>()
+            assertFalse(channel.isClosedForReceive)
+            channel.close()
+            assertTrue(channel.isClosedForReceive)
+        }
     }
 
     @Test
-    fun testClosedWithExceptionIsClosedForReceive() = runTestForEach { kind ->
-        val channel = kind.create<Int>()
-        assertFalse(channel.isClosedForReceive)
-        channel.close(TestException())
-        assertTrue(channel.isClosedForReceive)
+    fun testClosedWithExceptionIsClosedForReceive() = runTest {
+        TestChannelKind.entries.forEach { kind ->
+            val channel = kind.create<Int>()
+            assertFalse(channel.isClosedForReceive)
+            channel.close(TestException())
+            assertTrue(channel.isClosedForReceive)
+        }
     }
 
     @Test
-    fun testClosedIsEmptyFalse() = runTestForEach { kind ->
-        val channel = kind.create<Int>()
-        assertTrue(channel.isEmpty)
-        assertFalse(channel.isClosedForReceive)
-        channel.close()
-        // NB! Not obvious.
-        assertFalse(channel.isEmpty)
-        assertTrue(channel.isClosedForReceive)
+    fun testClosedIsEmptyFalse() = runTest {
+        TestChannelKind.entries.forEach { kind ->
+            val channel = kind.create<Int>()
+            assertTrue(channel.isEmpty)
+            assertFalse(channel.isClosedForReceive)
+            channel.close()
+            // NB! Not obvious.
+            assertFalse(channel.isEmpty)
+            assertTrue(channel.isClosedForReceive)
+        }
     }
 
     @Test
-    fun testClosedWithExceptionIsEmptyFalse() = runTestForEach { kind ->
-        val channel = kind.create<Int>()
-        assertTrue(channel.isEmpty)
-        assertFalse(channel.isClosedForReceive)
-        channel.close(TestException())
-        assertFalse(channel.isEmpty)
-        assertTrue(channel.isClosedForReceive)
+    fun testClosedWithExceptionIsEmptyFalse() = runTest {
+        TestChannelKind.entries.forEach { kind ->
+            val channel = kind.create<Int>()
+            assertTrue(channel.isEmpty)
+            assertFalse(channel.isClosedForReceive)
+            channel.close(TestException())
+            assertFalse(channel.isEmpty)
+            assertTrue(channel.isClosedForReceive)
+        }
     }
 
     @Test

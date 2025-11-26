@@ -1,24 +1,35 @@
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.*
 import kotlin.test.*
 
-class BasicOperationsTest : ChannelTestBase() {
+class BasicOperationsTest : TestBase() {
     @Test
-    fun testSimpleSendReceive() = runTestForEach { kind -> testSendReceive(kind, 20) }
+    fun testSimpleSendReceive() = runTest {
+        // Parametrized common test :(
+        TestChannelKind.entries.forEach { kind -> testSendReceive(kind, 20) }
+    }
 
     @Test
-    fun testTrySendToFullChannel() = runTestForEach { kind -> testTrySendToFullChannel(kind) }
+    fun testTrySendToFullChannel() = runTest {
+        TestChannelKind.entries.forEach { kind -> testTrySendToFullChannel(kind) }
+    }
 
     @Test
-    fun testTrySendAfterClose() = runTestForEach { kind -> testTrySendAfterClose(kind) }
+    fun testTrySendAfterClose() = runTest {
+        TestChannelKind.entries.forEach { kind -> testTrySendAfterClose(kind) }
+    }
 
     @Test
-    fun testSendAfterClose() = runTestForEach { kind -> testSendAfterClose(kind) }
+    fun testSendAfterClose() = runTest {
+        TestChannelKind.entries.forEach { kind -> testSendAfterClose(kind) }
+    }
 
     @Test
-    fun testReceiveCatching() = runTestForEach { kind -> testReceiveCatching(kind) }
+    fun testReceiveCatching() = runTest {
+        TestChannelKind.entries.forEach { kind -> testReceiveCatching(kind) }
+    }
 
     @Test
     fun testInvokeOnClose() = TestChannelKind.entries.forEach { kind ->
@@ -60,15 +71,17 @@ class BasicOperationsTest : ChannelTestBase() {
     }
 
     @Test
-    fun testIteratorHasNextMustPrecedeNext() = runTestForEach { kind ->
-        val channel = kind.create<Int>()
-        val iterator = channel.iterator()
-        assertFailsWith<IllegalStateException> { iterator.next() }
-        channel.close()
-        assertFailsWith<IllegalStateException> { iterator.next() }
-        assertFalse(iterator.hasNext())
-        assertFailsWith<NoSuchElementException> { iterator.next() }
-        assertFailsWith<IllegalStateException> { iterator.next() }
+    fun testIteratorHasNextMustPrecedeNext() = runTest {
+        TestChannelKind.entries.forEach { kind ->
+            val channel = kind.create<Int>()
+            val iterator = channel.iterator()
+            assertFailsWith<IllegalStateException> { iterator.next() }
+            channel.close()
+            assertFailsWith<IllegalStateException> { iterator.next() }
+            assertFalse(iterator.hasNext())
+            assertFailsWith<NoSuchElementException> { iterator.next() }
+            assertFailsWith<IllegalStateException> { iterator.next() }
+        }
     }
 
     @Test
@@ -146,7 +159,9 @@ class BasicOperationsTest : ChannelTestBase() {
         channel.close()
 
         assertTrue(channel.isClosedForSend)
-        channel.trySend(2).onSuccess { expectUnreached() }.onClosed {
+        channel.trySend(2)
+            .onSuccess { expectUnreached() }
+            .onClosed {
                 assertTrue { it is ClosedSendChannelException }
                 if (!kind.isConflated) {
                     assertEquals(42, channel.receive())
@@ -162,7 +177,10 @@ class BasicOperationsTest : ChannelTestBase() {
         repeat(11) {
             channel.trySend(42)
         }
-        channel.trySend(1).onSuccess { expectUnreached() }.onFailure { assertNull(it) }.onClosed {
+        channel.trySend(1)
+            .onSuccess { expectUnreached() }
+            .onFailure { assertNull(it) }
+            .onClosed {
                 expectUnreached()
             }
     }
