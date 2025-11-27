@@ -17,7 +17,6 @@ internal actual fun ensurePlatformExceptionHandlerLoaded(callback: CoroutineExce
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 internal actual fun propagateExceptionFinalResort(exception: Throwable) {
     // log exception
     processUnhandledException(exception)

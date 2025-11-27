@@ -10,7 +10,6 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DefaultDisp
 
 private object DefaultDispatcher : CoroutineDispatcher() {
     // Be consistent with JVM -- at least 2 threads to provide some liveness guarantees in case of improper uses
-    @OptIn(ExperimentalStdlibApi::class)
     private val ctx = newFixedThreadPoolContext(Platform.getAvailableProcessors().coerceAtLeast(2), "Dispatchers.Default")
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
