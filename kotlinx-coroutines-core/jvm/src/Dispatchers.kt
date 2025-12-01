@@ -57,8 +57,10 @@ public actual object Dispatchers {
      * dispatcher typically does not lead to an actual switching to another thread. In such scenarios,
      * the underlying implementation attempts to keep the execution on the same thread on a best-effort basis.
      *
-     * As a result of thread sharing, more than 64 (default parallelism) threads can be created (but not used)
-     * during operations over IO dispatcher.
+     * Whenever we are talking about the number of IO threads in the pool being limited by some number,
+     * that only means that at most that many threads are going to *actually perform* IO work in parallel.
+     * It is still possible to observe more threads than that, but those threads are guaranteed to be in their
+     * start-up or shutdown phases.
      */
     @JvmStatic
     public val IO: CoroutineDispatcher get() = DefaultIoScheduler
