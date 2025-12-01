@@ -13,26 +13,27 @@ import kotlin.coroutines.intrinsics.*
  * A scope in which coroutines run.
  *
  * A scope defines a group of coroutines with shared execution properties
- * (represented as [CoroutineContext.Element] values)
  * and mutually dependent lifecycles.
  *
  * The execution properties of coroutines are defined by the [coroutineContext] property of this interface
  * and are inherited by all coroutines launched in this scope.
+ * A [CoroutineContext] is a collection of [CoroutineContext.Element] values that may affect the behavior of
+ * `kotlinx.coroutines`.
  * For example, the [CoroutineDispatcher] element of the context defines which threads the coroutines will run on,
  * with [Dispatchers.Main] meaning the coroutines will run on the main thread of the application.
  * See a more detailed explanation of the context elements in a separate section below.
  *
  * The lifecycles of coroutines are governed by a set of rules called "structured concurrency",
  * meaning that the lifetimes of child coroutines are strictly inside the lifetime of the scope.
- * If the scope is cancelled, all coroutines in it are cancelled too, and the scope itself
+ * If a scope is cancelled, all coroutines in it are cancelled too, and the scope itself
  * cannot be completed until all its children are completed.
  * See a more detailed explanation of structured concurrency in a separate section below.
  *
- * ## Using the coroutine scope
+ * ## Using coroutine scopes
  *
  * The methods of this interface are not intended to be called directly.
- * Instead, a [CoroutineScope] is passed as a receiver to the coroutine builders such as [launch] and [async],
- * controlling the execution properties and lifetimes of the created coroutines.
+ * Instead, a [CoroutineScope] is passed as a receiver to the coroutine builders such as [launch] and [async]
+ * and affects the execution properties and lifetimes of the created coroutines.
  *
  * ## Coroutine context elements
  *
@@ -44,8 +45,10 @@ import kotlin.coroutines.intrinsics.*
  * - The scheduling policy, represented by a [CoroutineDispatcher] element.
  *   Some commonly used dispatchers are provided in the [Dispatchers] object.
  * - [CoroutineExceptionHandler] that defines how failures of child coroutines should be reported whenever
- *   structured concurrency does not provide a way to propagate the failure to the parent
- *   (typically, because the root scope of the ancestry tree is not lexically scoped).
+ *   structured concurrency does not provide a way to propagate the failure to the parent.
+ *   Typically, this happens because the root scope of the ancestry tree is not lexically scoped,
+ *   that is, not created using coroutine builders like [coroutineScope] or [withContext] that return the result
+ *   directly to the caller.
  * - A [CoroutineName] element that can be used to name coroutines for debugging purposes.
  * - On the JVM, a `ThreadContextElement` ensures that a specific thread-local value gets set on the thread
  *   that executes the coroutine.
@@ -53,12 +56,13 @@ import kotlin.coroutines.intrinsics.*
  * ## Obtaining a coroutine scope
  *
  * Manual implementations of this interface are not recommended.
- * Instead, there are several structured ways to obtain a [CoroutineScope].
+ * Instead, a [CoroutineScope] should be obtained in a way that reflects the
+ * intended structured concurrency relationships.
  *
  * ### Lexical scopes
  *
- * [coroutineScope] and [supervisorScope] functions can be used in any `suspend` function to define a scope
- * lexically, ensuring that all coroutines launched in this scope have completed by the time scope-limiting
+ * [coroutineScope] and [supervisorScope] functions can be called in any `suspend` function to define a scope
+ * lexically, ensuring that all coroutines launched in this scope complete by the time the scope-limiting
  * function exits.
  *
  * ```
@@ -84,7 +88,7 @@ import kotlin.coroutines.intrinsics.*
  * } // will only exit once all `Coroutine X finished` messages are printed
  * ```
  *
- * This should be the preferred way to create a scope for coroutines.
+ * This is the preferred way to create a [CoroutineScope].
  *
  * ### `CoroutineScope` constructor function
  *
@@ -132,7 +136,7 @@ import kotlin.coroutines.intrinsics.*
  * See the documentation for the [CoroutineScope] constructor function for more details.
  * Also note that `MyEntity` accepts the `scope` parameter that can be used to pass a custom scope for testing.
  *
- * Sometimes, authors of coroutine-aware frameworks provide [CoroutineScope] instances like this out of the box.
+ * Sometimes, coroutine-aware frameworks provide [CoroutineScope] instances like this out of the box.
  * For example, on Android, all entities with a lifecycle and all `ViewModel` instances expose a [CoroutineScope]:
  * see [the corresponding documentation](https://developer.android.com/topic/libraries/architecture/coroutines).
  *
@@ -140,7 +144,7 @@ import kotlin.coroutines.intrinsics.*
  *
  * Occasionally, several coroutines need to be launched with the same additional [CoroutineContext] that is not
  * present in the original scope.
- * In this case, the [CoroutineScope.plus] operator can be used to create a new view of the existing scope:
+ * In this case, the [CoroutineScope.plus] operator can be used to create a new view of an existing scope:
  *
  * ```
  * coroutineScope {
@@ -162,8 +166,8 @@ import kotlin.coroutines.intrinsics.*
  * ### Application lifecycle scope
  *
  * [GlobalScope] is a [CoroutineScope] that has the lifetime of the whole application.
- * It is convenient for launching top-level coroutines that are not tied to the lifecycle of any entity,
- * but it is easy to misuse it and create memory leaks or resource leaks when a coroutine actually should be tied
+ * Although it is convenient for launching top-level coroutines that are not tied to the lifecycle of any entity,
+ * it is easy to misuse it and create memory or resource leaks when a coroutine actually should be tied
  * to the lifecycle of some entity.
  *
  * ```
@@ -179,8 +183,8 @@ import kotlin.coroutines.intrinsics.*
  *
  * ### `by`-delegation
  *
- * When all else fails and a custom [CoroutineScope] implementation is needed, it is recommended to use
- * `by`-delegation to implement the interface:
+ * When the approaches listed above are not applicable and a custom [CoroutineScope] implementation is needed,
+ * it is recommended to use `by`-delegation to implement the interface:
  *
  * ```
  * class MyEntity : CoroutineScope by CoroutineScope(
@@ -247,7 +251,7 @@ import kotlin.coroutines.intrinsics.*
  * ### Specifics
  *
  * Coroutines and [CoroutineScope] instances have an associated lifecycle.
- * A runtime representation of a lifecycle in `kotlinx.coroutines` called a [Job].
+ * A runtime representation of a lifecycle in `kotlinx.coroutines` is called a [Job].
  * [Job] instances form a hierarchy of parent-child relationships,
  * and the [Job] of every coroutine spawned in a [CoroutineScope] is a child of the [Job] of that scope.
  * This is often shortened to saying that the coroutine is the scope's child.
@@ -262,7 +266,7 @@ import kotlin.coroutines.intrinsics.*
  * }
  * ```
  *
- * Because every coroutine has a lifecycle and a [Job], a [CoroutineScope] can be associated with it.
+ * Because every coroutine has a lifecycle represented by a [Job], a [CoroutineScope] can be associated with it.
  * Most coroutine builders in `kotlinx.coroutines` expose the [CoroutineScope] of the coroutine on creation:
  *
  * ```
@@ -270,7 +274,7 @@ import kotlin.coroutines.intrinsics.*
  *     val parentScope = this
  *     var grandChildFinished = false
  *     val childJob = launch {
- *         // this block has a `CoroutineScope` receiver too
+ *         // this block has a `CoroutineScope` receiver, too
  *         val childScope = this
  *         check(childScope.coroutineContext[Job]?.parent
  *             === parentScope.coroutineContext[Job])
@@ -371,21 +375,21 @@ import kotlin.coroutines.intrinsics.*
  * ```
  *
  * If several coroutines fail with non-[CancellationException] exceptions,
- * the first one to fail will be propagated, and the rest will be attached to it as
+ * the first observed failure will be propagated, and the rest will be attached to it as
  * [suppressed exceptions][Throwable.suppressedExceptions].
  *
- * If a coroutine fails with a non-[CancellationException] exception and cannot cancel its parent
+ * If a non-lexically-scoped coroutine fails with a non-[CancellationException] exception and cannot cancel its parent
  * (because its parent is a [SupervisorJob] or there is none at all),
  * the failure is reported through other channels.
  * See [CoroutineExceptionHandler] for details.
  *
  * Failing with a [CancellationException] only cancels the coroutine itself and its children.
- * It does not affect the parent or any other coroutines and is not considered a failure.
+ * It does not affect the parent or any sibling coroutines and is not considered a failure.
  *
  * ### How-to: stop failures of child coroutines from cancelling other coroutines
  *
  * If not affecting the [CoroutineScope] on a failure in a child coroutine is the desired behaviour,
- * then a [SupervisorJob] should be used instead of [Job] when constructing the scope:
+ * then a [SupervisorJob] should be used instead of `Job()` when constructing the scope:
  *
  * ```
  * val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main + CoroutineExceptionHandler { _, e ->
