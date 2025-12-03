@@ -18,7 +18,7 @@ open class ChannelNanoBenchmarkUnlimited {
     lateinit var channel: Channel<Int>
 
     @Setup(Level.Trial)
-    fun prefill() {
+    fun createPrefilledChannel() {
         channel = Channel(Channel.UNLIMITED)
         repeat(prefill) {
             channel.trySend(it)
