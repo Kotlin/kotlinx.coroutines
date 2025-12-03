@@ -16,8 +16,7 @@ open class ChannelBenchmark {
     // to allow for true parallelism
     val cores = Runtime.getRuntime().availableProcessors()
 
-    //                4 KB,   40 KB,   400 KB,      4 MB,      40 MB,      400 MB
-    @Param(value = ["1000", "10000", "100000", "1000000", "10000000", "100000000"])
+    @Param(value = ["1000", "10000", "100000", "1000000", "10000000", "100000000"]) // 4, 40, 400, KB, 4, 40, 400 MB
     var count: Int = 0
 
     // 1. Preallocate.
@@ -26,8 +25,7 @@ open class ChannelBenchmark {
 
     @State(Scope.Benchmark)
     open class UnlimitedChannelWrapper {
-        //                0,      4 MB,      40 MB,      400 MB
-        @Param(value = ["0", "1000000", "10000000", "100000000"])
+        @Param(value = ["0", "100000", "1000000", "10000000", "100000000"]) // 0, 400 KB, 4, 40, 400 MB
         private var prefill = 0
 
         lateinit var channel: Channel<Int>
@@ -49,6 +47,8 @@ open class ChannelBenchmark {
         runSend(count, Channel.UNLIMITED)
     }
 
+    // Similar to ChannelNanoBenchmarkConflated
+    // but ~4x faster due to hotpath (and it's ok)
     @Benchmark
     fun sendConflated() = runBlocking {
         runSend(count, Channel.CONFLATED)
