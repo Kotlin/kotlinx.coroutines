@@ -3,6 +3,7 @@ package benchmarks
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.openjdk.jmh.annotations.*
+import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.*
 
 @Warmup(iterations = 7, time = 1)
@@ -55,35 +56,35 @@ open class ChannelBenchmark {
     }
 
     @Benchmark
-    fun sendReceiveUnlimited(wrapper: UnlimitedChannelWrapper) = runBlocking {
-        runSendReceive(wrapper.channel, count)
+    fun sendReceiveUnlimited(bh: Blackhole, wrapper: UnlimitedChannelWrapper) = runBlocking {
+        runSendReceive(bh, wrapper.channel, count)
     }
 
     @Benchmark
-    fun sendReceiveConflated() = runBlocking(Dispatchers.Default) {
-        runSendReceive(Channel(Channel.CONFLATED), count)
+    fun sendReceiveConflated(bh: Blackhole) = runBlocking(Dispatchers.Default) {
+        runSendReceive(bh, Channel(Channel.CONFLATED), count)
     }
 
     @Benchmark
-    fun sendReceiveRendezvous() = runBlocking(Dispatchers.Default) {
+    fun sendReceiveRendezvous(bh: Blackhole) = runBlocking(Dispatchers.Default) {
         // NB: Rendezvous is partly benchmarking the scheduler, not the channel alone.
         // So don't trust the Rendezvous results too much.
-        runSendReceive(Channel(Channel.RENDEZVOUS), count)
+        runSendReceive(bh, Channel(Channel.RENDEZVOUS), count)
     }
 
     @Benchmark
-    fun oneSenderManyReceivers(wrapper: UnlimitedChannelWrapper) = runBlocking {
-        runSendReceive(wrapper.channel, count, 1, cores - 1)
+    fun oneSenderManyReceivers(bh: Blackhole, wrapper: UnlimitedChannelWrapper) = runBlocking {
+        runSendReceive(bh, wrapper.channel, count, 1, cores - 1)
     }
 
     @Benchmark
-    fun manySendersOneReceiver(wrapper: UnlimitedChannelWrapper) = runBlocking {
-        runSendReceive(wrapper.channel, count, cores - 1, 1)
+    fun manySendersOneReceiver(bh: Blackhole, wrapper: UnlimitedChannelWrapper) = runBlocking {
+        runSendReceive(bh, wrapper.channel, count, cores - 1, 1)
     }
 
     @Benchmark
-    fun manySendersManyReceivers(wrapper: UnlimitedChannelWrapper) = runBlocking {
-        runSendReceive(wrapper.channel, count, cores / 2, cores / 2)
+    fun manySendersManyReceivers(bh: Blackhole, wrapper: UnlimitedChannelWrapper) = runBlocking {
+        runSendReceive(bh, wrapper.channel, count, cores / 2, cores / 2)
     }
 
     private suspend fun runSend(count: Int, capacity: Int) {
@@ -102,7 +103,7 @@ open class ChannelBenchmark {
     // NB: not all parameter combinations make sense in general.
     // E.g., for the rendezvous channel, senders should be equal to receivers.
     // If they are non-equal, it's a special case of performance under contention.
-    private suspend inline fun runSendReceive(channel: Channel<Int>, count: Int, senders: Int = 1, receivers: Int = 1) {
+    private suspend inline fun runSendReceive(bh: Blackhole, channel: Channel<Int>, count: Int, senders: Int = 1, receivers: Int = 1) {
         //require (senders > 0 && receivers > 0)
         //require (senders + receivers <= cores) // Can be used with more than num cores, but what would it measure?
         // If the channel is prefilled with N items, it should have (at least) N items by the end of the benchmark.
@@ -119,12 +120,11 @@ open class ChannelBenchmark {
                 launch {
                     if (receiveAll) {
                         channel.forEach {
-                            // possibly receive into the blackhole
+                            bh.consume(it)
                         }
                     } else {
                        repeat(countPerReceiverAtLeast) {
-                           // possibly receive into the blackhole
-                           channel.receive()
+                           bh.consume(channel.receive())
                        }
                     }
                 }
