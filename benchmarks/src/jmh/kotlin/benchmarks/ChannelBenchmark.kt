@@ -49,7 +49,7 @@ open class ChannelBenchmark {
     }
 
     // Similar to ChannelNanoBenchmarkConflated
-    // but ~4x faster due to hotpath (and it's ok)
+    // but ~4x faster due to lesser runBlocking switching and possibly hotpath (and it's ok)
     @Benchmark
     fun sendConflated() = runBlocking {
         runSend(count, Channel.CONFLATED)

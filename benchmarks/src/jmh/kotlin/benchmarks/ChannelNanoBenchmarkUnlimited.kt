@@ -26,8 +26,14 @@ open class ChannelNanoBenchmarkUnlimited {
     }
 
     @Benchmark
-    fun sendReceive() = runBlocking {
+    fun sendReceiveRUNBLOCKINGOVERHEAD(): Int = runBlocking {
         channel.send(42)
         return@runBlocking channel.receive()
+    }
+
+    @Benchmark
+    fun trySendTryReceive(): Int {
+        channel.trySend(42)
+        return channel.tryReceive().getOrThrow()
     }
 }

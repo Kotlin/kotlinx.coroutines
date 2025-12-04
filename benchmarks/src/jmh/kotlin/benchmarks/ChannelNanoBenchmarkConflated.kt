@@ -15,7 +15,7 @@ open class ChannelNanoBenchmarkConflated {
     var channel: Channel<Int> = Channel(Channel.CONFLATED)
 
     @Benchmark
-    fun send() = runBlocking {
+    fun sendRUNBLOCKINGOVERHEAD() = runBlocking {
         channel.send(42)
     }
 
