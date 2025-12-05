@@ -5,6 +5,9 @@ import kotlinx.coroutines.channels.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 
+/**
+ * Benchmarks with `runBlocking` are significantly skewed by `runBlocking` overhead.
+ */
 @Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 5, time = 1)
 @BenchmarkMode(Mode.AverageTime)
