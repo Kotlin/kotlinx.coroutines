@@ -41,7 +41,7 @@ open class ChannelBenchmark {
     val list = List(100_000_000) { it }
 
     @State(Scope.Benchmark)
-    open class UnlimitedChannelWrapper {
+    open class PrefilledChannelState {
         @Param(value = ["0", "100000", "1000000", "10000000"]) // 0, 400 KB, 4, 40 MB
         private var prefill = 0
 
@@ -70,8 +70,8 @@ open class ChannelBenchmark {
     }
 
     @Benchmark
-    fun sendReceiveUnlimited(bh: Blackhole, wrapper: UnlimitedChannelWrapper) = runBlocking {
-        runSendReceive(bh, wrapper.channel, count)
+    fun sendReceiveUnlimited(bh: Blackhole, s: PrefilledChannelState) = runBlocking {
+        runSendReceive(bh, s.channel, count)
     }
 
     @Benchmark
@@ -87,18 +87,18 @@ open class ChannelBenchmark {
     }
 
     @Benchmark
-    fun oneSenderManyReceivers(bh: Blackhole, wrapper: UnlimitedChannelWrapper) = runBlocking {
-        runSendReceive(bh, wrapper.channel, count, 1, cores - 1)
+    fun oneSenderManyReceivers(bh: Blackhole, s: PrefilledChannelState) = runBlocking {
+        runSendReceive(bh, s.channel, count, 1, cores - 1)
     }
 
     @Benchmark
-    fun manySendersOneReceiver(bh: Blackhole, wrapper: UnlimitedChannelWrapper) = runBlocking {
-        runSendReceive(bh, wrapper.channel, count, cores - 1, 1)
+    fun manySendersOneReceiver(bh: Blackhole, s: PrefilledChannelState) = runBlocking {
+        runSendReceive(bh, s.channel, count, cores - 1, 1)
     }
 
     @Benchmark
-    fun manySendersManyReceivers(bh: Blackhole, wrapper: UnlimitedChannelWrapper) = runBlocking {
-        runSendReceive(bh, wrapper.channel, count, cores / 2, cores / 2)
+    fun manySendersManyReceivers(bh: Blackhole, s: PrefilledChannelState) = runBlocking {
+        runSendReceive(bh, s.channel, count, cores / 2, cores / 2)
     }
 
     private suspend fun runSend(count: Int, capacity: Int) {
