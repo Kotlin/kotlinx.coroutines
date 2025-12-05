@@ -6,6 +6,22 @@ import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.*
 
+/**
+ * This is NOT a comprehensive channel benchmark suit.
+ * It's a collection of rather arbitrary low-effort benchmarks.
+ *
+ * This collection does NOT measure:
+ * - isolated `send` or `receive` performance
+ * - typical channel usage patterns (they are unknown and need to be researched)
+ *
+ * These benchmarks are affected by:
+ * - Initializing and maintaining structured concurrency overhead (`runBlocking`)
+ * - Thread scheduling
+ * - Internal channel structure, such as allocations
+ * - GC
+ * - Not necessarily hot-path performance
+ * - Not necessarily typical usage patterns
+ */
 @Warmup(iterations = 7, time = 1)
 @Measurement(iterations = 10, time = 1)
 @BenchmarkMode(Mode.AverageTime)
@@ -17,21 +33,21 @@ open class ChannelBenchmark {
     // to allow for true parallelism
     val cores = Runtime.getRuntime().availableProcessors()
 
-    @Param(value = ["1000", "10000", "100000", "1000000", "10000000", "100000000"]) // 4, 40, 400, KB, 4, 40, 400 MB
+    @Param(value = ["1000", "10000", "100000", "1000000", "10000000"]) // 4, 40, 400 KB, 4, 40 MB
     var count: Int = 0
 
     // 1. Preallocate.
     // 2. Different values to avoid helping the cache.
-    val list = List(100000000) { it }
+    val list = List(100_000_000) { it }
 
     @State(Scope.Benchmark)
     open class UnlimitedChannelWrapper {
-        @Param(value = ["0", "100000", "1000000", "10000000", "100000000"]) // 0, 400 KB, 4, 40, 400 MB
+        @Param(value = ["0", "100000", "1000000", "10000000"]) // 0, 400 KB, 4, 40 MB
         private var prefill = 0
 
         lateinit var channel: Channel<Int>
 
-        val list = List(100000000) { it }
+        val list = List(100_000_000) { it }
 
         @Setup(Level.Invocation)
         fun createPrefilledChannel() {
@@ -48,8 +64,6 @@ open class ChannelBenchmark {
         runSend(count, Channel.UNLIMITED)
     }
 
-    // Similar to ChannelNanoBenchmarkConflated
-    // but ~4x faster due to lesser runBlocking switching and possibly hotpath (and it's ok)
     @Benchmark
     fun sendConflated() = runBlocking {
         runSend(count, Channel.CONFLATED)

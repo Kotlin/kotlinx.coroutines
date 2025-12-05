@@ -9,31 +9,79 @@ import java.util.concurrent.*
 @Measurement(iterations = 5, time = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@State(Scope.Benchmark)
 @Fork(1)
 open class ChannelNanoBenchmarkUnlimited {
-    @Param(value = ["0", "100000", "1000000", "10000000", "100000000"])  // 0, 400 KB, 4, 40, 400 MB
-    private var prefill = 0
+    @State(Scope.Benchmark)
+    open class PrefilledChannelState {
+        private val list = List(10_000_000) { it }
 
-    lateinit var channel: Channel<Int>
+        @Param(value = ["0", "100000", "1000000", "10000000"])  // 0, 400 KB, 4, 40 MB
+        private var prefill = 0
 
-    @Setup(Level.Trial)
-    fun createPrefilledChannel() {
-        channel = Channel(Channel.UNLIMITED)
-        repeat(prefill) {
-            channel.trySend(it)
+        lateinit var channel: Channel<Int>
+
+        @Setup(Level.Trial)
+        fun createPrefilledChannel() {
+            channel = Channel(Channel.UNLIMITED)
+            repeat(prefill) {
+                channel.trySend(list[it])
+            }
         }
     }
 
     @Benchmark
-    fun sendReceiveRUNBLOCKINGOVERHEAD(): Int = runBlocking {
-        channel.send(42)
-        return@runBlocking channel.receive()
+    fun sendReceive(s: PrefilledChannelState): Int = runBlocking {
+        s.channel.send(42)
+        return@runBlocking s.channel.receive()
     }
 
     @Benchmark
-    fun trySendTryReceive(): Int {
-        channel.trySend(42)
-        return channel.tryReceive().getOrThrow()
+    fun trySendTryReceive(s: PrefilledChannelState): Int {
+        s.channel.trySend(42)
+        return s.channel.tryReceive().getOrThrow()
+    }
+
+    @State(Scope.Benchmark)
+    open class EmptyChannelState {
+        lateinit var channel: Channel<Int>
+
+        @Setup(Level.Iteration)
+        fun createEmptyChannel() {
+            channel = Channel(Channel.UNLIMITED)
+        }
+    }
+
+    @Benchmark
+    fun send(s: EmptyChannelState) = runBlocking {
+        s.channel.send(42)
+    }
+
+    @Benchmark
+    fun trySend(s: EmptyChannelState) {
+        s.channel.trySend(42)
+    }
+
+    @State(Scope.Benchmark)
+    open class BigChannelState {
+        private val list = List(100_000_000) { it }
+        lateinit var channel: Channel<Int>
+
+        @Setup(Level.Iteration)
+        fun createPrefilledChannel() {
+            channel = Channel(Channel.UNLIMITED)
+            for (it in list) {
+                channel.trySend(it)
+            }
+        }
+    }
+
+    @Benchmark
+    fun receive(s: BigChannelState): Int = runBlocking {
+        return@runBlocking s.channel.receive()
+    }
+
+    @Benchmark
+    fun tryReceive(s: BigChannelState): Int {
+        return s.channel.tryReceive().getOrThrow()
     }
 }
