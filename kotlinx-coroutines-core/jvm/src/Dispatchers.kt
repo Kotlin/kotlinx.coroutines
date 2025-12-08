@@ -25,7 +25,7 @@ public actual object Dispatchers {
      * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
      *
      * Additional threads in this pool are created and are shutdown on demand.
-     * The number of threads used by tasks in this dispatcher is limited by the value of
+     * The number of threads doing IO work in parallel is limited by the value of
      * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
      * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
      *
@@ -46,21 +46,20 @@ public actual object Dispatchers {
      * // 60 threads for MongoDB connection
      * val myMongoDbDispatcher = Dispatchers.IO.limitedParallelism(60)
      * ```
-     * the system may have up to `64 + 100 + 60` threads dedicated to blocking tasks during peak loads,
+     * the system may have up to `64 + 100 + 60` threads running blocking tasks in parallel during peak loads,
      * but during its steady state there is only a small number of threads shared
      * among `Dispatchers.IO`, `myMysqlDbDispatcher` and `myMongoDbDispatcher`.
      *
-     * ### Implementation note
+     * ### Implementation notes
      *
      * This dispatcher and its views share threads with the [Default][Dispatchers.Default] dispatcher, so using
      * `withContext(Dispatchers.IO) { ... }` when already running on the [Default][Dispatchers.Default]
      * dispatcher typically does not lead to an actual switching to another thread. In such scenarios,
      * the underlying implementation attempts to keep the execution on the same thread on a best-effort basis.
      *
-     * Whenever we are talking about the number of IO threads in the pool being limited by some number,
-     * that only means that at most that many threads are going to *actually perform* IO work in parallel.
-     * It is still possible to observe more threads than that, but those threads are guaranteed to be in their
-     * start-up or shutdown phases.
+     * The limit on the number of blocking tasks running in parallel is *not* a strict limit on the number of threads.
+     * It is possible for more thread than the limit to exist at the same time, but the extra threads are guaranteed
+     * to be in their start-up or shutdown phases and not actually executing work.
      */
     @JvmStatic
     public val IO: CoroutineDispatcher get() = DefaultIoScheduler
