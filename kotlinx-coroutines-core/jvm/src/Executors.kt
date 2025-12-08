@@ -15,7 +15,11 @@ import kotlin.AutoCloseable
  */
 public abstract class ExecutorCoroutineDispatcher : CoroutineDispatcher(), Closeable, AutoCloseable {
     /** @suppress */
+    @Deprecated("Use ContinuationInterceptor.Key and attempt " +
+        "casting the context element to ExecutorCoroutineDispatcher instead",
+        level = DeprecationLevel.WARNING)
     @ExperimentalStdlibApi
+    @Suppress("DEPRECATION")
     public companion object Key : AbstractCoroutineContextKey<CoroutineDispatcher, ExecutorCoroutineDispatcher>(
         CoroutineDispatcher,
         { it as? ExecutorCoroutineDispatcher })

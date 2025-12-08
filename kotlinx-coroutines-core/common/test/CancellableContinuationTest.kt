@@ -134,4 +134,15 @@ class CancellableContinuationTest : TestBase() {
         })
         finish(5)
     }
+
+    /** Tests that the compiler recognizes that [suspendCancellableCoroutine] invokes its block exactly once. */
+    @Test
+    fun testSuspendCancellableCoroutineContract() = runTest {
+        val i: Int
+        suspendCancellableCoroutine { cont ->
+            i = 1
+            cont.resume(Unit)
+        }
+        assertEquals(1, i)
+    }
 }

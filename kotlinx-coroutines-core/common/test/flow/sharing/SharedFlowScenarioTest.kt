@@ -267,7 +267,6 @@ class SharedFlowScenarioTest : TestBase() {
     private data class ResumeCollecting(val job: TestJob) : Action()
     private data class Cancelled(val job: TestJob) : Action()
 
-    @OptIn(ExperimentalStdlibApi::class)
     private class ScenarioDsl<T>(
         val sharedFlow: MutableSharedFlow<T>,
         coroutineContext: CoroutineContext

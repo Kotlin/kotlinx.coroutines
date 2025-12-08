@@ -122,9 +122,8 @@ internal suspend inline fun <R> selectUnbiasedOld(crossinline builder: SelectBui
         scope.initSelectResult()
     }
 
-@OptIn(ExperimentalStdlibApi::class)
 private fun <T> CancellableContinuation<T>.resumeUndispatched(result: T) {
-    val dispatcher = context[CoroutineDispatcher]
+    val dispatcher = context[ContinuationInterceptor] as? CoroutineDispatcher
     if (dispatcher != null) {
         dispatcher.resumeUndispatched(result)
     } else {
@@ -132,9 +131,8 @@ private fun <T> CancellableContinuation<T>.resumeUndispatched(result: T) {
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 private fun CancellableContinuation<*>.resumeUndispatchedWithException(exception: Throwable) {
-    val dispatcher = context[CoroutineDispatcher]
+    val dispatcher = context[ContinuationInterceptor] as? CoroutineDispatcher
     if (dispatcher != null) {
         dispatcher.resumeUndispatchedWithException(exception)
     } else {
