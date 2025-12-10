@@ -542,8 +542,7 @@ internal open class SharedFlowImpl<T>(
         // take into account a special case of sync shared flow that can go past 1st queued emitter
         if (bufferCapacity == 0 && queueSize > 0) newMinCollectorIndex++
         forEachSlotLocked { slot ->
-            @Suppress("ConvertTwoComparisonsToRangeCheck") // Bug in JS backend
-            if (slot.index >= 0 && slot.index < newMinCollectorIndex) newMinCollectorIndex = slot.index
+            if (slot.index in 0..<newMinCollectorIndex) newMinCollectorIndex = slot.index
         }
         assert { newMinCollectorIndex >= minCollectorIndex } // can only grow
         if (newMinCollectorIndex <= minCollectorIndex) return EMPTY_RESUMES // nothing changes
