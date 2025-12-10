@@ -10,19 +10,66 @@ import kotlin.jvm.*
 @JvmField
 internal val EMPTY_RESUMES = arrayOfNulls<Continuation<Unit>?>(0)
 
+/**
+ * A slot allocated to a collector when it subscribes to a shared flow and freed when the collector unsubscribes.
+ */
 internal abstract class AbstractSharedFlowSlot<F> {
+    /**
+     * Try marking this slot as allocated for the given [flow]. Only call this under the [flow]'s lock.
+     *
+     * Returns `false` if the slot is already allocated to some other collector.
+     */
     abstract fun allocateLocked(flow: F): Boolean
-    abstract fun freeLocked(flow: F): Array<Continuation<Unit>?> // returns continuations to resume after lock
+
+    /**
+     * Mark this slot as available for reuse. Only call this under the [flow]'s lock.
+     *
+     * Returns an array of continuations that need to be resumed after the lock is released.
+     * These continuations represent suspended emitters that were waiting for the slowest collector to move on
+     * so that the next value can be placed into the buffer.
+     */
+    abstract fun freeLocked(flow: F): Array<Continuation<Unit>?>
 }
 
-internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : SynchronizedObject() {
-    protected var slots: Array<S?>? = null // allocated when needed
+/**
+ * A common data structure for `StateFlow` and `SharedFlow`.
+ */
+internal abstract class AbstractSharedFlow<This, S : AbstractSharedFlowSlot<This>> : SynchronizedObject() {
+    /**
+     * Array of slots for collectors of the shared flow.
+     *
+     * `null` by default, created on demand.
+     * Each cell is also `null` by default, and the specific slot object is [created][createSlot] on demand.
+     * The whole array being `null` or a cell being `null` is equivalent to the cell not being
+     * [*allocated*][AbstractSharedFlowSlot.allocateLocked]--not to be confused with memory allocation, this means
+     * that a specific collector inhabits the slot.
+     */
+    protected var slots: Array<S?>? = null
         private set
-    protected var nCollectors = 0 // number of allocated (!free) slots
-        private set
-    private var nextIndex = 0 // oracle for the next free slot index
-    private var _subscriptionCount: SubscriptionCountStateFlow? = null // init on first need
 
+    /**
+     * The number of [*allocated*][AbstractSharedFlowSlot.allocateLocked] slots in [slots].
+     */
+    protected var nCollectors = 0
+        private set
+
+    /**
+     * A good starting index for looking for the next non-*allocated* slot in [slots].
+     *
+     * It is not guaranteed that this slot will not be *allocated*, nor is it guaranteed that it will be the first
+     * non-*allocated* slot.
+     * This is just a heuristic to have a better guess in common scenarios.
+     */
+    private var nextIndex = 0
+
+    /**
+     * The backing field for [subscriptionCount].
+     *
+     * Will not be initialized until [subscriptionCount] is accessed for the first time.
+     */
+    private var _subscriptionCount: SubscriptionCountStateFlow? = null
+
+    /** A `StateFlow` representing [nCollectors], potentially with some delay. A user-visible API. */
     val subscriptionCount: StateFlow<Int>
         get() = synchronized(this) {
             // allocate under lock in sync with nCollectors variable
@@ -31,11 +78,13 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
             }
         }
 
+    /** Allocate a new implementation-representation of a collector, but do not register it anywhere yet. */
     protected abstract fun createSlot(): S
 
+    /** Equivalent to [arrayOfNulls]. */
     protected abstract fun createSlotArray(size: Int): Array<S?>
 
-    @Suppress("UNCHECKED_CAST")
+    /** Register a new collector and return its newly allocated slot. A slot may be [created][createSlot] or reused. */
     protected fun allocateSlot(): S {
         // Actually create slot under lock
         val subscriptionCount: SubscriptionCountStateFlow?
@@ -54,7 +103,8 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
                 slot = slots[index] ?: createSlot().also { slots[index] = it }
                 index++
                 if (index >= slots.size) index = 0
-                if ((slot as AbstractSharedFlowSlot<Any>).allocateLocked(this)) break // break when found and allocated free slot
+                @Suppress("UNCHECKED_CAST")
+                if (slot.allocateLocked(this as This)) break // break when found and allocated free slot
             }
             nextIndex = index
             nCollectors++
@@ -66,7 +116,7 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
         return slot
     }
 
-    @Suppress("UNCHECKED_CAST")
+    /** Deregisters a collector and marks its slot as available for reuse. */
     protected fun freeSlot(slot: S) {
         // Release slot under lock
         val subscriptionCount: SubscriptionCountStateFlow?
@@ -75,7 +125,8 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
             subscriptionCount = _subscriptionCount // retrieve under lock if initialized
             // Reset next index oracle if we have no more active collectors for more predictable behavior next time
             if (nCollectors == 0) nextIndex = 0
-            (slot as AbstractSharedFlowSlot<Any>).freeLocked(this)
+            @Suppress("UNCHECKED_CAST")
+            slot.freeLocked(this as This)
         }
         /*
          * Resume suspended coroutines.

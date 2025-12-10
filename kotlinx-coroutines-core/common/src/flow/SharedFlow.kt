@@ -58,7 +58,7 @@ import kotlin.jvm.*
  * get values from the buffer without suspending emitters. The buffer space determines how much slow subscribers
  * can lag from the fast ones. When creating a shared flow, additional buffer capacity beyond replay can be reserved
  * using the `extraBufferCapacity` parameter.
- * 
+ *
  * A shared flow with a buffer can be configured to avoid suspension of emitters on buffer overflow using
  * the `onBufferOverflow` parameter, which is equal to one of the entries of the [BufferOverflow] enum. When a strategy other
  * than [SUSPENDED][BufferOverflow.SUSPEND] is configured, emissions to the shared flow never suspend.
@@ -292,11 +292,23 @@ public fun <T> MutableSharedFlow(
 // ------------------------------------ Implementation ------------------------------------
 
 internal class SharedFlowSlot : AbstractSharedFlowSlot<SharedFlowImpl<*>>() {
+    /**
+     * The first index in the buffer that was not yet consumed by this collector,
+     * or -1 if the slot is not allocated to a collector.
+     */
     @JvmField
-    var index = -1L // current "to-be-emitted" index, -1 means the slot is free now
+    var index = -1L
 
+    /**
+     * The current continuation of the collector.
+     *
+     * This field is used by the collector each time when it can not acquire the next value and suspends while
+     * waiting for the next one.
+     * `null` means that either the collector is not suspended but is processing some value,
+     * or that this slot is not allocated to a collector.
+     */
     @JvmField
-    var cont: Continuation<Unit>? = null // collector waiting for new value
+    var cont: Continuation<Unit>? = null
 
     override fun allocateLocked(flow: SharedFlowImpl<*>): Boolean {
         if (index >= 0) return false // not free
@@ -318,7 +330,7 @@ internal open class SharedFlowImpl<T>(
     private val replay: Int,
     private val bufferCapacity: Int,
     private val onBufferOverflow: BufferOverflow
-) : AbstractSharedFlow<SharedFlowSlot>(), MutableSharedFlow<T>, CancellableFlow<T>, FusibleFlow<T> {
+) : AbstractSharedFlow<SharedFlowImpl<*>, SharedFlowSlot>(), MutableSharedFlow<T>, CancellableFlow<T>, FusibleFlow<T> {
     /*
         Logical structure of the buffer
 
@@ -350,7 +362,7 @@ internal open class SharedFlowImpl<T>(
 
     // Stored state
     private var buffer: Array<Any?>? = null // allocated when needed, allocated size always power of two
-    private var replayIndex = 0L // minimal index from which new collector gets values
+    private var replayIndex = 0L // minimal index from which a new collector gets values
     private var minCollectorIndex = 0L // minimal index of active collectors, equal to replayIndex if there are none
     private var bufferSize = 0 // number of buffered values
     private var queueSize = 0 // number of queued emitters
@@ -532,13 +544,27 @@ internal open class SharedFlowImpl<T>(
         return index
     }
 
-    // Is called when a collector disappears or changes index, returns a list of continuations to resume after lock
+    /**
+     * Handle a collector having receiving the next value from the buffer or disappearing.
+     *
+     * As a result of both, the *index* of the collector--that is, the index of the next value in the buffer this
+     * collector intends to consume--changes, so the internal invariants need updating.
+     *
+     * In addition, it may turn out that either
+     * - This collector was the slowest one, and now that it has processed a value in the buffer,
+     *   the buffer has one more free slot to accommodate more values, so new emitters can be resumed.
+     * - This collector was the last one, and now that it's gone, emitters don't need to distribute values among
+     *   collectors anymore and can all continue executing immediately.
+     *
+     * In both cases, an array of continuations of the correct number of waiting emitters is returned
+     * so that they can be resumed.
+     */
     internal fun updateCollectorIndexLocked(oldIndex: Long): Array<Continuation<Unit>?> {
         assert { oldIndex >= minCollectorIndex }
         if (oldIndex > minCollectorIndex) return EMPTY_RESUMES // nothing changes, it was not min
-        // start computing new minimal index of active collectors
+        // start computing the new minimal index of active collectors
         val head = head
-        var newMinCollectorIndex = head + bufferSize
+        var newMinCollectorIndex = head + bufferSize // = this.bufferEndIndex
         // take into account a special case of sync shared flow that can go past 1st queued emitter
         if (bufferCapacity == 0 && queueSize > 0) newMinCollectorIndex++
         forEachSlotLocked { slot ->
@@ -546,21 +572,27 @@ internal open class SharedFlowImpl<T>(
         }
         assert { newMinCollectorIndex >= minCollectorIndex } // can only grow
         if (newMinCollectorIndex <= minCollectorIndex) return EMPTY_RESUMES // nothing changes
-        // Compute new buffer size if we drop items we no longer need and no emitter is resumed:
-        // We must keep all the items from newMinIndex to the end of buffer
-        var newBufferEndIndex = bufferEndIndex // var to grow when waiters are resumed
+        /* The new minimal resumer index has increased, so new emitters can be resumed,
+         * with their values now moving to the buffer. */
+        // Initially, `bufferEndIndex`, but later, grown for every resumed emitter.
+        var newBufferEndIndex = bufferEndIndex
+        // Represents how many emitters we can awaken at most.
         val maxResumeCount = if (nCollectors > 0) {
-            // If we have collectors we can resume up to maxResumeCount waiting emitters
-            // a) queueSize -> that's how many waiting emitters we have
-            // b) bufferCapacity - newBufferSize0 -> that's how many we can afford to resume to add w/o exceeding bufferCapacity
+            // Represents how many elements would be in the buffer if we didn't resume any emitters.
             val newBufferSize0 = (newBufferEndIndex - newMinCollectorIndex).toInt()
+            /** a) We can't awaken more than [queueSize] emitters, as only that many have registered.
+                b) If we awaken more than `bufferCapacity - newBufferSize0` emitters, we'll exceed [bufferCapacity]. */
             minOf(queueSize, bufferCapacity - newBufferSize0)
         } else {
-            // If we don't have collectors anymore we must resume all waiting emitters
-            queueSize // that's how many waiting emitters we have (at most)
+            // If we don't have collectors anymore, we must resume all waiting emitters and drop the buffer.
+            /** [queueSize] is the number of emitters that registered (there may, in fact, be fewer than that). */
+            queueSize
         }
+        /* Walk through at most `maxResumeCount` emitters, moving their values to the buffer,
+        * zeroing out the cells the emitters were occupying, and storing their continuations in an array that
+        * will be returned from this function and processed once the lock gets released. */
         var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
-        val newQueueEndIndex = newBufferEndIndex + queueSize
+        val newQueueEndIndex = newBufferEndIndex + queueSize // = this.queueEndIndex
         if (maxResumeCount > 0) { // collect emitters to resume if we have them
             resumes = arrayOfNulls(maxResumeCount)
             var resumeCount = 0
@@ -577,13 +609,13 @@ internal open class SharedFlowImpl<T>(
                 }
             }
         }
-        // Compute new buffer size -> how many values we now actually have after resume
+        /** Represents how many values are stored in the buffer after processing the emitters.
+         * The value may be larger than [bufferCapacity] if [nCollectors] was 0,
+         * but the `minOf(replay)` will clamp this value to a valid one, since `replay <= bufferCapacity`. */
         val newBufferSize1 = (newBufferEndIndex - head).toInt()
-        // Note: When nCollectors == 0 we resume ALL queued emitters and we might have resumed more than bufferCapacity,
-        // and newMinCollectorIndex might pointing the wrong place because of that. The easiest way to fix it is by
-        // forcing newMinCollectorIndex = newBufferEndIndex. We do not needed to update newBufferSize1 (which could be
-        // too big), because the only use of newBufferSize1 in the below code is in the minOf(replay, newBufferSize1)
-        // expression, which coerces values that are too big anyway.
+        /** If [nCollectors] was 0, there are no active collector slots,
+         * and the invariant dictates that [minCollectorIndex] should be [bufferEndIndex] (`replayIndex + bufferSize`).
+         * Ensure this directly. */
         if (nCollectors == 0) newMinCollectorIndex = newBufferEndIndex
         // Compute new replay size -> limit to replay the number of items we need, take into account that it can only grow
         var newReplayIndex = maxOf(replayIndex, newBufferEndIndex - minOf(replay, newBufferSize1))
@@ -618,6 +650,7 @@ internal open class SharedFlowImpl<T>(
         bufferSize = (newBufferEndIndex - newHead).toInt()
         queueSize = (newQueueEndIndex - newBufferEndIndex).toInt()
         // check our key invariants (just in case)
+        assert { bufferSize <= bufferCapacity }
         assert { bufferSize >= 0 }
         assert { queueSize >= 0 }
         assert { replayIndex <= this.head + bufferSize }
@@ -712,7 +745,7 @@ internal open class SharedFlowImpl<T>(
 
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseSharedFlow(context, capacity, onBufferOverflow)
-    
+
     private class Emitter(
         @JvmField val flow: SharedFlowImpl<*>,
         @JvmField var index: Long,
