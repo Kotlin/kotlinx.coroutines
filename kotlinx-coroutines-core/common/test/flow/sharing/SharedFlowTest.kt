@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.random.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * This test suite contains some basic tests for [SharedFlow]. There are some scenarios here written
@@ -819,6 +820,37 @@ class SharedFlowTest : TestBase() {
     @Test
     fun testSubscriptionByFirstSuspensionInSharedFlow() = runTest {
         testSubscriptionByFirstSuspensionInCollect(MutableSharedFlow()) { emit(it) }
+    }
+
+    /** Tests that cancelling a subscriber and an emitter simultaneously
+     * does not break the invariants of a [SharedFlow] with no buffer. */
+    @Test
+    fun testCancellingSubscriberAndEmitterWithNoBuffer() = runTest {
+        val mutableSharedFlow = MutableSharedFlow<Unit>()
+        repeat(10) {
+            launch {
+                val valueObtained = CompletableDeferred<Unit>()
+                val j1 = launch {
+                    mutableSharedFlow.collect {
+                        valueObtained.complete(Unit)
+                    }
+                }
+                val j2 =
+                    launch {
+                        while (isActive) {
+                            mutableSharedFlow.emit(Unit)
+                        }
+                    }
+                val successfullyAwaited = withTimeoutOrNull(100.milliseconds) {
+                    valueObtained.await()
+                }
+                if (successfullyAwaited == null) {
+                    throw AssertionError("The collector failed to obtain a value from a non-empty shared flow")
+                }
+                j1.cancel()
+                j2.cancel()
+            }.join()
+        }
     }
 }
 

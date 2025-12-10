@@ -613,10 +613,6 @@ internal open class SharedFlowImpl<T>(
          * The value may be larger than [bufferCapacity] if [nCollectors] was 0,
          * but the `minOf(replay)` will clamp this value to a valid one, since `replay <= bufferCapacity`. */
         val newBufferSize1 = (newBufferEndIndex - head).toInt()
-        /** If [nCollectors] was 0, there are no active collector slots,
-         * and the invariant dictates that [minCollectorIndex] should be [bufferEndIndex] (`replayIndex + bufferSize`).
-         * Ensure this directly. */
-        if (nCollectors == 0) newMinCollectorIndex = newBufferEndIndex
         // Compute new replay size -> limit to replay the number of items we need, take into account that it can only grow
         var newReplayIndex = maxOf(replayIndex, newBufferEndIndex - minOf(replay, newBufferSize1))
         // adjustment for synchronous case with cancelled emitter (NO_VALUE)
@@ -624,6 +620,10 @@ internal open class SharedFlowImpl<T>(
             newBufferEndIndex++
             newReplayIndex++
         }
+        /** If [nCollectors] was 0, there are no active collector slots,
+         * and the invariant dictates that [minCollectorIndex] should be [bufferEndIndex] (`replayIndex + bufferSize`).
+         * Ensure this directly. */
+        if (nCollectors == 0) newMinCollectorIndex = newBufferEndIndex
         // Update buffer state
         updateBufferLocked(newReplayIndex, newMinCollectorIndex, newBufferEndIndex, newQueueEndIndex)
         // just in case we've moved all buffered emitters and have NO_VALUE's at the tail now
