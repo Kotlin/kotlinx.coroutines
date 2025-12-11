@@ -1,13 +1,9 @@
 package benchmarks
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 
-/**
- * Benchmarks with `runBlocking` are significantly skewed by `runBlocking` overhead.
- */
 @Warmup(iterations = 30, time = 1)
 @Measurement(iterations = 30, time = 1)
 @BenchmarkMode(Mode.AverageTime)
@@ -18,19 +14,8 @@ open class ChannelNanoBenchmarkConflated {
     var channel: Channel<Int> = Channel(Channel.CONFLATED)
 
     @Benchmark
-    fun send() = runBlocking {
-        channel.send(42)
-    }
-
-    @Benchmark
     fun trySend() {
         channel.trySend(42)
-    }
-
-    @Benchmark
-    fun sendReceive(): Int = runBlocking {
-        channel.send(42)
-        return@runBlocking channel.receive()
     }
 
     @Benchmark
