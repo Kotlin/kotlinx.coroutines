@@ -8,8 +8,8 @@ import java.util.concurrent.*
 /**
  * Benchmarks with `runBlocking` are significantly skewed by `runBlocking` overhead.
  */
-@Warmup(iterations = 5, time = 1)
-@Measurement(iterations = 5, time = 1)
+@Warmup(iterations = 30, time = 1)
+@Measurement(iterations = 30, time = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)

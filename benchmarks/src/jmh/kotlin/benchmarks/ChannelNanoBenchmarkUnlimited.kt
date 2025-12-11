@@ -8,17 +8,17 @@ import java.util.concurrent.*
 /**
  * Benchmarks with `runBlocking` are significantly skewed by `runBlocking` overhead.
  */
-@Warmup(iterations = 5, time = 1)
-@Measurement(iterations = 5, time = 1)
+@Warmup(iterations = 30, time = 1)
+@Measurement(iterations = 30, time = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Fork(1)
 open class ChannelNanoBenchmarkUnlimited {
     @State(Scope.Benchmark)
     open class PrefilledChannelState {
-        private val list = List(10_000_000) { it }
+        private val list = List(1_000_000) { it }
 
-        @Param(value = ["0", "100000", "1000000", "10000000"])  // 0, 400 KB, 4, 40 MB
+        @Param(value = ["0", "10000", "100000", "1000000"])  // 0, 40, 400 KB, 4 MB
         private var prefill = 0
 
         lateinit var channel: Channel<Int>
