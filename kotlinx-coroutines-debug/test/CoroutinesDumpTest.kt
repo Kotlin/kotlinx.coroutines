@@ -2,8 +2,6 @@ package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -11,7 +9,7 @@ class CoroutinesDumpTest : DebugTestBase() {
     private val monitor = Any()
     private var coroutineThread: Thread? = null // guarded by monitor
 
-    @Before
+    @BeforeTest
     override fun setUp() {
         super.setUp()
         DebugProbes.enableCreationStackTraces = true
@@ -19,11 +17,13 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     @Test
     fun testSuspendedCoroutine() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
-            sleepingOuterMethod()
+        val latch = CompletableDeferred<Unit>()
+        val singleThreadedDispatcher = newSingleThreadContext("TestCoroutineThread")
+        val deferred = async(singleThreadedDispatcher) {
+            sleepingOuterMethod(singleThreadedDispatcher, latch)
         }
 
-        awaitCoroutine()
+        latch.await()
         val found = DebugProbes.dumpCoroutinesInfo().single { it.job === deferred }
         verifyDump(
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: SUSPENDED\n" +
@@ -35,6 +35,7 @@ class CoroutinesDumpTest : DebugTestBase() {
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n",
             ignoredCoroutine = "BlockingCoroutine"
         ) {
+            singleThreadedDispatcher.close()
             deferred.cancel()
             coroutineThread!!.interrupt()
         }
@@ -181,7 +182,7 @@ class CoroutinesDumpTest : DebugTestBase() {
     private suspend fun nestedActiveMethod(shouldSuspend: Boolean) {
         if (shouldSuspend) yield()
         notifyCoroutineStarted()
-        while (coroutineContext[Job]!!.isActive) {
+        while (currentCoroutineContext()[Job]!!.isActive) {
             try {
                 Thread.sleep(60_000)
             } catch (_ : InterruptedException) {
@@ -189,14 +190,20 @@ class CoroutinesDumpTest : DebugTestBase() {
         }
     }
 
-    private suspend fun sleepingOuterMethod() {
-        sleepingNestedMethod()
+    private suspend fun sleepingOuterMethod(currentDispatcher: CoroutineDispatcher, latch: CompletableDeferred<Unit>) {
+        sleepingNestedMethod(currentDispatcher, latch)
         yield() // TCE
     }
 
-    private suspend fun sleepingNestedMethod() {
+    private suspend fun sleepingNestedMethod(currentDispatcher: CoroutineDispatcher, latch: CompletableDeferred<Unit>) {
         yield() // Suspension point
-        notifyCoroutineStarted()
+        /* Schedule a computation on the current single-threaded dispatcher.
+        Since that thread is currently running this code,
+        the start notification will happen *after* the currently running coroutine suspends. */
+        currentDispatcher.dispatch(currentDispatcher) {
+            coroutineThread = Thread.currentThread()
+            latch.complete(Unit)
+        }
         delay(Long.MAX_VALUE)
     }
 
