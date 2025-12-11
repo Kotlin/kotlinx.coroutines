@@ -233,7 +233,7 @@ tasks {
             ":jpmsTest:check",
             "smokeTest:build",
             "java8Test:check",
-            "safeDebugAgentTest:runWithExpectedFailure"
+            "safeDebugAgentTest:attachAgentWithoutKotlinStdlib"
         )
     }
 
