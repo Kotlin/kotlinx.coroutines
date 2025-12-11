@@ -16,21 +16,21 @@ Cancellation works through the [`Job`](https://kotlinlang.org/api/kotlinx.corout
 ## Cancel coroutines
 
 A coroutine is canceled when the [`cancel()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html) function is invoked on its `Job` handle.
-This handle is returned by [coroutine builder functions](coroutines-basics.md#coroutine-builder-functions) like
-the [`.launch()`](coroutines-basics.md#coroutinescope-launch) function, which returns a `Job`, or the [`.async()`](coroutines-basics.md#coroutinescope-async)
-function, which returns a [`Deferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/).
-`Deferred` is a type that implements `Job` and supports the same cancellation behavior.
+[Coroutine builder functions](coroutines-basics.md#coroutine-builder-functions) such as
+[`.launch()`](coroutines-basics.md#coroutinescope-launch) return a `Job`. The [`.async()`](coroutines-basics.md#coroutinescope-async)
+function returns a [`Deferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/), which
+implements `Job` and supports the same cancellation behavior.
 
 You can call the `cancel()` function manually, or it can be invoked automatically through cancellation propagation when a parent coroutine is canceled.
 
 When a coroutine is canceled, it throws a [`CancellationException`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/) the next time it checks for cancellation.
 For more information about how and when this happens, see [Suspension points and cancellation](#suspension-points-and-cancellation).
 
-> You can use the [`awaitCancellation()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await-cancellation.html) function to suspend a coroutine until cancellation.
+> You can use the [`awaitCancellation()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await-cancellation.html) function to suspend a coroutine until it's canceled.
 >
 {style="tip"}
 
-Here's an example that demonstrates how to manually cancel coroutines:
+Here's an example on how to manually cancel coroutines:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -70,7 +70,8 @@ suspend fun main() {
 
         // async returns a Deferred handle, which inherits from Job
         val job2 = async {
-                  // This line may not be printed if the coroutine is canceled before its body starts executing
+                  // If the coroutine is canceled before its body starts executing,
+                  // this line may not be printed
                   println("The second coroutine has started")
 
             try {
@@ -108,7 +109,7 @@ The coroutine created by `.async()` doesn't have this check, so it may be cancel
 ### Cancellation propagation
 
 [Structured concurrency](coroutines-basics.md#coroutine-scope-and-structured-concurrency) ensures that canceling a coroutine also cancels all of its children.
-This prevents child coroutines from continuing work after the parent has already stopped.
+This prevents child coroutines from working after the parent has already stopped.
 
 Here's an example:
 
@@ -164,13 +165,13 @@ Here, `CompletableDeferred` signals that the child coroutines are launched befor
 In Kotlin, coroutine cancellation is _cooperative_.
 This means that coroutines only react to cancellation when they cooperate by [suspending](#suspension-points-and-cancellation) or [checking for cancellation explicitly](#check-for-cancellation-explicitly).
 
-In this section, you can learn ways to create cancelable coroutines.
+In this section, you can learn how to create cancelable coroutines.
 
 ### Suspension points and cancellation
 
 When a coroutine is canceled, it continues running until it reaches a point in the code where it may suspend, also known as a _suspension point_.
 If the coroutine suspends there, the suspending function checks whether it has been canceled.
-If it has been canceled, the coroutine stops and throws `CancellationException`.
+If it has, the coroutine stops and throws `CancellationException`.
 
 A call to a `suspend` function is a suspension point, but it doesn't always suspend.
 For example, when awaiting a `Deferred` result, the coroutine only suspends if that `Deferred` isn't completed yet.
@@ -224,7 +225,7 @@ suspend fun main() {
 {kotlin-runnable="true" id="suspension-points-example"}
 
 > All suspending functions in the `kotlinx.coroutines` library cooperate with cancellation because they use [`suspendCancellableCoroutine()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/suspend-cancellable-coroutine.html) internally, which checks for cancellation when the coroutine suspends.
-> On the other hand, custom suspending functions that use [`suspendCoroutine()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.coroutines/suspend-coroutine.html) don't react to cancellation.
+> In contrast, custom suspending functions that use [`suspendCoroutine()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.coroutines/suspend-coroutine.html) don't react to cancellation.
 >
 {style="tip"}
 
@@ -234,9 +235,9 @@ If a coroutine doesn't [suspend](#suspension-points-and-cancellation) for a long
 
 To check for cancellation, use the following APIs:
 
-* [`isActive`](#isactive): this property is `false` when the coroutine is canceled.
-* [`ensureActive()`](#ensureactive): this function throws `CancellationException` immediately if the coroutine is canceled.
-* [`yield()`](#yield): this function suspends the coroutine, releasing the thread and giving other coroutines a chance to run on it. Suspending the coroutine lets it check for cancellation and throw `CancellationException` if it's canceled.
+* [`isActive`](#isactive) property is `false` when the coroutine is canceled.
+* [`ensureActive()`](#ensureactive) function throws `CancellationException` immediately if the coroutine is canceled.
+* [`yield()`](#yield) function suspends the coroutine, releasing the thread and giving other coroutines a chance to run on it. Suspending the coroutine lets it check for cancellation and throw `CancellationException` if it's canceled.
 
 These APIs are useful when your coroutines run for a long time between suspension points or are unlikely to suspend at suspension points.
 
@@ -270,7 +271,7 @@ suspend fun main() {
                 "Stopped sorting the list after $i iterations"
             )
         }
-        // Sorts the list for 100 milliseconds, then consider it sorted enough
+        // Sorts the list for 100 milliseconds, then considers it sorted enough
         delay(100.milliseconds)
 
         // Cancels the sorting when the result is good enough        
@@ -334,7 +335,7 @@ suspend fun main() {
 The [`yield()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html) function suspends the coroutine and checks for cancellation before resuming.
 Without suspending, coroutines on the same thread run sequentially.
 
-Use `yield` to allow other coroutines to run on the same thread or thread pool before one coroutine finishes:
+Use `yield` to allow other coroutines to run on the same thread or thread pool before one of them finishes:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -382,7 +383,7 @@ suspend fun main() {
         val childStarted = CompletableDeferred<Unit>()
         val childJob = launch {
             try {
-                // Cancellation triggers a thread interrupt
+                // Cancellation triggers a thread interruption
                 runInterruptible {
                     childStarted.complete(Unit)
                     try {
@@ -400,7 +401,8 @@ suspend fun main() {
         }
         childStarted.await()
 
-        // Cancels the coroutine and interrupts the thread running Thread.sleep()
+        // Cancels the coroutine and interrupts the thread
+        // by running Thread.sleep()
         childJob.cancel()
     }
 }
@@ -434,7 +436,7 @@ class ScreenWithFileContents(private val scope: CoroutineScope) {
                 }
             }
             // It's safe to call updateUi here,
-            // because cancellation would have prevented withContext() from returning any values
+            // In case of cancellation, withContext() wouldn't return any values
             updateUi(contents)
         }
     }
@@ -561,7 +563,6 @@ suspend fun main() {
                 awaitCancellation()
             } finally {
                 withContext(NonCancellable) {
-                    
                     // Without withContext(NonCancellable),
                     // This function doesn't complete because the coroutine is canceled
                     shutdownServiceAndWait()
