@@ -50,11 +50,13 @@ internal object DebugProbesImpl {
     private val dynamicAttach = getDynamicAttach()
 
     @Suppress("UNCHECKED_CAST")
-    private fun getDynamicAttach(): Function1<Boolean, Unit>? = runCatching {
+    private fun getDynamicAttach(): Function1<Boolean, Unit>? = try {
         val clz = Class.forName("kotlinx.coroutines.debug.ByteBuddyDynamicAttach")
         val ctor = clz.constructors[0]
         ctor.newInstance() as Function1<Boolean, Unit>
-    }.getOrNull()
+    } catch (_: Throwable) {
+        null
+    }
 
     /**
      * Because `probeCoroutinesResumed` is called for every resumed continuation (see KT-29997 and the related code),
@@ -88,8 +90,14 @@ internal object DebugProbesImpl {
     }
 
     private fun startWeakRefCleanerThread() {
-        weakRefCleanerThread = thread(isDaemon = true, name = "Coroutines Debugger Cleaner") {
+        // Can not use the `thread { }` function here, as the standard library may be unavailable
+        // when the debug agent is loaded.
+        Thread({
             callerInfoCache.runWeakRefQueueCleaningLoopUntilInterrupted()
+        }, "Coroutines Debugger Cleaner").also {
+            weakRefCleanerThread = it
+            it.isDaemon = true
+            it.start()
         }
     }
 
@@ -194,7 +202,7 @@ internal object DebugProbesImpl {
                     "dispatcher": $dispatcher,
                     "sequenceNumber": ${info.sequenceNumber},
                     "state": "${info.state}"
-                } 
+                }
                 """.trimIndent()
             )
             lastObservedFrames.add(info.lastObservedFrame)
