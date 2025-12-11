@@ -528,7 +528,7 @@ In this example, storing the `BufferedReader` in a variable and closing it in th
 You can prevent cancellation from affecting certain parts of a coroutine.
 To do so, pass [`NonCancellable`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-non-cancellable/) as an argument to the `withContext()` coroutine builder function.
 
-> Avoid using `NonCancellable` with other coroutine builders like `.launch()` or `.async()`. Doing so breaks structured concurrency by severing the parent-child relationship.
+> Avoid using `NonCancellable` with other coroutine builders like `.launch()` or `.async()`. Doing so disrupts structured concurrency by breaking the parent-child relationship.
 >
 {style="warning"}
 
