@@ -1,506 +1,629 @@
-<!--- TEST_NAME CancellationGuideTest -->
 <contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
 
 [//]: # (title: Cancellation and timeouts)
 
-This section covers coroutine cancellation and timeouts.
+Cancellation lets you stop a coroutine before it completes.
+It stops work that's no longer needed, such as when a user closes a window or navigates away in a user interface while a coroutine is still running.
+You can also use it to release resources early and to stop a coroutine from accessing objects past their disposal.
 
-## Cancelling coroutine execution
-
-In a long-running application, you might need fine-grained control on your background coroutines.
-For example, a user might have closed the page that launched a coroutine, and now its result
-is no longer needed and its operation can be cancelled. 
-The [launch] function returns a [Job] that can be used to cancel the running coroutine:
-
-```kotlin
-import kotlinx.coroutines.*
-
-fun main() = runBlocking {
-//sampleStart
-    val job = launch {
-        repeat(1000) { i ->
-            println("job: I'm sleeping $i ...")
-            delay(500L)
-        }
-    }
-    delay(1300L) // delay a bit
-    println("main: I'm tired of waiting!")
-    job.cancel() // cancels the job
-    job.join() // waits for job's completion 
-    println("main: Now I can quit.")
-//sampleEnd    
-}
-```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-01.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-01.kt).
+> You can use cancellation to stop long-running coroutines that keep producing values even after other coroutines no longer need them, for example, in [pipelines](channels.md#pipelines).
 >
-{style="note"}
+{style="tip"}
 
-It produces the following output:
+Cancellation works through the [`Job`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/) handle, which represents the lifecycle of a coroutine and its parent-child relationships.
+`Job` allows you to check whether the coroutine is active and allows you to cancel it, along with its children, as defined by [structured concurrency](coroutines-basics.md#coroutine-scope-and-structured-concurrency).
 
-```text
-job: I'm sleeping 0 ...
-job: I'm sleeping 1 ...
-job: I'm sleeping 2 ...
-main: I'm tired of waiting!
-main: Now I can quit.
-```
+## Cancel coroutines
 
-<!--- TEST -->
+A coroutine is canceled when the [`cancel()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html) function is invoked on its `Job` handle.
+[Coroutine builder functions](coroutines-basics.md#coroutine-builder-functions) such as
+[`.launch()`](coroutines-basics.md#coroutinescope-launch) return a `Job`. The [`.async()`](coroutines-basics.md#coroutinescope-async)
+function returns a [`Deferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/), which
+implements `Job` and supports the same cancellation behavior.
 
-As soon as main invokes `job.cancel`, we don't see any output from the other coroutine because it was cancelled. 
-There is also a [Job] extension function [cancelAndJoin] 
-that combines [cancel][Job.cancel] and [join][Job.join] invocations.
+You can call the `cancel()` function manually, or it can be invoked automatically through cancellation propagation when a parent coroutine is canceled.
 
-## Cancellation is cooperative
+When a coroutine is canceled, it throws a [`CancellationException`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/) the next time it checks for cancellation.
+For more information about how and when this happens, see [Suspension points and cancellation](#suspension-points-and-cancellation).
 
-Coroutine cancellation is _cooperative_. A coroutine code has to cooperate to be cancellable.
-All the suspending functions in `kotlinx.coroutines` are _cancellable_. They check for cancellation of 
-coroutine and throw [CancellationException] when cancelled. However, if a coroutine is working in 
-a computation and does not check for cancellation, then it cannot be cancelled, like the following 
-example shows:
-
-```kotlin
-import kotlinx.coroutines.*
-
-fun main() = runBlocking {
-//sampleStart
-    val startTime = System.currentTimeMillis()
-    val job = launch(Dispatchers.Default) {
-        var nextPrintTime = startTime
-        var i = 0
-        while (i < 5) { // computation loop, just wastes CPU
-            // print a message twice a second
-            if (System.currentTimeMillis() >= nextPrintTime) {
-                println("job: I'm sleeping ${i++} ...")
-                nextPrintTime += 500L
-            }
-        }
-    }
-    delay(1300L) // delay a bit
-    println("main: I'm tired of waiting!")
-    job.cancelAndJoin() // cancels the job and waits for its completion
-    println("main: Now I can quit.")
-//sampleEnd    
-}
-```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-02.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-02.kt).
+> You can use the [`awaitCancellation()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await-cancellation.html) function to suspend a coroutine until it's canceled.
 >
-{style="note"}
+{style="tip"}
 
-Run it to see that it continues to print "I'm sleeping" even after cancellation
-until the job completes by itself after five iterations.
-
-<!--- TEST 
-job: I'm sleeping 0 ...
-job: I'm sleeping 1 ...
-job: I'm sleeping 2 ...
-main: I'm tired of waiting!
-job: I'm sleeping 3 ...
-job: I'm sleeping 4 ...
-main: Now I can quit.
--->
-
-The same problem can be observed by catching a [CancellationException] and not rethrowing it:
+Here's an example on how to manually cancel coroutines:
 
 ```kotlin
 import kotlinx.coroutines.*
+import kotlin.time.Duration
 
-fun main() = runBlocking {
 //sampleStart
-    val job = launch(Dispatchers.Default) {
-        repeat(5) { i ->
+suspend fun main() {
+    withContext(Dispatchers.Default) {
+        // Used as a signal that the coroutine has started running
+        val job1Started = CompletableDeferred<Unit>()
+        
+        val job1: Job = launch {
+            
+            println("The coroutine has started")
+
+            // Completes the CompletableDeferred,
+            // signaling that the coroutine has started running
+            job1Started.complete(Unit)
             try {
-                // print a message twice a second
-                println("job: I'm sleeping $i ...")
-                delay(500)
-            } catch (e: Exception) {
-                // log the exception
-                println(e)
+                // Suspends indefinitely
+                // Without cancellation, this call would never return
+                delay(Duration.INFINITE)
+            } catch (e: CancellationException) {
+                println("The coroutine was canceled: $e")
+              
+                // Always rethrow cancellation exceptions!
+                throw e
+            }
+            println("This line will never be executed")
+        }
+      
+        // Waits for job1 to start before canceling it
+        job1Started.await()
+
+        // Cancels the coroutine, so delay() throws a CancellationException
+        job1.cancel()
+
+        // async returns a Deferred handle, which inherits from Job
+        val job2 = async {
+                  // If the coroutine is canceled before its body starts executing,
+                  // this line may not be printed
+                  println("The second coroutine has started")
+
+            try {
+                // Equivalent to delay(Duration.INFINITE)
+                // Suspends until this coroutine is canceled
+                awaitCancellation()
+
+            } catch (e: CancellationException) {
+                println("The second coroutine was canceled")
+                throw e
             }
         }
+        job2.cancel()
     }
-    delay(1300L) // delay a bit
-    println("main: I'm tired of waiting!")
-    job.cancelAndJoin() // cancels the job and waits for its completion
-    println("main: Now I can quit.")
-//sampleEnd    
+    // Coroutine builders such as withContext() or coroutineScope()
+    // wait for all child coroutines to complete,
+    // even when the children are canceled
+    println("All coroutines have completed")
+}
+//sampleEnd
+```
+{kotlin-runnable="true" id="manual-cancellation-example"}
+
+In this example, [`CompletableDeferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-completable-deferred/) is used as a signal that the coroutine has started running.
+The coroutine calls `complete()` when it starts executing, and `await()` only returns once that `CompletableDeferred` is completed. This way, cancellation happens only after the coroutine has started running.
+The coroutine created by `.async()` doesn't have this check, so it may be canceled before it can run the code inside its block.
+
+> Catching `CancellationException` can break the cancellation propagation.
+> If you must catch it, rethrow it to let the cancellation propagate correctly through the coroutine hierarchy.
+>
+> For more information, see [Coroutine exceptions handling](exception-handling.md#cancellation-and-exceptions).
+>
+{style="warning"}
+
+### Cancellation propagation
+
+[Structured concurrency](coroutines-basics.md#coroutine-scope-and-structured-concurrency) ensures that canceling a coroutine also cancels all of its children.
+This prevents child coroutines from working after the parent has already stopped.
+
+Here's an example:
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlin.time.Duration
+
+//sampleStart
+suspend fun main() {
+    withContext(Dispatchers.Default) {
+        // Used as a signal that the child coroutines have been launched
+        val childrenLaunched = CompletableDeferred<Unit>()
+
+        // Launches two child coroutines
+        val parentJob = launch {
+            launch {
+                println("Child coroutine 1 has started running")
+                try {
+                    awaitCancellation()
+                } finally {
+                    println("Child coroutine 1 has been canceled")
+                }
+            }
+            launch {
+                println("Child coroutine 2 has started running")
+                try {
+                    awaitCancellation()
+                } finally {
+                    println("Child coroutine 2 has been canceled")
+                }
+            }
+            // Completes the CompletableDeferred,
+            // signaling that the child coroutines have been launched
+            childrenLaunched.complete(Unit)
+        }
+        // Waits for the parent coroutine to signal that it has launched
+        // all of its children
+        childrenLaunched.await()
+
+        // Cancels the parent coroutine, which cancels all its children
+        parentJob.cancel()
+    }
+}
+//sampleEnd
+```
+{kotlin-runnable="true" id="cancellation-propagation-example"}
+
+In this example, each child coroutine uses a [`finally` block](exceptions.md#the-finally-block), so the code inside it runs when the coroutine is canceled.
+Here, `CompletableDeferred` signals that the child coroutines are launched before they are canceled, but it doesn't guarantee that they start running. If they are canceled first, nothing is printed.
+
+## Make coroutines react to cancellation {id="cancellation-is-cooperative"}
+
+In Kotlin, coroutine cancellation is _cooperative_.
+This means that coroutines only react to cancellation when they cooperate by [suspending](#suspension-points-and-cancellation) or [checking for cancellation explicitly](#check-for-cancellation-explicitly).
+
+In this section, you can learn how to create cancelable coroutines.
+
+### Suspension points and cancellation
+
+When a coroutine is canceled, it continues running until it reaches a point in the code where it may suspend, also known as a _suspension point_.
+If the coroutine suspends there, the suspending function checks whether it has been canceled.
+If it has, the coroutine stops and throws `CancellationException`.
+
+A call to a `suspend` function is a suspension point, but it doesn't always suspend.
+For example, when awaiting a `Deferred` result, the coroutine only suspends if that `Deferred` isn't completed yet.
+
+Here's an example using common suspending functions that suspend, enabling the coroutine to check and stop when it's canceled:
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.channels.Channel
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration
+
+suspend fun main() {
+    withContext(Dispatchers.Default) {
+        val childJobs = listOf(
+            launch {
+                // Suspends until canceled
+                awaitCancellation()
+            },
+            launch {
+                // Suspends until canceled
+                delay(Duration.INFINITE)
+            },
+            launch {
+                val channel = Channel<Int>()
+                // Suspends while waiting for a value that is never sent
+                channel.receive()
+            },
+            launch {
+                val deferred = CompletableDeferred<Int>()
+                // Suspends while waiting for a value that is never completed
+                deferred.await()
+            },
+            launch {
+                val mutex = Mutex(locked = true)
+                // Suspends while waiting for a mutex that remains locked indefinitely
+                mutex.lock()
+            }
+        )
+        
+        // Gives the child coroutines time to start and suspend
+        delay(100.milliseconds)
+        
+        // Cancels all child coroutines
+        childJobs.forEach { it.cancel() }
+    }
+    println("All child jobs completed!")
 }
 ```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-03.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-03.kt).
+{kotlin-runnable="true" id="suspension-points-example"}
+
+> All suspending functions in the `kotlinx.coroutines` library cooperate with cancellation because they use [`suspendCancellableCoroutine()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/suspend-cancellable-coroutine.html) internally, which checks for cancellation when the coroutine suspends.
+> In contrast, custom suspending functions that use [`suspendCoroutine()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.coroutines/suspend-coroutine.html) don't react to cancellation.
+>
+{style="tip"}
+
+### Check for cancellation explicitly
+
+If a coroutine doesn't [suspend](#suspension-points-and-cancellation) for a long time, it doesn't stop when it's canceled unless it explicitly checks for cancellation.
+
+To check for cancellation, use the following APIs:
+
+* [`isActive`](#isactive) property is `false` when the coroutine is canceled.
+* [`ensureActive()`](#ensureactive) function throws `CancellationException` immediately if the coroutine is canceled.
+* [`yield()`](#yield) function suspends the coroutine, releasing the thread and giving other coroutines a chance to run on it. Suspending the coroutine lets it check for cancellation and throw `CancellationException` if it's canceled.
+
+These APIs are useful when your coroutines run for a long time between suspension points or are unlikely to suspend at suspension points.
+
+#### isActive
+
+Use the [`isActive`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/is-active.html) property in long-running computations to periodically check for cancellation.
+This property is `false` when the coroutine is no longer active, which you can use to gracefully stop the coroutine when it no longer needs to continue the operation:
+
+Here's an example:
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.random.Random
+
+//sampleStart
+suspend fun main() {
+    withContext(Dispatchers.Default) {
+        val unsortedList = MutableList(10) { Random.nextInt() }
+        
+        // Starts a long-running computation
+        val listSortingJob = launch {
+            var i = 0
+
+            // Repeatedly sorts the list while the coroutine remains active
+            while (isActive) {
+                unsortedList.sort()
+                ++i
+            }
+            println(
+                "Stopped sorting the list after $i iterations"
+            )
+        }
+        // Sorts the list for 100 milliseconds, then considers it sorted enough
+        delay(100.milliseconds)
+
+        // Cancels the sorting when the result is good enough        
+        listSortingJob.cancel()
+
+        // Waits until the sorting coroutine finishes
+        // before accessing the shared list to avoid data races
+        listSortingJob.join()
+        println("The list is probably sorted: $unsortedList")
+    }
+}
+//sampleEnd
+```
+{kotlin-runnable="true" id="isactive-example"}
+
+In this example, the [`join()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html) function suspends the coroutine until it finishes. This ensures that the list isn't accessed while the sorting coroutine is still running.
+
+> You can use the [`cancelAndJoin()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/cancel-and-join.html) function to cancel a coroutine and wait for it to finish in a single call.
 >
 {style="note"}
 
-While catching `Exception` is an anti-pattern, this issue may surface in more subtle ways, like when using the
-[`runCatching`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/run-catching.html) function,
-which does not rethrow [CancellationException].
+#### ensureActive()
 
-## Making computation code cancellable
+Use the [`ensureActive()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/ensure-active.html) function to check for cancellation and stop the current computation by throwing `CancellationException` if the coroutine is canceled:
 
-There are two approaches to making computation code cancellable.
-The first one is periodically invoking a suspending function that checks for cancellation.
-There are the [yield] and [ensureActive]
-functions, which are great choices for that purpose.
-The other one is explicitly checking the cancellation status using [isActive].
-Let us try the latter approach.
+```kotlin
+import kotlinx.coroutines.*
+import kotlin.time.Duration.Companion.milliseconds
 
-Replace `while (i < 5)` in the previous example with `while (isActive)` and rerun it. 
+suspend fun main() {
+    withContext(Dispatchers.Default) {
+        val childJob = launch {
+            var start = 0
+            try {
+                while (true) {
+                    ++start
+                    // Checks the Collatz conjecture for the current number
+                    var n = start
+                    while (n != 1) {
+                        // Throws CancellationException if the coroutine is canceled
+                        ensureActive()
+                        n = if (n % 2 == 0) n / 2 else 3 * n + 1
+                    }
+                }
+            } finally {
+                println("Checked the Collatz conjecture for 0..${start-1}")
+            }
+        }
+        // Runs the computation for one second
+        delay(100.milliseconds)
+
+        // Cancels the coroutine
+        childJob.cancel()
+    }
+}
+```
+{kotlin-runnable="true" id="ensurective-example"}
+
+#### yield()
+
+The [`yield()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html) function suspends the coroutine and checks for cancellation before resuming.
+Without suspending, coroutines on the same thread run sequentially.
+
+Use `yield` to allow other coroutines to run on the same thread or thread pool before one of them finishes:
 
 ```kotlin
 import kotlinx.coroutines.*
 
-fun main() = runBlocking {
 //sampleStart
-    val startTime = System.currentTimeMillis()
-    val job = launch(Dispatchers.Default) {
-        var nextPrintTime = startTime
-        var i = 0
-        while (isActive) { // cancellable computation loop
-            // prints a message twice a second
-            if (System.currentTimeMillis() >= nextPrintTime) {
-                println("job: I'm sleeping ${i++} ...")
-                nextPrintTime += 500L
+fun main() {
+    // runBlocking uses the current thread for running all coroutines
+    runBlocking {
+        val coroutineCount = 5
+        repeat(coroutineCount) { coroutineIndex ->
+            launch {
+                val id = coroutineIndex + 1
+                repeat(5) { iterationIndex ->
+                    val iteration = iterationIndex + 1
+                    // Temporarily suspends to give other coroutines a chance to run
+                    // Without this, the coroutines run sequentially
+                    yield()
+                    // Prints the coroutine index and iteration index
+                    println("$id * $iteration = ${id * iteration}")
+                }
             }
         }
     }
-    delay(1300L) // delay a bit
-    println("main: I'm tired of waiting!")
-    job.cancelAndJoin() // cancels the job and waits for its completion
-    println("main: Now I can quit.")
-//sampleEnd    
 }
+//sampleEnd
 ```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-04.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-04.kt).
->
-{style="note"}
+{kotlin-runnable="true" id="yield-example"}
 
-As you can see, now this loop is cancelled. [isActive] is an extension property 
-available inside the coroutine via the [CoroutineScope] object.
+In this example, each coroutine uses `yield()` to let other coroutines run between iterations.
 
-<!--- TEST
-job: I'm sleeping 0 ...
-job: I'm sleeping 1 ...
-job: I'm sleeping 2 ...
-main: I'm tired of waiting!
-main: Now I can quit.
--->
+### Interrupt blocking code when coroutines are canceled
 
-## Closing resources with finally
+On the JVM, some functions, such as `Thread.sleep()` or `BlockingQueue.take()`, can block the current thread.
+These blocking functions can be interrupted, which stops them prematurely.
+However, when you call them from a coroutine, cancellation doesn't interrupt the thread.
 
-Cancellable suspending functions throw [CancellationException] on cancellation, which can be handled in 
-the usual way.
-For example,
-the `try {...} finally {...}` expression and Kotlin's [use](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.io/use.html)
-function execute their finalization actions normally when a coroutine is cancelled:
+To interrupt the thread when canceling a coroutine, use the [`runInterruptible()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-interruptible.html) function:
 
 ```kotlin
 import kotlinx.coroutines.*
 
-fun main() = runBlocking {
 //sampleStart
-    val job = launch {
-        try {
-            repeat(1000) { i ->
-                println("job: I'm sleeping $i ...")
-                delay(500L)
+suspend fun main() {
+    withContext(Dispatchers.Default) {
+        val childStarted = CompletableDeferred<Unit>()
+        val childJob = launch {
+            try {
+                // Cancellation triggers a thread interruption
+                runInterruptible {
+                    childStarted.complete(Unit)
+                    try {
+                        // Blocks the current thread for a very long time
+                        Thread.sleep(Long.MAX_VALUE)
+                    } catch (e: InterruptedException) {
+                        println("Thread interrupted (Java): $e")
+                        throw e
+                    }
+                }
+            } catch (e: CancellationException) {
+                println("Coroutine canceled (Kotlin): $e")
+                throw e
             }
-        } finally {
-            println("job: I'm running finally")
+        }
+        childStarted.await()
+
+        // Cancels the coroutine and interrupts the thread
+        // by running Thread.sleep()
+        childJob.cancel()
+    }
+}
+//sampleEnd
+```
+{kotlin-runnable="true" id="interrupt-cancellation-example"}
+
+## Handle values safely when canceling coroutines
+
+When a suspended coroutine is canceled, it resumes with a `CancellationException` instead of returning any values, even if those values are already available.
+This behavior is called _prompt cancellation_.
+It prevents your code from continuing in a canceled coroutine's scope, such as updating a screen that's already closed.
+
+Here's an example:
+
+```kotlin
+import java.nio.file.*
+import java.nio.charset.*
+import kotlinx.coroutines.*
+import java.io.*
+
+// Defines a coroutine scope that uses the UI thread
+class ScreenWithFileContents(private val scope: CoroutineScope) {
+    fun displayFile(path: Path) {
+        scope.launch {
+            val contents = withContext(Dispatchers.IO) {
+                Files.newBufferedReader(
+                    path, Charset.forName("US-ASCII")
+                ).use {
+                    it.readLines()
+                }
+            }
+            // It's safe to call updateUi here,
+            // In case of cancellation, withContext() wouldn't return any values
+            updateUi(contents)
         }
     }
-    delay(1300L) // delay a bit
-    println("main: I'm tired of waiting!")
-    job.cancelAndJoin() // cancels the job and waits for its completion
-    println("main: Now I can quit.")
-//sampleEnd    
+
+    // Throws an exception if called after the user left the screen
+    private fun updateUi(contents: List<String>) {
+      contents.forEach { line -> addOneLineToUi(line) }
+    }
+  
+    private fun addOneLineToUi(line: String) {
+        // Placeholder for code that adds one line to the UI
+    }
+
+    // Only callable from the UI thread
+    fun leaveScreen() {
+        // Cancels the scope when leaving the screen
+        // You can no longer update the UI
+        scope.cancel()
+    }
 }
 ```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-05.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-05.kt).
->
-{style="note"}
 
-Both [join][Job.join] and [cancelAndJoin] wait for all finalization actions to complete, 
-so the example above produces the following output:
+In this example, `withContext(Dispatchers.IO)` cooperates with cancellation and prevents `updateUI()` from running if the
+`leaveScreen()` function cancels the coroutine before it returns the contents of the file.
 
-```text
-job: I'm sleeping 0 ...
-job: I'm sleeping 1 ...
-job: I'm sleeping 2 ...
-main: I'm tired of waiting!
-job: I'm running finally
-main: Now I can quit.
+While prompt cancellation prevents using values after they are no longer valid, it can also stop your code while an important value is still in use, which might lead to losing that value.
+This can happen when a coroutine receives a value, such as an `AutoCloseable` resource, but is canceled before it can reach the part of the code that closes it.
+To prevent this, keep cleanup logic in a place that's guaranteed to run even when the coroutine receiving the value is canceled.
+
+Here's an example:
+
+```kotlin
+import java.nio.file.*
+import java.nio.charset.*
+import kotlinx.coroutines.*
+import java.io.*
+
+// scope is a coroutine scope using the UI thread
+class ScreenWithFileContents(private val scope: CoroutineScope) {
+    fun displayFile(path: Path) {
+        scope.launch {
+            // Stores the reader in a variable, so the finally block can close it
+            var reader: BufferedReader? = null
+            
+            try {
+                withContext(Dispatchers.IO) {
+                    reader = Files.newBufferedReader(
+                        path, Charset.forName("US-ASCII")
+                    )
+                }
+                // Uses the stored reader after withContext() completes
+                updateUi(reader!!)
+            } finally {
+                // Ensures the reader is closed even when the coroutine is canceled
+                reader?.close()
+            }
+        }
+    }
+
+    private suspend fun updateUi(reader: BufferedReader) {
+        // Shows the file contents
+        while (true) {
+            val line = withContext(Dispatchers.IO) {
+                reader.readLine()
+            }
+            if (line == null)
+                break
+            addOneLineToUi(line)
+        }
+    }
+
+    private fun addOneLineToUi(line: String) {
+        // Placeholder for code that adds one line to the UI
+    }
+
+    // Only callable from the UI thread
+    fun leaveScreen() {
+        // Cancels the scope when leaving the screen
+        // You can no longer update the UI
+        scope.cancel()
+    }
+}
 ```
 
-<!--- TEST -->
+In this example, storing the `BufferedReader` in a variable and closing it in the `finally` block ensures the resource is released even if the coroutine is canceled.
 
-## Run non-cancellable block
+### Run non-cancelable blocks
 
-Any attempt to use a suspending function in the `finally` block of the previous example causes
-[CancellationException], because the coroutine running this code is cancelled. Usually, this is not a 
-problem, since all well-behaved closing operations (closing a file, cancelling a job, or closing any kind of 
-communication channel) are usually non-blocking and do not involve any suspending functions. However, in the 
-rare case when you need to suspend in a cancelled coroutine you can wrap the corresponding code in
-`withContext(NonCancellable) {...}` using [withContext] function and [NonCancellable] context as the following example shows:
+You can prevent cancellation from affecting certain parts of a coroutine.
+To do so, pass [`NonCancellable`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-non-cancellable/) as an argument to the `withContext()` coroutine builder function.
+
+> Avoid using `NonCancellable` with other coroutine builders like `.launch()` or `.async()`. Doing so disrupts structured concurrency by breaking the parent-child relationship.
+>
+{style="warning"}
+
+`NonCancellable` is useful when you need to ensure that certain operations, such as closing resources with a suspending `close()` function,
+complete even if the coroutine is canceled before they finish.
+
+Here's an example:
 
 ```kotlin
 import kotlinx.coroutines.*
+import kotlin.time.Duration.Companion.milliseconds
 
-fun main() = runBlocking {
 //sampleStart
-    val job = launch {
-        try {
-            repeat(1000) { i ->
-                println("job: I'm sleeping $i ...")
-                delay(500L)
-            }
-        } finally {
-            withContext(NonCancellable) {
-                println("job: I'm running finally")
-                delay(1000L)
-                println("job: And I've just delayed for 1 sec because I'm non-cancellable")
+val serviceStarted = CompletableDeferred<Unit>()
+
+fun startService() {
+    println("Starting the service...")
+    serviceStarted.complete(Unit)
+}
+
+suspend fun shutdownServiceAndWait() {
+    println("Shutting down...")
+    delay(100.milliseconds)
+    println("Successfully shut down!")
+}
+
+suspend fun main() {
+    withContext(Dispatchers.Default) {
+        val childJob = launch {
+            startService()
+            try {
+                awaitCancellation()
+            } finally {
+                withContext(NonCancellable) {
+                    // Without withContext(NonCancellable),
+                    // This function doesn't complete because the coroutine is canceled
+                    shutdownServiceAndWait()
+                }
             }
         }
+        serviceStarted.await()
+        childJob.cancel()
     }
-    delay(1300L) // delay a bit
-    println("main: I'm tired of waiting!")
-    job.cancelAndJoin() // cancels the job and waits for its completion
-    println("main: Now I can quit.")
-//sampleEnd    
+    println("Exiting the program")
 }
+//sampleEnd
 ```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-06.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-06.kt).
->
-{style="note"}
-
-<!--- TEST
-job: I'm sleeping 0 ...
-job: I'm sleeping 1 ...
-job: I'm sleeping 2 ...
-main: I'm tired of waiting!
-job: I'm running finally
-job: And I've just delayed for 1 sec because I'm non-cancellable
-main: Now I can quit.
--->
+{kotlin-runnable="true" id="noncancellable-blocks-example"}
 
 ## Timeout
 
-The most obvious practical reason to cancel execution of a coroutine 
-is because its execution time has exceeded some timeout.
-While you can manually track the reference to the corresponding [Job] and launch a separate coroutine to cancel 
-the tracked one after delay, there is a ready to use [withTimeout] function that does it.
-Look at the following example:
+Timeouts allow you to automatically cancel a coroutine after a specified duration.
+They are useful for stopping operations that take too long, helping to keep your application responsive and avoid blocking threads unnecessarily.
+
+To specify a timeout, use the [`withTimeoutOrNull()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-timeout-or-null.html) function with a `Duration`:
 
 ```kotlin
 import kotlinx.coroutines.*
-
-fun main() = runBlocking {
-//sampleStart
-    withTimeout(1300L) {
-        repeat(1000) { i ->
-            println("I'm sleeping $i ...")
-            delay(500L)
-        }
-    }
-//sampleEnd
-}
-```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-07.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-07.kt).
->
-{style="note"}
-
-It produces the following output:
-
-```text
-I'm sleeping 0 ...
-I'm sleeping 1 ...
-I'm sleeping 2 ...
-Exception in thread "main" kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 1300 ms
-```
-
-<!--- TEST STARTS_WITH -->
-
-The [TimeoutCancellationException] that is thrown by [withTimeout] is a subclass of [CancellationException].
-We have not seen its stack trace printed on the console before. That is because
-inside a cancelled coroutine `CancellationException` is considered to be a normal reason for coroutine completion. 
-However, in this example we have used `withTimeout` right inside the `main` function. 
-
-Since cancellation is just an exception, all resources are closed in the usual way. 
-You can wrap the code with timeout in a `try {...} catch (e: TimeoutCancellationException) {...}` block if 
-you need to do some additional action specifically on any kind of timeout or use the [withTimeoutOrNull] function
-that is similar to [withTimeout] but returns `null` on timeout instead of throwing an exception:
-
-```kotlin
-import kotlinx.coroutines.*
-
-fun main() = runBlocking {
-//sampleStart
-    val result = withTimeoutOrNull(1300L) {
-        repeat(1000) { i ->
-            println("I'm sleeping $i ...")
-            delay(500L)
-        }
-        "Done" // will get cancelled before it produces this result
-    }
-    println("Result is $result")
-//sampleEnd
-}
-```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-08.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-08.kt).
->
-{style="note"}
-
-There is no longer an exception when running this code:
-
-```text
-I'm sleeping 0 ...
-I'm sleeping 1 ...
-I'm sleeping 2 ...
-Result is null
-```
-
-<!--- TEST -->
-
-## Asynchronous timeout and resources
-
-<!-- 
-  NOTE: Don't change this section name. It is being referenced to from within KDoc of withTimeout functions.
--->
-
-The timeout event in [withTimeout] is asynchronous with respect to the code running in its block and may happen at any time,
-even right before the return from inside of the timeout block. Keep this in mind if you open or acquire some
-resource inside the block that needs closing or release outside of the block. 
-
-For example, here we imitate a closeable resource with the `Resource` class that simply keeps track of how many times 
-it was created by incrementing the `acquired` counter and decrementing the counter in its `close` function.
-Now let us create a lot of coroutines, each of which creates a `Resource` at the end of the `withTimeout` block
-and releases the resource outside the block. We add a small delay so that it is more likely that the timeout occurs
-right when the `withTimeout` block is already finished, which will cause a resource leak.
-
-```kotlin
-import kotlinx.coroutines.*
+import kotlin.time.Duration.Companion.milliseconds
 
 //sampleStart
-var acquired = 0
-
-class Resource {
-    init { acquired++ } // Acquire the resource
-    fun close() { acquired-- } // Release the resource
+suspend fun slowOperation(): Int {
+    try {
+        delay(300.milliseconds)
+        return 5
+    } catch (e: CancellationException) {
+        println("The slow operation has been canceled: $e")
+        throw e
+    }
 }
 
-fun main() {
-    runBlocking {
-        repeat(10_000) { // Launch 10K coroutines
-            launch { 
-                val resource = withTimeout(60) { // Timeout of 60 ms
-                    delay(50) // Delay for 50 ms
-                    Resource() // Acquire a resource and return it from withTimeout block     
-                }
-                resource.close() // Release the resource
-            }
-        }
+suspend fun fastOperation(): Int {
+    try {
+        delay(15.milliseconds)
+        return 14
+    } catch (e: CancellationException) {
+        println("The fast operation has been canceled: $e")
+        throw e
     }
-    // Outside of runBlocking all coroutines have completed
-    println(acquired) // Print the number of resources still acquired
+}
+
+suspend fun main() {
+    withContext(Dispatchers.Default) {
+        val slow = withTimeoutOrNull(100.milliseconds) {
+            slowOperation()
+        }
+        println("The slow operation finished with $slow")
+        val fast = withTimeoutOrNull(100.milliseconds) {
+            fastOperation()
+        }
+        println("The fast operation finished with $fast")
+    }
 }
 //sampleEnd
 ```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-09.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-09.kt).
->
-{style="note"}
+{kotlin-runnable="true" id="timeout-example"}
 
-<!--- CLEAR -->
-
-If you run the above code, you'll see that it does not always print zero, though it may depend on the timings 
-of your machine. You may need to tweak the timeout in this example to actually see non-zero values. 
-
-> Note that incrementing and decrementing `acquired` counter here from 10K coroutines is completely thread-safe,
-> since it always happens from the same thread, the one used by `runBlocking`.
-> More on that will be explained in the chapter on coroutine context.
-> 
-{style="note"}
-
-To work around this problem you can store a reference to the resource in a variable instead of returning it 
-from the `withTimeout` block. 
-
-```kotlin
-import kotlinx.coroutines.*
-
-var acquired = 0
-
-class Resource {
-    init { acquired++ } // Acquire the resource
-    fun close() { acquired-- } // Release the resource
-}
-
-fun main() {
-//sampleStart
-    runBlocking {
-        repeat(10_000) { // Launch 10K coroutines
-            launch { 
-                var resource: Resource? = null // Not acquired yet
-                try {
-                    withTimeout(60) { // Timeout of 60 ms
-                        delay(50) // Delay for 50 ms
-                        resource = Resource() // Store a resource to the variable if acquired      
-                    }
-                    // We can do something else with the resource here
-                } finally {  
-                    resource?.close() // Release the resource if it was acquired
-                }
-            }
-        }
-    }
-    // Outside of runBlocking all coroutines have completed
-    println(acquired) // Print the number of resources still acquired
-//sampleEnd
-}
-```
-{kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
-<!--- KNIT example-cancel-10.kt -->
-> You can get the full code [here](https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/jvm/test/guide/example-cancel-10.kt).
->
-{style="note"}
-
-This example always prints zero. Resources do not leak.
-
-<!--- TEST 
-0
--->
-
-<!--- MODULE kotlinx-coroutines-core -->
-<!--- INDEX kotlinx.coroutines -->
-
-[launch]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
-[Job]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
-[cancelAndJoin]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/cancel-and-join.html
-[Job.cancel]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/cancel.html
-[Job.join]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html
-[CancellationException]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/index.html
-[yield]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html
-[ensureActive]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/ensure-active.html
-[isActive]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/is-active.html
-[CoroutineScope]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
-[withContext]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
-[NonCancellable]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-non-cancellable/index.html
-[withTimeout]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-timeout.html
-[TimeoutCancellationException]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-timeout-cancellation-exception/index.html
-[withTimeoutOrNull]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-timeout-or-null.html
-
-<!--- END -->
+If the timeout exceeds the specified `Duration`, `withTimeoutOrNull()` returns `null`.

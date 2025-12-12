@@ -411,7 +411,7 @@ After running this example, you can see that the `main()` function isn't blocked
 
 > The `CoroutineScope.launch()` function returns a [`Job`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/) handle.
 > Use this handle to wait for the launched coroutine to complete.
-> For more information, see [Cancellation and timeouts](cancellation-and-timeouts.md#cancelling-coroutine-execution).
+> For more information, see [Cancellation and timeouts](cancellation-and-timeouts.md#cancel-coroutines).
 > 
 {style="tip"}
 
