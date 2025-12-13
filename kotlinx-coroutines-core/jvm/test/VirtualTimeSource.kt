@@ -3,18 +3,18 @@ package kotlinx.coroutines
 import java.io.*
 import java.util.concurrent.*
 import java.util.concurrent.locks.*
+import kotlin.time.Duration.Companion.seconds
 
-private const val SHUTDOWN_TIMEOUT = 1000L
+private val SHUTDOWN_TIMEOUT = 1.seconds
 
 internal inline fun withVirtualTimeSource(log: PrintStream? = null, block: () -> Unit) {
-    DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT) // shutdown execution with old time source (in case it was working)
+    ensureDefaultDelayDeinitialized(SHUTDOWN_TIMEOUT) // shutdown execution with old time source (in case it was working)
     val testTimeSource = VirtualTimeSource(log)
     mockTimeSource(testTimeSource)
-    DefaultExecutor.ensureStarted() // should start with new time source
     try {
         block()
     } finally {
-        DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
+        ensureDefaultDelayDeinitialized(SHUTDOWN_TIMEOUT)
         testTimeSource.shutdown()
         mockTimeSource(null) // restore time source
     }
@@ -48,7 +48,7 @@ internal class VirtualTimeSource(
     @Volatile
     private var time: Long = 0
 
-    private var trackedTasks = 0
+    private val trackedTasks = HashSet<Any>()
 
     private val threads = ConcurrentHashMap<Thread, ThreadStatus>()
 
@@ -56,22 +56,21 @@ internal class VirtualTimeSource(
     override fun nanoTime(): Long = time
 
     override fun wrapTask(block: Runnable): Runnable {
-        trackTask()
+        trackTask(block)
         return Runnable {
             try { block.run() }
-            finally { unTrackTask() }
+            finally { unTrackTask(block) }
         }
     }
 
     @Synchronized
-    override fun trackTask() {
-        trackedTasks++
+    override fun trackTask(obj: Any) {
+        trackedTasks.add(obj)
     }
 
     @Synchronized
-    override fun unTrackTask() {
-        assert(trackedTasks > 0)
-        trackedTasks--
+    override fun unTrackTask(obj: Any) {
+        trackedTasks.remove(obj)
     }
 
     @Synchronized
@@ -125,7 +124,7 @@ internal class VirtualTimeSource(
             return
         }
         if (threads[mainThread] == null) return
-        if (trackedTasks != 0) return
+        if (trackedTasks.isNotEmpty()) return
         val minParkedTill = minParkedTill()
         if (minParkedTill <= time) return
         time = minParkedTill

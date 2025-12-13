@@ -1,5 +1,7 @@
 package kotlinx.coroutines
 
+import kotlinx.coroutines.scheduling.isSchedulerWorker
+import kotlinx.coroutines.scheduling.mayNotBlock
 import kotlinx.coroutines.testing.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
@@ -181,4 +183,8 @@ class RunBlockingJvmTest : TestBase() {
         }
         return result.get().getOrThrow()
     }
+}
+
+internal actual fun runningOnIoThread(): Boolean = Thread.currentThread().let {
+    isSchedulerWorker(it) && !mayNotBlock(it)
 }

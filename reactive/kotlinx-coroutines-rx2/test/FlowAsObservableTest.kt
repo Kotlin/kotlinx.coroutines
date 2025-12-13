@@ -5,8 +5,6 @@ import io.reactivex.*
 import io.reactivex.disposables.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.junit.Test
-import java.util.concurrent.*
 import kotlin.test.*
 
 class FlowAsObservableTest : TestBase() {
@@ -109,7 +107,7 @@ class FlowAsObservableTest : TestBase() {
                 expect(3)
                 throw TestException()
             }
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             finish(5)
         }
     }

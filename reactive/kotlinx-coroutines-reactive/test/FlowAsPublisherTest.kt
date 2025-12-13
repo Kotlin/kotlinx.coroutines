@@ -4,9 +4,7 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
-import org.junit.Test
 import org.reactivestreams.*
-import java.util.concurrent.*
 import kotlin.test.*
 
 class FlowAsPublisherTest : TestBase() {
@@ -157,7 +155,7 @@ class FlowAsPublisherTest : TestBase() {
         try {
             expect(1)
             publisher.awaitFirstOrNull()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             expect(3)
         }
         finish(4)
