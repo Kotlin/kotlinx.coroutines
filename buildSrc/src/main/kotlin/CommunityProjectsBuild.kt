@@ -188,6 +188,7 @@ fun KotlinCommonCompilerOptions.configureKotlinUserProject() {
     freeCompilerArgs.addAll(
         "-Xreport-all-warnings", // emit warnings even if there are also errors
         "-Xrender-internal-diagnostic-names", // render the diagnostic names in CLI
+        "-XXLanguage:-JvmEnhancedBridges", // temporary disable enhanced bridges to avoid ABI divergence
     )
 }
 
