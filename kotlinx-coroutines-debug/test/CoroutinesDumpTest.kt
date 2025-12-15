@@ -2,7 +2,6 @@ package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
 import kotlin.test.*
 
 class CoroutinesDumpTest : DebugTestBase() {
@@ -192,11 +191,10 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     private suspend fun sleepingOuterMethod(currentDispatcher: CoroutineDispatcher, latch: CompletableDeferred<Unit>) {
         sleepingNestedMethod(currentDispatcher, latch)
-        yield() // TCE
+        yield() // TCE: make sure `sleepingOuterMethod` is contained in the continuation of `sleepingNestedMethod`
     }
 
     private suspend fun sleepingNestedMethod(currentDispatcher: CoroutineDispatcher, latch: CompletableDeferred<Unit>) {
-        yield() // Suspension point
         /* Schedule a computation on the current single-threaded dispatcher.
         Since that thread is currently running this code,
         the start notification will happen *after* the currently running coroutine suspends. */
@@ -205,6 +203,7 @@ class CoroutinesDumpTest : DebugTestBase() {
             latch.complete(Unit)
         }
         delay(Long.MAX_VALUE)
+        yield() // TCE: make sure `sleepingNestedMethod` is contained in the continuation of `delay`
     }
 
     private fun awaitCoroutine() = synchronized(monitor) {
