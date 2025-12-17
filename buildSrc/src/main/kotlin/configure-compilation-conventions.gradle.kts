@@ -30,6 +30,9 @@ configure(subprojects) {
                     "-Xno-receiver-assertions",
                 )
             }
+            if (this@configureEach is Kotlin2JsCompile) {
+                freeCompilerArgs.add("-Xklib-ir-inliner=intra-module")
+            }
             if (this@configureEach is KotlinNativeCompile) {
                 optIn.addAll(
                     "kotlinx.cinterop.ExperimentalForeignApi",
@@ -37,6 +40,7 @@ configure(subprojects) {
                     "kotlin.experimental.ExperimentalNativeApi",
                     "kotlin.native.concurrent.ObsoleteWorkersApi",
                 )
+                freeCompilerArgs.add("-Xklib-ir-inliner=intra-module")
             }
             addExtraCompilerFlags(project)
         }
