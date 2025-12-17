@@ -209,7 +209,11 @@ class CoroutinesDumpTest : DebugTestBase() {
     private fun awaitCoroutine() = synchronized(monitor) {
         while (coroutineThread == null) (monitor as Object).wait()
         while (coroutineThread!!.state != Thread.State.TIMED_WAITING) {
-            // Wait until thread sleeps to have a consistent stacktrace
+            /* Wait until the thread we're awaiting goes to sleep.
+            Note: this does not establish a happens-before relationship with the thread entering `Thread.sleep`.
+            There still doesn't seem to be any guarantee that the stacktrace will be accurately updated.
+            <https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#getStackTrace--> says that how accurate
+            a stacktrace is is implementation-dependent. */
         }
     }
 
