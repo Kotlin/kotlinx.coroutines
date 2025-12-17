@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class SelectMutexTest : TestBase() {
     @Test
     fun testSelectLock() = runTest {
@@ -13,7 +14,7 @@ class SelectMutexTest : TestBase() {
         launch { // ensure that it is not scheduled earlier than needed
             finish(4) // after main exits
         }
-        val res = select<String> {
+        val res = select {
             mutex.onLock {
                 assertTrue(mutex.isLocked)
                 expect(2)
@@ -31,8 +32,8 @@ class SelectMutexTest : TestBase() {
         expect(1)
         launch {
             expect(3)
-            val res = select<String> {
-                // will suspended
+            val res = select {
+                // will suspend
                 mutex.onLock {
                     assertTrue(mutex.isLocked)
                     expect(6)
@@ -47,7 +48,7 @@ class SelectMutexTest : TestBase() {
         expect(4)
         mutex.unlock()
         expect(5)
-        yield() // to resumed select
+        yield() // to the resumed select
         finish(8)
     }
 }

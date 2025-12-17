@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -11,7 +9,7 @@ import kotlin.test.*
  */
 class JobStatesTest : TestBase() {
     @Test
-    public fun testNormalCompletion() = runTest {
+    fun testNormalCompletion() = runTest {
         expect(1)
         val parent = coroutineContext.job
         val job = launch(start = CoroutineStart.LAZY) {
@@ -50,7 +48,7 @@ class JobStatesTest : TestBase() {
     }
 
     @Test
-    public fun testCompletingFailed() = runTest(
+    fun testCompletingFailed() = runTest(
         unhandled = listOf({ it -> it is TestException })
     ) {
         expect(1)
@@ -87,7 +85,7 @@ class JobStatesTest : TestBase() {
     }
 
     @Test
-    public fun testFailed() = runTest(
+    fun testFailed() = runTest(
         unhandled = listOf({ it -> it is TestException })
     ) {
         expect(1)
@@ -124,7 +122,7 @@ class JobStatesTest : TestBase() {
     }
 
     @Test
-    public fun testCancelling() = runTest {
+    fun testCancelling() = runTest {
         expect(1)
         val job = launch(NonCancellable, start = CoroutineStart.LAZY) {
             expect(2)

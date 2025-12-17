@@ -31,7 +31,7 @@ import kotlin.coroutines.*
  */
 public fun <T> publish(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> {
     require(context[Job] === null) { "Publisher context cannot contain job in it." +
             "Its lifecycle should be managed via subscription. Had $context" }
@@ -331,5 +331,5 @@ public class PublisherCoroutine<in T>(
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0. Binary compatibility with Spring
 public fun <T> CoroutineScope.publish(
     context: CoroutineContext = EmptyCoroutineContext,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
+    block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = publishInternal(this, context, DEFAULT_HANDLER, block)

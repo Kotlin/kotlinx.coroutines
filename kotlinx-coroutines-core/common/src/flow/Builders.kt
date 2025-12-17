@@ -49,7 +49,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  *
  * If you want to switch the context of execution of a flow, use the [flowOn] operator.
  */
-public fun <T> flow(@BuilderInference block: suspend FlowCollector<T>.() -> Unit): Flow<T> = SafeFlow(block)
+public fun <T> flow(block: suspend FlowCollector<T>.() -> Unit): Flow<T> = SafeFlow(block)
 
 // Named anonymous object
 private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : AbstractFlow<T>() {
@@ -236,7 +236,7 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
  * }
  * ```
  */
-public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
+public fun <T> channelFlow(block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
     ChannelFlowBuilder(block)
 
 /**
@@ -300,7 +300,7 @@ public fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() 
  * > `awaitClose` block can be called at any time due to asynchronous nature of cancellation, even
  * > concurrently with the call of the callback.
  */
-public fun <T> callbackFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(block)
+public fun <T> callbackFlow(block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(block)
 
 // ChannelFlow implementation that is the first in the chain of flow operations and introduces (builds) a flow
 private open class ChannelFlowBuilder<T>(

@@ -30,6 +30,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
     }
 }
 
+@OptIn(ExperimentalWasmJsInterop::class)
 private fun addUncaughtExceptionHandlerHelper() {
     // https://nodejs.org/api/process.html#event-uncaughtexception
     js("""
@@ -41,10 +42,12 @@ private fun addUncaughtExceptionHandlerHelper() {
         """)
 }
 
+@OptIn(ExperimentalWasmJsInterop::class)
 private fun removeHandlerHelper() {
     js("""
             process.removeListener('uncaughtException', globalThis.exceptionHandler);
         """)
 }
 
+@OptIn(ExperimentalWasmJsInterop::class)
 private fun exceptionCaught(): Boolean = js("globalThis.exceptionCaught")

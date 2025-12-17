@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "UNREACHABLE_CODE", "USELESS_IS_CHECK") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -82,11 +80,10 @@ class AsyncTest : TestBase() {
         val deferred = async(NonCancellable) {
             val decomposed = async(NonCancellable) {
                 throw TestException()
-                1
             }
             try {
                 decomposed.await()
-            } catch (e: TestException) {
+            } catch (_: TestException) {
                 42
             }
         }
@@ -101,11 +98,10 @@ class AsyncTest : TestBase() {
             val decomposed = async { // inherits parent job!
                 expect(3)
                 throw TestException()
-                1
             }
             try {
                 decomposed.await()
-            } catch (e: TestException) {
+            } catch (_: TestException) {
                 expect(4) // Should catch this exception, but parent is already cancelled
                 42
             }
@@ -113,17 +109,16 @@ class AsyncTest : TestBase() {
         try {
             // This will fail
             assertEquals(42, deferred.await())
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             finish(5)
         }
     }
 
     @Test
     fun testParallelDecompositionUncaughtExceptionWithInheritedParent() = runTest(expected = { it is TestException }) {
-        val deferred = async(NonCancellable) {
+        val deferred = async<Int>(NonCancellable) {
             val decomposed = async {
                 throw TestException()
-                1
             }
 
             decomposed.await()
@@ -135,10 +130,9 @@ class AsyncTest : TestBase() {
 
     @Test
     fun testParallelDecompositionUncaughtException() = runTest(expected = { it is TestException }) {
-        val deferred = async(NonCancellable) {
+        val deferred = async<Int>(NonCancellable) {
             val decomposed = async {
                 throw TestException()
-                1
             }
 
             decomposed.await()
@@ -158,7 +152,7 @@ class AsyncTest : TestBase() {
         deferred.cancel()
         try {
             deferred.await()
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             finish(3)
         }
     }
@@ -229,7 +223,7 @@ class AsyncTest : TestBase() {
         try {
             expect(1)
             deferred.await()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             finish(3)
         }
     }

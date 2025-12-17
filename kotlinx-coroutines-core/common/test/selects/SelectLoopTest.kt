@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines.selects
 
 import kotlinx.coroutines.testing.*
@@ -23,7 +21,7 @@ class SelectLoopTest : TestBase() {
         }
         try {
             while (true) {
-                select<Unit> {
+                select {
                     channel.onReceiveCatching {
                         expectUnreached()
                     }
@@ -32,8 +30,8 @@ class SelectLoopTest : TestBase() {
                     }
                 }
             }
-        } catch (e: CancellationException) {
-            // select will get cancelled because of the failure of job
+        } catch (_: CancellationException) {
+            // select will get cancelled because of the failure of the job
             finish(4)
         }
     }

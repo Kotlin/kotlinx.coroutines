@@ -55,7 +55,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    public fun testFlowOnThrowingSource() = runTest {
+    fun testFlowOnThrowingSource() = runTest {
         val flow = flow {
             expect(1)
             emit(NamedDispatchers.name())
@@ -73,7 +73,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    public fun testFlowOnThrowingOperator() = runTest {
+    fun testFlowOnThrowingOperator() = runTest {
         val flow = flow {
             expect(1)
             emit(NamedDispatchers.name())
@@ -90,7 +90,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    public fun testFlowOnDownstreamOperator() = runTest() {
+    fun testFlowOnDownstreamOperator() = runTest() {
         val flow = flow {
             expect(2)
             emit(NamedDispatchers.name())
@@ -112,7 +112,7 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    public fun testFlowOnThrowingConsumer() = runTest {
+    fun testFlowOnThrowingConsumer() = runTest {
         val flow = flow {
             expect(2)
             emit(NamedDispatchers.name())
@@ -323,7 +323,7 @@ class FlowOnTest : TestBase() {
     }
 
     private inner class Source(private val value: Int) {
-        public var contextName: String = "unknown"
+        var contextName: String = "unknown"
 
         fun produce(): Int {
             contextName = NamedDispatchers.nameOr("main")
@@ -332,7 +332,7 @@ class FlowOnTest : TestBase() {
     }
 
     private inner class Consumer(private val expected: Int) {
-        public var contextName: String = "unknown"
+        var contextName: String = "unknown"
 
         fun consume(value: Int) {
             contextName = NamedDispatchers.nameOr("main")

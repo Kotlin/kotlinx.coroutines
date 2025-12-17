@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -13,7 +11,7 @@ class CancellableResumeOldTest : TestBase() {
     @Test
     fun testResumeImmediateNormally() = runTest {
         expect(1)
-        val ok = suspendCancellableCoroutine<String> { cont ->
+        val ok = suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation { expectUnreached() }
             cont.resume("OK") { expectUnreached() }
@@ -28,7 +26,7 @@ class CancellableResumeOldTest : TestBase() {
         expected = { it is TestException }
     ) {
         expect(1)
-        suspendCancellableCoroutine<String> { cont ->
+        suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation { expect(3) }
             cont.cancel(TestException("FAIL"))
@@ -51,7 +49,7 @@ class CancellableResumeOldTest : TestBase() {
         )
     ) {
         expect(1)
-        suspendCancellableCoroutine<String> { cont ->
+        suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation {
                 expect(3)
@@ -75,7 +73,7 @@ class CancellableResumeOldTest : TestBase() {
     ) {
         expect(1)
         val ctx = coroutineContext
-        suspendCancellableCoroutine<String> { cont ->
+        suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation { expect(3) }
             ctx.cancel()
@@ -98,7 +96,7 @@ class CancellableResumeOldTest : TestBase() {
     ) {
         expect(1)
         val ctx = coroutineContext
-        suspendCancellableCoroutine<String> { cont ->
+        suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation {
                 expect(3)
@@ -121,7 +119,7 @@ class CancellableResumeOldTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            val ok = suspendCancellableCoroutine<String> { cont ->
+            val ok = suspendCancellableCoroutine { cont ->
                 expect(3)
                 cont.invokeOnCancellation { expectUnreached() }
                 cc = cont
@@ -141,13 +139,13 @@ class CancellableResumeOldTest : TestBase() {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                suspendCancellableCoroutine<String> { cont ->
+                suspendCancellableCoroutine { cont ->
                     expect(3)
                     cont.invokeOnCancellation { expect(5) }
                     cc = cont
                 }
                 expectUnreached()
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 finish(9)
             }
         }
@@ -173,7 +171,7 @@ class CancellableResumeOldTest : TestBase() {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                suspendCancellableCoroutine<String> { cont ->
+                suspendCancellableCoroutine { cont ->
                     expect(3)
                     cont.invokeOnCancellation {
                         expect(5)
@@ -182,7 +180,7 @@ class CancellableResumeOldTest : TestBase() {
                     cc = cont
                 }
                 expectUnreached()
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 finish(9)
             }
         }
@@ -204,7 +202,7 @@ class CancellableResumeOldTest : TestBase() {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                suspendCancellableCoroutine<String> { cont ->
+                suspendCancellableCoroutine { cont ->
                     expect(3)
                     // resumed first, dispatched, then cancelled, but still got invokeOnCancellation call
                     cont.invokeOnCancellation { cause ->
@@ -215,7 +213,7 @@ class CancellableResumeOldTest : TestBase() {
                     cc = cont
                 }
                 expectUnreached()
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 expect(9)
             }
         }
@@ -244,7 +242,7 @@ class CancellableResumeOldTest : TestBase() {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                suspendCancellableCoroutine<String> { cont ->
+                suspendCancellableCoroutine { cont ->
                     expect(3)
                     // resumed first, dispatched, then cancelled, but still got invokeOnCancellation call
                     cont.invokeOnCancellation { cause ->
@@ -256,7 +254,7 @@ class CancellableResumeOldTest : TestBase() {
                     cc = cont
                 }
                 expectUnreached()
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 expect(9)
             }
         }
@@ -278,7 +276,7 @@ class CancellableResumeOldTest : TestBase() {
     fun testResumeUnconfined() = runTest {
         val outerScope = this
         withContext(Dispatchers.Unconfined) {
-            val result = suspendCancellableCoroutine<String> {
+            val result = suspendCancellableCoroutine {
                 outerScope.launch {
                     it.resume("OK") {
                         expectUnreached()

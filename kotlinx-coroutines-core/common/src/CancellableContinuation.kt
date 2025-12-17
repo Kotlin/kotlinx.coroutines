@@ -1,6 +1,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
@@ -160,6 +161,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Implementation note: current implementation always returns RESUME_TOKEN or `null`
      *
      * @suppress  **This is unstable API and it is subject to change.**
+     * Used in ktor.
      */
     @InternalCoroutinesApi
     public fun <R: T> tryResume(
@@ -172,6 +174,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * [completeResume] must be invoked with it.
      *
      * @suppress **This is unstable API and it is subject to change.**
+     * Used in ktor.
      */
     @InternalCoroutinesApi
     public fun tryResumeWithException(exception: Throwable): Any?
@@ -180,6 +183,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Completes the execution of [tryResume] or [tryResumeWithException] on its non-null result.
      *
      * @suppress **This is unstable API and it is subject to change.**
+     * Used in ktor.
      */
     @InternalCoroutinesApi
     public fun completeResume(token: Any)
@@ -191,6 +195,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Exposed in our ABI since 1.0.0 within `suspendCancellableCoroutine` body.
      *
      * @suppress **This is unstable API and it is subject to change.**
+     * Used in ktor.
      */
     @InternalCoroutinesApi
     public fun initCancellability()
@@ -420,10 +425,12 @@ internal fun <T> CancellableContinuation<T>.invokeOnCancellation(handler: Cancel
  * [CoroutineDispatcher] class, then there is no prompt cancellation guarantee. A custom continuation interceptor
  * can resume execution of a previously suspended coroutine even if its job was already cancelled.
  */
+@OptIn(ExperimentalContracts::class)
 public suspend inline fun <T> suspendCancellableCoroutine(
     crossinline block: (CancellableContinuation<T>) -> Unit
-): T =
-    suspendCoroutineUninterceptedOrReturn { uCont ->
+): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
         val cancellable = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_CANCELLABLE)
         /*
          * For non-atomic cancellation we setup parent-child relationship immediately
@@ -434,6 +441,7 @@ public suspend inline fun <T> suspendCancellableCoroutine(
         block(cancellable)
         cancellable.getResult()
     }
+}
 
 /**
  * Suspends the coroutine similar to [suspendCancellableCoroutine], but an instance of

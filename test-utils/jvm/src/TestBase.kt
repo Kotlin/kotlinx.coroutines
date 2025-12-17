@@ -10,7 +10,7 @@ import kotlin.test.*
 
 actual val VERBOSE = try {
     System.getProperty("test.verbose")?.toBoolean() ?: false
-} catch (e: SecurityException) {
+} catch (_: SecurityException) {
     false
 }
 
@@ -28,8 +28,6 @@ private const val SHUTDOWN_TIMEOUT = 1_000L // 1s at most to wait per thread
  */
 actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
 
-
-@Suppress("ACTUAL_WITHOUT_EXPECT")
 actual typealias TestResult = Unit
 
 internal actual fun lastResortReportException(error: Throwable) {
@@ -118,7 +116,7 @@ actual open class TestBase(
         expected: ((Throwable) -> Boolean)?,
         unhandled: List<(Throwable) -> Boolean>,
         block: suspend CoroutineScope.() -> Unit
-    ): TestResult {
+    ) {
         var exCount = 0
         var ex: Throwable? = null
         try {

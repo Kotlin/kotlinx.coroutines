@@ -20,7 +20,7 @@ internal open class ScopeCoroutine<in T>(
 
     override fun afterCompletion(state: Any?) {
         // Resume in a cancellable way by default when resuming from another context
-        uCont.intercepted().resumeCancellableWith(recoverResult(state, uCont))
+        uCont.intercepted().resumeCancellableWithInternal(recoverResult(state, uCont))
     }
 
     /**

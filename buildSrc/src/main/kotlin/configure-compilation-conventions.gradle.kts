@@ -28,7 +28,6 @@ configure(subprojects) {
                     "-Xno-param-assertions",
                     "-Xno-call-assertions",
                     "-Xno-receiver-assertions",
-                    "-Xjvm-default=disable",
                 )
             }
             if (this@configureEach is KotlinNativeCompile) {
@@ -36,6 +35,7 @@ configure(subprojects) {
                     "kotlinx.cinterop.ExperimentalForeignApi",
                     "kotlinx.cinterop.UnsafeNumber",
                     "kotlin.experimental.ExperimentalNativeApi",
+                    "kotlin.native.concurrent.ObsoleteWorkersApi",
                 )
             }
             addExtraCompilerFlags(project)

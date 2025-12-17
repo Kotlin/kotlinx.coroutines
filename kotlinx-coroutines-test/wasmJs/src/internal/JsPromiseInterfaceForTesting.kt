@@ -6,6 +6,7 @@ a parametric class. So, we make a non-parametric class just for this. */
 /**
  * @suppress
  */
+@OptIn(ExperimentalWasmJsInterop::class)
 @JsName("Promise")
 public external class JsPromiseInterfaceForTesting : JsAny {
     /**

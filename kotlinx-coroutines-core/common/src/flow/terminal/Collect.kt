@@ -111,3 +111,21 @@ public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value
     collect(object : FlowCollector<T> {
         override suspend fun emit(value: T) = action(value)
     })
+
+// -------------------- Collecting operations on a SharedFlow --------------------
+// -------------------- These mirror the operations above and are introduced when requested --------------------
+
+/**
+ * Terminal flow operator that collects the given flow with a provided [action].
+ * The crucial difference from [collect] is that when the original flow emits a new value
+ * then the [action] block for the previous value is cancelled.
+ *
+ * This is a special version of [collectLatest] for [SharedFlow].
+ * Its only difference from the usual [collectLatest] on [Flow]
+ * is that this version returns [Nothing] to indicate that it never completes.
+ * See [SharedFlow] for more details.
+ */
+public suspend inline fun <T> SharedFlow<T>.collectLatest(noinline action: suspend (value: T) -> Unit): Nothing {
+    (this as Flow<T>).collectLatest(action)
+    throw IllegalStateException("SharedFlow never completes, this call should never return.")
+}

@@ -66,7 +66,7 @@ class MutexTest : TestBase() {
                 assertTrue(mutex.isLocked)
                 throw TestException()
             }
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             expect(2)
         }
         assertFalse(mutex.isLocked)
@@ -174,6 +174,7 @@ class MutexTest : TestBase() {
         assertTrue(mutex.tryLock(owner))
         assertFailsWith<IllegalStateException> { mutex.tryLock(owner) }
         assertFailsWith<IllegalStateException> { mutex.lock(owner) }
+        @Suppress("DEPRECATION")
         assertFailsWith<IllegalStateException> { select { mutex.onLock(owner) {} } }
     }
 

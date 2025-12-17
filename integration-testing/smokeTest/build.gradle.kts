@@ -45,26 +45,11 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
-            }
-        }
-        jsTest {
-            dependencies {
-                implementation(kotlin("test-js"))
-            }
-        }
-        wasmJsTest {
-            dependencies {
-                implementation(kotlin("test-wasm-js"))
-            }
-        }
-        wasmWasiTest {
-            dependencies {
-                implementation(kotlin("test-wasm-wasi"))
+                implementation(kotlin("test"))
             }
         }
         jvmTest {
             dependencies {
-                implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
             }
         }

@@ -67,7 +67,7 @@ public fun <T1, T2, R> combine(flow: Flow<T1>, flow2: Flow<T2>, transform: suspe
 @JvmName("flowCombineTransform")
 public fun <T1, T2, R> Flow<T1>.combineTransform(
     flow: Flow<T2>,
-    @BuilderInference transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
+    transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
 ): Flow<R> = combineTransformUnsafe(this, flow) { args: Array<*> ->
     transform(
         args[0] as T1,
@@ -95,7 +95,7 @@ public fun <T1, T2, R> Flow<T1>.combineTransform(
 public fun <T1, T2, R> combineTransform(
     flow: Flow<T1>,
     flow2: Flow<T2>,
-    @BuilderInference transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
+    transform: suspend FlowCollector<R>.(a: T1, b: T2) -> Unit
 ): Flow<R> = combineTransformUnsafe(flow, flow2) { args: Array<*> ->
     transform(
         args[0] as T1,
@@ -111,7 +111,7 @@ public fun <T1, T2, T3, R> combine(
     flow: Flow<T1>,
     flow2: Flow<T2>,
     flow3: Flow<T3>,
-    @BuilderInference transform: suspend (T1, T2, T3) -> R
+    transform: suspend (T1, T2, T3) -> R
 ): Flow<R> = combineUnsafe(flow, flow2, flow3) { args: Array<*> ->
     transform(
         args[0] as T1,
@@ -130,7 +130,7 @@ public fun <T1, T2, T3, R> combineTransform(
     flow: Flow<T1>,
     flow2: Flow<T2>,
     flow3: Flow<T3>,
-    @BuilderInference transform: suspend FlowCollector<R>.(T1, T2, T3) -> Unit
+    transform: suspend FlowCollector<R>.(T1, T2, T3) -> Unit
 ): Flow<R> = combineTransformUnsafe(flow, flow2, flow3) { args: Array<*> ->
     transform(
         args[0] as T1,
@@ -169,7 +169,7 @@ public fun <T1, T2, T3, T4, R> combineTransform(
     flow2: Flow<T2>,
     flow3: Flow<T3>,
     flow4: Flow<T4>,
-    @BuilderInference transform: suspend FlowCollector<R>.(T1, T2, T3, T4) -> Unit
+    transform: suspend FlowCollector<R>.(T1, T2, T3, T4) -> Unit
 ): Flow<R> = combineTransformUnsafe(flow, flow2, flow3, flow4) { args: Array<*> ->
     transform(
         args[0] as T1,
@@ -212,7 +212,7 @@ public fun <T1, T2, T3, T4, T5, R> combineTransform(
     flow3: Flow<T3>,
     flow4: Flow<T4>,
     flow5: Flow<T5>,
-    @BuilderInference transform: suspend FlowCollector<R>.(T1, T2, T3, T4, T5) -> Unit
+    transform: suspend FlowCollector<R>.(T1, T2, T3, T4, T5) -> Unit
 ): Flow<R> = combineTransformUnsafe(flow, flow2, flow3, flow4, flow5) { args: Array<*> ->
     transform(
         args[0] as T1,
@@ -242,7 +242,7 @@ public inline fun <reified T, R> combine(
  */
 public inline fun <reified T, R> combineTransform(
     vararg flows: Flow<T>,
-    @BuilderInference crossinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
+    crossinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
 ): Flow<R> = safeFlow {
     combineInternal(flows, { arrayOfNulls(flows.size) }, { transform(it) })
 }
@@ -264,7 +264,7 @@ private inline fun <reified T, R> combineUnsafe(
  */
 private inline fun <reified T, R> combineTransformUnsafe(
     vararg flows: Flow<T>,
-    @BuilderInference crossinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
+    crossinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
 ): Flow<R> = safeFlow {
     combineInternal(flows, nullArrayFactory(), { transform(it) })
 }
@@ -297,7 +297,7 @@ public inline fun <reified T, R> combine(
  */
 public inline fun <reified T, R> combineTransform(
     flows: Iterable<Flow<T>>,
-    @BuilderInference crossinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
+    crossinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
 ): Flow<R> {
     val flowArray = flows.toList().toTypedArray()
     return safeFlow {

@@ -172,7 +172,7 @@ class StateFlowTest : TestBase() {
     }
 
     @Test
-    public fun testOnSubscriptionWithException() = runTest {
+    fun testOnSubscriptionWithException() = runTest {
         expect(1)
         val state = MutableStateFlow("A")
         state

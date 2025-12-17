@@ -1,5 +1,6 @@
 package kotlinx.coroutines.test
 
+@OptIn(ExperimentalWasmJsInterop::class)
 actual fun testResultChain(block: () -> TestResult, after: (Result<Unit>) -> TestResult): TestResult =
     block().then(
         {

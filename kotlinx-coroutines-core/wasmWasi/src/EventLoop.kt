@@ -5,9 +5,11 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.wasm.*
 import kotlin.wasm.unsafe.*
 
+@OptIn(ExperimentalWasmInterop::class)
 @WasmImport("wasi_snapshot_preview1", "poll_oneoff")
 private external fun wasiPollOneOff(ptrToSubscription: Int, eventPtr: Int, nsubscriptions: Int, resultPtr: Int): Int
 
+@OptIn(ExperimentalWasmInterop::class)
 @WasmImport("wasi_snapshot_preview1", "clock_time_get")
 private external fun wasiRawClockTimeGet(clockId: Int, precision: Long, resultPtr: Int): Int
 

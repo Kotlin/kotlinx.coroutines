@@ -558,7 +558,7 @@ class SharedFlowTest : TestBase() {
     }
 
     @Test
-    public fun testOnSubscription() = runTest {
+    fun testOnSubscription() = runTest {
         expect(1)
         val sh = MutableSharedFlow<String>()
         fun share(s: String) { launch(start = CoroutineStart.UNDISPATCHED) { sh.emit(s) } }
@@ -762,10 +762,10 @@ class SharedFlowTest : TestBase() {
     }
 
     @Test
-    public fun testReplayCancellability() = testCancellability(fromReplay = true)
+    fun testReplayCancellability() = testCancellability(fromReplay = true)
 
     @Test
-    public fun testEmitCancellability() = testCancellability(fromReplay = false)
+    fun testEmitCancellability() = testCancellability(fromReplay = false)
 
     private fun testCancellability(fromReplay: Boolean) = runTest {
         expect(1)

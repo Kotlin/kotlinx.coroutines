@@ -162,11 +162,8 @@ public typealias ProcessResultFunction = (clauseObject: Any, param: Any?, clause
  * or [SelectInstance.selectInRegistrationPhase], should be processed in case of this `select`
  * cancellation while dispatching. Unfortunately, we cannot pass this function only in [SelectInstance.trySelect],
  * as [SelectInstance.selectInRegistrationPhase] can be called when the coroutine is already cancelled.
- *
- * @suppress **This is unstable API, and it is subject to change.**
  */
-@InternalCoroutinesApi
-public typealias OnCancellationConstructor = (select: SelectInstance<*>, param: Any?, internalResult: Any?) ->
+internal typealias OnCancellationConstructor = (select: SelectInstance<*>, param: Any?, internalResult: Any?) ->
     (Throwable, Any?, CoroutineContext) -> Unit
 
 /**

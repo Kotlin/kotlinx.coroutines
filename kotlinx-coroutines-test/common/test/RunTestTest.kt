@@ -9,6 +9,7 @@ import kotlin.test.*
 import kotlin.test.assertFailsWith
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RunTestTest {
 
@@ -47,44 +48,6 @@ class RunTestTest {
     fun testNestedRunTestForbidden() = runTest {
         assertFailsWith<IllegalStateException> {
             runTest { }
-        }
-    }
-
-    /** Tests that even the dispatch timeout of `0` is fine if all the dispatches go through the same scheduler. */
-    @Test
-    fun testRunTestWithZeroDispatchTimeoutWithControlledDispatches() = runTest(dispatchTimeoutMs = 0) {
-        // below is some arbitrary concurrent code where all dispatches go through the same scheduler.
-        launch {
-            delay(2000)
-        }
-        val deferred = async {
-            val job = launch(StandardTestDispatcher(testScheduler)) {
-                launch {
-                    delay(500)
-                }
-                delay(1000)
-            }
-            job.join()
-        }
-        deferred.await()
-    }
-
-    /** Tests that too low of a dispatch timeout causes crashes. */
-    @Test
-    fun testRunTestWithSmallDispatchTimeout() = testResultMap({ fn ->
-        try {
-            fn()
-            fail("shouldn't be reached")
-        } catch (e: Throwable) {
-            assertIs<UncompletedCoroutinesError>(e)
-        }
-    }) {
-        runTest(dispatchTimeoutMs = 100) {
-            withContext(Dispatchers.Default) {
-                delay(10000)
-                3
-            }
-            fail("shouldn't be reached")
         }
     }
 
@@ -149,7 +112,7 @@ class RunTestTest {
                 assertFalse((e.message ?: "").contains(name2))
             }
         }) {
-            runTest(dispatchTimeoutMs = 10) {
+            runTest(timeout = 10.milliseconds) {
                 launch(CoroutineName(name1)) {
                     CompletableDeferred<Unit>().await()
                 }
@@ -184,17 +147,9 @@ class RunTestTest {
         }
     }
 
-    /** Tests that real delays can be accounted for with a large enough dispatch timeout. */
-    @Test
-    fun testRunTestWithLargeDispatchTimeout() = runTest(dispatchTimeoutMs = 5000) {
-        withContext(Dispatchers.Default) {
-            delay(50)
-        }
-    }
-
     /** Tests that delays can be accounted for with a large enough timeout. */
     @Test
-    fun testRunTestWithLargeTimeout() = runTest(timeout = 5000.milliseconds) {
+    fun testRunTestWithLargeTimeout() = runTest(timeout = 5.seconds) {
         withContext(Dispatchers.Default) {
             delay(50)
         }
@@ -388,7 +343,7 @@ class RunTestTest {
             try {
                 it()
                 fail("should not be reached")
-            } catch (e: TestException) {
+            } catch (_: TestException) {
                 // expected
             }
         }) {
@@ -479,12 +434,62 @@ class RunTestTest {
         try {
             it()
             fail("unreached")
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             // expected
         }
     }) {
         runTest {
             cancel(CancellationException("Oh no", TestException()))
         }
+    }
+
+    @Suppress("DEPRECATION")
+    class RunTestWithDispatchTimeoutTest {
+        /** Tests that too low of a dispatch timeout causes crashes. */
+        @Test
+        fun testRunTestWithSmallDispatchTimeout() = testResultMap({ fn ->
+            try {
+                fn()
+                fail("shouldn't be reached")
+            } catch (e: Throwable) {
+                assertIs<UncompletedCoroutinesError>(e)
+            }
+        }) {
+            runTest(dispatchTimeoutMs = 100) {
+                withContext(Dispatchers.Default) {
+                    delay(10.seconds)
+                    3
+                }
+                fail("shouldn't be reached")
+            }
+        }
+
+        /** Tests that even the dispatch timeout of `0` is fine if all the dispatches go through the same scheduler. */
+        @Test
+        fun testRunTestWithZeroDispatchTimeoutWithControlledDispatches() = runTest(dispatchTimeoutMs = 0) {
+            // below is some arbitrary concurrent code where all dispatches go through the same scheduler.
+            launch {
+                delay(2000)
+            }
+            val deferred = async {
+                val job = launch(StandardTestDispatcher(testScheduler)) {
+                    launch {
+                        delay(500)
+                    }
+                    delay(1000)
+                }
+                job.join()
+            }
+            deferred.await()
+        }
+
+        /** Tests that real delays can be accounted for with a large enough dispatch timeout. */
+        @Test
+        fun testRunTestWithLargeDispatchTimeout() = runTest(dispatchTimeoutMs = 5000) {
+            withContext(Dispatchers.Default) {
+                delay(50)
+            }
+        }
+
     }
 }

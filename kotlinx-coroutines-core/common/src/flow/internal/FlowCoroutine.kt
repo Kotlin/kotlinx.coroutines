@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * } // <- CE will be rethrown here
  * ```
  */
-internal suspend fun <R> flowScope(@BuilderInference block: suspend CoroutineScope.() -> R): R =
+internal suspend fun <R> flowScope(block: suspend CoroutineScope.() -> R): R =
     suspendCoroutineUninterceptedOrReturn { uCont ->
         val coroutine = FlowCoroutine(uCont.context, uCont)
         coroutine.startUndispatchedOrReturn(coroutine, block)
@@ -42,7 +42,7 @@ internal suspend fun <R> flowScope(@BuilderInference block: suspend CoroutineSco
  * with additional constraint on cancellation.
  * To cancel child without cancelling itself, `cancel(ChildCancelledException())` should be used.
  */
-internal fun <R> scopedFlow(@BuilderInference block: suspend CoroutineScope.(FlowCollector<R>) -> Unit): Flow<R> =
+internal fun <R> scopedFlow(block: suspend CoroutineScope.(FlowCollector<R>) -> Unit): Flow<R> =
     flow {
         flowScope { block(this@flow) }
     }

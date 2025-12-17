@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines.selects
 
 import kotlinx.coroutines.testing.*
@@ -20,7 +18,7 @@ class SelectRendezvousChannelTest : TestBase() {
         }
         yield() // to launched coroutine
         expect(3)
-        select<Unit> {
+        select {
             channel.onSend("OK") {
                 expect(4)
             }
@@ -39,7 +37,7 @@ class SelectRendezvousChannelTest : TestBase() {
         }
         yield() // to launched coroutine
         expect(3)
-        select<Unit> {
+        select {
             channel.onSend("OK") {
                 expect(4)
             }
@@ -54,7 +52,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectSendWaitWithDefault() = runTest {
         expect(1)
         val channel = Channel<String>(Channel.RENDEZVOUS)
-        select<Unit> {
+        select {
             channel.onSend("OK") {
                 expectUnreached()
             }
@@ -86,7 +84,7 @@ class SelectRendezvousChannelTest : TestBase() {
             expect(4)
         }
         expect(2)
-        select<Unit> {
+        select {
             channel.onSend("OK") {
                 expect(5)
             }
@@ -105,7 +103,7 @@ class SelectRendezvousChannelTest : TestBase() {
         }
         yield() // to launched coroutine
         expect(3)
-        select<Unit> {
+        select {
             channel.onReceive { v ->
                 expect(4)
                 assertEquals("OK", v)
@@ -125,7 +123,7 @@ class SelectRendezvousChannelTest : TestBase() {
         }
         yield() // to launched coroutine
         expect(3)
-        select<Unit> {
+        select {
             channel.onReceive { v ->
                 expect(4)
                 assertEquals("OK", v)
@@ -141,7 +139,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectReceiveWaitWithDefault() = runTest {
         expect(1)
         val channel = Channel<String>(Channel.RENDEZVOUS)
-        select<Unit> {
+        select {
             channel.onReceive {
                 expectUnreached()
             }
@@ -173,7 +171,7 @@ class SelectRendezvousChannelTest : TestBase() {
             expect(4)
         }
         expect(2)
-        select<Unit> {
+        select {
             channel.onReceive { v ->
                 expect(5)
                 assertEquals("OK", v)
@@ -188,7 +186,7 @@ class SelectRendezvousChannelTest : TestBase() {
         val channel = Channel<String>(Channel.RENDEZVOUS)
         channel.close()
         finish(2)
-        select<Unit> {
+        select {
             channel.onReceive {
                 expectUnreached()
             }
@@ -206,7 +204,7 @@ class SelectRendezvousChannelTest : TestBase() {
             finish(4)
         }
         expect(2)
-        select<Unit> {
+        select {
             channel.onReceive {
                 expectUnreached()
             }
@@ -249,7 +247,7 @@ class SelectRendezvousChannelTest : TestBase() {
         expect(1)
         launch {
             expect(3)
-            val res = select<String> {
+            val res = select {
                 c1.onReceive { v1 ->
                     expect(4)
                     assertEquals(42, v1)
@@ -279,7 +277,7 @@ class SelectRendezvousChannelTest : TestBase() {
         expect(1)
         launch {
             expect(3)
-            val res = select<String> {
+            val res = select {
                 c.onReceive { v ->
                     expect(6)
                     assertEquals(42, v)
@@ -312,7 +310,7 @@ class SelectRendezvousChannelTest : TestBase() {
             expect(4)
         }
         expect(2)
-        select<Unit> {
+        select {
             channel.onReceiveCatching {
                 expect(5)
                 assertTrue(it.isClosed)
@@ -349,7 +347,7 @@ class SelectRendezvousChannelTest : TestBase() {
         val channel = Channel<Unit>()
         channel.close()
         expect(1)
-        select<Unit> {
+        select {
             expect(2)
             channel.onReceiveCatching {
                 assertTrue(it.isClosed)
@@ -366,7 +364,7 @@ class SelectRendezvousChannelTest : TestBase() {
         expect(1)
         val job = launch {
             repeat(iterations) {
-                select<Unit> {
+                select {
                     channel.onReceiveCatching { v ->
                         expect(4 + it * 2)
                         assertEquals(it, v.getOrThrow())
@@ -392,7 +390,7 @@ class SelectRendezvousChannelTest : TestBase() {
         expect(1)
         launch {
             expect(3)
-            val res = select<String> {
+            val res = select {
                 c.onReceiveCatching { v ->
                     expect(6)
                     assertEquals(42, v.getOrThrow())
@@ -444,7 +442,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectSendAndReceive() = runTest {
         val c = Channel<Int>()
         assertFailsWith<IllegalStateException> {
-            select<Unit> {
+            select {
                 c.onSend(1) { expectUnreached() }
                 c.onReceive { expectUnreached() }
             }
@@ -456,7 +454,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectReceiveAndSend() = runTest {
         val c = Channel<Int>()
         assertFailsWith<IllegalStateException> {
-            select<Unit> {
+            select {
                 c.onReceive { expectUnreached() }
                 c.onSend(1) { expectUnreached() }
             }

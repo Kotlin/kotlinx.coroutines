@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "DEPRECATION") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -180,7 +178,7 @@ class CompletableDeferredTest : TestBase() {
         expect(4)
         try {
             parent.await()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             finish(6)
         }
     }

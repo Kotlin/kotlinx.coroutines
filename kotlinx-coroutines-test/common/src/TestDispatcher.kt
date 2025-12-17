@@ -42,7 +42,6 @@ public abstract class TestDispatcher internal constructor() : CoroutineDispatche
         scheduler.registerEvent(this, timeMillis, block, context) { false }
 
     /** @suppress */
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     @Deprecated("Is only needed internally", level = DeprecationLevel.HIDDEN)
     public override fun timeoutMessage(timeout: Duration): String =
         "Timed out after $timeout of _virtual_ (kotlinx.coroutines.test) time. " +

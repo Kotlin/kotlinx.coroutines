@@ -10,11 +10,13 @@ import kotlin.test.*
 
 class MainDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
 
+    @OptIn(ExperimentalForeignApi::class)
     override fun isMainThread(): Boolean = CFRunLoopGetCurrent() == CFRunLoopGetMain()
 
     // skip if already on the main thread, run blocking doesn't really work well with that
     override fun shouldSkipTesting(): Boolean = isMainThread()
 
+    @OptIn(BetaInteropApi::class)
     override fun scheduleOnMainQueue(block: () -> Unit) {
         autoreleasepool {
             dispatch_async(dispatch_get_main_queue()) {

@@ -3,10 +3,12 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 import kotlin.js.*
 
+@OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")
 internal fun promiseSetDeferred(promise: Promise<JsAny?>, deferred: JsAny): Unit =
     js("promise.deferred = deferred")
 
+@OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")
 internal fun promiseGetDeferred(promise: Promise<JsAny?>): JsAny? = js("""{
     console.assert(promise instanceof Promise, "promiseGetDeferred must receive a promise, but got ", promise);
@@ -29,6 +31,7 @@ internal fun promiseGetDeferred(promise: Promise<JsAny?>): JsAny? = js("""{
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param block the coroutine code.
  */
+@ExperimentalWasmJsInterop
 public fun <T> CoroutineScope.promise(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -39,6 +42,7 @@ public fun <T> CoroutineScope.promise(
 /**
  * Converts this deferred value to the instance of [Promise<JsAny?>].
  */
+@ExperimentalWasmJsInterop
 public fun <T> Deferred<T>.asPromise(): Promise<JsAny?> {
     val promise = Promise<JsAny?> { resolve, reject ->
         invokeOnCompletion {
@@ -57,6 +61,7 @@ public fun <T> Deferred<T>.asPromise(): Promise<JsAny?> {
 /**
  * Converts this promise value to the instance of [Deferred].
  */
+@ExperimentalWasmJsInterop
 @Suppress("UNCHECKED_CAST_TO_EXTERNAL_INTERFACE", "UNCHECKED_CAST")
 public fun <T> Promise<JsAny?>.asDeferred(): Deferred<T> {
     val deferred = promiseGetDeferred(this) as? JsReference<Deferred<T>>
@@ -71,6 +76,7 @@ public fun <T> Promise<JsAny?>.asDeferred(): Deferred<T> {
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  */
+@ExperimentalWasmJsInterop
 @Suppress("UNCHECKED_CAST")
 public suspend fun <T> Promise<JsAny?>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     this@await.then(

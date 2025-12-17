@@ -239,7 +239,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
 public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = Channel.RENDEZVOUS,
-    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
+    block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> =
     produce(context, capacity, BufferOverflow.SUSPEND, CoroutineStart.DEFAULT, onCompletion = null, block = block)
 
@@ -261,7 +261,7 @@ public fun <E> CoroutineScope.produce(
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
-    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
+    block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> =
     produce(context, capacity, BufferOverflow.SUSPEND, start, onCompletion, block)
 
@@ -273,7 +273,7 @@ internal fun <E> CoroutineScope.produce(
     onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
-    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
+    block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> {
     val channel = Channel<E>(capacity, onBufferOverflow)
     val newContext = newCoroutineContext(context)

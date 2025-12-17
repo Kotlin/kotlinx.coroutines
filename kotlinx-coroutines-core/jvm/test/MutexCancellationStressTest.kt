@@ -38,6 +38,7 @@ class MutexCancellationStressTest : TestBase() {
                         counterLocal[jobId].incrementAndGet()
                         counter++
                     }
+                    @Suppress("DEPRECATION")
                     select<Unit> {
                         mutex.onLock(mutexOwners[jobId]) {
                             counterLocal[jobId].incrementAndGet()

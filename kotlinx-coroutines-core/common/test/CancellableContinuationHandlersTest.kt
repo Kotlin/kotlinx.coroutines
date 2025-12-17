@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -11,7 +9,7 @@ class CancellableContinuationHandlersTest : TestBase() {
 
     @Test
     fun testDoubleSubscription() = runTest({ it is IllegalStateException }) {
-        suspendCancellableCoroutine<Unit> { c ->
+        suspendCancellableCoroutine { c ->
             c.invokeOnCancellation { finish(1) }
             c.invokeOnCancellation { expectUnreached() }
         }
@@ -19,7 +17,7 @@ class CancellableContinuationHandlersTest : TestBase() {
 
     @Test
     fun testDoubleSubscriptionAfterCompletion() = runTest {
-        suspendCancellableCoroutine<Unit> { c ->
+        suspendCancellableCoroutine { c ->
             c.resume(Unit)
             // First invokeOnCancellation is Ok
             c.invokeOnCancellation { expectUnreached() }
@@ -31,7 +29,7 @@ class CancellableContinuationHandlersTest : TestBase() {
     @Test
     fun testDoubleSubscriptionAfterCompletionWithException() = runTest {
         assertFailsWith<TestException> {
-            suspendCancellableCoroutine<Unit> { c ->
+            suspendCancellableCoroutine { c ->
                 c.resumeWithException(TestException())
                 // First invokeOnCancellation is Ok
                 c.invokeOnCancellation { expectUnreached() }
@@ -44,7 +42,7 @@ class CancellableContinuationHandlersTest : TestBase() {
     @Test
     fun testDoubleSubscriptionAfterCancellation() = runTest {
         try {
-            suspendCancellableCoroutine<Unit> { c ->
+            suspendCancellableCoroutine { c ->
                 c.cancel()
                 c.invokeOnCancellation {
                     assertIs<CancellationException>(it)
@@ -52,7 +50,7 @@ class CancellableContinuationHandlersTest : TestBase() {
                 }
                 assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
             }
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             finish(2)
         }
     }
@@ -60,7 +58,7 @@ class CancellableContinuationHandlersTest : TestBase() {
     @Test
     fun testSecondSubscriptionAfterCancellation() = runTest {
         try {
-            suspendCancellableCoroutine<Unit> { c ->
+            suspendCancellableCoroutine { c ->
                 // Set IOC first
                 c.invokeOnCancellation {
                     assertNull(it)
@@ -72,7 +70,7 @@ class CancellableContinuationHandlersTest : TestBase() {
                 // then try to install another one
                 assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
             }
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             finish(3)
         }
     }
@@ -83,7 +81,7 @@ class CancellableContinuationHandlersTest : TestBase() {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             // will be cancelled during dispatch
             assertFailsWith<CancellationException> {
-                suspendCancellableCoroutine<Unit> { c ->
+                suspendCancellableCoroutine { c ->
                     cont = c
                     // Set IOC first -- not called (completed)
                     c.invokeOnCancellation {
@@ -105,7 +103,7 @@ class CancellableContinuationHandlersTest : TestBase() {
         expect(6)
         // then try to install another one after we've done dispatching it
         assertFailsWith<IllegalStateException> {
-            cont!!.invokeOnCancellation { expectUnreached() }
+            cont.invokeOnCancellation { expectUnreached() }
         }
         finish(7)
     }
@@ -113,7 +111,7 @@ class CancellableContinuationHandlersTest : TestBase() {
     @Test
     fun testDoubleSubscriptionAfterCancellationWithCause() = runTest {
         try {
-            suspendCancellableCoroutine<Unit> { c ->
+            suspendCancellableCoroutine { c ->
                 c.cancel(AssertionError())
                 c.invokeOnCancellation {
                     require(it is AssertionError)
@@ -121,7 +119,7 @@ class CancellableContinuationHandlersTest : TestBase() {
                 }
                 assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
             }
-        } catch (e: AssertionError) {
+        } catch (_: AssertionError) {
             finish(2)
         }
     }
@@ -129,7 +127,7 @@ class CancellableContinuationHandlersTest : TestBase() {
     @Test
     fun testDoubleSubscriptionMixed() = runTest {
         try {
-            suspendCancellableCoroutine<Unit> { c ->
+            suspendCancellableCoroutine { c ->
                 c.invokeOnCancellation {
                     require(it is IndexOutOfBoundsException)
                     expect(1)
@@ -137,7 +135,7 @@ class CancellableContinuationHandlersTest : TestBase() {
                 c.cancel(IndexOutOfBoundsException())
                 assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
             }
-        } catch (e: IndexOutOfBoundsException) {
+        } catch (_: IndexOutOfBoundsException) {
             finish(2)
         }
     }
@@ -148,11 +146,11 @@ class CancellableContinuationHandlersTest : TestBase() {
     ) {
         expect(1)
         try {
-            suspendCancellableCoroutine<Unit> { c ->
+            suspendCancellableCoroutine { c ->
                 c.invokeOnCancellation { throw AssertionError() }
                 c.cancel()
             }
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             expect(2)
         }
         finish(3)
@@ -171,13 +169,13 @@ class CancellableContinuationHandlersTest : TestBase() {
         val s = MySegment()
         expect(1)
         try {
-            suspendCancellableCoroutine<Unit> { c ->
+            suspendCancellableCoroutine { c ->
                 expect(2)
                 c as CancellableContinuationImpl<*>
                 c.invokeOnCancellation(s, 0)
                 c.cancel()
             }
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             expect(3)
         }
         expect(4)

@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kotlin.test.*
 
 class PromiseTest {
+    @OptIn(ExperimentalWasmJsInterop::class)
     @Test
     fun testCompletionFromPromise() = runTest {
         var promiseEntered = false

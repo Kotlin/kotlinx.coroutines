@@ -1,6 +1,3 @@
-
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-22237
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -16,7 +13,7 @@ class WithContextTest : TestBase() {
                 expect(2)
                 throw AssertionError()
             }
-        } catch (e: AssertionError) {
+        } catch (_: AssertionError) {
             expect(3)
         }
 
@@ -32,7 +29,7 @@ class WithContextTest : TestBase() {
                 expect(2)
                 throw AssertionError()
             }
-        } catch (e: AssertionError) {
+        } catch (_: AssertionError) {
             expect(3)
         }
 
@@ -89,14 +86,14 @@ class WithContextTest : TestBase() {
                 try {
                     yield() // shall throw CancellationException
                     expectUnreached()
-                } catch (e: CancellationException) {
+                } catch (_: CancellationException) {
                     expect(4)
                 }
                 "OK".wrap()
             }
 
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             expect(5)
             // will wait for the first coroutine
         }
@@ -120,7 +117,7 @@ class WithContextTest : TestBase() {
             try {
                 yield() // shall throw CancellationException
                 expectUnreached()
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 finish(6)
             }
             "OK".wrap()
@@ -155,7 +152,7 @@ class WithContextTest : TestBase() {
                     job!!.cancel() // cancel this job _before_ it throws
                     throw TestException()
                 }
-            } catch (e: TestException) {
+            } catch (_: TestException) {
                 // must have caught TextException
                 expect(6)
             }
@@ -180,7 +177,7 @@ class WithContextTest : TestBase() {
                     job!!.cancel() // cancel this job _before_ it throws
                     throw TestException()
                 }
-            } catch (e: TestException) {
+            } catch (_: TestException) {
                 // must have caught TextException
                 expect(8)
             }
@@ -269,7 +266,7 @@ class WithContextTest : TestBase() {
                 "OK".wrap()
             }
             expectUnreached()
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             // ensure that we can catch exception outside of the scope
             expect(5)
         }
@@ -329,7 +326,7 @@ class WithContextTest : TestBase() {
             withContext(job) {
                 expectUnreached()
             }
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             expect(2)
         }
         finish(3)

@@ -104,7 +104,6 @@ private class PublisherAsFlow<T : Any>(
         collectImpl(scope.coroutineContext, SendingCollector(scope.channel))
 }
 
-@Suppress("ReactiveStreamsSubscriberImplementation")
 private class ReactiveSubscriber<T : Any>(
     capacity: Int,
     onBufferOverflow: BufferOverflow,
@@ -163,7 +162,6 @@ internal fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: Coroutine
  * Adapter that transforms [Flow] into TCK-complaint [Publisher].
  * [cancel] invocation cancels the original flow.
  */
-@Suppress("ReactiveStreamsPublisherImplementation")
 private class FlowAsPublisher<T : Any>(
     private val flow: Flow<T>,
     private val context: CoroutineContext
@@ -229,7 +227,7 @@ public class FlowSubscription<T>(
             subscriber.onNext(value)
             // Suspend if needed before requesting the next value
             if (requested.decrementAndGet() <= 0) {
-                suspendCancellableCoroutine<Unit> {
+                suspendCancellableCoroutine {
                     producer.value = it
                 }
             } else {

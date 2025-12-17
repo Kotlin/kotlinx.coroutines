@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package kotlinx.coroutines.testing
 
 import kotlin.test.*

@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 
 class FlowSampleTest : TestBase() {
     @Test
-    public fun testBasic() = withVirtualTime {
+    fun testBasic() = withVirtualTime {
         expect(1)
         val flow = flow {
             expect(3)

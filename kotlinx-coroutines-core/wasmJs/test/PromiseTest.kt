@@ -4,6 +4,7 @@ import kotlinx.coroutines.testing.*
 import kotlin.js.*
 import kotlin.test.*
 
+@OptIn(ExperimentalWasmJsInterop::class)
 class PromiseTest : TestBase() {
     @Test
     fun testPromiseResolvedAsDeferred() = GlobalScope.promise {

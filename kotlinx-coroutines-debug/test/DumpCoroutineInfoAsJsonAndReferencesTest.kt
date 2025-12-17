@@ -1,7 +1,6 @@
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package kotlinx.coroutines.debug
 
-import kotlinx.coroutines.testing.*
 import com.google.gson.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.*
@@ -9,7 +8,6 @@ import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
-@ExperimentalStdlibApi
 class DumpCoroutineInfoAsJsonAndReferencesTest : DebugTestBase() {
     private data class CoroutineInfoFromJson(
         val name: String?,
@@ -93,7 +91,7 @@ class DumpCoroutineInfoAsJsonAndReferencesTest : DebugTestBase() {
             val context = info.context
             assertEquals(context[CoroutineName.Key]?.name, infoFromJson.name)
             assertEquals(context[CoroutineId.Key]?.id, infoFromJson.id)
-            assertEquals(context[CoroutineDispatcher.Key]?.toString(), infoFromJson.dispatcher)
+            assertEquals(context[ContinuationInterceptor.Key]?.toString(), infoFromJson.dispatcher)
         }
     }
 }

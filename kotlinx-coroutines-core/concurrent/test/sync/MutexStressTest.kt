@@ -82,6 +82,7 @@ class MutexStressTest : TestBase() {
         }
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun stressUnlockCancelRaceWithSelect() = runTest {
         val n = 10_000 * stressTestMultiplier
@@ -93,7 +94,7 @@ class MutexStressTest : TestBase() {
                 assertTrue(mutex.isLocked)
                 var job1EnteredCriticalSection = false
                 val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
-                    select<Unit> {
+                    select {
                         mutex.onLock {
                             job1EnteredCriticalSection = true
                             mutex.unlock()

@@ -120,7 +120,7 @@ internal class WorkQueue {
     fun trySteal(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
         val task = when (stealingMode) {
             STEAL_ANY -> pollBuffer()
-            else -> stealWithExclusiveMode(stealingMode)
+            else -> stealWithExclusiveMode(onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY)
         }
 
         if (task != null) {
@@ -131,10 +131,9 @@ internal class WorkQueue {
     }
 
     // Steal only tasks of a particular kind, potentially invoking full queue scan
-    private fun stealWithExclusiveMode(stealingMode: StealingMode): Task? {
+    private fun stealWithExclusiveMode(/* Only blocking OR only CPU */ onlyBlocking: Boolean): Task? {
         var start = consumerIndex.value
         val end = producerIndex.value
-        val onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY
         // Bail out if there is no blocking work for us
         while (start != end) {
             if (onlyBlocking && blockingTasksInBuffer.value == 0) return null
@@ -147,10 +146,6 @@ internal class WorkQueue {
     // Polls for blocking task, invoked only by the owner
     // NB: ONLY for runSingleTask method
     fun pollBlocking(): Task? = pollWithExclusiveMode(onlyBlocking = true /* only blocking */)
-
-    // Polls for CPU task, invoked only by the owner
-    // NB: ONLY for runSingleTask method
-    fun pollCpu(): Task? = pollWithExclusiveMode(onlyBlocking = false /* only cpu */)
 
     private fun pollWithExclusiveMode(/* Only blocking OR only CPU */ onlyBlocking: Boolean): Task? {
         while (true) { // Poll the slot
@@ -175,7 +170,7 @@ internal class WorkQueue {
         return null
     }
 
-    private fun tryExtractFromTheMiddle(index: Int, onlyBlocking: Boolean): Task? {
+    private fun tryExtractFromTheMiddle(index: Int, /* Only blocking OR only CPU */ onlyBlocking: Boolean): Task? {
         val arrayIndex = index and MASK
         val value = buffer[arrayIndex]
         if (value != null && value.isBlocking == onlyBlocking && buffer.compareAndSet(arrayIndex, value, null)) {

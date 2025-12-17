@@ -24,7 +24,7 @@ apply(plugin = "pub-conventions")
 
      TARGETS                            SOURCE SETS
      ------------------------------------------------------------
-     wasmJs \------> jsAndWasmJsShared ----+
+     wasmJs \-----------> web -------------+
      js     /                              |
                                            V
      wasmWasi --------------------> jsAndWasmShared ----------+

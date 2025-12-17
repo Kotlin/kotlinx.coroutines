@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.testing.*
@@ -47,7 +45,7 @@ class IdFlowTest : TestBase() {
 }
 
 /**
- * This flow should be "identity" function with respect to cancellation.
+ * This flow should be the "identity" function with respect to cancellation.
  */
 private fun <T> Flow<T>.idScoped(): Flow<T> = flow {
     coroutineScope {

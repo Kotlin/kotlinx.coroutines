@@ -23,39 +23,39 @@ class SharingStressTest : TestBase() {
     val subscriberDispatcher = ExecutorRule(nSubscribers)
 
     @Test
-    public fun testNoReplayLazy() =
+    fun testNoReplayLazy() =
         testStress(0, started = SharingStarted.Lazily)
 
     @Test
-    public fun testNoReplayWhileSubscribed() =
+    fun testNoReplayWhileSubscribed() =
         testStress(0, started = SharingStarted.WhileSubscribed())
 
     @Test
-    public fun testNoReplayWhileSubscribedTimeout() =
+    fun testNoReplayWhileSubscribedTimeout() =
         testStress(0, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 50L))
 
     @Test
-    public fun testReplay100WhileSubscribed() =
+    fun testReplay100WhileSubscribed() =
         testStress(100, started = SharingStarted.WhileSubscribed())
 
     @Test
-    public fun testReplay100WhileSubscribedReset() =                             
+    fun testReplay100WhileSubscribedReset() =                             
         testStress(100, started = SharingStarted.WhileSubscribed(replayExpirationMillis = 0L))
 
     @Test
-    public fun testReplay100WhileSubscribedTimeout() =
+    fun testReplay100WhileSubscribedTimeout() =
         testStress(100, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 50L))
 
     @Test
-    public fun testStateLazy() =
+    fun testStateLazy() =
         testStress(1, started = SharingStarted.Lazily)
 
     @Test
-    public fun testStateWhileSubscribed() =
+    fun testStateWhileSubscribed() =
         testStress(1, started = SharingStarted.WhileSubscribed())
 
     @Test
-    public fun testStateWhileSubscribedReset() =
+    fun testStateWhileSubscribedReset() =
         testStress(1, started = SharingStarted.WhileSubscribed(replayExpirationMillis = 0L))
 
     private fun testStress(replay: Int, started: SharingStarted) = runTest {

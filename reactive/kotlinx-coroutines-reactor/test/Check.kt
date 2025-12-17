@@ -5,7 +5,7 @@ import reactor.core.publisher.Mono
 
 fun <T> checkMonoValue(
         mono: Mono<T>,
-        checker: (T) -> Unit
+        checker: (T?) -> Unit
 ) {
     val monoValue = mono.block()
     checker(monoValue)
@@ -33,7 +33,7 @@ fun <T> checkSingleValue(
 
 fun checkErroneous(
         flux: Flux<*>,
-        checker: (Throwable) -> Unit
+        checker: (Throwable?) -> Unit
 ) {
     val singleNotification = flux.materialize().toIterable().single()
     checker(singleNotification.throwable)

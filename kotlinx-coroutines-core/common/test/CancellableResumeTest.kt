@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -12,7 +10,7 @@ class CancellableResumeTest : TestBase() {
     @Test
     fun testResumeImmediateNormally() = runTest {
         expect(1)
-        val ok = suspendCancellableCoroutine<String> { cont ->
+        val ok = suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation { expectUnreached() }
             cont.resume("OK") { _, _, _ -> expectUnreached() }
@@ -27,7 +25,7 @@ class CancellableResumeTest : TestBase() {
         expected = { it is TestException }
     ) {
         expect(1)
-        suspendCancellableCoroutine<String> { cont ->
+        suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation { expect(3) }
             cont.cancel(TestException("FAIL"))
@@ -53,7 +51,7 @@ class CancellableResumeTest : TestBase() {
         )
     ) {
         expect(1)
-        suspendCancellableCoroutine<String> { cont ->
+        suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation {
                 expect(3)
@@ -80,7 +78,7 @@ class CancellableResumeTest : TestBase() {
     ) {
         expect(1)
         val ctx = coroutineContext
-        suspendCancellableCoroutine<String> { cont ->
+        suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation { expect(3) }
             ctx.cancel()
@@ -107,7 +105,7 @@ class CancellableResumeTest : TestBase() {
     ) {
         expect(1)
         val ctx = coroutineContext
-        suspendCancellableCoroutine<String> { cont ->
+        suspendCancellableCoroutine { cont ->
             expect(2)
             cont.invokeOnCancellation {
                 expect(3)
@@ -134,7 +132,7 @@ class CancellableResumeTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            val ok = suspendCancellableCoroutine<String> { cont ->
+            val ok = suspendCancellableCoroutine { cont ->
                 expect(3)
                 cont.invokeOnCancellation { expectUnreached() }
                 cc = cont
@@ -154,7 +152,7 @@ class CancellableResumeTest : TestBase() {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                suspendCancellableCoroutine<String> { cont ->
+                suspendCancellableCoroutine { cont ->
                     expect(3)
                     cont.invokeOnCancellation { expect(5) }
                     cc = cont
@@ -189,7 +187,7 @@ class CancellableResumeTest : TestBase() {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                suspendCancellableCoroutine<String> { cont ->
+                suspendCancellableCoroutine { cont ->
                     expect(3)
                     cont.invokeOnCancellation {
                         expect(5)
@@ -223,7 +221,7 @@ class CancellableResumeTest : TestBase() {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                suspendCancellableCoroutine<String> { cont ->
+                suspendCancellableCoroutine { cont ->
                     expect(3)
                     // resumed first, dispatched, then cancelled, but still got invokeOnCancellation call
                     cont.invokeOnCancellation { cause ->
@@ -266,7 +264,7 @@ class CancellableResumeTest : TestBase() {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                suspendCancellableCoroutine<String> { cont ->
+                suspendCancellableCoroutine { cont ->
                     expect(3)
                     // resumed first, dispatched, then cancelled, but still got invokeOnCancellation call
                     cont.invokeOnCancellation { cause ->
@@ -303,7 +301,7 @@ class CancellableResumeTest : TestBase() {
     fun testResumeUnconfined() = runTest {
         val outerScope = this
         withContext(Dispatchers.Unconfined) {
-            val result = suspendCancellableCoroutine<String> {
+            val result = suspendCancellableCoroutine {
                 outerScope.launch {
                     it.resume("OK") { _, _, _ ->
                         expectUnreached()

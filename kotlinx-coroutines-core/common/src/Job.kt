@@ -240,7 +240,7 @@ public interface Job : CoroutineContext.Element {
     public val children: Sequence<Job>
 
     /**
-     * Attaches child job so that this job becomes its parent and
+     * Attaches a child job so that this job becomes its parent and
      * returns a handle that should be used to detach it.
      *
      * A parent-child relation has the following effect:
@@ -256,7 +256,8 @@ public interface Job : CoroutineContext.Element {
      * lookup a [Job] instance in the parent context and use this function to attach themselves as a child.
      * They also store a reference to the resulting [ChildHandle] and dispose a handle when they complete.
      *
-     * @suppress This is an internal API. This method is too error prone for public API.
+     * @suppress This is an internal API. This method is too error-prone for public API.
+     * Used in IntelliJ.
      */
     // ChildJob and ChildHandle are made internal on purpose to further deter 3rd-party impl of Job
     @InternalCoroutinesApi

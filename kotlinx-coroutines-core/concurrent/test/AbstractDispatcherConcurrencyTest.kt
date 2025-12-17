@@ -7,7 +7,7 @@ import kotlin.test.*
 
 abstract class AbstractDispatcherConcurrencyTest : TestBase() {
 
-   public abstract val dispatcher: CoroutineDispatcher
+   abstract val dispatcher: CoroutineDispatcher
 
     @Test
     fun testLaunchAndJoin() = runTest {

@@ -1,5 +1,3 @@
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -109,7 +107,7 @@ class AsyncLazyTest : TestBase() {
         assertTrue(!d.isActive && !d.isCompleted)
         try {
             d.await() // will throw IOException
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             assertTrue(!d.isActive && d.isCompleted && d.isCancelled)
             expect(4)
         }

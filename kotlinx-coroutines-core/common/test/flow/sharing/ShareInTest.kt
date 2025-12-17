@@ -119,7 +119,6 @@ class ShareInTest : TestBase() {
     fun testWhileSubscribedCustomAtLeast2() =
         testWhileSubscribed(2, SharingStarted.WhileSubscribedAtLeast(2))
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun testWhileSubscribed(threshold: Int, started: SharingStarted) = runTest {
         expect(1)
         val flowState = FlowState()
@@ -217,7 +216,8 @@ class ShareInTest : TestBase() {
         }.shareIn(this, SharingStarted.Lazily)
 
         expect(1)
-        flow.onSubscription { throw CancellationException("") }
+        // Casting so that the non-deprecated `catch` overload is chosen
+        (flow.onSubscription { throw CancellationException("") } as Flow<Int>)
             .catch { e -> assertTrue { e is CancellationException } }
             .collect()
         yield()

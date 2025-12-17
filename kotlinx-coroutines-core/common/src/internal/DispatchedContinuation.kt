@@ -271,13 +271,22 @@ internal fun CoroutineDispatcher.safeIsDispatchNeeded(context: CoroutineContext)
  * It may appear in stack traces when coroutines are started/resumed with unconfined dispatcher.
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public fun <T> Continuation<T>.resumeCancellableWith(
+internal fun <T> Continuation<T>.resumeCancellableWithInternal(
     result: Result<T>,
 ): Unit = when (this) {
     is DispatchedContinuation -> resumeCancellableWith(result)
     else -> resumeWith(result)
 }
+
+@InternalCoroutinesApi
+@Deprecated(
+    "This function was intended for internal use only and will be removed. " +
+        "If you have a use case for it, please file an issue in the issue tracker.",
+    level = DeprecationLevel.WARNING
+) // WARNING in 1.11, ERROR in 1.12, REMOVE in 1.13, was @InternalCoroutinesApi
+public fun <T> Continuation<T>.resumeCancellableWith(
+    result: Result<T>,
+): Unit = resumeCancellableWithInternal(result)
 
 internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
     executeUnconfined(Unit, MODE_CANCELLABLE, doYield = true) {

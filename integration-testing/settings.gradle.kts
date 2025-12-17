@@ -8,6 +8,7 @@ pluginManagement {
 }
 
 include("smokeTest")
+include("safeDebugAgentTest")
 include("java8Test")
 include(":jpmsTest")
 

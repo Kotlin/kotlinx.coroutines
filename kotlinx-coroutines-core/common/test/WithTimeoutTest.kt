@@ -1,6 +1,3 @@
-
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "UNREACHABLE_CODE") // KT-21913
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -129,7 +126,7 @@ class WithTimeoutTest : TestBase() {
             expect(2)
             try {
                 delay(1000)
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 finish(3)
             }
             "OK"
@@ -145,7 +142,7 @@ class WithTimeoutTest : TestBase() {
                 expect(2)
                 try {
                     delay(1000)
-                } catch (e: CancellationException) {
+                } catch (_: CancellationException) {
                     expect(3)
                     throw TestException()
                 }
@@ -153,7 +150,7 @@ class WithTimeoutTest : TestBase() {
                 "OK"
             }
             expectUnreached()
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             finish(4)
         }
     }
@@ -175,6 +172,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testExceptionFromWithinTimeout() = runTest {
         expect(1)
+        @Suppress("UNREACHABLE_CODE")
         try {
             expect(2)
             withTimeout(1000) {

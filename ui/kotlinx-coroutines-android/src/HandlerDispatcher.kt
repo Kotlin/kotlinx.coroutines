@@ -22,7 +22,7 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
      * This dispatcher does not use [Handler.post] when current looper is the same as looper of the handler.
      *
      * Immediate dispatcher is safe from stack overflows and in case of nested invocations forms event-loop similar to [Dispatchers.Unconfined].
-     * The event loop is an advanced topic and its implications can be found in [Dispatchers.Unconfined] documentation.
+     * The event loop is an advanced topic, and its implications can be found in [Dispatchers.Unconfined] documentation.
      *
      * Example of usage:
      * ```
@@ -193,9 +193,9 @@ private suspend fun awaitFrameSlowPath(): Long = suspendCancellableCoroutine { c
     if (Looper.myLooper() === Looper.getMainLooper()) { // Check if we are already in the main looper thread
         updateChoreographerAndPostFrameCallback(cont)
     } else { // post into looper thread to figure it out
-        Dispatchers.Main.dispatch(cont.context, Runnable {
+        Dispatchers.Main.dispatch(cont.context) {
             updateChoreographerAndPostFrameCallback(cont)
-        })
+        }
     }
 }
 
