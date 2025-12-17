@@ -1,8 +1,5 @@
 # Change log for kotlinx.coroutines
 
-## Version 1.10.3
-* Unhandled exceptions in Kotlin coroutines are now re-thrown into the environment instead of being logged into the console on the `js` and `wasmJS` targets.
-
 ## Version 1.10.2
 
 * Fixed the `kotlinx-coroutines-debug` JAR file including the `module-info.class` file twice, resulting in failures in various tooling (#4314). Thanks, @RyuNen344!
