@@ -21,3 +21,9 @@ kotlin {
         }
     }
 }
+
+val allMetadataJar by tasks.getting(Jar::class) {
+    manifest {
+        attributes("Automatic-Module-Name" to "kotlinx.coroutines.test.artifact_disambiguating_module")
+    }
+}
