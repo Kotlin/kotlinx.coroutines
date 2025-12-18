@@ -233,7 +233,8 @@ tasks {
             ":jpmsTest:check",
             "smokeTest:build",
             "java8Test:check",
-            "safeDebugAgentTest:runWithExpectedFailure"
+            "safeDebugAgentTest:runWithExpectedFailure",
+            "safeDebugAgentTest:runWithIgnoredError"
         )
     }
 
