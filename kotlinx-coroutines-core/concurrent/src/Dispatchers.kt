@@ -23,7 +23,7 @@ package kotlinx.coroutines
  * // 60 threads for MongoDB connection
  * val myMongoDbDispatcher = Dispatchers.IO.limitedParallelism(60)
  * ```
- * the system may have up to `64 + 100 + 60` threads dedicated to blocking tasks during peak loads,
+ * the system may have up to `64 + 100 + 60` threads running blocking tasks in parallel during peak loads,
  * but during its steady state there is only a small number of threads shared
  * among `Dispatchers.IO`, `myMysqlDbDispatcher` and `myMongoDbDispatcher`
  *
@@ -35,8 +35,13 @@ package kotlinx.coroutines
  * // Provides the same number of threads as a resource but shares and caches them internally
  * val databasePoolDispatcher = Dispatchers.IO.limitedParallelism(128)
  * ```
+ *
+ * ### Implementation note
+ *
+ * The limit on the number of blocking tasks running in parallel is *not* a strict limit on the number of threads.
+ * It is possible for more thread than the limit to exist at the same time, but the extra threads are guaranteed
+ * to be in their start-up or shutdown phases and not actually executing work.
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public expect val Dispatchers.IO: CoroutineDispatcher
-
 
