@@ -936,6 +936,14 @@ public final class kotlinx/coroutines/channels/TickerMode : java/lang/Enum {
 	public static fun values ()[Lkotlinx/coroutines/channels/TickerMode;
 }
 
+public abstract class kotlinx/coroutines/debug/internal/AbstractStaticDebugProbes {
+	public fun <init> ()V
+	public final fun dumpCoroutines (Ljava/io/PrintStream;)V
+	public fun probeCoroutineCreated (Lkotlin/coroutines/Continuation;)Lkotlin/coroutines/Continuation;
+	public fun probeCoroutineResumed (Lkotlin/coroutines/Continuation;)V
+	public fun probeCoroutineSuspended (Lkotlin/coroutines/Continuation;)V
+}
+
 public final class kotlinx/coroutines/debug/internal/AgentInstallationType {
 	public static final field INSTANCE Lkotlinx/coroutines/debug/internal/AgentInstallationType;
 }
