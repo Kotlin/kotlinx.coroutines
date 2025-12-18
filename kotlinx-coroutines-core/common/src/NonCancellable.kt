@@ -20,6 +20,150 @@ import kotlin.coroutines.*
  * if you write `launch(NonCancellable) { ... }` then not only the newly launched job will not be cancelled
  * when the parent is cancelled, the whole parent-child relation between parent and child is severed.
  * The parent will not wait for the child's completion, nor will be cancelled when the child crashed.
+ *
+ * ## Pitfalls
+ *
+ * ### Overriding the exception with a [CancellationException] in a finalizer
+ *
+ * #### Combining [NonCancellable] with a [ContinuationInterceptor]
+ *
+ * The typical usage of [NonCancellable] is to ensure that cleanup code is executed even if the parent job is cancelled.
+ * Example:
+ *
+ * ```
+ * try {
+ *     // some code using a resource
+ * } finally {
+ *     withContext(NonCancellable) {
+ *         // cleanup code that should not be cancelled
+ *     }
+ * }
+ * ```
+ *
+ * However, it is easy to get this pattern wrong if the cleanup code needs to run on some specific dispatcher:
+ *
+ * ```
+ * // DO NOT DO THIS
+ * withContext(Dispatchers.Main) {
+ *     try {
+ *         // some code using a resource
+ *     } finally {
+ *         // THIS IS INCORRECT
+ *         withContext(NonCancellable + Dispatchers.Default) {
+ *             // cleanup code that should not be cancelled
+ *         } // this line may throw a `CancellationException`!
+ *     }
+ * }
+ * ```
+ *
+ * In this case, if the parent job is cancelled, [withContext] will throw a [CancellationException] as soon
+ * as it tries to switch back from the [Dispatchers.Default] dispatcher back to the original one.
+ * The reason for this is that [withContext] obeys the **prompt cancellation** principle,
+ * which means that dispatching back from it to the original context will fail with a [CancellationException]
+ * even if the block passed to [withContext] finished successfully,
+ * overriding the original exception thrown by the `try` block, if any.
+ *
+ * To avoid this, you should use [NonCancellable] as the only element in the context of the `withContext` call,
+ * and then inside the block, you can switch to any dispatcher you need:
+ *
+ * ```
+ * withContext(Dispatchers.Main) {
+ *     try {
+ *         // some code using a resource
+ *     } finally {
+ *         withContext(NonCancellable) {
+ *             withContext(Dispatchers.Default) {
+ *                 // cleanup code that should not be cancelled
+ *             }
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * #### Launching child coroutines
+ *
+ * Child coroutines should not be started in `withContext(NonCancellable)` blocks in resource cleanup handlers directly.
+ *
+ * ```
+ * // DO NOT DO THIS
+ * withContext(Dispatchers.Main) {
+ *     try {
+ *         // some code using a resource
+ *     } finally {
+ *         // THIS IS INCORRECT
+ *         withContext(NonCancellable) {
+ *             // cleanup code that should not be cancelled
+ *             launch { delay(100.milliseconds) }
+ *         } // this line may throw a `CancellationException`!
+ *     }
+ * }
+ * ```
+ *
+ * Similarly to the case of specifying a dispatcher alongside [NonCancellable] in a [withContext] argument,
+ * having to wait for child coroutines can lead to a dispatch at the end of the [withContext] call,
+ * which will lead to it throwing a [CancellationException] due to the prompt cancellation guarantee.
+ *
+ * The solution to this is also similar:
+ *
+ * ```
+ * withContext(Dispatchers.Main) {
+ *     try {
+ *         // some code using a resource
+ *     } finally {
+ *         withContext(NonCancellable) {
+ *             // note: `coroutineScope` here is required
+ *             // to prevent a sporadic CancellationException
+ *             coroutineScope {
+ *                 // cleanup code that should not be cancelled
+ *                 launch { delay(100.milliseconds) }
+ *             }
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * Because now [coroutineScope] and not [withContext] has to wait for the children, there is once again no dispatch
+ * between the last line of the [withContext] block and getting back to the caller.
+ *
+ * ### Not reacting to cancellations right outside the [withContext]
+ *
+ * Just like combining [NonCancellable] with other elements is incorrect because cancellation may override
+ * the original exception, the opposite can also be incorrect, depending on the context:
+ *
+ * ```
+ * // DO NOT DO THIS
+ * withContext(Dispatchers.Main) {
+ *     withContext(NonCancellable) {
+ *         withContext(Dispatchers.Default) {
+ *             // do something
+ *         }
+ *     } // will not react to the caller's cancellation!
+ *     // BUG HERE
+ *     updateUi() // may be invoked when the caller is already cancelled
+ * }
+ * ```
+ *
+ * Here, the following may happen:
+ * 1. The `do something` block gets entered, and the main thread gets released and is free to perform other tasks.
+ * 2. Some other task updates the UI and cancels this coroutine, which is no longer needed.
+ * 3. `do something` finishes, and the computation is dispatched back to the main thread.
+ * 4. `updateUi()` is called, even though the coroutine was already cancelled and the UI is no longer in a valid state
+ *    for this update operation, potentially leading to a crash.
+ *
+ * [ensureActive] can be used to manually ensure that cancelled code no longer runs:
+ *
+ * ```
+ * withContext(Dispatchers.Main) {
+ *     withContext(NonCancellable) {
+ *         withContext(Dispatchers.Default) {
+ *             // do something
+ *         }
+ *     }
+ *     ensureActive() // check if we are still allowed to run the code
+ *     updateUi()
+ * }
+ * ```
+ *
  */
 @OptIn(InternalForInheritanceCoroutinesApi::class)
 public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
