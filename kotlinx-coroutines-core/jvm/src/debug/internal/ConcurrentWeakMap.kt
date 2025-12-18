@@ -3,6 +3,7 @@ package kotlinx.coroutines.debug.internal
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import java.lang.ref.*
+import java.util.AbstractMap
 
 // This is very limited implementation, not suitable as a generic map replacement.
 // It has lock-free get and put with synchronized rehash for simplicity (and better CPU usage on contention)
@@ -13,7 +14,7 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
      * reference to the value when the key was already disposed.
      */
     weakRefQueue: Boolean = false
-) : AbstractMutableMap<K, V>() {
+) : AbstractMap<K, V>() {
     private val _size = atomic(0)
     private val core = atomic(Core(MIN_CAPACITY))
     private val weakRefQueue: ReferenceQueue<K>? = if (weakRefQueue) ReferenceQueue() else null
@@ -68,7 +69,7 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
             while (true) {
                 cleanWeakRef(weakRefQueue.remove() as HashedWeakRef<*>)
             }
-        } catch (e: InterruptedException) {
+        } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
     }
