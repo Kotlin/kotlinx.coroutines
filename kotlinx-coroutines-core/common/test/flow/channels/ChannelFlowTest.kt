@@ -204,4 +204,22 @@ class ChannelFlowTest : TestBase() {
         myFlow.collect()
         finish(4)
     }
+
+    @Test
+    fun testDoesntDispatchUnnecessarilyWhenCollected() = runTest {
+        expect(1)
+        val myFlow = flow<Int> {
+            expect(3)
+            yield() // In other words, testing that this will be the first suspension point in `collectLatest`.
+            expect(5)
+        }
+        launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            myFlow.collectLatest {
+                expectUnreached()
+            }
+            finish(6)
+        }
+        expect(4)
+    }
 }
