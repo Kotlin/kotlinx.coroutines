@@ -2,6 +2,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.SEGMENT_SIZE
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -35,25 +36,56 @@ internal fun <S : Segment<S>> S.findSegmentInternal(
 }
 
 /**
+ * Returns the segment with the specified [id] or the last one if the required one does not exist (if it was removed
+ * or was not created yet).
+
+ * Unlike [findSegmentInternal], [findSpecifiedOrLast] does not add new segments to the list.
+ */
+internal fun <S : Segment<S>> S.findSpecifiedOrLast(id: Long): S {
+    // Start searching the required segment from the specified one.
+    var cur: S = this
+    while (cur.id < id) {
+        cur = cur.next ?: break
+    }
+    return cur
+}
+
+/**
  * Returns `false` if the segment `to` is logically removed, `true` on a successful update.
  */
 @Suppress("NOTHING_TO_INLINE", "RedundantNullableReturnType") // Must be inline because it is an AtomicRef extension
 internal inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = loop { cur ->
-    if (cur.id >= to.id) return true
-    if (!to.tryIncPointers()) return false
-    if (compareAndSet(cur, to)) { // the segment is moved
-        if (cur.decPointers()) cur.remove()
+    if (cur.id >= to.id) return true // No need to update the pointer
+    if (to.isRemoved) return false // Trying to move pointer to the logically removed segment
+    if (compareAndSet(cur, to)) { // The segment is moved
+        if (to.isRemoved) return false // The segment was removed in parallel during the `CAS` operation
+        cleanLeftmostPrev(cur, to)
         return true
     }
-    if (to.decPointers()) to.remove() // undo tryIncPointers
+}
+
+/**
+ * Cleans the `prev` reference of the leftmost segment in the list. The method works with the sublist which
+ * boundaries are specified by the given nodes [from] and [to]. It looks for the leftmost segment going from
+ * the tail to the head of the sublist.
+ *
+ * The method is called when [moveForward] successfully updates the value stored in the `AtomicRef` reference.
+ */
+private inline fun <S : Segment<S>> cleanLeftmostPrev(from: S, to: S) {
+    var cur = to
+    // Find the leftmost segment on the sublist between `from` and `to` segments.
+    while (!cur.isLeftmostOrProcessed && cur.id > from.id) {
+        cur = cur.prev ?:
+            // The `prev` reference was cleaned in parallel.
+            return
+    }
+    if (cur.isLeftmostOrProcessed) cur.cleanPrev() // The leftmost segment is found
 }
 
 /**
  * Tries to find a segment with the specified [id] following by next references from the
  * [startFrom] segment and creating new ones if needed. The typical use-case is reading this `AtomicRef` values,
  * doing some synchronization, and invoking this function to find the required segment and update the pointer.
- * At the same time, [Segment.cleanPrev] should also be invoked if the previous segments are no longer needed
- * (e.g., queues should use it in dequeue operations).
  *
  * Since segments can be removed from the list, or it can be closed for further segment additions.
  * Returns the segment `s` with `s.id >= id` or `CLOSED` if all the segments in this linked list have lower `id`,
@@ -68,6 +100,27 @@ internal inline fun <S : Segment<S>> AtomicRef<S>.findSegmentAndMoveForward(
     while (true) {
         val s = startFrom.findSegmentInternal(id, createNewSegment)
         if (s.isClosed || moveForward(s.segment)) return s
+    }
+}
+
+/**
+ * Updates the `AtomicRef` reference by moving it to the existing segment.
+ *
+ * Unlike [findSegmentAndMoveForward], [moveToSpecifiedOrLast] does not add new segments into the list.
+ */
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun <S : Segment<S>> AtomicRef<S>.moveToSpecifiedOrLast(id: Long, startFrom: S) {
+    // Start searching the required segment from the specified one.
+    var s = startFrom.findSpecifiedOrLast(id)
+    // Skip all removed segments and try to update the channel pointer to the first non-removed one.
+    // This part should succeed eventually, as the tail segment is never removed.
+    while (true) {
+        while (s.isRemoved) {
+            s = s.next ?: break
+        }
+        // Try to update the value of `AtomicRef`.
+        // On failure, the found segment is already removed, so it should be skipped.
+        if (moveForward(s)) return
     }
 }
 
@@ -144,8 +197,10 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
     /**
      * Removes this node physically from this linked list. The node should be
      * logically removed (so [isRemoved] returns `true`) at the point of invocation.
+     *
+     * Returns `true`, if the node was physically removed, and `false` otherwise.
      */
-    fun remove() {
+    open fun remove() {
         assert { isRemoved || isTail } // The node should be logically removed at first.
         // The physical tail cannot be removed. Instead, we remove it when
         // a new segment is added and this segment is not the tail one anymore.
@@ -168,7 +223,7 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
     private val aliveSegmentLeft: N? get() {
         var cur = prev
         while (cur !== null && cur.isRemoved)
-            cur = cur._prev.value
+            cur = cur.prev
         return cur
     }
 
@@ -190,7 +245,7 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
  * instance-check it and uses a separate code-path for that.
  */
 internal abstract class Segment<S : Segment<S>>(
-    @JvmField val id: Long, prev: S?, pointers: Int
+    @JvmField val id: Long, prev: S?
 ) : ConcurrentLinkedListNode<S>(prev),
     // Segments typically store waiting continuations. Thus, on cancellation, the corresponding
     // slot should be cleaned and the segment should be removed if it becomes full of cancelled cells.
@@ -207,21 +262,56 @@ internal abstract class Segment<S : Segment<S>>(
     abstract val numberOfSlots: Int
 
     /**
-     * Numbers of cleaned slots (the lowest bits) and AtomicRef pointers to this segment (the highest bits)
+     * Number of cleaned slots.
      */
-    private val cleanedAndPointers = atomic(pointers shl POINTERS_SHIFT)
+    private val cleanedSlots = atomic(0)
 
     /**
      * The segment is considered as removed if all the slots are cleaned
      * and there are no pointers to this segment from outside.
      */
-    override val isRemoved get() = cleanedAndPointers.value == numberOfSlots && !isTail
+    override val isRemoved get() = cleanedSlots.value == numberOfSlots && !isTail
 
-    // increments the number of pointers if this segment is not logically removed.
-    internal fun tryIncPointers() = cleanedAndPointers.addConditionally(1 shl POINTERS_SHIFT) { it != numberOfSlots || isTail }
-
-    // returns `true` if this segment is logically removed after the decrement.
-    internal fun decPointers() = cleanedAndPointers.addAndGet(-(1 shl POINTERS_SHIFT)) == numberOfSlots && !isTail
+    /**
+     * Shows if all nodes going before this node have been processed.
+     *
+     * The value depends on the position of only two pointers - `sendSegment`
+     * and `receiveSegment`. The `bufferEndSegment` does not influence it.
+     * ```
+     *             S R       EB
+     *             │ │       │
+     *             ▼ ▼       ▼
+     * ┌──────┐  ┌──────┐  ┌──────┐
+     * │  #1  │  │  #2  │  │  #3  │
+     * └──────┘  └──────┘  └──────┘
+     *
+     * #1 is a processed segment => isLeftmostOrProcessed=true
+     * #2 is the leftmost segment => isLeftmostOrProcessed=true
+     * #3: isLeftmostOrProcessed=false
+     * ```
+     *
+     * Normally, the `bufferEndSegment` pointer is located after `receiveSegment`
+     * on the segment list. However, there can be races when `expandBuffer()` of
+     * the existing `receive` request has not finished yet, but a new `receive`
+     * request has already come.
+     * In this case, the value still does not depend on the location  of the
+     * `bufferEndSegment` pointer, even though the pointer can be before both
+     * `sendSegment` and `receiveSegment`:
+     *
+     * ```
+     *   EB        S R
+     *   │         │ │
+     *   ▼         ▼ ▼
+     * ┌──────┐  ┌──────┐  ┌──────┐
+     * │  #1  │  │  #2  │  │  #3  │
+     * └──────┘  └──────┘  └──────┘
+     *
+     * #1 is a processed segment => isLeftmostOrProcessed=true
+     * #2 is the leftmost segment => isLeftmostOrProcessed=true
+     * #3: isLeftmostOrProcessed=false
+     * ```
+     */
+    abstract val isLeftmostOrProcessed: Boolean
 
     /**
      * This function is invoked on continuation cancellation when this segment
@@ -240,15 +330,8 @@ internal abstract class Segment<S : Segment<S>>(
      * Invoked on each slot clean-up; should not be invoked twice for the same slot.
      */
     fun onSlotCleaned() {
-        if (cleanedAndPointers.incrementAndGet() == numberOfSlots) remove()
-    }
-}
-
-private inline fun AtomicInt.addConditionally(delta: Int, condition: (cur: Int) -> Boolean): Boolean {
-    while (true) {
-        val cur = this.value
-        if (!condition(cur)) return false
-        if (this.compareAndSet(cur, cur + delta)) return true
+        check(cleanedSlots.incrementAndGet() <= SEGMENT_SIZE) { "Some cell was interrupted twice." }
+        if (isRemoved) remove()
     }
 }
 
@@ -258,7 +341,5 @@ internal value class SegmentOrClosed<S : Segment<S>>(private val value: Any?) {
     @Suppress("UNCHECKED_CAST")
     val segment: S get() = if (value === CLOSED) error("Does not contain segment") else value as S
 }
-
-private const val POINTERS_SHIFT = 16
 
 private val CLOSED = Symbol("CLOSED")

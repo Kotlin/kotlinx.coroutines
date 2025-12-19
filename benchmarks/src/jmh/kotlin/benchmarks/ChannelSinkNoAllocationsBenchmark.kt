@@ -13,6 +13,9 @@ import kotlin.coroutines.*
 @State(Scope.Benchmark)
 @Fork(1)
 open class ChannelSinkNoAllocationsBenchmark {
+    @Param("${Channel.RENDEZVOUS}", "${Channel.BUFFERED}")
+    var capacity: Int = 0
+
     private val unconfined = Dispatchers.Unconfined
 
     @Benchmark
@@ -26,7 +29,7 @@ open class ChannelSinkNoAllocationsBenchmark {
         return size
     }
 
-    private fun Channel.Factory.range(context: CoroutineContext) = GlobalScope.produce(context) {
+    private fun Channel.Factory.range(context: CoroutineContext) = GlobalScope.produce(context, capacity) {
         for (i in 0 until 100_000)
             send(Unit) // no allocations
     }
