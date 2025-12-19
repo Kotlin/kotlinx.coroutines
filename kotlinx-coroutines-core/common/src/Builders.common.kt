@@ -136,6 +136,29 @@ private class LazyDeferredCoroutine<T>(
  * The cancellation behaviour described above is enabled if and only if the dispatcher is being changed.
  * For example, when using `withContext(NonCancellable) { ... }` there is no change in dispatcher and
  * this call will not be cancelled neither on entry to the block inside `withContext` nor on exit from it.
+ *
+ * It is incorrect to pass any instances of [Job] other than [NonCancellable] to [withContext].
+ * This does not raise an exception only for preserving backward compatibility.
+ * If the purpose of passing a [Job] to this function is to ensure that [block] gets cancelled when that job
+ * gets cancelled, this pattern can be used instead:
+ *
+ * ```
+ * val deferred = scopeWithTheRequiredJob.async {
+ *     withContext(extraContextWithoutJob) {
+ *         // your code here
+ *     }
+ * }
+ * try {
+ *     deferred.await()
+ * } finally {
+ *     // if `await` fails because the current job is cancelled,
+ *     // also cancel the now-unnecessary computations
+ *     deferred.cancel()
+ * }
+ * ```
+ *
+ * This way, the [block] gets cancelled when either the caller or `scopeWithTheRequiredJob` gets cancelled,
+ * ensuring that unnecessary computations do not keep executing
  */
 public suspend fun <T> withContext(
     context: CoroutineContext,
