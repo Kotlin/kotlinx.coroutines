@@ -79,7 +79,7 @@ import kotlin.coroutines.*
  *
  * Use [SharedFlow] when you need a [StateFlow] with tweaks in its behavior such as extra buffering, replaying more
  * values, or omitting the initial value.
- * 
+ *
  * ### StateFlow vs ConflatedBroadcastChannel
  *
  * Conceptually, state flow is similar to [ConflatedBroadcastChannel]
@@ -116,7 +116,7 @@ import kotlin.coroutines.*
  * Application of [flowOn][Flow.flowOn], [conflate][Flow.conflate],
  * [buffer] with [CONFLATED][Channel.CONFLATED] or [RENDEZVOUS][Channel.RENDEZVOUS] capacity,
  * [distinctUntilChanged][Flow.distinctUntilChanged], or [cancellable] operators to a state flow has no effect.
- * 
+ *
  * ### Implementation notes
  *
  * State flow implementation is optimized for memory consumption and allocation-freedom. It uses a lock to ensure
@@ -247,7 +247,7 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
     /**
      * Each slot can have one of the following states:
      *
-     * - `null` -- it is not used right now. Can [allocateLocked] to new collector.
+     * - `null` -- it is not used right now. Can [occupyLocked] to new collector.
      * - `NONE` -- used by a collector, but neither suspended nor has pending value.
      * - `PENDING` -- pending to process new value.
      * - `CancellableContinuationImpl<Unit>` -- suspended waiting for new value.
@@ -263,14 +263,14 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
      */
     private val _state = WorkaroundAtomicReference<Any?>(null)
 
-    override fun allocateLocked(flow: StateFlowImpl<*>): Boolean {
+    override fun occupyLocked(flow: StateFlowImpl<*>): Boolean {
         // No need for atomic check & update here, since allocated happens under StateFlow lock
         if (_state.value != null) return false // not free
         _state.value = NONE // allocated
         return true
     }
 
-    override fun freeLocked(flow: StateFlowImpl<*>): Array<Continuation<Unit>?> {
+    override fun leaveLocked(flow: StateFlowImpl<*>): Array<Continuation<Unit>?> {
         _state.value = null // free now
         return EMPTY_RESUMES // nothing more to do
     }
@@ -312,7 +312,7 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class StateFlowImpl<T>(
     initialState: Any // T | NULL
-) : AbstractSharedFlow<StateFlowSlot>(), MutableStateFlow<T>, CancellableFlow<T>, FusibleFlow<T> {
+) : AbstractSharedFlow<StateFlowImpl<*>, StateFlowSlot>(), MutableStateFlow<T>, CancellableFlow<T>, FusibleFlow<T> {
     private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
 
@@ -407,7 +407,7 @@ private class StateFlowImpl<T>(
                 }
             }
         } finally {
-            freeSlot(slot)
+            leaveSlot(slot)
         }
     }
 

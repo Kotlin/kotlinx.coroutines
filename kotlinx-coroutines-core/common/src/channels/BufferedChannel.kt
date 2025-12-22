@@ -347,7 +347,7 @@ internal open class BufferedChannel<E>(
         }
     }
 
-    // Note: this function is temporarily moved from ConflatedBufferedChannel to BufferedChannel class, because of this issue: KT-65554. 
+    // Note: this function is temporarily moved from ConflatedBufferedChannel to BufferedChannel class, because of this issue: KT-65554.
     // For now, an inline function, which invokes atomic operations, may only be called within a parent class.
     protected fun trySendDropOldest(element: E): ChannelResult<Unit> =
         sendImpl( // <-- this is an inline function
@@ -2592,7 +2592,6 @@ internal open class BufferedChannel<E>(
     // # Debug Functions #
     // ###################
 
-    @Suppress("ConvertTwoComparisonsToRangeCheck")
     override fun toString(): String {
         val sb = StringBuilder()
         // Append the close status
@@ -2618,16 +2617,16 @@ internal open class BufferedChannel<E>(
                 val element = segment.getElement(i)
                 val cellStateString = when (cellState) {
                     is CancellableContinuation<*> -> {
-                        when {
-                            globalCellIndex < r && globalCellIndex >= s -> "receive"
-                            globalCellIndex < s && globalCellIndex >= r -> "send"
+                        when (globalCellIndex) {
+                            in s..<r -> "receive"
+                            in r..<s -> "send"
                             else -> "cont"
                         }
                     }
                     is SelectInstance<*> -> {
-                        when {
-                            globalCellIndex < r && globalCellIndex >= s -> "onReceive"
-                            globalCellIndex < s && globalCellIndex >= r -> "onSend"
+                        when (globalCellIndex) {
+                            in s..<r -> "onReceive"
+                            in r..<s -> "onSend"
                             else -> "select"
                         }
                     }
