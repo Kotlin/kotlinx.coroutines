@@ -11,53 +11,53 @@ import kotlin.jvm.*
 internal val EMPTY_RESUMES = arrayOfNulls<Continuation<Unit>?>(0)
 
 /**
- * A slot allocated to a collector when it subscribes to a shared flow and freed when the collector unsubscribes.
+ * A slot occupied by a collector when it subscribes to a shared flow and freed when the collector unsubscribes.
  */
 internal abstract class AbstractSharedFlowSlot<F> {
     /**
-     * Try marking this slot as allocated for the given [flow]. Only call this under the [flow]'s lock.
+     * Try marking this slot as occupied by the given [flow]. Only call this under the [flow]'s lock.
      *
-     * Returns `false` if the slot is already allocated to some other collector.
+     * Returns `false` if the slot is already occupied by some other collector.
      */
-    abstract fun allocateLocked(flow: F): Boolean
+    abstract fun occupyLocked(flow: F): Boolean
 
     /**
-     * Mark this slot as available for reuse. Only call this under the [flow]'s lock.
+     * Stop occupying this slot, making it available for reuse. Only call this under the [flow]'s lock.
      *
      * Returns an array of continuations that need to be resumed after the lock is released.
      * These continuations represent suspended emitters that were waiting for the slowest collector to move on
-     * so that the next value can be placed into the buffer.
+     * so that their values can be placed into the buffer.
      */
-    abstract fun freeLocked(flow: F): Array<Continuation<Unit>?>
+    abstract fun leaveLocked(flow: F): Array<Continuation<Unit>?>
 }
 
 /**
  * A common data structure for `StateFlow` and `SharedFlow`.
  */
-internal abstract class AbstractSharedFlow<This, S : AbstractSharedFlowSlot<This>> : SynchronizedObject() {
+internal abstract class AbstractSharedFlow<SpecificImpl, S : AbstractSharedFlowSlot<SpecificImpl>>: SynchronizedObject()
+{
     /**
      * Array of slots for collectors of the shared flow.
      *
      * `null` by default, created on demand.
      * Each cell is also `null` by default, and the specific slot object is [created][createSlot] on demand.
      * The whole array being `null` or a cell being `null` is equivalent to the cell not being
-     * [*allocated*][AbstractSharedFlowSlot.allocateLocked]--not to be confused with memory allocation, this means
-     * that a specific collector inhabits the slot.
+     * [occupied][AbstractSharedFlowSlot.occupyLocked].
      */
     protected var slots: Array<S?>? = null
         private set
 
     /**
-     * The number of [*allocated*][AbstractSharedFlowSlot.allocateLocked] slots in [slots].
+     * The number of [occupied][AbstractSharedFlowSlot.occupyLocked] slots in [slots].
      */
     protected var nCollectors = 0
         private set
 
     /**
-     * A good starting index for looking for the next non-*allocated* slot in [slots].
+     * It is likely that the next non-occupied slot in [slots] will be at this index or to its right.
      *
-     * It is not guaranteed that this slot will not be *allocated*, nor is it guaranteed that it will be the first
-     * non-*allocated* slot.
+     * It is not guaranteed that this slot will not be occupied, nor is it guaranteed that it will be the first
+     * non-occupied slot.
      * This is just a heuristic to have a better guess in common scenarios.
      */
     private var nextIndex = 0
@@ -78,15 +78,19 @@ internal abstract class AbstractSharedFlow<This, S : AbstractSharedFlowSlot<This
             }
         }
 
-    /** Allocate a new implementation-representation of a collector, but do not register it anywhere yet. */
+    /** Create a new implementation-specific representation of a collector, but do not place it in [slots] yet. */
     protected abstract fun createSlot(): S
 
     /** Equivalent to [arrayOfNulls]. */
     protected abstract fun createSlotArray(size: Int): Array<S?>
 
-    /** Register a new collector and return its newly allocated slot. A slot may be [created][createSlot] or reused. */
+    /**
+     * Have a new collector occupy some slot.
+     *
+     * A slot may be either [created][createSlot] or reused.
+     */
     protected fun allocateSlot(): S {
-        // Actually create slot under lock
+        // Actually occupy slot under lock
         val subscriptionCount: SubscriptionCountStateFlow?
         val slot = synchronized(this) {
             val slots = when (val curSlots = slots) {
@@ -104,7 +108,7 @@ internal abstract class AbstractSharedFlow<This, S : AbstractSharedFlowSlot<This
                 index++
                 if (index >= slots.size) index = 0
                 @Suppress("UNCHECKED_CAST")
-                if (slot.allocateLocked(this as This)) break // break when found and allocated free slot
+                if (slot.occupyLocked(this as SpecificImpl)) break // break when found and occupied a free slot
             }
             nextIndex = index
             nCollectors++
@@ -116,22 +120,22 @@ internal abstract class AbstractSharedFlow<This, S : AbstractSharedFlowSlot<This
         return slot
     }
 
-    /** Deregisters a collector and marks its slot as available for reuse. */
-    protected fun freeSlot(slot: S) {
+    /** Have a collector no longer occupy its slot, making the latter available for reuse. */
+    protected fun leaveSlot(slot: S) {
         // Release slot under lock
         val subscriptionCount: SubscriptionCountStateFlow?
         val resumes = synchronized(this) {
             nCollectors--
             subscriptionCount = _subscriptionCount // retrieve under lock if initialized
-            // Reset next index oracle if we have no more active collectors for more predictable behavior next time
+            // Reset next index hint if we have no more active collectors for more predictable behavior next time
             if (nCollectors == 0) nextIndex = 0
             @Suppress("UNCHECKED_CAST")
-            slot.freeLocked(this as This)
+            slot.leaveLocked(this as SpecificImpl)
         }
         /*
          * Resume suspended coroutines.
-         * This can happen when the subscriber that was freed was a slow one and was holding up buffer.
-         * When this subscriber was freed, previously queued emitted can now wake up and are resumed here.
+         * This can happen when the subscriber that left was a slow one and was holding up buffer.
+         * When this subscriber left, previously queued emitted can now wake up and are resumed here.
          */
         for (cont in resumes) cont?.resume(Unit)
         // decrement subscription count
