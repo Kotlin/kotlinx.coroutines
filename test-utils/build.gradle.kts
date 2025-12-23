@@ -4,6 +4,10 @@
 
 kotlin {
     sourceSets {
+        val concurrentMain by creating {
+            configureDirectoryPaths()
+            dependsOn(commonMain.get())
+        }
         commonMain.dependencies {
             api("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
         }
@@ -14,5 +18,7 @@ kotlin {
             api("org.jetbrains.kotlin:kotlin-test-junit:${version("kotlin")}")
             api("junit:junit:${version("junit")}")
         }
+        jvmMain { dependsOn(concurrentMain) }
+        nativeMain { dependsOn(concurrentMain) }
     }
 }
