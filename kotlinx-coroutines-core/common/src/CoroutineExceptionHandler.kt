@@ -50,29 +50,154 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
     }
 
 /**
- * An optional element in the coroutine context to handle **uncaught** exceptions.
+ * An optional element in the [CoroutineContext] to handle coroutine exceptions without a clear propagation path.
  *
- * Normally, uncaught exceptions can only result from _root_ coroutines created using the [launch][CoroutineScope.launch] builder.
- * All _children_ coroutines (coroutines created in the context of another [Job]) delegate handling of their
- * exceptions to their parent coroutine, which also delegates to the parent, and so on until the root,
- * so the `CoroutineExceptionHandler` installed in their context is never used.
- * Coroutines running with [SupervisorJob] do not propagate exceptions to their parent and are treated like root coroutines.
- * A coroutine that was created using [async][CoroutineScope.async] always catches all its exceptions and represents them
- * in the resulting [Deferred] object, so it cannot result in uncaught exceptions.
+ * `kotlinx.coroutines` ensures that every [exception][Throwable] thrown in a coroutine is handled by some code instead
+ * of being forgotten about.
+ * This helps failures not to go unnoticed, with the program silently entering an incorrect state.
  *
- * ### Handling coroutine exceptions
+ * In most scenarios, a clear exception propagation path allows processing failures in coroutines: for example,
+ * a [coroutineScope] call can rethrow the exception to the caller,
+ * and failing coroutines typically [cancel][Job.cancel] their [parent][Job.parent] coroutines.
+ * See "Propagation channels recognized by `kotlinx.coroutines`" below for an enumeration of ways an exception in a
+ * coroutine can get propagated.
  *
- * `CoroutineExceptionHandler` is a last-resort mechanism for global "catch all" behavior.
- * You cannot recover from the exception in the `CoroutineExceptionHandler`. The coroutine had already completed
- * with the corresponding exception when the handler is called. Normally, the handler is used to
- * log the exception, show some kind of error message, terminate, and/or restart the application.
- *
- * If you need to handle the exception in a specific part of the code, it is recommended to use `try`/`catch` around
- * the corresponding code inside your coroutine. This way you can prevent completion of the coroutine
- * with the exception (exception is now _caught_), retry the operation, and/or take other arbitrary actions:
+ * However, in some cases, a clear propagation path is not available. Example:
  *
  * ```
- * scope.launch { // launch child coroutine in a scope
+ * supervisorScope {
+ *     launch { error("Failure") }
+ * }
+ * ```
+ *
+ * Here, the coroutine created by `launch` fails with the exception `"Failure"`,
+ * and [supervisorScope] does not react to exceptions from its children, as opposed to [coroutineScope].
+ *
+ * In such cases, a [CoroutineExceptionHandler] should be used to process the exceptions:
+ *
+ * ```
+ * withContext(CoroutineExceptionHandler { ctx, ex ->
+ *     println("Exception $ex thrown from coroutine context $ctx")
+ * }) {
+ *     supervisorScope {
+ *         launch { error("Failure") }
+ *     }
+ * }
+ * ```
+ *
+ * Not handling a lost exception with a [CoroutineExceptionHandler] is treated as a programming error
+ * by `kotlinx.coroutines` and will invoke last-resort exception handling, potentially crashing the program.
+ * See the "Platform-specific last-resort handling of lost exceptions" section for details.
+ *
+ * ### Propagation channels recognized by `kotlinx.coroutines`
+ *
+ * The only exceptions that need to be propagated at all are those with which coroutines finish.
+ * If an exception is handled via a `try`/`catch` block inside the coroutine itself,
+ * the coroutine machinery will not even learn about it:
+ *
+ * ```
+ * launch {
+ *     try {
+ *         throw IllegalStateException("""
+ *             This is not an unpropagated exception,
+ *             since it gets caught.
+ *         """)
+ *     } catch (_: IllegalStateException) {
+ *         println("Caught an exception")
+ *     }
+ * }
+ * ```
+ *
+ * Exceptions in lexically scoped coroutines are always propagated by being rethrown to the caller:
+ *
+ * ```
+ * // This function will throw an `IllegalStateException`
+ * coroutineScope {
+ *     throw IllegalStateException("""
+ *         This exception is propagated
+ *         by being rethrown to the caller.
+ *     """)
+ * }
+ * ```
+ *
+ * An exception is considered to be propagated if it's transferred to the parent
+ * through [structured concurrency][CoroutineScope]:
+ *
+ * ```
+ * coroutineScope {
+ *     launch {
+ *         throw IllegalStateException("""
+ *             This exception is propagated
+ *             by `launch` to its parent (`coroutineScope`)
+ *             that is able to process child exceptions.
+ *         """)
+ *     }
+ * }
+ * ```
+ *
+ * Finally, an exception is considered to have been propagated
+ * if the return value of the coroutine builder allows querying the result of the coroutine's execution:
+ *
+ * ```
+ * val deferred = GlobalScope.async {
+ *     throw IllegalStateException("""
+ *         This exception is propagated,
+ *         since calling `await()` on `deferred`
+ *         will rethrow the exception.
+ *     """)
+ * }
+ * ```
+ *
+ * When none of the propagation channels listed above applies, an exception can not be propagated.
+ * Most common examples are coroutines created using the [launch] function on a scope with no [Job] (most notably,
+ * [GlobalScope]) or a [SupervisorJob]:
+ *
+ * ```
+ * supervisorScope {
+ *     launch {
+ *         throw IllegalStateException("""
+ *             This *is* an exception with no propagation path, since
+ *             1. The block of `launch` finishes with it.
+ *             2. `launch` is not lexically scoped,
+ *             3. `supervisorScope` does not handle the failures in children,
+ *             4. `launch` returns a `Job`, which does not allow querying the exception.
+ *         """)
+ *     }
+ * }
+ * ```
+ *
+ * ```
+ * GlobalScope.launch {
+ *     throw IllegalStateException("This *is* an unpropagated exception.")
+ * }
+ * ```
+ *
+ * ### Platform-specific last-resort handling of lost exceptions
+ *
+ * When no [CoroutineExceptionHandler] is present in the [CoroutineContext] of the failing coroutine,
+ * an exception with no propagation path is handled in the following way as the last-resort measure:
+ *
+ * - On JVM, all instances of [CoroutineExceptionHandler] found via `ServiceLoader` and
+ *   the current thread's [Thread.uncaughtExceptionHandler] are invoked.
+ * - On Native, the whole application crashes with the exception.
+ * - On JS and Wasm JS, the exception is propagated into the JavaScript runtime's event loop
+ *   and is processed in a platform-specific way determined by the platform itself.
+ *
+ * ### Recommended patterns for handling coroutine exceptions
+ *
+ * A [CoroutineExceptionHandler] is intended to be a more lenient version of the platform-specific last-resort handling
+ * of coroutine exceptions, allowing one to log exceptions, show an error message, restart the program,
+ * and in general, fail more gracefully.
+ * It is not a replacement for handling exceptions in the normal control flow, and it only gets invoked after the
+ * coroutine has completed and can no longer be resumed.
+ *
+ * If you need to handle the exception in a specific part of the code, it is recommended to use `try`/`catch` around
+ * the corresponding code inside your coroutine instead of relying on a [CoroutineExceptionHandler].
+ * This way, you can prevent completion of the coroutine with the exception,
+ * retry the operation, and/or take arbitrary other actions:
+ *
+ * ```
+ * scope.launch { // launch a child coroutine in a scope
  *     try {
  *          // do something
  *     } catch (e: Throwable) {
@@ -81,19 +206,63 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * }
  * ```
  *
- * ### Uncaught exceptions with no handler
+ * Alternatively, whenever a failure is indeed supposed to terminate a coroutine,
+ * using [async] instead of [launch] and later calling [Deferred.await] instead of [Job.join]
+ * on its result to check if the computation was successful will allow gracefully processing the exception.
  *
- * When no handler is installed, an exception is handled in the following way:
- * - If the exception is [CancellationException], it is ignored, as these exceptions are used to cancel coroutines.
- * - Otherwise, if there is a [Job] in the context, then [Job.cancel] is invoked.
- * - Otherwise, as a last resort, the exception is processed in a platform-specific manner:
- *   - On JVM, all instances of [CoroutineExceptionHandler] found via [ServiceLoader], as well as
- *     the current thread's [Thread.uncaughtExceptionHandler], are invoked.
- *   - On Native, the whole application crashes with the exception.
- *   - On JS and Wasm JS, the exception is propagated into the JavaScript runtime's event loop
- *     and is processed in a platform-specific way determined by the platform itself.
+ * ### Pitfalls
  *
- * [CoroutineExceptionHandler] can be invoked from an arbitrary thread.
+ * #### Using a [CoroutineExceptionHandler] does not prevent coroutine failures
+ *
+ * A [CoroutineExceptionHandler] is only called after the coroutine completes if, informally,
+ * the exception has nowhere else to go.
+ * A common pitfall is trying to use a [CoroutineExceptionHandler] to prevent the expected failure of a child coroutine
+ * from also making the parent coroutine fail:
+ *
+ * ```
+ * coroutineScope {
+ *     launch(CoroutineExceptionHandler { ctx, ex ->
+ *         println("This line will not be printed!")
+ *     }) {
+ *         error("This failure will cancel `coroutineScope`!")
+ *     }
+ * }
+ * ```
+ *
+ * A [CoroutineExceptionHandler] has no effect in this scenario: the failure in [launch] will cancel [coroutineScope].
+ * Using `try`/`catch` is the proper way to achieve this.
+ *
+ * See "Recommended patterns for handling coroutine exceptions" above for more details.
+ *
+ * #### Overriding [CoroutineExceptionHandler] in coroutines with exception propagation paths has no effect
+ *
+ * Consider this snippet:
+ *
+ * ```
+ * // Launch the parent coroutine:
+ * GlobalScope.launch(CoroutineExceptionHandler { ctx, e -> println("Outer") }) {
+ *     // Launch the child coroutine:
+ *     launch(CoroutineExceptionHandler { ctx, e -> println("Nested") }) {
+ *         error("Error")
+ *     }
+ * }
+ * ```
+ *
+ * It will print `Outer`, even though the coroutine where the failure originally happened specifies its own
+ * [CoroutineExceptionHandler].
+ * The explanation is that initially, the exception *does* have a propagation path and will get propagated to the
+ * parent coroutine using structured concurrency.
+ * The parent itself, however, has no viable propagation channel and has to use *its* [CoroutineExceptionHandler].
+ *
+ * Similarly, this [CoroutineExceptionHandler] is redundant and will never be invoked:
+ *
+ * ```
+ * GlobalScope.async(CoroutineExceptionHandler { ctx, e -> println("Failure") }) {
+ *     error("Error")
+ * }
+ * ```
+ *
+ * The caller of [async] is responsible for handling the exceptions in the returned [Deferred] value.
  */
 public interface CoroutineExceptionHandler : CoroutineContext.Element {
     /**
@@ -104,6 +273,13 @@ public interface CoroutineExceptionHandler : CoroutineContext.Element {
     /**
      * Handles uncaught [exception] in the given [context]. It is invoked
      * if the coroutine has an uncaught exception.
+     *
+     * [handleException] is invoked inside coroutine machinery in an unspecified thread.
+     * Therefore, it should be thread-safe and finish quickly.
+     *
+     * Throwing exceptions from this method is discouraged and
+     * will invoke platform-specific last-resort exception handling,
+     * described in the [CoroutineExceptionHandler] documentation.
      */
     public fun handleException(context: CoroutineContext, exception: Throwable)
 }
