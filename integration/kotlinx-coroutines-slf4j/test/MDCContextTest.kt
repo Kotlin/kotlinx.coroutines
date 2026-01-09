@@ -141,4 +141,22 @@ class MDCContextTest : TestBase() {
         assertEquals("value", MDC.get("key"))
         assertEquals("b", MDC.get("a"))
     }
+
+    @Test
+    fun testSecondaryConstructorUsage() = runTest {
+        MDC.put("a", "0")
+        MDC.put("b", "2")
+        val innerContextMap = withContext(MDCContext("a" to "1", "c" to "3")) {
+            MDC.getCopyOfContextMap()
+        }
+        val outerContextMap = MDC.getCopyOfContextMap()
+
+        assertEquals("0", outerContextMap["a"])
+        assertEquals("2", outerContextMap["b"])
+        assertNull(outerContextMap["c"])
+
+        assertEquals("1", innerContextMap["a"])
+        assertEquals("2", innerContextMap["b"])
+        assertEquals("3", innerContextMap["c"])
+    }
 }
