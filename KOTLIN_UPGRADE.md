@@ -23,7 +23,7 @@
    Set the compiler version of Kotlin Playground to the same major version as `<version>`,
    click "Copy link", and replace the original link in `README.md` with the new one.
 
-5. Perform a full build: `gradle clean check publishToMavenLocal`,
+5. Perform a full build: `gradle clean check publishAllPublicationsToIntegrationTestingRepository`,
    followed by `gradle clean check` in the `integration-testing` directory.
    Fix any issues that arise.
 

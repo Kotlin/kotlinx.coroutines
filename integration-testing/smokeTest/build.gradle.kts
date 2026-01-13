@@ -12,6 +12,7 @@ repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
     // Coroutines from the outer project are published by previous CI builds step
+    maven(rootProject.layout.projectDirectory.dir("../build/integration-testing-repository/"))
     mavenLocal()
 }
 
