@@ -71,7 +71,7 @@ tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }
 // Compatibility with old TeamCity configurations that perform :kotlinx-coroutines-core:bintrayUpload
 tasks.register("bintrayUpload") { dependsOn(tasks.matching { it.name == "publish" }) }
 
-// Compatibility with old TeamCity configurations that perform :kotlinx-coroutines-core:publishToMavenLocal
+// Compatibility with old TeamCity configurations that perform `publishToMavenLocal`
 tasks.named("publishToMavenLocal") {
     dependsOn(tasks.matching { it.name == "publishAllPublicationsToIntegrationTestingRepository" })
 }
