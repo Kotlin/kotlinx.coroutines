@@ -9,8 +9,9 @@ repositories {
     if (project.properties["build_snapshot_train"]?.toString()?.toBoolean() == true) {
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
     }
-    mavenLocal()
     mavenCentral()
+    maven(rootProject.layout.projectDirectory.dir("../build/integration-testing-repository/"))
+    mavenLocal()
 }
 
 java {

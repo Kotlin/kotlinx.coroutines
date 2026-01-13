@@ -61,6 +61,7 @@ repositories {
     if (extra["using_snapshot_version"] == true) {
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
     }
+    maven(rootProject.layout.projectDirectory.dir("../build/integration-testing-repository/"))
     mavenLocal()
     mavenCentral()
 }
