@@ -14,4 +14,4 @@ The tests are the following:
 
 The `integration-testing` project is expected to be in a subdirectory of the main `kotlinx.coroutines` project.
 
-To run all the available tests: `./gradlew publishToMavenLocal` + `cd integration-testing` + `./gradlew check`.
+To run all the available tests: `./gradlew publishAllPublicationsToIntegrationTestingRepository` + `cd integration-testing` + `./gradlew check`.
