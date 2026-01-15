@@ -12,7 +12,7 @@ fun KotlinSourceSet.configureDirectoryPaths() {
         } else if (name == "jvmTest") {
             resources.srcDir("$platform/test-resources")
         }
-    } else if (platformOf(project) == "jvm") {
+    } else {
         when (name) {
             "main" -> {
                 kotlin.srcDir("src")
@@ -23,8 +23,6 @@ fun KotlinSourceSet.configureDirectoryPaths() {
                 resources.srcDir("test-resources")
             }
         }
-    } else {
-        throw IllegalArgumentException("Unclear how to configure source sets for ${project.name}")
     }
 }
 
