@@ -188,12 +188,28 @@ internal class TestScopeImpl(context: CoroutineContext) :
     private var entered = false
     private var finished = false
     private val uncaughtExceptions = mutableListOf<Throwable>()
+    private var registeredExceptionCollection = false
     private val lock = SynchronizedObject()
 
     override val backgroundScope: CoroutineScope =
         CoroutineScope(coroutineContext + BackgroundWork + ReportingSupervisorJob {
             if (it !is CancellationException) reportException(it)
         })
+
+
+    fun registerExceptionCollectorLocked() {
+        @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+        run { ensurePlatformExceptionHandlerLoaded(ExceptionCollector) }
+        if (catchNonTestRelatedExceptions) {
+            ExceptionCollector.addOnExceptionCallback(lock, this::reportException)
+            registeredExceptionCollection = true
+        }
+    }
+
+    fun unregisterExceptionCollectorLocked() {
+        if (registeredExceptionCollection)
+            ExceptionCollector.removeOnExceptionCallback(lock)
+    }
 
     /** Called upon entry to [runTest]. Will throw if called more than once. */
     fun enter() {
@@ -207,15 +223,11 @@ internal class TestScopeImpl(context: CoroutineContext) :
              * However, we also want [uncaughtExceptions] to be queried after the callback is registered,
              * because the exception collector will be able to report the exceptions that arrived before this test but
              * after the previous one, and learning about such exceptions as soon is possible is nice. */
-            @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
-            run { ensurePlatformExceptionHandlerLoaded(ExceptionCollector) }
-            if (catchNonTestRelatedExceptions) {
-                ExceptionCollector.addOnExceptionCallback(lock, this::reportException)
-            }
+            registerExceptionCollectorLocked()
             uncaughtExceptions
         }
         if (exceptions.isNotEmpty()) {
-            ExceptionCollector.removeOnExceptionCallback(lock)
+            unregisterExceptionCollectorLocked()
             throw UncaughtExceptionsBeforeTest().apply {
                 for (e in exceptions)
                     addSuppressed(e)
@@ -227,7 +239,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
     fun leave(): List<Throwable> = synchronized(lock) {
         check(entered && !finished)
         /** After [finished] becomes `true`, it is no longer valid to have [reportException] as the callback. */
-        ExceptionCollector.removeOnExceptionCallback(lock)
+        unregisterExceptionCollectorLocked()
         finished = true
         uncaughtExceptions
     }
@@ -237,7 +249,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
         val exceptions = synchronized(lock) {
             check(entered && !finished)
             /** After [finished] becomes `true`, it is no longer valid to have [reportException] as the callback. */
-            ExceptionCollector.removeOnExceptionCallback(lock)
+            unregisterExceptionCollectorLocked()
             finished = true
             uncaughtExceptions
         }
