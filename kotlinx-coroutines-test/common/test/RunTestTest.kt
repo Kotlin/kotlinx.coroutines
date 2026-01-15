@@ -443,7 +443,6 @@ class RunTestTest {
         }
     }
 
-    @Suppress("DEPRECATION")
     class RunTestWithDispatchTimeoutTest {
         /** Tests that too low of a dispatch timeout causes crashes. */
         @Test
@@ -455,6 +454,7 @@ class RunTestTest {
                 assertIs<UncompletedCoroutinesError>(e)
             }
         }) {
+            @Suppress("DEPRECATION_ERROR")
             runTest(dispatchTimeoutMs = 100) {
                 withContext(Dispatchers.Default) {
                     delay(10.seconds)
@@ -466,6 +466,7 @@ class RunTestTest {
 
         /** Tests that even the dispatch timeout of `0` is fine if all the dispatches go through the same scheduler. */
         @Test
+        @Suppress("DEPRECATION_ERROR")
         fun testRunTestWithZeroDispatchTimeoutWithControlledDispatches() = runTest(dispatchTimeoutMs = 0) {
             // below is some arbitrary concurrent code where all dispatches go through the same scheduler.
             launch {
@@ -485,6 +486,7 @@ class RunTestTest {
 
         /** Tests that real delays can be accounted for with a large enough dispatch timeout. */
         @Test
+        @Suppress("DEPRECATION_ERROR")
         fun testRunTestWithLargeDispatchTimeout() = runTest(dispatchTimeoutMs = 5000) {
             withContext(Dispatchers.Default) {
                 delay(50)

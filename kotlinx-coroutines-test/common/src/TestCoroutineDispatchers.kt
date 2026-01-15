@@ -124,7 +124,7 @@ private class UnconfinedTestDispatcherImpl(
  * In practice, this means that [launch] or [async] blocks will not be entered immediately (unless they are
  * parameterized with [CoroutineStart.UNDISPATCHED]), and one should either call [TestCoroutineScheduler.runCurrent] to
  * run these pending tasks, which will block until there are no more tasks scheduled at this point in time, or, when
- * inside [runTest], call [yield] to yield the (only) thread used by [runTest] to the newly-launched coroutines.
+ * inside [runTest], call [yield] to yield the (only) thread used by [runTest] to the newly launched coroutines.
  *
  * If no [scheduler] is passed as an argument, [Dispatchers.Main] is checked, and if it was mocked with a
  * [TestDispatcher] via [Dispatchers.setMain], the [TestDispatcher.scheduler] of the mock dispatcher is used; if
@@ -147,7 +147,7 @@ private class StandardTestDispatcherImpl(
 ) : TestDispatcher() {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        scheduler.registerEvent(this, 0, block, context) { false }
+        scheduler.registerEvent(this, 0, block, context)
     }
 
     override fun toString(): String = "${name ?: "StandardTestDispatcher"}[scheduler=$scheduler]"
