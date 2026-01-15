@@ -81,18 +81,15 @@ configure(subprojects.filter { !sourceless.contains(it.name) }) {
     if (isMultiplatform) {
         apply(plugin = "kotlin-multiplatform")
         apply(plugin = "kotlin-multiplatform-conventions")
-    } else if (platformOf(this) == "jvm") {
-        apply(plugin = "kotlin-jvm-conventions")
     } else {
-        val platform = platformOf(this)
-        throw IllegalStateException("No configuration rules for $platform")
+        apply(plugin = "kotlin-jvm-conventions")
     }
 }
 
 // needs to be before evaluationDependsOn due to weird Gradle ordering
 configure(subprojects) {
     fun Project.shouldSniff(): Boolean =
-        platformOf(project) == "jvm" && project.name !in unpublished && project.name !in sourceless
+        project.name !in unpublished && project.name !in sourceless
             && project.name !in androidNonCompatibleProjects
     // Skip JDK 8 projects or unpublished ones
     if (shouldSniff()) {
