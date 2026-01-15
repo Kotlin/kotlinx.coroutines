@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.gradle.kotlin.dsl.*
 
@@ -142,8 +141,3 @@ configure(subprojects.filter {
 
 AuxBuildConfiguration.configure(rootProject)
 rootProject.registerTopLevelDeployTask()
-
-if (isSnapshotTrainEnabled(rootProject)) {
-    // Report Kotlin compiler version when building project
-    println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
-}
