@@ -67,10 +67,6 @@ apply(plugin = "kover-conventions")
 // Configure repositories
 allprojects {
     repositories {
-        /*
-         * google should be first in the repository list because some of the play services
-         * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
-         */
         google()
         mavenCentral()
         addDevRepositoryIfEnabled(this, project)
