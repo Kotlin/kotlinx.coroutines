@@ -31,7 +31,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
 
     /** This heap stores the knowledge about which dispatchers are interested in which moments of virtual time. */
     // TODO: all the synchronization is done via a separate lock, so a non-thread-safe priority queue can be used.
-    private val events = ThreadSafeHeap<TestDispatchEvent<Any>>()
+    private val events = ThreadSafeHeap<TestDispatchEvent>()
 
     /** Establishes that [currentTime] can't exceed the time of the earliest event in [events]. */
     private val lock = SynchronizedObject()
@@ -57,12 +57,11 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      *
      * Returns the handler which can be used to cancel the registration.
      */
-    internal fun <T : Any> registerEvent(
+    internal fun registerEvent(
         dispatcher: TestDispatcher,
         timeDeltaMillis: Long,
-        marker: T,
+        marker: Runnable,
         context: CoroutineContext,
-        isCancelled: (T) -> Boolean
     ): DisposableHandle {
         require(timeDeltaMillis >= 0) { "Attempted scheduling an event earlier in time (with the time delta $timeDeltaMillis)" }
         checkSchedulerInContext(this, context)
@@ -70,7 +69,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
         val isForeground = context[BackgroundWork] === null
         return synchronized(lock) {
             val time = addClamping(currentTime, timeDeltaMillis)
-            val event = TestDispatchEvent(dispatcher, count, time, marker as Any, isForeground) { isCancelled(marker) }
+            val event = TestDispatchEvent(dispatcher, count, time, marker, isForeground)
             events.addLast(event)
             /** can't be moved above: otherwise, [onDispatchEventForeground] or [onDispatchEvent] could consume the
              * token sent here before there's actually anything in the event queue. */
@@ -108,7 +107,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * milliseconds by which the execution of this method has advanced the virtual time. If you want to recreate that
      * functionality, query [currentTime] before and after the execution to achieve the same result.
      */
-    public fun advanceUntilIdle(): Unit = advanceUntilIdleOr { events.none(TestDispatchEvent<*>::isForeground) }
+    public fun advanceUntilIdle(): Unit = advanceUntilIdleOr { events.none(TestDispatchEvent::isForeground) }
 
     /**
      * [condition]: guaranteed to be invoked under the lock.
@@ -135,17 +134,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
 
     /**
      * Moves the virtual clock of this dispatcher forward by [the specified amount][delayTimeMillis], running the
-     * scheduled tasks in the meantime.
-     *
-     * Breaking changes from [TestCoroutineDispatcher.advanceTimeBy]:
-     * - Intentionally doesn't return a `Long` value, as its use cases are unclear. We may restore it in the future;
-     *   please describe your use cases at [the issue tracker](https://github.com/Kotlin/kotlinx.coroutines/issues/).
-     *   For now, it's possible to query [currentTime] before and after execution of this method, to the same effect.
-     * - It doesn't run the tasks that are scheduled at exactly [currentTime] + [delayTimeMillis]. For example,
-     *   advancing the time by one millisecond used to run the tasks at the current millisecond *and* the next
-     *   millisecond, but now will stop just before executing any task starting at the next millisecond.
-     * - Overflowing the target time used to lead to nothing being done, but will now run the tasks scheduled at up to
-     *   (but not including) [Long.MAX_VALUE].
+     * tasks scheduled for `currentTime()..<currentTime() + delayTimeMillis`.
      *
      * @throws IllegalArgumentException if passed a negative [delay][delayTimeMillis].
      */
@@ -154,7 +143,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
 
     /**
      * Moves the virtual clock of this dispatcher forward by [the specified amount][delayTime], running the
-     * scheduled tasks in the meantime.
+     * tasks scheduled for `timeSource.markNow()..<timeSource.markNow() + delayTime`
      *
      * @throws IllegalArgumentException if passed a negative [delay][delayTime].
      */
@@ -185,10 +174,8 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     /**
      * Checks that the only tasks remaining in the scheduler are cancelled.
      */
-    internal fun isIdle(strict: Boolean = true): Boolean =
-        synchronized(lock) {
-            if (strict) events.isEmpty else events.none { !it.isCancelled() }
-        }
+    internal fun isIdle(): Boolean =
+        synchronized(lock) { events.isEmpty }
 
     /**
      * Notifies this scheduler about a dispatch event.
@@ -231,20 +218,18 @@ private fun invalidSchedulerState(): Nothing =
     throw IllegalStateException("The test scheduler entered an invalid state. Please report this at https://github.com/Kotlin/kotlinx.coroutines/issues.")
 
 /** [ThreadSafeHeap] node representing a scheduled task, ordered by the planned execution time. */
-private class TestDispatchEvent<T>(
+private class TestDispatchEvent(
     @JvmField val dispatcher: TestDispatcher,
     private val count: Long,
     @JvmField val time: Long,
-    @JvmField val marker: T,
+    @JvmField val marker: Runnable,
     @JvmField val isForeground: Boolean,
-    // TODO: remove once the deprecated API is gone
-    @JvmField val isCancelled: () -> Boolean
-) : Comparable<TestDispatchEvent<*>>, ThreadSafeHeapNode {
+) : Comparable<TestDispatchEvent>, ThreadSafeHeapNode {
     override var heap: ThreadSafeHeap<*>? = null
     override var index: Int = 0
 
-    override fun compareTo(other: TestDispatchEvent<*>) =
-        compareValuesBy(this, other, TestDispatchEvent<*>::time, TestDispatchEvent<*>::count)
+    override fun compareTo(other: TestDispatchEvent) =
+        compareValuesBy(this, other, TestDispatchEvent::time, TestDispatchEvent::count)
 
     override fun toString() = "TestDispatchEvent(time=$time, dispatcher=$dispatcher${if (isForeground) "" else ", background"})"
 }
