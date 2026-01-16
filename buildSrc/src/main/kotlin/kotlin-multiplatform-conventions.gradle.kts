@@ -93,24 +93,8 @@ kotlin {
             api("org.jetbrains:annotations:23.0.0")
         }
         jvmTest.dependencies {
-            // Workaround to make addSuppressed work in tests
-            implementation("org.jetbrains.kotlin:kotlin-reflect:${version("kotlin")}")
-            implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${version("kotlin")}")
             implementation("org.jetbrains.kotlin:kotlin-test-junit:${version("kotlin")}")
             implementation("junit:junit:${version("junit")}")
-        }
-        nativeMain.dependencies {
-            // workaround for #3968 until this is fixed on atomicfu's side
-            api("org.jetbrains.kotlinx:atomicfu:0.23.1")
-        }
-        jsMain { }
-        val wasmJsMain by getting {
-        }
-        val wasmJsTest by getting {
-        }
-        val wasmWasiMain by getting {
-        }
-        val wasmWasiTest by getting {
         }
         groupSourceSets("jsAndWasmShared", listOf("web", "wasmWasi"), listOf("common"))
     }

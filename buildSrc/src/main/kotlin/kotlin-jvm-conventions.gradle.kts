@@ -28,9 +28,6 @@ kotlin {
 
 dependencies {
     testImplementation(kotlin("test"))
-    // Workaround to make addSuppressed work in tests
-    testImplementation(kotlin("reflect"))
-    testImplementation(kotlin("stdlib-jdk7"))
     testImplementation(kotlin("test-junit"))
     testImplementation("junit:junit:${version("junit")}")
 }
