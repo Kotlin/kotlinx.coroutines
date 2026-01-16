@@ -33,20 +33,19 @@ apply(plugin = "pub-conventions")
      jvm ----------------------------> concurrent -------> common
                                         ^
      ios     \                          |
-     macos   | ---> nativeDarwin ---> native ---+
-     tvos    |                         ^
-     watchos /                         |
-                                       |
-     linux  \  ---> nativeOther -------+
-     mingw  /
+     macos   | ---> apple ---------> native
+     tvos    |                          ^
+     watchos /                          |
+                                        |
+     linux         \                    |
+     mingw         | --> nativeOther ---+
+     androidNative /
  ========================================================================== */
 
 kotlin {
     sourceSets {
         // using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
         groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
-        // TODO: 'nativeDarwin' behaves exactly like 'apple', we can remove it
-        groupSourceSets("nativeDarwin", listOf("apple"), listOf("native"))
         groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
         jvmMain {
             dependencies {
