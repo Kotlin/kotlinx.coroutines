@@ -75,10 +75,10 @@ allprojects {
 configure(subprojects.filter { !sourceless.contains(it.name) }) {
     if (isMultiplatform) {
         apply(plugin = "kotlin-multiplatform")
-        apply(plugin = "kotlin-multiplatform-conventions")
     } else {
-        apply(plugin = "kotlin-jvm-conventions")
+        apply(plugin = "kotlin")
     }
+    apply(plugin = "kotlin-shared-conventions")
 }
 
 // needs to be before evaluationDependsOn due to weird Gradle ordering
