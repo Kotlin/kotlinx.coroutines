@@ -88,11 +88,7 @@ configure(subprojects) {
             && project.name !in androidNonCompatibleProjects
     // Skip JDK 8 projects or unpublished ones
     if (shouldSniff()) {
-        if (isMultiplatform) {
-            apply(plugin = "animalsniffer-multiplatform-conventions")
-        } else {
-            apply(plugin = "animalsniffer-jvm-conventions")
-        }
+        apply(plugin = "animalsniffer-shared-conventions")
     }
 }
 
