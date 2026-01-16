@@ -84,10 +84,8 @@ kotlin {
     }
     applyDefaultHierarchyTemplate()
     sourceSets {
-        commonTest {
-            dependencies {
-                api("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
-            }
+        commonTest.dependencies {
+            implementation("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
         }
         jvmMain.dependencies {
             compileOnly("org.codehaus.mojo:animal-sniffer-annotations:1.20")
@@ -96,10 +94,10 @@ kotlin {
         }
         jvmTest.dependencies {
             // Workaround to make addSuppressed work in tests
-            api("org.jetbrains.kotlin:kotlin-reflect:${version("kotlin")}")
-            api("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${version("kotlin")}")
-            api("org.jetbrains.kotlin:kotlin-test-junit:${version("kotlin")}")
-            api("junit:junit:${version("junit")}")
+            implementation("org.jetbrains.kotlin:kotlin-reflect:${version("kotlin")}")
+            implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${version("kotlin")}")
+            implementation("org.jetbrains.kotlin:kotlin-test-junit:${version("kotlin")}")
+            implementation("junit:junit:${version("junit")}")
         }
         nativeMain.dependencies {
             // workaround for #3968 until this is fixed on atomicfu's side
