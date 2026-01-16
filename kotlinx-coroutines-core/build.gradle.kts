@@ -45,11 +45,9 @@ kotlin {
     sourceSets {
         // using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
         groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
-        if (project.nativeTargetsAreEnabled) {
-            // TODO: 'nativeDarwin' behaves exactly like 'apple', we can remove it
-            groupSourceSets("nativeDarwin", listOf("apple"), listOf("native"))
-            groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
-        }
+        // TODO: 'nativeDarwin' behaves exactly like 'apple', we can remove it
+        groupSourceSets("nativeDarwin", listOf("apple"), listOf("native"))
+        groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
         jvmMain {
             dependencies {
                 compileOnly("com.google.android:annotations:4.1.1.4")
