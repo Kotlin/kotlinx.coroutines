@@ -1,8 +1,8 @@
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.testing.*
 import java.util.concurrent.*
-import java.util.concurrent.atomic.*
 import kotlin.test.*
 
 /**
@@ -79,7 +79,7 @@ class JobChildStressTest : TestBase() {
         repeat(N_ITERATIONS) {
             val canCloseThePool = CountDownLatch(1)
             runBlocking {
-                val rogueJob = AtomicReference<Job?>()
+                val rogueJob = atomic<Job?>(null)
                 /** not using [createCompletableDeferredForTesting] because we don't need extra children. */
                 val deferred = CompletableDeferred<Unit>()
                 // optionally, add a completion handler to the parent job, so that the child tries to enter a list with
@@ -91,20 +91,20 @@ class JobChildStressTest : TestBase() {
                     deferred.complete(Unit) // Transition deferred into "completing" state waiting for current child
                     // **Asynchronously** submit task that launches a child so it races with completion
                     pool.executor.execute {
-                        rogueJob.set(launch(pool + deferred) {
+                        rogueJob.value = launch(pool + deferred) {
                             throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
-                        })
+                        }
                         canCloseThePool.countDown()
                     }
                 }
 
                 deferred.join()
-                val rogue = rogueJob.get()
+                val rogue = rogueJob.value
                 if (rogue?.isActive == true) {
                     throw TestException("Rogue job $rogue with parent " + rogue.parent + " and children list: " + rogue.parent?.children?.toList())
                 } else {
                     canCloseThePool.await()
-                    rogueJob.get().let {
+                    rogueJob.value.let {
                         assertNotNull(it)
                         assertTrue(it.isCancelled)
                     }
