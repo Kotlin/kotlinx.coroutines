@@ -50,6 +50,9 @@ private fun Project.condigureDokkaSetup() {
                 remoteUrl("https://github.com/kotlin/kotlinx.coroutines/tree/master")
             }
         }
+        dokkaGeneratorIsolation.set(ProcessIsolation {
+            systemProperties.put("org.jetbrains.dokka.analysis.enableExperimentalKDocResolution", true)
+        })
     }
 }
 
