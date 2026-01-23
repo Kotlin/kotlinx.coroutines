@@ -7,7 +7,6 @@ import kotlinx.coroutines.selects.*
 import org.junit.After
 import org.junit.Test
 import java.util.concurrent.CyclicBarrier
-import java.util.concurrent.atomic.AtomicLongArray
 import kotlin.test.*
 
 class ChannelSelectStressTest : TestBase() {
@@ -32,8 +31,8 @@ class ChannelSelectStressTest : TestBase() {
             repeat(pairedCoroutines) { launchReceiver() }
         }
         val missing = ArrayList<Int>()
-        for (i in 0 until receivedArray.length()) {
-            val bits = receivedArray[i]
+        for (i in 0 until receivedArray.size) {
+            val bits = receivedArray[i].value
             if (bits != 0L.inv()) {
                 for (j in 0 until Long.SIZE_BITS) {
                     val mask = 1L shl j
@@ -66,11 +65,12 @@ class ChannelSelectStressTest : TestBase() {
                 val index = (element / Long.SIZE_BITS)
                 val mask = 1L shl (element % Long.SIZE_BITS.toLong()).toInt()
                 while (true) {
-                    val bits = receivedArray.get(index)
+                    val bits = receivedArray[index].value
                     if (bits and mask != 0L) {
                         error("Detected duplicate")
                     }
-                    if (receivedArray.compareAndSet(index, bits, bits or mask)) break
+                    val newBits = bits or mask
+                    if (receivedArray[index].compareAndSet(bits, newBits)) break
                 }
             }
         }
