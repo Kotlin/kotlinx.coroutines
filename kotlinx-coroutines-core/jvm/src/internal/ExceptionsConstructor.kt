@@ -12,18 +12,17 @@ private typealias Ctor = (Throwable) -> Throwable?
 private val ctorCache = try {
     if (ANDROID_DETECTED) WeakMapCtorCache
     else ClassValueCtorCache
-} catch (e: Throwable) {
+} catch (_: Throwable) {
     // Fallback on Java 6 or exotic setups
     WeakMapCtorCache
 }
 
-@Suppress("UNCHECKED_CAST")
-internal fun <E : Throwable> tryCopyException(exception: E): E? {
+internal fun <E : Throwable> tryCopyException(exception: E): Throwable? {
     // Fast path for CopyableThrowable
     if (exception is CopyableThrowable<*>) {
-        return runCatching { exception.createCopy() as E? }.getOrNull()
+        return runCatching { exception.createCopy() }.getOrNull()
     }
-    return ctorCache.get(exception.javaClass).invoke(exception) as E?
+    return ctorCache.get(exception.javaClass).invoke(exception)
 }
 
 private fun <E : Throwable> createConstructor(clz: Class<E>): Ctor {
@@ -101,7 +100,7 @@ private object WeakMapCtorCache : CtorCache() {
 @IgnoreJreRequirement
 private object ClassValueCtorCache : CtorCache() {
     private val cache = object : ClassValue<Ctor>() {
-        override fun computeValue(type: Class<*>?): Ctor {
+        override fun computeValue(type: Class<*>): Ctor {
             @Suppress("UNCHECKED_CAST")
             return createConstructor(type as Class<out Throwable>)
         }

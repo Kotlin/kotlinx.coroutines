@@ -11,7 +11,7 @@ import kotlin.coroutines.*
  *
  * Works only on JVM with enabled debug-mode.
  */
-internal expect fun <E: Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E
+internal expect fun recoverStackTrace(exception: Throwable, continuation: Continuation<*>): Throwable
 
 /**
  * initCause on JVM, nop on other platforms
@@ -26,7 +26,7 @@ internal expect fun Throwable.initCause(cause: Throwable)
  *
  * Works only on JVM with enabled debug-mode.
  */
-internal expect fun <E: Throwable> recoverStackTrace(exception: E): E
+internal expect fun recoverStackTrace(exception: Throwable): Throwable
 
 // Name conflict with recoverStackTrace
 @Suppress("NOTHING_TO_INLINE")

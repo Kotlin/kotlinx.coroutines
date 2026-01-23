@@ -26,7 +26,7 @@ private val stackTraceRecoveryClassName = runCatching {
     Class.forName(stackTraceRecoveryClass).canonicalName
 }.getOrElse { stackTraceRecoveryClass }
 
-internal actual fun <E : Throwable> recoverStackTrace(exception: E): E {
+internal actual fun recoverStackTrace(exception: Throwable): Throwable {
     if (!RECOVER_STACK_TRACES) return exception
     // No unwrapping on continuation-less path: exception is not reported multiple times via slow paths
     val copy = tryCopyException(exception) ?: return exception
@@ -53,12 +53,12 @@ private fun <E : Throwable> E.sanitizeStackTrace(): E {
 }
 
 @Suppress("NOTHING_TO_INLINE") // Inline for better R8 optimization
-internal actual inline fun <E : Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E {
+internal actual inline fun recoverStackTrace(exception: Throwable, continuation: Continuation<*>): Throwable {
     if (!RECOVER_STACK_TRACES || continuation !is CoroutineStackFrame) return exception
     return recoverFromStackFrame(exception, continuation)
 }
 
-private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: CoroutineStackFrame): E {
+private fun recoverFromStackFrame(exception: Throwable, continuation: CoroutineStackFrame): Throwable {
     /*
     * Here we are checking whether exception has already recovered stacktrace.
     * If so, we extract initial and merge recovered stacktrace and current one
@@ -94,7 +94,7 @@ private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: Co
  *   ...real stackTrace...
  * caused by "IllegalStateException" (original one)
  */
-private fun <E : Throwable> createFinalException(cause: E, result: E, resultStackTrace: ArrayDeque<StackTraceElement>): E {
+private fun createFinalException(cause: Throwable, result: Throwable, resultStackTrace: ArrayDeque<StackTraceElement>): Throwable {
     resultStackTrace.addFirst(ARTIFICIAL_FRAME)
     val causeTrace = cause.stackTrace
     val size = causeTrace.firstFrameIndex(baseContinuationImplClassName)
@@ -180,7 +180,7 @@ private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<Stac
 
     var last = continuation
     while (true) {
-        last = (last as? CoroutineStackFrame)?.callerFrame ?: break
+        last = last.callerFrame ?: break
         last.getStackTraceElement()?.let { stack.add(it) }
     }
     return stack
