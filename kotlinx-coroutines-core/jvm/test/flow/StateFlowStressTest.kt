@@ -1,6 +1,6 @@
 package kotlinx.coroutines.flow
 
-import java.util.concurrent.atomic.AtomicLongArray
+import kotlinx.atomicfu.*
 import kotlin.random.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.testing.*
@@ -31,12 +31,12 @@ class StateFlowStressTest : TestBase() {
                             val emitter = (value % nEmitters).toInt()
                             val current = value / nEmitters
                             // the first value in batch is allowed to repeat, but cannot go back
-                            val ok = if (index++ == 0) current >= c[emitter] else current > c[emitter]
+                            val ok = if (index++ == 0) current >= c[emitter].value else current > c[emitter].value
                             check(ok) {
                                 "Values must be monotonic, but $current is not, " +
                                     "was ${c[emitter]} in collector #$collector from emitter #$emitter"
                             }
-                            c[emitter] = current
+                            c[emitter].value = current
 
                         }.take(batchSize).count()
                     } while (cnt == batchSize)
@@ -48,8 +48,8 @@ class StateFlowStressTest : TestBase() {
             repeat(nEmitters) { emitter ->
                 launch(pool) {
                     while (true) {
-                        state.value = emitted.incrementAndGet(emitter) * nEmitters + emitter
-                        if (emitted[emitter] % 1000 == 0L) yield() // make it cancellable
+                        state.value = emitted[emitter].incrementAndGet() * nEmitters + emitter
+                        if (emitted[emitter].value % 1000 == 0L) yield() // make it cancellable
                     }
                 }
             }
@@ -63,13 +63,15 @@ class StateFlowStressTest : TestBase() {
         collectors.cancelAndJoin()
         // make sure nothing hanged up
         for (i in 0..<nCollectors) {
-            check((0..<nEmitters).any { j -> collected[i][j] > emitted[j] * 0.9 }) {
+            check((0..<nEmitters).any { j -> collected[i][j].value > emitted[j].value * 0.9 }) {
                 "collector #$i failed to collect any of the most recently emitted values"
             }
         }
     }
 
-    private fun AtomicLongArray.sum() = (0..<length()).sumOf(::get)
+    private fun AtomicLongArray.sum() = (0..<size).sumOf { index ->
+        get(index).value
+    }
 
     @Test
     fun testSingleEmitterAndCollector() = stress(1, 1)
