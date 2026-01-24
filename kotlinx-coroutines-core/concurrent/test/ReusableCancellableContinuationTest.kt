@@ -1,9 +1,8 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
-import org.junit.Test
+import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -132,7 +131,7 @@ class ReusableCancellableContinuationTest : TestBase() {
     }
 
     @Test
-    fun testPropagatedCancel() = runTest({it is CancellationException}) {
+    fun testPropagatedCancel() = runTest({ it is CancellationException }) {
         val currentJob = coroutineContext[Job]!!
         expect(1)
         // Bind child at first
@@ -202,7 +201,7 @@ class ReusableCancellableContinuationTest : TestBase() {
 
     @Test
     fun testReusableAndRegularSuspendCancellableCoroutineMemoryLeak() = runTest {
-        val channel =  produce {
+        val channel = produce {
             repeat(10) {
                 send(Unit)
             }

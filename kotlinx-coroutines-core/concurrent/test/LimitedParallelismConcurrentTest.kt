@@ -1,9 +1,8 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.testing.*
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.exceptions.*
+import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -64,13 +63,15 @@ class LimitedParallelismConcurrentTest : TestBase() {
      */
     @Test
     fun testNotDoingDispatchesWhenNoTasksArePresent() = runTest {
-        class NaggingDispatcher: CoroutineDispatcher() {
+        class NaggingDispatcher : CoroutineDispatcher() {
             private val closed = atomic(false)
             override fun dispatch(context: CoroutineContext, block: Runnable) {
-                if (closed.value)
+                if (closed.value) {
                     fail("Dispatcher was closed, but still dispatched a task")
+                }
                 Dispatchers.Default.dispatch(context, block)
             }
+
             fun close() {
                 closed.value = true
             }

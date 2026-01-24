@@ -1,8 +1,9 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
-import java.util.concurrent.*
-import java.util.concurrent.atomic.*
+import kotlin.concurrent.atomics.*
 import kotlin.test.*
 
 /**
@@ -31,7 +32,7 @@ class JobChildStressTest : TestBase() {
     @Test
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     fun testChildAttachmentRacingWithCancellation() = runTest {
-        val barrier = CyclicBarrier(3)
+        val barrier = ConcurrentCyclicBarrier(3)
         repeat(N_ITERATIONS) {
             var wasLaunched = false
             var unhandledException: Throwable? = null
@@ -76,22 +77,23 @@ class JobChildStressTest : TestBase() {
     @Test
     fun testChildAttachmentRacingWithLastChildCompletion() {
         // All exceptions should get aggregated here
-        repeat(N_ITERATIONS) {
-            val canCloseThePool = CountDownLatch(1)
+        repeat(N_ITERATIONS) { iteration ->
+            val canCloseThePool = ConcurrentCountDownLatch(1)
             runBlocking {
-                val rogueJob = AtomicReference<Job?>()
+                val rogueJob = AtomicReference<Job?>(null)
+
                 /** not using [createCompletableDeferredForTesting] because we don't need extra children. */
                 val deferred = CompletableDeferred<Unit>()
                 // optionally, add a completion handler to the parent job, so that the child tries to enter a list with
                 // multiple elements, not just one.
-                if (it.mod(2) == 0) {
+                if (iteration.mod(2) == 0) {
                     deferred.invokeOnCompletion { }
                 }
                 launch(pool + deferred) {
                     deferred.complete(Unit) // Transition deferred into "completing" state waiting for current child
                     // **Asynchronously** submit task that launches a child so it races with completion
-                    pool.executor.execute {
-                        rogueJob.set(launch(pool + deferred) {
+                    pool.dispatch(currentCoroutineContext()) {
+                        rogueJob.store(launch(pool + deferred) {
                             throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
                         })
                         canCloseThePool.countDown()
@@ -99,12 +101,12 @@ class JobChildStressTest : TestBase() {
                 }
 
                 deferred.join()
-                val rogue = rogueJob.get()
+                val rogue = rogueJob.load()
                 if (rogue?.isActive == true) {
                     throw TestException("Rogue job $rogue with parent " + rogue.parent + " and children list: " + rogue.parent?.children?.toList())
                 } else {
                     canCloseThePool.await()
-                    rogueJob.get().let {
+                    rogueJob.load().let {
                         assertNotNull(it)
                         assertTrue(it.isCancelled)
                     }

@@ -1,20 +1,17 @@
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.runner.*
-import org.junit.runners.*
+import kotlinx.coroutines.testing.*
+import kotlin.test.*
 
-@RunWith(Parameterized::class)
-class BufferedChannelStressTest(private val capacity: Int) : TestBase() {
 
-    companion object {
-        @Parameterized.Parameters(name = "{0}, nSenders={1}, nReceivers={2}")
-        @JvmStatic
-        fun params(): Collection<Array<Any>> = listOf(1, 10, 100, 100_000, 1_000_000).map { arrayOf<Any>(it) }
-    }
+class BufferedChannelStressTest1 : BufferedChannelStressTest(1)
+class BufferedChannelStressTest10 : BufferedChannelStressTest(10)
+class BufferedChannelStressTest100 : BufferedChannelStressTest(100)
+class BufferedChannelStressTest100000 : BufferedChannelStressTest(100_000)
+class BufferedChannelStressTest1000000 : BufferedChannelStressTest(1_000_000)
 
+abstract class BufferedChannelStressTest(private val capacity: Int) : TestBase() {
     @Test
     fun testStress() = runTest {
         val n = 100_000 * stressTestMultiplier
@@ -40,7 +37,7 @@ class BufferedChannelStressTest(private val capacity: Int) : TestBase() {
 
     @Test
     fun testBurst() = runTest {
-        Assume.assumeTrue(capacity < 100_000)
+        if (capacity >= 100_000) return@runTest
         repeat(10_000 * stressTestMultiplier) {
             val channel = Channel<Int>(capacity)
             val sender = launch(Dispatchers.Default) {
