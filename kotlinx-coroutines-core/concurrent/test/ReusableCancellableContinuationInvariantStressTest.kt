@@ -1,21 +1,25 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
-import org.junit.Test
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.atomics.*
 import kotlin.coroutines.*
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.test.*
 
 // Stresses scenario from #3613
 class ReusableCancellableContinuationInvariantStressTest : TestBase() {
 
     // Tests have a timeout 10 sec because the bug they catch leads to an infinite spin-loop
 
-    @Test(timeout = 10_000)
+    //    @Test(timeout = 10_000)
+    @Test
     fun testExceptionFromSuspendReusable() = doTest { /* nothing */ }
 
 
-    @Test(timeout = 10_000)
+    //    @Test(timeout = 10_000)
+    @Test
     fun testExceptionFromCancelledSuspendReusable() = doTest { it.cancel() }
 
 
@@ -23,12 +27,12 @@ class ReusableCancellableContinuationInvariantStressTest : TestBase() {
     private inline fun doTest(crossinline block: (Job) -> Unit) {
         runTest {
             repeat(10_000) {
-                val latch = CountDownLatch(1)
+                val latch = ConcurrentCountDownLatch(1)
                 val continuationToResume = AtomicReference<Continuation<Unit>?>(null)
                 val j1 = launch(Dispatchers.Default) {
                     latch.await()
                     suspendCancellableCoroutineReusable {
-                        continuationToResume.set(it)
+                        continuationToResume.store(it)
                         block(coroutineContext.job)
                         throw CancellationException() // Don't let getResult() chance to execute
                     }
@@ -36,10 +40,10 @@ class ReusableCancellableContinuationInvariantStressTest : TestBase() {
 
                 val j2 = launch(Dispatchers.Default) {
                     latch.await()
-                    while (continuationToResume.get() == null) {
+                    while (continuationToResume.load() == null) {
                         // spin
                     }
-                    continuationToResume.get()!!.resume(Unit)
+                    continuationToResume.load()!!.resume(Unit)
                 }
 
                 latch.countDown()
