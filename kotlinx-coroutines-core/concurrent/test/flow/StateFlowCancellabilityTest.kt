@@ -2,7 +2,6 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import java.util.concurrent.*
 import kotlin.test.*
 
 @Suppress("BlockingMethodInNonBlockingContext")
@@ -13,7 +12,7 @@ class StateFlowCancellabilityTest : TestBase() {
         val state = MutableStateFlow(0)
         var subscribed = true
         var lastReceived = -1
-        val barrier = CyclicBarrier(2)
+        val barrier = ConcurrentCyclicBarrier(2)
         val job = state
             .onSubscription {
                 subscribed = true
@@ -50,4 +49,3 @@ class StateFlowCancellabilityTest : TestBase() {
         finish(5)
     }
 }
-

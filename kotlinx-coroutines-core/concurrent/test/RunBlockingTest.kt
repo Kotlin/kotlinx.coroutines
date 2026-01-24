@@ -1,7 +1,7 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.exceptions.*
+import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
@@ -68,7 +68,7 @@ class RunBlockingTest : TestBase() {
     }
 
     @Test
-    fun testCancellation()  = runTest {
+    fun testCancellation() = runTest {
         newFixedThreadPoolContext(2, "testCancellation").use {
             val job = GlobalScope.launch(it) {
                 runBlocking(coroutineContext) {

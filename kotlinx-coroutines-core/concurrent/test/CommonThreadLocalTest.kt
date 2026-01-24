@@ -1,11 +1,11 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.exceptions.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
-class CommonThreadLocalTest: TestBase() {
+class CommonThreadLocalTest : TestBase() {
 
     /**
      * Tests the basic functionality of [commonThreadLocal]: storing a separate value for each thread.

@@ -3,8 +3,6 @@ package kotlinx.coroutines.selects
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.junit.*
-import org.junit.Test
 import kotlin.test.*
 
 /**
@@ -15,7 +13,7 @@ class SelectDeadlockStressTest : TestBase() {
     private val pool = newFixedThreadPoolContext(2, "SelectDeadlockStressTest")
     private val nSeconds = 3 * stressTestMultiplier
 
-    @After
+    @AfterTest
     fun tearDown() {
         pool.close()
     }

@@ -1,9 +1,6 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
-import org.junit.*
-import org.junit.Test
-import java.util.concurrent.*
 import kotlin.test.*
 
 class JoinStressTest : TestBase() {
@@ -11,7 +8,7 @@ class JoinStressTest : TestBase() {
     private val iterations = 50_000 * stressTestMultiplier
     private val pool = newFixedThreadPoolContext(3, "JoinStressTest")
 
-    @After
+    @AfterTest
     fun tearDown() {
         pool.close()
     }
@@ -21,7 +18,7 @@ class JoinStressTest : TestBase() {
         val results = IntArray(2)
 
         repeat(iterations) {
-            val barrier = CyclicBarrier(3)
+            val barrier = ConcurrentCyclicBarrier(3)
             val exceptionalJob = async(pool + NonCancellable) {
                 barrier.await()
                 throw TestException()
@@ -54,7 +51,7 @@ class JoinStressTest : TestBase() {
         val results = IntArray(2)
 
         repeat(iterations) {
-            val barrier = CyclicBarrier(4)
+            val barrier = ConcurrentCyclicBarrier(4)
             val exceptionalJob = async<Unit>(pool + NonCancellable) {
                 barrier.await()
                 throw TestException()
