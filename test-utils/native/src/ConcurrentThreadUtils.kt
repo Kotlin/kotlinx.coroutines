@@ -2,6 +2,8 @@ package kotlinx.coroutines.testing
 
 import kotlin.native.concurrent.*
 
+actual fun assertTrueJvm(value: Boolean) = Unit
+
 actual fun runThread(
     name: String?, block: () -> Unit
 ): ConcurrentThread {
