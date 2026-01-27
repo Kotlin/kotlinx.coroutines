@@ -19,9 +19,6 @@ fun concurrentSleep(duration: Duration) {
     }
 }
 
-expect fun runThread(
-    name: String? = null, block: () -> Unit
-): ConcurrentThread
 
 expect class ConcurrentThread(
     block: Runnable, name: String?
