@@ -8,9 +8,6 @@ import kotlin.native.concurrent.*
 
 actual fun assertTrueJvm(value: Boolean) = Unit
 
-actual fun runThread(
-    name: String?, block: () -> Unit
-): ConcurrentThread = ConcurrentThread(block, name).apply { start() }
 
 actual class ConcurrentThread actual constructor(
     private val block: Runnable, private val name: String?
