@@ -82,7 +82,7 @@ class JobHandlersUpgradeStressTest : TestBase() {
         }
         threads.forEach { it.start() }
         repeat(nSeconds) { second ->
-            concurrentSleep(1.seconds)
+            threadSleep(1.seconds)
             println("${second + 1}: ${inters.value} iterations")
         }
         done = true
