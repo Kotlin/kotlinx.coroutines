@@ -22,7 +22,7 @@ class JobActivationStressTest : TestBase() {
                 }
                 // need to add on completion handler
                 val causeHolder = CompletableDeferred<Throwable?>()
-                // we use synchronization on causeHolder to work around the fact that completion listeners
+                // we await on causeHolder below to work around the fact that completion listeners
                 // are invoked after the job is in the final state, so when "d.join()" completes there is
                 // no guarantee that this listener was already invoked
                 d.invokeOnCompletion {
