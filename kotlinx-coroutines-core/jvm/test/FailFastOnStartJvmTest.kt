@@ -1,5 +1,3 @@
-@file:Suppress("DeferredResultUnused")
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
