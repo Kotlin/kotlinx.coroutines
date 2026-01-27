@@ -7,7 +7,7 @@ import kotlin.time.*
 expect fun assertTrueJvm(value: Boolean)
 
 @OptIn(ExperimentalThreadBlockingApi::class)
-fun concurrentSleep(duration: Duration) {
+fun threadSleep(duration: Duration) {
     if (duration <= Duration.ZERO) return
     val start = TimeSource.Monotonic.markNow()
     ParkingSupport.park(duration)
