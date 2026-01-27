@@ -4,7 +4,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.scheduling.CONCURRENT_CORE_POOL_SIZE
+import kotlinx.coroutines.CONCURRENT_CORE_POOL_SIZE
 import kotlinx.coroutines.testing.*
 import kotlin.concurrent.atomics.*
 import kotlin.test.*
