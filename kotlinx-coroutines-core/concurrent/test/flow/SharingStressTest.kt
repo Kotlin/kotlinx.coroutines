@@ -20,8 +20,8 @@ class SharingStressTest : TestBase() {
 
     @AfterTest
     fun tearDown() {
-        emitterDispatcher.close()
         subscriberDispatcher.close()
+        emitterDispatcher.close()
     }
 
     @Test
