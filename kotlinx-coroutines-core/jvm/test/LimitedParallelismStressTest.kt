@@ -126,7 +126,7 @@ abstract class LimitedParallelismStressTest(private val targetParallelism: Int) 
                     }
                     // Feed the dispatcher with more tasks to make sure it's not stuck
                     while (success.isActive) {
-                        concurrentSleep(1.milliseconds)
+                        threadSleep(1.milliseconds)
                         repeat(targetParallelism) {
                             occasionallyFailing.dispatch(EmptyCoroutineContext, Runnable {
                                 // do nothing.
