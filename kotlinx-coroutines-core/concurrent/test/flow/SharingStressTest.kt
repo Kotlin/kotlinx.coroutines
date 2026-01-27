@@ -170,7 +170,9 @@ class SharingStressTest : TestBase() {
                             if (expected != j) {
                                 if (j == expected + 1) {
                                     // if missing just one -- could be race with cancelled emit
-                                    missingCollects.add(expected)
+                                    runBlocking {
+                                        missingCollects.add(expected)
+                                    }
                                 } else {
                                     // broken otherwise
                                     assertEquals(expected, j)
