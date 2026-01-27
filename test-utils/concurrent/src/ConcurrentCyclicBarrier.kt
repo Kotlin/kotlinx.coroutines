@@ -9,10 +9,6 @@ import kotlin.time.*
 // Adapted from kotlinx-atomicfu
 // https://github.com/Kotlin/kotlinx-atomicfu/blob/d09c2b07cd16b0b273bd94edaa4929acd2ec42bc/atomicfu/src/concurrentTest/kotlin/kotlinx/atomicfu/locks/CyclicBarrierTest.kt#L59
 
-private class HandleWrapper(val handle: ParkingHandle) {
-    val woken = AtomicBoolean(false)
-}
-
 class ConcurrentCyclicBarrier(private val parties: Int) {
     private val queue = MSQueueCyclicBarrier<HandleWrapper>()
 
@@ -35,6 +31,11 @@ class ConcurrentCyclicBarrier(private val parties: Int) {
             }
         }
     }
+}
+
+
+private class HandleWrapper(val handle: ParkingHandle) {
+    val woken = AtomicBoolean(false)
 }
 
 
