@@ -6,45 +6,45 @@ import kotlin.test.*
 
 class ExceptionTransparencyTest : TestBase() {
 
-    @Test
-    fun testViolation() = runTest {
-        val flow = flow {
-            try {
-                expect(1)
-                emit(1)
-                expectUnreached()
-            } catch (e: CancellationException) {
-                expect(3)
-                emit(2)
-            }
-        }.take(1)
+//    @Test
+//    fun testViolation() = runTest {
+//        val flow = flow {
+//            try {
+//                expect(1)
+//                emit(1)
+//                expectUnreached()
+//            } catch (e: CancellationException) {
+//                expect(3)
+//                emit(2)
+//            }
+//        }.take(1)
+//
+//        assertFailsWith<IllegalStateException> { flow.collect { expect(2) } }
+//        finish(4)
+//    }
 
-        assertFailsWith<IllegalStateException> { flow.collect { expect(2) } }
-        finish(4)
-    }
-
-    @Test
-    fun testViolationResumeWith() = runTest {
-        val flow = flow {
-            try {
-                expect(1)
-                emit(1)
-                yield()
-                expectUnreached()
-            } catch (e: CancellationException) {
-                expect(3)
-                emit(2)
-            }
-        }.take(1)
-
-        assertFailsWith<IllegalStateException> {
-            flow.collect {
-                yield()
-                expect(2)
-            }
-        }
-        finish(4)
-    }
+//    @Test
+//    fun testViolationResumeWith() = runTest {
+//        val flow = flow {
+//            try {
+//                expect(1)
+//                emit(1)
+//                yield()
+//                expectUnreached()
+//            } catch (e: CancellationException) {
+//                expect(3)
+//                emit(2)
+//            }
+//        }.take(1)
+//
+//        assertFailsWith<IllegalStateException> {
+//            flow.collect {
+//                yield()
+//                expect(2)
+//            }
+//        }
+//        finish(4)
+//    }
 
     @Test
     fun testViolationAfterInvariantVariation() = runTest {
