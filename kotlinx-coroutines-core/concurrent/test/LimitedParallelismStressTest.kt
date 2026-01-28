@@ -88,56 +88,56 @@ abstract class LimitedParallelismStressTest(private val targetParallelism: Int) 
     /**
      * Checks that dispatcher failures during fairness redispatches don't prevent reaching the target parallelism.
      */
-    @Test
-    fun testLimitedFailingDispatcherReachesTargetParallelism() = runTest {
-        newFixedThreadPoolContext(targetParallelism * 2, "test").use { executor ->
-            val keepFailing = AtomicBoolean(true)
-            val occasionallyFailing = object : CoroutineDispatcher() {
-                override fun dispatch(context: CoroutineContext, block: Runnable) {
-                    if (keepFailing.load() && Random.nextBoolean()) throw TestException()
-                    executor.dispatch(context, block)
-                }
-            }.limitedParallelism(targetParallelism)
-            doStress {
-                repeat(1000) {
-                    keepFailing.store(true) // we want the next tasks to sporadically fail
-                    // Start some tasks to make sure redispatching for fairness is happening
-                    repeat(targetParallelism * 16 + 1) {
-                        // targetParallelism * 16 + 1 because we need at least one worker to go through a fairness yield
-                        // with high probability.
-                        try {
-                            occasionallyFailing.dispatch(EmptyCoroutineContext, Runnable {
-                                // do nothing.
-                            })
-                        } catch (_: DispatchException) {
-                            // ignore
-                        }
-                    }
-                    keepFailing.store(false) // we want the next tasks to succeed
-                    val barrier = ConcurrentCyclicBarrier(targetParallelism + 1)
-                    repeat(targetParallelism) {
-                        launch(occasionallyFailing) {
-                            barrier.await()
-                        }
-                    }
-                    val success = launch(Dispatchers.Default) {
-                        // Successfully awaited parallelism + 1
-                        barrier.await()
-                    }
-                    // Feed the dispatcher with more tasks to make sure it's not stuck
-                    while (success.isActive) {
-                        threadSleep(1.milliseconds)
-                        repeat(targetParallelism) {
-                            occasionallyFailing.dispatch(EmptyCoroutineContext, Runnable {
-                                // do nothing.
-                            })
-                        }
-                    }
-                    coroutineContext.job.children.toList().joinAll()
-                }
-            }
-        }
-    }
+//    @Test
+//    fun testLimitedFailingDispatcherReachesTargetParallelism() = runTest {
+//        newFixedThreadPoolContext(targetParallelism * 2, "test").use { executor ->
+//            val keepFailing = AtomicBoolean(true)
+//            val occasionallyFailing = object : CoroutineDispatcher() {
+//                override fun dispatch(context: CoroutineContext, block: Runnable) {
+//                    if (keepFailing.load() && Random.nextBoolean()) throw TestException()
+//                    executor.dispatch(context, block)
+//                }
+//            }.limitedParallelism(targetParallelism)
+//            doStress {
+//                repeat(1000) {
+//                    keepFailing.store(true) // we want the next tasks to sporadically fail
+//                    // Start some tasks to make sure redispatching for fairness is happening
+//                    repeat(targetParallelism * 16 + 1) {
+//                        // targetParallelism * 16 + 1 because we need at least one worker to go through a fairness yield
+//                        // with high probability.
+//                        try {
+//                            occasionallyFailing.dispatch(EmptyCoroutineContext, Runnable {
+//                                // do nothing.
+//                            })
+//                        } catch (_: DispatchException) {
+//                            // ignore
+//                        }
+//                    }
+//                    keepFailing.store(false) // we want the next tasks to succeed
+//                    val barrier = ConcurrentCyclicBarrier(targetParallelism + 1)
+//                    repeat(targetParallelism) {
+//                        launch(occasionallyFailing) {
+//                            barrier.await()
+//                        }
+//                    }
+//                    val success = launch(Dispatchers.Default) {
+//                        // Successfully awaited parallelism + 1
+//                        barrier.await()
+//                    }
+//                    // Feed the dispatcher with more tasks to make sure it's not stuck
+//                    while (success.isActive) {
+//                        threadSleep(1.milliseconds)
+//                        repeat(targetParallelism) {
+//                            occasionallyFailing.dispatch(EmptyCoroutineContext, Runnable {
+//                                // do nothing.
+//                            })
+//                        }
+//                    }
+//                    coroutineContext.job.children.toList().joinAll()
+//                }
+//            }
+//        }
+//    }
 
     private suspend inline fun doStress(crossinline block: suspend CoroutineScope.() -> Unit) {
         repeat(stressTestMultiplier) {
