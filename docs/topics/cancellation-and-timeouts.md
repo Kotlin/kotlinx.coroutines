@@ -70,9 +70,9 @@ suspend fun main() {
 
         // async returns a Deferred handle, which inherits from Job
         val job2 = async {
-                  // If the coroutine is canceled before its body starts executing,
-                  // this line may not be printed
-                  println("The second coroutine has started")
+            // If the coroutine is canceled before its body starts executing,
+            // this line may not be printed
+            println("The second coroutine has started")
 
             try {
                 // Equivalent to delay(Duration.INFINITE)
