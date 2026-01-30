@@ -9,7 +9,7 @@ import kotlin.native.concurrent.*
 actual fun assertTrueJvm(value: Boolean) = Unit
 
 
-actual class ConcurrentThread actual constructor(
+actual class MultiplatformThread actual constructor(
     private val block: Runnable, private val name: String?
 ) {
     private val starting = AtomicBoolean(false)

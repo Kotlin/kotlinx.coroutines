@@ -12,7 +12,7 @@ class JobHandlersUpgradeStressTest : TestBase() {
     private val nThreads = 4
 
     private val cyclicBarrier = CyclicBarrier(1 + nThreads)
-    private val threads = mutableListOf<ConcurrentThread>()
+    private val threads = mutableListOf<MultiplatformThread>()
 
     private val inters = atomic(0)
     private val removed = atomic(0)

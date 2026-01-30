@@ -20,11 +20,11 @@ fun threadSleep(duration: Duration) {
 }
 
 
-expect class ConcurrentThread(
+expect class MultiplatformThread(
     block: Runnable, name: String?
 ) {
     fun start()
     fun join()
 }
 
-fun ConcurrentThread(name: String?, block: () -> Unit) = ConcurrentThread({ block() }, name)
+fun ConcurrentThread(name: String?, block: () -> Unit) = MultiplatformThread({ block() }, name)
