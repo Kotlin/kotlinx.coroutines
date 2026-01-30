@@ -65,7 +65,7 @@ class SharingStressTest : TestBase() {
         val random = Random(1)
         val emitIndex = AtomicLong(0)
         val cancelledEmits = HashSet<Long>()
-        val missingCollects = ConcurrentSynchronizedSet()
+        val missingCollects = SynchronizedSet()
         // at most one copy of upstream can be running at any time
         val isRunning = AtomicInt(0)
         val upstream = flow {
@@ -145,7 +145,7 @@ class SharingStressTest : TestBase() {
         sharedFlow: SharedFlow<Long>,
         usingStateFlow: Boolean,
         subCount: MutableStateFlow<Int>,
-        missingCollects: ConcurrentSynchronizedSet
+        missingCollects: SynchronizedSet
     ): SubJob {
         val subJob = SubJob()
         subJob.job = launch(subscriberDispatcher) {

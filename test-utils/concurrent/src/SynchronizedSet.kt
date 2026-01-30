@@ -2,7 +2,7 @@ package kotlinx.coroutines.testing
 
 import kotlinx.coroutines.sync.*
 
-class ConcurrentSynchronizedSet {
+class SynchronizedSet {
     private val elements = LinkedHashSet<Long>()
     private val mutex = Mutex()
 
