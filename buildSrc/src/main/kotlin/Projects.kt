@@ -13,9 +13,6 @@ fun Project.version(target: String): String {
 val Project.jdkToolchainVersion: Int get() =
     providers.gradleProperty("jdk_toolchain_version").get().toInt()
 
-val Project.sourceSets: SourceSetContainer
-    get() = extensions.getByName("sourceSets") as SourceSetContainer
-
 val coreModule = "kotlinx-coroutines-core"
 val jdk8ObsoleteModule = "kotlinx-coroutines-jdk8"
 val testUtilsModule = "test-utils"
