@@ -1,6 +1,8 @@
 package kotlinx.coroutines.future
 
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.testing.CountDownLatch
+import kotlinx.coroutines.testing.CyclicBarrier
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import org.junit.*
@@ -190,12 +192,11 @@ class FutureTest : TestBase() {
             depth.andDecrement
         }) {
             assertEquals(1, depth.get(), "Part before first suspension must be wrapped")
-            val result =
-                    CompletableFuture.supplyAsync {
-                        while (depth.get() > 0);
-                        assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
-                        "OK"
-                    }.await()
+            val result = CompletableFuture.supplyAsync {
+                while (depth.get() > 0);
+                assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
+                "OK"
+            }.await()
             assertEquals(1, depth.get(), "Part after first suspension should be wrapped")
             CompletableFuture.supplyAsync {
                 while (depth.get() > 0);
@@ -322,40 +323,40 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testStructuredException() = runTest(
-        expected = { it is TestException } // exception propagates to parent with structured concurrency
-    ) {
-        val result = future<Int>(Dispatchers.Unconfined) {
-            throw TestException("FAIL")
+    fun testStructuredException() =
+        runTest(expected = { it is TestException } // exception propagates to parent with structured concurrency
+        ) {
+            val result = future<Int>(Dispatchers.Unconfined) {
+                throw TestException("FAIL")
+            }
+            result.checkFutureException<TestException>()
         }
-        result.checkFutureException<TestException>()
-    }
 
     @Test
-    fun testChildException() = runTest(
-        expected = { it is TestException } // exception propagates to parent with structured concurrency
-    ) {
-        val result = future(Dispatchers.Unconfined) {
-            // child crashes
-            launch { throw TestException("FAIL") }
-            42
+    fun testChildException() =
+        runTest(expected = { it is TestException } // exception propagates to parent with structured concurrency
+        ) {
+            val result = future(Dispatchers.Unconfined) {
+                // child crashes
+                launch { throw TestException("FAIL") }
+                42
+            }
+            result.checkFutureException<TestException>()
         }
-        result.checkFutureException<TestException>()
-    }
 
     @Test
-    fun testExceptionAggregation() = runTest(
-        expected = { it is TestException } // exception propagates to parent with structured concurrency
-    ) {
-        val result = future(Dispatchers.Unconfined) {
-            // child crashes
-            launch(start = CoroutineStart.ATOMIC) { throw TestException1("FAIL") }
-            launch(start = CoroutineStart.ATOMIC) { throw TestException2("FAIL") }
-            throw TestException()
+    fun testExceptionAggregation() =
+        runTest(expected = { it is TestException } // exception propagates to parent with structured concurrency
+        ) {
+            val result = future(Dispatchers.Unconfined) {
+                // child crashes
+                launch(start = CoroutineStart.ATOMIC) { throw TestException1("FAIL") }
+                launch(start = CoroutineStart.ATOMIC) { throw TestException2("FAIL") }
+                throw TestException()
+            }
+            result.checkFutureException<TestException>(TestException1::class, TestException2::class)
+            finish(1)
         }
-        result.checkFutureException<TestException>(TestException1::class, TestException2::class)
-        finish(1)
-    }
 
     @Test
     fun testExternalCompletion() = runTest {
@@ -373,21 +374,21 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testExceptionOnExternalCompletion() = runTest(
-        expected = { it is TestException } // exception propagates to parent with structured concurrency
-    ) {
-        expect(1)
-        val result = future(Dispatchers.Unconfined) {
-            try {
-                delay(Long.MAX_VALUE)
-            } finally {
-                expect(2)
-                throw TestException()
+    fun testExceptionOnExternalCompletion() =
+        runTest(expected = { it is TestException } // exception propagates to parent with structured concurrency
+        ) {
+            expect(1)
+            val result = future(Dispatchers.Unconfined) {
+                try {
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    expect(2)
+                    throw TestException()
+                }
             }
+            result.complete(Unit)
+            finish(3)
         }
-        result.complete(Unit)
-        finish(3)
-    }
 
     @Test
     fun testUnhandledExceptionOnExternalCompletionIsNotReported() = runTest {
@@ -468,7 +469,7 @@ class FutureTest : TestBase() {
         fSlow.checkFutureException<TestException>() // now wait until it completes
     }
 
-    private inline fun <reified T: Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
+    private inline fun <reified T : Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!
         assertIs<T>(cause)
@@ -592,7 +593,7 @@ class FutureTest : TestBase() {
     @Test
     fun testFailsIfLazy() {
         assertFailsWith<IllegalArgumentException> {
-            GlobalScope.future<Unit>(start = CoroutineStart.LAZY) {  }
+            GlobalScope.future<Unit>(start = CoroutineStart.LAZY) { }
         }
     }
 

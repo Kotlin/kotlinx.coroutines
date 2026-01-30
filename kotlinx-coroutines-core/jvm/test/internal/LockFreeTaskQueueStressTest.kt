@@ -1,6 +1,7 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.testing.CyclicBarrier
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import org.junit.runner.*

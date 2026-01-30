@@ -1,9 +1,6 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
-import org.junit.*
-import org.junit.Test
-import java.util.concurrent.*
 import kotlin.test.*
 
 class JoinStressTest : TestBase() {
@@ -11,7 +8,7 @@ class JoinStressTest : TestBase() {
     private val iterations = 50_000 * stressTestMultiplier
     private val pool = newFixedThreadPoolContext(3, "JoinStressTest")
 
-    @After
+    @AfterTest
     fun tearDown() {
         pool.close()
     }

@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
 import kotlin.test.*
 
-object FieldWalker {
+actual object FieldWalker {
     sealed class Ref {
         object RootRef : Ref()
         class FieldRef(val parent: Any, val name: String) : Ref()
@@ -35,9 +35,9 @@ object FieldWalker {
      * Reflectively starts to walk through object graph and returns identity set of all reachable objects.
      * Use [walkRefs] if you need a path from root for debugging.
      */
-    fun walk(root: Any?): Set<Any> = walkRefs(root, false).keys
+    actual fun walk(root: Any?): Set<Any> = walkRefs(root, false).keys
 
-    fun assertReachableCount(expected: Int, root: Any?, rootStatics: Boolean = false, predicate: (Any) -> Boolean) {
+    actual fun assertReachableCount(expected: Int, root: Any?, rootStatics: Boolean, predicate: (Any) -> Boolean) {
         val visited = walkRefs(root, rootStatics)
         val actual = visited.keys.filter(predicate)
         if (actual.size != expected) {
@@ -160,8 +160,8 @@ object FieldWalker {
             check(fields.isEmpty() || !type.name.startsWith("java.")) {
                 """
                     Trying to walk through JDK's '$type' will get into illegal reflective access on JDK 9+.
-                    Either modify your test to avoid usage of this class or update FieldWalker code to retrieve 
-                    the captured state of this class without going through reflection (see how collections are handled).  
+                    Either modify your test to avoid usage of this class or update FieldWalker code to retrieve
+                    the captured state of this class without going through reflection (see how collections are handled).
                 """.trimIndent()
             }
             fields.forEach { it.isAccessible = true } // make them all accessible

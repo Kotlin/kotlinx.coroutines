@@ -1,9 +1,12 @@
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
+// TODO: implement CyclicBarrier.reset (in this PR)
+//import kotlinx.coroutines.testing.CyclicBarrier
+import kotlinx.coroutines.testing.CountDownLatch
 import kotlinx.coroutines.*
 import org.junit.Test
-import java.util.concurrent.*
+import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 

@@ -1,12 +1,12 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.scheduling.*
-import org.junit.Assume.*
-import org.junit.Test
-import java.util.concurrent.atomic.*
+import kotlinx.coroutines.CONCURRENT_CORE_POOL_SIZE
+import kotlinx.coroutines.testing.*
+import kotlin.concurrent.atomics.*
 import kotlin.test.*
 
 class FlatMapStressTest : TestBase() {
@@ -38,18 +38,18 @@ class FlatMapStressTest : TestBase() {
                 unsafeFlow {
                     repeat(4) {
                         emit(value + it)
-                        inFlightElements.incrementAndGet()
+                        inFlightElements.incrementAndFetch()
                     }
                 }
             }.buffer(bufferSize).collect { value ->
-                val inFlight = inFlightElements.get()
+                val inFlight = inFlightElements.load()
                 assertTrue(inFlight <= bufferSize + 1,
                     "Expected less in flight elements than ${bufferSize + 1}, but had $inFlight")
-                inFlightElements.decrementAndGet()
+                inFlightElements.decrementAndFetch()
                 result += value
             }
 
-            assertEquals(0, inFlightElements.get())
+            assertEquals(0, inFlightElements.load())
             assertEquals(expectedSum, result)
         }
     }
@@ -82,18 +82,18 @@ class FlatMapStressTest : TestBase() {
     }
 
     private suspend fun testConcurrencyLevel(maxConcurrency: Int) {
-        assumeTrue(maxConcurrency <= CORE_POOL_SIZE)
-        val concurrency = AtomicLong()
+        if (maxConcurrency > CONCURRENT_CORE_POOL_SIZE) return
+        val concurrency = AtomicLong(0)
         val result = (1L..iterations).asFlow().flatMapMerge(concurrency = maxConcurrency) { value ->
             unsafeFlow {
-                val current = concurrency.incrementAndGet()
+                val current = concurrency.incrementAndFetch()
                 assertTrue(current in 1..maxConcurrency)
                 emit(value)
-                concurrency.decrementAndGet()
+                concurrency.decrementAndFetch()
             }
         }.longSum()
 
-        assertEquals(0, concurrency.get())
+        assertEquals(0, concurrency.load())
         assertEquals(expectedSum, result)
     }
 }

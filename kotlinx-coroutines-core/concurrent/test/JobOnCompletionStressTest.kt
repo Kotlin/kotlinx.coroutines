@@ -1,13 +1,14 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.testing.*
-import java.util.concurrent.CyclicBarrier
-import java.util.concurrent.atomic.*
+import kotlin.concurrent.atomics.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
-class JobOnCompletionStressTest: TestBase() {
+class JobOnCompletionStressTest : TestBase() {
     private val N_ITERATIONS = 10_000 * stressTestMultiplier
     private val pool = newFixedThreadPoolContext(2, "JobOnCompletionStressTest")
 
@@ -27,9 +28,9 @@ class JobOnCompletionStressTest: TestBase() {
             invokeImmediately = true,
             parentCompletion = { complete(Unit) }
         ) {
-            assertNull(encounteredException.get())
-            assertTrue(completionHandlerSeesCompletedParent.get())
-            assertFalse(completionHandlerSeesCancelledParent.get())
+            assertNull(encounteredException.load())
+            assertTrue(completionHandlerSeesCompletedParent.load())
+            assertFalse(completionHandlerSeesCancelledParent.load())
         }
     }
 
@@ -40,9 +41,9 @@ class JobOnCompletionStressTest: TestBase() {
             invokeImmediately = true,
             parentCompletion = { completeExceptionally(TestException()) }
         ) {
-            assertIs<TestException>(encounteredException.get())
-            assertTrue(completionHandlerSeesCompletedParent.get())
-            assertTrue(completionHandlerSeesCancelledParent.get())
+            assertIs<TestException>(encounteredException.load())
+            assertTrue(completionHandlerSeesCompletedParent.load())
+            assertTrue(completionHandlerSeesCancelledParent.load())
         }
     }
 
@@ -53,9 +54,9 @@ class JobOnCompletionStressTest: TestBase() {
             invokeImmediately = true,
             parentCompletion = { complete(Unit) }
         ) {
-            assertNull(encounteredException.get())
-            assertTrue(completionHandlerSeesCompletedParent.get())
-            assertFalse(completionHandlerSeesCancelledParent.get())
+            assertNull(encounteredException.load())
+            assertTrue(completionHandlerSeesCompletedParent.load())
+            assertFalse(completionHandlerSeesCancelledParent.load())
         }
     }
 
@@ -66,8 +67,8 @@ class JobOnCompletionStressTest: TestBase() {
             invokeImmediately = true,
             parentCompletion = { completeExceptionally(TestException()) }
         ) {
-            assertIs<TestException>(encounteredException.get())
-            assertTrue(completionHandlerSeesCancelledParent.get())
+            assertIs<TestException>(encounteredException.load())
+            assertTrue(completionHandlerSeesCancelledParent.load())
         }
     }
 
@@ -78,9 +79,9 @@ class JobOnCompletionStressTest: TestBase() {
             invokeImmediately = false,
             parentCompletion = { complete(Unit) }
         ) {
-            assertNull(encounteredException.get())
-            assertTrue(completionHandlerSeesCompletedParent.get())
-            assertFalse(completionHandlerSeesCancelledParent.get())
+            assertNull(encounteredException.load())
+            assertTrue(completionHandlerSeesCompletedParent.load())
+            assertFalse(completionHandlerSeesCancelledParent.load())
         }
     }
 
@@ -91,9 +92,9 @@ class JobOnCompletionStressTest: TestBase() {
             invokeImmediately = false,
             parentCompletion = { completeExceptionally(TestException()) }
         ) {
-            assertIs<TestException>(encounteredException.get())
-            assertTrue(completionHandlerSeesCompletedParent.get())
-            assertTrue(completionHandlerSeesCancelledParent.get())
+            assertIs<TestException>(encounteredException.load())
+            assertTrue(completionHandlerSeesCompletedParent.load())
+            assertTrue(completionHandlerSeesCancelledParent.load())
         }
     }
 
@@ -104,9 +105,9 @@ class JobOnCompletionStressTest: TestBase() {
             invokeImmediately = false,
             parentCompletion = { complete(Unit) }
         ) {
-            assertNull(encounteredException.get())
-            assertTrue(completionHandlerSeesCompletedParent.get())
-            assertFalse(completionHandlerSeesCancelledParent.get())
+            assertNull(encounteredException.load())
+            assertTrue(completionHandlerSeesCompletedParent.load())
+            assertFalse(completionHandlerSeesCancelledParent.load())
         }
     }
 
@@ -117,8 +118,8 @@ class JobOnCompletionStressTest: TestBase() {
             invokeImmediately = false,
             parentCompletion = { completeExceptionally(TestException()) }
         ) {
-            assertIs<TestException>(encounteredException.get())
-            assertTrue(completionHandlerSeesCancelledParent.get())
+            assertIs<TestException>(encounteredException.load())
+            assertTrue(completionHandlerSeesCancelledParent.load())
         }
     }
 
@@ -130,9 +131,9 @@ class JobOnCompletionStressTest: TestBase() {
     ) {
         repeat(N_ITERATIONS) {
             val entered = Channel<Unit>(1)
-            completionHandlerSeesCompletedParent.set(false)
-            completionHandlerSeesCancelledParent.set(false)
-            encounteredException.set(null)
+            completionHandlerSeesCompletedParent.store(false)
+            completionHandlerSeesCancelledParent.store(false)
+            encounteredException.store(null)
             val parent = createCompletableDeferredForTesting(it)
             val barrier = CyclicBarrier(2)
             val handlerInstallJob = coroutineScope {
@@ -146,9 +147,9 @@ class JobOnCompletionStressTest: TestBase() {
                         onCancelling = onCancelling,
                         invokeImmediately = invokeImmediately,
                     ) { exception ->
-                        encounteredException.set(exception)
-                        completionHandlerSeesCompletedParent.set(parent.isCompleted)
-                        completionHandlerSeesCancelledParent.set(parent.isCancelled)
+                        encounteredException.store(exception)
+                        completionHandlerSeesCompletedParent.store(parent.isCompleted)
+                        completionHandlerSeesCancelledParent.store(parent.isCancelled)
                         entered.trySend(Unit)
                     }
                 }

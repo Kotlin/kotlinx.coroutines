@@ -1,9 +1,9 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.testing.CyclicBarrier
 import kotlinx.atomicfu.*
 import org.junit.*
-import java.util.concurrent.*
 import kotlin.test.*
 import kotlin.test.Test
 

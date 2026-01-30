@@ -1,32 +1,28 @@
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.testing.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.*
-import org.junit.runners.*
-import kotlin.random.Random
+import kotlinx.coroutines.testing.*
+import kotlin.concurrent.*
+import kotlin.random.*
 import kotlin.test.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+
+class ChannelUndeliveredElementStressTestRENDEZVOUS : ChannelUndeliveredElementStressTest(TestChannelKind.RENDEZVOUS)
+class ChannelUndeliveredElementStressTestBUFFERED1 : ChannelUndeliveredElementStressTest(TestChannelKind.BUFFERED_1)
+class ChannelUndeliveredElementStressTestBUFFERED2 : ChannelUndeliveredElementStressTest(TestChannelKind.BUFFERED_2)
+class ChannelUndeliveredElementStressTestBUFFERED10 : ChannelUndeliveredElementStressTest(TestChannelKind.BUFFERED_10)
+class ChannelUndeliveredElementStressTestUNLIMITED : ChannelUndeliveredElementStressTest(TestChannelKind.UNLIMITED)
+class ChannelUndeliveredElementStressTestCONFLATED : ChannelUndeliveredElementStressTest(TestChannelKind.CONFLATED)
 
 /**
- * Tests resource transfer via channel send & receive operations, including their select versions,
+ * Tests resource transfer via channel send and receive operations, including their select versions,
  * using `onUndeliveredElement` to detect lost resources and close them properly.
  */
-@RunWith(Parameterized::class)
-class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : TestBase() {
-    companion object {
-        @Parameterized.Parameters(name = "{0}")
-        @JvmStatic
-        fun params(): Collection<Array<Any>> =
-            TestChannelKind.values()
-                .filter { !it.viaBroadcast }
-                .map { arrayOf<Any>(it) }
-    }
-
-    private val iterationDurationMs = 100L
+abstract class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : TestBase() {
+    private val iterationDuration = 100.milliseconds
     private val testIterations = 20 * stressTestMultiplier // 2 sec
 
     private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
@@ -56,7 +52,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     lateinit var sender: Job
     lateinit var receiver: Job
 
-    @After
+    @AfterTest
     fun tearDown() {
         dispatcher.close()
     }
@@ -73,13 +69,13 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     @Test
     fun testAtomicCancelStress() = runBlocking {
         println("=== ChannelAtomicCancelStressTest $kind")
-        var nextIterationTime = System.currentTimeMillis() + iterationDurationMs
+        var nextIterationTime = TimeSource.Monotonic.markNow().plus(iterationDuration)
         var iteration = 0
         launchSender()
         launchReceiver()
         while (!hasError()) {
-            if (System.currentTimeMillis() >= nextIterationTime) {
-                nextIterationTime += iterationDurationMs
+            if (TimeSource.Monotonic.markNow() >= nextIterationTime) {
+                nextIterationTime += iterationDuration
                 iteration++
                 verify(iteration)
                 if (iteration % 10 == 0) printProgressSummary(iteration)
@@ -92,10 +88,12 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                     stopSender()
                     launchSender()
                 }
+
                 1 -> { // cancel & restart receiver
                     stopReceiver()
                     launchReceiver()
                 }
+
                 2 -> yield() // just yield (burn a little time)
             }
         }
@@ -137,10 +135,11 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
             val receivedCnt = if (receivedStatus[x] != 0) 1 else 0
             val failedToDeliverCnt = failedStatus[x]
             if (sentCnt - failedToDeliverCnt != receivedCnt) {
-                println("!!! Error for value $x: " +
-                    "sentStatus=${sentStatus[x]}, " +
-                    "receivedStatus=${receivedStatus[x]}, " +
-                    "failedStatus=${failedStatus[x]}"
+                println(
+                    "!!! Error for value $x: " +
+                        "sentStatus=${sentStatus[x]}, " +
+                        "receivedStatus=${receivedStatus[x]}, " +
+                        "failedStatus=${failedStatus[x]}"
                 )
             }
         }
@@ -157,7 +156,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                     sentStatus[trySendData.x] = sendMode
                     when (sendMode) {
                         1 -> channel.send(trySendData)
-                        2 -> select<Unit> { channel.onSend(trySendData) {} }
+                        2 -> select { channel.onSend(trySendData) {} }
                         else -> error("cannot happen")
                     }
                     sentStatus[trySendData.x] = sendMode + 2
@@ -194,6 +193,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                             check(iterator.hasNext()) { "Should not be closed" }
                             iterator.next()
                         }
+
                         else -> error("cannot happen")
                     }
                     receivedData.onReceived()
@@ -209,7 +209,7 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     }
 
     private suspend fun drainReceiver() {
-        while (!channel.isEmpty) yield() // burn time until receiver gets it all
+        while (!channel.isEmpty) yield() // burn time until the receiver gets it all
     }
 
     private suspend fun stopReceiver() {
@@ -228,13 +228,19 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
                 failedStatus[x] = 1
                 return
             }
-            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
+            throw IllegalStateException(
+                "onUndeliveredElement()/onReceived() notified twice",
+                firstFailedToDeliverOrReceivedCallTrace.value!!
+            )
         }
 
         fun onReceived() {
             val trace = if (TRACING_ENABLED) Exception("First onReceived() call") else DUMMY_TRACE_EXCEPTION
             if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) return
-            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
+            throw IllegalStateException(
+                "onUndeliveredElement()/onReceived() notified twice",
+                firstFailedToDeliverOrReceivedCallTrace.value!!
+            )
         }
     }
 
@@ -264,4 +270,5 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
 }
 
 private const val TRACING_ENABLED = false // Change to `true` to enable the tracing
-private val DUMMY_TRACE_EXCEPTION = Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")
+private val DUMMY_TRACE_EXCEPTION =
+    Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")

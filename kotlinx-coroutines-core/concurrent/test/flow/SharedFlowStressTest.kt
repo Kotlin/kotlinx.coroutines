@@ -1,11 +1,8 @@
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.testing.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Test
-import kotlin.collections.ArrayList
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
@@ -17,13 +14,18 @@ class SharedFlowStressTest : TestBase() {
     private lateinit var sf: MutableSharedFlow<Long>
     private lateinit var view: SharedFlow<Long>
 
-    @get:Rule
-    val producerDispatcher = ExecutorRule(nProducers)
-    @get:Rule
-    val consumerDispatcher = ExecutorRule(nConsumers)
+    val producerDispatcher = newFixedThreadPoolContext(nProducers, "Producers")
+
+    val consumerDispatcher = newFixedThreadPoolContext(nConsumers, "Consumers")
 
     private val totalProduced = atomic(0L)
     private val totalConsumed = atomic(0L)
+
+    @AfterTest
+    fun tearDown() {
+        producerDispatcher.close()
+        consumerDispatcher.close()
+    }
 
     @Test
     fun testStressReplay1() =

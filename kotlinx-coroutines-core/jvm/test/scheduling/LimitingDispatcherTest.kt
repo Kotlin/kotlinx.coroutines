@@ -1,6 +1,7 @@
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.testing.CyclicBarrier
 import kotlinx.coroutines.*
 import org.junit.*
 import java.util.concurrent.*
