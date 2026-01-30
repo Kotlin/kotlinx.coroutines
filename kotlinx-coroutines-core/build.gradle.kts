@@ -274,16 +274,6 @@ kover {
     }
 }
 
-val testsJar by tasks.registering(Jar::class) {
-    dependsOn(jvmTestClasses)
-    archiveClassifier = "tests"
-    from(compileTestKotlinJvm.destinationDirectory)
-}
-
-artifacts {
-    archives(testsJar)
-}
-
 // Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
 tasks.withType<DokkaBaseTask>() {
     dependsOn(jvmJar)
