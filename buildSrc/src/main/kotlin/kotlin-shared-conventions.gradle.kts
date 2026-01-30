@@ -90,9 +90,6 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
         js {
             outputModuleName = project.name
             nodejs()
-            compilations["main"]?.dependencies {
-                api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
-            }
         }
         @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
         wasmJs {
@@ -100,16 +97,10 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
             // otherwise IC tasks that start clashing different modules with the same module name
             outputModuleName = project.name + "Wasm"
             nodejs()
-            compilations["main"]?.dependencies {
-                api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
-            }
         }
         @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
         wasmWasi {
             nodejs()
-            compilations["main"]?.dependencies {
-                api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
-            }
             compilations.configureEach {
                 compileTaskProvider.configure {
                     compilerOptions {
