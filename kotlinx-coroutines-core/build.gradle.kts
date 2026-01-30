@@ -33,23 +33,20 @@ apply(plugin = "pub-conventions")
      jvm ----------------------------> concurrent -------> common
                                         ^
      ios     \                          |
-     macos   | ---> nativeDarwin ---> native ---+
-     tvos    |                         ^
-     watchos /                         |
-                                       |
-     linux  \  ---> nativeOther -------+
-     mingw  /
+     macos   | ---> apple ---------> native
+     tvos    |                          ^
+     watchos /                          |
+                                        |
+     linux         \                    |
+     mingw         | --> nativeOther ---+
+     androidNative /
  ========================================================================== */
 
 kotlin {
     sourceSets {
         // using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
         groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
-        if (project.nativeTargetsAreEnabled) {
-            // TODO: 'nativeDarwin' behaves exactly like 'apple', we can remove it
-            groupSourceSets("nativeDarwin", listOf("apple"), listOf("native"))
-            groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
-        }
+        groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
         jvmMain {
             dependencies {
                 compileOnly("com.google.android:annotations:4.1.1.4")
@@ -57,8 +54,8 @@ kotlin {
         }
         jvmTest {
             dependencies {
-                api("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
-                api("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
+                implementation("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
+                implementation("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
                 implementation(project(":android-unit-tests"))
                 implementation("org.openjdk.jol:jol-core:0.16")
             }
@@ -222,12 +219,11 @@ val jvmLincheckTestAdditional by tasks.registering(Test::class) {
 fun Test.configureJvmForLincheck(segmentSize: Int = 1) {
     minHeapSize = "1g"
     maxHeapSize = "4g" // we may need more space for building an interleaving tree in the model checking mode
-    // https://github.com/JetBrains/lincheck#java-9
+    // Fails with an exception in the model checking mode without these arguments for Java 9+:
     jvmArgs = listOf(
         "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
-        "--add-exports", "java.base/sun.security.action=ALL-UNNAMED",
         "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED"
-    ) // in the model checking mode
+    )
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
     systemProperty("kotlinx.coroutines.semaphore.segmentSize", segmentSize)
     systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 1) // better for the model checking mode
@@ -275,16 +271,6 @@ kover {
             }
         }
     }
-}
-
-val testsJar by tasks.registering(Jar::class) {
-    dependsOn(jvmTestClasses)
-    archiveClassifier = "tests"
-    from(compileTestKotlinJvm.destinationDirectory)
-}
-
-artifacts {
-    archives(testsJar)
 }
 
 // Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
