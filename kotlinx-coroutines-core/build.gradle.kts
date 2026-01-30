@@ -219,12 +219,11 @@ val jvmLincheckTestAdditional by tasks.registering(Test::class) {
 fun Test.configureJvmForLincheck(segmentSize: Int = 1) {
     minHeapSize = "1g"
     maxHeapSize = "4g" // we may need more space for building an interleaving tree in the model checking mode
-    // https://github.com/JetBrains/lincheck#java-9
+    // Fails with an exception in the model checking mode without these arguments for Java 9+:
     jvmArgs = listOf(
         "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
-        "--add-exports", "java.base/sun.security.action=ALL-UNNAMED",
         "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED"
-    ) // in the model checking mode
+    )
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
     systemProperty("kotlinx.coroutines.semaphore.segmentSize", segmentSize)
     systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 1) // better for the model checking mode
