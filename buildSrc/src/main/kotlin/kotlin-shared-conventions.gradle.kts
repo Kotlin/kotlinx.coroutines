@@ -4,8 +4,9 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 
-internal fun KotlinCommonCompilerOptions.configureGlobalKotlinArgumentsAndOptIns() {
+private fun KotlinCommonCompilerOptions.configureGlobalKotlinArgumentsAndOptIns() {
     freeCompilerArgs.addAll("-progressive")
     optIn.addAll(
         "kotlin.experimental.ExperimentalTypeInference",
@@ -18,11 +19,12 @@ internal fun KotlinCommonCompilerOptions.configureGlobalKotlinArgumentsAndOptIns
     )
 }
 
+extensions.configure<JavaPluginExtension> {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 plugins.withId("org.jetbrains.kotlin.jvm") {
-    extensions.configure<JavaPluginExtension> {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
     extensions.configure<KotlinJvmProjectExtension> {
         extensions.configure<AbiValidationExtension> {
             @OptIn(ExperimentalAbiValidation::class)
@@ -41,29 +43,12 @@ plugins.withId("org.jetbrains.kotlin.jvm") {
         add("testImplementation", "junit:junit:${version("junit")}")
     }
 
-    tasks.withType<Test> {
-        testLogging {
-            showStandardStreams = true
-            events("passed", "failed")
-        }
-        val stressTest = project.properties["stressTest"]
-        if (stressTest != null) systemProperties["stressTest"] = stressTest
-    }
-
-    tasks.named("check") {
-       dependsOn(tasks.named("checkLegacyAbi"))
-    }
-
     tasks.named<Jar>("jar") {
         fillManifestImplementationAttributes(project)
     }
 }
 
 plugins.withId("org.jetbrains.kotlin.multiplatform") {
-    extensions.configure<JavaPluginExtension> {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
     extensions.configure<KotlinMultiplatformExtension> {
         extensions.configure<AbiValidationMultiplatformExtension> {
             @OptIn(ExperimentalAbiValidation::class)
@@ -154,6 +139,13 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
             freeCompilerArgs.add("-Xexpect-actual-classes")
             optIn.add("kotlin.ExperimentalMultiplatform")
         }
+
+        targets.withType<KotlinJvmTarget>().configureEach {
+            // Fill attributes for the JVM implementation Jar only
+            tasks.named<Jar>(artifactsTaskName) {
+                fillManifestImplementationAttributes(project)
+            }
+        }
     }
 
     // Disable intermediate sourceSet compilation because we do not need js-wasm common artifact
@@ -163,26 +155,6 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
         }
         if (name == "compileJsAndWasmJsSharedMainKotlinMetadata") {
             enabled = false
-        }
-    }
-
-    tasks.named("jvmTest", Test::class) {
-        testLogging {
-            showStandardStreams = true
-            events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
-        }
-        project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
-    }
-
-    tasks.named("check") {
-        dependsOn(tasks.named("checkLegacyAbi"))
-    }
-
-    
-    kotlin.targets.withType<KotlinJvmTarget>().configureEach {
-        // Fill attributes for the JVM implementation Jar only
-        tasks.named<Jar>(artifactsTaskName) {
-            fillManifestImplementationAttributes(project)
         }
     }
 
@@ -196,5 +168,16 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
             attributes("Automatic-Module-Name" to moduleName)
         }
     }
+}
 
+tasks.withType<Test> {
+    testLogging {
+        showStandardStreams = true
+        events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
+    }
+    project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
+}
+
+tasks.named("check") {
+    dependsOn(tasks.named("checkLegacyAbi"))
 }
