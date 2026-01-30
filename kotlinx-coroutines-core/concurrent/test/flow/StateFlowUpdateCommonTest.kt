@@ -1,7 +1,8 @@
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlin.test.*
 
 // A simplified version of StateFlowUpdateStressTest

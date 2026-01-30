@@ -1,7 +1,7 @@
 package kotlinx.coroutines.exceptions
 
 import kotlinx.coroutines.*
-import kotlin.concurrent.*
+import kotlin.concurrent.Volatile
 import kotlin.random.*
 
 fun randomWait() {

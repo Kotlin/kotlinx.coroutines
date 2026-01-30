@@ -7,7 +7,7 @@ import kotlin.test.*
 class TrySendBlockingTest : TestBase() {
 
     @Test
-    fun testTrySendBlocking() = runBlocking { // For old MM
+    fun testTrySendBlocking() = runBlocking<Unit> { // For old MM
         val ch = Channel<Int>()
         val sum = GlobalScope.async {
             var sum = 0

@@ -1,15 +1,15 @@
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.testing.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 @Suppress("DEPRECATION_ERROR")
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     private val nSenders = 2
     private val nReceivers = 3
-    private val nEvents = (if (isNative) 5_000 else 500_000) * stressTestMultiplier
+    private val nEvents =  (if (isNative) 5_000 else 500_000) * stressTestMultiplier
     private val timeLimit = 30_000L * stressTestMultiplier // 30 sec
 
     private val broadcast = ConflatedBroadcastChannel<Int>()
@@ -20,7 +20,7 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     private val receivedTotal = atomic(0)
 
     @Test
-    fun testStressNotify() = runTest {
+    fun testStressNotify()= runTest {
         println("--- ConflatedBroadcastChannelNotifyStressTest")
         val senders = List(nSenders) { senderId ->
             launch(Dispatchers.Default + CoroutineName("Sender$senderId")) {
@@ -59,9 +59,9 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
         }
         try {
             withTimeout(timeLimit) {
-                senders.joinAll()
+                senders.forEach { it.join() }
                 broadcast.trySend(nEvents) // last event to signal receivers termination
-                receivers.joinAll()
+                receivers.forEach { it.join() }
             }
         } catch (e: CancellationException) {
             println("!!! Test timed out $e")

@@ -1,7 +1,8 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.exceptions.*
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.exceptions.*
+import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
 class ConcurrentExceptionsStressTest : TestBase() {
@@ -42,7 +43,8 @@ class ConcurrentExceptionsStressTest : TestBase() {
         deferred.join()
         assertTrue(deferred.isCancelled)
         val completionException = deferred.getCompletionExceptionOrNull()
-        val cause = completionException as? StressException ?: unexpectedException("completion", completionException)
+        val cause = completionException as? StressException
+            ?: unexpectedException("completion", completionException)
         val suppressed = cause.suppressedExceptions
         val indices = listOf(cause.index) + suppressed.mapIndexed { index, e ->
             (e as? StressException)?.index ?: unexpectedException("suppressed $index", e)
@@ -59,3 +61,4 @@ class ConcurrentExceptionsStressTest : TestBase() {
 
     private class StressException(val index: Int) : Throwable()
 }
+
