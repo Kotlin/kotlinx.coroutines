@@ -9,7 +9,7 @@ import kotlin.time.*
 // Adapted from kotlinx-atomicfu
 // https://github.com/Kotlin/kotlinx-atomicfu/blob/d09c2b07cd16b0b273bd94edaa4929acd2ec42bc/atomicfu/src/concurrentTest/kotlin/kotlinx/atomicfu/locks/CyclicBarrierTest.kt#L59
 
-class ConcurrentCyclicBarrier(private val parties: Int) {
+class CyclicBarrier(private val parties: Int) {
     private val queue = MSQueueCyclicBarrier<HandleWrapper>()
 
     fun await() {

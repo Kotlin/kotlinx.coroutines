@@ -1,10 +1,10 @@
 package kotlinx.coroutines.exceptions
 
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.testing.CyclicBarrier
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
-import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.minutes

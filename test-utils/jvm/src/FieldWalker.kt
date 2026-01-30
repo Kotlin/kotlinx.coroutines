@@ -25,7 +25,7 @@ actual object FieldWalker {
             Any::class, String::class, Thread::class, Throwable::class, StackTraceElement::class,
             WeakReference::class, ReferenceQueue::class, AbstractMap::class, Enum::class,
             ReentrantLock::class, ReentrantReadWriteLock::class, SimpleDateFormat::class, ThreadPoolExecutor::class,
-            ConcurrentCountDownLatch::class,
+            CountDownLatch::class,
         )
             .map { it.java }
             .associateWith { emptyList() }

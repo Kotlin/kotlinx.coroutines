@@ -12,7 +12,7 @@ class AwaitStressTest : TestBase() {
         newFixedThreadPoolContext(4, "test").use { pool ->
             val ctx = pool + NonCancellable
             repeat(iterations) {
-                val barrier = ConcurrentCyclicBarrier(4)
+                val barrier = CyclicBarrier(4)
                 val d1 = async(ctx) {
                     barrier.await()
                     throw TestException()
@@ -39,7 +39,7 @@ class AwaitStressTest : TestBase() {
     @Test
     fun testAwaitAll() = runTest {
         newFixedThreadPoolContext(4, "test").use { pool ->
-            val barrier = ConcurrentCyclicBarrier(3)
+            val barrier = CyclicBarrier(3)
             repeat(iterations) {
                 val d1 = async(pool) {
                     barrier.await()
@@ -61,7 +61,7 @@ class AwaitStressTest : TestBase() {
         newFixedThreadPoolContext(4, "test").use { pool ->
             var cancelledOnce = false
             repeat(iterations) {
-                val barrier = ConcurrentCyclicBarrier(3)
+                val barrier = CyclicBarrier(3)
 
                 val d1 = async(pool) {
                     barrier.await()

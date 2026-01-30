@@ -36,7 +36,7 @@ class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
             val counter = AtomicInt(0)
             val channel = kind.create<Int>()
 
-            val latch = ConcurrentCountDownLatch(1)
+            val latch = CountDownLatch(1)
             val j1 = async {
                 latch.await()
                 channel.close()

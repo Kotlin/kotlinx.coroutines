@@ -12,7 +12,7 @@ class JobActivationStressTest : TestBase() {
     @Test
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     fun testActivation() = runTest {
-        val barrier = ConcurrentCyclicBarrier(3)
+        val barrier = CyclicBarrier(3)
         newFixedThreadPoolContext(3, "JobActivationStressTest").use { pool ->
             repeat(N_ITERATIONS) {
                 var wasStarted = false

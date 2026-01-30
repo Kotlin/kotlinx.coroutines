@@ -12,7 +12,7 @@ class StateFlowCancellabilityTest : TestBase() {
         val state = MutableStateFlow(0)
         var subscribed = true
         var lastReceived = -1
-        val barrier = ConcurrentCyclicBarrier(2)
+        val barrier = CyclicBarrier(2)
         val job = state
             .onSubscription {
                 subscribed = true

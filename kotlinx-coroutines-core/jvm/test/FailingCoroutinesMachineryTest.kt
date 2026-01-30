@@ -1,11 +1,14 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
+// TODO: implement CountDownLatch.await with timeout (in this PR)
+//import kotlinx.coroutines.testing.CountDownLatch
 import org.junit.*
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.*
 import kotlin.test.*
 

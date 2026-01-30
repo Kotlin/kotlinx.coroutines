@@ -32,7 +32,7 @@ class JobChildStressTest : TestBase() {
     @Test
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     fun testChildAttachmentRacingWithCancellation() = runTest {
-        val barrier = ConcurrentCyclicBarrier(3)
+        val barrier = CyclicBarrier(3)
         repeat(N_ITERATIONS) {
             var wasLaunched = false
             var unhandledException: Throwable? = null
@@ -78,7 +78,7 @@ class JobChildStressTest : TestBase() {
     fun testChildAttachmentRacingWithLastChildCompletion() {
         // All exceptions should get aggregated here
         repeat(N_ITERATIONS) { iteration ->
-            val canCloseThePool = ConcurrentCountDownLatch(1)
+            val canCloseThePool = CountDownLatch(1)
             runBlocking {
                 val rogueJob = AtomicReference<Job?>(null)
 
