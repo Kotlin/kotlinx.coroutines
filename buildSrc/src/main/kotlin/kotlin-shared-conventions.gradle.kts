@@ -1,9 +1,13 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 
 private fun KotlinCommonCompilerOptions.configureGlobalKotlinArgumentsAndOptIns() {
     freeCompilerArgs.addAll("-progressive")
@@ -17,6 +21,8 @@ private fun KotlinCommonCompilerOptions.configureGlobalKotlinArgumentsAndOptIns(
         "kotlinx.coroutines.FlowPreview"
     )
 }
+
+apply(plugin = "org.jetbrains.kotlinx.atomicfu")
 
 extensions.configure<JavaPluginExtension> {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -157,4 +163,42 @@ tasks.withType<Test> {
 
 tasks.named("check") {
     dependsOn(tasks.named("checkLegacyAbi"))
+}
+
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    val isMainTaskName = name.startsWith("compileKotlin")
+    compilerOptions {
+        getOverriddenKotlinLanguageVersion(project)?.let {
+            languageVersion = it
+        }
+        getOverriddenKotlinApiVersion(project)?.let {
+            apiVersion = it
+        }
+        if (isMainTaskName && !unpublished.contains(project.name)) {
+            setWarningsAsErrors(project)
+            freeCompilerArgs.addAll(
+                "-Xexplicit-api=strict",
+                "-Xdont-warn-on-error-suppression",
+            )
+        }
+        configureKotlinUserProject()
+        /* Coroutines do not interop with Java and these flags provide a significant
+         * (i.e. close to double-digit) reduction in both bytecode and optimized dex size */
+        if (this@configureEach is KotlinJvmCompile) {
+            freeCompilerArgs.addAll(
+                "-Xno-param-assertions",
+                "-Xno-call-assertions",
+                "-Xno-receiver-assertions",
+            )
+        }
+        if (this@configureEach is KotlinNativeCompile) {
+            optIn.addAll(
+                "kotlinx.cinterop.ExperimentalForeignApi",
+                "kotlinx.cinterop.UnsafeNumber",
+                "kotlin.experimental.ExperimentalNativeApi",
+                "kotlin.native.concurrent.ObsoleteWorkersApi",
+            )
+        }
+        addExtraCompilerFlags(project)
+    }
 }
