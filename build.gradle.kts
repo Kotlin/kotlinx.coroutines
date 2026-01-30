@@ -30,9 +30,6 @@ buildscript {
     with(CacheRedirector) { buildscript.configureBuildScript(rootProject) }
 }
 
-// Configure subprojects with Kotlin sources
-apply(plugin = "configure-compilation-conventions")
-
 allprojects {
     val deployVersion = properties["DeployVersion"]
     if (deployVersion != null) version = deployVersion
