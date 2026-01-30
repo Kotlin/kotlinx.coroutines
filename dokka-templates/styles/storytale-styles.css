@@ -1,0 +1,28 @@
+.storytale-embedded-container {
+    container-type: inline-size;
+}
+
+.storytale-embedded {
+    min-height: 450px;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+@container (max-width: 800px) {
+    .storytale-embedded {
+        aspect-ratio: 1 / 1;
+    }
+}
+
+@container (max-width: 700px) {
+    .storytale-embedded {
+        aspect-ratio: 15 / 16;
+    }
+}
+
+@container (max-width: 500px) {
+    .storytale-embedded {
+        aspect-ratio: 3 / 4;
+    }
+}

@@ -31,6 +31,8 @@ public fun <T> Flow<T>.distinctUntilChanged(areEquivalent: (old: T, new: T) -> B
     distinctUntilChangedBy(keySelector = defaultKeySelector, areEquivalent = areEquivalent as (Any?, Any?) -> Boolean)
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/DistinctUntilChanged
+ *
  * Returns flow where all subsequent repetitions of the same key are filtered out, where
  * key is extracted with [keySelector] function.
  *

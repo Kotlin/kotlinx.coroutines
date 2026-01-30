@@ -26,6 +26,8 @@ fun main() = runBlocking {
 */
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/Debounce
+ *
  * Returns a flow that mirrors the original flow, but filters out values
  * that are followed by the newer values within the given [timeout][timeoutMillis].
  * The latest value is always emitted.

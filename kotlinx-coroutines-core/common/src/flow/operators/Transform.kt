@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 import kotlinx.coroutines.flow.unsafeTransform as transform
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/Filter
+ *
  * Returns a flow containing only values of the original flow that match the given [predicate].
  */
 public inline fun <T> Flow<T>.filter(crossinline predicate: suspend (T) -> Boolean): Flow<T> = transform { value ->
@@ -44,6 +46,8 @@ public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = transform<T?, T> { value
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/Map
+ *
  * Returns a flow containing the results of applying the given [transform] function to each value of the original flow.
  */
 public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -> R): Flow<R> = transform { value ->
@@ -59,6 +63,8 @@ public inline fun <T, R: Any> Flow<T>.mapNotNull(crossinline transform: suspend 
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/WithIndex
+ *
  * Returns a flow that wraps each element into [IndexedValue], containing value and its index (starting from zero).
  */
 public fun <T> Flow<T>.withIndex(): Flow<IndexedValue<T>> = flow {
@@ -108,6 +114,8 @@ public fun <T, R> Flow<T>.runningFold(initial: R, @BuilderInference operation: s
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/RunningReduce
+ *
  * Reduces the given flow with [operation], emitting every intermediate result, including initial value.
  * The first element is taken as initial value for operation accumulator.
  * This operator has a sibling with initial value -- [scan].

@@ -30,6 +30,8 @@ public val DEFAULT_CONCURRENCY: Int = systemProp(
 )
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/FlatMapConcat
+ *
  * Transforms elements emitted by the original flow by applying [transform], that returns another flow,
  * and then concatenating and flattening these flows.
  *
@@ -43,6 +45,8 @@ public fun <T, R> Flow<T>.flatMapConcat(transform: suspend (value: T) -> Flow<R>
     map(transform).flattenConcat()
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/FlatMapMerge
+ *
  * Transforms elements emitted by the original flow by applying [transform], that returns another flow,
  * and then merging and flattening these flows.
  *
@@ -103,6 +107,8 @@ public fun <T> Iterable<Flow<T>>.merge(): Flow<T> {
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/Merge
+ *
  * Merges the given flows into a single flow without preserving an order of elements.
  * All flows are merged concurrently, without limit on the number of simultaneously collected flows.
  *
@@ -138,6 +144,8 @@ public fun <T> Flow<Flow<T>>.flattenMerge(concurrency: Int = DEFAULT_CONCURRENCY
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/TransformLatest
+ *
  * Returns a flow that produces element by [transform] function every time the original flow emits a value.
  * When the original flow emits a new value, the previous `transform` block is cancelled, thus the name `transformLatest`.
  *
@@ -163,6 +171,8 @@ public fun <T, R> Flow<T>.transformLatest(@BuilderInference transform: suspend F
     ChannelFlowTransformLatest(transform, this)
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/FlatMapLatest
+ *
  * Returns a flow that switches to a new flow produced by [transform] function every time the original flow emits a value.
  * When the original flow emits a new value, the previous flow produced by `transform` block is cancelled.
  *
@@ -189,6 +199,8 @@ public inline fun <T, R> Flow<T>.flatMapLatest(@BuilderInference crossinline tra
     transformLatest { emitAll(transform(it)) }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/MapLatest
+ *
  * Returns a flow that emits elements from the original flow transformed by [transform] function.
  * When the original flow emits a new value, computation of the [transform] block for previous value is cancelled.
  *
