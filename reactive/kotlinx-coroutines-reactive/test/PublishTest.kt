@@ -9,7 +9,7 @@ import kotlinx.coroutines.sync.*
 import kotlinx.coroutines.testing.exceptions.*
 import org.junit.Test
 import org.reactivestreams.*
-import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import kotlin.test.*
 
 class PublishTest : TestBase() {
