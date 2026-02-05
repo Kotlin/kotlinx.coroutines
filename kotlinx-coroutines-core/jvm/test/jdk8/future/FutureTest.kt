@@ -1,14 +1,13 @@
 package kotlinx.coroutines.future
 
 import kotlinx.coroutines.testing.*
-import kotlinx.coroutines.testing.CountDownLatch
-import kotlinx.coroutines.testing.CyclicBarrier
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import org.junit.*
 import org.junit.Test
 import java.lang.IllegalArgumentException
 import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
 import java.util.function.*

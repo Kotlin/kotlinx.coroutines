@@ -1,10 +1,10 @@
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
-import kotlinx.coroutines.testing.CountDownLatch
-import kotlinx.coroutines.testing.CyclicBarrier
 import kotlinx.coroutines.*
 import org.junit.Test
+import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 
 class CoroutineSchedulerOversubscriptionTest : TestBase() {

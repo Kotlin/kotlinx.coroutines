@@ -11,7 +11,7 @@ class JobHandlersUpgradeStressTest : TestBase() {
     private val nSeconds = 3 * stressTestMultiplier
     private val nThreads = 4
 
-    private val cyclicBarrier = CyclicBarrier(1 + nThreads)
+    private val twoPhaseBarrier = TwoPhaseBarrier(1 + nThreads)
     private val threads = mutableListOf<MultiplatformThread>()
 
     private val inters = atomic(0)
@@ -39,13 +39,13 @@ class JobHandlersUpgradeStressTest : TestBase() {
         threads += ConcurrentThread("creator") {
             while (true) {
                 job = if (done) null else Job()
-                cyclicBarrier.await()
+                twoPhaseBarrier.await()
                 val job = job ?: break
                 // burn some time
                 repeat(Random.nextInt(3000)) { sink.incrementAndGet() }
                 // cancel job
                 job.cancel()
-                cyclicBarrier.await()
+                twoPhaseBarrier.await()
                 inters.incrementAndGet()
             }
         }
@@ -54,7 +54,7 @@ class JobHandlersUpgradeStressTest : TestBase() {
                 while (true) {
                     val onCancelling = Random.nextBoolean()
                     val invokeImmediately: Boolean = Random.nextBoolean()
-                    cyclicBarrier.await()
+                    twoPhaseBarrier.await()
                     val job = job ?: break
                     val state = State()
                     // burn some time
@@ -68,7 +68,7 @@ class JobHandlersUpgradeStressTest : TestBase() {
                     repeat(Random.nextInt(1000)) { sink.incrementAndGet() }
                     // dispose
                     handle.dispose()
-                    cyclicBarrier.await()
+                    twoPhaseBarrier.await()
                     val resultingState = state.state.value
                     when (resultingState) {
                         0 -> removed.incrementAndGet()

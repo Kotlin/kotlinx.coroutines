@@ -32,7 +32,7 @@ class JobChildStressTest : TestBase() {
     @Test
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     fun testChildAttachmentRacingWithCancellation() = runTest {
-        val barrier = CyclicBarrier(3)
+        val barrier = TwoPhaseBarrier(3)
         repeat(N_ITERATIONS) {
             var wasLaunched = false
             var unhandledException: Throwable? = null

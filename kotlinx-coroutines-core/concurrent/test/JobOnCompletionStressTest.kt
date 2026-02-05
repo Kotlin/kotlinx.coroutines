@@ -135,7 +135,7 @@ class JobOnCompletionStressTest : TestBase() {
             completionHandlerSeesCancelledParent.store(false)
             encounteredException.store(null)
             val parent = createCompletableDeferredForTesting(it)
-            val barrier = CyclicBarrier(2)
+            val barrier = Barrier(2)
             val handlerInstallJob = coroutineScope {
                 launch(pool) {
                     barrier.await()
