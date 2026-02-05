@@ -487,6 +487,46 @@ class SchedulerTest : TestBase() {
         }
         finish(4)
     }
+
+
+    /**
+     * Check that whenever a worker is cancelled, all outstanding work is cancelled as well.
+     */
+    @Test
+    fun testWorkerCancellationCancelsOutstandingWork() {
+        val customScheduler = object: CoroutineDispatcher(), Delay {
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                block.run()
+            }
+
+            override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+                expectUnreached()
+            }
+
+            override fun invokeOnTimeout(
+                timeMillis: Long,
+                block: Runnable,
+                context: CoroutineContext
+            ): DisposableHandle = object: DisposableHandle {
+                init {
+                    expect(1)
+                }
+                override fun dispose() {
+                    expect(2)
+                }
+            }
+        }.asScheduler()
+        // Allocates a new worker internally and scheduler a ticker,
+        // *without* storing the scheduled periodic tasks anywhere.
+        // The only way for them to get cancelled is by the worker disposing of them as part of its own disposal.
+        val disposable = Flowable.interval(5, 1, TimeUnit.MINUTES, customScheduler)
+            .doOnNext {
+                expectUnreached()
+            }.subscribe()
+        // Dispose of the worker, which will, in turn, dispose of the outstanding task.
+        disposable.dispose()
+        finish(3)
+    }
 }
 
 typealias RxSchedulerBlockNoDelay = (Runnable) -> Disposable
