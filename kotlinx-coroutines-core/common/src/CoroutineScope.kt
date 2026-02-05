@@ -12,20 +12,16 @@ import kotlin.coroutines.intrinsics.*
 /**
  * A scope in which coroutines run.
  *
- * A scope defines a group of coroutines with shared execution properties
- * and mutually dependent lifecycles.
+ * The scope allows managing the lifecycles of several coroutines simultaneously
+ * and setting the execution properties with which coroutines (its "children") are launched.
  *
- * The execution properties of coroutines are defined by the [coroutineContext] property of this interface
- * and are inherited by all coroutines launched in this scope.
- * A [CoroutineContext] is a collection of [CoroutineContext.Element] values that may affect the behavior of
- * `kotlinx.coroutines`.
- * For example, the [CoroutineDispatcher] element of the context defines which threads the coroutines will run on,
- * with [Dispatchers.Main] meaning the coroutines will run on the main thread of the application.
+ * Execution properties are defined as [CoroutineContext.Element] values that may affect the behavior of
+ * `kotlinx.coroutines`--for example, which thread pool a coroutine should run on.
  * See a more detailed explanation of the context elements in a separate section below.
  *
- * The lifecycles of coroutines are governed by a set of rules called "structured concurrency",
- * meaning that the lifetimes of child coroutines are strictly inside the lifetime of the scope.
- * If a scope is cancelled, all coroutines in it are cancelled too, and the scope itself
+ * A set of rules called "structured concurrency" ensures that the lifecycles of children
+ * are nested inside the lifecycles of their parent scopes.
+ * For example, a scope is cancelled, all coroutines in it are cancelled too, and the scope itself
  * cannot be completed until all its children are completed.
  * See a more detailed explanation of structured concurrency in a separate section below.
  *
@@ -299,14 +295,14 @@ import kotlin.coroutines.intrinsics.*
  * ```
  *
  * Such a [CoroutineScope] receiver is provided for [launch], [async], and other coroutine builders,
- * as well as for scoping functions like [coroutineScope], [supervisorScope], and [withContext].
+ * as well as for lexically scoping functions like [coroutineScope], [supervisorScope], and [withContext].
  * Each of these [CoroutineScope] instances is tied to the lifecycle of the code block it runs in.
  *
  * Like the example above shows, a coroutine does not complete until all its children are completed.
  * This means that [Job.join] on a [launch] or [async] result or [Deferred.await] on an [async] result
- * will not return until all the children of that coroutine are completed,
- * and scoping functions like [coroutineScope] and [withContext] will not return until all the coroutines
- * launched in them are completed.
+ * will not return until all the children of that coroutine are completed.
+ * Likewise, lexically scoping functions like [coroutineScope] and [withContext] will not return
+ * until all the coroutines launched in them are completed.
  *
  * #### Interactions between coroutines
  *
@@ -331,16 +327,27 @@ import kotlin.coroutines.intrinsics.*
  * job.join() // finishes normally
  * ```
  *
- * If a coroutine fails with a non-[CancellationException] exception,
- * is not a coroutine created with lexically scoped coroutine builders like [coroutineScope] or [withContext],
- * *and* its parent is a normal [Job] (not a [SupervisorJob]),
- * the parent fails with that exception, too (and the same logic applies recursively to the parent of the parent, etc.):
+ * A failure of a child coroutine causes the parent to fail with the same exception if all of the following conditions
+ * are met:
+ * 1. The exception is not a [CancellationException].
+ * 2. The failed child coroutine was not created with lexically scoped coroutine builders
+ *    like [coroutineScope] or [withContext].
+ * 3. The parent coroutine's [Job] is not a [SupervisorJob].
+ *
+ * The same logic applies recursively to the parent of the parent, etc.
+ * Example:
  *
  * ```
  * check(
  *     runCatching {
  *         coroutineScope {
- *             launch { throw IllegalStateException() }
+ *             launch {
+ *                 // This cancels the `coroutineScope` coroutine, since
+ *                 // 1. The coroutine fails with a non-`CancellationException` exception,
+ *                 // 2. `launch` is not a lexically scope coroutine builder,
+ *                 // 3. `coroutineScope` has a non-supervisor `Job`
+ *                 throw IllegalStateException()
+ *             }
  *             launch {
  *                 // this coroutine will be cancelled
  *                 // when the parent gets cancelled
@@ -350,10 +357,8 @@ import kotlin.coroutines.intrinsics.*
  *     }.exceptionOrNull()
  *     is IllegalStateException
  * )
- * // the calling coroutine will *not* be cancelled,
- * // even though the caller is a parent of the failed `coroutineScope`,
- * // because `coroutineScope` is a lexically scoped coroutine builder,
- * // which propagate their exceptions by rethrowing them.
+ * // The currently running coroutine will *not* be cancelled
+ * // because the failed coroutine (`coroutineScope`) is lexically scoped.
  * check(currentCoroutineContext().isActive)
  * ```
  *
@@ -380,7 +385,7 @@ import kotlin.coroutines.intrinsics.*
  *
  * If a non-lexically-scoped coroutine fails with a non-[CancellationException] exception and cannot cancel its parent
  * (because its parent is a [SupervisorJob] or there is none at all),
- * the failure is reported through other channels.
+ * the failure is reported through other means.
  * See [CoroutineExceptionHandler] for details.
  *
  * Failing with a [CancellationException] only cancels the coroutine itself and its children.
