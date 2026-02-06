@@ -36,7 +36,7 @@ class JobHandlersUpgradeStressTest : TestBase() {
     @Test
     fun testStress() {
         println("--- JobHandlersUpgradeStressTest")
-        threads += ConcurrentThread("creator") {
+        threads += MultiplatformThread("creator") {
             while (true) {
                 job = if (done) null else Job()
                 twoPhaseBarrier.await()
@@ -50,7 +50,7 @@ class JobHandlersUpgradeStressTest : TestBase() {
             }
         }
         threads += List(nThreads) { threadId ->
-            ConcurrentThread(name = "handler-$threadId") {
+            MultiplatformThread(name = "handler-$threadId") {
                 while (true) {
                     val onCancelling = Random.nextBoolean()
                     val invokeImmediately: Boolean = Random.nextBoolean()

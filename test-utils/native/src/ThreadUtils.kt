@@ -20,7 +20,7 @@ actual class MultiplatformThread actual constructor(
 
     actual fun start() {
         if (!starting.compareAndSet(false, true)) {
-            throw IllegalStateException("Cannot call start() on a ConcurrentThread which has already started")
+            error("Cannot call start() on a MultiplatformThread which has already started")
         }
         worker = Worker.start(name = name)
         future = worker!!.execute(TransferMode.SAFE, { block }) { it.run() }
