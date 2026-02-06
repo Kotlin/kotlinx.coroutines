@@ -3,7 +3,10 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.testing.*
+import kotlin.collections.toList
 import kotlin.concurrent.atomics.*
 import kotlin.random.*
 import kotlin.test.*
@@ -65,7 +68,8 @@ class SharingStressTest : TestBase() {
         val random = Random(1)
         val emitIndex = AtomicLong(0)
         val cancelledEmits = HashSet<Long>()
-        val missingCollects = SynchronizedSet()
+        val missingCollects = LinkedHashSet<Long>()
+        val missingCollectsMutex = Mutex()
         // at most one copy of upstream can be running at any time
         val isRunning = AtomicInt(0)
         val upstream = flow {
@@ -101,7 +105,7 @@ class SharingStressTest : TestBase() {
                 while (true) {
                     log("Staring $nSubscribers subscribers")
                     repeat(nSubscribers) {
-                        subscribers += launchSubscriber(sharedFlow, usingStateFlow, subCount, missingCollects)
+                        subscribers += launchSubscriber(sharedFlow, usingStateFlow, subCount, missingCollects, missingCollectsMutex)
                     }
                     // wait until they all subscribed
                     subCount.first { it == nSubscribers }
@@ -134,8 +138,8 @@ class SharingStressTest : TestBase() {
         }
         sharingJob.join() // make sure sharing job did not hang
         log("Emitter was cancelled ${cancelledEmits.size} times")
-        log("Collectors missed ${missingCollects.size()} values")
-        val missingCollectsSnapshot = missingCollects.snapshot()
+        val missingCollectsSnapshot = missingCollectsMutex.withLock { missingCollects.toList() }
+        log("Collectors missed ${missingCollectsSnapshot.size} values")
         for (value in missingCollectsSnapshot) {
             assertTrue(value in cancelledEmits, "Value $value is missing for no apparent reason")
         }
@@ -145,7 +149,8 @@ class SharingStressTest : TestBase() {
         sharedFlow: SharedFlow<Long>,
         usingStateFlow: Boolean,
         subCount: MutableStateFlow<Int>,
-        missingCollects: SynchronizedSet
+        missingCollects: LinkedHashSet<Long>,
+        missingCollectsMutex: Mutex
     ): SubJob {
         val subJob = SubJob()
         subJob.job = launch(subscriberDispatcher) {
@@ -171,7 +176,9 @@ class SharingStressTest : TestBase() {
                                 if (j == expected + 1) {
                                     // if missing just one -- could be race with cancelled emit
                                     runBlocking {
-                                        missingCollects.add(expected)
+                                        missingCollectsMutex.withLock {
+                                            missingCollects.add(expected)
+                                        }
                                     }
                                 } else {
                                     // broken otherwise
