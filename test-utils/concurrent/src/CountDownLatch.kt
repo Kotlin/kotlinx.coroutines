@@ -35,7 +35,7 @@ class CountDownLatch(count: Int) {
     }
 }
 
-class MpscStack {
+private class MpscStack {
     // Invariant: node only stores non-null values. Node(null, _) is a sentinel.
     private class Node(val data: ParkingHandle?, var next: Node?)
 
