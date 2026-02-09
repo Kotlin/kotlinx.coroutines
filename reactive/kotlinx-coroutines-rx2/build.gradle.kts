@@ -4,7 +4,7 @@ dependencies {
     api("io.reactivex.rxjava2:rxjava:${version("rxjava2")}")
 }
 
-externalDocumentationLink("http://reactivex.io/RxJava/2.x/javadoc/")
+//externalDocumentationLink("http://reactivex.io/RxJava/2.x/javadoc/")
 
 val testNG by tasks.registering(Test::class) {
     useTestNG()

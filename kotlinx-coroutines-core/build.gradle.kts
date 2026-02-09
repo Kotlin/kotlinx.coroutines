@@ -289,7 +289,7 @@ artifacts {
 
 // Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
 tasks.withType<DokkaBaseTask>() {
-    dependsOn(jvmJar)
+//    dependsOn(jvmJar)
 }
 
 // Specific files so nothing from core is accidentally skipped

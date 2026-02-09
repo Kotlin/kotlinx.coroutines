@@ -31,6 +31,10 @@ buildscript {
     with(CacheRedirector) { buildscript.configureBuildScript(rootProject) }
 }
 
+plugins {
+    id("org.jetbrains.dokka")
+}
+
 // Configure subprojects with Kotlin sources
 apply(plugin = "configure-compilation-conventions")
 
@@ -133,8 +137,8 @@ apply(plugin = "version-file-conventions")
 rootProject.configureCommunityBuildTweaks()
 
 apply(plugin = "source-set-conventions")
-apply(plugin = "dokka-conventions")
-apply(plugin = "knit-conventions")
+//apply(plugin = "dokka-conventions")
+//apply(plugin = "knit-conventions")
 
 /*
  * TODO: core and non-core cannot be configured via 'configure(subprojects)'
@@ -144,13 +148,17 @@ apply(plugin = "knit-conventions")
 configure(subprojects.filter {
     !unpublished.contains(it.name) && it.name != coreModule
 }) {
-    apply(plugin = "pub-conventions")
+//    apply(plugin = "pub-conventions")
 }
 
-AuxBuildConfiguration.configure(rootProject)
-rootProject.registerTopLevelDeployTask()
+//AuxBuildConfiguration.configure(rootProject)
+//rootProject.registerTopLevelDeployTask()
 
 if (isSnapshotTrainEnabled(rootProject)) {
     // Report Kotlin compiler version when building project
     println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
+}
+
+dependencies {
+    dokka(project(":kotlinx-coroutines-core"))
 }

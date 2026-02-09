@@ -61,9 +61,9 @@ tasks.test {
     }
 }
 
-externalDocumentationLink(
-    url = "https://developer.android.com/reference/"
-)
+//externalDocumentationLink(
+//    url = "https://developer.android.com/reference/"
+//)
 /*
  * Task used by our ui/android tests to test minification results and keep track of size of the binary.
  */

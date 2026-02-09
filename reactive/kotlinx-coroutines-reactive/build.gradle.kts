@@ -32,20 +32,20 @@ tasks.check {
     dependsOn(testNG)
 }
 
-externalDocumentationLink(
-    url = "https://www.reactive-streams.org/reactive-streams-$reactiveStreamsVersion-javadoc/"
-)
+//externalDocumentationLink(
+//    url = "https://www.reactive-streams.org/reactive-streams-$reactiveStreamsVersion-javadoc/"
+//)
 
-kover {
-    reports {
-        filters {
-            excludes {
-                classes(
-                    "kotlinx.coroutines.reactive.FlowKt", // Deprecated
-                    "kotlinx.coroutines.reactive.FlowKt__MigrationKt", // Deprecated
-                    "kotlinx.coroutines.reactive.ConvertKt" // Deprecated
-                )
-            }
-        }
-    }
-}
+//kover {
+//    reports {
+//        filters {
+//            excludes {
+//                classes(
+//                    "kotlinx.coroutines.reactive.FlowKt", // Deprecated
+//                    "kotlinx.coroutines.reactive.FlowKt__MigrationKt", // Deprecated
+//                    "kotlinx.coroutines.reactive.ConvertKt" // Deprecated
+//                )
+//            }
+//        }
+//    }
+//}

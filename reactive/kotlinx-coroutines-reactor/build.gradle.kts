@@ -27,20 +27,20 @@ tasks {
 
 // the version of the docs can be different from the version of the Reactor
 // library itself: https://github.com/reactor/reactor-core/issues/3794
-externalDocumentationLink(
-    url = "https://projectreactor.io/docs/core/${version("reactor_docs")}/api/"
-)
-
-
-kover {
-    reports {
-        filters {
-            excludes {
-                classes(
-                    "kotlinx.coroutines.reactor.FlowKt", // Deprecated
-                    "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
-                )
-            }
-        }
-    }
-}
+//externalDocumentationLink(
+//    url = "https://projectreactor.io/docs/core/${version("reactor_docs")}/api/"
+//)
+//
+//
+//kover {
+//    reports {
+//        filters {
+//            excludes {
+//                classes(
+//                    "kotlinx.coroutines.reactor.FlowKt", // Deprecated
+//                    "kotlinx.coroutines.reactor.ConvertKt\$asFlux$1" // Deprecated
+//                )
+//            }
+//        }
+//    }
+//}
