@@ -51,7 +51,7 @@ class JoinStressTest : TestBase() {
         val results = IntArray(2)
 
         repeat(iterations) {
-            val barrier = TwoPhaseBarrier(4)
+            val barrier = Barrier(4)
             val exceptionalJob = async<Unit>(pool + NonCancellable) {
                 barrier.await()
                 throw TestException()
