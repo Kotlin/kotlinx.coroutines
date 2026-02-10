@@ -4,6 +4,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlin.concurrent.atomics.*
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.*
 
 /**
@@ -92,7 +93,7 @@ class JobChildStressTest : TestBase() {
                 launch(pool + deferred) {
                     deferred.complete(Unit) // Transition deferred into "completing" state waiting for current child
                     // **Asynchronously** submit task that launches a child so it races with completion
-                    pool.dispatch(currentCoroutineContext()) {
+                    pool.dispatch(EmptyCoroutineContext) {
                         rogueJob.store(launch(pool + deferred) {
                             throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
                         })
