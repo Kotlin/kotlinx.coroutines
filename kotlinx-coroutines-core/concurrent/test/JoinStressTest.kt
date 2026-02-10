@@ -29,9 +29,9 @@ class JoinStressTest : TestBase() {
                 barrier.await()
                 try {
                     exceptionalJob.await()
-                } catch (e: TestException) {
+                } catch (_: TestException) {
                     0
-                } catch (e: CancellationException) {
+                } catch (_: CancellationException) {
                     1
                 }
             }
