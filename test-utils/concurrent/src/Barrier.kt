@@ -22,9 +22,8 @@ class Barrier(private val parties: Int) {
 
     fun await() {
         val myIndex = count.getAndIncrement()
-        if (myIndex >= parties) {
-            // count could overflow and not enter this if, but it's unlikely and has safeguards down the line
-            error("No more than $parties threads can call await() throughout the lifetime of the barrier($parties).")
+        check(myIndex < parties) {
+            "No more than $parties threads can call await() throughout the lifetime of the barrier($parties)."
         }
         if (myIndex == parties - 1) {
             wakeUpEveryone()
