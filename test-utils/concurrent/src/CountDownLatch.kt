@@ -13,6 +13,7 @@ class CountDownLatch(count: Int) {
 
     fun await() {
         val thread = ParkingSupport.currentThreadHandle()
+        if (c.value <= 0) return
         if (waiters.enqueue(thread)) {
             while (c.value > 0) {
                 ParkingSupport.park(Duration.INFINITE)
@@ -29,13 +30,13 @@ class CountDownLatch(count: Int) {
 
 private class MPSCQueueLatch<E> {
     private val head = atomic(Node<E>(null))
-    private val tail = atomic<Any>(head.value)
+    private val tail = atomic<Node<E>?>(head.value) // if null, then closed
 
     fun enqueue(element: E): Boolean {
         val node = Node(element)
         tail.loop {
-            if (it === finished) return false
-            if ((it as Node<E>).next.compareAndSet(null, node)) {
+            if (it == null) return false
+            if (it.next.compareAndSet(null, node)) {
                 tail.compareAndSet(it, node)
                 return true
             } else {
@@ -51,17 +52,16 @@ private class MPSCQueueLatch<E> {
             action(node.element!!)
             node = node.next.value
         }
+        head.value.next.value = null
     }
 
     private fun close() {
         tail.loop {
-            if (tail.compareAndSet(it, finished)) return
+            if (tail.compareAndSet(it, null)) return
         }
     }
 
     private class Node<E>(var element: E?) {
         val next = atomic<Node<E>?>(null)
     }
-
-    private val finished = Any()
 }
