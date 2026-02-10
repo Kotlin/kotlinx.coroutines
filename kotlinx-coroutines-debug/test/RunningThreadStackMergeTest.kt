@@ -1,5 +1,6 @@
 package kotlinx.coroutines.debug
 
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.internal.*
 import org.junit.Test
@@ -17,7 +18,17 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         launchCoroutine()
         awaitCoroutineStarted()
         verifyDump(
-            "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@50284dc4, state: RUNNING\n" + "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" + "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)\n" + "\tat java.util.concurrent.locks.AbstractQueuedSynchronizer\$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)\n" + "\tat java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:234)\n" + "\tat java.util.concurrent.CyclicBarrier.await(CyclicBarrier.java:362)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.nonSuspendingFun(RunningThreadStackMergeTest.kt:86)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.access\$nonSuspendingFun(RunningThreadStackMergeTest.kt:12)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$suspendingFunction\$2.invokeSuspend(RunningThreadStackMergeTest.kt:77)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.suspendingFunction(RunningThreadStackMergeTest.kt:75)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$launchCoroutine\$1.invokeSuspend(RunningThreadStackMergeTest.kt:68)",
+            "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@50284dc4, state: RUNNING\n" +
+                "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" +
+                "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)\n" +
+                "\tat java.util.concurrent.locks.AbstractQueuedSynchronizer\$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)\n" +
+                "\tat java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:234)\n" +
+                "\tat java.util.concurrent.CyclicBarrier.await(CyclicBarrier.java:362)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.nonSuspendingFun(RunningThreadStackMergeTest.kt:86)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.access\$nonSuspendingFun(RunningThreadStackMergeTest.kt:12)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$suspendingFunction\$2.invokeSuspend(RunningThreadStackMergeTest.kt:77)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.suspendingFunction(RunningThreadStackMergeTest.kt:75)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$launchCoroutine\$1.invokeSuspend(RunningThreadStackMergeTest.kt:68)",
             ignoredCoroutine = "BlockingCoroutine"
         ) {
             coroutineBlocker.await()
@@ -63,7 +74,17 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         launchEscapingCoroutine()
         awaitCoroutineStarted()
         verifyDump(
-            "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@3aea3c67, state: RUNNING\n" + "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" + "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)\n" + "\tat java.util.concurrent.locks.AbstractQueuedSynchronizer\$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)\n" + "\tat java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:234)\n" + "\tat java.util.concurrent.CyclicBarrier.await(CyclicBarrier.java:362)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.nonSuspendingFun(RunningThreadStackMergeTest.kt:83)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.access\$nonSuspendingFun(RunningThreadStackMergeTest.kt:12)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$suspendingFunctionWithContext\$2.invokeSuspend(RunningThreadStackMergeTest.kt:124)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.suspendingFunctionWithContext(RunningThreadStackMergeTest.kt:122)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$launchEscapingCoroutine\$1.invokeSuspend(RunningThreadStackMergeTest.kt:116)",
+            "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@3aea3c67, state: RUNNING\n" +
+                "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" +
+                "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)\n" +
+                "\tat java.util.concurrent.locks.AbstractQueuedSynchronizer\$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)\n" +
+                "\tat java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:234)\n" +
+                "\tat java.util.concurrent.CyclicBarrier.await(CyclicBarrier.java:362)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.nonSuspendingFun(RunningThreadStackMergeTest.kt:83)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.access\$nonSuspendingFun(RunningThreadStackMergeTest.kt:12)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$suspendingFunctionWithContext\$2.invokeSuspend(RunningThreadStackMergeTest.kt:124)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.suspendingFunctionWithContext(RunningThreadStackMergeTest.kt:122)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$launchEscapingCoroutine\$1.invokeSuspend(RunningThreadStackMergeTest.kt:116)",
             ignoredCoroutine = "BlockingCoroutine"
         ) {
             coroutineBlocker.await()
@@ -91,7 +112,15 @@ class RunningThreadStackMergeTest : DebugTestBase() {
         launchEscapingCoroutineWithoutContext()
         awaitCoroutineStarted()
         verifyDump(
-            "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@3aea3c67, state: RUNNING\n" + "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" + "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)\n" + "\tat java.util.concurrent.locks.AbstractQueuedSynchronizer\$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)\n" + "\tat java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:234)\n" + "\tat java.util.concurrent.CyclicBarrier.await(CyclicBarrier.java:362)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.nonSuspendingFun(RunningThreadStackMergeTest.kt:83)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.suspendingFunctionWithoutContext(RunningThreadStackMergeTest.kt:160)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$launchEscapingCoroutineWithoutContext\$1.invokeSuspend(RunningThreadStackMergeTest.kt:153)",
+            "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@3aea3c67, state: RUNNING\n" +
+                "\tat jdk.internal.misc.Unsafe.park(Native Method)\n" +
+                "\tat java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)\n" +
+                "\tat java.util.concurrent.locks.AbstractQueuedSynchronizer\$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)\n" +
+                "\tat java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:234)\n" +
+                "\tat java.util.concurrent.CyclicBarrier.await(CyclicBarrier.java:362)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.nonSuspendingFun(RunningThreadStackMergeTest.kt:83)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest.suspendingFunctionWithoutContext(RunningThreadStackMergeTest.kt:160)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$launchEscapingCoroutineWithoutContext\$1.invokeSuspend(RunningThreadStackMergeTest.kt:153)",
             ignoredCoroutine = "BlockingCoroutine"
         ) {
             coroutineBlocker.await()
@@ -114,7 +143,15 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     @Test
     fun testRunBlocking() = runBlocking {
         verifyDump(
-            "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@4bcd176c, state: RUNNING\n" + "\tat java.lang.Thread.getStackTrace(Thread.java)\n" + "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.enhanceStackTraceWithThreadDumpImpl(DebugProbesImpl.kt)\n" + "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutinesSynchronized(DebugProbesImpl.kt)\n" + "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutines(DebugProbesImpl.kt)\n" + "\tat kotlinx.coroutines.debug.DebugProbes.dumpCoroutines(DebugProbes.kt)\n" + "\tat kotlinx.coroutines.debug.StacktraceUtilsKt.verifyDump(StacktraceUtils.kt)\n" + "\tat kotlinx.coroutines.debug.StacktraceUtilsKt.verifyDump\$default(StacktraceUtils.kt)\n" + "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$testRunBlocking\$1.invokeSuspend(RunningThreadStackMergeTest.kt)"
+            "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@4bcd176c, state: RUNNING\n" +
+                "\tat java.lang.Thread.getStackTrace(Thread.java)\n" +
+                "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.enhanceStackTraceWithThreadDumpImpl(DebugProbesImpl.kt)\n" +
+                "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutinesSynchronized(DebugProbesImpl.kt)\n" +
+                "\tat kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutines(DebugProbesImpl.kt)\n" +
+                "\tat kotlinx.coroutines.debug.DebugProbes.dumpCoroutines(DebugProbes.kt)\n" +
+                "\tat kotlinx.coroutines.debug.StacktraceUtilsKt.verifyDump(StacktraceUtils.kt)\n" +
+                "\tat kotlinx.coroutines.debug.StacktraceUtilsKt.verifyDump\$default(StacktraceUtils.kt)\n" +
+                "\tat kotlinx.coroutines.debug.RunningThreadStackMergeTest\$testRunBlocking\$1.invokeSuspend(RunningThreadStackMergeTest.kt)"
         )
     }
 
