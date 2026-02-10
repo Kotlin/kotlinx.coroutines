@@ -9,53 +9,59 @@ import kotlin.time.*
 
 class CountDownLatch(count: Int) {
     private val c = atomic(count)
-    private val waiters = MSQueueLatch<ParkingHandle>()
+    private val waiters = MPSCQueueLatch<ParkingHandle>()
 
     fun await() {
         val thread = ParkingSupport.currentThreadHandle()
-        waiters.enqueue(thread)
-        while (c.value > 0) ParkingSupport.park(Duration.INFINITE)
+        if (waiters.enqueue(thread)) {
+            while (c.value > 0) {
+                ParkingSupport.park(Duration.INFINITE)
+            }
+        }
     }
 
     fun countDown() {
         val myIndex = c.decrementAndGet()
         if (myIndex != 0) return
-        while (true) {
-            val thread = waiters.dequeue()
-            if (thread == null) return
-            ParkingSupport.unpark(thread)
-        }
+        waiters.drain { ParkingSupport.unpark(it) }
     }
 }
 
-private class MSQueueLatch<E> {
+private class MPSCQueueLatch<E> {
     private val head = atomic(Node<E>(null))
-    private val tail = atomic(head.value)
+    private val tail = atomic<Any>(head.value)
 
-    fun enqueue(element: E) {
-        while (true) {
-            val node = Node(element)
-            val curTail = tail.value
-            if (curTail.next.compareAndSet(null, node)) {
-                tail.compareAndSet(curTail, node)
-                return
-            } else tail.compareAndSet(curTail, curTail.next.value!!)
+    fun enqueue(element: E): Boolean {
+        val node = Node(element)
+        tail.loop {
+            if (it === finished) return false
+            if ((it as Node<E>).next.compareAndSet(null, node)) {
+                tail.compareAndSet(it, node)
+                return true
+            } else {
+                tail.compareAndSet(it, it.next.value!!)
+            }
         }
     }
 
-    fun dequeue(): E? {
-        while (true) {
-            val currentHead = head.value
-            val currentHeadNext = currentHead.next.value ?: return null
-            if (head.compareAndSet(currentHead, currentHeadNext)) {
-                val element = currentHeadNext.element
-                currentHeadNext.element = null
-                return element
-            }
+    fun drain(action: (E) -> Unit) {
+        close()
+        var node = head.value.next.value
+        while (node != null) {
+            action(node.element!!)
+            node = node.next.value
+        }
+    }
+
+    private fun close() {
+        tail.loop {
+            if (tail.compareAndSet(it, finished)) return
         }
     }
 
     private class Node<E>(var element: E?) {
         val next = atomic<Node<E>?>(null)
     }
+
+    private val finished = Any()
 }
