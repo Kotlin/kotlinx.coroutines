@@ -22,12 +22,11 @@ class TwoPhaseBarrier(private val parties: Int) {
         if (n % parties == 0L) {
             var wokenUp = 0
             while (wokenUp < parties - 1) {
-                val deq = queue.dequeue() ?: error("CyclicBarrier await failed to dequeue")
-                if (deq.first % parties == 0L) continue
-                if (deq.second.woken.compareAndSet(false, true)) {
-                    ParkingSupport.unpark(deq.second.handle)
-                    wokenUp++
-                }
+                val wrapper = queue.dequeue() ?: error("CyclicBarrier await failed to dequeue")
+                val awoken = wrapper.woken.compareAndSet(false, true)
+                check(awoken)
+                ParkingSupport.unpark(wrapper.handle)
+                wokenUp++
             }
         } else {
             while (!wrapper.woken.value) {
@@ -58,15 +57,14 @@ private class MSQueueCyclicBarrier<E> {
         }
     }
 
-    fun dequeue(): Pair<Long, E>? {
+    fun dequeue(): E? {
         while (true) {
             val currentHead = head.value
             val currentHeadNext = currentHead.next.value ?: return null
             if (head.compareAndSet(currentHead, currentHeadNext)) {
                 val element = currentHeadNext.element
                 currentHeadNext.element = null
-                val id = currentHeadNext.id
-                return element?.let { Pair(id, it) }
+                return element
             }
         }
     }
