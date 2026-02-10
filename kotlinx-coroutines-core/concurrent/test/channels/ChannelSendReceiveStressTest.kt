@@ -123,9 +123,7 @@ abstract class ChannelSendReceiveStressTest(
     private val nSenders: Int,
     private val nReceivers: Int
 ) : TestBase() {
-    // ChannelSendReceiveStressTestBUFFERED 1x10x10 and 2x10x10 need more time on Windows (mingwX64 worker with new MM)
-    private val timeLimit = 30_000L * stressTestMultiplier * // 30 sec
-        (if (this is ChannelSendReceiveStressTestBUFFERED2x10x10 || this is ChannelSendReceiveStressTestBUFFERED1x10x10) 10 else 1) // 6 min
+    private val timeLimit = 30_000L * stressTestMultiplier * 10 // 6 min
     private val nEvents = 200_000 * stressTestMultiplier
 
     private val maxBuffer = 10_000 // artificial limit for unlimited channel
