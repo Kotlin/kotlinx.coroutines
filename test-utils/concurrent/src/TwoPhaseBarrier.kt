@@ -1,9 +1,9 @@
-@file:OptIn(ExperimentalThreadBlockingApi::class, ExperimentalAtomicApi::class)
+@file:OptIn(ExperimentalThreadBlockingApi::class)
 
 package kotlinx.coroutines.testing
 
 import kotlinx.atomicfu.locks.*
-import kotlin.concurrent.atomics.*
+import kotlinx.atomicfu.*
 import kotlin.time.*
 
 // Adapted from kotlinx-atomicfu
@@ -15,8 +15,6 @@ class TwoPhaseBarrier(private val parties: Int) {
     }
 
     private val queue = MSQueueCyclicBarrier<HandleWrapper>()
-    val numberWaiting: Long get() = queue.counterValue
-
 
     fun await() {
         val wrapper = HandleWrapper(ParkingSupport.currentThreadHandle())
@@ -32,61 +30,48 @@ class TwoPhaseBarrier(private val parties: Int) {
                 }
             }
         } else {
-            while (!wrapper.woken.load()) {
+            while (!wrapper.woken.value) {
                 ParkingSupport.park(Duration.INFINITE)
-                if (wrapper.reset.load()) {
-                    throw Exception("reset was called while this thread was still awaiting")
-                }
             }
         }
-    }
-
-    fun reset() {
-
     }
 }
 
 
 private class HandleWrapper(val handle: ParkingHandle) {
-    val woken = AtomicBoolean(false)
-    val reset = AtomicBoolean(false)
+    val woken = atomic(false)
 }
 
 
 private class MSQueueCyclicBarrier<E> {
-    private val head = AtomicReference(Node<E>(null, 0))
-    private val tail = AtomicReference<Node<E>>(head.load())
-    private val counter = AtomicLong(0L)
-    val counterValue: Long
-        get() = counter.load()
+    private val head = atomic(Node<E>(null, 0))
+    private val tail = atomic<Node<E>>(head.value)
 
     fun enqueue(element: E): Long {
         while (true) {
-            val curTail = tail.load()
+            val curTail = tail.value
             val node = Node(element, curTail.id + 1)
             if (curTail.next.compareAndSet(null, node)) {
                 tail.compareAndSet(curTail, node)
-                counter.incrementAndFetch()
                 return node.id
-            } else tail.compareAndSet(curTail, curTail.next.load()!!)
+            } else tail.compareAndSet(curTail, curTail.next.value!!)
         }
     }
 
     fun dequeue(): Pair<Long, E>? {
         while (true) {
-            val currentHead = head.load()
-            val currentHeadNext = currentHead.next.load() ?: return null
+            val currentHead = head.value
+            val currentHeadNext = currentHead.next.value ?: return null
             if (head.compareAndSet(currentHead, currentHeadNext)) {
                 val element = currentHeadNext.element
                 currentHeadNext.element = null
                 val id = currentHeadNext.id
-                counter.decrementAndFetch()
                 return element?.let { Pair(id, it) }
             }
         }
     }
 
     private class Node<E>(var element: E?, val id: Long) {
-        val next = AtomicReference<Node<E>?>(null)
+        val next = atomic<Node<E>?>(null)
     }
 }

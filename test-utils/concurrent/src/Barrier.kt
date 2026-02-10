@@ -19,7 +19,6 @@ class Barrier(private val parties: Int) {
 
     private val count = atomic(0)
     private val waiters = atomicArrayOfNulls<Any?>(parties - 1)
-    val numberWaiting: Int get() = count.value.coerceAtMost(parties)
 
     fun await() {
         val myIndex = count.getAndIncrement()
@@ -39,7 +38,7 @@ class Barrier(private val parties: Int) {
                 waiter === null -> waiters[myIndex].compareAndSet(waiter, currentThread)
                 waiter is ParkingHandle -> ParkingSupport.park(Duration.INFINITE)
                 waiter === FINISHED -> return
-                else -> error("Unexpected waiter: $waiter")
+                else -> error("Unreachable")
             }
         }
     }
