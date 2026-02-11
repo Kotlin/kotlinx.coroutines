@@ -1,10 +1,12 @@
-@file:OptIn(ExperimentalThreadBlockingApi::class)
+@file:OptIn(ExperimentalThreadBlockingApi::class, ExperimentalAtomicApi::class)
 
 package kotlinx.coroutines.testing
 
 import kotlinx.atomicfu.locks.*
 import kotlinx.atomicfu.*
 import kotlin.time.*
+import kotlin.concurrent.atomics.*
+import kotlin.concurrent.atomics.AtomicBoolean
 
 // Adapted from kotlinx-atomicfu
 // https://github.com/Kotlin/kotlinx-atomicfu/blob/d09c2b07cd16b0b273bd94edaa4929acd2ec42bc/atomicfu/src/concurrentTest/kotlin/kotlinx/atomicfu/locks/CyclicBarrierTest.kt#L59
@@ -30,7 +32,7 @@ class TwoPhaseBarrier(private val parties: Int) {
                 wokenUp++
             }
         } else {
-            while (!wrapper.woken.value) {
+            while (!wrapper.woken.load()) {
                 ParkingSupport.park(Duration.INFINITE)
             }
         }
@@ -39,7 +41,7 @@ class TwoPhaseBarrier(private val parties: Int) {
 
 
 private class HandleWrapper(val handle: ParkingHandle) {
-    val woken = atomic(false)
+    val woken = AtomicBoolean(false)
 }
 
 
