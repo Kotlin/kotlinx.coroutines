@@ -21,8 +21,9 @@ class TwoPhaseBarrier(private val parties: Int) {
         val n = queue.enqueue(wrapper)
         if (n % parties == 0L) {
             var wokenUp = 0
-            while (wokenUp < parties - 1) {
+            while (true) {
                 val wrapper = queue.dequeue() ?: error("CyclicBarrier await failed to dequeue")
+                if (wokenUp == parties - 1) break // the current thread was dequeued above, it's already awake
                 val awoken = wrapper.woken.compareAndSet(false, true)
                 check(awoken)
                 ParkingSupport.unpark(wrapper.handle)
