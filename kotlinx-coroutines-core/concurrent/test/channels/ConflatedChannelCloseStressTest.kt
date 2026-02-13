@@ -1,9 +1,11 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
-import java.util.concurrent.atomic.*
+import kotlinx.coroutines.testing.*
+import kotlin.concurrent.atomics.*
+import kotlin.test.*
 
 class ConflatedChannelCloseStressTest : TestBase() {
 
@@ -11,13 +13,13 @@ class ConflatedChannelCloseStressTest : TestBase() {
     private val testSeconds = 3 * stressTestMultiplier
 
     private val curChannel = AtomicReference<Channel<Int>>(Channel(Channel.CONFLATED))
-    private val sent = AtomicInteger()
-    private val closed = AtomicInteger()
-    val received = AtomicInteger()
+    private val sent = AtomicInt(0)
+    private val closed = AtomicInt(0)
+    val received = AtomicInt(0)
 
     val pool = newFixedThreadPoolContext(nSenders + 2, "TestStressClose")
 
-    @After
+    @AfterTest
     fun tearDown() {
         pool.close()
     }
@@ -31,9 +33,9 @@ class ConflatedChannelCloseStressTest : TestBase() {
                 var x = senderId
                 try {
                     while (isActive) {
-                        curChannel.get().trySend(x).onSuccess {
+                        curChannel.load().trySend(x).onSuccess {
                             x += nSenders
-                            sent.incrementAndGet()
+                            sent.incrementAndFetch()
                         }
                     }
                 } finally {
@@ -46,7 +48,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
             try {
                 while (isActive) {
                     flipChannel()
-                    closed.incrementAndGet()
+                    closed.incrementAndFetch()
                     yield()
                 }
             } finally {
@@ -55,10 +57,10 @@ class ConflatedChannelCloseStressTest : TestBase() {
         }
         val receiver = async(pool + NonCancellable) {
             while (isActive) {
-                curChannel.get().receiveCatching().getOrElse {
+                curChannel.load().receiveCatching().getOrElse {
                     it?.let { throw it }
                 }
-                received.incrementAndGet()
+                received.incrementAndFetch()
             }
         }
         // print stats while running
@@ -71,19 +73,19 @@ class ConflatedChannelCloseStressTest : TestBase() {
         closer.cancel()
         // wait them to complete
         println("waiting for senders...")
-        senderJobs.forEach { it.join() }
+        senderJobs.joinAll()
         println("waiting for closer...")
         closerJob.join()
         // close cur channel
         println("Closing channel and signalling receiver...")
         flipChannel()
-        curChannel.get().close(StopException())
+        curChannel.load().close(StopException())
         /// wait for receiver do complete
         println("Waiting for receiver...")
         try {
             receiver.await()
             error("Receiver should not complete normally")
-        } catch (e: StopException) {
+        } catch (_: StopException) {
             // ok
         }
         // print stats
@@ -92,14 +94,14 @@ class ConflatedChannelCloseStressTest : TestBase() {
     }
 
     private fun flipChannel() {
-        val oldChannel = curChannel.get()
+        val oldChannel = curChannel.load()
         val newChannel = Channel<Int>(Channel.CONFLATED)
-        curChannel.set(newChannel)
+        curChannel.store(newChannel)
         check(oldChannel.close())
     }
 
     private fun printStats() {
-        println("sent ${sent.get()}, closed ${closed.get()}, received ${received.get()}")
+        println("sent ${sent.load()}, closed ${closed.load()}, received ${received.load()}")
     }
 
     class StopException : Exception()

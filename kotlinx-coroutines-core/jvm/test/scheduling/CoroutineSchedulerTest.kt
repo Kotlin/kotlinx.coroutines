@@ -1,9 +1,9 @@
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.testing.CountDownLatch
 import org.junit.Test
 import java.lang.Runnable
-import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 

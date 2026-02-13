@@ -3,10 +3,8 @@ package kotlinx.coroutines.exceptions
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.testing.exceptions.*
 import org.junit.Test
-import java.lang.RuntimeException
 import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*

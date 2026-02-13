@@ -1,7 +1,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
-import org.junit.*
+import kotlin.test.*
 
 class CancelledAwaitStressTest : TestBase() {
     private val n = 1000 * stressTestMultiplier

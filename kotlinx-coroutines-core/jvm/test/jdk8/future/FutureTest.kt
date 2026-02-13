@@ -7,6 +7,7 @@ import org.junit.*
 import org.junit.Test
 import java.lang.IllegalArgumentException
 import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
 import java.util.function.*
@@ -468,7 +469,7 @@ class FutureTest : TestBase() {
         fSlow.checkFutureException<TestException>() // now wait until it completes
     }
 
-    private inline fun <reified T: Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
+    private inline fun <reified T : Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!
         assertIs<T>(cause)
@@ -592,7 +593,7 @@ class FutureTest : TestBase() {
     @Test
     fun testFailsIfLazy() {
         assertFailsWith<IllegalArgumentException> {
-            GlobalScope.future<Unit>(start = CoroutineStart.LAZY) {  }
+            GlobalScope.future<Unit>(start = CoroutineStart.LAZY) { }
         }
     }
 

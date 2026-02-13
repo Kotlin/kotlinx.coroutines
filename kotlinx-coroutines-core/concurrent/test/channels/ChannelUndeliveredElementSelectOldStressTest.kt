@@ -1,32 +1,39 @@
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.testing.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.*
-import org.junit.runners.*
-import kotlin.random.Random
+import kotlinx.coroutines.testing.*
+import kotlin.concurrent.*
+import kotlin.random.*
 import kotlin.test.*
+import kotlin.time.*
+import kotlin.time.Duration.Companion.milliseconds
+
+class ChannelUndeliveredElementSelectOldStressTestRENDEZVOUS :
+    ChannelUndeliveredElementSelectOldStressTest(TestChannelKind.RENDEZVOUS)
+
+class ChannelUndeliveredElementSelectOldStressTestBUFFERED1 :
+    ChannelUndeliveredElementSelectOldStressTest(TestChannelKind.BUFFERED_1)
+
+class ChannelUndeliveredElementSelectOldStressTestBUFFERED2 :
+    ChannelUndeliveredElementSelectOldStressTest(TestChannelKind.BUFFERED_2)
+
+class ChannelUndeliveredElementSelectOldStressTestBUFFERED10 :
+    ChannelUndeliveredElementSelectOldStressTest(TestChannelKind.BUFFERED_10)
+
+class ChannelUndeliveredElementSelectOldStressTestUNLIMITED :
+    ChannelUndeliveredElementSelectOldStressTest(TestChannelKind.UNLIMITED)
+
+class ChannelUndeliveredElementSelectOldStressTestCONFLATED :
+    ChannelUndeliveredElementSelectOldStressTest(TestChannelKind.CONFLATED)
 
 /**
- * Tests resource transfer via channel send & receive operations, including their select versions,
+ * Tests resource transfer via channel send and receive operations, including their select versions,
  * using `onUndeliveredElement` to detect lost resources and close them properly.
  */
-@RunWith(Parameterized::class)
-class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannelKind) : TestBase() {
-    companion object {
-        @Parameterized.Parameters(name = "{0}")
-        @JvmStatic
-        fun params(): Collection<Array<Any>> =
-            TestChannelKind.values()
-                .filter { !it.viaBroadcast }
-                .map { arrayOf<Any>(it) }
-    }
-
-    private val iterationDurationMs = 100L
+abstract class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannelKind) : TestBase() {
+    private val iterationDuration = 100.milliseconds
     private val testIterations = 20 * stressTestMultiplier // 2 sec
 
     private val dispatcher = newFixedThreadPoolContext(2, "ChannelAtomicCancelStressTest")
@@ -56,7 +63,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
     lateinit var sender: Job
     lateinit var receiver: Job
 
-    @After
+    @AfterTest
     fun tearDown() {
         dispatcher.close()
     }
@@ -65,21 +72,20 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
         try {
             block()
         } finally {
-            if (!done.trySend(true).isSuccess)
-                error(IllegalStateException("failed to offer to done channel"))
+            if (!done.trySend(true).isSuccess) error(IllegalStateException("failed to offer to done channel"))
         }
     }
 
     @Test
     fun testAtomicCancelStress() = runBlocking {
         println("=== ChannelAtomicCancelStressTest $kind")
-        var nextIterationTime = System.currentTimeMillis() + iterationDurationMs
+        var nextIterationTime = TimeSource.Monotonic.markNow().plus(iterationDuration)
         var iteration = 0
         launchSender()
         launchReceiver()
         while (!hasError()) {
-            if (System.currentTimeMillis() >= nextIterationTime) {
-                nextIterationTime += iterationDurationMs
+            if (TimeSource.Monotonic.markNow() >= nextIterationTime) {
+                nextIterationTime += iterationDuration
                 iteration++
                 verify(iteration)
                 if (iteration % 10 == 0) printProgressSummary(iteration)
@@ -92,10 +98,12 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
                     stopSender()
                     launchSender()
                 }
+
                 1 -> { // cancel & restart receiver
                     stopReceiver()
                     launchReceiver()
                 }
+
                 2 -> yield() // just yield (burn a little time)
             }
         }
@@ -153,7 +161,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
                 while (true) {
                     val trySendData = Data(sentCnt++)
                     sentStatus[trySendData.x] = 1
-                    selectOld<Unit> { channel.onSend(trySendData) {} }
+                    selectOld { channel.onSend(trySendData) {} }
                     sentStatus[trySendData.x] = 3
                     when {
                         // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
@@ -176,13 +184,14 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
         receiver = scope.launch(start = CoroutineStart.ATOMIC) {
             cancellable(receiverDone) {
                 while (true) {
-                   selectOld<Unit> {
+                    selectOld {
                         channel.onReceive { receivedData ->
                             receivedData.onReceived()
                             receivedCnt++
                             val received = receivedData.x
-                            if (received <= lastReceived)
+                            if (received <= lastReceived) {
                                 dupCnt++
+                            }
                             lastReceived = received
                             receivedStatus[received] = 1
                         }
@@ -193,7 +202,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
     }
 
     private suspend fun drainReceiver() {
-        while (!channel.isEmpty) yield() // burn time until receiver gets it all
+        while (!channel.isEmpty) yield() // burn time until the receiver gets it all
     }
 
     private suspend fun stopReceiver() {
@@ -212,13 +221,19 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
                 failedStatus[x] = 1
                 return
             }
-            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
+            throw IllegalStateException(
+                "onUndeliveredElement()/onReceived() notified twice",
+                firstFailedToDeliverOrReceivedCallTrace.value!!
+            )
         }
 
         fun onReceived() {
             val trace = if (TRACING_ENABLED) Exception("First onReceived() call") else DUMMY_TRACE_EXCEPTION
             if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) return
-            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
+            throw IllegalStateException(
+                "onUndeliveredElement()/onReceived() notified twice",
+                firstFailedToDeliverOrReceivedCallTrace.value!!
+            )
         }
     }
 
@@ -248,4 +263,5 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
 }
 
 private const val TRACING_ENABLED = false // Change to `true` to enable the tracing
-private val DUMMY_TRACE_EXCEPTION = Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")
+private val DUMMY_TRACE_EXCEPTION =
+    Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")

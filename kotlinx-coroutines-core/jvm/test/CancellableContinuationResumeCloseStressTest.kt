@@ -1,7 +1,7 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.testing.*
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.testing.*
 import org.junit.*
 import java.util.concurrent.*
 import kotlin.test.*

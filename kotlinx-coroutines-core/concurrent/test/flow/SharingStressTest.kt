@@ -1,26 +1,30 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Test
-import java.util.*
-import java.util.concurrent.atomic.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.testing.*
+import kotlin.collections.toList
+import kotlin.concurrent.atomics.*
 import kotlin.random.*
 import kotlin.test.*
 import kotlin.time.*
-import kotlin.time.TimeSource
 
 class SharingStressTest : TestBase() {
     private val testDuration = 1000L * stressTestMultiplier
     private val nSubscribers = 5
     private val testStarted = TimeSource.Monotonic.markNow()
 
-    @get:Rule
-    val emitterDispatcher = ExecutorRule(1)
-    
-    @get:Rule
-    val subscriberDispatcher = ExecutorRule(nSubscribers)
+    val emitterDispatcher = newSingleThreadContext("Emitter")
+
+    val subscriberDispatcher = newFixedThreadPoolContext(nSubscribers, "Subscribers")
+
+    @AfterTest
+    fun tearDown() {
+        subscriberDispatcher.close()
+        emitterDispatcher.close()
+    }
 
     @Test
     fun testNoReplayLazy() =
@@ -39,7 +43,7 @@ class SharingStressTest : TestBase() {
         testStress(100, started = SharingStarted.WhileSubscribed())
 
     @Test
-    fun testReplay100WhileSubscribedReset() =                             
+    fun testReplay100WhileSubscribedReset() =
         testStress(100, started = SharingStarted.WhileSubscribed(replayExpirationMillis = 0L))
 
     @Test
@@ -61,16 +65,17 @@ class SharingStressTest : TestBase() {
     private fun testStress(replay: Int, started: SharingStarted) = runTest {
         log("-- Stress with replay=$replay, started=$started")
         val random = Random(1)
-        val emitIndex = AtomicLong()
+        val emitIndex = AtomicLong(0)
         val cancelledEmits = HashSet<Long>()
-        val missingCollects = Collections.synchronizedSet(LinkedHashSet<Long>())
+        val missingCollects = LinkedHashSet<Long>()
+        val missingCollectsObject = SynchronizedObject()
         // at most one copy of upstream can be running at any time
-        val isRunning = AtomicInteger(0)
+        val isRunning = AtomicInt(0)
         val upstream = flow {
-            assertEquals(0, isRunning.getAndIncrement())
+            assertEquals(0, isRunning.fetchAndIncrement())
             try {
                 while (true) {
-                    val value = emitIndex.getAndIncrement()
+                    val value = emitIndex.fetchAndIncrement()
                     try {
                         emit(value)
                     } catch (e: CancellationException) {
@@ -80,17 +85,18 @@ class SharingStressTest : TestBase() {
                     }
                 }
             } finally {
-                assertEquals(1, isRunning.getAndDecrement())
+                assertEquals(1, isRunning.fetchAndDecrement())
             }
         }
         val subCount = MutableStateFlow(0)
         val sharingJob = Job()
         val sharingScope = this + emitterDispatcher + sharingJob
         val usingStateFlow = replay == 1
-        val sharedFlow = if (usingStateFlow)
+        val sharedFlow = if (usingStateFlow) {
             upstream.stateIn(sharingScope, started, 0L)
-        else
+        } else {
             upstream.shareIn(sharingScope, started, replay)
+        }
         try {
             val subscribers = ArrayList<SubJob>()
             withTimeoutOrNull(testDuration) {
@@ -98,20 +104,20 @@ class SharingStressTest : TestBase() {
                 while (true) {
                     log("Staring $nSubscribers subscribers")
                     repeat(nSubscribers) {
-                        subscribers += launchSubscriber(sharedFlow, usingStateFlow, subCount, missingCollects)
+                        subscribers += launchSubscriber(sharedFlow, usingStateFlow, subCount, missingCollects, missingCollectsObject)
                     }
                     // wait until they all subscribed
                     subCount.first { it == nSubscribers }
                     // let them work a bit more & make sure emitter did not hang
-                    val fromEmitIndex = emitIndex.get()
+                    val fromEmitIndex = emitIndex.load()
                     val waitEmitIndex = fromEmitIndex + 100 // wait until 100 emitted
                     withTimeout(10000) { // wait for at most 10s for something to be emitted
                         do {
                             delay(random.nextLong(50L..100L))
-                        } while (emitIndex.get() < waitEmitIndex)  // Ok, enough was emitted, wait more if not
+                        } while (emitIndex.load() < waitEmitIndex)  // Ok, enough was emitted, wait more if not
                     }
                     // Stop all subscribers and ensure they collected something
-                    log("Stopping subscribers (emitted = ${emitIndex.get() - fromEmitIndex})")
+                    log("Stopping subscribers (emitted = ${emitIndex.load() - fromEmitIndex})")
                     subscribers.forEach {
                         it.job.cancelAndJoin()
                         assertTrue { it.count > 0 } // something must be collected too
@@ -131,8 +137,9 @@ class SharingStressTest : TestBase() {
         }
         sharingJob.join() // make sure sharing job did not hang
         log("Emitter was cancelled ${cancelledEmits.size} times")
-        log("Collectors missed ${missingCollects.size} values")
-        for (value in missingCollects) {
+        val missingCollectsSnapshot = synchronized(missingCollectsObject) { missingCollects.toList() }
+        log("Collectors missed ${missingCollectsSnapshot.size} values")
+        for (value in missingCollectsSnapshot) {
             assertTrue(value in cancelledEmits, "Value $value is missing for no apparent reason")
         }
     }
@@ -141,7 +148,8 @@ class SharingStressTest : TestBase() {
         sharedFlow: SharedFlow<Long>,
         usingStateFlow: Boolean,
         subCount: MutableStateFlow<Int>,
-        missingCollects: MutableSet<Long>
+        missingCollects: LinkedHashSet<Long>,
+        missingCollectsObject: SynchronizedObject
     ): SubJob {
         val subJob = SubJob()
         subJob.job = launch(subscriberDispatcher) {
@@ -166,7 +174,9 @@ class SharingStressTest : TestBase() {
                             if (expected != j) {
                                 if (j == expected + 1) {
                                     // if missing just one -- could be race with cancelled emit
-                                    missingCollects.add(expected)
+                                    synchronized(missingCollectsObject) {
+                                        missingCollects.add(expected)
+                                    }
                                 } else {
                                     // broken otherwise
                                     assertEquals(expected, j)
