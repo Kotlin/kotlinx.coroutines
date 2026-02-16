@@ -59,6 +59,28 @@ class PromiseTestWeb : TestBase() {
     }
 
     @Test
+    fun testCompletedDeferredAsPromiseString() = GlobalScope.promise {
+        val deferred = async(start = CoroutineStart.UNDISPATCHED) {
+            // completed right away
+            "OK".toJsString()
+        }
+        val promise = deferred.asPromise()
+        assertEquals("OK", promise.await().toString())
+        null
+    }
+
+    @Test
+    fun testWaitForDeferredAsPromiseString() = GlobalScope.promise {
+        val deferred = async {
+            // will complete later
+            "OK".toJsString()
+        }
+        val promise = deferred.asPromise()
+        assertEquals("OK", promise.await().toString()) // await yields main thread to deferred coroutine
+        null
+    }
+
+    @Test
     fun testCancellableAwaitPromise() = GlobalScope.promise {
         lateinit var r: (JsAny) -> Unit
         val toAwait = Promise<JsAny?> { resolve, _ -> r = resolve }
