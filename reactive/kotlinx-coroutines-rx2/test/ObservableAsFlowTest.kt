@@ -1,14 +1,12 @@
 package kotlinx.coroutines.rx2
 
-import kotlinx.coroutines.testing.*
-import io.reactivex.Observable
-import io.reactivex.ObservableSource
-import io.reactivex.Observer
-import io.reactivex.disposables.Disposables
-import io.reactivex.subjects.PublishSubject
+import io.reactivex.*
+import io.reactivex.disposables.*
+import io.reactivex.subjects.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.testing.flow.*
 import kotlin.test.*
 
@@ -72,8 +70,7 @@ class ObservableAsFlowTest : TestBase() {
                 expect(1)
                 flow.collect { expect(it) }
                 expectUnreached()
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 assertSame(exception, e.cause)
                 expect(5)
             }
@@ -99,8 +96,7 @@ class ObservableAsFlowTest : TestBase() {
                     if (it == 3) throw exception
                 }
                 expectUnreached()
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 assertSame(exception, e.cause)
                 expect(4)
             }
@@ -128,7 +124,7 @@ class ObservableAsFlowTest : TestBase() {
         assertNotNull(observer)
         job.cancel()
         val disposable = Disposables.empty()
-        observer!!.onSubscribe(disposable)
+        observer.onSubscribe(disposable)
         assertTrue(disposable.isDisposed)
         finish(3)
     }
@@ -154,7 +150,7 @@ class ObservableAsFlowTest : TestBase() {
     fun testConflated() = runTest {
         val source = Observable.range(1, 5)
         val list = source.asFlow().conflate().toList()
-        assertEquals(listOf(1, 5), list)
+        assertEquals(listOf(5), list)
     }
 
     @Test

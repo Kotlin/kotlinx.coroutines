@@ -109,14 +109,24 @@ public abstract class ChannelFlow<T>(
      * For non-atomic start it is possible to observe the situation,
      * where the pipeline after the [flowOn] call successfully executes (mostly, its `onCompletion`)
      * handlers, while the pipeline before does not, because it was cancelled during its dispatch.
-     * Thus `onCompletion` and `finally` blocks won't be executed and it may lead to a different kinds of memory leaks.
+     * Thus `onCompletion` and `finally` blocks won't be executed, and it may lead to a different kind of memory leaks.
      */
     public open fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> =
-        scope.produce(context, produceCapacity, onBufferOverflow, start = CoroutineStart.ATOMIC, block = collectToFun)
+        produceImplInternal(scope, CoroutineStart.ATOMIC)
+
+    internal open fun produceImplInternal(scope: CoroutineScope, start: CoroutineStart): ReceiveChannel<T> =
+        scope.produce(context, produceCapacity, onBufferOverflow, start = start, block = collectToFun)
 
     override suspend fun collect(collector: FlowCollector<T>): Unit =
         coroutineScope {
-            collector.emitAll(produceImpl(this))
+            // If upstream and collect have the same dispatcher, launch the `produce` coroutine undispatched.
+            // This allows the collector to reliably subscribe to the flow before it starts emitting.
+            val current = currentCoroutineContext()[ContinuationInterceptor]
+            val desired = context[ContinuationInterceptor]
+            val start = if (desired == null || desired == current) {
+                CoroutineStart.UNDISPATCHED
+            } else CoroutineStart.ATOMIC
+            collector.emitAll(produceImplInternal(this, start))
         }
 
     protected open fun additionalToStringProps(): String? = null

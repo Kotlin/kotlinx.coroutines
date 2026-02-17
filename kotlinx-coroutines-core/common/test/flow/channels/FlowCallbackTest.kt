@@ -2,9 +2,9 @@
 
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 class FlowCallbackTest : TestBase() {
@@ -14,24 +14,25 @@ class FlowCallbackTest : TestBase() {
         val flow = callbackFlow {
             // ~ callback-based API
             outerScope.launch(Job()) {
-                expect(2)
                 try {
+                    expect(4)
                     send(1)
                     expectUnreached()
                 } catch (e: IllegalStateException) {
-                    expect(3)
+                    expect(5)
                     assertTrue(e.message!!.contains("awaitClose"))
                 }
+                finish(6)
             }
             expect(1)
         }
         try {
             flow.collect()
         } catch (e: IllegalStateException) {
-            expect(4)
+            expect(2)
             assertTrue(e.message!!.contains("awaitClose"))
         }
-        finish(5)
+        expect(3)
     }
 
     @Test

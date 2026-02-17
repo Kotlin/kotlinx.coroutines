@@ -1,14 +1,13 @@
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.testing.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 /**
  * A _behavioral_ test for conflation options that can be configured by the [buffer] operator to test that it is
  * implemented properly and that adjacent [buffer] calls are fused properly.
-*/
+ */
 class BufferConflationTest : TestBase() {
     private val n = 100 // number of elements to emit for test
 
@@ -20,8 +19,8 @@ class BufferConflationTest : TestBase() {
         expect(1)
         // emit all and conflate, then collect first & last
         val expectedList = when (onBufferOverflow) {
-            BufferOverflow.DROP_OLDEST -> listOf(0) + (n - capacity until n).toList() // first item & capacity last ones
-            BufferOverflow.DROP_LATEST -> (0..capacity).toList() // first & capacity following ones
+            BufferOverflow.DROP_OLDEST -> (n - capacity until n).toList() // first item & capacity last ones
+            BufferOverflow.DROP_LATEST -> (0 until capacity).toList() // first & capacity following ones
             else -> error("cannot happen")
         }
         flow {
@@ -36,6 +35,26 @@ class BufferConflationTest : TestBase() {
                 expect(n + 2 + j)
             }
         finish(n + 2 + expectedList.size)
+    }
+
+    @Test
+    fun testConflateExplicit() = runTest {
+        val n = 3
+        expect(1)
+        flow {
+            expect(2)
+            emit(0)
+            expect(3)
+            emit(1)
+            expect(4)
+            emit(2)
+        }
+            .conflate()
+            .collect { value ->
+                assertEquals(2, value)
+                expect(n + 2)
+            }
+        finish(n + 2 + 1)
     }
 
     @Test
@@ -138,6 +157,6 @@ class BufferConflationTest : TestBase() {
     fun testBuffer3DropOldestOverrideBuffer8DropLatest() =
         checkConflate(3, BufferOverflow.DROP_OLDEST) {
             buffer(8, onBufferOverflow = BufferOverflow.DROP_LATEST)
-            .buffer(3, BufferOverflow.DROP_OLDEST)
+                .buffer(3, BufferOverflow.DROP_OLDEST)
         }
 }
