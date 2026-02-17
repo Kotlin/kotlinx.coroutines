@@ -160,24 +160,18 @@ val jvmJar by tasks.getting(Jar::class) { setupManifest(this) }
  * This manifest contains reference to AgentPremain that belongs to
  * kotlinx-coroutines-core-jvm, but our resolving machinery guarantees that
  * any JVM project that depends on -core artifact also depends on -core-jvm one.
- *
- * To avoid a conflict with a JPMS module provided by kotlinx-coroutines-core-jvm,
- * an explicit automatic module name has to be specified in the manifest.
  */
 val allMetadataJar by tasks.getting(Jar::class) {
-    setupManifest(this, "kotlinx.coroutines.core.artifact_disambiguating_module")
+    setupManifest(this)
 }
 
-fun setupManifest(jar: Jar, autoModuleName: String? = null) {
+fun setupManifest(jar: Jar) {
     jar.manifest {
         attributes(
 
                 "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
                 "Can-Retransform-Classes" to "true"
         )
-        autoModuleName?.let {
-            attributes("Automatic-Module-Name" to it)
-        }
     }
 }
 

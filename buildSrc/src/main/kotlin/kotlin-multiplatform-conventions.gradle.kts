@@ -155,3 +155,14 @@ kotlin.targets.withType<KotlinJvmTarget>().configureEach {
         fillManifestImplementationAttributes(project)
     }
 }
+
+/*
+ * To avoid a conflict with a JPMS module provided by kotlinx-coroutines-*-jvm artifacts,
+ * an explicit automatic module name has to be specified in the manifest for metadata jars.
+ */
+tasks.named("allMetadataJar", Jar::class) {
+    val moduleName =  project.name.replace("-", ".") + ".artifact_disambiguating_module"
+    manifest {
+        attributes("Automatic-Module-Name" to moduleName)
+    }
+}
