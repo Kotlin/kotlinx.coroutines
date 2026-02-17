@@ -1,8 +1,7 @@
 package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.*
+import kotlin.js.unsafeCast
 
-internal actual fun propagateExceptionFinalResort(exception: Throwable) {
-    // log exception
-    console.error(exception.toString())
-}
+internal actual external interface JsAny
+
+internal actual fun Throwable.toJsException(): JsAny = this.unsafeCast<JsAny>()

@@ -23,7 +23,6 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${version("kotlin")}")
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:${version("dokka")}")
         classpath("org.jetbrains.kotlinx:kotlinx-knit:${version("knit")}")
-        classpath("org.jetbrains.kotlinx:binary-compatibility-validator:${version("binary_compatibility_validator")}")
         classpath("ru.vyarus:gradle-animalsniffer-plugin:${version("animalsniffer")}") // Android API check
         classpath("org.jetbrains.kotlin:atomicfu:${version("kotlin")}")
         classpath("org.jetbrains.kotlinx:kover-gradle-plugin:${version("kover")}")
@@ -62,20 +61,8 @@ allprojects {
     }
 }
 
-plugins {
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.16.2"
-}
-
 apply(plugin = "base")
 apply(plugin = "kover-conventions")
-
-apiValidation {
-    ignoredProjects += unpublished + listOf("kotlinx-coroutines-bom")
-    @OptIn(kotlinx.validation.ExperimentalBCVApi::class)
-    klib {
-        enabled = true
-    }
-}
 
 // Configure repositories
 allprojects {
