@@ -7,26 +7,45 @@ import kotlin.test.*
 class FlatMapLatestTest : TestBase() {
 
     @Test
-    fun testFlatMapLatest() = runTest {
-        val flow = flowOf(1, 2, 3).flatMapLatest { value ->
+    fun testFlatMapLatestSuspension() = runTest {
+        val flow = flowOfYielding(1, 2, 3).flatMapLatest { value ->
             flowOf(value, value + 1)
         }
         assertEquals(listOf(1, 2, 2, 3, 3, 4), flow.toList())
     }
 
     @Test
-    fun testEmission() = runTest {
+    fun testEmissionSuspension() = runTest {
         val list = flow {
             repeat(5) {
                 emit(it)
+                yield()
             }
         }.flatMapLatest { flowOf(it) }.toList()
         assertEquals(listOf(0, 1, 2, 3, 4), list)
     }
 
     @Test
+    fun testFlatMapLatestNoSuspension() = runTest {
+        val flow = flowOf(1, 2, 3).flatMapLatest { value ->
+            flowOf(value, value + 1)
+        }
+        assertEquals(listOf(3, 4), flow.toList())
+    }
+
+    @Test
+    fun testEmissionNoSuspension() = runTest {
+        val list = flow {
+            repeat(5) {
+                emit(it)
+            }
+        }.flatMapLatest { flowOf(it) }.toList()
+        assertEquals(listOf(4), list)
+    }
+
+    @Test
     fun testSwitchIntuitiveBehaviour() = runTest {
-        val flow = flowOf(1, 2, 3, 4, 5)
+        val flow = flowOfYielding(1, 2, 3, 4, 5)
         flow.flatMapLatest {
             flow {
                 expect(it)
@@ -40,22 +59,24 @@ class FlatMapLatestTest : TestBase() {
     }
 
     @Test
-    fun testSwitchRendevouzBuffer() = runTest {
-        val flow = flowOf(1, 2, 3, 4, 5)
+    fun testSwitchRendezvousBuffer() = runTest {
+        val flow = flowOfYielding(1, 2, 3, 4, 5)
         flow.flatMapLatest {
             flow {
                 emit(it)
                 // Reach here every uneven element because of channel's unfairness
                 expect(it)
             }
-        }.buffer(0).onEach { expect(it + 1) }
-            .collect()
+        }.buffer(0).collect {
+            expect(it + 1)
+            yield() // give the `flowOfYielding` a chance to cancel the previous flow
+        }
         finish(7)
     }
 
     @Test
     fun testHangFlows() = runTest {
-        val flow = listOf(1, 2, 3, 4).asFlow()
+        val flow = flowOfYielding(1, 2, 3, 4)
         val result = flow.flatMapLatest { value ->
             flow {
                 if (value != 4) hang { expect(value) }
@@ -74,7 +95,7 @@ class FlatMapLatestTest : TestBase() {
 
     @Test
     fun testFailureInTransform() = runTest {
-        val flow = flowOf(1, 2).flatMapLatest { value ->
+        val flow = flowOfYielding(1, 2).flatMapLatest { value ->
             flow {
                 if (value == 1) {
                     emit(1)
@@ -128,7 +149,7 @@ class FlatMapLatestTest : TestBase() {
 
     @Test
     fun testTake() = runTest {
-        val flow = flowOf(1, 2, 3, 4, 5).flatMapLatest { flowOf(it) }
+        val flow = flowOfYielding(1, 2, 3, 4, 5).flatMapLatest { flowOf(it) }
         assertEquals(listOf(1), flow.take(1).toList())
     }
 }
