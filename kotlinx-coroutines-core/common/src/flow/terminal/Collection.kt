@@ -26,12 +26,12 @@ public suspend fun <T, C : MutableCollection<in T>> Flow<T>.toCollection(destina
 }
 
 /**
- * Returns a [Map] containing key-value pairs provided by [transform] function
- * applied to elements of the given sequence.
+ * Collects `this` [Flow] into a [Map]
+ * with the key-value pairs provided by the [transform] function applied to each element.
  *
- * If any of two pairs would have the same key the last one gets added to the map.
+ * If the same key appears in more than one pair, the last one gets added to the map.
  *
- * The returned map preserves the entry iteration order of the original sequence.
+ * The entry iteration order of the resulting [Map] is the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  */
@@ -39,12 +39,12 @@ public suspend fun <T, K, V> Flow<T>.associate(transform: (T) -> Pair<K, V>): Ma
     associateTo(LinkedHashMap(), transform)
 
 /**
- * Returns a [Map] containing the elements from the given sequence indexed by the key
- * returned from [keySelector] function applied to each element.
+ * Collects `this` [Flow] into a [Map]
+ * with the keys provided by the [keySelector] function applied to each element.
  *
- * If any two elements would have the same key returned by [keySelector] the last one gets added to the map.
+ * If the same key is returned for more than one element by [keySelector], the last one gets added to the map.
  *
- * The returned map preserves the entry iteration order of the original sequence.
+ * The entry iteration order of the resulting [Map] is the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  */
@@ -52,11 +52,12 @@ public suspend fun <T, K> Flow<T>.associateBy(keySelector: (T) -> K): Map<K, T> 
     associateByTo(LinkedHashMap(), keySelector)
 
 /**
- * Returns a [Map] containing the values provided by [valueTransform] and indexed by [keySelector] functions applied to elements of the given sequence.
+ * Collects `this` [Flow] into a [Map]
+ * with the keys and values provided by the [keySelector] and [valueTransform] functions applied to each element.
  *
- * If any two elements would have the same key returned by [keySelector] the last one gets added to the map.
+ * If the same key is returned for more than one element by [keySelector], the last one gets added to the map.
  *
- * The returned map preserves the entry iteration order of the original sequence.
+ * The entry iteration order of the resulting [Map] is the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  */
@@ -64,11 +65,11 @@ public suspend fun <T, K, V> Flow<T>.associateBy(keySelector: (T) -> K, valueTra
     associateByTo(LinkedHashMap(), keySelector, valueTransform)
 
 /**
- * Populates and returns the [destination] mutable map with key-value pairs,
- * where key is provided by the [keySelector] function applied to each element of the given sequence
- * and value is the element itself.
+ * Collects `this` [Flow] into the given [Map]
+ * with the keys provided by the [keySelector] function applied to each element.
  *
- * If any two elements would have the same key returned by [keySelector] the last one gets added to the map.
+ * The order in which key-value pairs get inserted into the [destination] is
+ * the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  */
@@ -80,11 +81,11 @@ public suspend fun <T, K, M : MutableMap<in K, in T>> Flow<T>.associateByTo(dest
 }
 
 /**
- * Populates and returns the [destination] mutable map with key-value pairs,
- * where key is provided by the [keySelector] function and
- * and value is provided by the [valueTransform] function applied to elements of the given sequence.
+ * Collects `this` [Flow] into the given [Map]
+ * with the keys and values provided by the [keySelector] and [valueTransform] functions applied to each element.
  *
- * If any two elements would have the same key returned by [keySelector] the last one gets added to the map.
+ * The order in which key-value pairs get inserted into the [destination] is
+ * the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  */
@@ -96,10 +97,11 @@ public suspend fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateByTo(d
 }
 
 /**
- * Populates and returns the [destination] mutable map with key-value pairs
- * provided by [transform] function applied to each element of the given sequence.
+ * Collects `this` [Flow] into the given [Map]
+ * with the key-value pairs provided by the [transform] function applied to each element.
  *
- * If any of two pairs would have the same key the last one gets added to the map.
+ * The order in which key-value pairs get inserted into the [destination] is
+ * the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  */
@@ -111,12 +113,12 @@ public suspend fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateTo(des
 }
 
 /**
- * Returns a [Map] where keys are elements from the given sequence and values are
- * produced by the [valueSelector] function applied to each element.
+ * Collects `this` [Flow] into a [Map]
+ * with the keys being the [Flow] elements and the corresponding values being obtained from them using [valueSelector].
  *
- * If any two elements are equal, the last one gets added to the map.
+ * If the same element is emitted more than once, the last value returned by [valueSelector] gets added to the map.
  *
- * The returned map preserves the entry iteration order of the original sequence.
+ * The entry iteration order of the resulting [Map] is the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  */
@@ -124,10 +126,11 @@ public suspend fun <K, V> Flow<K>.associateWith(valueSelector: (K) -> V): Map<K,
     associateWithTo(LinkedHashMap(), valueSelector)
 
 /**
- * Populates and returns the [destination] mutable map with key-value pairs for each element of the given sequence,
- * where key is the element itself and value is provided by the [valueSelector] function applied to that key.
+ * Collects `this` [Flow] into the given [Map]
+ * with the keys being the [Flow] elements and the corresponding values being obtained from them using [valueSelector].
  *
- * If any two elements are equal, the last one overwrites the former value in the map.
+ * The order in which key-value pairs get inserted into the [destination] is
+ * the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  */
@@ -139,10 +142,11 @@ public suspend fun <K, V, M : MutableMap<in K, in V>> Flow<K>.associateWithTo(de
 }
 
 /**
- * Groups elements of the original sequence by the key returned by the given [keySelector] function
- * applied to each element and returns a map where each group key is associated with a list of corresponding elements.
+ * Groups elements of the original [Flow] by the key returned by the given [keySelector] function
+ * applied to each element and returns a map where each group key is associated with the list of corresponding elements.
  *
- * The returned map preserves the entry iteration order of the keys produced from the original sequence.
+ * The entry iteration order of the resulting [Map] is the order in which the keys were first encountered when
+ * applying [keySelector] to the [Flow] elements.
  *
  * The operation is _terminal_.
  */
@@ -150,11 +154,12 @@ public suspend fun <T, K> Flow<T>.groupBy(keySelector: (T) -> K): Map<K, List<T>
     groupByTo(LinkedHashMap<K, MutableList<T>>(), keySelector)
 
 /**
- * Groups values returned by the [valueTransform] function applied to each element of the original sequence
+ * Groups values returned by the [valueTransform] function applied to each element of the original [Flow]
  * by the key returned by the given [keySelector] function applied to the element
- * and returns a map where each group key is associated with a list of corresponding values.
+ * and returns a map where each group key is associated with the list of corresponding values.
  *
- * The returned map preserves the entry iteration order of the keys produced from the original sequence.
+ * The entry iteration order of the resulting [Map] is the order in which the keys were first encountered when
+ * applying [keySelector] to the [Flow] elements.
  *
  * The operation is _terminal_.
  */
@@ -162,8 +167,9 @@ public suspend fun <T, K, V> Flow<T>.groupBy(keySelector: (T) -> K, valueTransfo
     groupByTo(LinkedHashMap<K, MutableList<V>>(), keySelector, valueTransform)
 
 /**
- * Groups elements of the original sequence by the key returned by the given [keySelector] function
- * applied to each element and puts to the [destination] map each group key associated with a list of corresponding elements.
+ * Groups elements of the original [Flow] by the key returned by the given [keySelector] function
+ * applied to each element and puts each group key associated with the list of corresponding elements into the given
+ * [Map].
  *
  * @return The [destination] map.
  *
@@ -179,9 +185,9 @@ public suspend fun <T, K, M : MutableMap<in K, MutableList<T>>> Flow<T>.groupByT
 }
 
 /**
- * Groups values returned by the [valueTransform] function applied to each element of the original sequence
+ * Groups values returned by the [valueTransform] function applied to each element of the original [Flow]
  * by the key returned by the given [keySelector] function applied to the element
- * and puts to the [destination] map each group key associated with a list of corresponding values.
+ * and puts each group key associated with the list of corresponding values into the given [Map].
  *
  * @return The [destination] map.
  *
