@@ -1,5 +1,4 @@
-@file:JvmMultifileClass
-@file:JvmName("FlowKt")
+@file:JvmMultifileClass @file:JvmName("FlowKt")
 
 package kotlinx.coroutines.flow
 
@@ -44,7 +43,7 @@ public suspend fun <T, C : MutableCollection<in T>> Flow<T>.toCollection(destina
  * println(byLastName) // {Hopper=Grace, Bernoulli=Johann}
  * ```
  */
-public suspend fun <T, K, V> Flow<T>.associate(transform: (T) -> Pair<K, V>): Map<K, V> =
+public suspend inline fun <T, K, V> Flow<T>.associate(crossinline transform: suspend (T) -> Pair<K, V>): Map<K, V> =
     associateTo(LinkedHashMap(), transform)
 
 /**
@@ -70,7 +69,7 @@ public suspend fun <T, K, V> Flow<T>.associate(transform: (T) -> Pair<K, V>): Ma
  * println(byLastName) // {Hopper=Grace Hopper, Bernoulli=Johann Bernoulli}
  * ```
  */
-public suspend fun <T, K> Flow<T>.associateBy(keySelector: (T) -> K): Map<K, T> =
+public suspend inline fun <T, K> Flow<T>.associateBy(crossinline keySelector: suspend (T) -> K): Map<K, T> =
     associateByTo(LinkedHashMap(), keySelector)
 
 /**
@@ -94,8 +93,9 @@ public suspend fun <T, K> Flow<T>.associateBy(keySelector: (T) -> K): Map<K, T> 
  * println(byLastName) // {Hopper=Grace, Bernoulli=Johann}
  * ```
  */
-public suspend fun <T, K, V> Flow<T>.associateBy(keySelector: (T) -> K, valueTransform: (T) -> V): Map<K, V> =
-    associateByTo(LinkedHashMap(), keySelector, valueTransform)
+public suspend inline fun <T, K, V> Flow<T>.associateBy(
+    crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
+): Map<K, V> = associateByTo(LinkedHashMap(), keySelector, valueTransform)
 
 /**
  * Collects `this` [Flow] into the given [Map]
@@ -123,7 +123,9 @@ public suspend fun <T, K, V> Flow<T>.associateBy(keySelector: (T) -> K, valueTra
  * println(byLastName) // {Hopper=Grace Hopper, Bernoulli=Johann Bernoulli}
  * ```
  */
-public suspend fun <T, K, M : MutableMap<in K, in T>> Flow<T>.associateByTo(destination: M, keySelector: (T) -> K): M {
+public suspend inline fun <T, K, M : MutableMap<in K, in T>> Flow<T>.associateByTo(
+    destination: M, crossinline keySelector: suspend (T) -> K
+): M {
     collect { element ->
         destination[keySelector(element)] = element
     }
@@ -154,7 +156,9 @@ public suspend fun <T, K, M : MutableMap<in K, in T>> Flow<T>.associateByTo(dest
  * println(byLastName) // {Hopper=Grace, Bernoulli=Johann}
  * ```
  */
-public suspend fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateByTo(destination: M, keySelector: (T) -> K, valueTransform: (T) -> V): M {
+public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateByTo(
+    destination: M, crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
+): M {
     collect { element ->
         destination[keySelector(element)] = valueTransform(element)
     }
@@ -185,7 +189,9 @@ public suspend fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateByTo(d
  * println(byLastName) // {Hopper=Grace, Bernoulli=Johann}
  * ```
  */
-public suspend fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateTo(destination: M, transform: (T) -> Pair<K, V>): M {
+public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateTo(
+    destination: M, crossinline transform: suspend (T) -> Pair<K, V>
+): M {
     collect { element ->
         destination += transform(element)
     }
@@ -209,7 +215,7 @@ public suspend fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateTo(des
  * println(withLength.values) // [1, 3, 2, 3, 4]
  * ```
  */
-public suspend fun <K, V> Flow<K>.associateWith(valueSelector: (K) -> V): Map<K, V> =
+public suspend inline fun <K, V> Flow<K>.associateWith(crossinline valueSelector: suspend (K) -> V): Map<K, V> =
     associateWithTo(LinkedHashMap(), valueSelector)
 
 /**
@@ -237,7 +243,9 @@ public suspend fun <K, V> Flow<K>.associateWith(valueSelector: (K) -> V): Map<K,
  * println(withLengthOfNames) // {Grace Hopper=11, Jacob Bernoulli=14}
  * ```
  */
-public suspend fun <K, V, M : MutableMap<in K, in V>> Flow<K>.associateWithTo(destination: M, valueSelector: (K) -> V): M {
+public suspend inline fun <K, V, M : MutableMap<in K, in V>> Flow<K>.associateWithTo(
+    destination: M, crossinline valueSelector: suspend (K) -> V
+): M {
     collect { element ->
         destination[element] = valueSelector(element)
     }
@@ -265,7 +273,7 @@ public suspend fun <K, V, M : MutableMap<in K, in V>> Flow<K>.associateWithTo(de
  * println("mutableByLength == byLength is ${mutableByLength == byLength}") // true
  * ```
  */
-public suspend fun <T, K> Flow<T>.groupBy(keySelector: (T) -> K): Map<K, List<T>> =
+public suspend inline fun <T, K> Flow<T>.groupBy(crossinline keySelector: (T) -> K): Map<K, List<T>> =
     groupByTo(LinkedHashMap<K, MutableList<T>>(), keySelector)
 
 /**
@@ -288,8 +296,9 @@ public suspend fun <T, K> Flow<T>.groupBy(keySelector: (T) -> K): Map<K, List<T>
  * println("mutableNamesByTeam == namesByTeam is ${mutableNamesByTeam == namesByTeam}") // true
  * ```
  */
-public suspend fun <T, K, V> Flow<T>.groupBy(keySelector: (T) -> K, valueTransform: (T) -> V): Map<K, List<V>> =
-    groupByTo(LinkedHashMap<K, MutableList<V>>(), keySelector, valueTransform)
+public suspend inline fun <T, K, V> Flow<T>.groupBy(
+    crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
+): Map<K, List<V>> = groupByTo(LinkedHashMap<K, MutableList<V>>(), keySelector, valueTransform)
 
 /**
  * Groups elements of the original [Flow] by the key returned by the given [keySelector] function
@@ -312,7 +321,9 @@ public suspend fun <T, K, V> Flow<T>.groupBy(keySelector: (T) -> K, valueTransfo
  * println("mutableByLength == byLength is ${mutableByLength == byLength}") // true
  * ```
  */
-public suspend fun <T, K, M : MutableMap<in K, MutableList<T>>> Flow<T>.groupByTo(destination: M, keySelector: (T) -> K): M {
+public suspend inline fun <T, K, M : MutableMap<in K, MutableList<T>>> Flow<T>.groupByTo(
+    destination: M, crossinline keySelector: suspend (T) -> K
+): M {
     collect { element ->
         val key = keySelector(element)
         val list = destination.getOrPut(key) { ArrayList() }
@@ -340,7 +351,9 @@ public suspend fun <T, K, M : MutableMap<in K, MutableList<T>>> Flow<T>.groupByT
  * println("mutableNamesByTeam == namesByTeam is ${mutableNamesByTeam == namesByTeam}") // true
  * ```
  */
-public suspend fun <T, K, V, M : MutableMap<in K, MutableList<V>>> Flow<T>.groupByTo(destination: M, keySelector: (T) -> K, valueTransform: (T) -> V): M {
+public suspend inline fun <T, K, V, M : MutableMap<in K, MutableList<V>>> Flow<T>.groupByTo(
+    destination: M, crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
+): M {
     collect { element ->
         val key = keySelector(element)
         val list = destination.getOrPut(key) { ArrayList() }
