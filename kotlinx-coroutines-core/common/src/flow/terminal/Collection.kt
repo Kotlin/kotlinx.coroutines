@@ -273,7 +273,7 @@ public suspend inline fun <K, V, M : MutableMap<in K, in V>> Flow<K>.associateWi
  * println("mutableByLength == byLength is ${mutableByLength == byLength}") // true
  * ```
  */
-public suspend inline fun <T, K> Flow<T>.groupBy(crossinline keySelector: (T) -> K): Map<K, List<T>> =
+public suspend inline fun <T, K> Flow<T>.groupBy(crossinline keySelector: suspend (T) -> K): Map<K, List<T>> =
     groupByTo(LinkedHashMap<K, MutableList<T>>(), keySelector)
 
 /**
