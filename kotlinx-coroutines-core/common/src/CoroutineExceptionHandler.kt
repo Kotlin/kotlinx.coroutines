@@ -59,7 +59,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * In most scenarios, a clear exception propagation path allows processing failures in coroutines: for example,
  * a [coroutineScope] call can rethrow the exception to the caller,
  * and failing coroutines typically [cancel][Job.cancel] their [parent][Job.parent] coroutines.
- * See "Propagation channels recognized by `kotlinx.coroutines`" below for an enumeration of ways an exception in a
+ * See "Propagation paths recognized by `kotlinx.coroutines`" below for an enumeration of ways an exception in a
  * coroutine can get propagated.
  *
  * However, in some cases, a clear propagation path is not available. Example:
@@ -89,7 +89,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * by `kotlinx.coroutines` and will invoke last-resort exception handling, potentially crashing the program.
  * See the "Platform-specific last-resort handling of lost exceptions" section for details.
  *
- * ### Propagation channels recognized by `kotlinx.coroutines`
+ * ### Propagation paths recognized by `kotlinx.coroutines`
  *
  * The only exceptions that need to be propagated at all are those with which coroutines finish.
  * If an exception is handled via a `try`/`catch` block inside the coroutine itself,
@@ -108,7 +108,8 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * }
  * ```
  *
- * Exceptions in lexically scoped coroutines are always propagated by being rethrown to the caller:
+ * Exceptions in lexically scoped coroutines (those that, like [coroutineScope], return the result to the caller)
+ * are always propagated by being rethrown to the caller:
  *
  * ```
  * // This function will throw an `IllegalStateException`
@@ -148,7 +149,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * }
  * ```
  *
- * When none of the propagation channels listed above applies, an exception can not be propagated.
+ * When none of the propagation paths listed above apply, an exception can not be propagated.
  * Most common examples are coroutines created using the [launch] function on a scope with no [Job] (most notably,
  * [GlobalScope]) or a [SupervisorJob]:
  *
@@ -201,6 +202,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  *     try {
  *          // do something
  *     } catch (e: Throwable) {
+ *          if (e is CancellationException) ensureActive()
  *          // handle exception
  *     }
  * }
@@ -252,7 +254,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * [CoroutineExceptionHandler].
  * The explanation is that initially, the exception *does* have a propagation path and will get propagated to the
  * parent coroutine using structured concurrency.
- * The parent itself, however, has no viable propagation channel and has to use *its* [CoroutineExceptionHandler].
+ * The parent itself, however, has no viable propagation path and has to use *its* [CoroutineExceptionHandler].
  *
  * Similarly, this [CoroutineExceptionHandler] is redundant and will never be invoked:
  *
