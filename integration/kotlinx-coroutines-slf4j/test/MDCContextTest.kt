@@ -177,8 +177,8 @@ class MDCContextTest : TestBase() {
     fun testPrimaryAndSecondaryConstructorHaveConsistentOutcomeForNoInputParametersAndEmptyMDC() = runTest {
         listOf(
             { MDCContext() },
-            { MDCContext(*arrayOf())},
-        ).forEach{ constructor ->
+            { MDCContext(*arrayOf()) },
+        ).forEach { constructor ->
             withContext(constructor()) {
                 val copyOfContextMap = MDC.getCopyOfContextMap()
                 assertNull(copyOfContextMap)
@@ -191,8 +191,8 @@ class MDCContextTest : TestBase() {
         MDC.put("a", "1")
         listOf(
             { MDCContext() },
-            { MDCContext(*arrayOf())},
-        ).forEach{ constructor ->
+            { MDCContext(*arrayOf()) },
+        ).forEach { constructor ->
             withContext(constructor()) {
                 val copyOfContextMap = MDC.getCopyOfContextMap()
                 assertNotNull(copyOfContextMap)
