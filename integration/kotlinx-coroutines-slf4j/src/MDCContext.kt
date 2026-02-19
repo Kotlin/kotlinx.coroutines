@@ -95,7 +95,7 @@ public class MDCContext(
     public companion object Key : CoroutineContext.Key<MDCContext>
 
     /**
-     * Alternative constructor to put [key-value-pairs][keyValuePairs] into the [MDC].
+     * Alternative constructor to put [key-value-pairs][pairs] into the [MDC].
      *
      * Example:
      * ```
@@ -113,10 +113,10 @@ public class MDCContext(
      * println(MDC.get("kotlin")) // prints "is great"
      * ```
      *
-     * @param keyValuePairs key-value-pairs with will be put into the MDC
+     * @param pairs key-value-pairs with will be put into the MDC
      */
-    public constructor(vararg keyValuePairs: Pair<String, String>): this(
-        (MDC.getCopyOfContextMap() ?: emptyMap()) + keyValuePairs,
+    public constructor(vararg pairs: Pair<String, String>): this(
+        (MDC.getCopyOfContextMap() ?: emptyMap()) + pairs,
     )
 
     /** @suppress */
