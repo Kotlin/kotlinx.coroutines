@@ -115,6 +115,7 @@ public class MDCContext(
      *
      * @param pairs key-value-pairs with will be put into the MDC
      */
+    @ExperimentalCoroutineApi
     public constructor(vararg pairs: Pair<String, String>): this(
         MDC.getCopyOfContextMap().let {
             if (pairs.isEmpty()) it else (it ?: emptyMap()) + pairs
