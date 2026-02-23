@@ -39,6 +39,7 @@ buildscript {
 
     val usingSnapshotVersion = checkIsSnapshotVersion()
     val hasSnapshotTrainProperty = checkIsSnapshotTrainProperty()
+    val kotlinRepoUrl = providers.gradleProperty("kotlin_repo_url").orNull
 
     extra.apply {
         set("using_snapshot_version", usingSnapshotVersion)
@@ -50,6 +51,9 @@ buildscript {
             mavenLocal()
             maven("https://redirector.kotlinlang.org/maven/dev")
             maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+            if (!kotlinRepoUrl.isNullOrBlank()) {
+                maven(kotlinRepoUrl)
+            }
         }
     }
 }
@@ -62,6 +66,10 @@ repositories {
     if (extra["using_snapshot_version"] == true) {
         maven("https://redirector.kotlinlang.org/maven/dev")
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+    }
+    val kotlinRepoUrl = providers.gradleProperty("kotlin_repo_url").orNull
+    if (!kotlinRepoUrl.isNullOrBlank()) {
+        maven(kotlinRepoUrl)
     }
     mavenLocal()
     maven("https://redirector.kotlinlang.org/maven/dev")

@@ -9,6 +9,10 @@ plugins {
 }
 
 repositories {
+    val kotlinRepoUrl = providers.gradleProperty("kotlin_repo_url").orNull
+    if (!kotlinRepoUrl.isNullOrBlank()) {
+        maven(kotlinRepoUrl)
+    }
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
     maven("https://redirector.kotlinlang.org/maven/dev")

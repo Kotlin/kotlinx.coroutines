@@ -6,6 +6,10 @@ plugins {
 val coroutines_version: String by project
 
 repositories {
+    val kotlinRepoUrl = providers.gradleProperty("kotlin_repo_url").orNull
+    if (!kotlinRepoUrl.isNullOrBlank()) {
+        maven(kotlinRepoUrl)
+    }
     if (project.properties["build_snapshot_train"]?.toString()?.toBoolean() == true) {
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
         maven("https://redirector.kotlinlang.org/maven/dev")
