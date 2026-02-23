@@ -12,9 +12,11 @@ java {
 }
 
 kotlin {
-    @OptIn(ExperimentalAbiValidation::class)
-    abiValidation {
-        enabled = abiCheckEnabled
+    if (abiCheckEnabled) {
+        @OptIn(ExperimentalAbiValidation::class)
+        abiValidation {
+            enabled = true
+        }
     }
 
     jvm {
@@ -143,8 +145,4 @@ tasks.named("jvmTest", Test::class) {
         events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
     }
     project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
-}
-
-tasks.check {
-   dependsOn(tasks.checkLegacyAbi)
 }
