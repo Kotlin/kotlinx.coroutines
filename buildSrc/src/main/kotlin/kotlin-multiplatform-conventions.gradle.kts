@@ -12,9 +12,11 @@ java {
 }
 
 kotlin {
-    @OptIn(ExperimentalAbiValidation::class)
-    abiValidation {
-        enabled = abiCheckEnabled
+    if (abiCheckEnabled) {
+        @OptIn(ExperimentalAbiValidation::class)
+        abiValidation {
+            enabled = true
+        }
     }
 
     jvm {
@@ -143,6 +145,7 @@ tasks.named("jvmTest", Test::class) {
     project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
 }
 
+// TODO: delete this after starting to use Kotlin 2.3.20
 tasks.check {
-   dependsOn(tasks.checkLegacyAbi)
+    dependsOn(tasks.matching { it.name == "checkLegacyAbi" })
 }

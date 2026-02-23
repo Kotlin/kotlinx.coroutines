@@ -14,9 +14,11 @@ java {
 }
 
 kotlin {
-    @OptIn(ExperimentalAbiValidation::class)
-    abiValidation {
-        enabled = abiCheckEnabled
+    if (abiCheckEnabled) {
+        @OptIn(ExperimentalAbiValidation::class)
+        abiValidation {
+            enabled = true
+        }
     }
 
     compilerOptions {
@@ -44,6 +46,7 @@ tasks.withType<Test> {
     if (stressTest != null) systemProperties["stressTest"] = stressTest
 }
 
+// TODO: delete this after starting to use Kotlin 2.3.20
 tasks.check {
-   dependsOn(tasks.checkLegacyAbi)
+    dependsOn(tasks.matching { it.name == "checkLegacyAbi" })
 }
