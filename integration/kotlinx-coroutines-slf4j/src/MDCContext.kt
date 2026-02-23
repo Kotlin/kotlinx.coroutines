@@ -113,7 +113,7 @@ public class MDCContext(
      * println(MDC.get("kotlin")) // prints "is great"
      * ```
      *
-     * @param pairs key-value-pairs with will be put into the MDC
+     * @param pairs key-value-pairs which will be put into the MDC
      */
     @ExperimentalCoroutineApi
     public constructor(vararg pairs: Pair<String, String>): this(
