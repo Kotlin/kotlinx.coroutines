@@ -1,8 +1,11 @@
+@file:OptIn(ExperimentalJsExport::class, ExperimentalJsStatic::class, ExperimentalStdlibApi::class)
+@file:Suppress("INVISIBLE_REFERENCE", "EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.*
-import kotlin.coroutines.*
+import kotlinx.coroutines.internal.JsAsyncIterable
+import kotlinx.coroutines.internal.JsAsyncIterator
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * An asynchronous data stream that sequentially emits values and completes normally or with an exception.
@@ -162,7 +165,7 @@ import kotlin.coroutines.*
  * ### Reactive streams
  *
  * Flow is [Reactive Streams](http://www.reactive-streams.org/) compliant, you can safely interop it with
- * reactive streams using `Flow.asPublisher` and `Publisher.asFlow` from `kotlinx-coroutines-reactive` module.
+ * reactive streams using [Flow.asPublisher] and [Publisher.asFlow] from `kotlinx-coroutines-reactive` module.
  *
  * ### Not stable for inheritance
  *
@@ -173,7 +176,7 @@ import kotlin.coroutines.*
  * These implementations ensure that the context preservation property is not violated, and prevent most
  * of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.
  */
-public expect interface Flow<out T> {
+public actual interface Flow<out T> {
 
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
@@ -191,56 +194,75 @@ public expect interface Flow<out T> {
      * All default flow implementations ensure context preservation and exception transparency properties on a best-effort basis
      * and throw [IllegalStateException] if a violation was detected.
      */
-    public suspend fun collect(collector: FlowCollector<T>)
-}
+    @JsExport.Ignore
+    public actual suspend fun collect(collector: FlowCollector<T>)
 
-/**
- * Base class for stateful implementations of `Flow`.
- * It tracks all the properties required for context preservation and throws an [IllegalStateException]
- * if any of the properties are violated.
- *
- * Example of the implementation:
- *
- * ```
- * // list.asFlow() + collect counter
- * class CountingListFlow(private val values: List<Int>) : AbstractFlow<Int>() {
- *     private val collectedCounter = AtomicInteger(0)
- *
- *     override suspend fun collectSafely(collector: FlowCollector<Int>) {
- *         collectedCounter.incrementAndGet() // Increment collected counter
- *         values.forEach { // Emit all the values
- *             collector.emit(it)
- *         }
- *     }
- *
- *     fun toDiagnosticString(): String = "Flow with values $values was collected ${collectedCounter.value} times"
- * }
- * ```
- */
-@ExperimentalCoroutinesApi
-public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
 
-    public final override suspend fun collect(collector: FlowCollector<T>) {
-        val safeCollector = SafeCollector(collector, coroutineContext)
-        try {
-            collectSafely(safeCollector)
-        } finally {
-            safeCollector.releaseIntercepted()
+
+    @JsExport.Ignore
+    // For Kotlin side only to be able to set up a custom scope for the iterator
+    public fun asAsyncIterable(scope: CoroutineScope): JsAsyncIterable<T> =
+        buffer(0).produceIn(scope)
+
+    public fun asAsyncIterable(): JsAsyncIterable<T> =
+       asAsyncIterable(CoroutineScope(EmptyCoroutineContext))
+
+    @JsExport.Ignore
+    // Important note: it would be much nicer to place those factory functions outside of Flow
+    // so from both Kotlin and TypeScript side it could be used without importing Flow (like in `flowOf` or `flow`)
+    // However, the described way of exporting factory functions forces the functions always to be exported (even if people don't use them and don't export Flow),
+    // and that may cause bundle size problems (at least right now).
+    // So, until the bundle size problem is solved, we keep those factory functions inside Flow, with possibility to move them outside later.
+    public companion object {
+        /**
+         * Converts a JavaScript AsyncIterable to a Kotlin Flow.
+         *
+         * The resulting flow will iterate through all values produced by the async iterable.
+         * If the flow collection is canceled or fails, the iterator's `return()` method will be called
+         * to properly clean up the async iterable.
+         */
+        @JsStatic
+        public fun <T> from(async: JsAsyncIterable<T>): Flow<T> =
+            from(async.asyncIterator())
+
+        /**
+         * Converts a JavaScript async generator function to a Kotlin Flow.
+         *
+         * The generator will be invoked to get an async iterator for collection.
+         * Cancellation or failure during a collection triggers the iterator's `return()` method
+         * to ensure proper cleanup.
+         */
+        @JsStatic
+        @JsName("fromAsyncGenerator")
+        public fun <T> from(generator: () -> JsAsyncIterator<T>): Flow<T> = flow {
+            var completed = false
+            val iterator = generator()
+            try {
+                while (true) {
+                    val result = iterator.next().await()
+                    if (result.done) {
+                        completed = true
+                        break
+                    }
+                    emit(result.value.unsafeCast<T>())
+                }
+            } finally {
+                if (!completed) {
+                        iterator.`return`().await()
+                }
+            }
         }
-    }
 
-    /**
-     * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
-     *
-     * A valid implementation of this method has the following constraints:
-     * 1) It should not change the coroutine context (e.g. with `withContext(Dispatchers.IO)`) when emitting values.
-     *    The emission should happen in the context of the [collect] call.
-     *    Please refer to the top-level [Flow] documentation for more details.
-     * 2) It should serialize calls to [emit][FlowCollector.emit] as [FlowCollector] implementations are not
-     *    thread-safe by default.
-     *    To automatically serialize emissions [channelFlow] builder can be used instead of [flow]
-     *
-     * @throws IllegalStateException if any of the invariants are violated.
-     */
-    public abstract suspend fun collectSafely(collector: FlowCollector<T>)
+        /**
+         * Converts a JavaScript AsyncIterator to a Kotlin Flow.
+         *
+         * The resulting flow emits items produced by the iterator until it reports completion.
+         * If a collection is canceled or fails, the iterator's `return()` method is called
+         * to close the iterator.
+         */
+        @JsStatic
+        @JsName("fromAsyncIterator")
+        public fun <T> from(iterator: JsAsyncIterator<T>): Flow<T> =
+            from { iterator }
+    }
 }
