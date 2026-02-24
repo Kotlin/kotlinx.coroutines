@@ -7,7 +7,6 @@ pluginManagement {
         if (!kotlinRepoUrl.isNullOrBlank()) {
             maven(kotlinRepoUrl)
         }
-        maven("https://redirector.kotlinlang.org/maven/dev")
         mavenLocal()
     }
 }
