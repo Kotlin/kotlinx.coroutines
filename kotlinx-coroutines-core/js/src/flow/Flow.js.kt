@@ -1,5 +1,5 @@
 @file:OptIn(ExperimentalJsExport::class, ExperimentalJsStatic::class, ExperimentalStdlibApi::class)
-@file:Suppress("INVISIBLE_REFERENCE", "EXPOSED_SUPER_INTERFACE", "EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
+@file:Suppress("INVISIBLE_REFERENCE", "EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
@@ -180,7 +180,7 @@ import kotlin.js.JsSymbol
  */
 @Suppress("INVISIBLE_REFERENCE", "EXPOSED_SUPER_INTERFACE")
 @JsImplicitExport(true)
-public actual interface Flow<out T> : JsAsyncIterable<T> {
+public actual interface Flow<out T> {
 
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
@@ -201,7 +201,8 @@ public actual interface Flow<out T> : JsAsyncIterable<T> {
     @JsExport.Ignore
     public actual suspend fun collect(collector: FlowCollector<T>)
 
-    override fun asyncIterator(): JsAsyncIterator<T> {
+    @JsSymbol("asyncIterator")
+    public fun asyncIterator(): JsAsyncIterator<T> {
         val flow = this
         val demand = Channel<Unit>(Channel.RENDEZVOUS)
         val valueChannel = Channel<T>(Channel.RENDEZVOUS)
@@ -216,7 +217,7 @@ public actual interface Flow<out T> : JsAsyncIterable<T> {
                 }
             } catch (e: Throwable) {
                 valueChannel.close(e)
-                demand.close()
+                demand.close(e)
                 return@launch
             }
             valueChannel.close()
@@ -241,24 +242,26 @@ public actual interface Flow<out T> : JsAsyncIterable<T> {
                         result.exceptionOrNull()?.let { throw it }
                         doneValue
                     }
-                } catch (_: ClosedReceiveChannelException) {
+                } catch (e: ClosedReceiveChannelException) {
+                    e.cause?.let { throw it }
                     doneValue
-                } catch (_: ClosedSendChannelException) {
+                } catch (e: ClosedSendChannelException) {
+                    e.cause?.let { throw it }
                     doneValue
                 }
             }
         }
 
         asyncIterator.`return` = {
-            scope.promise<dynamic> {
+            scope.promise {
                 try {
                     if (!producer.isCancelled && producer.isActive) {
                         producer.cancel(CancellationException("Iterator returned early"))
                     }
+                    js("({ value: undefined, done: true })")
                 } finally {
                     demand.close()
                     valueChannel.close()
-                    js("({ value: undefined, done: true })")
                 }
             }
         }
@@ -302,20 +305,9 @@ public actual interface Flow<out T> : JsAsyncIterable<T> {
          */
         @JsStatic
         @JsName("fromAsyncGenerator")
-        public fun <T> from(generator: () -> JsAsyncIterator<T>): Flow<T> =
-            from(generator())
-
-        /**
-         * Converts a JavaScript AsyncIterator to a Kotlin Flow.
-         *
-         * The resulting flow emits items produced by the iterator until it reports completion.
-         * If a collection is canceled or fails, the iterator's `return()` method is called
-         * to close the iterator.
-         */
-        @JsStatic
-        @JsName("fromAsyncIterator")
-        public fun <T> from(iterator: JsAsyncIterator<T>): Flow<T> = flow {
+        public fun <T> from(generator: () -> JsAsyncIterator<T>): Flow<T> = flow {
             var completed = false
+            val iterator = generator()
             try {
                 while (true) {
                     val result = iterator.next().await()
@@ -333,6 +325,18 @@ public actual interface Flow<out T> : JsAsyncIterable<T> {
                 }
             }
         }
+
+        /**
+         * Converts a JavaScript AsyncIterator to a Kotlin Flow.
+         *
+         * The resulting flow emits items produced by the iterator until it reports completion.
+         * If a collection is canceled or fails, the iterator's `return()` method is called
+         * to close the iterator.
+         */
+        @JsStatic
+        @JsName("fromAsyncIterator")
+        public fun <T> from(iterator: JsAsyncIterator<T>): Flow<T> =
+            from { iterator }
     }
 }
 
