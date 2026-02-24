@@ -139,6 +139,74 @@ class FlowInteropTest : TestBase() {
         assertEquals(true, result3.done)
     }
 
+    @Test
+    fun testFlowToAsyncIteratorCancellationReturnsDone() = runTest {
+        val flow = flow {
+            emit(1)
+            emit(2)
+            emit(3)
+            emit(4)
+            emit(5)
+        }
+        val iterator: JsAsyncIterator<Int> = flow.asDynamic()[js("Symbol.asyncIterator")]()
+
+        val result1 = iterator.next().await()
+        assertEquals(1, result1.value)
+        assertEquals(false, result1.done)
+
+        val result2 = iterator.next().await()
+        assertEquals(2, result2.value)
+        assertEquals(false, result2.done)
+
+        val returnResult = iterator.`return`().await()
+        assertEquals(true, returnResult.done)
+
+        val result3 = iterator.next().await()
+        assertEquals(true, result3.done)
+
+        val result4 = iterator.next().await()
+        assertEquals(true, result4.done)
+    }
+
+    @Test
+    fun testFlowToAsyncIteratorCancellationExceptionReturnsDone() = runTest {
+        val flow = flow {
+            emit(1)
+            emit(2)
+            emit(3)
+            throw CancellationException("flow cancelled")
+            emit(4) // These should never be emitted
+            emit(5)
+            emit(6)
+        }
+        val iterator: JsAsyncIterator<Int> = flow.asDynamic()[js("Symbol.asyncIterator")]()
+
+        val result1 = iterator.next().await()
+        assertEquals(1, result1.value)
+        assertEquals(false, result1.done)
+
+        val result2 = iterator.next().await()
+        assertEquals(2, result2.value)
+        assertEquals(false, result2.done)
+
+        val result3 = iterator.next().await()
+        assertEquals(3, result3.value)
+        assertEquals(false, result3.done)
+
+        // When flow throws CancellationException, next() should return done: true
+        // without propagating the exception, and unconditionally stop emitting
+        val result4 = iterator.next().await()
+        assertEquals(true, result4.done)
+
+        // Subsequent calls should also return done: true, ensuring elements after
+        // CancellationException are never emitted
+        val result5 = iterator.next().await()
+        assertEquals(true, result5.done)
+
+        val result6 = iterator.next().await()
+        assertEquals(true, result6.done)
+    }
+
     // ===== AsyncIterator to Flow tests =====
 
     @Test
@@ -335,6 +403,28 @@ class FlowInteropTest : TestBase() {
                 Promise.resolve(js("({ value: value, done: false })"))
             } else {
                 Promise.reject(exception)
+            }
+        }
+
+        iterator.`return` = fun(): Promise<JsIteratorResult<Int>> {
+            return Promise.resolve(js("({ value: undefined, done: true })"))
+        }
+        iterator.`throw` = fun(error: Throwable): Promise<JsIteratorResult<Int>> {
+            return Promise.reject(error)
+        }
+        return iterator
+    }
+
+    private fun createAsyncIteratorWithCallCounter(values: List<Int>, onNextCall: () -> Unit): JsAsyncIterator<Int> {
+        var index = 0
+        val iterator = js("({})")
+        iterator.next = fun(): Promise<JsIteratorResult<Int>> {
+            onNextCall()
+            return if (index < values.size) {
+                val value = values[index++]
+                Promise.resolve(js("({ value: value, done: false })"))
+            } else {
+                Promise.resolve(js("({ value: undefined, done: true })"))
             }
         }
 

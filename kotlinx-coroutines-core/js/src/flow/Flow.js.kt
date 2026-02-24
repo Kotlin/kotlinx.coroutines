@@ -215,7 +215,12 @@ public actual interface Flow<out T> {
                     demand.receive()
                     valueChannel.send(value)
                 }
-            } catch (e: Throwable) {
+            } catch (e: CancellationException) {
+                valueChannel.close()
+                demand.close()
+                throw e
+            }
+            catch (e: Throwable) {
                 valueChannel.close(e)
                 demand.close(e)
                 return@launch
@@ -227,8 +232,8 @@ public actual interface Flow<out T> {
         val asyncIteratorConstructor = js("typeof AsyncIterator === 'function' ? AsyncIterator : Object")
         val asyncIterator = js("Object.create(asyncIteratorConstructor.prototype)")
 
-        asyncIterator.next = fun(): Promise<JsIteratorResult<T>> {
-            return scope.promise {
+        asyncIterator.next = {
+            scope.promise {
                 val doneValue = js("({ value: undefined, done: true })")
                 try {
                     // Signal demand for the next value
@@ -319,9 +324,7 @@ public actual interface Flow<out T> {
                 }
             } finally {
                 if (!completed) {
-                    try {
                         iterator.`return`().await()
-                    } catch (_: Throwable) {}
                 }
             }
         }
