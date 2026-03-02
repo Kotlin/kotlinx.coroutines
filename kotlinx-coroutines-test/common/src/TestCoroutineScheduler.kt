@@ -172,7 +172,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     }
 
     /**
-     * Checks that the only tasks remaining in the scheduler are cancelled.
+     * Checks that no tasks remain in the event queue.
      */
     internal fun isIdle(): Boolean =
         synchronized(lock) { events.isEmpty }
