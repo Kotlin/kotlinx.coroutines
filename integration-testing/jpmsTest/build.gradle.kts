@@ -5,14 +5,6 @@ plugins {
 
 val coroutines_version: String by project
 
-repositories {
-    if (project.properties["build_snapshot_train"]?.toString()?.toBoolean() == true) {
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-    }
-    mavenLocal()
-    mavenCentral()
-}
-
 java {
     modularity.inferModulePath.set(true)
 }
