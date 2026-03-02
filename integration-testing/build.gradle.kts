@@ -76,24 +76,6 @@ repositories {
     mavenCentral()
 }
 
-subprojects {
-    repositories {
-        val kotlinRepoUrl = providers.gradleProperty("kotlin_repo_url").orNull
-        val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull?.toBoolean() == true
-        val includeKotlinDevRepos = buildSnapshotTrain || name != "jpmsTest"
-
-        if (!kotlinRepoUrl.isNullOrBlank()) {
-            maven(kotlinRepoUrl)
-        }
-        mavenCentral()
-        if (includeKotlinDevRepos) {
-            maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-            maven("https://redirector.kotlinlang.org/maven/dev")
-        }
-        mavenLocal()
-    }
-}
-
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
