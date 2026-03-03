@@ -20,7 +20,7 @@ import kotlin.jvm.*
  * It is not expected that this interface will be implemented directly.
  * Instead, the existing [Channel] implementations can be used or delegated to.
  */
-public interface SendChannel<in E> {
+public expect interface SendChannel<in E> {
     /**
      * Returns `true` if this channel was closed by an invocation of [close] or its receiving side was [cancelled][ReceiveChannel.cancel].
      * This means that calling [send] will result in an exception.
@@ -341,11 +341,7 @@ public interface SendChannel<in E> {
         message = "Deprecated in the favour of 'trySend' method",
         replaceWith = ReplaceWith("trySend(element).isSuccess")
     ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
-    public fun offer(element: E): Boolean {
-        val result = trySend(element)
-        if (result.isSuccess) return true
-        throw recoverStackTrace(result.exceptionOrNull() ?: return false)
-    }
+    public open fun offer(element: E): Boolean
 }
 
 /**
@@ -353,7 +349,7 @@ public interface SendChannel<in E> {
  *
  * Combined, [SendChannel] and [ReceiveChannel] define the complete [Channel] interface.
  */
-public interface ReceiveChannel<out E> {
+public expect interface ReceiveChannel<out E> {
     /**
      * Returns `true` if the sending side of this channel was [closed][SendChannel.close]
      * and all previously sent items were already received (which also happens for [cancelled][cancel] channels).
@@ -698,7 +694,7 @@ public interface ReceiveChannel<out E> {
      * @suppress This method implements old version of JVM ABI. Use [cancel].
      */
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-    public fun cancel(): Unit = cancel(null)
+    public open fun cancel(): Unit
 
     /**
      * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
@@ -735,11 +731,7 @@ public interface ReceiveChannel<out E> {
             "for the precise replacement please refer to the 'poll' documentation",
         replaceWith = ReplaceWith("tryReceive().getOrNull()")
     ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
-    public fun poll(): E? {
-        val result = tryReceive()
-        if (result.isSuccess) return result.getOrThrow()
-        throw recoverStackTrace(result.exceptionOrNull() ?: return null)
-    }
+    public open fun poll(): E?
 
     /**
      * This function was deprecated since 1.3.0 and is no longer recommended to use
@@ -767,7 +759,7 @@ public interface ReceiveChannel<out E> {
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("receiveCatching().getOrNull()")
     ) // Warning since 1.3.0, error in 1.5.0, cannot be hidden due to deprecated extensions
-    public suspend fun receiveOrNull(): E? = receiveCatching().getOrNull()
+    public open suspend fun receiveOrNull(): E?
 
     /**
      * This function was deprecated since 1.3.0 and is no longer recommended to use
@@ -782,7 +774,7 @@ public interface ReceiveChannel<out E> {
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("onReceiveCatching")
     ) // Warning since 1.3.0, error in 1.5.0, will be hidden or removed in 1.7.0
-    public val onReceiveOrNull: SelectClause1<E?> get() = (this as BufferedChannel<E>).onReceiveOrNull
+    public open val onReceiveOrNull: SelectClause1<E?>
 }
 
 /**
@@ -991,7 +983,7 @@ public inline fun <T> ChannelResult<T>.getOrElse(onFailure: (exception: Throwabl
         callsInPlace(onFailure, InvocationKind.AT_MOST_ONCE)
     }
     @Suppress("UNCHECKED_CAST")
-    return if (holder is ChannelResult.Failed) onFailure(exceptionOrNull()) else holder as T
+    return if (isFailure) onFailure(exceptionOrNull()) else holder as T
 }
 
 /**
@@ -1006,7 +998,7 @@ public inline fun <T> ChannelResult<T>.onSuccess(action: (value: T) -> Unit): Ch
         callsInPlace(action, InvocationKind.AT_MOST_ONCE)
     }
     @Suppress("UNCHECKED_CAST")
-    if (holder !is ChannelResult.Failed) action(holder as T)
+    if (!isFailure) action(holder as T)
     return this
 }
 
@@ -1023,7 +1015,7 @@ public inline fun <T> ChannelResult<T>.onFailure(action: (exception: Throwable?)
     contract {
         callsInPlace(action, InvocationKind.AT_MOST_ONCE)
     }
-    if (holder is ChannelResult.Failed) action(exceptionOrNull())
+    if (isFailure) action(exceptionOrNull())
     return this
 }
 
@@ -1044,7 +1036,7 @@ public inline fun <T> ChannelResult<T>.onClosed(action: (exception: Throwable?) 
     contract {
         callsInPlace(action, InvocationKind.AT_MOST_ONCE)
     }
-    if (holder is ChannelResult.Closed) action(exceptionOrNull())
+    if (isClosed) action(exceptionOrNull())
     return this
 }
 
