@@ -2,16 +2,13 @@ package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Test
-import kotlin.coroutines.*
 import kotlin.test.*
 
 class CoroutinesDumpTest : DebugTestBase() {
     private val monitor = Any()
     private var coroutineThread: Thread? = null // guarded by monitor
 
-    @Before
+    @BeforeTest
     override fun setUp() {
         super.setUp()
         DebugProbes.enableCreationStackTraces = true
@@ -19,11 +16,13 @@ class CoroutinesDumpTest : DebugTestBase() {
 
     @Test
     fun testSuspendedCoroutine() = runBlocking {
-        val deferred = async(Dispatchers.Default) {
-            sleepingOuterMethod()
+        val latch = CompletableDeferred<Unit>()
+        val singleThreadedDispatcher = newSingleThreadContext("TestCoroutineThread")
+        val deferred = async(singleThreadedDispatcher) {
+            sleepingOuterMethod(singleThreadedDispatcher, latch)
         }
 
-        awaitCoroutine()
+        latch.await()
         val found = DebugProbes.dumpCoroutinesInfo().single { it.job === deferred }
         verifyDump(
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: SUSPENDED\n" +
@@ -35,6 +34,7 @@ class CoroutinesDumpTest : DebugTestBase() {
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt)\n",
             ignoredCoroutine = "BlockingCoroutine"
         ) {
+            singleThreadedDispatcher.close()
             deferred.cancel()
             coroutineThread!!.interrupt()
         }
@@ -181,7 +181,7 @@ class CoroutinesDumpTest : DebugTestBase() {
     private suspend fun nestedActiveMethod(shouldSuspend: Boolean) {
         if (shouldSuspend) yield()
         notifyCoroutineStarted()
-        while (coroutineContext[Job]!!.isActive) {
+        while (currentCoroutineContext()[Job]!!.isActive) {
             try {
                 Thread.sleep(60_000)
             } catch (_ : InterruptedException) {
@@ -189,21 +189,31 @@ class CoroutinesDumpTest : DebugTestBase() {
         }
     }
 
-    private suspend fun sleepingOuterMethod() {
-        sleepingNestedMethod()
-        yield() // TCE
+    private suspend fun sleepingOuterMethod(currentDispatcher: CoroutineDispatcher, latch: CompletableDeferred<Unit>) {
+        sleepingNestedMethod(currentDispatcher, latch)
+        yield() // TCE: make sure `sleepingOuterMethod` is contained in the continuation of `sleepingNestedMethod`
     }
 
-    private suspend fun sleepingNestedMethod() {
-        yield() // Suspension point
-        notifyCoroutineStarted()
+    private suspend fun sleepingNestedMethod(currentDispatcher: CoroutineDispatcher, latch: CompletableDeferred<Unit>) {
+        /* Schedule a computation on the current single-threaded dispatcher.
+        Since that thread is currently running this code,
+        the start notification will happen *after* the currently running coroutine suspends. */
+        currentDispatcher.dispatch(currentDispatcher) {
+            coroutineThread = Thread.currentThread()
+            latch.complete(Unit)
+        }
         delay(Long.MAX_VALUE)
+        yield() // TCE: make sure `sleepingNestedMethod` is contained in the continuation of `delay`
     }
 
     private fun awaitCoroutine() = synchronized(monitor) {
         while (coroutineThread == null) (monitor as Object).wait()
         while (coroutineThread!!.state != Thread.State.TIMED_WAITING) {
-            // Wait until thread sleeps to have a consistent stacktrace
+            /* Wait until the thread we're awaiting goes to sleep.
+            Note: this does not establish a happens-before relationship with the thread entering `Thread.sleep`.
+            There still doesn't seem to be any guarantee that the stacktrace will be accurately updated.
+            <https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#getStackTrace--> says that how accurate
+            a stacktrace is is implementation-dependent. */
         }
     }
 
