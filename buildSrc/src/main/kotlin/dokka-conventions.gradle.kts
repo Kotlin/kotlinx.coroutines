@@ -11,13 +11,13 @@ private val subprojectWithDokka = subprojects.filterNot { projectsWithoutDokka.c
 
 configure(subprojectWithDokka) {
     apply(plugin = "org.jetbrains.dokka")
-    configurePathsaver()
+    configureDokkaPlugins()
     configureDokkaTemplatesDir()
     condigureDokkaSetup()
 }
 
 // For top-level multimodule collection
-configurePathsaver()
+configureDokkaPlugins()
 configureDokkaTemplatesDir()
 
 dependencies {
@@ -26,10 +26,13 @@ dependencies {
     }
 }
 
-// Dependencies for Knit processing: Knit plugin to work with Dokka
-private fun Project.configurePathsaver() {
+private fun Project.configureDokkaPlugins() {
     dependencies {
+        // Dependencies for Knit processing: Knit plugin to work with Dokka
         dokkaPlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+
+        // make samples runnable via Kotlin playground
+        dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-playground-samples-plugin")
     }
 }
 
