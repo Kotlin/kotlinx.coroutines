@@ -15,9 +15,9 @@ class PropagateExceptionFinalResortTest : TestBase() {
     }
 
     /*
-     * Test that `propagateExceptionFinalResort` re-throws the exception on wasmJS.
+     * Test that `propagateExceptionFinalResort` re-throws the exception on Wasm/JS.
      *
-     * It is checked by setting up an exception handler within wasmJS.
+     * It is checked by setting up an exception handler within Wasm/JS.
      */
     @Test
     fun testPropagateExceptionFinalResortReThrowsOnWasmJS() = runTest {
@@ -32,7 +32,6 @@ class PropagateExceptionFinalResortTest : TestBase() {
 
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun addUncaughtExceptionHandlerHelper() {
-    // https://nodejs.org/api/process.html#event-uncaughtexception
     js("""
             globalThis.exceptionCaught = false;
             globalThis.exceptionHandler = function(e) {
