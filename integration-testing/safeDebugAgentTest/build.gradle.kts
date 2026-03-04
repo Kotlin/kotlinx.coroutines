@@ -20,22 +20,23 @@ tasks.register("attachAgentWithoutKotlinStdlib") {
 
     doLast {
         val agentJar = System.getProperty("coroutines.debug.agent.path")
-        val errorOutputStream = ByteArrayOutputStream()
-        val standardOutputStream = ByteArrayOutputStream()
-
-        project.javaexec {
+        val execResult = project.providers.javaexec {
             mainClass.set("Main")
             classpath = sourceSets.main.get().runtimeClasspath
             jvmArgs = listOf("-javaagent:$agentJar")
-            errorOutput = errorOutputStream
-            standardOutput = standardOutputStream
+            isIgnoreExitValue = true
         }
-
-        check(errorOutputStream.toString().isEmpty()) {
-            "Expected no output in the error stream, but got:\n$errorOutputStream"
+        val exitCode = execResult.result.get().exitValue
+        val stdout = execResult.standardOutput.asText.getOrElse("<not found>")
+        val stderr = execResult.standardError.asText.getOrElse("<not found>")
+        check (exitCode == 0) {
+            "Process execution ended with non-zero exit code: $exitCode\nstdout:\n$stdout\nstderr:\n$stderr"
         }
-        check(standardOutputStream.toString().contains("OK!")) {
-            "Expected 'OK!' in the standard output, but got:\n$standardOutputStream"
+        check(stderr.isEmpty()) {
+            "Expected no output in the error stream, but got:\n$stderr"
+        }
+        check(stdout.contains("OK!")) {
+            "Expected 'OK!' in the standard output, but got:\n$stdout"
         }
     }
 }
