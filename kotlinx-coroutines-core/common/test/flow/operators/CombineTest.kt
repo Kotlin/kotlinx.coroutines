@@ -114,37 +114,38 @@ abstract class CombineTestBase : TestBase() {
         finish(8)
     }
 
+    // NamedDispatcher used for this test is now a real dispatcher and we cannot (and should not)
+    // assert on the synchronous execution of the test anymore. The primary goal of this test is
+    // to verify that each operation runs on the expected dispatcher which is validated with the
+    // assertions on the dispatcher name. Having the correct final result at the end validates the
+    // overall correctness of the execution.
+    // Consequently, all expect calls are commented out.
     @Test
     fun testContextIsIsolated() = runTest {
         val f1 = flow {
             emit("a")
             assertEquals("first", NamedDispatchers.name())
-            expect(1)
         }.flowOn(NamedDispatchers("first")).onEach {
             assertEquals("nested", NamedDispatchers.name())
-            expect(2)
         }.flowOn(NamedDispatchers("nested"))
 
         val f2 = flow {
             emit(1)
             assertEquals("second", NamedDispatchers.name())
-            expect(3)
         }.flowOn(NamedDispatchers("second"))
             .onEach {
                 assertEquals("onEach", NamedDispatchers.name())
-                expect(4)
             }.flowOn(NamedDispatchers("onEach"))
 
         val value = withContext(NamedDispatchers("main")) {
             f1.combineLatest(f2) { i, j ->
                 assertEquals("main", NamedDispatchers.name())
-                expect(5)
                 i + j
             }.single()
         }
 
         assertEquals("a1", value)
-        finish(6)
+        finish(1)
     }
 
     @Test

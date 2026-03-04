@@ -155,7 +155,14 @@ class TimeoutTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamTimeoutIsolatedContext() = withVirtualTime {
+    // The documentation for `withVirtualTime` states that none of the coroutines in the test should
+    // be launched on a dispatcher different from the current one. This constraint wasn't an issue
+    // when `NamedDispatchers` was a fake dispatcher, but it is now a real dispatcher.
+    // Hopefully, on JS, this test can simply use `runTest` and doesn't require virtual time. The
+    // delay is sufficiently large compared to the timeout to prevent flakiness.
+    // original code:
+    // fun testUpstreamTimeoutIsolatedContext() = withVirtualTime {
+    fun testUpstreamTimeoutIsolatedContext() = runTest {
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
             expect(1)
@@ -170,7 +177,14 @@ class TimeoutTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamTimeoutActionIsolatedContext() = withVirtualTime {
+    // The documentation for `withVirtualTime` states that none of the coroutines in the test should
+    // be launched on a dispatcher different from the current one. This constraint wasn't an issue
+    // when `NamedDispatchers` was a fake dispatcher, but it is now a real dispatcher.
+    // Hopefully, on JS, this test can simply use `runTest` and doesn't require virtual time. The
+    // delay is sufficiently large compared to the timeout to prevent flakiness.
+    // original code:
+    // fun testUpstreamTimeoutIsolatedContext() = withVirtualTime {
+    fun testUpstreamTimeoutActionIsolatedContext() = runTest {
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
             expect(1)

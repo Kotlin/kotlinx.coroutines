@@ -78,6 +78,12 @@ class TransformLatestTest : TestBase() {
         assertNull(emptyFlow<Int>().transformLatest { emit(1) }.singleOrNull())
     }
 
+    // NamedDispatcher used for this test is now a real dispatcher and we cannot (and should not)
+    // assert on the synchronous execution of the test anymore. The primary goal of this test is
+    // to verify that each operation runs on the expected dispatcher which is validated with the
+    // assertions on the dispatcher name. Having the correct final result at the end validates the
+    // overall correctness of the execution.
+    // Consequently, all expect calls are commented out.
     @Test
     fun testIsolatedContext() = runTest {
         val flow = flow {
@@ -90,15 +96,27 @@ class TransformLatestTest : TestBase() {
         }.flowOn(NamedDispatchers("source")).transformLatest<Int, Int> { value ->
             emitAll(flow<Int> {
                 assertEquals("switch$value", NamedDispatchers.name())
-                expect(value)
                 emit(value)
             }.flowOn(NamedDispatchers("switch$value")))
         }.onEach {
-            expect(it + 2)
             assertEquals("main", NamedDispatchers.nameOr("main"))
         }
-        assertEquals(2, flow.count())
-        finish(8)
+        // We now observe the correct behavior. Changing the dispatcher with flowOn avoids the
+        // kotlinx-coroutines library from skipping some dispatches and `transformLatest` can
+        // properly cancel the processing of a previous value when a new value is emitted by the
+        // upstream flow. For instance, when `5` is emitted, the ongoing work for `4` is cancelled.
+        // In the original code, `transformLatest` and `onEach` ran synchronously. This meant the
+        // processing for each value completed fully before the next value was handled, preventing
+        // any cancellation from occurring.
+        // The bug discovered with https://pl.kotl.in/GCP1nSBF1 is a known issue
+        // (see https://github.com/Kotlin/kotlinx.coroutines/issues/3109) and a fix is in review
+        // (see https://github.com/Kotlin/kotlinx.coroutines/pull/4493).
+        // original code:
+        // assertEquals(2, flow.count())
+        assertEquals(1, flow.count())
+        // original code:
+        // finish(8)
+        finish(4)
     }
 
     @Test

@@ -17,12 +17,29 @@ public object NamedDispatchers {
 
     private fun named(name: String): CoroutineDispatcher = object : CoroutineDispatcher() {
         override fun dispatch(context: CoroutineContext, block: Runnable) {
-            stack.push(name)
-            try {
-                block.run()
-            } finally {
-                val last = stack.pop() ?: error("No names on stack")
-                require(last == name) { "Inconsistent stack: expected $name, but had $last" }
+            // This fake dispatch tries to execute the block synchronously. This caused an issue
+            // where coroutines were resumed before being suspended (b/477052749). We decided not to
+            // change our implementation to cover this case, as it only occurs in these tests.
+            // Resuming before suspending is discouraged by the coroutine documentation. In addition
+            // to this, the `dispatch` function documentation states that it cannot invoke the block
+            // directly. Our implementation is following the specification by delegating the
+            // dispatch to the Default dispatcher.
+            // original code:
+            // stack.push(name)
+            // try {
+            //     block.run()
+            // } finally {
+            //     val last = stack.pop() ?: error("No names on stack")
+            //     require(last == name) { "Inconsistent stack: expected $name, but had $last" }
+            // }
+            Dispatchers.Default.dispatch(context) {
+                stack.push(name)
+                try {
+                    block.run()
+                } finally {
+                    val last = stack.pop() ?: error("No names on stack")
+                    require(last == name) { "Inconsistent stack: expected $name, but had $last" }
+                }
             }
         }
     }
