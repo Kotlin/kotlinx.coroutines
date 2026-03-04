@@ -160,8 +160,6 @@ class TimeoutTest : TestBase() {
     // when `NamedDispatchers` was a fake dispatcher, but it is now a real dispatcher.
     // Hopefully, on JS, this test can simply use `runTest` and doesn't require virtual time. The
     // delay is sufficiently large compared to the timeout to prevent flakiness.
-    // original code:
-    // fun testUpstreamTimeoutIsolatedContext() = withVirtualTime {
     fun testUpstreamTimeoutIsolatedContext() = runTest {
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())
@@ -182,8 +180,6 @@ class TimeoutTest : TestBase() {
     // when `NamedDispatchers` was a fake dispatcher, but it is now a real dispatcher.
     // Hopefully, on JS, this test can simply use `runTest` and doesn't require virtual time. The
     // delay is sufficiently large compared to the timeout to prevent flakiness.
-    // original code:
-    // fun testUpstreamTimeoutIsolatedContext() = withVirtualTime {
     fun testUpstreamTimeoutActionIsolatedContext() = runTest {
         val flow = flow {
             assertEquals("upstream", NamedDispatchers.name())

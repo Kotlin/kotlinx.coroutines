@@ -111,11 +111,7 @@ class TransformLatestTest : TestBase() {
         // The bug discovered with https://pl.kotl.in/GCP1nSBF1 is a known issue
         // (see https://github.com/Kotlin/kotlinx.coroutines/issues/3109) and a fix is in review
         // (see https://github.com/Kotlin/kotlinx.coroutines/pull/4493).
-        // original code:
-        // assertEquals(2, flow.count())
         assertEquals(1, flow.count())
-        // original code:
-        // finish(8)
         finish(4)
     }
 

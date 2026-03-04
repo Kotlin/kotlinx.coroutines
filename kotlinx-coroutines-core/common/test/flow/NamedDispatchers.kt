@@ -24,14 +24,6 @@ public object NamedDispatchers {
             // to this, the `dispatch` function documentation states that it cannot invoke the block
             // directly. Our implementation is following the specification by delegating the
             // dispatch to the Default dispatcher.
-            // original code:
-            // stack.push(name)
-            // try {
-            //     block.run()
-            // } finally {
-            //     val last = stack.pop() ?: error("No names on stack")
-            //     require(last == name) { "Inconsistent stack: expected $name, but had $last" }
-            // }
             Dispatchers.Default.dispatch(context) {
                 stack.push(name)
                 try {
