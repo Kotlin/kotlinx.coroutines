@@ -183,6 +183,12 @@ public interface Flow<out T> {
      * myFlow.collect { value -> println("Collected $value") }
      * ```
      *
+     * ### Cancellation
+     *
+     * Flows built with the [flow] builder and all [SharedFlow] implementations provide a
+     * **prompt cancellation guarantee**: the collector's cancellation status is checked on each emission.
+     * For other [Flow] implementations, the [cancellable] operator can be used to ensure the same guarantee.
+     *
      * ### Method inheritance
      *
      * To ensure the context preservation property, it is not recommended implementing this method directly.

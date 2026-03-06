@@ -252,9 +252,13 @@ public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
 }
 
 /**
- * Returns a flow which checks cancellation status on each emission and throws
- * the corresponding cancellation cause if flow collector was cancelled.
- * Note that [flow] builder and all implementations of [SharedFlow] are [cancellable] by default.
+ * Returns a flow that provides a **prompt cancellation guarantee**: on each emission, the
+ * flow collector's cancellation status is checked, and if the collector was cancelled,
+ * the corresponding cancellation cause is thrown.
+ *
+ * The [flow] builder and all implementations of [SharedFlow] are [cancellable] by default.
+ * This operator is useful for custom [Flow] implementations or flows created without the [flow]
+ * builder to ensure they promptly respond to the collector's cancellation.
  *
  * This operator provides a shortcut for `.onEach { currentCoroutineContext().ensureActive() }`.
  * See [ensureActive][CoroutineContext.ensureActive] for details.
