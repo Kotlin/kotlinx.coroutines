@@ -9,7 +9,8 @@ buildscript {
     /*
         These property group is used to build kotlinx.coroutines against Kotlin compiler snapshot.
         How does it work:
-        When build_snapshot_train is set to true, kotlin_version property is overridden with kotlin_snapshot_version,
+        When build_snapshot_train is set to true, kotlin_version is taken from Gradle properties
+        (and can be overridden from the command line),
         atomicfu_version is overwritten by TeamCity environment (AFU is built with snapshot and published to mavenLocal
         as previous step or the snapshot build).
         Additionally, mavenLocal and Sonatype snapshots are added to repository list and stress tests are disabled.
@@ -82,12 +83,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-val kotlinVersion = if (extra["build_snapshot_train"] == true) {
-    providers.gradleProperty("kotlin_snapshot_version").orNull
-        ?: throw IllegalArgumentException("'kotlin_snapshot_version' should be defined when building with snapshot compiler")
-} else {
-    providers.gradleProperty("kotlin_version").get()
-}
+val kotlinVersion = providers.gradleProperty("kotlin_version").get()
 
 val asmVersion = property("asm_version")
 
