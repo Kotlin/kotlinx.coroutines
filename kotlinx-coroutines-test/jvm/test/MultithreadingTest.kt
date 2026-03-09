@@ -8,18 +8,6 @@ import kotlin.test.*
 class MultithreadingTest {
 
     @Test
-    fun incorrectlyCalledRunBlocking_doesNotHaveSameInterceptor() = runBlockingTest {
-        // this code is an error as a production test, please do not use this as an example
-
-        // this test exists to document this error condition, if it's possible to make this code work please update
-        val outerInterceptor = coroutineContext[ContinuationInterceptor]
-        // runBlocking always requires an argument to pass the context in tests
-        runBlocking {
-            assertNotSame(coroutineContext[ContinuationInterceptor], outerInterceptor)
-        }
-    }
-
-    @Test
     fun testSingleThreadExecutor() = runBlocking {
         val mainThread = Thread.currentThread()
         Dispatchers.setMain(Dispatchers.Unconfined)
@@ -44,44 +32,6 @@ class MultithreadingTest {
                 assertSame(mainThread, Thread.currentThread())
             }
             assertSame(mainThread, Thread.currentThread())
-        }
-    }
-
-    @Test
-    fun whenDispatchCalled_runsOnCurrentThread() {
-        val currentThread = Thread.currentThread()
-        val subject = TestCoroutineDispatcher()
-        val scope = TestCoroutineScope(subject)
-
-        val deferred = scope.async(Dispatchers.Default) {
-            withContext(subject) {
-                assertNotSame(currentThread, Thread.currentThread())
-                3
-            }
-        }
-
-        runBlocking {
-            // just to ensure the above code terminates
-            assertEquals(3, deferred.await())
-        }
-    }
-
-    @Test
-    fun whenAllDispatchersMocked_runsOnSameThread() {
-        val currentThread = Thread.currentThread()
-        val subject = TestCoroutineDispatcher()
-        val scope = TestCoroutineScope(subject)
-
-        val deferred = scope.async(subject) {
-            withContext(subject) {
-                assertSame(currentThread, Thread.currentThread())
-                3
-            }
-        }
-
-        runBlocking {
-            // just to ensure the above code terminates
-            assertEquals(3, deferred.await())
         }
     }
 

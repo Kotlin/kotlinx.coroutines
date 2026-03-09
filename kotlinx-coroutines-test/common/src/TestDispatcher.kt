@@ -18,7 +18,7 @@ public abstract class TestDispatcher internal constructor() : CoroutineDispatche
     /** The scheduler that this dispatcher is linked to. */
     public abstract val scheduler: TestCoroutineScheduler
 
-    /** Notifies the dispatcher that it should process a single event marked with [marker] happening at time [time]. */
+    /** Notifies the dispatcher that it should process a single event marked with [marker]. */
     internal fun processEvent(marker: Any) {
         check(marker is Runnable)
         marker.run()
@@ -32,14 +32,13 @@ public abstract class TestDispatcher internal constructor() : CoroutineDispatche
             timeMillis,
             timedRunnable,
             continuation.context,
-            ::cancellableRunnableIsCancelled
         )
         continuation.disposeOnCancellation(handle)
     }
 
     /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
-        scheduler.registerEvent(this, timeMillis, block, context) { false }
+        scheduler.registerEvent(this, timeMillis, block, context)
 
     /** @suppress */
     @Deprecated("Is only needed internally", level = DeprecationLevel.HIDDEN)
@@ -59,5 +58,3 @@ private class CancellableContinuationRunnable(
     override fun run() = with(dispatcher) { with(continuation) { resumeUndispatched(Unit) } }
 }
 
-private fun cancellableRunnableIsCancelled(runnable: CancellableContinuationRunnable): Boolean =
-    !runnable.continuation.isActive

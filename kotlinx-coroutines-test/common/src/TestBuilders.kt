@@ -51,7 +51,7 @@ public expect class TestResult
  * ```
  *
  * The platform difference entails that, in order to use this function correctly in common code, one must always
- * immediately return the produced [TestResult] from the test method, without doing anything else afterwards. See
+ * immediately return the produced [TestResult] from the test method, without doing anything else afterward. See
  * [TestResult] for details on this.
  *
  * The test is run on a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
@@ -89,7 +89,7 @@ public expect class TestResult
  * If [Dispatchers.Main] is set to a [TestDispatcher] via [Dispatchers.setMain] before the test,
  * then its [TestCoroutineScheduler] is used;
  * otherwise, a new one is automatically created (or taken from [context] in some way) and can be used to control
- * the virtual time, advancing it, running the tasks scheduled at a specific time etc.
+ * the virtual time, advancing it, running the tasks scheduled at a specific time, etc.
  * The scheduler can be accessed via [TestScope.testScheduler].
  *
  * Delays in code that runs inside dispatchers that don't use a [TestCoroutineScheduler] don't get skipped:
@@ -150,7 +150,7 @@ public expect class TestResult
  *
  * ### Configuration
  *
- * [context] can be used to affect the environment of the code under test. Beside just being passed to the coroutine
+ * [context] can be used to affect the environment of the code under test. Besides just being passed to the coroutine
  * scope created for the test, [context] also can be used to change how the test is executed.
  * See the [TestScope] constructor function documentation for details.
  *
@@ -189,7 +189,7 @@ public fun runTest(
  * ```
  *
  * The platform difference entails that, in order to use this function correctly in common code, one must always
- * immediately return the produced [TestResult] from the test method, without doing anything else afterwards. See
+ * immediately return the produced [TestResult] from the test method, without doing anything else afterward. See
  * [TestResult] for details on this.
  *
  * The test is run in a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
@@ -227,7 +227,7 @@ public fun runTest(
  * If [Dispatchers.Main] is set to a [TestDispatcher] via [Dispatchers.setMain] before the test,
  * then its [TestCoroutineScheduler] is used;
  * otherwise, a new one is automatically created (or taken from [context] in some way) and can be used to control
- * the virtual time, advancing it, running the tasks scheduled at a specific time etc.
+ * the virtual time, advancing it, running the tasks scheduled at a specific time, etc.
  * Some convenience methods are available on [TestScope] to control the scheduler.
  *
  * Delays in code that runs inside dispatchers that don't use a [TestCoroutineScheduler] don't get skipped:
@@ -274,7 +274,7 @@ public fun runTest(
  *
  * ### Configuration
  *
- * [context] can be used to affect the environment of the code under test. Beside just being passed to the coroutine
+ * [context] can be used to affect the environment of the code under test. Besides just being passed to the coroutine
  * scope created for the test, [context] also can be used to change how the test is executed.
  * See the [TestScope] constructor function documentation for details.
  *
@@ -285,8 +285,8 @@ public fun runTest(
         "Warning: the proposed replacement is not identical as it uses 'dispatchTimeoutMs' as the timeout for the whole test!",
     ReplaceWith("runTest(context, timeout = dispatchTimeoutMs.milliseconds, testBody)",
         "kotlin.time.Duration.Companion.milliseconds"),
-    DeprecationLevel.WARNING
-) // Warning since 1.7.0, was experimental in 1.6.x
+    DeprecationLevel.ERROR
+) // Error since 1.11.0, warning since 1.7.0, was experimental in 1.6.x
 public fun runTest(
     context: CoroutineContext = EmptyCoroutineContext,
     dispatchTimeoutMs: Long,
@@ -294,7 +294,7 @@ public fun runTest(
 ): TestResult {
     if (context[RunningInRunTest] != null)
         throw IllegalStateException("Calls to `runTest` can't be nested. Please read the docs on `TestResult` for details.")
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION_ERROR")
     return TestScope(context + RunningInRunTest).runTest(dispatchTimeoutMs = dispatchTimeoutMs, testBody)
 }
 
@@ -388,8 +388,8 @@ public fun TestScope.runTest(
         "Warning: the proposed replacement is not identical as it uses 'dispatchTimeoutMs' as the timeout for the whole test!",
     ReplaceWith("this.runTest(timeout = dispatchTimeoutMs.milliseconds, testBody)",
         "kotlin.time.Duration.Companion.milliseconds"),
-    DeprecationLevel.WARNING
-) // Warning since 1.7.0, was experimental in 1.6.x
+    DeprecationLevel.ERROR
+) // Error since 1.11, warning since 1.7.0, was experimental in 1.6.x
 public fun TestScope.runTest(
     dispatchTimeoutMs: Long,
     testBody: suspend TestScope.() -> Unit
@@ -417,10 +417,6 @@ internal object RunningInRunTest : CoroutineContext.Key<RunningInRunTest>, Corou
 
     override fun toString(): String = "RunningInRunTest"
 }
-
-/** The default timeout to use when waiting for asynchronous completions of the coroutines managed by
- * a [TestCoroutineScheduler]. */
-internal const val DEFAULT_DISPATCH_TIMEOUT_MS = 60_000L
 
 /**
  * The default timeout to use when running a test.
@@ -477,13 +473,13 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
      *    If there is no activity for [dispatchTimeoutMs] milliseconds, we consider the test to have hanged.
      *
      *    The background work is not running on a dedicated thread.
-     *    Instead, the test thread itself is used, by spawning a separate coroutine.
+     *    Instead, the test thread itself is used by spawning a separate coroutine.
      */
     var completed = false
     while (!completed) {
         scheduler.advanceUntilIdle()
         if (coroutine.isCompleted) {
-            /* don't even enter `withTimeout`; this allows to use a timeout of zero to check that there are no
+            /* don't even enter `withTimeout`; this allows using a timeout of zero to check that there are no
            non-trivial dispatches. */
             completed = true
             continue
@@ -503,7 +499,7 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
             }
         }
         try {
-            select<Unit> {
+            select {
                 coroutine.onJoin {
                     // observe that someone completed the test coroutine and leave without waiting for the timeout
                     completed = true
@@ -522,7 +518,7 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
     coroutine.getCompletionExceptionOrNull()?.let { exception ->
         val exceptions = try {
             cleanup()
-        } catch (e: UncompletedCoroutinesError) {
+        } catch (_: UncompletedCoroutinesError) {
             // it's normal that some jobs are not completed if the test body has failed, won't clutter the output
             emptyList()
         }
@@ -542,7 +538,7 @@ private inline fun <T : AbstractCoroutine<Unit>> handleTimeout(
 ): AssertionError {
     val uncaughtExceptions = try {
         cleanup()
-    } catch (e: UncompletedCoroutinesError) {
+    } catch (_: UncompletedCoroutinesError) {
         // we expect these and will instead throw a more informative exception.
         emptyList()
     }
@@ -596,8 +592,8 @@ internal expect fun systemPropertyImpl(name: String): String?
     "This is for binary compatibility with the `runTest` overload that existed at some point",
     level = DeprecationLevel.HIDDEN
 )
-@JvmName("runTest\$default")
-@Suppress("DEPRECATION", "UNUSED_PARAMETER")
+@JvmName($$"runTest$default")
+@Suppress("DEPRECATION_ERROR", "UNUSED_PARAMETER")
 public fun TestScope.runTestLegacy(
     dispatchTimeoutMs: Long,
     testBody: suspend TestScope.() -> Unit,
@@ -610,5 +606,5 @@ private class AtomicBoolean(initial: Boolean) {
     private val container = atomic(initial)
     var value: Boolean
         get() = container.value
-        set(value: Boolean) { container.value = value }
+        set(value) { container.value = value }
 }
