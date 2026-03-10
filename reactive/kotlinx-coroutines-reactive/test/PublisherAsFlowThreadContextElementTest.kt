@@ -8,7 +8,7 @@ import kotlin.coroutines.*
 import kotlin.test.*
 
 class PublisherAsFlowThreadContextElementTest: TestBase() {
-    val threadLocal = ThreadLocal<String>.withInitial { "default" }
+    val threadLocal = ThreadLocal.withInitial { "default" }
 
     @Test
     fun testFlowOnThreadContext() = runBlocking {
@@ -74,7 +74,7 @@ class PublisherAsFlowThreadContextElementTest: TestBase() {
             .flowOn(root + Dispatchers.Default)
             .single()
     }
-    
+
         @Test
     fun testThreadLocalFlowOn() = runTest {
         val parameters: List<Triple<CoroutineContext, Boolean, Boolean>> =
