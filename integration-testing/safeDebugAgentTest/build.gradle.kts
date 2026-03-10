@@ -15,29 +15,28 @@ application {
 
 // In this test coroutine debug agent is attached as a javaagent vm argument
 // to a pure Java project (safeDebugAgentTest) with no Kotlin stdlib dependency.
-// In this case the error should be thrown from AgetnPremain class:
-// "java.lang.IllegalStateException: kotlinx.coroutines debug agent failed to load."
-tasks.register<Test>("runWithExpectedFailure") {
-    val agentJar = System.getProperty("coroutines.debug.agent.path")
-    val errorOutputStream = ByteArrayOutputStream()
-    val standardOutputStream = ByteArrayOutputStream()
+tasks.register("attachAgentWithoutKotlinStdlib") {
+    dependsOn("classes")
 
-    project.javaexec {
-        mainClass.set("Main")
-        classpath = sourceSets.main.get().runtimeClasspath
-        jvmArgs = listOf("-javaagent:$agentJar")
-        errorOutput = errorOutputStream
-        standardOutput = standardOutputStream
-        isIgnoreExitValue = true
-    }
-
-    val expectedAgentError =
-        "kotlinx.coroutines debug agent failed to load.\n" +
-            "Please ensure that the Kotlin standard library is present in the classpath.\n" +
-            "Alternatively, you can disable kotlinx.coroutines debug agent by removing `-javaagent=/path/kotlinx-coroutines-core.jar` from your VM arguments.\n"
-    val errorOutput = errorOutputStream.toString()
-    val standardOutput = standardOutputStream.toString()
-    if (!errorOutput.contains(expectedAgentError)) {
-        throw GradleException("':safeDebugAgentTest:runWithExpectedFailure' completed with an unexpected output:\n" + standardOutput + "\n" + errorOutput)
+    doLast {
+        val agentJar = System.getProperty("coroutines.debug.agent.path")
+        val execResult = project.providers.javaexec {
+            mainClass.set("Main")
+            classpath = sourceSets.main.get().runtimeClasspath
+            jvmArgs = listOf("-javaagent:$agentJar")
+            isIgnoreExitValue = true
+        }
+        val exitCode = execResult.result.get().exitValue
+        val stdout = execResult.standardOutput.asText.getOrElse("<not found>")
+        val stderr = execResult.standardError.asText.getOrElse("<not found>")
+        check (exitCode == 0) {
+            "Process execution ended with non-zero exit code: $exitCode\nstdout:\n$stdout\nstderr:\n$stderr"
+        }
+        check(stderr.isEmpty()) {
+            "Expected no output in the error stream, but got:\n$stderr"
+        }
+        check(stdout.contains("OK!")) {
+            "Expected 'OK!' in the standard output, but got:\n$stdout"
+        }
     }
 }
