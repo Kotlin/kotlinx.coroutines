@@ -515,7 +515,7 @@ class SchedulerTest : TestBase() {
                 }
             }
         }.asScheduler()
-        // Allocates a new worker internally and scheduler a ticker,
+        // Allocates a new worker internally and schedules a ticker,
         // *without* storing the scheduled periodic tasks anywhere.
         // The only way for them to get cancelled is by the worker disposing of them as part of its own disposal.
         val disposable = Flowable.interval(5, 1, TimeUnit.MINUTES, customScheduler)
