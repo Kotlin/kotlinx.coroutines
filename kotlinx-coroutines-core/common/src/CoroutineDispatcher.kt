@@ -244,7 +244,7 @@ public abstract class CoroutineDispatcher :
      * may leave the coroutines that use this dispatcher in an inconsistent and hard-to-debug state.
      * It is assumed that if any exceptions do get thrown from this method, then [block] will not be executed.
      *
-     * Most implementations should avoid calling [block] inline. Doing so may result in `StackOverflowError`
+     * Most implementations should avoid calling [block] in-place. Doing so may result in `StackOverflowError`
      * when `dispatch` is invoked repeatedly, for example when [yield] is called in a loop.
      * In order to execute a block in place, it is recommended to return `false` from [isDispatchNeeded]
      * and delegate the `dispatch` implementation to `Dispatchers.Unconfined.dispatch` in such cases.
