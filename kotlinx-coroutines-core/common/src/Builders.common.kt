@@ -138,7 +138,7 @@ private class LazyDeferredCoroutine<T>(
  * this call will not be cancelled neither on entry to the block inside `withContext` nor on exit from it.
  *
  * It is incorrect to pass any instances of [Job] other than [NonCancellable] to [withContext].
- * This does not raise an exception only for preserving backward compatibility.
+ * The only reason this does not raise an exception is preserving backward compatibility.
  * If the purpose of passing a [Job] to this function is to ensure that [block] gets cancelled when that job
  * gets cancelled, this pattern can be used instead:
  *
@@ -154,11 +154,16 @@ private class LazyDeferredCoroutine<T>(
  *     // if `await` fails because the current job is cancelled,
  *     // also cancel the now-unnecessary computations
  *     deferred.cancel()
+ *     // optional: wait for the `deferred` to finish running its code
+ *     // after being cancelled
+ *     withContext(NonCancellable) {
+ *         deferred.join()
+ *     }
  * }
  * ```
  *
  * This way, the [block] gets cancelled when either the caller or `scopeWithTheRequiredJob` gets cancelled,
- * ensuring that unnecessary computations do not keep executing
+ * ensuring that unnecessary computations do not keep executing.
  */
 public suspend fun <T> withContext(
     context: CoroutineContext,

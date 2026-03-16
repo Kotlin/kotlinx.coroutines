@@ -9,8 +9,8 @@ import kotlin.coroutines.CoroutineContext
  * when the caller gets cancelled, but passing a [Job] in [context] breaks the structured concurrency relationship
  * between the code being invoked and the code running in [block].
  *
- * See the [withContext] documentation for a description of how to ensure the [block] gets cancelled when a non-caller
- * [Job] gets cancelled.
+ * See the [withContext] documentation for a description of how to ensure the [block] gets cancelled when a [Job]
+ * other than that of the calling coroutine gets cancelled.
  */
 @Deprecated(
     "Passing a Job to `runInterruptible` prevents it from being cancelled when the caller gets cancelled. " +

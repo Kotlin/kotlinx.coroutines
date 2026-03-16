@@ -518,6 +518,8 @@ internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwabl
  * The passed [Job] becomes the sole parent of the newly created coroutine, which completely severs the tie between
  * the new coroutine and the [CoroutineScope] in which it is launched.
  *
+ * ## Benefits of structured concurrency
+ *
  * Structured concurrency ensures that
  * - Cancellation of the parent job cancels the children as well,
  *   which helps avoid unnecessary computations when they are no longer needed.
@@ -535,16 +537,21 @@ internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwabl
  *
  * ## Possible alternatives
  *
- * ### Avoiding cancellation
+ * In some scenarios, one or more of the properties guaranteed by structured concurrency are actually undesirable.
+ * However, breaking structured concurrency altogether and losing the other properties can often be avoided.
+ *
+ * ### Ignoring cancellation
  *
  * Sometimes, it is undesirable for the child coroutine to react to the cancellation of the parent: for example,
- * some computations have to be performed either way.
- * `produce(NonCancellable)` or `produce(Job())` can be used to achieve this effect.
+ * some computations have to be performed unconditionally.
  *
- * Alternative approaches that preserve structured concurrency are this:
+ * Seeing `produce(NonCancellable)` in code is a reliable sign that this was the intention.
+ * Alternatively, you may see `produce(Job())`.
+ * Both patterns break structured concurrency and prevent cancellation from being propagated.
+ *
+ * Here's an alternative approach that preserves structured concurrency:
  *
  * ```
- * // Guarantees the completion
  * scope.produce(start = CoroutineStart.ATOMIC) {
  *     withContext(NonCancellable) {
  *         // this line will be reached even if the parent is cancelled
@@ -553,13 +560,17 @@ internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwabl
  * ```
  *
  * This way, the child coroutine is guaranteed to complete,
- * but the scope is still aware of the child and can track its lifecycle.
+ * but the scope is still aware of the child.
+ * This allows the parent scope to await the completion of the child and to react to its failure.
  *
- * ### Avoid cancelling other children
+ * ### Not cancelling other coroutines on failure
  *
- * Occasionally, the failure of one child does not mean the work of the other children is also unneeded.
- * `producer(Job()) { failure() }` makes sure that the only effect of `failure()` is to make *this* `producer` finish
- * with an error, while the other coroutines continue executing.
+ * Often, the failure of one child does not require the work of the other coroutines to be cancelled.
+ *
+ * `producer(SupervisorJob())` is a telling sign that this was the reason for breaking structured concurrency in code,
+ * though `producer(Job())` has the exact same effect.
+ * By breaking structured concurrency, `producer(SupervisorJob()) { error("failure") }` will prevent `failure` from
+ * affecting the parent coroutine and the siblings.
  *
  * If *all* coroutines in a scope should fail independently, this suggests that the scope
  * is a [*supervisor*][supervisorScope]:
@@ -588,15 +599,20 @@ internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwabl
  * the correct approach from the point of view of structured concurrency is this:
  *
  * ```
+ * val supervisorJob = SupervisorJob(scope.coroutineContext.job)
  * val childSupervisorScope = CoroutineScope(
- *     scope.coroutineContext + SupervisorJob(scope.coroutineContext.job)
+ *     scope.coroutineContext + supervisorJob
  * )
  * childSupervisorScope.produce {
  *     // failures in this coroutine will not affect other children
  * }
+ * // `cancel` or `complete` the `supervisorJob` when it's no longer needed
+ * supervisorJob.complete()
+ * supervisorJob.join()
  * ```
  *
- * For a lexically scoped [CoroutineScope], using a [supervisorScope] at the end of the outer scope may help:
+ * For a lexically scoped [CoroutineScope], it may be possible to use a [supervisorScope] at the end of the outer scope,
+ * depending on the code structure:
  *
  * ```
  * coroutineScope {
@@ -609,7 +625,7 @@ internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwabl
  *             // are only available through `channel`
  *         }
  *     }
- *     // this line will only be reached when the `produce` coroutine complete
+ *     // this line will only be reached when the `produce` coroutine completes
  * }
  * // this line will be reached when both `launch` and `produce` complete
  * ```
@@ -625,12 +641,12 @@ internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwabl
  *
  * ```
  * GlobalScope.produce {
- *     // this is explicitly a rogue computation
+ *     // this computation is explicitly outside structured concurrency
  * }
  * ```
  *
  * The reason why [GlobalScope] is marked as [delicate][DelicateCoroutinesApi] is exactly that the coroutines
- * created in it are outside structured concurrency.
+ * created in it are not benefitting from structured concurrency.
  */
 @Deprecated(
     "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +

@@ -30,6 +30,8 @@ public fun launch(
  * The passed [Job] becomes the sole parent of the newly created coroutine, which completely severs the tie between
  * the new coroutine and the [CoroutineScope] in which it is launched.
  *
+ * ## Benefits of structured concurrency
+ *
  * Structured concurrency ensures that
  * - Cancellation of the parent job cancels the children as well,
  *   which helps avoid unnecessary computations when they are no longer needed.
@@ -47,13 +49,19 @@ public fun launch(
  *
  * ## Possible alternatives
  *
- * ### Avoiding cancellation
+ * In some scenarios, one or more of the properties guaranteed by structured concurrency are actually undesirable.
+ * However, breaking structured concurrency altogether and losing the other properties can often be avoided.
+ *
+ * ### Ignoring cancellation
  *
  * Sometimes, it is undesirable for the child coroutine to react to the cancellation of the parent: for example,
- * some computations have to be performed either way.
- * `async(NonCancellable)` or `async(Job())` can be used to achieve this effect.
+ * some computations have to be performed unconditionally.
  *
- * An alternative approach that preserves structured concurrency is this:
+ * Seeing `launch(NonCancellable)` in code is a reliable sign that this was the intention.
+ * Alternatively, you may see `launch(Job())`.
+ * Both patterns break structured concurrency and prevent cancellation from being propagated.
+ *
+ * Here's an alternative approach that preserves structured concurrency:
  *
  * ```
  * scope.launch(start = CoroutineStart.ATOMIC) {
@@ -64,9 +72,17 @@ public fun launch(
  * ```
  *
  * This way, the child coroutine is guaranteed to complete,
- * but the scope is still aware of the child and can track its lifecycle.
+ * but the scope is still aware of the child.
+ * This allows the parent scope to await the completion of the child and to react to its failure.
  *
- * ### Avoid cancelling other children
+ * ### Not cancelling other coroutines on failure
+ *
+ * Often, the failure of one child does not require the work of the other coroutines to be cancelled.
+ *
+ * `launch(SupervisorJob())` is a telling sign that this was the reason for breaking structured concurrency in code,
+ * though `launch(Job())` has the exact same effect.
+ * By breaking structured concurrency, `launch(SupervisorJob()) { error("failure") }` will prevent `failure` from
+ * affecting the parent coroutine and the siblings.
  *
  * Occasionally, the failure of one child does not mean the work of the other children is also unneeded.
  * `launch(Job()) { failure() }` makes sure that the only effect of `failure()` is to make *this* `launch` finish
@@ -86,7 +102,7 @@ public fun launch(
  *                 throw IllegalStateException("$it is tired of all this")
  *             }
  *         }
- *         coroutines.joinAll()
+ *         coroutines.joinAll() // errors in `launch` don't affect this call!
  *     }
  * }
  * ```
@@ -101,9 +117,10 @@ public fun launch(
  * the correct approach from the point of view of structured concurrency is this:
  *
  * ```
+ * val supervisorJob = SupervisorJob(scope.coroutineContext.job)
  * val childSupervisorScope = CoroutineScope(
  *     scope.coroutineContext +
- *     SupervisorJob(scope.coroutineContext.job) +
+ *     supervisorJob +
  *     CoroutineExceptionHandler { _, e ->
  *         // process errors
  *     }
@@ -111,9 +128,13 @@ public fun launch(
  * childSupervisorScope.launch {
  *     // failures in this coroutine will not affect other children
  * }
+ * // `cancel` or `complete` the `supervisorJob` when it's no longer needed
+ * supervisorJob.complete()
+ * supervisorJob.join()
  * ```
  *
- * For a lexically scoped [CoroutineScope], using a [supervisorScope] at the end of the outer scope may help:
+ * For a lexically scoped [CoroutineScope], it may be possible to use a [supervisorScope] at the end of the outer scope,
+ * depending on the code structure:
  *
  * ```
  * coroutineScope {
@@ -148,12 +169,12 @@ public fun launch(
  * GlobalScope.launch(CoroutineExceptionHandler { _, e ->
  *     /* what to do if this coroutine fails */
  * }) {
- *     // this is explicitly a rogue computation
+ *     // this computation is explicitly outside structured concurrency
  * }
  * ```
  *
  * The reason why [GlobalScope] is marked as [delicate][DelicateCoroutinesApi] is exactly that the coroutines
- * created in it are outside structured concurrency.
+ * created in it are not benefitting from structured concurrency.
  */
 @Deprecated(
     "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +
@@ -193,6 +214,8 @@ public fun <T> async(
  * The passed [Job] becomes the sole parent of the newly created coroutine, which completely severs the tie between
  * the new coroutine and the [CoroutineScope] in which it is launched.
  *
+ * ## Benefits of structured concurrency
+ *
  * Structured concurrency ensures that
  * - Cancellation of the parent job cancels the children as well,
  *   which helps avoid unnecessary computations when they are no longer needed.
@@ -210,13 +233,19 @@ public fun <T> async(
  *
  * ## Possible alternatives
  *
- * ### Avoiding cancellation
+ * In some scenarios, one or more of the properties guaranteed by structured concurrency are actually undesirable.
+ * However, breaking structured concurrency altogether and losing the other properties can often be avoided.
+ *
+ * ### Ignoring cancellation
  *
  * Sometimes, it is undesirable for the child coroutine to react to the cancellation of the parent: for example,
- * some computations have to be performed either way.
- * `async(NonCancellable)` or `async(Job())` can be used to achieve this effect.
+ * some computations have to be performed unconditionally.
  *
- * Alternative approaches that preserve structured concurrency are this:
+ * Seeing `async(NonCancellable)` in code is a reliable sign that this was the intention.
+ * Alternatively, you may see `async(Job())`.
+ * Both patterns break structured concurrency and prevent cancellation from being propagated.
+ *
+ * Here's an alternative approach that preserves structured concurrency:
  *
  * ```
  * // Guarantees the completion, but not the delivery of the value
@@ -242,13 +271,17 @@ public fun <T> async(
  * ```
  *
  * This way, the child coroutine is guaranteed to complete,
- * but the scope is still aware of the child and can track its lifecycle.
+ * but the scope is still aware of the child.
+ * This allows the parent scope to await the completion of the child and to react to its failure.
  *
- * ### Avoid cancelling other children
+ * ### Not cancelling other coroutines on failure
  *
- * Occasionally, the failure of one child does not mean the work of the other children is also unneeded.
- * `async(Job()) { failure() }` makes sure that the only effect of `failure()` is to make *this* `async` finish
- * with an error, while the other coroutines continue executing.
+ * Often, the failure of one child does not require the work of the other coroutines to be cancelled.
+ *
+ * `async(SupervisorJob())` is a telling sign that this was the reason for breaking structured concurrency in code,
+ * though `async(Job())` has the exact same effect.
+ * By breaking structured concurrency, `async(SupervisorJob()) { error("failure") }` will prevent `failure` from
+ * affecting the parent coroutine and the siblings.
  *
  * If *all* coroutines in a scope should fail independently, this suggests that the scope
  * is a [*supervisor*][supervisorScope]:
@@ -277,15 +310,20 @@ public fun <T> async(
  * the correct approach from the point of view of structured concurrency is this:
  *
  * ```
+ * val supervisorJob = SupervisorJob(scope.coroutineContext.job)
  * val childSupervisorScope = CoroutineScope(
- *     scope.coroutineContext + SupervisorJob(scope.coroutineContext.job)
+ *     scope.coroutineContext + supervisorJob
  * )
  * childSupervisorScope.async {
  *     // failures in this coroutine will not affect other children
  * }
+ * // `cancel` or `complete` the `supervisorJob` when it's no longer needed
+ * supervisorJob.complete()
+ * supervisorJob.join()
  * ```
  *
- * For a lexically scoped [CoroutineScope], using a [supervisorScope] at the end of the outer scope may help:
+ * For a lexically scoped [CoroutineScope], it may be possible to use a [supervisorScope] at the end of the outer scope,
+ * depending on the code structure:
  *
  * ```
  * coroutineScope {
@@ -314,12 +352,12 @@ public fun <T> async(
  *
  * ```
  * GlobalScope.async {
- *     // this is explicitly a rogue computation
+ *     // this computation is explicitly outside structured concurrency
  * }
  * ```
  *
  * The reason why [GlobalScope] is marked as [delicate][DelicateCoroutinesApi] is exactly that the coroutines
- * created in it are outside structured concurrency.
+ * created in it are not benefitting from structured concurrency.
  */
 @Deprecated(
     "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +
