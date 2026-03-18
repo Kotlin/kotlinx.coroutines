@@ -52,12 +52,11 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
 /**
  * An optional element in the [CoroutineContext] to handle coroutine exceptions without a clear propagation path.
  *
- * `kotlinx.coroutines` ensures that every [exception][Throwable] thrown in a coroutine is handled by some code instead
- * of being forgotten about.
- * This helps failures not to go unnoticed, with the program silently entering an incorrect state.
+ * This interface is part of the overall strategy through which `kotlinx.coroutines` ensures [exceptions][Throwable]
+ * don't go unnoticed.
  *
- * In most scenarios, a clear exception propagation path allows processing failures in coroutines: for example,
- * a [coroutineScope] call can rethrow the exception to the caller,
+ * In most scenarios, a clear exception propagation path for processing failures in coroutines does exist.
+ * For example, a [coroutineScope] call can rethrow the exception to the caller,
  * and failing coroutines typically [cancel][Job.cancel] their [parent][Job.parent] coroutines.
  * See "Propagation paths recognized by `kotlinx.coroutines`" below for an enumeration of ways an exception in a
  * coroutine can get propagated.
@@ -86,7 +85,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * ```
  *
  * Not handling a lost exception with a [CoroutineExceptionHandler] is treated as a programming error
- * by `kotlinx.coroutines` and will invoke last-resort exception handling, potentially crashing the program.
+ * by `kotlinx.coroutines` and will invoke last-resort exception handling, **potentially crashing the program**.
  * See the "Platform-specific last-resort handling of lost exceptions" section for details.
  *
  * ### Propagation paths recognized by `kotlinx.coroutines`
