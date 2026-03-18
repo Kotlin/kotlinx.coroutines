@@ -24,7 +24,7 @@ internal class DebugCoroutineInfoImpl internal constructor(
     @JvmField public val sequenceNumber: Long
 ) {
     /**
-     * We cannot keep a strong reference to the context, because with the [Job] in the context it will indirectly
+     * We cannot keep a strong reference to the context, because with the [kotlinx.coroutines.Job] in the context it will indirectly
      * keep a reference to the last frame of an abandoned coroutine which the debugger should not be preventing
      * garbage-collection of. The reference to context will not disappear as long as the coroutine itself is not lost.
      */
@@ -145,7 +145,7 @@ internal class DebugCoroutineInfoImpl internal constructor(
 
     /**
      * Last observed stacktrace of the coroutine captured on its suspension or resumption point.
-     * It means that for [running][State.RUNNING] coroutines resulting stacktrace is inaccurate and
+     * It means that for [running][RUNNING] coroutines resulting stacktrace is inaccurate and
      * reflects stacktrace of the resumption point, not the actual current stacktrace.
      */
     internal fun lastObservedStackTrace(): List<StackTraceElement> {
