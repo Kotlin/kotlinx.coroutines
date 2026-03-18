@@ -416,7 +416,7 @@ internal open class SelectImplementation<R>(
      *
      * Unfortunately, we cannot store the result in the [state] field, as the latter stores
      * the clause object upon selection (see [ClauseData.clauseObject] and [SelectClause.clauseObject]).
-     * Instead, it is possible to merge the [internalResult] and [disposableHandle] fields into
+     * Instead, it is possible to merge the [internalResult] and [disposableHandleOrSegment] fields into
      * one that stores either result when the clause is successfully registered ([inRegistrationPhase] is `true`),
      * or [DisposableHandle] instance when the clause is completed during registration ([inRegistrationPhase] is `false`).
      * Yet, this optimization is omitted for code simplicity.
