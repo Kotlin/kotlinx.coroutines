@@ -33,7 +33,7 @@ import kotlin.coroutines.*
  *   This allows creating private thread pools without spawning new threads.
  *   For example, `Dispatchers.IO.limitedParallelism(4)` creates a dispatcher that allows running at most
  *   4 tasks in parallel, reusing the existing IO dispatcher threads.
- * - When thread pools completely separate from [Dispatchers.Default] and [Dispatchers.IO] are required,
+ * - When thread pools completely separate from [Dispatchers.Default] and `Dispatchers.IO` are required,
  *   they can be created with `newSingleThreadContext` and `newFixedThreadPoolContext` on the JVM and Native targets.
  * - An arbitrary `java.util.concurrent.Executor` can be converted to a dispatcher with the
  *   `asCoroutineDispatcher` extension function.

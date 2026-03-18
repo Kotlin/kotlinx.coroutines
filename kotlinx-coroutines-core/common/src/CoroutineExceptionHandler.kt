@@ -9,8 +9,8 @@ import kotlin.coroutines.*
  * cannot be rethrown. This is a last resort handler to prevent lost exceptions.
  *
  * If there is [CoroutineExceptionHandler] in the context, then it is used. If it throws an exception during handling
- * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and
- * [Thread.uncaughtExceptionHandler] are invoked.
+ * or is absent, all instances of [CoroutineExceptionHandler] found via `ServiceLoader` and
+ * `Thread.uncaughtExceptionHandler` are invoked.
  *
  * @suppress **This is internal API and it is subject to change.**
  */
@@ -87,8 +87,8 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * - If the exception is [CancellationException], it is ignored, as these exceptions are used to cancel coroutines.
  * - Otherwise, if there is a [Job] in the context, then [Job.cancel] is invoked.
  * - Otherwise, as a last resort, the exception is processed in a platform-specific manner:
- *   - On JVM, all instances of [CoroutineExceptionHandler] found via [ServiceLoader], as well as
- *     the current thread's [Thread.uncaughtExceptionHandler], are invoked.
+ *   - On JVM, all instances of [CoroutineExceptionHandler] found via `ServiceLoader`, as well as
+ *     the current thread's `Thread.uncaughtExceptionHandler`, are invoked.
  *   - On Native, the whole application crashes with the exception.
  *   - On JS and Wasm JS, the exception is propagated into the JavaScript runtime's event loop
  *     and is processed in a platform-specific way determined by the platform itself.

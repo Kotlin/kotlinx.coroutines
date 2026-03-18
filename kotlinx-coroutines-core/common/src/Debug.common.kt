@@ -7,7 +7,7 @@ internal expect fun assert(value: () -> Boolean)
 
 /**
  * Throwable which can be cloned during stacktrace recovery in a class-specific way.
- * For additional information about stacktrace recovery see [STACKTRACE_RECOVERY_PROPERTY_NAME]
+ * For additional information about stacktrace recovery see `STACKTRACE_RECOVERY_PROPERTY_NAME`
  *
  * Example of usage:
  * ```
@@ -30,7 +30,7 @@ public interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable
      * Creates a copy of the current instance.
      *
      * For better debuggability, it is recommended to use original exception as [cause][Throwable.cause] of the resulting one.
-     * Stacktrace of copied exception will be overwritten by stacktrace recovery machinery by [Throwable.setStackTrace] call.
+     * Stacktrace of copied exception will be overwritten by stacktrace recovery machinery by `Throwable.setStackTrace` call.
      * An exception can opt-out of copying by returning `null` from this function.
      * Suppressed exceptions of the original exception should not be copied in order to avoid circular exceptions.
      *
