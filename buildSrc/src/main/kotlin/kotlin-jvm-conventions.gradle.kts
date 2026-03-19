@@ -16,9 +16,7 @@ java {
 kotlin {
     if (abiCheckEnabled) {
         @OptIn(ExperimentalAbiValidation::class)
-        abiValidation {
-            enabled = true
-        }
+        abiValidation { }
     }
 
     compilerOptions {
