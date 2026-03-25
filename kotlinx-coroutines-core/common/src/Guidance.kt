@@ -318,9 +318,10 @@ public fun <T> async(
  * // Guarantees the completion, but not the delivery of the value
  * scope.async(start = CoroutineStart.ATOMIC) {
  *     withContext(NonCancellable) {
- *         // this line will be reached even if the parent is cancelled
+ *         // The actual body of the coroutine.
+ *         // This code will get executed even if the parent is cancelled.
  *     }
- *     // note: the cancellation exception *can* be thrown here,
+ *     // Note: the cancellation exception *can* be thrown here,
  *     // losing the computed value!
  * }
  *
