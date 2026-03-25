@@ -188,6 +188,73 @@ public fun CoroutineScope.launch(
 ): Job = launch(context as CoroutineContext, start, block)
 
 /**
+ * Deprecated version of [launch] that accepts a [NonCancellable].
+ *
+ * See the documentation for the non-deprecated [launch] function to learn about the functionality of this function.
+ * This piece of documentation explains why this overload is deprecated.
+ *
+ * Passing [NonCancellable] to [launch] or [async] breaks structured concurrency, completely severing the tie between
+ * the new coroutine and the [CoroutineScope] in which it is launched.
+ * This has the effect of preventing the new coroutine from being cancelled when the parent coroutine is cancelled,
+ * which is probably what was intended.
+ * However, in addition to that, it breaks the other aspects of structured concurrency.
+ *
+ * 1. A [CoroutineScope] only completes when all its children complete.
+ *    When [NonCancellable] removes the parent-child tie, the [CoroutineScope] will not wait for the completion of the
+ *    new coroutine.
+ *    ```
+ *    coroutineScope {
+ *        launch(NonCancellable) {
+ *            delay(100.milliseconds)
+ *            println("The child only completes now")
+ *        }
+ *    }
+ *    println("The parent completed before the child")
+ *    ```
+ * 2. A child typically notifies the parent about its failure by cancelling it.
+ *    When [NonCancellable] removes the parent-child tie, the child will not be able to notify the parent about its
+ *    failure.
+ *    If this is the intended effect, please use [SupervisorJob] or [supervisorScope] to ensure independent failure
+ *    of children.
+ *    ```
+ *    // `launch` will not cancel the `coroutineScope`.
+ *    // Instead, without a propagation path, the exception will be passed
+ *    // to `CoroutineExceptionHandler` and potentially crash the program.
+ *    coroutineScope {
+ *        launch(NonCancellable) {
+ *            error("The child failed")
+ *        }
+ *    }
+ *    ```
+ *
+ * A pattern that prevents child cancellation even when the parent is cancelled consists of two parts:
+ * - [CoroutineStart.ATOMIC] or [CoroutineStart.UNDISPATCHED] both ensure that the new coroutine is at least going
+ *   to be started and run until the first suspension, even if the parent is already cancelled.
+ * - Using [NonCancellable] together with [withContext] in the coroutine's body ensures that the child will
+ *   successfully resume from suspension points even if the coroutine is cancelled.
+ *
+ * Example:
+ * ```
+ * launch(start = CoroutineStart.ATOMIC) {
+ *     withContext(NonCancellable) {
+ *         // Actual coroutine body here
+ *     }
+ * }
+ * ```
+ */
+@Deprecated(
+    "Passing a NonCancellable to `launch` breaks structured concurrency, leading to hard-to-diagnose errors. " +
+        "This pattern should be avoided. " +
+        "This overload will be deprecated with an error in the future.",
+    level = DeprecationLevel.WARNING,
+)
+public fun CoroutineScope.launch(
+    context: NonCancellable,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> Unit
+): Job = launch(context as CoroutineContext, start, block)
+
+/**
  * @suppress this is a function that should help users who are trying to use 'launch'
  * without the corresponding coroutine scope. It is not supposed to be called.
  */
@@ -366,6 +433,72 @@ public fun <T> async(
     level = DeprecationLevel.WARNING)
 public fun <T> CoroutineScope.async(
     context: Job,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): Deferred<T> = async(context as CoroutineContext, start, block)
+
+/**
+ * Deprecated version of [async] that accepts a [NonCancellable].
+ *
+ * See the documentation for the non-deprecated [async] function to learn about the functionality of this function.
+ * This piece of documentation explains why this overload is deprecated.
+ *
+ * Passing [NonCancellable] to [launch] or [async] breaks structured concurrency, completely severing the tie between
+ * the new coroutine and the [CoroutineScope] in which it is launched.
+ * This has the effect of preventing the new coroutine from being cancelled when the parent coroutine is cancelled,
+ * which is probably what was intended.
+ * However, in addition to that, it breaks the other aspects of structured concurrency.
+ *
+ * 1. A [CoroutineScope] only completes when all its children complete.
+ *    When [NonCancellable] removes the parent-child tie, the [CoroutineScope] will not wait for the completion of the
+ *    new coroutine.
+ *    ```
+ *    coroutineScope {
+ *        async(NonCancellable) {
+ *            delay(100.milliseconds)
+ *            println("The child only completes now")
+ *        }
+ *    }
+ *    println("The parent completed before the child")
+ *    ```
+ * 2. A child typically notifies the parent about its failure by cancelling it.
+ *    When [NonCancellable] removes the parent-child tie, the child will not be able to notify the parent about its
+ *    failure.
+ *    If this is the intended effect, please use [SupervisorJob] or [supervisorScope] to ensure independent failure
+ *    of children.
+ *    ```
+ *    // `async` will not cancel the `coroutineScope`.
+ *    // Instead, the exception will only be available in the resulting `Deferred`.
+ *    coroutineScope {
+ *        async<Int>(NonCancellable) {
+ *            error("The child failed")
+ *        }
+ *    }
+ *    ```
+ *
+ * A pattern that prevents child cancellation even when the parent is cancelled consists of two parts:
+ * - [CoroutineStart.ATOMIC] or [CoroutineStart.UNDISPATCHED] both ensure that the new coroutine is at least going
+ *   to be started and run until the first suspension, even if the parent is already cancelled.
+ * - Using [NonCancellable] together with [withContext] in the coroutine's body ensures that the child will
+ *   successfully resume from suspension points even if the coroutine is cancelled.
+ *
+ * Example:
+ * ```
+ * async(start = CoroutineStart.ATOMIC) {
+ *     withContext(NonCancellable) {
+ *         // Actual coroutine body here
+ *     }
+ * }
+ * ```
+ */
+@Deprecated(
+    "Passing a NonCancellable to `async` breaks structured concurrency, leading to hard-to-diagnose errors. " +
+        "This pattern should be avoided. " +
+        "This overload will be deprecated with an error in the future.",
+    level = DeprecationLevel.WARNING,
+)
+public fun <T> CoroutineScope.async(
+    context: NonCancellable,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(context as CoroutineContext, start, block)
