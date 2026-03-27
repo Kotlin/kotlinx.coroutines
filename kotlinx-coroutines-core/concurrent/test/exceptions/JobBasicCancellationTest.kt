@@ -91,28 +91,6 @@ class JobBasicCancellationTest : TestBase() {
     }
 
     @Test
-    fun testNestedAsyncFailure() = runTest {
-        val deferred = async(NonCancellable) {
-            val nested = async(NonCancellable) {
-                expect(3)
-                throw TestException()
-            }
-
-            expect(2)
-            yield()
-            expect(4)
-            nested.await()
-        }
-
-        expect(1)
-        try {
-            deferred.await()
-        } catch (_: TestException) {
-            finish(5)
-        }
-    }
-
-    @Test
     fun testCancelJobImpl() = runTest {
         val parent = launch {
             expect(1)

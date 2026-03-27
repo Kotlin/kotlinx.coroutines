@@ -13,7 +13,7 @@ class SuppressionTests : TestBase() {
     @Test
     fun testNotificationsWithException() = runTest {
         expect(1)
-        val coroutineContext = kotlin.coroutines.coroutineContext + NonCancellable // workaround for KT-22984
+        val coroutineContext = currentCoroutineContext() + NonCancellable // workaround for KT-22984
         val coroutine = object : AbstractCoroutine<String>(coroutineContext, true, false) {
             override fun onStart() {
                 expect(3)
@@ -61,7 +61,7 @@ class SuppressionTests : TestBase() {
     fun testExceptionUnwrapping() = runTest {
         val channel = Channel<Int>()
 
-        val deferred = async(NonCancellable) {
+        val deferred = GlobalScope.async {
             launch {
                 while (true) channel.send(1)
             }
@@ -73,11 +73,10 @@ class SuppressionTests : TestBase() {
             }
         }
 
-        try {
+        val e = assertFailsWith<RecoverableTestException> {
             deferred.await()
-        } catch (e: RecoverableTestException) {
-            assertTrue(e.suppressed.isEmpty())
-            assertTrue(e.cause!!.suppressed.isEmpty())
         }
+        assertTrue(e.suppressed.isEmpty())
+        assertTrue(e.cause!!.suppressed.isEmpty())
     }
 }

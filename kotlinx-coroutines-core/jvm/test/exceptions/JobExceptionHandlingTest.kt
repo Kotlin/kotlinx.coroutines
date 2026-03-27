@@ -38,20 +38,18 @@ class JobExceptionHandlingTest : TestBase() {
         val parent = Job()
         val deferred = async(parent) {
             expect(2)
-            delay(Long.MAX_VALUE)
+            awaitCancellation()
         }
 
         expect(1)
         yield()
         parent.completeExceptionally(IOException())
-        try {
+        val e = assertFailsWith<CancellationException>{
             deferred.await()
-            expectUnreached()
-        } catch (e: CancellationException) {
-            assertTrue(e.suppressed.isEmpty())
-            assertTrue(e.cause?.suppressed?.isEmpty() ?: false)
-            finish(3)
         }
+        assertTrue(e.suppressed.isEmpty())
+        assertTrue(e.cause?.suppressed?.isEmpty() ?: false)
+        finish(3)
     }
 
     @Test
@@ -59,7 +57,7 @@ class JobExceptionHandlingTest : TestBase() {
         val parent = Job()
         val job = launch(parent) {
             expect(2)
-            delay(Long.MAX_VALUE)
+            awaitCancellation()
         }
 
         expect(1)

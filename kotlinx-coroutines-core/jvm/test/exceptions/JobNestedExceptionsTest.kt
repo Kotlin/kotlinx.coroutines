@@ -12,20 +12,19 @@ class JobNestedExceptionsTest : TestBase() {
     @Test
     fun testExceptionUnwrapping() {
         val exception = captureExceptionsRun {
-            val job = Job()
-            launch(job) {
-                expect(2)
+            supervisorScope {
                 launch {
+                    expect(2)
                     launch {
                         launch {
-                            throw IllegalStateException()
+                            launch {
+                                throw IllegalStateException()
+                            }
                         }
                     }
                 }
+                expect(1)
             }
-
-            expect(1)
-            job.join()
             finish(3)
         }
 
@@ -36,26 +35,25 @@ class JobNestedExceptionsTest : TestBase() {
     @Test
     fun testExceptionUnwrappingWithSuspensions() {
         val exception = captureExceptionsRun {
-            val job = Job()
-            launch(job) {
-                expect(2)
+            supervisorScope {
                 launch {
+                    expect(2)
                     launch {
                         launch {
                             launch {
-                                throw IOException()
+                                launch {
+                                    throw IOException()
+                                }
+                                yield()
                             }
-                            yield()
+                            delay(Long.MAX_VALUE)
                         }
                         delay(Long.MAX_VALUE)
                     }
                     delay(Long.MAX_VALUE)
                 }
-                delay(Long.MAX_VALUE)
+                expect(1)
             }
-
-            expect(1)
-            job.join()
             finish(3)
         }
 

@@ -1,7 +1,6 @@
 package benchmarks.flow.scrabble
 
 import reactor.core.publisher.*
-import java.lang.Long.*
 import java.util.*
 import java.util.function.Function
 
@@ -15,13 +14,13 @@ open class ReactorPlaysScrabble : ShakespearePlaysScrabble() {
 
 //    @Benchmark
     public override fun play(): List<Map.Entry<Int, List<String>>> {
-        val scoreOfALetter = Function<Int, Flux<Int>> { letter -> Flux.just(letterScores[letter - 'a'.toInt()]) }
+        val scoreOfALetter = Function<Int, Flux<Int>> { letter -> Flux.just(letterScores[letter - 'a'.code]) }
 
         val letterScore = Function<Map.Entry<Int, LongWrapper>, Flux<Int>> { entry ->
             Flux.just(
-                letterScores[entry.key - 'a'.toInt()] * Integer.min(
+                letterScores[entry.key - 'a'.code] * minOf(
                     entry.value.get().toInt(),
-                    scrabbleAvailableLetters[entry.key - 'a'.toInt()]
+                    scrabbleAvailableLetters[entry.key - 'a'.code]
                 )
             )
         }
@@ -46,14 +45,14 @@ open class ReactorPlaysScrabble : ShakespearePlaysScrabble() {
         }
 
         val blank = Function<Map.Entry<Int, LongWrapper>, Flux<Long>> { entry ->
-            Flux.just(max(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.toInt()]))
+            Flux.just(maxOf(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.code]))
         }
 
         val nBlanks = Function<String, Flux<Long>> { word ->
             Flux.from(histoOfLetters.apply(word)
-                .flatMap<Map.Entry<Int, LongWrapper>> { map -> Flux.fromIterable<Map.Entry<Int, LongWrapper>>(Iterable { map.entries.iterator() }) }
+                .flatMap { map -> Flux.fromIterable<Map.Entry<Int, LongWrapper>>(Iterable { map.entries.iterator() }) }
                 .flatMap(blank)
-                .reduce { a, b -> sum(a, b) })
+                .reduce { a, b -> a + b })
         }
 
         val checkBlanks = Function<String, Flux<Boolean>> { word ->
@@ -66,7 +65,7 @@ open class ReactorPlaysScrabble : ShakespearePlaysScrabble() {
             Flux.from(histoOfLetters.apply(word)
                 .flatMap<Map.Entry<Int, LongWrapper>> { map -> Flux.fromIterable<Map.Entry<Int, LongWrapper>>(Iterable { map.entries.iterator() }) }
                 .flatMap(letterScore)
-                .reduce { a, b -> Integer.sum(a, b) })
+                .reduce { a, b -> a + b })
 
         }
 
@@ -88,9 +87,9 @@ open class ReactorPlaysScrabble : ShakespearePlaysScrabble() {
 
         // Bonus for double letter
         val bonusForDoubleLetter = Function<String, Flux<Int>>  { word ->
-            Flux.from<Int>(toBeMaxed.apply(word)
-                .flatMap<Int>(scoreOfALetter)
-                .reduce { a, b -> Integer.max(a, b) }
+            Flux.from(toBeMaxed.apply(word)
+                .flatMap(scoreOfALetter)
+                .reduce { a, b -> maxOf(a, b) }
             )
         }
 
@@ -103,7 +102,7 @@ open class ReactorPlaysScrabble : ShakespearePlaysScrabble() {
                 Flux.just(if (word.length == 7) 50 else 0)
             )
                 .flatMap { Stream -> Stream }
-                .reduce { a, b -> Integer.sum(a, b) })
+                .reduce { a, b -> a + b })
         }
 
         val buildHistoOnScore = Function<Function<String, Flux<Int>>, Flux<TreeMap<Int, List<String>>>> { score ->
@@ -137,4 +136,3 @@ open class ReactorPlaysScrabble : ShakespearePlaysScrabble() {
     }
 
 }
-

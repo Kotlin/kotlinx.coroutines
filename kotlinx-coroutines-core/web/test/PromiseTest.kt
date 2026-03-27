@@ -96,7 +96,7 @@ class PromiseTestWeb : TestBase() {
     fun testAsPromiseAsDeferred() = GlobalScope.promise {
         val deferred = async { "OK".toJsString() }
         val promise = deferred.asPromise()
-        val d2 = promise.asDeferred<JsString>()
+        val d2 = promise.asDeferred()
         assertSame(d2, deferred)
         assertEquals("OK", d2.await().toString())
         null
@@ -118,7 +118,7 @@ class PromiseTestWeb : TestBase() {
         lateinit var r: (JsPromiseError) -> Unit
         val toAwait = Promise<JsAny?> { _, reject -> r = reject }
         val throwable = async(start = CoroutineStart.UNDISPATCHED) {
-            assertFails { toAwait.await<JsAny?>() }
+            assertFails { toAwait.await() }
         }
         @Suppress("CAST_NEVER_SUCCEEDS")
         r(RuntimeException("Rejected").toJsReference() as JsPromiseError)
