@@ -1,6 +1,11 @@
 @file:OptIn(ExperimentalContracts::class)
 @file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
+/*
+ * Note: the package is different from the folder structure on purpose,
+ * to simplify tracking of https://github.com/Kotlin/kotlinx.coroutines/issues/1374
+ * and to help users to find the right symbol in the IDE.
+ */
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
@@ -35,13 +40,15 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * @param timeMillis timeout time in milliseconds.
  */
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@kotlin.internal.LowPriorityInOverloadResolution
 public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
     if (timeMillis <= 0L) throw TimeoutCancellationException("Timed out immediately")
     return suspendCoroutineUninterceptedOrReturn { uCont ->
-        setupTimeout(TimeoutCoroutine(timeMillis, uCont), block)
+        setupTimeout(TimeoutLegacyCoroutine(timeMillis, uCont), block)
     }
 }
 
@@ -65,6 +72,8 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  *
  * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
  */
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@kotlin.internal.LowPriorityInOverloadResolution
 public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
@@ -97,10 +106,10 @@ public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineSc
 public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend CoroutineScope.() -> T): T? {
     if (timeMillis <= 0L) return null
 
-    var coroutine: TimeoutCoroutine<T?, T?>? = null
+    var coroutine: TimeoutLegacyCoroutine<T?, T?>? = null
     try {
         return suspendCoroutineUninterceptedOrReturn { uCont ->
-            val timeoutCoroutine = TimeoutCoroutine(timeMillis, uCont)
+            val timeoutCoroutine = TimeoutLegacyCoroutine(timeMillis, uCont)
             coroutine = timeoutCoroutine
             setupTimeout<T?, T?>(timeoutCoroutine, block)
         }
@@ -136,8 +145,8 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
 public suspend fun <T> withTimeoutOrNull(timeout: Duration, block: suspend CoroutineScope.() -> T): T? =
     withTimeoutOrNull(timeout.toDelayMillis(), block)
 
-private fun <U, T : U> setupTimeout(
-    coroutine: TimeoutCoroutine<U, T>,
+internal fun <U, T : U> setupTimeout(
+    coroutine: TimeoutCoroutineBase<U, T>,
     block: suspend CoroutineScope.() -> T
 ): Any? {
     // schedule cancellation of this coroutine on time
@@ -149,16 +158,25 @@ private fun <U, T : U> setupTimeout(
     return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block)
 }
 
-private class TimeoutCoroutine<U, in T : U>(
+internal abstract class TimeoutCoroutineBase<U, in T : U>(
     @JvmField val time: Long,
     uCont: Continuation<U> // unintercepted continuation
 ) : ScopeCoroutine<T>(uCont.context, uCont), Runnable {
     override fun run() {
-        cancelCoroutine(TimeoutCancellationException(time, context.delay, this))
+        cancelCoroutine(timeoutException())
     }
+
+    internal abstract fun timeoutException(): Throwable
 
     override fun nameString(): String =
         "${super.nameString()}(timeMillis=$time)"
+}
+
+internal class TimeoutLegacyCoroutine<U, in T : U>(
+    time: Long,
+    uCont: Continuation<U> // unintercepted continuation
+) : TimeoutCoroutineBase<U, T>(time, uCont) {
+    override fun timeoutException(): Throwable = TimeoutCancellationException(time, context.delay, this)
 }
 
 /**
@@ -183,7 +201,7 @@ internal fun TimeoutCancellationException(
     time: Long,
     delay: Delay,
     coroutine: Job
-) : TimeoutCancellationException {
+): TimeoutCancellationException {
     val message = (delay as? DelayWithTimeoutDiagnostics)?.timeoutMessage(time.milliseconds)
         ?: "Timed out waiting for $time ms"
     return TimeoutCancellationException(message, coroutine)
