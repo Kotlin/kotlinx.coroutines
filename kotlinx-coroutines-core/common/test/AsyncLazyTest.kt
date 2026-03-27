@@ -26,7 +26,7 @@ class AsyncLazyTest : TestBase() {
         expect(1)
         val d = async(start = CoroutineStart.LAZY) {
             expect(3)
-            yield() // this has not effect, because parent coroutine is waiting
+            yield() // this has no effect, because parent coroutine is waiting
             expect(4)
             42
         }
@@ -58,7 +58,7 @@ class AsyncLazyTest : TestBase() {
         }
         expect(3)
         assertTrue(!d.isActive && !d.isCompleted)
-        yield() // yield to second child (lazy async is not computing yet)
+        yield() // yield to the second child (lazy async is not computing yet)
         expect(5)
         assertTrue(!d.isActive && !d.isCompleted)
         assertEquals(d.await(), 42) // starts computing
@@ -87,7 +87,7 @@ class AsyncLazyTest : TestBase() {
         expect(1)
         val d = async<Unit>(start = CoroutineStart.LAZY) {
             expect(3)
-            yield() // this has not effect, because parent coroutine is waiting
+            yield() // this has no effect, because parent coroutine is waiting
             finish(4)
             throw TestException()
         }
@@ -98,20 +98,22 @@ class AsyncLazyTest : TestBase() {
 
     @Test
     fun testCatchException() = runTest {
-        expect(1)
-        val d = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
-            expect(3)
-            throw TestException()
-        }
-        expect(2)
-        assertTrue(!d.isActive && !d.isCompleted)
-        try {
-            d.await() // will throw IOException
-        } catch (_: TestException) {
+        val d: Deferred<Unit>
+        // `supervisorScope` to avoid cancelling the parent scope
+        supervisorScope {
+            expect(1)
+            d = async(start = CoroutineStart.LAZY) {
+                expect(3)
+                throw TestException()
+            }
+            expect(2)
+            assertTrue(!d.isActive && !d.isCompleted)
+            assertFailsWith<TestException> {
+                d.await() // will throw TestException
+            }
             assertTrue(!d.isActive && d.isCompleted && d.isCancelled)
-            expect(4)
+            finish(4)
         }
-        finish(5)
     }
 
     @Test

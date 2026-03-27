@@ -157,9 +157,13 @@ class TestScopeTest {
     fun testSuppressedExceptions() {
         TestScope().apply {
             asSpecificImplementation().enter()
-            launch(SupervisorJob()) { throw TestException("x") }
-            launch(SupervisorJob()) { throw TestException("y") }
-            launch(SupervisorJob()) { throw TestException("z") }
+            launch {
+                supervisorScope {
+                    launch { throw TestException("x") }
+                    launch { throw TestException("y") }
+                    launch { throw TestException("z") }
+                }
+            }
             runCurrent()
             val e = asSpecificImplementation().legacyLeave()
             assertEquals(3, e.size)

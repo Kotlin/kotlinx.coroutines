@@ -3,16 +3,15 @@ package kotlinx.coroutines.guava
 import kotlinx.coroutines.testing.*
 import com.google.common.util.concurrent.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Ignore
-import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
-import java.util.concurrent.atomic.*
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.test.*
 
 class ListenableFutureTest : TestBase() {
-    @Before
+    @BeforeTest
     fun setup() {
         ignoreLostThreads("ForkJoinPool.commonPool-worker-")
     }
@@ -326,7 +325,7 @@ class ListenableFutureTest : TestBase() {
             }
         }
         val asFuture = deferred.asListenableFuture()
-        asFuture.addListener(Runnable { expect(4) }, MoreExecutors.directExecutor())
+        asFuture.addListener({ expect(4) }, MoreExecutors.directExecutor())
         assertFalse(asFuture.isDone)
         expect(2)
         asFuture.cancel(false)
@@ -541,7 +540,7 @@ class ListenableFutureTest : TestBase() {
                 expect(1)
                 delay(Long.MAX_VALUE)
                 expectUnreached()
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 expect(3)
                 throw TestException()
             }
@@ -587,8 +586,11 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testCancellingFutureContextJobCancelsFuture() = runTest {
         expect(1)
-        val supervisorJob = SupervisorJob()
-        val future = future(context = supervisorJob) {
+        // TODO: simplify after #2758
+        val childSupervisorScope = CoroutineScope(
+            currentCoroutineContext() + SupervisorJob(currentCoroutineContext()[Job])
+        )
+        val future = childSupervisorScope.future {
             expect(2)
             try {
                 delay(Long.MAX_VALUE)
@@ -600,8 +602,8 @@ class ListenableFutureTest : TestBase() {
         }
         yield()
         expect(3)
-        supervisorJob.cancel(CancellationException("Parent cancelled", TestException()))
-        supervisorJob.join()
+        childSupervisorScope.cancel(CancellationException("Parent cancelled", TestException()))
+        childSupervisorScope.coroutineContext.job.join()
         assertTrue(future.isDone)
         assertTrue(future.isCancelled)
         val thrown = assertFailsWith<CancellationException> { future.get() }
@@ -663,7 +665,7 @@ class ListenableFutureTest : TestBase() {
                 expect(3) // Cancelled.
             }
         }
-        future.addListener(Runnable { expect(4) }, MoreExecutors.directExecutor())
+        future.addListener({ expect(4) }, MoreExecutors.directExecutor())
         assertFalse(future.isDone)
         expect(2)
         future.cancel(false)
@@ -675,9 +677,11 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testFutureCompletedExceptionally() = runTest {
         val testException = TestException()
-        // NonCancellable to not propagate error to this scope.
-        val future = future(context = NonCancellable) {
-            throw testException
+        // supervisorScope to avoid propagating the error to the parent scope
+        val future = supervisorScope {
+            future {
+                throw testException
+            }
         }
         yield()
         assertTrue(future.isDone)
@@ -731,22 +735,22 @@ class ListenableFutureTest : TestBase() {
         future(start = CoroutineStart.UNDISPATCHED) { }
     }
 
+    @OptIn(ExperimentalAtomicApi::class)
     @Test
     fun testStackOverflow() = runTest {
         val future = SettableFuture.create<Int>()
-        val completed = AtomicLong()
-        val count = 10000L
-        val children = ArrayList<Job>()
-        for (i in 0 until count) {
-            children += launch(Dispatchers.Default) {
+        val completed = AtomicInt(0)
+        val count = 10000
+        val children = List(count) {
+            launch(Dispatchers.Default) {
                 future.asDeferred().await()
-                completed.incrementAndGet()
+                completed.incrementAndFetch()
             }
         }
         future.set(1)
         withTimeout(60_000) {
-            children.forEach { it.join() }
-            assertEquals(count, completed.get())
+            children.joinAll()
+            assertEquals(count, completed.load())
         }
     }
 

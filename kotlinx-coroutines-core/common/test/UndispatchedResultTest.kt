@@ -23,7 +23,7 @@ class UndispatchedResultTest : TestBase() {
 
     @Test
     fun testAsync() = runTest {
-        invokeTest { block -> async(NonCancellable, block = block).await() }
+        invokeTest { block -> supervisorScope { async(block = block).await() } }
     }
 
     @Test
@@ -42,7 +42,7 @@ class UndispatchedResultTest : TestBase() {
     ) {
         try {
             scopeProvider { block(context) }
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             finish(5)
             reset()
         }

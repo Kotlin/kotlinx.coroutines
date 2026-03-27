@@ -187,7 +187,8 @@ class SupervisorTest : TestBase() {
     @Test
     fun testAsyncCancellation() = runTest {
         val parent = SupervisorJob()
-        val deferred = async(parent) {
+        val childScope = CoroutineScope(currentCoroutineContext() + parent)
+        val deferred = childScope.async {
             expect(2)
             delay(Long.MAX_VALUE)
         }

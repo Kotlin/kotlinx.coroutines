@@ -47,11 +47,11 @@ class CompletableJobTest : TestBase() {
     @Test
     fun testExceptionIsNotReportedToChildren() = parametrized { job ->
         expect(1)
-        val child = launch(job) {
+        val scope = CoroutineScope(currentCoroutineContext() + job)
+        val child = scope.launch {
             expect(2)
             try {
-                // KT-33840
-                hang {}
+                awaitCancellation()
             } catch (e: Throwable) {
                 assertIs<CancellationException>(e)
                 assertIs<TestException>(if (RECOVER_STACK_TRACES) e.cause?.cause else e.cause)
@@ -69,11 +69,11 @@ class CompletableJobTest : TestBase() {
     @Test
     fun testCompleteExceptionallyDoesntAffectDeferred() = parametrized { job ->
         expect(1)
-        val child = async(job) {
+        val scope = CoroutineScope(currentCoroutineContext() + job)
+        val child = scope.async {
             expect(2)
             try {
-                // KT-33840
-                hang {}
+                awaitCancellation()
             } catch (e: Throwable) {
                 assertIs<CancellationException>(e)
                 assertIs<TestException>(if (RECOVER_STACK_TRACES) e.cause?.cause else e.cause)

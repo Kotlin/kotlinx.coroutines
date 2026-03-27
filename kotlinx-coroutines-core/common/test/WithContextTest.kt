@@ -194,14 +194,13 @@ class WithContextTest : TestBase() {
     @Test
     fun testRunSelfCancellationWithException() = runTest {
         expect(1)
-        var job: Job? = null
-        job = launch(Job()) {
+        launch {
             try {
                 expect(3)
                 withContext<Unit>(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
-                    job!!.cancel()
+                    this@launch.cancel()
                     require(!isActive)
                     throw TestException() // but throw an exception
                 }
@@ -223,14 +222,13 @@ class WithContextTest : TestBase() {
     @Test
     fun testRunSelfCancellation() = runTest {
         expect(1)
-        var job: Job? = null
-        job = launch(Job()) {
+        launch {
             try {
                 expect(3)
                 withContext(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
-                    job!!.cancel() // cancel itself
+                    this@launch.cancel() // cancel itself
                     require(!isActive)
                     "OK".wrap()
                 }

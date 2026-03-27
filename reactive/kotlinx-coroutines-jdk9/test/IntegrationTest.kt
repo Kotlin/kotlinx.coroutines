@@ -94,28 +94,24 @@ class IntegrationTest(
 
     @Test
     fun testCancelWithoutValue() = runTest {
-        val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             flowPublish<String> {
-                hang {}
+                awaitCancellation()
             }.awaitFirst()
         }
-
         job.cancel()
-        job.join()
     }
 
     @Test
-    fun testEmptySingle() = runTest(unhandled = listOf { e -> e is NoSuchElementException}) {
+    fun testEmptySingle() = runTest {
         expect(1)
-        val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
+        assertFailsWith<NoSuchElementException> {
             flowPublish<String> {
                 yield()
                 expect(2)
                 // Nothing to emit
             }.awaitFirst()
         }
-
-        job.join()
         finish(3)
     }
 

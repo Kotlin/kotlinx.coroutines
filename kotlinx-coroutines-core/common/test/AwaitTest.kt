@@ -58,60 +58,62 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllExceptionally() = runTest {
-        expect(1)
-        val d = async {
-            expect(3)
-            "OK"
-        }
+        supervisorScope {
+            expect(1)
+            val d = async {
+                expect(3)
+                "OK"
+            }
 
-        val d2 = async(NonCancellable) {
-            yield()
-            throw TestException()
-        }
+            val d2 = async {
+                yield()
+                throw TestException()
+            }
 
-        val d3 = async {
-            expect(4)
-            delay(Long.MAX_VALUE)
-            1
-        }
+            val d3 = async {
+                expect(4)
+                delay(Long.MAX_VALUE)
+                1
+            }
 
-        expect(2)
-        try {
-            awaitAll(d, d2, d3)
-        } catch (e: TestException) {
+            expect(2)
+            assertFailsWith<TestException> {
+                awaitAll(d, d2, d3)
+            }
             expect(5)
-        }
 
-        yield()
-        require(d.isCompleted && d2.isCancelled && d3.isActive)
-        d3.cancel()
-        finish(6)
+            yield()
+            require(d.isCompleted && d2.isCancelled && d3.isActive)
+            d3.cancel()
+            finish(6)
+        }
     }
 
     @Test
     fun testAwaitAllMultipleExceptions() = runTest {
-        val d = async(NonCancellable) {
-            expect(2)
-            throw TestException()
-        }
+        supervisorScope {
+            val d = async {
+                expect(2)
+                throw TestException()
+            }
 
-        val d2 = async(NonCancellable) {
-            yield()
-            throw TestException()
-        }
+            val d2 = async {
+                yield()
+                throw TestException()
+            }
 
-        val d3 = async {
-            yield()
-        }
+            val d3 = async {
+                yield()
+            }
 
-        expect(1)
-        try {
-            awaitAll(d, d2, d3)
-        } catch (e: TestException) {
+            expect(1)
+            assertFailsWith<TestException> {
+                awaitAll(d, d2, d3)
+            }
             expect(3)
-        }
 
-        finish(4)
+            finish(4)
+        }
     }
 
     @Test
@@ -151,28 +153,28 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllPartiallyCompletedExceptionally() = runTest {
-        val d1 = async(NonCancellable) {
-            expect(1)
-            throw TestException()
-        }
+        supervisorScope {
+            val d1 = async {
+                expect(1)
+                throw TestException()
+            }
 
-        yield()
+            yield()
 
-        // This job is called after exception propagation
-        val d2 = async { expect(4) }
+            // This job is called after exception propagation
+            val d2 = async { expect(4) }
 
-        expect(2)
-        try {
-            awaitAll(d1, d2)
-            expectUnreached()
-        } catch (e: TestException) {
+            expect(2)
+            assertFailsWith<TestException> {
+                awaitAll(d1, d2)
+            }
             expect(3)
-        }
 
-        require(d2.isActive)
-        d2.await()
-        require(d1.isCompleted && d2.isCompleted)
-        finish(5)
+            require(d2.isActive)
+            d2.await()
+            require(d1.isCompleted && d2.isCompleted)
+            finish(5)
+        }
     }
 
     @Test
@@ -205,11 +207,10 @@ class AwaitTest : TestBase() {
             .apply { completeExceptionally(TestException()) }
         val job = async { expect(3) }
         expect(1)
-        try {
+        assertFailsWith<TestException> {
             awaitAll(d1, d2)
-        } catch (e: TestException) {
-            expect(2)
         }
+        expect(2)
 
         job.await()
         finish(4)
@@ -224,16 +225,16 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllSameThrowingJobMultipleTimes() = runTest {
-        val d1 =
-            async(NonCancellable) { throw TestException() }
-        val d2 = async { } // do nothing
+        supervisorScope {
+            val d1 =
+                async { throw TestException() }
+            val d2 = async { } // do nothing
 
-        try {
             expect(1)
-            // Duplicates are allowed though kdoc doesn't guarantee that
-            awaitAll(d1, d2, d1, d2)
-            expectUnreached()
-        } catch (e: TestException) {
+            assertFailsWith<TestException> {
+                // Duplicates are allowed though kdoc doesn't guarantee that
+                awaitAll(d1, d2, d1, d2)
+            }
             finish(2)
         }
     }
@@ -277,20 +278,22 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testJoinAllExceptionally() = runTest {
-        val d1 = launch {
-            expect(2)
-        }
-        val d2 = async(NonCancellable) {
-            expect(3)
-            throw TestException()
-        }
-        val d3 = async {
-            expect(4)
-        }
+        supervisorScope {
+            val d1 = launch {
+                expect(2)
+            }
+            val d2 = async {
+                expect(3)
+                throw TestException()
+            }
+            val d3 = async {
+                expect(4)
+            }
 
-        expect(1)
-        joinAll(d1, d2, d3)
-        finish(5)
+            expect(1)
+            joinAll(d1, d2, d3)
+            finish(5)
+        }
     }
 
     @Test
@@ -344,9 +347,10 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testJoinAllSameJobExceptionally() = runTest {
-        val job =
-            async(NonCancellable) { throw TestException() }
-        joinAll(job, job, job)
+        supervisorScope {
+            val job = async { throw TestException() }
+            joinAll(job, job, job)
+        }
     }
 
     @Test

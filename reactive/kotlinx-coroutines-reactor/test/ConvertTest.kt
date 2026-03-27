@@ -16,7 +16,7 @@ class ConvertTest : TestBase() {
         val job = launch {
             expect(3)
         }
-        val mono = job.asMono(coroutineContext.minusKey(Job))
+        val mono = job.asMono(currentCoroutineContext().minusKey(Job))
         mono.subscribe {
             expect(4)
         }
@@ -27,18 +27,19 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testJobToMonoFail() = runBlocking {
-        expect(1)
-        val job = async(NonCancellable) {
-            expect(3)
-            throw RuntimeException("OK")
+        supervisorScope {
+            expect(1)
+            val job = async {
+                expect(3)
+                throw RuntimeException("OK")
+            }
+            val mono = job.asMono(currentCoroutineContext().minusKey(Job))
+            mono.subscribe(
+                    { fail("no item should be emitted") },
+                    { expect(4) }
+            )
+            expect(2)
         }
-        val mono = job.asMono(coroutineContext.minusKey(Job))
-        mono.subscribe(
-                { fail("no item should be emitted") },
-                { expect(4) }
-        )
-        expect(2)
-        yield()
         finish(5)
     }
 

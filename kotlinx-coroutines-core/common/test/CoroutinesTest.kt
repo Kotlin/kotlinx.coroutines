@@ -261,7 +261,8 @@ class CoroutinesTest : TestBase() {
     fun testCancelAndJoinChildren() = runTest {
         expect(1)
         val parent = Job()
-        launch(parent, CoroutineStart.UNDISPATCHED) {
+        val parentScope = CoroutineScope(currentCoroutineContext() + parent)
+        parentScope.launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // to be cancelled
@@ -280,14 +281,17 @@ class CoroutinesTest : TestBase() {
 
     @Test
     fun testParentCrashCancelsChildren() = runTest(
-        unhandled = listOf({ it -> it is TestException })
+        unhandled = listOf({ it is TestException })
     ) {
         expect(1)
-        val parent = launch(Job()) {
+        val parentScope = CoroutineScope(currentCoroutineContext() + Job())
+        val parent = parentScope.launch {
             expect(4)
             throw TestException("Crashed")
         }
-        val child = launch(parent, CoroutineStart.UNDISPATCHED) {
+        // TODO: simplify after #2758
+        val childScope = CoroutineScope(currentCoroutineContext() + parent)
+        val child = childScope.launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // to test
@@ -308,22 +312,24 @@ class CoroutinesTest : TestBase() {
     }
 
     @Test
-    fun testNotCancellableChildWithExceptionCancelled() = runTest(
-        expected = { it is TestException }
-    ) {
-        expect(1)
-        // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
-        val d = async(NonCancellable, start = CoroutineStart.ATOMIC) {
-            finish(4)
-            throwTestException() // will throw
-            expectUnreached()
+    fun testNotCancellableChildWithExceptionCancelled() = runTest {
+        supervisorScope {
+            expect(1)
+            // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
+            val d = async(start = CoroutineStart.ATOMIC) {
+                finish(4)
+                throwTestException() // will throw
+                expectUnreached()
+            }
+            expect(2)
+            // now cancel with some other exception
+            d.cancel(TestCancellationException())
+            // now await to see how it got crashed -- TestCancellationException should have been suppressed by TestException
+            expect(3)
+            assertFailsWith<TestException> {
+                d.await()
+            }
         }
-        expect(2)
-        // now cancel with some other exception
-        d.cancel(TestCancellationException())
-        // now await to see how it got crashed -- TestCancellationException should have been suppressed by TestException
-        expect(3)
-        d.await()
     }
 
     private fun throwTestException() { throw TestException() }

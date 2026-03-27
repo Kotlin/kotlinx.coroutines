@@ -100,7 +100,7 @@ class RunBlockingTest : TestBase() {
                 }
             }
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             finish(4)
         }
     }
@@ -109,7 +109,8 @@ class RunBlockingTest : TestBase() {
     fun testDispatchOnShutdown(): Unit = assertFailsWith<CancellationException> {
         runBlocking {
             expect(1)
-            val job = launch(NonCancellable) {
+            val dispatcher = coroutineContext[ContinuationInterceptor]!!
+            val job = GlobalScope.launch(dispatcher) {
                 try {
                     expect(2)
                     delay(Long.MAX_VALUE)
@@ -130,7 +131,8 @@ class RunBlockingTest : TestBase() {
         runBlocking {
             coroutineContext.cancel()
             expect(1)
-            val job = launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
+            val dispatcher = coroutineContext[ContinuationInterceptor]!!
+            val job = GlobalScope.launch(dispatcher, start = CoroutineStart.UNDISPATCHED) {
                 try {
                     expect(2)
                     delay(Long.MAX_VALUE)

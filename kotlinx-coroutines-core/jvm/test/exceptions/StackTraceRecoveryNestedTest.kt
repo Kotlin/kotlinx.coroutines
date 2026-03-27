@@ -11,7 +11,8 @@ class StackTraceRecoveryNestedTest : TestBase() {
 
     @Test
     fun testNestedAsync() = runTest {
-        val rootAsync = async(NonCancellable) {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
+        val rootAsync = detachedScope.async {
             expect(1)
 
             // Just a noise for unwrapping

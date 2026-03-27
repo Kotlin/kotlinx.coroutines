@@ -22,10 +22,10 @@ class JobActivationStressTest : TestBase() {
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     fun testActivation() = runTest {
         val barrier = CyclicBarrier(3)
-        val scope = CoroutineScope(pool)
+        val scope = CoroutineScope(currentCoroutineContext() + pool + SupervisorJob())
         repeat(N_ITERATIONS) {
             var wasStarted = false
-            val d = scope.async(NonCancellable, start = CoroutineStart.LAZY) {
+            val d = scope.async(start = CoroutineStart.LAZY) {
                 wasStarted = true
                 throw TestException()
             }

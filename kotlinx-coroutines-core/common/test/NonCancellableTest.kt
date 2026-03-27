@@ -40,6 +40,7 @@ class NonCancellableTest : TestBase() {
     @Test
     fun testNonCancellableWithException() = runTest {
         expect(1)
+        @Suppress("DEPRECATION") // async(NonCancellable) is deprecated, but we test its behavior here
         val deferred = async(NonCancellable) {
             withContext(NonCancellable) {
                 expect(2)

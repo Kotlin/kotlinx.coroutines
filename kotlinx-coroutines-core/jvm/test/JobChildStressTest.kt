@@ -34,32 +34,27 @@ class JobChildStressTest : TestBase() {
         val barrier = CyclicBarrier(3)
         repeat(N_ITERATIONS) {
             var wasLaunched = false
-            var unhandledException: Throwable? = null
-            val handler = CoroutineExceptionHandler { _, ex ->
-                unhandledException = ex
-            }
-            val scope = CoroutineScope(pool + handler)
-            val parent = createCompletableDeferredForTesting(it)
+            val detachedDeferred = createCompletableDeferredForTesting(it)
+            val detachedScope = CoroutineScope(currentCoroutineContext() + pool + detachedDeferred)
             // concurrent child launcher
-            val launcher = scope.launch {
+            val launcher = launch(pool) {
                 barrier.await()
                 // A: launch child for a parent job
-                launch(parent) {
+                detachedScope.launch {
                     wasLaunched = true
                     throw TestException()
                 }
             }
             // concurrent cancel
-            val canceller = scope.launch {
+            val canceller = launch(pool) {
                 barrier.await()
                 // B: cancel parent job of a child
-                parent.cancel()
+                detachedDeferred.cancel()
             }
             barrier.await()
-            joinAll(launcher, canceller, parent)
-            assertNull(unhandledException)
+            joinAll(launcher, canceller, detachedDeferred)
             if (wasLaunched) {
-                val exception = parent.getCompletionExceptionOrNull()
+                val exception = detachedDeferred.getCompletionExceptionOrNull()
                 assertIs<TestException>(exception, "exception=$exception")
             }
         }

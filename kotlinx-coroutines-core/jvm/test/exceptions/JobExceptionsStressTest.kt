@@ -26,24 +26,24 @@ class JobExceptionsStressTest : TestBase() {
          */
         repeat(1000 * stressTestMultiplier) {
             val exception = captureExceptionsRun(executor) {
-                val barrier = CyclicBarrier(4)
-                val job = launch(NonCancellable) {
-                    launch(start = CoroutineStart.ATOMIC) {
-                        barrier.await()
-                        throw TestException1()
+                supervisorScope {
+                    val barrier = CyclicBarrier(4)
+                    launch {
+                        launch(start = CoroutineStart.ATOMIC) {
+                            barrier.await()
+                            throw TestException1()
+                        }
+                        launch(start = CoroutineStart.ATOMIC) {
+                            barrier.await()
+                            throw TestException2()
+                        }
+                        launch(start = CoroutineStart.ATOMIC) {
+                            barrier.await()
+                            throw TestException3()
+                        }
                     }
-                    launch(start = CoroutineStart.ATOMIC) {
-                        barrier.await()
-                        throw TestException2()
-                    }
-                    launch(start = CoroutineStart.ATOMIC) {
-                        barrier.await()
-                        throw TestException3()
-                    }
-                    delay(1000) // to avoid OutOfMemory errors....
+                    barrier.await()
                 }
-                barrier.await()
-                job.join()
             }
             val classes = mutableSetOf(
                 TestException1::class,

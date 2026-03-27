@@ -47,7 +47,8 @@ class CoroutineExceptionHandlerJvmTest : TestBase() {
             expect(3)
             throw TestException("will not be reported")
         }) {
-            launch(Job()) {
+            val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
+            detachedScope.launch {
                 expect(2)
                 throw TestException("will be passed to the uncaught exception handler")
             }.join()

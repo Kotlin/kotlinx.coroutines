@@ -15,7 +15,7 @@ class ConvertTest : TestBase() {
         val job = launch {
             expect(3)
         }
-        val completable = job.asCompletable(coroutineContext.minusKey(Job))
+        val completable = job.asCompletable(currentCoroutineContext().minusKey(Job))
         completable.subscribe {
             expect(4)
         }
@@ -26,17 +26,18 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToCompletableFail() = runBlocking {
-        expect(1)
-        val job = async(NonCancellable) { // don't kill parent on exception
-            expect(3)
-            throw RuntimeException("OK")
+        supervisorScope {
+            expect(1)
+            val job = async {
+                expect(3)
+                throw RuntimeException("OK")
+            }
+            val completable = job.asCompletable(currentCoroutineContext().minusKey(Job))
+            completable.subscribe {
+                expect(4)
+            }
+            expect(2)
         }
-        val completable = job.asCompletable(coroutineContext.minusKey(Job))
-        completable.subscribe {
-            expect(4)
-        }
-        expect(2)
-        yield()
         finish(5)
     }
 

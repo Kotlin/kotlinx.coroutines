@@ -8,10 +8,10 @@ import kotlin.test.*
 class FlowCallbackTest : TestBase() {
     @Test
     fun testClosedPrematurely() = runTest {
-        val outerScope = this
+        val childScope = CoroutineScope(coroutineContext + Job())
         val flow = callbackFlow {
             // ~ callback-based API
-            outerScope.launch(Job()) {
+            childScope.launch {
                 expect(2)
                 try {
                     send(1)
@@ -34,10 +34,10 @@ class FlowCallbackTest : TestBase() {
 
     @Test
     fun testNotClosedPrematurely() = runTest {
-        val outerScope = this
+        val childScope = CoroutineScope(coroutineContext + Job())
         val flow = callbackFlow {
             // ~ callback-based API
-            outerScope.launch(Job()) {
+            childScope.launch {
                 expect(2)
                 send(1)
                 close()

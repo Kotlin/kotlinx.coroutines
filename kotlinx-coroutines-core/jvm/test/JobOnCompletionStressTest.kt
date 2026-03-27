@@ -186,7 +186,7 @@ fun createCompletableDeferredForTesting(iteration: Int): CompletableDeferred<Uni
         parent.invokeOnCompletion { }
     }
     if (iteration.mod(3) == 0) {
-        GlobalScope.launch(parent) { }
+        CoroutineScope(parent).launch { }
     }
     return parent
 }
