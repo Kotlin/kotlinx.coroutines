@@ -3,7 +3,6 @@ package benchmarks.flow.scrabble
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
-import java.lang.Long.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -55,13 +54,13 @@ open class SaneFlowPlaysScrabble : ShakespearePlaysScrabble() {
 
     private suspend inline fun bonusForDoubleLetter(word: String): Int {
         return toBeMaxed(word)
-            .map { letterScores[it - 'a'.toInt()] }
+            .map { letterScores[it - 'a'.code] }
             .max()
     }
 
-    private fun Map.Entry<Int, MutableLong>.letterScore(): Int = letterScores[key - 'a'.toInt()] * Integer.min(
+    private fun Map.Entry<Int, MutableLong>.letterScore(): Int = letterScores[key - 'a'.code] * Integer.min(
         value.get().toInt(),
-        scrabbleAvailableLetters[key - 'a'.toInt()])
+        scrabbleAvailableLetters[key - 'a'.code])
 
     private fun toBeMaxed(word: String) = concat(word.asSequence(), word.asSequence(endIndex = 3))
 
@@ -74,7 +73,7 @@ open class SaneFlowPlaysScrabble : ShakespearePlaysScrabble() {
     }
 
     private fun blanks(entry: Map.Entry<Int, MutableLong>): Long =
-        max(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.toInt()])
+        maxOf(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.code])
 
     private suspend inline fun buildHistogram(word: String): HashMap<Int, MutableLong> {
         return word.asSequence().fold(HashMap()) { accumulator, value ->
@@ -90,7 +89,7 @@ open class SaneFlowPlaysScrabble : ShakespearePlaysScrabble() {
 
     private fun String.asSequence(startIndex: Int = 0, endIndex: Int = length) = flow {
         for (i in  startIndex until endIndex.coerceAtMost(length)) {
-            emit(get(i).toInt())
+            emit(get(i).code)
         }
     }
 }

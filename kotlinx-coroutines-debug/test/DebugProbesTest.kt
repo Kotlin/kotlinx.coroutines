@@ -9,13 +9,13 @@ import kotlin.test.*
 
 class DebugProbesTest : DebugTestBase() {
 
-    private fun CoroutineScope.createDeferred(): Deferred<*> = async(NonCancellable) {
+    private fun CoroutineScope.createDeferred(): Deferred<*> = async {
         throw ExecutionException(null)
     }
 
     @Test
     fun testAsync() = runTest {
-        val deferred = createDeferred()
+        val deferred = GlobalScope.createDeferred()
         val traces = listOf(
             "java.util.concurrent.ExecutionException\n" +
                 "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt:14)\n" +
@@ -35,7 +35,7 @@ class DebugProbesTest : DebugTestBase() {
     fun testAsyncWithProbes() = DebugProbes.withDebugProbes {
         DebugProbes.sanitizeStackTraces = false
         runTest {
-            val deferred = createDeferred()
+            val deferred = GlobalScope.createDeferred()
             val traces = listOf(
                 "java.util.concurrent.ExecutionException\n" +
                     "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt)\n" +
@@ -56,7 +56,7 @@ class DebugProbesTest : DebugTestBase() {
     fun testAsyncWithSanitizedProbes() = DebugProbes.withDebugProbes {
         DebugProbes.sanitizeStackTraces = true
         runTest {
-            val deferred = createDeferred()
+            val deferred = GlobalScope.createDeferred()
             val traces = listOf(
                 "java.util.concurrent.ExecutionException\n" +
                     "\tat kotlinx.coroutines.debug.DebugProbesTest\$createDeferred\$1.invokeSuspend(DebugProbesTest.kt:16)\n" +

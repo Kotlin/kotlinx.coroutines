@@ -328,9 +328,11 @@ class RunTestTest {
         }
     }) {
         runTest {
-            launch(SupervisorJob()) { throw TestException("x") }
-            launch(SupervisorJob()) { throw TestException("y") }
-            launch(SupervisorJob()) { throw TestException("z") }
+            supervisorScope {
+                launch { throw TestException("x") }
+                launch { throw TestException("y") }
+                launch { throw TestException("z") }
+            }
             throw TestException("w")
         }
     }
@@ -348,7 +350,9 @@ class RunTestTest {
             }
         }) {
             scope.runTest {
-                launch(SupervisorJob()) { throw TestException("x") }
+                supervisorScope {
+                    launch { throw TestException("x") }
+                }
             }
         }
     }
@@ -382,7 +386,9 @@ class RunTestTest {
         // step 2: throwing an uncaught exception to be caught by the exception-handling system
         println("step 2")
         createTestResult {
-            launch(NonCancellable) { throw TestException("A") }
+            supervisorScope {
+                launch { throw TestException("A") }
+            }
         }
     }, {
         it.getOrThrow()
@@ -407,7 +413,9 @@ class RunTestTest {
         // step 5: throwing an uncaught exception to be caught by the exception-handling system, again
         println("step 5")
         createTestResult {
-            launch(NonCancellable) { throw TestException("B") }
+            supervisorScope {
+                launch { throw TestException("B") }
+            }
         }
     }, {
         it.getOrThrow()

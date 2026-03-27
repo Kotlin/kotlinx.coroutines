@@ -30,17 +30,18 @@ class ConcurrentExceptionsStressTest : TestBase() {
     }
 
     @Suppress("SuspendFunctionOnCoroutineScope") // workaround native inline fun stacktraces
-    private suspend fun CoroutineScope.testOnce() {
-        val deferred = async(NonCancellable) {
-            repeat(nWorkers) { index ->
-                // Always launch a coroutine even if parent job was already cancelled (atomic start)
-                launch(workers[index], start = CoroutineStart.ATOMIC) {
-                    randomWait()
-                    throw StressException(index)
+    private suspend fun testOnce() {
+        val deferred = supervisorScope {
+            async {
+                repeat(nWorkers) { index ->
+                    // Always launch a coroutine even if parent job was already cancelled (atomic start)
+                    launch(workers[index], start = CoroutineStart.ATOMIC) {
+                        randomWait()
+                        throw StressException(index)
+                    }
                 }
             }
         }
-        deferred.join()
         assertTrue(deferred.isCancelled)
         val completionException = deferred.getCompletionExceptionOrNull()
         val cause = completionException as? StressException

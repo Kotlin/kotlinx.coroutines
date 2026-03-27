@@ -165,7 +165,8 @@ class CompletableDeferredTest : TestBase() {
     fun testCancelAndAwaitParentWaitChildren() = runTest {
         expect(1)
         val parent = CompletableDeferred<String>()
-        launch(parent, start = CoroutineStart.UNDISPATCHED) {
+        val childScope = CoroutineScope(currentCoroutineContext() + parent)
+        childScope.launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // will get cancelled
@@ -187,7 +188,8 @@ class CompletableDeferredTest : TestBase() {
     fun testCompleteAndAwaitParentWaitChildren() = runTest {
         expect(1)
         val parent = CompletableDeferred<String>()
-        launch(parent, start = CoroutineStart.UNDISPATCHED) {
+        val childScope = CoroutineScope(currentCoroutineContext() + parent)
+        childScope.launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // will get cancelled

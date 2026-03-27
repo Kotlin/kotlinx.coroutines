@@ -4,7 +4,6 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.testing.exceptions.*
-import org.junit.Test
 import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
@@ -17,9 +16,10 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testAsync() = runTest {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
         fun createDeferred(depth: Int): Deferred<*> {
             return if (depth == 0) {
-                async<Unit>(coroutineContext + NonCancellable) {
+                detachedScope.async<Unit> {
                     throw ExecutionException(null)
                 }
             } else {
@@ -45,7 +45,8 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testCompletedAsync() = runTest {
-        val deferred = async<Unit>(coroutineContext + NonCancellable) {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
+        val deferred = detachedScope.async<Unit> {
             throw ExecutionException(null)
         }
 
@@ -80,7 +81,8 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testWithContext() = runTest {
-        val deferred = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
+        val deferred = detachedScope.async<Unit>(start = CoroutineStart.LAZY) {
             throw RecoverableTestException()
         }
 
@@ -117,7 +119,8 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testCoroutineScope() = runTest {
-        val deferred = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
+        val deferred = detachedScope.async<Unit>(start = CoroutineStart.LAZY) {
             throw RecoverableTestException()
         }
 
@@ -149,7 +152,8 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testThrowingInitCause() = runTest {
-        val deferred = async<Unit>(NonCancellable) {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
+        val deferred = detachedScope.async<Unit> {
             expect(2)
             throw TrickyException()
         }
@@ -172,11 +176,11 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     @Test
-    fun testSelfSuppression() = runTest {
+    fun testSelfSuppression() {
         try {
             runBlocking {
                 val job = launch {
-                    coroutineScope<Unit> {
+                    coroutineScope {
                         throw RecoverableTestException()
                     }
                 }
