@@ -190,7 +190,7 @@ internal fun TimeoutCancellationException(
     val baseMessage = (delay as? DelayWithTimeoutDiagnostics)?.timeoutMessage(time.milliseconds)
         ?: "Timed out waiting for $time ms"
     val message = if (coroutineName != null) {
-        "Coroutine \"$coroutineName\" $baseMessage"
+        "Coroutine \"$coroutineName\" ${baseMessage.replaceFirstChar { it.lowercaseChar() }}"
     } else {
         baseMessage
     }
