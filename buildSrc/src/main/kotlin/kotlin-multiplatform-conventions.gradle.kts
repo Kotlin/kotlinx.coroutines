@@ -1,6 +1,8 @@
 import org.gradle.api.tasks.testing.logging.*
+import org.gradle.api.tasks.bundling.Jar
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 
 plugins {
     kotlin("multiplatform")
@@ -145,4 +147,11 @@ tasks.named("jvmTest", Test::class) {
 
 tasks.check {
    dependsOn(tasks.checkLegacyAbi)
+}
+
+kotlin.targets.withType<KotlinJvmTarget>().configureEach {
+    // Fill attributes for the JVM implementation Jar only
+    tasks.named<Jar>(artifactsTaskName) {
+        fillManifestImplementationAttributes(project)
+    }
 }

@@ -3,6 +3,7 @@
 import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.gradle.api.tasks.bundling.Jar
 
 plugins {
     kotlin("jvm")
@@ -46,4 +47,8 @@ tasks.withType<Test> {
 
 tasks.check {
    dependsOn(tasks.checkLegacyAbi)
+}
+
+tasks.named<Jar>("jar") {
+    fillManifestImplementationAttributes(project)
 }
