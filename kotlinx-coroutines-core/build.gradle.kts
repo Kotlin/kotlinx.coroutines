@@ -161,16 +161,15 @@ val jvmJar by tasks.getting(Jar::class) { setupManifest(this) }
  * kotlinx-coroutines-core-jvm, but our resolving machinery guarantees that
  * any JVM project that depends on -core artifact also depends on -core-jvm one.
  */
-val allMetadataJar by tasks.getting(Jar::class) {
-    setupManifest(this)
-}
+val allMetadataJar by tasks.getting(Jar::class) { setupManifest(this) }
 
 fun setupManifest(jar: Jar) {
     jar.manifest {
         attributes(
-
+            mapOf(
                 "Premain-Class" to "kotlinx.coroutines.debug.internal.AgentPremain",
-                "Can-Retransform-Classes" to "true"
+                "Can-Retransform-Classes" to "true",
+            )
         )
     }
 }
