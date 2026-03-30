@@ -40,9 +40,18 @@ internal fun handlerException(originalException: Throwable, thrownException: Thr
 
 /**
  * Creates a [CoroutineExceptionHandler] instance.
- * @param handler a function which handles exception thrown by a coroutine
+ *
+ * When an exception without a propagation path is thrown, [handler] is invoked with the [CoroutineContext]
+ * of the coroutine where the exception occurred, as well as the problematic [Throwable] itself.
+ * See the [CoroutineExceptionHandler] interface documentation for a description of propagation paths.
+ *
+ * [handler] is invoked inside coroutine machinery on an unspecified thread.
+ * Therefore, it must be thread-safe and finish quickly.
+ *
+ * Throwing exceptions from this method is discouraged and
+ * will invoke platform-specific last-resort exception handling,
+ * described in the [CoroutineExceptionHandler] interface documentation.
  */
-@Suppress("FunctionName")
 public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineContext, Throwable) -> Unit): CoroutineExceptionHandler =
     object : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
         override fun handleException(context: CoroutineContext, exception: Throwable) =
@@ -178,7 +187,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  * an exception with no propagation path is handled in the following way as the last-resort measure:
  *
  * - On JVM, all instances of [CoroutineExceptionHandler] found via `ServiceLoader` and
- *   the current thread's [Thread.uncaughtExceptionHandler] are invoked.
+ *   the current thread's `Thread.uncaughtExceptionHandler` are invoked.
  * - On Native, the whole application crashes with the exception.
  * - On JS and Wasm JS, the exception is propagated into the JavaScript runtime's event loop
  *   and is processed in a platform-specific way determined by the platform itself.
@@ -267,16 +276,17 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  */
 public interface CoroutineExceptionHandler : CoroutineContext.Element {
     /**
-     * Key for [CoroutineExceptionHandler] instance in the coroutine context.
+     * Key for the [CoroutineExceptionHandler] instance in a coroutine context.
      */
     public companion object Key : CoroutineContext.Key<CoroutineExceptionHandler>
 
     /**
-     * Handles uncaught [exception] in the given [context]. It is invoked
-     * if the coroutine has an uncaught exception.
+     * Handles an [exception] in the given [context].
+     * It is invoked if a coroutine fails without a clear propagation path,
+     * as described in the [CoroutineExceptionHandler] documentation.
      *
      * [handleException] is invoked inside coroutine machinery in an unspecified thread.
-     * Therefore, it should be thread-safe and finish quickly.
+     * Therefore, it must be thread-safe and finish quickly.
      *
      * Throwing exceptions from this method is discouraged and
      * will invoke platform-specific last-resort exception handling,
