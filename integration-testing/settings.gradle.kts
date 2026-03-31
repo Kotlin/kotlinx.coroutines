@@ -15,5 +15,6 @@ include("smokeTest")
 include("safeDebugAgentTest")
 include("java8Test")
 include(":jpmsTest")
+include("r8Test")
 
 rootProject.name = "kotlinx-coroutines-integration-testing"

@@ -69,6 +69,7 @@ allprojects {
         if (!kotlinRepoUrl.isNullOrBlank()) {
             maven(kotlinRepoUrl)
         }
+        google()
         mavenCentral()
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
         maven("https://redirector.kotlinlang.org/maven/dev")
@@ -244,7 +245,8 @@ tasks {
             ":jpmsTest:check",
             "smokeTest:build",
             "java8Test:check",
-            "safeDebugAgentTest:attachAgentWithoutKotlinStdlib"
+            "safeDebugAgentTest:attachAgentWithoutKotlinStdlib",
+            "r8Test:testGcAnchor"
         )
     }
 
