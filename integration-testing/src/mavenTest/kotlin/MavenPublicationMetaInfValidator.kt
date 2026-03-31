@@ -1,10 +1,6 @@
 package kotlinx.coroutines.validator
 
 import org.junit.Test
-import org.objectweb.asm.*
-import org.objectweb.asm.ClassReader.*
-import org.objectweb.asm.ClassWriter.*
-import org.objectweb.asm.Opcodes.*
 import java.util.jar.*
 import kotlin.test.*
 
@@ -29,20 +25,24 @@ class MavenPublicationMetaInfValidator {
     @Test
     fun testMetaInfAndroidStructure() {
         val clazz = Class.forName("kotlinx.coroutines.android.HandlerDispatcher")
-        JarFile(clazz.protectionDomain.codeSource.location.file).checkMetaInfStructure(
-            setOf(
-                "MANIFEST.MF",
-                "kotlinx-coroutines-android.kotlin_module",
-                "services/kotlinx.coroutines.CoroutineExceptionHandler",
-                "services/kotlinx.coroutines.internal.MainDispatcherFactory",
-                "com.android.tools/r8-from-1.6.0/coroutines.pro",
-                "com.android.tools/r8-upto-3.0.0/coroutines.pro",
-                "com.android.tools/proguard/coroutines.pro",
-                "proguard/coroutines.pro",
-                "versions/9/module-info.class",
-                "kotlinx_coroutines_android.version"
-            )
-        )
+        val expectedEntries = buildSet {
+            add("MANIFEST.MF")
+            if (kotlinVersion.startsWith("2.4")) {
+                add("org.jetbrains.kotlinx_kotlinx-coroutines-android.kotlin_module")
+            } else {
+                add("kotlinx-coroutines-android.kotlin_module")
+            }
+            add("services/kotlinx.coroutines.CoroutineExceptionHandler")
+            add("services/kotlinx.coroutines.internal.MainDispatcherFactory")
+            add("com.android.tools/r8-from-1.6.0/coroutines.pro")
+            add("com.android.tools/r8-upto-3.0.0/coroutines.pro")
+            add("com.android.tools/proguard/coroutines.pro")
+            add("proguard/coroutines.pro")
+            add("versions/9/module-info.class")
+            add("kotlinx_coroutines_android.version")
+        }
+        JarFile(clazz.protectionDomain.codeSource.location.file)
+            .checkMetaInfStructure(expectedEntries)
     }
 
     private fun JarFile.checkMetaInfStructure(expected: Set<String>) {
@@ -63,4 +63,7 @@ class MavenPublicationMetaInfValidator {
 
         close()
     }
+
+    private val kotlinVersion: String
+        get() = System.getProperty("kotlin.version.integration")
 }

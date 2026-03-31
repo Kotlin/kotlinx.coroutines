@@ -194,6 +194,10 @@ tasks {
         val sourceSet = sourceSets[name]
         testClassesDirs = sourceSet.output.classesDirs
         classpath = sourceSet.runtimeClasspath
+
+        doFirst {
+            systemProperty("kotlin.version.integration", kotlinVersion)
+        }
     }
 
     create<Test>("debugAgentTest") {
