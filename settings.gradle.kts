@@ -13,6 +13,10 @@ pluginManagement {
 
 rootProject.name = "kotlinx.coroutines"
 
+gradle.beforeProject {
+    plugins.apply("old-module-name-behavior")
+}
+
 fun module(path: String) {
     val i = path.lastIndexOf("/")
     val name = path.substring(i + 1)

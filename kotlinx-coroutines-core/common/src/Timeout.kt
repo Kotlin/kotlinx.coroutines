@@ -154,7 +154,9 @@ private class TimeoutCoroutine<U, in T : U>(
     uCont: Continuation<U> // unintercepted continuation
 ) : ScopeCoroutine<T>(uCont.context, uCont), Runnable {
     override fun run() {
-        cancelCoroutine(TimeoutCancellationException(time, context.delay, this))
+        val delay = context.delay
+        val name = context[CoroutineName]?.name
+        cancelCoroutine(TimeoutCancellationException(time, delay, this, name))
     }
 
     override fun nameString(): String =
@@ -182,9 +184,15 @@ public class TimeoutCancellationException internal constructor(
 internal fun TimeoutCancellationException(
     time: Long,
     delay: Delay,
-    coroutine: Job
-) : TimeoutCancellationException {
-    val message = (delay as? DelayWithTimeoutDiagnostics)?.timeoutMessage(time.milliseconds)
+    coroutine: Job,
+    coroutineName: String?
+): TimeoutCancellationException {
+    val baseMessage = (delay as? DelayWithTimeoutDiagnostics)?.timeoutMessage(time.milliseconds)
         ?: "Timed out waiting for $time ms"
+    val message = if (coroutineName != null) {
+        "Coroutine \"$coroutineName\" ${baseMessage.replaceFirstChar { it.lowercaseChar() }}"
+    } else {
+        baseMessage
+    }
     return TimeoutCancellationException(message, coroutine)
 }

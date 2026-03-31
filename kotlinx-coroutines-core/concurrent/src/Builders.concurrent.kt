@@ -38,6 +38,26 @@ import kotlin.jvm.JvmName
  * the specified dispatcher while the current thread is blocked. If the specified dispatcher is an event loop of another `runBlocking`,
  * then this invocation uses the outer event loop.
  *
+ * If the [context] contains a [Job],
+ * that job becomes the parent of the [CoroutineScope] passed as the receiver to the [block].
+ * This can be used to establish a structured concurrency relationship across the boundary of a non-`suspend` function:
+ *
+ * ```
+ * val currentCoroutine = ThreadLocal<Job?>()
+ *
+ * interface BlockingInterface {
+ *     fun performSomeBlockingTask()
+ * }
+ *
+ * object AsyncImplOfBlockingInterface: BlockingInterface {
+ *     override fun performSomeBlockingTask() {
+ *         runBlocking(currentCoroutine.get() ?: EmptyCoroutineContext) {
+ *             // do some async task
+ *         }
+ *     }
+ * }
+ * ```
+ *
  * If this blocked thread is interrupted (see `Thread.interrupt`), then the coroutine job is cancelled and
  * this `runBlocking` invocation throws `InterruptedException`.
  *

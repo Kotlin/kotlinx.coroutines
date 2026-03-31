@@ -228,8 +228,8 @@ public abstract class CoroutineDispatcher :
 
     /**
      * Requests execution of a runnable [block].
-     * The dispatcher guarantees that [block] will eventually execute, typically by dispatching it to a thread pool,
-     * using a dedicated thread, or just executing the block in place.
+     * The dispatcher guarantees that [block] will eventually execute, typically by dispatching it to a thread pool
+     * or using a dedicated thread.
      * The [context] parameter represents the context of the coroutine that is being dispatched,
      * or [EmptyCoroutineContext] if a non-coroutine-specific [Runnable] is dispatched instead.
      * Implementations may use [context] for additional context-specific information,
@@ -244,9 +244,9 @@ public abstract class CoroutineDispatcher :
      * may leave the coroutines that use this dispatcher in an inconsistent and hard-to-debug state.
      * It is assumed that if any exceptions do get thrown from this method, then [block] will not be executed.
      *
-     * This method must not immediately call [block]. Doing so may result in `StackOverflowError`
+     * Most implementations should avoid calling [block] in-place. Doing so may result in `StackOverflowError`
      * when `dispatch` is invoked repeatedly, for example when [yield] is called in a loop.
-     * In order to execute a block in place, it is required to return `false` from [isDispatchNeeded]
+     * In order to execute a block in place, it is recommended to return `false` from [isDispatchNeeded]
      * and delegate the `dispatch` implementation to `Dispatchers.Unconfined.dispatch` in such cases.
      * To support this, the coroutines machinery ensures in-place execution and forms an event-loop to
      * avoid unbound recursion.
