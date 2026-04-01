@@ -8,7 +8,7 @@ import kotlin.js.*
  */
 @OptIn(ExperimentalWasmJsInterop::class)
 internal fun throwAsyncJsError(message: String?, className: String?, stack: String) {
-    // reportError is a browser API for reporting unhandled exceptions
+    // reportError is the browser API for reporting unhandled exceptions
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/reportError
     // https://developer.mozilla.org/en-US/docs/Web/API/WorkerGlobalScope/reportError
     // It is also implemented in some non-browser JS runtimes (Node.js alternatives)
@@ -20,10 +20,10 @@ internal fun throwAsyncJsError(message: String?, className: String?, stack: Stri
         error.name = className;
         error.stack = stack;
         if (typeof globalThis.reportError === 'function') {
-            // Modern browsers and some non-browser JS runtimes (Deno, Bun)
+            // Up-to-date browsers and some non-browser JS runtimes (Deno, Bun)
             globalThis.reportError(error);
         } else {
-            // Old browser (Safari), Node.js
+            // Fallback for old browsers (pre-2022), Node.js
             setTimeout(function () { throw error }, 0);
         }
     """)
