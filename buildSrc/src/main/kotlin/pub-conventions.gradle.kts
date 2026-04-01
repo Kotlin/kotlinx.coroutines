@@ -16,8 +16,8 @@ publishing {
     repositories {
         configureMavenPublication(this, project)
         maven {
-            name = "IntegrationTesting"
-            url = uri(project.rootProject.layout.buildDirectory.dir("integration-testing-repository"))
+            name = "BuildLocal"
+            url = uri(project.rootProject.layout.buildDirectory.dir("build-local-repository"))
         }
     }
 
@@ -73,5 +73,5 @@ tasks.register("bintrayUpload") { dependsOn(tasks.matching { it.name == "publish
 
 // Compatibility with old TeamCity configurations that perform `publishToMavenLocal`
 tasks.named("publishToMavenLocal") {
-    dependsOn(tasks.matching { it.name == "publishAllPublicationsToIntegrationTestingRepository" })
+    dependsOn(tasks.matching { it.name == "publishAllPublicationsToBuildLocalRepository" })
 }
