@@ -1052,7 +1052,7 @@ public inline fun <T> ChannelResult<T>.onClosed(action: (exception: Throwable?) 
  * Iterator for a [ReceiveChannel].
  * An instance of this interface is *not thread-safe*.
  * Multiple coroutines are allowed to create and use
- * its own instances of this interface for the same channel.
+ * their own instances of this interface for the same channel.
  *
  * Typically, an iterator is used indirectly in the `for` loop and is not instantiated explicitly.
  *
