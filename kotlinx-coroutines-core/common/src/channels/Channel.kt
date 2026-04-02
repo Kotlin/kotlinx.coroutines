@@ -1074,7 +1074,7 @@ public inline fun <T> ChannelResult<T>.onClosed(action: (exception: Throwable?) 
  *      channel.send(1)
  *      channel.send(2)
  *      channel.send(3)
- *      channel.close()  // NB: must close for iterators to finish
+ *      channel.close() // NB: must close for iterators to finish
  * }
  * launch {
  *      for (element in channel) {
