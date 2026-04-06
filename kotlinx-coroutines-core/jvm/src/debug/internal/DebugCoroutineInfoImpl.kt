@@ -1,5 +1,6 @@
 package kotlinx.coroutines.debug.internal
 
+import kotlinx.coroutines.*
 import java.lang.ref.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
@@ -24,7 +25,7 @@ internal class DebugCoroutineInfoImpl internal constructor(
     @JvmField public val sequenceNumber: Long
 ) {
     /**
-     * We cannot keep a strong reference to the context, because with the [kotlinx.coroutines.Job] in the context it will indirectly
+     * We cannot keep a strong reference to the context, because with the [Job] in the context it will indirectly
      * keep a reference to the last frame of an abandoned coroutine which the debugger should not be preventing
      * garbage-collection of. The reference to context will not disappear as long as the coroutine itself is not lost.
      */
