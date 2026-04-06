@@ -12,7 +12,7 @@ plugins.withId("org.jetbrains.kotlin.jvm") {
     }
 }
 
-plugins.withId("org.jetbrains.multiplatform") {
+plugins.withId("org.jetbrains.kotlin.multiplatform") {
     extensions.configure<KotlinMultiplatformExtension>() {
         targets.withType<KotlinJvmTarget>() {
             compilerOptions.moduleName.value(project.name)
