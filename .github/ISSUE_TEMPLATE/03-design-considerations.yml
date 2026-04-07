@@ -1,0 +1,83 @@
+name: Design consideration
+description: Discuss intentional but suboptimal behavior or possible design improvements
+title: "[Design] "
+labels:
+  - design
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue type is for discussing **intentional library behavior that feels suboptimal**,
+        surprising, or worth reconsidering.
+
+        If the behavior looks unintentional, undocumented, or plainly wrong,
+        a **Bug report** might be a better fit.
+
+        If you’re unsure — just describe what you see and why it feels off.
+
+        For quick questions or general design advice, you may also want to ask on
+        [StackOverflow](https://stackoverflow.com/) or in the
+        [Kotlin Slack](https://slack-chats.kotlinlang.org/).
+
+  - type: textarea
+    id: current
+    attributes:
+      label: What do we have today?
+      description: |
+        Describe the current behavior.
+        Code examples are very helpful.
+      placeholder: |
+        Currently, this behaves like:
+        ```kotlin
+        // example
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: concern
+    attributes:
+      label: Why does this feel problematic?
+      description: |
+        What is suboptimal, awkward, or limiting about the current behavior?
+      placeholder: |
+        This makes it hard to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: Possible alternative (optional)
+      description: |
+        If you have an idea of how this could work differently, feel free to share it.
+        This can be vague, incomplete, or exploratory.
+      placeholder: |
+        It might be nicer if...
+        ```kotlin
+        // sketch
+        ```
+    validations:
+      required: false
+
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Trade-offs you see (optional)
+      description: |
+        Any pros, cons, risks, or breaking-change concerns you already thought about.
+        Not required, but very welcome.
+      placeholder: |
+        One concern is that this could...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else? (optional)
+      description: |
+        Context, links to prior discussions, production experience, or related issues.
+    validations:
+      required: false

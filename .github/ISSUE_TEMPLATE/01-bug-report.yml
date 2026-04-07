@@ -1,0 +1,67 @@
+name: Bug report
+description: Something in kotlinx.coroutines behaves incorrectly
+title: "[Bug] "
+labels:
+  - bug
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report!
+
+        Please focus on **what happens** and **how to reproduce it**.
+        Everything else is optional.
+
+        Before filing, a quick sanity check (no worries if you’re unsure):
+
+        - If the behavior is documented but feels wrong or questionable,
+          it might be better filed as a **design discussion** rather than a bug.
+        - If something is unclear rather than broken, you may get a faster answer on
+          [StackOverflow](https://stackoverflow.com/) or in the
+          [Kotlin Slack](https://slack-chats.kotlinlang.org/).
+        - Please make sure the issue is in **kotlinx.coroutines itself**,
+          not in Kotlin, a third-party library, or your own code.
+        - If you suspect this might already be fixed, trying a recent version can help —
+          but it’s okay if you can’t.
+
+        If in doubt, just file the issue and describe what you see.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is happening? What should have happened instead?
+      placeholder: |
+        Describe what looks wrong or unexpected.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Reproducer
+      description: |
+        Any form of reproducer is welcome.
+
+        - A minimal, self-contained snippet is ideal
+        - A small sample project is great
+        - A real-world project or production code is also fine if isolating the issue is hard
+
+        If the code is private, please mention that — we can discuss alternatives.
+      placeholder: |
+        ```kotlin
+        runBlocking {
+            // minimal example
+        }
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else? (optional)
+      placeholder: |
+        What you expected, versions, environment, logs, links — whatever you think matters.
+    validations:
+      required: false
