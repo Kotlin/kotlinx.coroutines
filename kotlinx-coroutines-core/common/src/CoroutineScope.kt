@@ -92,7 +92,7 @@ import kotlin.coroutines.intrinsics.*
  * When the lifecycle of the scope is not limited lexically
  * (for example, when coroutines should outlive the function that creates them)
  * but is tied to the lifecycle of some entity, the [CoroutineScope] constructor function can be used
- * to define a personal scope for that entity that should be stored as a field there.
+ * to define a personal scope for the entity. This scope should be stored as a field in the entity.
  *
  * **The key part of using a custom `CoroutineScope` is cancelling it at the end of the lifecycle.**
  * The [CoroutineScope.cancel] extension function shall be used when the entity launching coroutines
