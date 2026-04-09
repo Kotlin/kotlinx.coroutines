@@ -92,7 +92,7 @@ actual open class TestBase(
             checkFinishCall()
         }
         lastTestPromise = result
-        @Suppress("CAST_NEVER_SUCCEEDS")
+        @Suppress("CAST_NEVER_SUCCEEDS", "CAST_NEVER_SUCCEEDS_ERROR")
         return result as MyPromise
     }
 }
