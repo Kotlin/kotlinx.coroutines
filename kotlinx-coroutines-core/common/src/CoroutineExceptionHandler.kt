@@ -287,7 +287,7 @@ public interface CoroutineExceptionHandler : CoroutineContext.Element {
     public companion object Key : CoroutineContext.Key<CoroutineExceptionHandler>
 
     /**
-     * Handles an [exception] in the given [context].
+     * Handles an [exception] that occurred in the given [context].
      * It is invoked if a coroutine fails without a clear propagation path,
      * as described in the [CoroutineExceptionHandler] documentation.
      *
