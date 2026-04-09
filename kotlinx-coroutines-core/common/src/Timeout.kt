@@ -67,7 +67,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * On the JVM, use the `runInterruptible` function to propagate cancellations
  * to blocking JVM code as thread interruptions.
  *
- * See the [Cancellation is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative).
+ * See the [Make coroutines react to cancellation](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative)
  * section of the coroutines guide for details.
  *
  * ### [TimeoutCancellationException] is not considered an error
@@ -104,14 +104,14 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * }
  * ```
  *
- * If [withTimeout] has to return a nullable value and [withTimeoutOrNull] can not be used,
+ * If [withTimeout] has to return a nullable value and [withTimeoutOrNull] cannot be used,
  * this pattern can help instead:
  *
  * ```
  * coroutineScope {
  *     launch {
  *         try {
- *             withTimeoutOrNull(10.milliseconds) {
+ *             withTimeout(10.milliseconds) {
  *                 // Some operation that is going to time out
  *                 awaitCancellation()
  *             }
@@ -197,7 +197,7 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
  * For example, this JVM code will run to completion, taking 10 seconds to do so:
  *
  * ```
- * withTimeout(1.seconds) {
+ * withTimeoutOrNull(1.seconds) {
  *     Thread.sleep(10_000)
  * }
  * ```
@@ -205,7 +205,7 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
  * On the JVM, use the `runInterruptible` function to propagate cancellations
  * to blocking JVM code as thread interruptions.
  *
- * See the [Cancellation is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative).
+ * See the [Make coroutines react to cancellation](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative)
  * section of the coroutines guide for details.
  *
  * ### Returning closeable resources
@@ -214,7 +214,7 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
  *
  * See the corresponding section in the [coroutineScope] documentation for details.
  *
- * @see withTimeoutOrNull
+ * @see withTimeout
  * @see SelectBuilder.onTimeout
  */
 public suspend fun <T> withTimeoutOrNull(timeout: Duration, block: suspend CoroutineScope.() -> T): T? =

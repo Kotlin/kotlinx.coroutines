@@ -16,12 +16,12 @@ import kotlin.coroutines.intrinsics.*
  * and setting the execution properties with which coroutines (its "children") are launched.
  *
  * Execution properties are defined as [CoroutineContext.Element] values that may affect the behavior of
- * `kotlinx.coroutines`--for example, which thread pool a coroutine should run on.
+ * `kotlinx.coroutines`—for example, which thread pool a coroutine should run on.
  * See a more detailed explanation of the context elements in a separate section below.
  *
  * A set of rules called "structured concurrency" ensures that the lifecycles of children
  * are nested inside the lifecycles of their parent scopes.
- * For example, a scope is cancelled, all coroutines in it are cancelled too, and the scope itself
+ * For example, if a scope is cancelled, all coroutines in it are cancelled too, and the scope itself
  * cannot be completed until all its children are completed.
  * See a more detailed explanation of structured concurrency in a separate section below.
  *
@@ -45,6 +45,7 @@ import kotlin.coroutines.intrinsics.*
  *   Typically, this happens because the root scope of the ancestry tree is not lexically scoped,
  *   that is, not created using coroutine builders like [coroutineScope] or [withContext] that return the result
  *   directly to the caller.
+ *   See the [CoroutineExceptionHandler] documentation for the full set of rules.
  * - A [CoroutineName] element that can be used to name coroutines for debugging purposes.
  * - On the JVM, a `ThreadContextElement` ensures that a specific thread-local value gets set on the thread
  *   that executes the coroutine.
@@ -202,10 +203,10 @@ import kotlin.coroutines.intrinsics.*
  * ```
  * suspend fun downloadFile(url: String): ByteArray {
  *     return withContext(Dispatchers.IO) {
- *         // this code will execute on the UI thread
+ *         // this code will execute on a thread for blocking work
  *         val file = byteArrayOf()
  *         // download the file
- *         return file
+ *         file
  *     }
  * }
  *
@@ -344,7 +345,7 @@ import kotlin.coroutines.intrinsics.*
  *             launch {
  *                 // This cancels the `coroutineScope` coroutine, since
  *                 // 1. The coroutine fails with a non-`CancellationException` exception,
- *                 // 2. `launch` is not a lexically scope coroutine builder,
+ *                 // 2. `launch` is not a lexically scoped coroutine builder,
  *                 // 3. `coroutineScope` has a non-supervisor `Job`
  *                 throw IllegalStateException()
  *             }
@@ -389,7 +390,7 @@ import kotlin.coroutines.intrinsics.*
  * See [CoroutineExceptionHandler] for details.
  *
  * Failing with a [CancellationException] only cancels the coroutine itself and its children.
- * It does not affect the parent or any sibling coroutines and is not considered a failure.
+ * It does not affect the parent or sibling coroutines and is not considered a failure.
  *
  * ### How-to: stop failures of child coroutines from cancelling other coroutines
  *
@@ -413,13 +414,13 @@ import kotlin.coroutines.intrinsics.*
  *
  * ```
  * supervisorScope {
- *     val failingCoroutine = scope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, e ->
+ *     val failingCoroutine = launch(CoroutineExceptionHandler { _, e ->
  *         println("Coroutine failed with exception $e")
  *     }) {
  *         throw IllegalStateException("This exception will not cancel the scope")
  *     }
  *     failingCoroutine.join()
- *     launch(Dispatchers.IO) {
+ *     launch {
  *         println("This coroutine is active! See: ${isActive}")
  *     }
  * }
@@ -480,7 +481,7 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
     ContextScope(coroutineContext + context)
 
 /**
- * Creates the a [CoroutineScope] for scheduling UI updates.
+ * Creates a [CoroutineScope] for scheduling UI updates.
  *
  * Example of use:
  * ```
@@ -732,7 +733,7 @@ public val CoroutineScope.isActive: Boolean
  * ```
  * // A global coroutine to log statistics every second, must be always active
  * @OptIn(DelicateCoroutinesApi::class)
- * val globalScopeReporter = GlobalScope.launch(CoroutineExceptionHandler) { _, e ->
+ * val globalScopeReporter = GlobalScope.launch(CoroutineExceptionHandler { _, e ->
  *     logFatalError("Error in the global statistics-logging coroutine: $e")
  * }) {
  *     while (true) {
@@ -778,7 +779,7 @@ public object GlobalScope : CoroutineScope {
  * ```
  * // If the current coroutine is cancelled, `firstFile`, `secondFile`,
  * // and `await()` get cancelled.
- * fun downloadAndCompareTwoFiles() = coroutineScope {
+ * suspend fun downloadAndCompareTwoFiles() = coroutineScope {
  *     val firstFile = async {
  *         // If this fails, `secondFile` and `await()` get cancelled,
  *         // and `downloadAndCompareTwoFiles` rethrows the exception,
@@ -809,7 +810,7 @@ public object GlobalScope : CoroutineScope {
  *
  * ## Pitfall: returning closeable resources from a scoped coroutine
  *
- * [R] must be a value that can safely be dropped. For example, this code is incorrect:
+ * The returned value must be safe to drop without any extra cleanup. For example, this code is incorrect:
  *
  * ```
  * // DO NOT DO THIS

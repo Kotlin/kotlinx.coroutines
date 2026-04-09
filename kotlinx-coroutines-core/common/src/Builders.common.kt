@@ -62,7 +62,7 @@ import kotlin.jvm.*
  * The details of structured concurrency are described in the [CoroutineScope] interface documentation.
  * Here is a restatement of some main points as they relate to [launch]:
  *
- * - The lifecycle of the parent [CoroutineScope] can not end until this coroutine
+ * - The lifecycle of the parent [CoroutineScope] cannot end until this coroutine
  *   (as well as all its children) completes.
  * - If the parent [CoroutineScope] is cancelled, this coroutine is cancelled as well.
  * - If this coroutine fails with a non-[CancellationException] exception
@@ -122,7 +122,7 @@ import kotlin.jvm.*
  * [launch] is similar to [async] whose block returns a [Unit] value.
  *
  * The only difference is the handling of uncaught coroutine exceptions:
- * if an [async] coroutine fails with an exception, then even if the exception can not be propagated to the parent,
+ * if an [async] coroutine fails with an exception, then even if the exception cannot be propagated to the parent,
  * a [CoroutineExceptionHandler] will not be invoked.
  * Instead, the user of [async] must call [Deferred.await] to get the result of the coroutine,
  * which will be the uncaught exception.
@@ -170,8 +170,8 @@ import kotlin.jvm.*
  *     } catch (e: CancellationException) {
  *         if (isActive) {
  *             // we were not cancelled, this is a failure
- *             println("`result` was cancelled")
- *             throw IllegalStateException("$result was cancelled", e)
+ *             println("`deferred` was cancelled")
+ *             throw IllegalStateException("deferred was cancelled", e)
  *         } else {
  *             println("I was cancelled")
  *             // throw again to finish the coroutine
@@ -245,7 +245,7 @@ public fun CoroutineScope.launch(
  * The details of structured concurrency are described in the [CoroutineScope] interface documentation.
  * Here is a restatement of some main points as they relate to [async]:
  *
- * - The lifecycle of the parent [CoroutineScope] can not end until this coroutine
+ * - The lifecycle of the parent [CoroutineScope] cannot end until this coroutine
  *   (as well as all its children) completes.
  * - If the parent [CoroutineScope] is cancelled, this coroutine is cancelled as well.
  * - If this coroutine fails with a non-[CancellationException] exception
@@ -324,7 +324,7 @@ private class LazyDeferredCoroutine<T>(
  * the result.
  *
  * [context] specifies the additional context elements for the coroutine to combine with
- * the elements already present in the [CoroutineScope.coroutineContext].
+ * the elements already present in the [currentCoroutineContext].
  * It is incorrect to pass a [Job] element there, as this breaks structured concurrency,
  * unless it is [NonCancellable].
  *
@@ -351,8 +351,6 @@ private class LazyDeferredCoroutine<T>(
  *   see a separate subsection below for details.
  *   The new scope's [Job] is added to the resulting context.
  *
- * The context of the new scope is obtained by combining the [currentCoroutineContext] with a new [Job]
- * whose parent is the [Job] of the caller [currentCoroutineContext] (if any).
  * The [Job] of the new scope is not a normal child of the caller coroutine but a lexically scoped one,
  * meaning that the failure of the [Job] will not affect the parent [Job].
  * Instead, the exception leading to the failure will be rethrown to the caller of this function.
@@ -400,7 +398,7 @@ private class LazyDeferredCoroutine<T>(
  * **Do not rely on this behaviour in new code.**
  *
  * If [context] contains a [Job] element, it will be the *parent* of the new coroutine,
- * and the lifecycle of the new coroutine will not be tied to the [CoroutineScope] at all.
+ * and the lifecycle of the new coroutine will not be tied to the [currentCoroutineContext] at all.
  *
  * In specific terms:
  *
@@ -441,7 +439,7 @@ private class LazyDeferredCoroutine<T>(
  * ## Dispatching behavior
  *
  * If [context] provides a [ContinuationInterceptor] other than the one used by the caller,
- * the [block] can not simply be called inline with the updated context and has to go through a dispatch,
+ * the [block] cannot simply be called inline with the updated context and has to go through a dispatch,
  * that is, get scheduled on the new [ContinuationInterceptor].
  * It is up to the [ContinuationInterceptor] to actually run the [block],
  * and it may take arbitrarily long for that to happen.
@@ -452,8 +450,8 @@ private class LazyDeferredCoroutine<T>(
  * as the caller, no dispatch is performed.
  * In that case, no dispatch happens on exiting the [block] either, unless child coroutines have to be awaited.
  *
- * Note that the result of [withContext] invocation is dispatched into the original context in a cancellable way
- * with a **prompt cancellation guarantee**, which means that if the original [coroutineContext]
+ * Note that the result of a [withContext] invocation is dispatched into the original context in a cancellable way
+ * with a **prompt cancellation guarantee**, which means that if the original [currentCoroutineContext]
  * in which [withContext] was invoked is cancelled by the time its dispatcher starts to execute the code,
  * it discards the result of [withContext] and throws a [CancellationException].
  *

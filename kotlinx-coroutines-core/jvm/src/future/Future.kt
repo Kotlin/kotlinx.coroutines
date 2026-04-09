@@ -39,8 +39,8 @@ import kotlin.coroutines.*
  *
  * If [CompletableFuture.complete] or [CompletableFuture.completeExceptionally] are called on the result of the
  * [future], the coroutine gets cancelled *without a cause specified*.
- * This means that even if the future is completed with an exception externally, [CoroutineScope] will not be notified
- * about the error.
+ * This means that even if the future is completed with an exception externally,
+ * the parent [CoroutineScope] will not be notified about the error.
  *
  * @param context the context to be added to the [CoroutineScope.coroutineContext] when creating the new coroutine.
  * @param start the coroutine start strategy. The default value is [CoroutineStart.DEFAULT].

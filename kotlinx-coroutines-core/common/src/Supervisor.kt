@@ -13,7 +13,7 @@ import kotlin.jvm.*
 /**
  * Creates a _supervisor_ job object in an active state.
  * Children of a supervisor job can fail independently of each other.
- * 
+ *
  * A failure or cancellation of a child does not cause the supervisor job to fail and does not affect its other children,
  * so a supervisor can implement a custom policy for handling failures of its children:
  *
@@ -60,7 +60,7 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  *         urls.map { url ->
  *             async {
  *                 // if one of the downloads fails, the others will continue
- *                 donwloadFileContent(url)
+ *                 downloadFileContent(url)
  *             }
  *         }
  *     } // every download will fail or complete by the time this function returns

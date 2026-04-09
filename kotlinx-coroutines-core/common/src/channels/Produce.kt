@@ -109,7 +109,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  *     try {
  *         send(3) // will throw CancellationException
  *     } catch (e: CancellationException) {
- *         println("The channel was cancelled!)
+ *         println("The channel was cancelled!")
  *         throw e // always rethrow CancellationException
  *     }
  * }
@@ -171,13 +171,6 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  *
  * The behavior around coroutine cancellation and error handling is experimental and may change in a future release.
  *
- * ### Coroutine context
- *
- * The coroutine context is inherited from this [CoroutineScope]. Additional context elements can be specified with the [context] argument.
- * If the context does not have any dispatcher or other [ContinuationInterceptor], then [Dispatchers.Default] is used.
- * The parent job is inherited from the [CoroutineScope] as well, but it can also be overridden
- * with a corresponding [context] element.
- *
  * See [newCoroutineContext] for a description of debugging facilities available for newly created coroutines.
  *
  * ### Undelivered elements
@@ -211,9 +204,9 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * ### Interactions between coroutines
  *
  * The details of structured concurrency are described in the [CoroutineScope] interface documentation.
- * Here is a restatement of some main points as they relate to [async]:
+ * Here is a restatement of some main points as they relate to [produce]:
  *
- * - The lifecycle of the parent [CoroutineScope] can not end until this coroutine
+ * - The lifecycle of the parent [CoroutineScope] cannot end until this coroutine
  *   (as well as all its children) completes.
  * - If the parent [CoroutineScope] is cancelled, this coroutine is cancelled as well.
  * - If this coroutine fails with a non-[CancellationException] exception
@@ -221,7 +214,7 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  *   the parent [Job] is cancelled with this exception.
  * - If this coroutine fails with an exception and the parent [CoroutineScope] has a supervisor [Job] or no job at all
  *   (as is the case with [GlobalScope] or malformed scopes),
- *   the exception is considered uncaught and is only available through the returned [Channel].
+ *   the exception is considered uncaught and is only available through the returned [ReceiveChannel].
  * - The lifecycle of the [CoroutineScope] passed as the receiver to the [block]
  *   will not end until the [block] completes (or gets cancelled before ever having a chance to run).
  * - If the [block] throws a [CancellationException], the coroutine is considered cancelled,

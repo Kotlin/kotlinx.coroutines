@@ -47,7 +47,7 @@ import kotlin.jvm.JvmName
  * If children should fail independently, consider using [supervisorScope]:
  * ```
  * runBlocking(CoroutineExceptionHandler { _, e ->
- *     // handle the exception
+ *     // handle the exception—necessary when using `supervisorScope`
  * }) {
  *     supervisorScope {
  *         // Children fail independently here
