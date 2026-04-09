@@ -4,15 +4,15 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**
- * Helper function for coroutine builder implementations to handle uncaught and unexpected exceptions in coroutines,
- * that could not be otherwise handled in a normal way through structured concurrency, saving them to a future, and
+ * Helper function for coroutine builder implementations to handle unpropagated and unexpected exceptions in coroutines,
+ * that could not be otherwise handled normally through structured concurrency or saving them to a `Future`, and
  * cannot be rethrown. This is a last resort handler to prevent lost exceptions.
  *
  * If there is [CoroutineExceptionHandler] in the context, then it is used. If it throws an exception during handling
  * or is absent, all instances of [CoroutineExceptionHandler] found via `ServiceLoader` and
  * `Thread.uncaughtExceptionHandler` are invoked.
  *
- * @suppress **This is internal API and it is subject to change.**
+ * @suppress **This is an internal API and it is subject to change.**
  */
 @InternalCoroutinesApi
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
@@ -48,7 +48,7 @@ internal fun handlerException(originalException: Throwable, thrownException: Thr
  * [handler] is invoked inside coroutine machinery on an unspecified thread.
  * Therefore, it must be thread-safe and finish quickly.
  *
- * Throwing exceptions from this method is discouraged and
+ * Throwing exceptions in [handler] is discouraged and
  * will invoke platform-specific last-resort exception handling,
  * described in the [CoroutineExceptionHandler] interface documentation.
  */
@@ -177,7 +177,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  *
  * ```
  * GlobalScope.launch {
- *     throw IllegalStateException("This *is* an unpropagated exception.")
+ *     throw IllegalStateException("This is an **unpropagated exception**.")
  * }
  * ```
  *
