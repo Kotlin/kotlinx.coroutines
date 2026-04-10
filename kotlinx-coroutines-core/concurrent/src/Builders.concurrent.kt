@@ -25,26 +25,26 @@ import kotlin.jvm.JvmName
  * ## Structured concurrency
  *
  * The lifecycle of the new coroutine's [Job] begins with starting the [block] and completes when both the [block] and
- * all the coroutines launched in the scope complete.
+ * all the coroutines created in the scope complete.
  *
- * A new coroutine is created with the following properties:
+ * The new coroutine executing [block] is created:
  * - A new [Job] for a lexically scoped coroutine is created.
  *   Its parent is the [Job] from the [context], if any was passed.
- * - If a [ContinuationInterceptor] is passed in [context],
- *   it is used as a dispatcher of the new coroutine created by [runBlocking].
- *   Otherwise, the new coroutine is dispatched to an event loop opened on this thread.
- * - The other pieces of the context are put into the new coroutine context as is.
+ * - By default, an event loop opened on this thread is used as the [ContinuationInterceptor].
+ *   This can be overridden by passing a [ContinuationInterceptor] in [context].
+ * - The other elements of [context] are put into the new coroutine context as is.
  * - [newCoroutineContext] is called to optionally install debugging facilities.
  *
- * The resulting context is available in the [CoroutineScope] passed as the [block]'s receiver.
+ * The resulting context is available in the [CoroutineScope] that is passed as the [block]'s receiver.
  *
  * Because the new coroutine is lexically scoped, even if a [Job] was passed in the [context],
  * it will not be cancelled if [runBlocking] or some child coroutine fails with an exception.
  * Instead, the exception will be rethrown to the caller of this function.
+ * However, cancelling the [Job] passed in the [context] does also cancel the new coroutine.
  *
  * If any child coroutine in this scope fails with an exception,
  * the scope fails, cancelling all the other children and its own [block].
- * If children should fail independently, consider using [supervisorScope]:
+ * If it is desired that children fail independently, consider using [supervisorScope]:
  * ```
  * runBlocking(CoroutineExceptionHandler { _, e ->
  *     // handle the exception—necessary when using `supervisorScope`
@@ -55,30 +55,20 @@ import kotlin.jvm.JvmName
  * }
  * ```
  *
- * Rephrasing this in more practical terms, the specific list of structured concurrency interactions is as follows:
- * - The caller's [currentCoroutineContext] *is not taken into account*, its cancellation does not affect [runBlocking].
- * - If the new [CoroutineScope] fails with an exception
- *   (which happens if either its [block] or any child coroutine fails with an exception),
- *   the exception is rethrown to the caller,
- *   without affecting the [Job] passed in the [context] (if any).
- *   Note that this happens on any child coroutine's failure even if [block] finishes successfully.
- * - Cancelling the [Job] passed in the [context] (if any) cancels the new coroutine and its children.
- * - [runBlocking] will only finish when all the coroutines launched in it finish.
- *   If all of them complete without failing, the [runBlocking] returns the result of the [block] to the caller.
- *
  * ## Event loop
  *
- * The default [CoroutineDispatcher] for this builder is an internal implementation of event loop that processes
- * continuations in this blocked thread until the completion of this coroutine.
+ * The default [ContinuationInterceptor] for this builder is an internal implementation of event loop that processes
+ * continuations in the current thread until the completion of the [runBlocking] coroutine.
  *
- * This event loop is set in a thread-local variable and is accessible to nested [runBlocking] calls and
+ * This event loop is set in a thread-local variable and is accessible by nested [runBlocking] calls and
  * coroutine tasks forming an event loop
  * (such as the tasks of [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate]).
  *
- * Nested [runBlocking] calls may execute other coroutines' tasks instead of running their own tasks.
+ * Nested [runBlocking] calls may execute other coroutines' tasks from the same event loop
+ * instead of running their own tasks.
  *
- * When [CoroutineDispatcher] is explicitly specified in the [context], then the new coroutine runs in the context of
- * the specified dispatcher while the current thread is blocked (and possibly running tasks from other
+ * If a [ContinuationInterceptor] is present in the [context], the new coroutine runs in the context of
+ * the specified interceptor while the current thread is blocked (and possibly running tasks from other
  * [runBlocking] calls on the same thread or [Dispatchers.Unconfined]).
  *
  * See [CoroutineDispatcher] for the other implementations that are provided by `kotlinx.coroutines`.
@@ -92,7 +82,7 @@ import kotlin.jvm.JvmName
  * ```
  * suspend fun loadConfiguration() {
  *     // DO NOT DO THIS:
- *     val data = runBlocking { // <- redundant and blocks the thread, do not do that
+ *     val data = runBlocking { // <- redundant and blocks the thread, avoid this!
  *         fetchConfigurationData() // suspending function
  *     }
  *     // ...

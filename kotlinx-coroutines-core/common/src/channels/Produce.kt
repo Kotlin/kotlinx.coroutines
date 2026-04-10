@@ -118,32 +118,50 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * channel.cancel()
  * ```
  *
- * If this coroutine finishes with an exception, it will close the channel with that exception as the cause,
+ * If this coroutine finishes with an exception, it will attempt to close the channel with that exception as the cause,
  * so after receiving all the existing elements,
  * all further attempts to receive from it will throw the exception with which the coroutine finished.
+ * In addition, the exception will cancel the parent coroutine through structured concurrency.
  *
  * ```
  * val produceJob = Job()
+ * val scope = CoroutineScope(produceJob)
  * // create and populate a channel with a buffer
- * val channel = produce<Int>(produceJob, capacity = Channel.UNLIMITED) {
+ * val channel = scope.produce<Int>(capacity = Channel.UNLIMITED) {
  *     repeat(5) { send(it) }
  *     throw TestException()
  * }
- * produceJob.join() // wait for `produce` to fail
+ * produceJob.join() // wait for the parent of the `produce` to get cancelled
  * check(produceJob.isCancelled == true)
  * // prints 0, 1, 2, 3, 4, then throws `TestException`
  * for (value in channel) { println(value) }
  * ```
  *
- * The exception will not be considered uncaught even if the parent coroutine does not react to it
- * (for example, because it has a [SupervisorJob]).
- * This means that, in the following code, the exception will not be reported anywhere and needs to be handled
- * manually by receiving from the resulting channel:
+ * If the channel is already closed *and* the exception cannot be propagated through structured concurrency
+ * (for example, because the parent has a [SupervisorJob]), the last-resort error-handling logic described in the
+ * [CoroutineExceptionHandler] will get invoked:
  *
  * ```
- * supervisorScope {
- *     produce<Int> {
- *         throw IllegalStateException()
+ * withContext(CoroutineExceptionHandler { ctx, e ->
+ *     // Will be invoked with `Failed to cancel`
+ *     println("Failure in the produce coroutine: $e")
+ * }) {
+ *     supervisorScope {
+ *         // Because the parent job is a supervisor,
+ *         // the exception will not be propagated to the parent.
+ *         val channel = produce(capacity = Channel.UNLIMITED) {
+ *             send(1)
+ *             try {
+ *                 awaitCancellation()
+ *             } catch (e: CancellationException) {
+ *                 throw IllegalStateException("Failed to cancel", e)
+ *             }
+ *         }
+ *         channel.receive()
+ *         // Cancelling a channel also closes it,
+ *         // so now, the exception with which `produce` fails
+ *         // cannot be propagated.
+ *         channel.cancel()
  *     }
  * }
  * ```
@@ -212,9 +230,11 @@ public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
  * - If this coroutine fails with a non-[CancellationException] exception
  *   and the parent [CoroutineScope] has a non-supervisor [Job] in its context,
  *   the parent [Job] is cancelled with this exception.
- * - If this coroutine fails with an exception and the parent [CoroutineScope] has a supervisor [Job] or no job at all
+ * - If this coroutine fails with a non-[CancellationException] exception,
+ *   the parent [CoroutineScope] has a supervisor [Job] or no job at all
  *   (as is the case with [GlobalScope] or malformed scopes),
- *   the exception is considered uncaught and is only available through the returned [ReceiveChannel].
+ *   and the channel is already [closed][SendChannel.close],
+ *   the exception cannot be propagated and is handled as the [CoroutineExceptionHandler] documentation describes.
  * - The lifecycle of the [CoroutineScope] passed as the receiver to the [block]
  *   will not end until the [block] completes (or gets cancelled before ever having a chance to run).
  * - If the [block] throws a [CancellationException], the coroutine is considered cancelled,

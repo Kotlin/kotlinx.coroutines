@@ -14,8 +14,8 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Shortcut for calling [withTimeout] with a [Duration] timeout of [timeMillis] milliseconds.
- * Please see that overload for details.
+ * Shorthand form for calling [withTimeout] with a [Duration] timeout of [timeMillis] milliseconds.
+ * Please see the overload accepting a [Duration] for details.
  *
  * > Note: the behavior of this function can be different from [withTimeout] if [timeMillis] is greater than
  * `Long.MAX_VALUE / 2` milliseconds.
@@ -31,21 +31,21 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
 }
 
 /**
- * Calls the specified suspending [block] with the specified [timeout], suspends until it completes,
+ * Calls the given suspending [block] with the specified [timeout], suspends until it completes,
  * and returns the result.
  *
  * If the [block] execution times out, it is cancelled with a [TimeoutCancellationException].
- * If the [timeout] is non-positive, this happens immediately and the [block] is not executed.
+ * If the [timeout] is non-positive, this happens immediately, and the [block] is not executed.
  *
- * The cancellation on timeout is asynchronous with respect to the code running in the block
- * and may happen at any time, even after the [block] finishes executing but before the caller gets resumed with
- * the result.
+ * Cancellation on timeout runs concurrently the code running in the block and may happen at any time,
+ * even after the [block] finishes executing but before the caller gets resumed with the result.
  *
- * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the [CoroutineDispatcher]
+ * in the [currentCoroutineContext].
  *
  * ## Structured Concurrency
  *
- * [withTimeout] behaves like [coroutineScope], as it, too, creates a new *scoped child coroutine*.
+ * [withTimeout] behaves like [coroutineScope], as it, too, creates a new *lexically scoped child coroutine*.
  * Refer to the documentation of [coroutineScope] for details.
  *
  * ## Pitfalls
@@ -54,9 +54,9 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  *
  * [withTimeout] will not automatically stop all code inside it from being executed once the timeout gets triggered.
  * It only cancels the running [block], but it's up to the [block] to notice that it was cancelled, for example,
- * using [ensureActive], checking [isActive], or using [suspendCancellableCoroutine].
+ * by suspending or checking [isActive].
  *
- * For example, this JVM code will run to completion, taking 10 seconds to do so:
+ * This JVM code will run to completion, taking 10 seconds to do so:
  *
  * ```
  * withTimeout(1.seconds) {
@@ -104,7 +104,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * }
  * ```
  *
- * If [withTimeout] has to return a nullable value and [withTimeoutOrNull] cannot be used,
+ * If [withTimeout] has to return a nullable value, and so [withTimeoutOrNull] cannot be used,
  * this pattern can help instead:
  *
  * ```
@@ -123,7 +123,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * ```
  *
  * Another option is to specify the timeout action in a [select] invocation
- * with [onTimeout][SelectBuilder.onTimeout] clause.
+ * with an [onTimeout][SelectBuilder.onTimeout] clause.
  *
  * ### Returning closeable resources
  *
@@ -142,8 +142,8 @@ public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineSc
 }
 
 /**
- * Shortcut for calling [withTimeoutOrNull] with a [Duration] timeout of [timeMillis] milliseconds.
- * Please see that overload for details.
+ * Shorthand form for calling [withTimeoutOrNull] with a [Duration] timeout of [timeMillis] milliseconds.
+ * Please see the overload accepting a [Duration] for details.
  *
  * > Note: the behavior of this function can be different from [withTimeoutOrNull] if [timeMillis] is greater than
  * `Long.MAX_VALUE / 2` milliseconds.
@@ -156,7 +156,7 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
         return suspendCoroutineUninterceptedOrReturn { uCont ->
             val timeoutCoroutine = TimeoutCoroutine(timeMillis, uCont)
             coroutine = timeoutCoroutine
-            setupTimeout<T?, T?>(timeoutCoroutine, block)
+            setupTimeout(timeoutCoroutine, block)
         }
     } catch (e: TimeoutCancellationException) {
         // Return null if it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
@@ -168,21 +168,21 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
 }
 
 /**
- * Calls the specified suspending [block] with the specified [timeout], suspends until it completes,
+ * Calls the given suspending [block] with the specified [timeout], suspends until it completes,
  * and returns the result.
  *
  * If the [block] execution times out, it is cancelled with a [TimeoutCancellationException].
- * If the [timeout] is non-positive, this happens immediately and the [block] is not executed.
+ * If the [timeout] is non-positive, this happens immediately, and the [block] is not executed.
  *
- * The cancellation on timeout is asynchronous with respect to the code running in the block
- * and may happen at any time, even after the [block] finishes executing but before the caller gets resumed with
- * the result.
+ * Cancellation on timeout runs concurrently the code running in the block and may happen at any time,
+ * even after the [block] finishes executing but before the caller gets resumed with the result.
  *
- * > Implementation note: how the time is tracked exactly is an implementation detail of the context's [CoroutineDispatcher].
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the [CoroutineDispatcher]
+ * in the [currentCoroutineContext].
  *
  * ## Structured Concurrency
  *
- * [withTimeoutOrNull] behaves like [coroutineScope], as it, too, creates a new *scoped child coroutine*.
+ * [withTimeoutOrNull] behaves like [coroutineScope], as it, too, creates a new *lexically scoped child coroutine*.
  * Refer to the documentation of [coroutineScope] for details.
  *
  * ## Pitfalls
@@ -192,9 +192,9 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
  * [withTimeoutOrNull] will not automatically stop all code inside it from being executed
  * once the timeout gets triggered.
  * It only cancels the running [block], but it's up to the [block] to notice that it was cancelled, for example,
- * using [ensureActive], checking [isActive], or using [suspendCancellableCoroutine].
+ * by suspending or checking [isActive].
  *
- * For example, this JVM code will run to completion, taking 10 seconds to do so:
+ * This JVM code will run to completion, taking 10 seconds to do so:
  *
  * ```
  * withTimeoutOrNull(1.seconds) {

@@ -61,7 +61,7 @@ import kotlin.coroutines.*
  * The reason for this is that [withContext] obeys the **prompt cancellation** principle,
  * which means that dispatching back from it to the original context will fail with a [CancellationException]
  * even if the block passed to [withContext] finished successfully,
- * overriding the original exception thrown by the `try` block, if any.
+ * overriding the original exception thrown by the `try` block.
  *
  * To avoid this, you should use [NonCancellable] as the only element in the context of the `withContext` call,
  * and then inside the block, you can switch to any dispatcher you need:
@@ -101,9 +101,9 @@ import kotlin.coroutines.*
  *
  * Similarly to the case of specifying a dispatcher alongside [NonCancellable] in a [withContext] argument,
  * having to wait for child coroutines can lead to a dispatch at the end of the [withContext] call,
- * which will lead to it throwing a [CancellationException] due to the prompt cancellation guarantee.
+ * causing a [CancellationException] due to the prompt cancellation guarantee.
  *
- * The solution to this is also similar:
+ * The solution to this is similar to the one above:
  *
  * ```
  * withContext(Dispatchers.Main) {

@@ -43,14 +43,11 @@ import kotlin.jvm.*
  *   using the [newCoroutineContext] function.
  *   In most cases, this means that elements from [context] simply override
  *   the elements in the [CoroutineScope.coroutineContext].
- *   If no [ContinuationInterceptor] is present in the resulting context,
- *   then [Dispatchers.Default] is added there.
- * - Then, the [Job] in the [CoroutineScope.coroutineContext] is used as the *parent* of the new coroutine,
- *   unless overridden.
- *   Overriding the [Job] is forbidden; see a separate subsection below for details.
- *   The new coroutine's [Job] is added to the resulting context.
+ * - Then, the [Job] in the [CoroutineScope.coroutineContext] is used as the *parent* of the new coroutine.
+ *   Passing a [Job] in [context] overrides the parent and is forbidden; see a separate subsection below for details.
+ *   The new coroutine's [Job] is added to the context.
  *
- * The resulting coroutine context is the [coroutineContext] of the [CoroutineScope]
+ * The resulting coroutine context becomes the [coroutineContext] of the [CoroutineScope]
  * passed to the [block] as its receiver.
  *
  * The new coroutine is considered [active][isActive] until the [block] and all its child coroutines finish.
@@ -63,14 +60,15 @@ import kotlin.jvm.*
  * Here is a restatement of some main points as they relate to [launch]:
  *
  * - The lifecycle of the parent [CoroutineScope] cannot end until this coroutine
- *   (as well as all its children) completes.
+ *   and all its children complete.
  * - If the parent [CoroutineScope] is cancelled, this coroutine is cancelled as well.
  * - If this coroutine fails with a non-[CancellationException] exception
  *   and the parent [CoroutineScope] has a non-supervisor [Job] in its context,
  *   the parent [Job] is cancelled with this exception.
- * - If this coroutine fails with an exception and the parent [CoroutineScope] has a supervisor [Job] or no job at all
+ * - If this coroutine fails with a non-[CancellationException] exception
+ *   and the parent [CoroutineScope] has a [SupervisorJob] or no job at all
  *   (as is the case with [GlobalScope] or malformed scopes),
- *   the exception is considered uncaught and is propagated as the [CoroutineExceptionHandler] documentation describes.
+ *   the exception cannot be propagated and is handled as the [CoroutineExceptionHandler] documentation describes.
  * - The lifecycle of the [CoroutineScope] passed as the receiver to the [block]
  *   will not end until the [block] completes (or gets cancelled before ever having a chance to run).
  * - If the [block] throws a [CancellationException], the coroutine is considered cancelled,
@@ -80,12 +78,12 @@ import kotlin.jvm.*
  *
  * Passing a [Job] in the [context] argument breaks structured concurrency and is not a supported pattern.
  * It does not throw an exception only for backward compatibility reasons, as a lot of code was written this way.
- * Always structure your coroutines such that the lifecycle of the child coroutine is
+ * Always structure your coroutines so that the lifecycle of the child coroutine is
  * contained in the lifecycle of the [CoroutineScope] it is launched in.
  *
- * To help with migrating to structured concurrency, the specific behaviour of passing a [Job] in the [context] argument
+ * To help with migrating to structured concurrency, the specific behavior of passing a [Job] in the [context] argument
  * is described here.
- * **Do not rely on this behaviour in new code.**
+ * **Do not rely on this behavior in new code.**
  *
  * If [context] contains a [Job] element, it will be the *parent* of the new coroutine,
  * and the lifecycle of the new coroutine will not be tied to the [CoroutineScope] at all.
@@ -97,13 +95,15 @@ import kotlin.jvm.*
  *   Instead, the exception will be propagated to the [Job] passed in the [context] argument.
  *   If that [Job] is a [SupervisorJob], the exception will be unhandled,
  *   and will be propagated as the [CoroutineExceptionHandler] documentation describes.
- *   If that [Job] is not a [SupervisorJob], it will be cancelled with the exception thrown by [launch].
- * - If the [CoroutineScope] is lexically scoped (for example, created by [coroutineScope] or [withContext]),
+ *   If that [Job] is not a [SupervisorJob], it will be cancelled with the exception the coroutine failed with.
+ * - The [CoroutineScope] may complete without waiting for the new coroutine to finish.
+ *   In particular, if the [CoroutineScope] is lexically scoped
+ *   (for example, created by [coroutineScope] or [withContext]),
  *   the function defining the scope will not wait for the new coroutine to finish.
  *
  * ## Communicating with the coroutine
  *
- * [Job.cancel] can be used to cancel the coroutine, and [Job.join] can be used to block until its completion
+ * [Job.cancel] can be used to cancel the coroutine, and [Job.join] suspends until its completion
  * without blocking the current thread.
  * Note that [Job.join] succeeds even if the coroutine was cancelled or failed with an exception.
  * [Job.cancelAndJoin] is a convenience function that combines cancellation and joining.
@@ -121,11 +121,10 @@ import kotlin.jvm.*
  *
  * [launch] is similar to [async] whose block returns a [Unit] value.
  *
- * The only difference is the handling of uncaught coroutine exceptions:
- * if an [async] coroutine fails with an exception, then even if the exception cannot be propagated to the parent,
- * a [CoroutineExceptionHandler] will not be invoked.
+ * The only difference is the handling of failures that cannot be propagated to the parent:
+ * for an [async] coroutine, a [CoroutineExceptionHandler] will not be invoked in that scenario.
  * Instead, the user of [async] must call [Deferred.await] to get the result of the coroutine,
- * which will be the uncaught exception.
+ * which will be the exception the coroutine failed with.
  *
  * ## Pitfalls
  *
@@ -157,7 +156,7 @@ import kotlin.jvm.*
  *
  * The reason for this is that any [CancellationException] thrown in the coroutine is treated as a signal to cancel
  * the coroutine, but not the parent.
- * In this scenario, this is unlikely to be the desired behaviour:
+ * In this scenario, this is unlikely to be the desired behavior:
  * this was a failure and not a cancellation and should be propagated to the parent.
  *
  * This is a legacy behavior that cannot be changed in a backward-compatible way.
@@ -215,7 +214,7 @@ public fun CoroutineScope.launch(
 
 /**
  * Launches a new *child coroutine* of [CoroutineScope] without blocking the current thread
- * and returns a reference to the coroutine as a [Deferred] that can be used to access the final value.
+ * and returns a reference to the coroutine as a [Deferred] that can be used to access the result of the coroutine.
  *
  * [block] is the computation of the new coroutine that will run concurrently.
  * The coroutine is considered active until the block and all the child coroutines created in it finish.
@@ -246,14 +245,14 @@ public fun CoroutineScope.launch(
  * Here is a restatement of some main points as they relate to [async]:
  *
  * - The lifecycle of the parent [CoroutineScope] cannot end until this coroutine
- *   (as well as all its children) completes.
+ *   and all its children complete.
  * - If the parent [CoroutineScope] is cancelled, this coroutine is cancelled as well.
  * - If this coroutine fails with a non-[CancellationException] exception
  *   and the parent [CoroutineScope] has a non-supervisor [Job] in its context,
  *   the parent [Job] is cancelled with this exception.
  * - If this coroutine fails with an exception and the parent [CoroutineScope] has a supervisor [Job] or no job at all
  *   (as is the case with [GlobalScope] or malformed scopes),
- *   the exception is considered uncaught and is only available through the returned [Deferred].
+ *   the exception cannot be propagated and is only available through the returned [Deferred].
  * - The lifecycle of the [CoroutineScope] passed as the receiver to the [block]
  *   will not end until the [block] completes (or gets cancelled before ever having a chance to run).
  * - If the [block] throws a [CancellationException], the coroutine is considered cancelled,
@@ -267,7 +266,7 @@ public fun CoroutineScope.launch(
  * including [CancellationException] if the coroutine was cancelled.
  * See the "CancellationException silently stopping computations" pitfall in the [launch] documentation.
  *
- * [Deferred.cancel] can be used to cancel the coroutine, and [Deferred.join] can be used to block until its completion
+ * [Deferred.cancel] can be used to cancel the coroutine, and [Deferred.join] suspends until its completion
  * without blocking the current thread or accessing its result.
  * Note that [Deferred.join] succeeds even if the coroutine was cancelled or failed with an exception.
  * [Deferred.cancelAndJoin] is a convenience function that combines cancellation and joining.
@@ -325,8 +324,7 @@ private class LazyDeferredCoroutine<T>(
  *
  * [context] specifies the additional context elements for the coroutine to combine with
  * the elements already present in the [currentCoroutineContext].
- * It is incorrect to pass a [Job] element there, as this breaks structured concurrency,
- * unless it is [NonCancellable].
+ * It is incorrect to pass a [Job] element there, unless it is [NonCancellable], as this breaks structured concurrency.
  *
  * If the resulting [CoroutineScope.coroutineContext] is cancelled before the [block] starts running,
  * [block] will immediately finish with a [CancellationException],
@@ -334,7 +332,8 @@ private class LazyDeferredCoroutine<T>(
  *
  * ## Structured Concurrency
  *
- * The behavior of [withContext] is similar to [coroutineScope], as it, too, creates a new *scoped child coroutine*.
+ * The behavior of [withContext] is similar to [coroutineScope], as it, too,
+ * creates a new *lexically scoped child coroutine*.
  * Refer to the documentation of that function for details.
  *
  * The difference is that [withContext] does not simply call the [block] in a new coroutine
@@ -344,14 +343,14 @@ private class LazyDeferredCoroutine<T>(
  * - First, [currentCoroutineContext] is combined with the [context] argument.
  *   In most cases, this means that elements from [context] simply override
  *   the elements in the [currentCoroutineContext],
- *   but if they are `CopyableThreadContextElement`s, they are copied and combined as needed.
+ *   but if they are `CopyableThreadContextElement`s, they are copied and merged as needed.
  * - Then, the [Job] in the [currentCoroutineContext], if any, is used as the *parent* of the new scope,
  *   unless overridden.
  *   Overriding the [Job] is forbidden with the notable exception of [NonCancellable];
  *   see a separate subsection below for details.
  *   The new scope's [Job] is added to the resulting context.
  *
- * The [Job] of the new scope is not a normal child of the caller coroutine but a lexically scoped one,
+ * The [Job] of the new scope is not a normal child of the caller coroutine but a **lexically scoped** one,
  * meaning that the failure of the [Job] will not affect the parent [Job].
  * Instead, the exception leading to the failure will be rethrown to the caller of this function.
  *
@@ -390,12 +389,12 @@ private class LazyDeferredCoroutine<T>(
  *
  * Passing a [Job] in the [context] argument breaks structured concurrency and is not a supported pattern.
  * It does not throw an exception only for backward compatibility reasons, as a lot of code was written this way.
- * Always structure your coroutines such that the lifecycle of the child coroutine is
+ * Always structure your coroutines so that the lifecycle of the child coroutine is
  * contained in the lifecycle of the [CoroutineScope] it is launched in.
  *
- * To help with migrating to structured concurrency, the specific behaviour of passing a [Job] in the [context] argument
+ * To help with migrating to structured concurrency, the specific behavior of passing a [Job] in the [context] argument
  * is described here.
- * **Do not rely on this behaviour in new code.**
+ * **Do not rely on this behavior in new code.**
  *
  * If [context] contains a [Job] element, it will be the *parent* of the new coroutine,
  * and the lifecycle of the new coroutine will not be tied to the [currentCoroutineContext] at all.
@@ -407,7 +406,7 @@ private class LazyDeferredCoroutine<T>(
  *   will not cancel the parent [Job].
  * - If the [currentCoroutineContext] is cancelled, the new coroutine will not be affected.
  * - In particular, if [withContext] avoided a dispatch (see "Dispatching behavior" below)
- *   and its block finished without an exception, [withContext] itself will not throw a [CancellationException].
+ *   and finished without an exception, [withContext] itself will not throw a [CancellationException].
  *   This means that the block execution will continue even if the parent coroutine was cancelled.
  *
  * If the purpose of passing a [Job] to [withContext] is to ensure that [block] gets cancelled when that job
@@ -455,7 +454,7 @@ private class LazyDeferredCoroutine<T>(
  * in which [withContext] was invoked is cancelled by the time its dispatcher starts to execute the code,
  * it discards the result of [withContext] and throws a [CancellationException].
  *
- * Note that if the dispatch from [withContext] back to the original context does not need to happen
+ * On the other hand, if the dispatch from [withContext] back to the original context does not need to happen
  * (because of having the same dispatcher and not having to wait for the children)
  * *and* the [context] passed to [withContext] contains [NonCancellable],
  * then cancellation of the caller will not prevent a value from being successfully returned.
@@ -465,7 +464,7 @@ private class LazyDeferredCoroutine<T>(
  * ### Returning closeable resources
  *
  * Values returned from [withContext] will typically be lost if the caller is cancelled.
- * The exception is the `withContext(NonCancellable)` pattern.
+ * An important exception is the `withContext(NonCancellable)` pattern.
  *
  * See the corresponding section in the [coroutineScope] documentation for details,
  * as well as the [NonCancellable] documentation.

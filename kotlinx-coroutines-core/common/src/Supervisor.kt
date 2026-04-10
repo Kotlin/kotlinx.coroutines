@@ -33,15 +33,17 @@ public fun SupervisorJob(parent: Job? = null) : CompletableJob = SupervisorJobIm
 public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
 
 /**
- * Runs the given [block] in-place in a new [CoroutineScope] with a [SupervisorJob]
- * based on the caller coroutine context, returning its result.
+ * Runs the given [block] in-place in a new [CoroutineScope] that contains a [SupervisorJob]
+ * and is based on the caller coroutine context. The result of [block] is returned.
  *
  * The lifecycle of the new [SupervisorJob] begins with starting the [block] and completes when both the [block] and
  * all the coroutines launched in the scope complete.
  *
  * The context of the new scope is obtained by combining the [currentCoroutineContext] with a new [SupervisorJob]
  * whose parent is the [Job] of the caller [currentCoroutineContext] (if any).
- * The [SupervisorJob] of the new scope is not a normal child of the caller coroutine but a lexically scoped one,
+ * This parent-child relationship ensures that whenever the caller gets cancelled, so does the new scope.
+ *
+ * The [SupervisorJob] of the new scope is not a normal child of the caller coroutine but a **lexically scoped** one,
  * meaning that the failure of the [SupervisorJob] will not affect the parent [Job].
  * Instead, the exception leading to the failure will be rethrown to the caller of this function.
  *
@@ -50,7 +52,7 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  * See [coroutineScope] for a similar function that treats every child coroutine as crucial for obtaining the result
  * and cancels the whole computation if one of them fails.
  *
- * Together, this makes [supervisorScope] a good choice for launching multiple coroutines where some failures
+ * [supervisorScope] is a good choice for launching multiple coroutines where some failures
  * are acceptable and should not affect the others.
  *
  * ```
@@ -65,14 +67,6 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  *         }
  *     } // every download will fail or complete by the time this function returns
  * ```
- *
- * Rephrasing this in more practical terms, the specific list of structured concurrency interactions is as follows:
- * - Cancelling the caller's [currentCoroutineContext] leads to cancellation of the new [CoroutineScope]
- *   (corresponding to the code running in the [block]), which in turn cancels all the coroutines launched in it.
- * - If the [block] fails with an exception, the exception is rethrown to the caller,
- *   without directly affecting the caller's [Job].
- * - [supervisorScope] will only finish when all the coroutines launched in it finish.
- *   After that, the [supervisorScope] returns (or rethrows) the result of the [block] to the caller.
  *
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.

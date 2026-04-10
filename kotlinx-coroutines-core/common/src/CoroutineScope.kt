@@ -12,12 +12,12 @@ import kotlin.coroutines.intrinsics.*
 /**
  * A scope in which coroutines run.
  *
- * The scope allows managing the lifecycles of several coroutines simultaneously
+ * A coroutine scope allows managing the lifecycles of several coroutines simultaneously
  * and setting the execution properties with which coroutines (its "children") are launched.
  *
- * Execution properties are defined as [CoroutineContext.Element] values that may affect the behavior of
+ * Execution properties are [CoroutineContext.Element] values that may affect the behavior of
  * `kotlinx.coroutines`—for example, which thread pool a coroutine should run on.
- * See a more detailed explanation of the context elements in a separate section below.
+ * See a more detailed explanation of coroutine context elements in a separate section below.
  *
  * A set of rules called "structured concurrency" ensures that the lifecycles of children
  * are nested inside the lifecycles of their parent scopes.
@@ -40,12 +40,8 @@ import kotlin.coroutines.intrinsics.*
  *
  * - The scheduling policy, represented by a [CoroutineDispatcher] element.
  *   Some commonly used dispatchers are provided in the [Dispatchers] object.
- * - [CoroutineExceptionHandler] that defines how failures of child coroutines should be reported whenever
- *   structured concurrency does not provide a way to propagate the failure to the parent.
- *   Typically, this happens because the root scope of the ancestry tree is not lexically scoped,
- *   that is, not created using coroutine builders like [coroutineScope] or [withContext] that return the result
- *   directly to the caller.
- *   See the [CoroutineExceptionHandler] documentation for the full set of rules.
+ * - [CoroutineExceptionHandler] that defines how to handle coroutine failures that cannot
+ *   be propagated to any other coroutine.
  * - A [CoroutineName] element that can be used to name coroutines for debugging purposes.
  * - On the JVM, a `ThreadContextElement` ensures that a specific thread-local value gets set on the thread
  *   that executes the coroutine.
@@ -123,7 +119,6 @@ import kotlin.coroutines.intrinsics.*
  *     MyEntity().use { entity ->
  *         entity.doSomethingWhileEntityExists()
  *         Thread.sleep(200)
- *         entity.close()
  *     }
  * }
  * ```
@@ -221,7 +216,7 @@ import kotlin.coroutines.intrinsics.*
  *         }
  *         launch(Dispatchers.Main) {
  *             // create a separate coroutine on the UI thread
- *             if (file1.await() == file2.await()) {
+ *             if (file1.await().contentEquals(file2.await())) {
  *                 uiShow("Files are equal")
  *             } else {
  *                 uiShow("Files are not equal")
@@ -384,11 +379,6 @@ import kotlin.coroutines.intrinsics.*
  * the first observed failure will be propagated, and the rest will be attached to it as
  * [suppressed exceptions][Throwable.suppressedExceptions].
  *
- * If a non-lexically-scoped coroutine fails with a non-[CancellationException] exception and cannot cancel its parent
- * (because its parent is a [SupervisorJob] or there is none at all),
- * the failure is reported through other means.
- * See [CoroutineExceptionHandler] for details.
- *
  * Failing with a [CancellationException] only cancels the coroutine itself and its children.
  * It does not affect the parent or sibling coroutines and is not considered a failure.
  *
@@ -440,7 +430,7 @@ import kotlin.coroutines.intrinsics.*
  * }
  * ```
  *
- * [CoroutineStart.ATOMIC] ensures that the new coroutine is not cancelled until it is started.
+ * [CoroutineStart.ATOMIC] ensures that the new coroutine is not cancelled until it at least started to execute.
  * [NonCancellable] in [withContext] ensures that the code inside the block is executed even if the coroutine
  * created by [launch] is cancelled.
  */
@@ -450,10 +440,10 @@ public interface CoroutineScope {
      *
      * The context represents various execution properties of the coroutines launched in this scope,
      * such as the [dispatcher][CoroutineDispatcher] or
-     * the [procedure for handling uncaught exceptions][CoroutineExceptionHandler].
+     * the [procedure for handling exceptions without a propagation path][CoroutineExceptionHandler].
      * Except [GlobalScope], a [job][Job] instance for enforcing structured concurrency
      * must also be present in the context of every [CoroutineScope].
-     * See the documentation for [CoroutineScope] for details.
+     * See the documentation of [CoroutineScope] for details.
      *
      * Accessing this property in general code is not recommended for any purposes
      * except accessing the [Job] instance for advanced usages.
@@ -483,7 +473,7 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
 /**
  * Creates a [CoroutineScope] for scheduling UI updates.
  *
- * Example of use:
+ * Usage example:
  * ```
  * class MyAndroidActivity: Activity() {
  *     // be careful not to write `get() =` here by accident!
@@ -509,7 +499,6 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * the other coroutines will not be affected.
  * A [CoroutineExceptionHandler] is not installed.
  *
- * The resulting scope has [SupervisorJob] and [Dispatchers.Main] context elements.
  * If you want to append additional elements to the main scope, use the [CoroutineScope.plus] operator:
  * `val scope = MainScope() + CoroutineName("MyActivity")`.
  *
@@ -533,20 +522,19 @@ public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatch
  *
  * Coroutine cancellation [is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative),
  * and usually, it's checked if a coroutine is cancelled when it *suspends*, for example,
- * when trying to read from a [channel][kotlinx.coroutines.channels.Channel] that is empty.
+ * when trying to [await][Deferred.await] a [Deferred][kotlinx.coroutines.Deferred] that has not yet completed.
  *
  * Sometimes, a coroutine does not need to perform suspending operations but still wants to be cooperative
  * and respect cancellation.
  *
  * The [isActive] property is intended to be used for scenarios like this:
  * ```
- * val watchdogDispatcher = Dispatchers.IO.limitParallelism(1)
  * fun backgroundWork() {
  *     println("Doing bookkeeping in the background in a blocking manner")
  *     Thread.sleep(100L) // Sleep 100ms
  * }
  * // Part of some non-trivial CoroutineScope-confined lifecycle
- * launch(watchdogDispatcher) {
+ * launch(Dispatchers.IO) {
  *     while (isActive) {
  *         // Repetitively do some background work that is non-suspending
  *         backgroundWork()
@@ -580,10 +568,6 @@ public val CoroutineScope.isActive: Boolean
  * The global scope is used to launch top-level coroutines whose lifecycles are not limited by structured concurrency.
  * Since [GlobalScope] does not have a [Job], it is impossible to cancel all coroutines launched in it.
  * Likewise, there is no way to wait for all coroutines launched in it to finish.
- *
- * Active coroutines launched in `GlobalScope` do not keep the process alive.
- * They are similar to [daemon threads][https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setDaemon-boolean-]
- * in this regard.
  *
  * This is a **delicate** API. [GlobalScope] is easy to use to create new coroutines,
  * avoiding all bureaucracy of structured concurrency, but it also means losing all its benefits.
@@ -646,9 +630,9 @@ public val CoroutineScope.isActive: Boolean
  * ### Crashes
  *
  * [GlobalScope] does not have a [CoroutineExceptionHandler] installed.
- * This means that exceptions thrown in coroutines created using [launch] will be uncaught,
- * leading to platform-specific behavior, such as crashing the application (on Android and Kotlin/Native)
- * or populating the logs with potentially unnecessary information (on non-Android JVM, JS, and Wasm).
+ * This means that exceptions thrown in coroutines created using [launch] will lead to platform-specific
+ * last-resort error propagation behavior, such as crashing the application (on Android, Kotlin/Native, and JS)
+ * or populating the logs with potentially unnecessary information (on non-Android JVM).
  * Please see [CoroutineExceptionHandler] for details.
  *
  * ```
@@ -700,7 +684,7 @@ public val CoroutineScope.isActive: Boolean
  * }
  * ```
  *
- * A common pattern is to use [withContext] in a top-level `suspend fun main()` function:
+ * A useful pattern is to use [withContext] in a top-level `suspend fun main()` function:
  *
  * ```
  * suspend fun main() {
@@ -760,19 +744,21 @@ public object GlobalScope : CoroutineScope {
  *
  * The lifecycle of the new [Job] begins with starting the [block] and completes when both the [block] and
  * all the coroutines launched in the scope complete.
+ * Only then can the [coroutineScope] call return a value.
  *
  * The context of the new scope is obtained by combining the [currentCoroutineContext] with a new [Job]
  * whose parent is the [Job] of the caller [currentCoroutineContext] (if any).
- * The [Job] of the new scope is not a normal child of the caller coroutine but a lexically scoped one,
+ * This parent-child relationship ensures that whenever the caller gets cancelled, so does the new scope.
+ *
+ * The [Job] of the new scope is not a normal child of the caller coroutine but a **lexically scoped** one,
  * meaning that the failure of the [Job] will not affect the parent [Job].
  * Instead, the exception leading to the failure will be rethrown to the caller of this function.
  *
- * If any child coroutine in this scope fails with an exception,
+ * If [block] or any child coroutine in this scope fails with an exception,
  * the scope fails, cancelling all the other children and its own [block].
  * See [supervisorScope] for a similar function that allows child coroutines to fail independently.
  *
- * Together, this makes [coroutineScope] suitable for representing a task
- * that can be split into several subtasks,
+ * [coroutineScope] is suitable for representing a task that can be split into several subtasks,
  * which can be executed concurrently but have their results combined at some point,
  * all in the span of running a single function:
  *
@@ -794,21 +780,10 @@ public object GlobalScope : CoroutineScope {
  * }
  * ```
  *
- * Rephrasing this in more practical terms, the specific list of structured concurrency interactions is as follows:
- * - Cancelling the caller's [currentCoroutineContext] leads to cancellation of the new [CoroutineScope]
- *   (corresponding to the code running in the [block]), which in turn cancels all the coroutines launched in it.
- * - If the new [CoroutineScope] fails with an exception
- *   (which happens if either its [block] or any child coroutine fails with an exception),
- *   the exception is rethrown to the caller,
- *   without directly affecting the caller's [Job].
- *   Note that this happens on any child coroutine's failure even if [block] finishes successfully.
- * - [coroutineScope] will only finish when all the coroutines launched in it finish.
- *   If all of them complete without failing, the [coroutineScope] returns the result of the [block] to the caller.
- *
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  *
- * ## Pitfall: returning closeable resources from a scoped coroutine
+ * ## Pitfall: returning closeable resources from a lexically scoped coroutine
  *
  * The returned value must be safe to drop without any extra cleanup. For example, this code is incorrect:
  *
@@ -845,9 +820,7 @@ public object GlobalScope : CoroutineScope {
  * }
  * ```
  *
- * If cancellation during the acquisition of the resource is also undesired, the following pattern can be used
- * ([coroutineScope] would be meaningless here, as [withContext] defines its own [CoroutineScope],
- * but another lexical scope like [supervisorScope] or [withContext] can be useful as part of this pattern):
+ * If cancellation during the acquisition of the resource is also undesired, the following pattern can be used:
  *
  * ```
  * withContext(NonCancellable) {
@@ -858,10 +831,12 @@ public object GlobalScope : CoroutineScope {
  * }
  * ```
  *
+ * See [NonCancellable] for details.
+ *
  * Be aware, however, that like any [NonCancellable] usage, this creates the risk of accessing values past the point
  * where they are valid.
  * For example, if the caller coroutine scope is tied to the lifecycle of a UI element, with cancellation meaning
- * that the UI element was already disposed of, accessing it during the acquisition of a resource or
+ * that the UI element was already disposed of, accessing the UI during the acquisition of a resource or
  * before the first suspension point in [use] is not allowed and may lead to crashes.
  */
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
@@ -1036,7 +1011,7 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
  * ```
  *
  * This behavior is suitable for cases where one task is decomposed into several subtasks,
- * and one failure means the whole operation can no longer succeed and will have to be cancelled.
+ * so one failure means the whole operation can no longer succeed and will have to be cancelled.
  * However, in the far more common scenarios where `CoroutineScope()` represents the lifecycle of some entity
  * that supports multiple independent concurrent operations,
  * this is not the desired behavior.
@@ -1051,8 +1026,8 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
  * Examples of this include `CoroutineScope(currentCoroutineContext())`, `CoroutineScope(coroutineContext)`,
  * `CoroutineScope(scope.coroutineContext)`, or any variations thereof that add new elements or remove existing ones.
  *
- * In all of these cases, the [Job] in the context of the new scope will be used as the parent job of all the
- * coroutines in the newly created scope, meaning this scope will essentially be a view of some other scope,
+ * In all of these cases, the [Job] passed in the argument will become the [Job] of the newly created [CoroutineScope],
+ * meaning this scope will essentially be a view of some other scope,
  * similar to what the [CoroutineScope.plus] operation produces.
  *
  * ```
@@ -1094,7 +1069,7 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
  * ```
  *
  * If launching a coroutine in the context of the caller is the desired behavior,
- * make it explicit by passing the context:
+ * make it explicit by passing the outer scope as a parameter:
  *
  * ```
  * fun foo(scope: CoroutineScope) {
@@ -1147,7 +1122,7 @@ public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
  *     }
  * ```
  *
- * Failing to cancel the scope when it is no longer needed will lead to resource leaks
+ * Failing to cancel the scope when it is no longer in active use will lead to resource leaks
  * and can also potentially crash the program if some object used by the child coroutines becomes destroyed.
  *
  * ### Cancelling lexical [CoroutineScope]
@@ -1245,21 +1220,20 @@ public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Uni
  *
  * Coroutine cancellation [is cooperative](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative),
  * and normally, it's checked if a coroutine is cancelled when it *suspends*, for example,
- * when trying to read from a [channel][kotlinx.coroutines.channels.Channel] that is empty.
+ * when trying to [await][Deferred.await] a [Deferred][kotlinx.coroutines.Deferred] that has not yet completed.
  *
  * Sometimes, a coroutine does not need to perform suspending operations but still wants to be cooperative
  * and respect cancellation.
  *
  * [ensureActive] function is intended to be used for these scenarios and immediately bubble up the cancellation exception:
  * ```
- * val watchdogDispatcher = Dispatchers.IO.limitParallelism(1)
  * fun backgroundWork() {
  *     println("Doing bookkeeping in the background in a non-suspending manner")
  *     Thread.sleep(100L) // Sleep 100ms
  * }
  * fun postBackgroundCleanup() = println("Doing something else")
  * // Part of some non-trivial CoroutineScope-confined lifecycle
- * launch(watchdogDispatcher) {
+ * launch(Dispatchers.IO) {
  *     while (true) {
  *         // Repeatedly do some background work that is non-suspending
  *         backgroundWork()
@@ -1281,6 +1255,18 @@ public fun CoroutineScope.cancel(message: String, cause: Throwable? = null): Uni
  * }
  * ```
  *
+ * Alternatively, [yield] can be used to both ensure that [currentCoroutineContext] is active
+ * and give other coroutines a chance to run on this thread:
+ *
+ * ```
+ * suspend fun doSomething() {
+ *     // yield the thread to other coroutines
+ *     yield()
+ *     // ...
+ * }
+ * ```
+ *
+ * @see yield for a version that gives other coroutines a chance to run on this thread.
  * @see CoroutineScope.isActive for a version that returns a boolean value instead of throwing an exception.
  */
 public fun CoroutineScope.ensureActive(): Unit = coroutineContext.ensureActive()
