@@ -28,6 +28,28 @@ internal fun <E : Throwable> tryCopyException(exception: E): E? {
 
 private fun <E : Throwable> createConstructor(clz: Class<E>): Ctor {
     val nullResult: Ctor = { null } // Pre-cache class
+    /* Prepare for the introduction of `StackTraceRecoverable` in the standard library.
+     * The exact interface to be added is still under discussion,
+     * but the name `StackTraceRecoverable#copyForStackTraceRecovery`,
+     * returning either `(E: Throwable)?` or `Throwable?` is already agreed on.
+     *
+     * To anyone reading this: don't try adding `copyForStackTraceRecovery` in your own code.
+     * This will work for now, but break later.
+     * Once `StackTraceRecoverable` enters the standard library,
+     * `kotlinx.coroutines` will move to using an `is StackTraceRecoverable`-check.
+     * This is the reason this behavior is left undocumented. */
+    try {
+        val copyForStackTraceRecovery = clz.getMethod("copyForStackTraceRecovery")
+        return { e ->
+            runCatching {
+                (copyForStackTraceRecovery.invoke(e) as Throwable?)
+            }.getOrNull()
+        }
+    } catch (_: NoSuchMethodException) {
+        // Expected: there simply was no implementation of `StackTraceRecoverable`
+    } catch (_: SecurityException) {
+        // Restrictive SecurityManager
+    }
     // Skip reflective copy if an exception has additional fields (that are typically populated in user-defined constructors)
     if (throwableFields != clz.fieldsCountOrDefault(0)) return nullResult
     /*
