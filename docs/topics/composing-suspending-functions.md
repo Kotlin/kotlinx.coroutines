@@ -184,7 +184,7 @@ start `one`, then start `two`, and then await for the individual coroutines to f
 
 Note that if we just call [await][Deferred.await] in `println` without first calling [start][Job.start] on individual 
 coroutines, this will lead to sequential behavior, since [await][Deferred.await] starts the coroutine 
-execution and waits for its finish, which is not the intended use-case for laziness. 
+execution and waits for its finish, which is not the intended use-case for concurrency (the goal of using LAZY start is to enable parallel execution by explicitly calling start() first). 
 The use-case for `async(start = CoroutineStart.LAZY)` is a replacement for the 
 standard [lazy](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html) function in cases
 when computation of the value involves suspending functions.
