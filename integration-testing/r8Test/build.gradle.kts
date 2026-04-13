@@ -13,6 +13,8 @@ dependencies {
     "r8"("com.android.tools.build:builder:8.1.0")
 }
 
+// The R8 logic below was taken from `ui/kotlinx-coroutines-android/build.gradle.kts`
+
 val r8OutputDir = layout.buildDirectory.dir("r8out")
 
 val runR8 by tasks.registering(RunR8::class) {
