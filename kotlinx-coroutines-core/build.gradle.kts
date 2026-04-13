@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.dokka.gradle.tasks.DokkaBaseTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.testing.*
@@ -306,4 +307,17 @@ tasks.withType<AnimalSniffer> {
 
 animalsniffer {
     defaultTargets = setOf("jvmMain")
+}
+
+// Restores behavior that was before changes in https://youtrack.jetbrains.com/issue/KT-69701
+// as change could break unconventional access to internal symbols (without using '-Xfriends-path' argument) which
+// relies on module name to be stable between releases.
+// This is needed due to IDEA-335375 Change coroutine debugger implementation to use a new package
+// as the debugger uses internal symbols
+plugins.withId("org.jetbrains.kotlin.multiplatform") {
+    extensions.configure<KotlinMultiplatformExtension> {
+        targets.withType<KotlinJvmTarget>().configureEach {
+            compilerOptions.moduleName.value(project.name)
+        }
+    }
 }
