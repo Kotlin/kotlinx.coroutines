@@ -13,6 +13,8 @@ import kotlin.jvm.*
 //   user code to directly emit to the underlying FlowCollector.
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/Transform
+ *
  * Applies [transform] function to each value of the given flow.
  *
  * The receiver of the `transform` is [FlowCollector] and thus `transform` is a

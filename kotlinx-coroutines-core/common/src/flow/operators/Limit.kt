@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.flow as safeFlow
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/Drop
+ *
  * Returns a flow that ignores first [count] elements.
  * Throws [IllegalArgumentException] if [count] is negative.
  */
@@ -25,6 +27,8 @@ public fun <T> Flow<T>.drop(count: Int): Flow<T> {
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/DropWhile
+ *
  * Returns a flow containing all elements except first elements that satisfy the given predicate.
  */
 public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = flow {
@@ -40,6 +44,8 @@ public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/Take
+ *
  * Returns a flow that contains first [count] elements.
  * When [count] elements are consumed, the original flow is cancelled.
  * Throws [IllegalArgumentException] if [count] is not positive.
@@ -73,6 +79,8 @@ private suspend fun <T> FlowCollector<T>.emitAbort(value: T, ownershipMarker: An
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/TakeWhile
+ *
  * Returns a flow that contains first elements satisfying the given [predicate].
  *
  * Note, that the resulting flow does not contain the element on which the [predicate] returned `false`.
@@ -91,6 +99,8 @@ public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
 }
 
 /**
+ * @story https://jsmonk.github.io/FlowMarbles/?embedded=true#story/TransformWhile
+ *
  * Applies [transform] function to each value of the given flow while this
  * function returns `true`.
  *
