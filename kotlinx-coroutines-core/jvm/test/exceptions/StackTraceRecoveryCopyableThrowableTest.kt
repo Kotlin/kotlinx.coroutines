@@ -4,15 +4,14 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-// Copied from StackTraceRecoveryCustomExceptionsTest
 @Suppress("UNREACHABLE_CODE", "UNUSED", "UNUSED_PARAMETER")
-class StackTraceRecoveryStdlibInterfaceTest : TestBase() {
+class StackTraceRecoveryCopyableThrowableTest : TestBase() {
 
-    internal class Copyable(val customData: Int) : Throwable(), StackTraceRecoverableWithNoTypeBounds {
+    internal class Copyable(val customData: Int) : Throwable(), CopyableThrowable<Copyable> {
         // Bait
         constructor(cause: Throwable) : this(42)
 
-        override fun copyForStackTraceRecovery(): Throwable {
+        override fun createCopy(): Copyable {
             val copy = Copyable(customData)
             copy.initCause(this)
             return copy
@@ -38,9 +37,9 @@ class StackTraceRecoveryStdlibInterfaceTest : TestBase() {
         message: String?,
         cause: Throwable? = null
     ) : RuntimeException(message, cause),
-        StackTraceRecoverableWithNoTypeBounds {
+        CopyableThrowable<CopyableWithCustomMessage> {
 
-        override fun copyForStackTraceRecovery(): Throwable {
+        override fun createCopy(): CopyableWithCustomMessage {
             return CopyableWithCustomMessage("Recovered: [$message]", cause)
         }
     }
@@ -59,8 +58,8 @@ class StackTraceRecoveryStdlibInterfaceTest : TestBase() {
 
     @Test
     fun testTryCopyThrows() = runTest {
-        class FailingException : Exception(), StackTraceRecoverableWithNoTypeBounds {
-            override fun copyForStackTraceRecovery(): Throwable? {
+        class FailingException : Exception(), CopyableThrowable<FailingException> {
+            override fun createCopy(): FailingException? {
                 TODO("Not yet implemented")
             }
         }
@@ -74,31 +73,4 @@ class StackTraceRecoveryStdlibInterfaceTest : TestBase() {
 
         assertSame(e, result.exceptionOrNull())
     }
-
-    @Test
-    fun testImplementationOverriding() = runTest {
-        open class FailingException(val data: String) : Exception(), StackTraceRecoverableWithNoTypeBounds {
-            override fun copyForStackTraceRecovery(): Throwable? {
-                return FailingException("This will not be invoked")
-            }
-        }
-        open class FailingExceptionChild(data: String): FailingException(data) {
-            override fun copyForStackTraceRecovery(): Throwable? {
-                return FailingExceptionChild("This will be the result")
-            }
-        }
-        class FailingExceptionGrandchild: FailingExceptionChild("Something")
-        val result = runCatching {
-            coroutineScope<Unit> {
-                throw FailingExceptionGrandchild()
-            }
-        }
-        val ex = result.exceptionOrNull() ?: error("Expected to fail")
-        assertIs<FailingExceptionChild>(ex)
-        assertEquals("This will be the result", ex.data)
-    }
-}
-
-private interface StackTraceRecoverableWithNoTypeBounds {
-    fun copyForStackTraceRecovery(): Throwable?
 }
