@@ -23,10 +23,10 @@ class DispatcherKeyTest : TestBase() {
         assertNull(context[CoroutineDispatcher])
         assertSame(CustomInterceptor, context[ContinuationInterceptor])
 
-        val updated = context + Dispatchers.Main
+        val updated = context + Dispatchers.Default
         val result: CoroutineDispatcher? = updated[CoroutineDispatcher]
-        assertSame(Dispatchers.Main, result)
-        assertSame(Dispatchers.Main, updated[ContinuationInterceptor])
+        assertSame(Dispatchers.Default, result)
+        assertSame(Dispatchers.Default, updated[ContinuationInterceptor])
         assertEquals(name, updated.minusKey(CoroutineDispatcher))
         assertEquals(name, updated.minusKey(ContinuationInterceptor))
     }
@@ -35,7 +35,7 @@ class DispatcherKeyTest : TestBase() {
     fun testExecutorCoroutineDispatcher() {
         val context = name + CustomInterceptor
         assertNull(context[ExecutorCoroutineDispatcher])
-        val updated = context + Dispatchers.Main
+        val updated = context + Dispatchers.Unconfined
         assertNull(updated[ExecutorCoroutineDispatcher])
         val executor = Dispatchers.Default
         val updated2 = updated + executor

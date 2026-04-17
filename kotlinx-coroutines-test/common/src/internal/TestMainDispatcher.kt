@@ -15,11 +15,16 @@ internal class TestMainDispatcher(createInnerMain: () -> CoroutineDispatcher):
 {
     internal constructor(delegate: CoroutineDispatcher): this({ delegate })
 
-    private val mainDispatcher by lazy(createInnerMain)
+    private val mainDispatcher: Result<CoroutineDispatcher> by lazy {
+        runCatching {
+            createInnerMain()
+        }
+    }
+
     private var delegate = NonConcurrentlyModifiable<CoroutineDispatcher?>(null, "Dispatchers.Main")
 
     private val dispatcher
-        get() = delegate.value ?: mainDispatcher
+        get() = delegate.value ?: mainDispatcher.getOrThrow()
 
     private val delay
         get() = dispatcher as? Delay ?: defaultDelay
@@ -49,7 +54,7 @@ internal class TestMainDispatcher(createInnerMain: () -> CoroutineDispatcher):
 
     companion object {
         internal val currentTestDispatcher
-            get() = (Dispatchers.Main as? TestMainDispatcher)?.delegate?.value as? TestDispatcher
+            get() = Dispatchers.getTestMainDispatcherOrNull()?.delegate?.value as? TestDispatcher
 
         internal val currentTestScheduler
             get() = currentTestDispatcher?.scheduler
@@ -96,5 +101,7 @@ internal class TestMainDispatcher(createInnerMain: () -> CoroutineDispatcher):
 private val defaultDelay
     inline get() = DefaultDelay
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
-internal expect fun Dispatchers.getTestMainDispatcher(): TestMainDispatcher
+internal expect fun Dispatchers.getOrInstallTestMainDispatcher(): TestMainDispatcher
+
+// Is not allowed to throw exceptions, even if the `Main` dispatcher failed to initialize!
+internal expect fun Dispatchers.getTestMainDispatcherOrNull(): TestMainDispatcher?
