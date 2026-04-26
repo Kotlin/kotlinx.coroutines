@@ -91,8 +91,8 @@ JDK >= 11 referred to by the `JAVA_HOME` environment variable.
 
 ### Updating the public API dump
 
-* Use the [Binary Compatibility Validator](https://github.com/Kotlin/binary-compatibility-validator/blob/master/README.md) for updates to public API:
-  * Run `./gradlew apiDump` to update API index files. 
+* Use the Kotlin Gradle Plugin's ABI validation for updates to public API:
+  * Run `./gradlew updateLegacyAbi` to update API index files.
   * Commit the updated API indexes together with other changes.
 
 ## Releases
