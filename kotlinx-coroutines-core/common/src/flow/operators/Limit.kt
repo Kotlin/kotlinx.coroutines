@@ -25,6 +25,21 @@ public fun <T> Flow<T>.drop(count: Int): Flow<T> {
 }
 
 /**
+ * Returns a flow that ignores the first element.
+ *
+ * More readable than `drop(1)` in chains - for example, to skip the [StateFlow] initial value:
+ *
+ * ```
+ * stateFlow
+ *     .dropFirst() // skip the initial value
+ *     .collect { change -> handleChange(change) }
+ * ```
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Flow<T>.dropFirst(): Flow<T> =
+    drop(count = 1)
+
+/**
  * Returns a flow containing all elements except first elements that satisfy the given predicate.
  */
 public fun <T> Flow<T>.dropWhile(predicate: suspend (T) -> Boolean): Flow<T> = flow {
