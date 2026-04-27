@@ -45,18 +45,24 @@ To release a new `<version>` of `kotlinx-coroutines`:
 
 0. On [TeamCity integration server](https://teamcity.jetbrains.com/project.html?projectId=KotlinTools_KotlinxCoroutines):
    * Wait until "Build" configuration for committed `version-<version>` branch passes tests.
-   * Run "Deploy (Configure, RUN THIS ONE)" configuration with the corresponding new version:
+   * Run the [`Deployment 3.0/Deploy [RUN THIS ONE]`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_StartDeployment)c
+     configuration with the corresponding new version:
      - Use the `version-<version>` branch
-     - Set the `DeployVersion` build parameter to `<version>`
-   * Wait until all four "Deploy" configurations finish.
+     - Set the `Version` build parameter to `<version>`
 
-1. In [Nexus](https://oss.sonatype.org/#stagingRepositories) admin interface:
-   * Close the repository and wait for it to verify.
-   * Release the repository.
+1. Wait until the corresponding
+   [`Deployment 3.0/Upload Deployment to Central Portal`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_UploadDeploymentToCentralPortal)
+   build finishes.
+   Check its `Artifacts` tab.
+   It has to contain `deployment_<version>.zip` with the artifacts expected
+   for `kotlinx.coroutines`.
+   If it does, approve the corresponding
+   [`Deployment 3.0/Publish deployment`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_PublishDeployment)
+   build and wait for it to finish.
 
 2. Merge the new version branch into `master`:<br>
    `git checkout master`<br>
-   `git merge version-<version>`<br>
+   `git merge --ff-only version-<version>`<br>
    `git push`
 
 3. In [GitHub](https://github.com/kotlin/kotlinx.coroutines) interface:
