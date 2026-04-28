@@ -45,19 +45,19 @@ To release a new `<version>` of `kotlinx-coroutines`:
 
 0. On [TeamCity integration server](https://teamcity.jetbrains.com/project.html?projectId=KotlinTools_KotlinxCoroutines):
    * Wait until "Build" configuration for committed `version-<version>` branch passes tests.
-   * Run the [`Deployment 3.0/Deploy [RUN THIS ONE]`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_StartDeployment)c
+   * Run the [`Deployment/Deploy [RUN THIS ONE]`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_StartDeployment)c
      configuration with the corresponding new version:
      - Use the `version-<version>` branch
      - Set the `Version` build parameter to `<version>`
 
 1. Wait until the corresponding
-   [`Deployment 3.0/Upload Deployment to Central Portal`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_UploadDeploymentToCentralPortal)
+   [`Deployment/Upload Deployment to Central Portal`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_UploadDeploymentToCentralPortal)
    build finishes.
    Check its `Artifacts` tab.
    It has to contain `deployment_<version>.zip` with the artifacts expected
    for `kotlinx.coroutines`.
    If it does, approve the corresponding
-   [`Deployment 3.0/Publish deployment`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_PublishDeployment)
+   [`Deployment/Publish deployment`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_PublishDeployment)
    build and wait for it to finish.
 
 2. Merge the new version branch into `master`:<br>
