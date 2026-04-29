@@ -24,14 +24,6 @@ public typealias MDCContextMap = Map<String, String>?
  * }
  * ```
  *
- * or
- *
- * ```
- * launch(MDCContext("kotlin" to "rocks")) {
- *     logger.info { "..." }   // The MDC context contains the mapping here
- * }
- * ```
- *
  * Note that you cannot update MDC context from inside the coroutine simply
  * using [MDC.put]. These updates are going to be lost on the next suspension and
  * reinstalled to the MDC context that was captured or explicitly specified in
@@ -93,34 +85,6 @@ public class MDCContext(
      * Key of [MDCContext] in [CoroutineContext].
      */
     public companion object Key : CoroutineContext.Key<MDCContext>
-
-    /**
-     * Alternative constructor to put [key-value-pairs][pairs] into the [MDC].
-     *
-     * Example:
-     * ```
-     * withContext(MDCContext("kotlin" to "rocks")) {
-     *     // The MDC context contains the mapping here
-     * }
-     * ```
-     *
-     * Note: The old MDC values will be restored when the coroutine context is restored.
-     * ```kotlin
-     * MDC.put("kotlin", "is great")
-     * withContext(MDCContext("kotlin" to "rocks")) {
-     *     println(MDC.get("kotlin")) // prints "rocks"
-     * }
-     * println(MDC.get("kotlin")) // prints "is great"
-     * ```
-     *
-     * @param pairs key-value-pairs which will be put into the MDC
-     */
-    @ExperimentalCoroutineApi
-    public constructor(vararg pairs: Pair<String, String>): this(
-        MDC.getCopyOfContextMap().let {
-            if (pairs.isEmpty()) it else (it ?: emptyMap()) + pairs
-        }
-    )
 
     /** @suppress */
     override fun updateThreadContext(context: CoroutineContext): MDCContextMap {
