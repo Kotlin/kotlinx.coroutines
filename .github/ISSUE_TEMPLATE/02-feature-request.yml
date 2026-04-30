@@ -1,0 +1,87 @@
+name: Feature request
+description: Suggest a new feature or enhancement for kotlinx.coroutines
+title: "[Feature] "
+labels:
+  - enhancement
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea!
+
+        Please focus on **what problem you’re trying to solve** and **why existing APIs don’t work well enough**.
+
+        If you’re unsure whether this belongs here, that’s okay —
+        just describe your use case and we’ll figure it out together.
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: What are you trying to do?
+      description: |
+        Describe the problem or use case you’re facing.
+        Focus on *what* you want to achieve and *why* it’s difficult today.
+      placeholder: |
+        Example:
+        I have a SharedFlow that represents readings from an external device,
+        and I need to ...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: underlying_problem
+    attributes:
+      label: What problem does this actually solve?
+      description: |
+        Describe the underlying need, independent of any specific solution or API.
+        
+        In other words:
+        * What is hard or impossible to do today?
+        * What breaks or becomes unsafe/inefficient without this?
+        * How would you know that the problem is solved?
+        
+        Please avoid describing a specific operator or API here.
+      placeholder: |
+        Example:
+        In production we need to guarantee that ...
+        Without this, we end up with ...
+        Existing APIs fail because ...
+    validations:
+      required: true     
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea (optional)
+      description: |
+        If you have an idea of what the solution or API could look like, feel free to share it.
+        Rough sketches, pseudocode, or examples are all welcome.
+      placeholder: |
+        ```kotlin
+        fun <T> Flow<T>.newOperator(): Flow<T>
+        ```
+    validations:
+      required: false
+
+  - type: textarea
+    id: prior_art
+    attributes:
+      label: Prior art or similar ideas (optional)
+      description: |
+        Are there similar features in other libraries or ecosystems?
+        Links and comparisons are helpful, but not required.
+      placeholder: |
+        RxJava has a similar operator that works like this...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else? (optional)
+      description: |
+        Motivation, constraints, production experience, trade-offs —
+        anything that helps understand the request.
+    validations:
+      required: false
