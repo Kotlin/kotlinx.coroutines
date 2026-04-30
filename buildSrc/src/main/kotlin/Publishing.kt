@@ -4,7 +4,6 @@ import groovy.util.Node
 import groovy.util.NodeList
 import org.gradle.api.Project
 import org.gradle.api.XmlProvider
-import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.*
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
@@ -12,7 +11,6 @@ import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.plugins.signing.*
-import java.net.*
 
 // Pom configuration
 
@@ -40,27 +38,6 @@ fun MavenPom.configureMavenCentralMetadata(project: Project) {
 
     scm {
         url = "https://github.com/Kotlin/kotlinx.coroutines"
-    }
-}
-
-/**
- * 'libs.space.pub' is a dev option that is set on our CI in order to publish
- * dev build into 'https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven' Maven repository.
- * In order to use it, pass the corresponding ENV to the TC 'Deploy' task.
- */
-private val spacePublicationEnabled = System.getenv("libs.space.pub")?.equals("true") ?: false
-
-fun configureSpaceRepository(rh: RepositoryHandler, project: Project) {
-    if (spacePublicationEnabled) {
-        rh.maven {
-            url = URI("https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven")
-
-            credentials {
-                // Configure space credentials
-                username = project.getSensitiveProperty("libs.space.user")
-                password = project.getSensitiveProperty("libs.space.password")
-            }
-        }
     }
 }
 
