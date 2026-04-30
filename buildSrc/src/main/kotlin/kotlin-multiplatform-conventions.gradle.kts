@@ -48,13 +48,13 @@ kotlin {
         mingwX64()
         watchosDeviceArm64()
 
-        // Deprecated
+        // Deprecated for removal: see KT-78660
         @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-        macosX64()
-        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-        tvosX64()
-        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-        watchosX64()
+        run {
+            macosX64()
+            tvosX64()
+            watchosX64()
+        }
     }
     js {
         outputModuleName = project.name
