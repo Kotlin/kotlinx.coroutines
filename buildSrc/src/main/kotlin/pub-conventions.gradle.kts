@@ -14,7 +14,6 @@ apply(plugin = "signing")
 
 publishing {
     repositories {
-        configureMavenPublication(this, project)
         maven {
             name = "BuildLocal"
             url = uri(project.rootProject.layout.buildDirectory.dir("build-local-repository"))
