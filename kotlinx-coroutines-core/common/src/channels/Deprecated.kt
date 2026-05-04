@@ -656,6 +656,6 @@ internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwabl
 public fun <E> CoroutineScope.produce(
     context: Job,
     capacity: Int = Channel.RENDEZVOUS,
-    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
+    block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> =
     produce(context as CoroutineContext, capacity, block)
