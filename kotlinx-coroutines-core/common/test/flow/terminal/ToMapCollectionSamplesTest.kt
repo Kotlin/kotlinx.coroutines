@@ -1,6 +1,5 @@
-package kotlinx.coroutines.flow.terminal
+package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
