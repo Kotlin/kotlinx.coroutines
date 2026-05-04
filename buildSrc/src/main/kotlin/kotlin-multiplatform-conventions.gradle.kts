@@ -31,18 +31,14 @@ kotlin {
         // According to https://kotlinlang.org/docs/native-target-support.html
         // Tier 1
         linuxX64()
-        macosX64()
         macosArm64()
         iosSimulatorArm64()
-        iosX64()
         // Tier 2
         linuxArm64()
         watchosSimulatorArm64()
-        watchosX64()
         watchosArm32()
         watchosArm64()
         tvosSimulatorArm64()
-        tvosX64()
         tvosArm64()
         iosArm64()
         // Tier 3
@@ -50,8 +46,17 @@ kotlin {
         androidNativeArm64()
         androidNativeX86()
         androidNativeX64()
+        iosX64()
         mingwX64()
         watchosDeviceArm64()
+
+        // Deprecated for removal: see KT-78660
+        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+        run {
+            macosX64()
+            tvosX64()
+            watchosX64()
+        }
     }
     js {
         outputModuleName = project.name
