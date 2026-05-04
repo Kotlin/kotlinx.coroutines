@@ -8,7 +8,7 @@ To release a new `<version>` of `kotlinx-coroutines`:
 2. Retrieve the most recent `develop`: <br>
    `git pull`
 
-3. Make sure the `master` branch is fully merged into `develop`:
+3. Make sure the `master` branch is fully merged into `develop`:<br>
    `git merge origin/master`
 
 4. Search & replace `<old-version>` with `<version>` across the project files. Should replace in:
@@ -29,7 +29,7 @@ To release a new `<version>` of `kotlinx-coroutines`:
    * Write each change on a single line (don't wrap with CR).
    * Look through the commit messages since the previous release.
 
-6. Create the branch for this release:
+6. Create the branch for this release:<br>
    `git checkout -b version-<version>`
 
 7. Commit the updated files to the new version branch:<br>
@@ -45,7 +45,7 @@ To release a new `<version>` of `kotlinx-coroutines`:
 
 0. On [TeamCity integration server](https://teamcity.jetbrains.com/project.html?projectId=KotlinTools_KotlinxCoroutines):
    * Wait until "Build" configuration for committed `version-<version>` branch passes tests.
-   * Run the [`Deployment/Deploy [RUN THIS ONE]`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_StartDeployment)c
+   * Run the [`Deployment/Deploy [RUN THIS ONE]`](https://teamcity.jetbrains.com/buildConfiguration/KotlinTools_KotlinxCoroutines_Deployment30_StartDeployment)
      configuration with the corresponding new version:
      - Use the `version-<version>` branch
      - Set the `Version` build parameter to `<version>`
@@ -83,5 +83,5 @@ To release a new `<version>` of `kotlinx-coroutines`:
 8. Push the updates to GitHub:<br>
    `git push`
 
-9. Propose the website documentation update: <br>
+9. Propose the website documentation update:
    * Set new value for [`KOTLINX_COROUTINES_RELEASE_TAG`](https://github.com/JetBrains/kotlin-web-site/blob/master/.teamcity/BuildParams.kt), creating a Pull Request in the website's repository. 
