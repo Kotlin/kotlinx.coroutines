@@ -1,5 +1,44 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.11.0
+
+### Various
+
+* Kotlin was updated to 2.2.20 (#4545).
+* Improved the published jar files (#3842, #4599).
+* Various documentation improvements, including complete rewrites of structured concurrency and error handling-related KDoc (#4433, #4596).
+
+### Breaking changes and deprecations
+
+* Moved `Promise`-related functions from JS and Wasm/JS to the new `web` target. On Wasm/JS, this is a breaking change. Before the change, `Promise` on Wasm/JS could work with arbitrary Kotlin types, but now, only `JsAny` subtypes are accepted (#4563).
+* Changed handling of coroutine exceptions that can't be propagated on JS and Wasm/JS. Before, exceptions were logged, but now, they are reported to the JS runtime (#4451, #4631).
+* Deprecated using `CoroutineDispatcher` as the coroutine context key; now, `ContinuationInterceptor` has to be used instead (#4333).
+* Advanced the deprecation levels on `kotlinx-coroutines-test` APIs (#4604).
+* Added lint functions that mark passing a `Job` to coroutine builders as deprecated (#4435).
+
+### Bug fixes and improvements
+
+* Added a `callsInPlace(EXACTLY_ONCE)` contract to `runBlocking` in code shared between JVM and Native (#4368).
+* Added a `callsInPlace(EXACTLY_ONCE)` contract to `suspendCancellableCoroutine` (#4574).
+* Fixed `flowOn` incorrectly handling `ThreadContextElement` updates (#4403).
+* Fixed exceptions in user-supplied `Thread.UncaughtExceptionHandler` instances causing the internal coroutines machinery to fail (#4516).
+* Fixed `CoroutineDispatcher.asScheduler` in the RxJava integration not cancelling outstanding work when a `Worker` gets cancelled, which led to memory leaks in some scenarios (#4615).
+* Fixed `SharedFlow` entering an invalid state when a subscriber and an emitter are cancelled simultaneously (#4583).
+* Fixed an R8 optimization leading to `shareIn`/`stateIn` coroutines getting garbage-collected (#4646). Thanks, @solevic!
+
+### Small additions
+
+* Added `CompletableDeferred.asDeferred` for obtaining a read-only `Deferred` view (#4408).
+* Added `SharedFlow.asFlow` for obtaining a `Flow` view with hidden hot flow semantics (#4530). Thanks, @g000sha256!
+* Added a `StateFlow.collectLatest` overload returning `Nothing` to assist with finding unreachable code (#4454).
+* Added `ReceiveChannel.consumeTo` for consuming a `ReceiveChannel` into a `MutableCollection` (#4520).
+* Added a `StateFlow<T>.onSubscription` overload returning a `StateFlow<T>`, similar to `SharedFlow<T>.onSubscription` returning `SharedFlow<T>` (#4275). Thanks, @xit0c!
+* Added terminal `Flow` operators for collecting a `Flow` to a `Map` (#1541).
+
+### Changelog relative to version 1.11.0
+
+No changes, only the version is increased.
+
 ## Version 1.11.0-rc02
 
 Restored binary compatibility with 1.10.2 and older versions on Wasm/JS for usages of `Promise`-related functions (#4661).
