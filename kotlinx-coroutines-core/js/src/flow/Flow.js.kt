@@ -1,8 +1,13 @@
+@file:OptIn(ExperimentalJsExport::class, ExperimentalJsStatic::class, ExperimentalStdlibApi::class)
+@file:Suppress("INVISIBLE_REFERENCE", "EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.internal.*
-import kotlin.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ClosedSendChannelException
+import kotlin.js.Promise
+import kotlin.js.JsSymbol
 
 /**
  * An asynchronous data stream that sequentially emits values and completes normally or with an exception.
@@ -162,7 +167,7 @@ import kotlin.coroutines.*
  * ### Reactive streams
  *
  * Flow is [Reactive Streams](http://www.reactive-streams.org/) compliant, you can safely interop it with
- * reactive streams using `Flow.asPublisher` and `Publisher.asFlow` from `kotlinx-coroutines-reactive` module.
+ * reactive streams using [Flow.asPublisher] and [Publisher.asFlow] from `kotlinx-coroutines-reactive` module.
  *
  * ### Not stable for inheritance
  *
@@ -173,7 +178,9 @@ import kotlin.coroutines.*
  * These implementations ensure that the context preservation property is not violated, and prevent most
  * of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.
  */
-public expect interface Flow<out T> {
+@Suppress("INVISIBLE_REFERENCE", "EXPOSED_SUPER_INTERFACE")
+@JsImplicitExport(true)
+public actual interface Flow<out T> {
 
     /**
      * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
@@ -191,56 +198,168 @@ public expect interface Flow<out T> {
      * All default flow implementations ensure context preservation and exception transparency properties on a best-effort basis
      * and throw [IllegalStateException] if a violation was detected.
      */
-    public suspend fun collect(collector: FlowCollector<T>)
-}
+    @JsExport.Ignore
+    public actual suspend fun collect(collector: FlowCollector<T>)
 
-/**
- * Base class for stateful implementations of `Flow`.
- * It tracks all the properties required for context preservation and throws an [IllegalStateException]
- * if any of the properties are violated.
- *
- * Example of the implementation:
- *
- * ```
- * // list.asFlow() + collect counter
- * class CountingListFlow(private val values: List<Int>) : AbstractFlow<Int>() {
- *     private val collectedCounter = AtomicInteger(0)
- *
- *     override suspend fun collectSafely(collector: FlowCollector<Int>) {
- *         collectedCounter.incrementAndGet() // Increment collected counter
- *         values.forEach { // Emit all the values
- *             collector.emit(it)
- *         }
- *     }
- *
- *     fun toDiagnosticString(): String = "Flow with values $values was collected ${collectedCounter.value} times"
- * }
- * ```
- */
-@ExperimentalCoroutinesApi
-public abstract class AbstractFlow<T> : Flow<T>, CancellableFlow<T> {
+    @JsSymbol("asyncIterator")
+    public fun asyncIterator(): JsAsyncIterator<T> {
+        val flow = this
+        val demand = Channel<Unit>(Channel.RENDEZVOUS)
+        val valueChannel = Channel<T>(Channel.RENDEZVOUS)
 
-    public final override suspend fun collect(collector: FlowCollector<T>) {
-        val safeCollector = SafeCollector(collector, coroutineContext)
-        try {
-            collectSafely(safeCollector)
-        } finally {
-            safeCollector.releaseIntercepted()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+        val producer = scope.launch(Dispatchers.Default) {
+            try {
+                flow.collect { value ->
+                    demand.receive()
+                    valueChannel.send(value)
+                }
+            } catch (e: CancellationException) {
+                valueChannel.close()
+                demand.close()
+                throw e
+            }
+            catch (e: Throwable) {
+                valueChannel.close(e)
+                demand.close(e)
+                return@launch
+            }
+            valueChannel.close()
+            demand.close()
         }
+
+        val asyncIteratorConstructor = js("typeof AsyncIterator === 'function' ? AsyncIterator : Object")
+        val asyncIterator = js("Object.create(asyncIteratorConstructor.prototype)")
+
+        asyncIterator.next = {
+            scope.promise {
+                val doneValue = js("({ value: undefined, done: true })")
+                try {
+                    // Signal demand for the next value
+                    demand.send(Unit)
+                    // Wait for the value
+                    val result = valueChannel.receiveCatching()
+                    if (result.isSuccess) {
+                        val v = result.getOrNull()
+                        js("({ value: v, done: false })")
+                    } else {
+                        result.exceptionOrNull()?.let { throw it }
+                        doneValue
+                    }
+                } catch (e: ClosedReceiveChannelException) {
+                    e.cause?.let { throw it }
+                    doneValue
+                } catch (e: ClosedSendChannelException) {
+                    e.cause?.let { throw it }
+                    doneValue
+                }
+            }
+        }
+
+        asyncIterator.`return` = {
+            scope.promise {
+                try {
+                    if (!producer.isCancelled && producer.isActive) {
+                        producer.cancel(CancellationException("Iterator returned early"))
+                    }
+                    js("({ value: undefined, done: true })")
+                } finally {
+                    demand.close()
+                    valueChannel.close()
+                }
+            }
+        }
+
+        asyncIterator.`throw` = { err: Any? ->
+            if (!producer.isCancelled && producer.isActive) {
+                val message = "Iterator.throw was called"
+                val cause = (err as? Throwable)
+                    ?.let { CancellationException(message, it) } ?: CancellationException(message)
+
+                producer.cancel(cause)
+            }
+
+            demand.close()
+            valueChannel.close()
+            js("Promise.reject(err)")
+        }
+
+        return asyncIterator
     }
 
-    /**
-     * Accepts the given [collector] and [emits][FlowCollector.emit] values into it.
-     *
-     * A valid implementation of this method has the following constraints:
-     * 1) It should not change the coroutine context (e.g. with `withContext(Dispatchers.IO)`) when emitting values.
-     *    The emission should happen in the context of the [collect] call.
-     *    Please refer to the top-level [Flow] documentation for more details.
-     * 2) It should serialize calls to [emit][FlowCollector.emit] as [FlowCollector] implementations are not
-     *    thread-safe by default.
-     *    To automatically serialize emissions [channelFlow] builder can be used instead of [flow]
-     *
-     * @throws IllegalStateException if any of the invariants are violated.
-     */
-    public abstract suspend fun collectSafely(collector: FlowCollector<T>)
+    @JsExport.Ignore
+    public companion object {
+        /**
+         * Converts a JavaScript AsyncIterable to a Kotlin Flow.
+         *
+         * The resulting flow will iterate through all values produced by the async iterable.
+         * If the flow collection is canceled or fails, the iterator's `return()` method will be called
+         * to properly clean up the async iterable.
+         */
+        @JsStatic
+        public fun <T> from(async: JsAsyncIterable<T>): Flow<T> =
+            from(async.asyncIterator())
+
+        /**
+         * Converts a JavaScript async generator function to a Kotlin Flow.
+         *
+         * The generator will be invoked to get an async iterator for collection.
+         * Cancellation or failure during a collection triggers the iterator's `return()` method
+         * to ensure proper cleanup.
+         */
+        @JsStatic
+        @JsName("fromAsyncGenerator")
+        public fun <T> from(generator: () -> JsAsyncIterator<T>): Flow<T> = flow {
+            var completed = false
+            val iterator = generator()
+            try {
+                while (true) {
+                    val result = iterator.next().await()
+                    if (result.done) {
+                        completed = true
+                        break
+                    }
+                    emit(result.value)
+                }
+            } finally {
+                if (!completed) {
+                        iterator.`return`().await()
+                }
+            }
+        }
+
+        /**
+         * Converts a JavaScript AsyncIterator to a Kotlin Flow.
+         *
+         * The resulting flow emits items produced by the iterator until it reports completion.
+         * If a collection is canceled or fails, the iterator's `return()` method is called
+         * to close the iterator.
+         */
+        @JsStatic
+        @JsName("fromAsyncIterator")
+        public fun <T> from(iterator: JsAsyncIterator<T>): Flow<T> =
+            from { iterator }
+    }
+}
+
+
+
+@JsName("AsyncIterable")
+internal external interface JsAsyncIterable<out T> {
+    @JsSymbol("asyncIterator")
+    public fun asyncIterator(): JsAsyncIterator<T>
+}
+
+@JsName("AsyncIterator")
+internal external interface JsAsyncIterator<out T> {
+    public fun next(): Promise<JsIteratorResult<T>>
+    public fun `return`(value: @UnsafeVariance T = definedExternally): Promise<JsIteratorResult<T>>
+    public fun `throw`(value: Any? = definedExternally): Promise<JsIteratorResult<T>>
+}
+
+@JsName("IteratorResult")
+internal external interface JsIteratorResult<out T> {
+    public val value: T
+    public val done: Boolean
 }
