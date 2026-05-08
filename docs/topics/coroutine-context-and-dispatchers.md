@@ -25,8 +25,8 @@ Try the following example:
 ```kotlin
 import kotlinx.coroutines.*
 
-fun main() = runBlocking<Unit> {
 //sampleStart
+fun main() = runBlocking<Unit> {
     launch { // context of the parent, main runBlocking coroutine
         println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
     }
@@ -38,9 +38,9 @@ fun main() = runBlocking<Unit> {
     }
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
         println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
-    }
-//sampleEnd    
+    }    
 }
+//sampleEnd
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 <!--- KNIT example-context-01.kt -->
@@ -89,8 +89,8 @@ this thread with predictable FIFO scheduling.
 ```kotlin
 import kotlinx.coroutines.*
 
-fun main() = runBlocking<Unit> {
 //sampleStart
+fun main() = runBlocking<Unit> {
     launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined      : I'm working in thread ${Thread.currentThread().name}")
         delay(500)
@@ -100,9 +100,9 @@ fun main() = runBlocking<Unit> {
         println("main runBlocking: I'm working in thread ${Thread.currentThread().name}")
         delay(1000)
         println("main runBlocking: After delay in thread ${Thread.currentThread().name}")
-    }
-//sampleEnd    
+    }    
 }
+//sampleEnd
 ```
 {kotlin-runnable="true" kotlin-min-compiler-version="1.3"}
 <!--- KNIT example-context-02.kt -->
