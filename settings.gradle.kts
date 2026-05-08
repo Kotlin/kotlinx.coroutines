@@ -8,7 +8,11 @@ pluginManagement {
     repositories {
         maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
         gradlePluginPortal()
+        mavenLocal()
     }
+}
+plugins {
+    id("org.jetbrains.kotlinx.artifacts-validator-plugin") version "0.0.1-SNAPSHOT"
 }
 
 rootProject.name = "kotlinx.coroutines"
