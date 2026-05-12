@@ -28,7 +28,7 @@ public typealias MDCContextMap = Map<String, String>?
  *
  * ```
  * launch(MDCContext() + mapOf("key" to "value")) { // Propagate existing MDC with additional key-value pairs
- *     logger.info { "..." }                        // The MDC context contains the mapping here
+ *     logger.info { "..." } // The MDC context contains the mapping here
  * }
  * ```
  *
