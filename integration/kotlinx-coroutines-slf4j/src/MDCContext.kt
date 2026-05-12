@@ -119,6 +119,7 @@ public class MDCContext(
  * If [map] contains keys that are already present in this context, values from [map]
  * replace existing values.
  */
+@ExperimentalCoroutinesApi
 public operator fun MDCContext.plus(map: Map<String, String>): MDCContext = MDCContext((contextMap ?: emptyMap()) + map)
 
 /**
@@ -128,6 +129,7 @@ public operator fun MDCContext.plus(map: Map<String, String>): MDCContext = MDCC
  * If the key `pair.first` is already present in this context, its existing value is replaced
  * with `pair.second`.
  */
+@ExperimentalCoroutinesApi
 public operator fun MDCContext.plus(pair: Pair<String, String>): MDCContext = MDCContext((contextMap ?: emptyMap()) + pair)
 
 /**
@@ -136,6 +138,7 @@ public operator fun MDCContext.plus(pair: Pair<String, String>): MDCContext = MD
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
  * in this context.
  */
+@ExperimentalCoroutinesApi
 public operator fun MDCContext.plus(pairs: Iterable<Pair<String, String>>): MDCContext = MDCContext((contextMap ?: emptyMap()) + pairs)
 
 /**
@@ -144,6 +147,7 @@ public operator fun MDCContext.plus(pairs: Iterable<Pair<String, String>>): MDCC
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
  * in this context.
  */
+@ExperimentalCoroutinesApi
 public operator fun MDCContext.plus(pairs: Sequence<Pair<String, String>>): MDCContext = MDCContext((contextMap ?: emptyMap()) + pairs)
 
 /**
@@ -152,4 +156,5 @@ public operator fun MDCContext.plus(pairs: Sequence<Pair<String, String>>): MDCC
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
  * in this context.
  */
+@ExperimentalCoroutinesApi
 public operator fun MDCContext.plus(pairs: Array<Pair<String, String>>): MDCContext = MDCContext((contextMap ?: emptyMap()) + pairs)
