@@ -103,13 +103,13 @@ class PromiseTestWeb : TestBase() {
     }
 
     @Test
-    fun testAwaitPromiseRejectedWithNonKotlinException() = GlobalScope.promise {
+    fun testAwaitPromiseRejectedWithNonThrowableException() = GlobalScope.promise {
         val toAwait = jsPromiseRejectedWithString()
         val throwable = async(start = CoroutineStart.UNDISPATCHED) {
-            assertFails { toAwait.await() }
+            assertFailsWith<JsException> { toAwait.await() }
         }
-        val throwableResolved = throwable.await()
-        assertEquals(true, throwableResolved.message?.contains("Rejected"), "${throwableResolved.message}")
+        val thrownValue = throwable.await().thrownValue
+        assertEquals(true, thrownValue.toString().contains("Rejected"), "$thrownValue")
         null
     }
 
@@ -126,7 +126,19 @@ class PromiseTestWeb : TestBase() {
         assertEquals("Rejected", throwable.await().message)
         null
     }
+
+    @Test
+    fun testAwaitPromiseRejectedWithNonKotlinException() = GlobalScope.promise {
+        val e = assertFailsWith<JsException> {
+            jsPromiseRejectedWithJsException().await()
+        }
+        assertTrue(e.message?.contains("Rejected") ?: false)
+        null
+    }
 }
 
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun jsPromiseRejectedWithString(): Promise<JsBigInt> = js("Promise.reject(\"Rejected\")")
+
+@OptIn(ExperimentalWasmJsInterop::class)
+private fun jsPromiseRejectedWithJsException(): Promise<JsBigInt> = js("Promise.reject(new Error(\"Rejected\"))")
