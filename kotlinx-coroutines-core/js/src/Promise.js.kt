@@ -1,9 +1,11 @@
 package kotlinx.coroutines
 
-@Suppress("USELESS_CAST") // on JS, arbitrary objects can be thrown
+@Suppress("USELESS_CAST")
 @OptIn(ExperimentalWasmJsInterop::class)
-internal actual fun JsPromiseError.toThrowable(): Throwable = this as? Throwable ?:
-    Exception("Promise resolved with a non-Throwable exception '$this' (type ${this::class})")
+// The cast looks redundant, but the `JsPromiseError` being a type alias to `Throwable` is actually incorrect.
+// A promise can be rejected with any value, not just `Throwable`.
+internal actual fun JsPromiseError.toThrowableOrNull(): Throwable? =
+    this as? Throwable
 
 @OptIn(ExperimentalWasmJsInterop::class)
 internal actual fun Throwable.toJsPromiseError(): JsPromiseError = this

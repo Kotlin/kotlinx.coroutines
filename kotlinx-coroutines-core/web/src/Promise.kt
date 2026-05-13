@@ -79,11 +79,29 @@ public fun <T: JsAny?> Promise<T>.asDeferred(): Deferred<T> {
 public suspend fun <T: JsAny?> Promise<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     this@await.then(
         onFulfilled = { cont.resume(it); null },
-        onRejected = { cont.resumeWithException(it.toThrowable()); null })
+        onRejected = {
+            /**
+             * The observable behavior is:
+             * - For JS exceptions:
+             *   + On JS, they are thrown as is.
+             *   + On Wasm/JS, they are represented as a [JsException] object.
+             * - For non-exceptions:
+             *   + On JS, a plain [Exception] is thrown with a clarifying message.
+             *   + On Wasm/JS, they are wrapped in a [JsException] object, with [thrownValue] set to what was thrown.
+             * - Kotlin/Wasm/JS exceptions are rethrown as is.
+             *
+             * Since Wasm/JS support is experimental, the specifics may change.
+             * In any case, we consistently throw a [JsException] if this is a JS exception.
+             */
+            val exception = it.toThrowableOrNull()
+                ?: Exception("Promise rejected with a non-Throwable exception '$it' (type ${it::class})")
+            cont.resumeWithException(exception)
+            null
+        })
 }
 
 @OptIn(ExperimentalWasmJsInterop::class)
-internal expect fun JsPromiseError.toThrowable(): Throwable
+internal expect fun JsPromiseError.toThrowableOrNull(): Throwable?
 
 @OptIn(ExperimentalWasmJsInterop::class)
 internal expect fun Throwable.toJsPromiseError(): JsPromiseError
