@@ -15,3 +15,4 @@ local.properties
 benchmarks.jar
 /kotlin-js-store
 /.kotlin
+buildSrc/.kotlin

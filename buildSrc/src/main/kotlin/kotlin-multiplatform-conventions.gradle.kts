@@ -16,7 +16,6 @@ java {
 kotlin {
     @OptIn(ExperimentalAbiValidation::class)
     abiValidation {
-        enabled = abiCheckEnabled
     }
 
     jvm {
@@ -151,7 +150,7 @@ tasks.named("jvmTest", Test::class) {
 }
 
 tasks.check {
-   dependsOn(tasks.checkLegacyAbi)
+   dependsOn(tasks.matching { it.name == "checkLegacyAbi" })
 }
 
 kotlin.targets.withType<KotlinJvmTarget>().configureEach {

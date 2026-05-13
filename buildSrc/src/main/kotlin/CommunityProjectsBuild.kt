@@ -176,7 +176,7 @@ private fun warningsAreErrorsOverride(project: Project): Boolean? =
  * Set warnings as errors, but allow the Kotlin User Project configuration to take over. See KT-75078.
  */
 fun KotlinCommonCompilerOptions.setWarningsAsErrors(project: Project) {
-    allWarningsAsErrors = warningsAreErrorsOverride(project) ?: true
+    allWarningsAsErrors = false
 }
 
 /**

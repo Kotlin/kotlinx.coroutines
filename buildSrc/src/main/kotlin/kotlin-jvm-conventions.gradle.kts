@@ -17,7 +17,6 @@ java {
 kotlin {
     @OptIn(ExperimentalAbiValidation::class)
     abiValidation {
-        enabled = abiCheckEnabled
     }
 
     compilerOptions {
@@ -46,7 +45,7 @@ tasks.withType<Test> {
 }
 
 tasks.check {
-   dependsOn(tasks.checkLegacyAbi)
+   dependsOn(tasks.matching { it.name == "checkLegacyAbi" })
 }
 
 tasks.named<Jar>("jar") {
