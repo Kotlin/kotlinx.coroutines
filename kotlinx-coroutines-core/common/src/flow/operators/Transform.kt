@@ -126,7 +126,7 @@ public fun <T> Flow<T>.runningReduce(operation: suspend (accumulator: T, value: 
         } else {
             operation(accumulator as T, value)
         }
-        emit(accumulator as T)
+        emit(accumulator)
     }
 }
 
