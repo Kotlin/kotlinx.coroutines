@@ -79,11 +79,16 @@ public fun <T: JsAny?> Promise<T>.asDeferred(): Deferred<T> {
 public suspend fun <T: JsAny?> Promise<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     this@await.then(
         onFulfilled = { cont.resume(it); null },
-        onRejected = { cont.resumeWithException(it.toThrowable()); null })
+        onRejected = {
+            val exception = it.toThrowableOrNull()
+                ?: Exception("Promise resolved with a non-Throwable exception '$it' (type ${it::class})")
+            cont.resumeWithException(exception)
+            null
+        })
 }
 
 @OptIn(ExperimentalWasmJsInterop::class)
-internal expect fun JsPromiseError.toThrowable(): Throwable
+internal expect fun JsPromiseError.toThrowableOrNull(): Throwable?
 
 @OptIn(ExperimentalWasmJsInterop::class)
 internal expect fun Throwable.toJsPromiseError(): JsPromiseError
