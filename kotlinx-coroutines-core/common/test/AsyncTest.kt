@@ -291,3 +291,47 @@ class AsyncTest : TestBase() {
         finish(8)
     }
 }
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class DeferredGetCompletedOrNullTest : TestBase() {
+
+    @Test
+    fun testReturnsValueWhenCompletedSuccessfully() = runTest {
+        val deferred = async { "result" }
+        // TDD: This test should fail initially because getCompletedOrNull doesn't exist yet
+        assertEquals("result", deferred.getCompletedOrNull())
+    }
+
+    @Test
+    fun testReturnsNullWhenNotCompleted() = runTest {
+        val deferred = async {
+            delay(100)
+            "result"
+        }
+        // Immediately check - should not be complete yet
+        assertNull(deferred.getCompletedOrNull())
+    }
+
+    @Test
+    fun testReturnsNullWhenCancelled() = runTest {
+        val deferred = async<String> {
+            delay(1000)
+            "never reached"
+        }
+        deferred.cancel()
+        assertThrows<CancellationException> { deferred.await() }
+        // getCompletedOrNull should return null for cancelled
+        assertNull(deferred.getCompletedOrNull())
+    }
+
+    @Test
+    fun testReturnsNullWhenCompletedExceptionally() = runTest {
+        val deferred = async<String> {
+            throw TestException()
+            "never reached"
+        }
+        assertThrows<TestException> { deferred.await() }
+        // getCompletedOrNull should return null for failed
+        assertNull(deferred.getCompletedOrNull())
+    }
+}

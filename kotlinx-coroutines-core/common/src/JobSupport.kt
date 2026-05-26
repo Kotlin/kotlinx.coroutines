@@ -1315,6 +1315,25 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     /**
+     * Returns the successfully completed result, or null if this job has not completed successfully.
+     *
+     * This function is similar to [getCompletedInternal], but returns null instead of throwing
+     * for incomplete or exceptionally completed states.
+     *
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    @Suppress("UNCHECKED_CAST")
+    internal fun getCompletedOrNullInternal(): Any? {
+        val state = this.state
+        // Incomplete -> null
+        if (state is Incomplete) return null
+        // Completed exceptionally (cancelled/failed) -> null
+        if (state is CompletedExceptionally) return null
+        // Successfully completed -> return unboxed result
+        return state.unboxState()
+    }
+
+    /**
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected suspend fun awaitInternal(): Any? {

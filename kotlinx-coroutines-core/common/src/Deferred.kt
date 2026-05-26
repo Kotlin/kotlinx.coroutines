@@ -100,3 +100,50 @@ public interface Deferred<out T> : Job {
     @ExperimentalCoroutinesApi
     public fun getCompletionExceptionOrNull(): Throwable?
 }
+
+/**
+ * Returns the successfully completed result of this deferred value, or `null` if this deferred
+ * has not completed successfully.
+ *
+ * This function is a non-throwing convenience accessor for inspecting the state of a `Deferred`
+ * without suspension. It returns the result only if the deferred completed **successfully**.
+ *
+ * The table below summarizes the behavior:
+ *
+ * | State                    | Return value |
+ * | ------------------------ | ------------ |
+ * | Completed successfully   | The result   |
+ * | Not completed yet        | `null`       |
+ * | Completed exceptionally  | `null`       |
+ *
+ * A deferred value is considered to have **completed exceptionally** if it was cancelled
+ * or failed with an exception. In both cases, this function returns `null`.
+ *
+ * To distinguish between these cases, use [isCompleted] and [isCancelled] properties,
+ * or use [getCompletionExceptionOrNull] to retrieve the exception.
+ *
+ * This function is designed for use cases such as:
+ * - Debugging and state inspection
+ * - Non-blocking status checks
+ * - Cache snapshots
+ *
+ * **Note: This is an experimental api.** This function may be removed or renamed in the future.
+ *
+ * @see getCompleted
+ * @see getCompletionExceptionOrNull
+ */
+@ExperimentalCoroutinesApi
+public fun <T> Deferred<T>.getCompletedOrNull(): T? {
+    // Use public API with exception handling
+    // Note: This catches the exceptions from getCompleted() for non-successful completion
+    @Suppress("TooGenericExceptionCaught")
+    return try {
+        getCompleted()
+    } catch (_: Exception) {
+        // Covers:
+        // - IllegalStateException: not completed yet
+        // - CancellationException: cancelled
+        // - Other exceptions: failed with exception
+        null
+    }
+}
