@@ -13,6 +13,9 @@ import kotlin.coroutines.*
 @State(Scope.Benchmark)
 @Fork(1)
 open class ChannelSinkBenchmark {
+    @Param("${Channel.RENDEZVOUS}", "${Channel.BUFFERED}")
+    var capacity: Int = 0
+
     private val tl = ThreadLocal.withInitial({ 42 })
     private val tl2 = ThreadLocal.withInitial({ 239 })
 
@@ -42,7 +45,7 @@ open class ChannelSinkBenchmark {
             .fold(0) { a, b -> a + b }
     }
 
-    private fun Channel.Factory.range(start: Int, count: Int, context: CoroutineContext) = GlobalScope.produce(context) {
+    private fun Channel.Factory.range(start: Int, count: Int, context: CoroutineContext) = GlobalScope.produce(context, capacity) {
         for (i in start until (start + count))
             send(i)
     }
@@ -50,7 +53,7 @@ open class ChannelSinkBenchmark {
     // Migrated from deprecated operators, are good only for stressing channels
 
     private fun <E> ReceiveChannel<E>.filter(context: CoroutineContext = Dispatchers.Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
-        GlobalScope.produce(context, onCompletion = { cancel() }) {
+        GlobalScope.produce(context, capacity, onCompletion = { cancel() }) {
             for (e in this@filter) {
                 if (predicate(e)) send(e)
             }
