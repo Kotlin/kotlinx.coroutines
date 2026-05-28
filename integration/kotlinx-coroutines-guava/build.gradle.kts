@@ -1,4 +1,4 @@
-val guavaVersion = "31.0.1-jre"
+val guavaVersion = "32.0.0-jre"
 
 dependencies {
     api("com.google.guava:guava:$guavaVersion")

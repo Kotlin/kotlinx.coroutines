@@ -487,6 +487,70 @@ class SchedulerTest : TestBase() {
         }
         finish(4)
     }
+
+
+    /**
+     * Check that whenever a worker is cancelled, all outstanding work is cancelled as well.
+     */
+    @Test
+    fun testWorkerCancellationCancelsOutstandingWork() {
+        val customScheduler = object: CoroutineDispatcher(), Delay {
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                block.run()
+            }
+
+            override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+                expectUnreached()
+            }
+
+            override fun invokeOnTimeout(
+                timeMillis: Long,
+                block: Runnable,
+                context: CoroutineContext
+            ): DisposableHandle = object: DisposableHandle {
+                init {
+                    expect(1)
+                }
+                override fun dispose() {
+                    expect(2)
+                }
+            }
+        }.asScheduler()
+        // Allocates a new worker internally and schedules a ticker,
+        // *without* storing the scheduled periodic tasks anywhere.
+        // The only way for them to get cancelled is by the worker disposing of them as part of its own disposal.
+        val disposable = Flowable.interval(5, 1, TimeUnit.MINUTES, customScheduler)
+            .doOnNext {
+                expectUnreached()
+            }.subscribe()
+        // Dispose of the worker, which will, in turn, dispose of the outstanding task.
+        disposable.dispose()
+        finish(3)
+    }
+
+    /**
+     * Tests for a memory leak that occurs when disposable handlers added to the scheduler's CoroutineScope for the case
+     * the scheduler is disposed of are not removed when the task completes.
+     */
+    @Test
+    fun testMemoryLeakInWorkerScope() = runTest {
+        // Choose a dispatcher without an internal state
+        val scheduler = Dispatchers.Unconfined.asScheduler()
+        suspend fun runSomeTasks() {
+            repeat(10) {
+                scheduler.scheduleDirect({}, 10, TimeUnit.MILLISECONDS)
+            }
+            // Wait for the task completion. Note: this is not a race, because `DefaultExecutor` is used here, is fair,
+            // and the tasks above are guaranteed to have been scheduled by this point.
+            delay(20)
+        }
+        // Warm-up: converge to a consistent state of the scheduler. `10` is arbitrary.
+        runSomeTasks()
+        val items = FieldWalker.walk(scheduler)
+        runSomeTasks()
+        val items2 = FieldWalker.walk(scheduler)
+        assertTrue(items2.size <= items.size)
+    }
 }
 
 typealias RxSchedulerBlockNoDelay = (Runnable) -> Disposable

@@ -64,11 +64,11 @@ fun getOverriddenKotlinLanguageVersion(project: Project): KotlinVersion? {
  *
  * @return an url for a kotlin compiler repository parametrized from command line nor gradle.properties, empty string otherwise
  */
-fun getKotlinDevRepositoryUrl(project: Project): URI? {
+fun getKotlinDevRepositoryUrl(project: Project): String? {
     val url: String? = project.providers.gradleProperty("kotlin_repo_url").orNull
     if (url != null) {
         LOGGER.info("""Configured Kotlin Compiler repository url: '$url' for project ${project.name}""")
-        return URI.create(url)
+        return url
     }
     return null
 }
@@ -78,9 +78,7 @@ fun getKotlinDevRepositoryUrl(project: Project): URI? {
  */
 fun addDevRepositoryIfEnabled(rh: RepositoryHandler, project: Project) {
     val devRepoUrl = getKotlinDevRepositoryUrl(project) ?: return
-    rh.maven {
-        url = devRepoUrl
-    }
+    rh.maven(devRepoUrl)
 }
 
 /**

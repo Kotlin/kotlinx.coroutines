@@ -11,9 +11,10 @@ class PromiseTest {
         val p = promise {
             delay(1)
             promiseEntered = true
+            null
         }
         delay(2)
-        p.await<JsAny>()
+        p.await()
         assertTrue(promiseEntered)
     }
 }

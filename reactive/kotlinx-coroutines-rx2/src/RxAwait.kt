@@ -110,7 +110,7 @@ public suspend fun <T> MaybeSource<T>.await(): T? = awaitSingleOrNull()
  *
  * ### Deprecation
  *
- * Deprecated in favor of [awaitSingleOrNull] for naming consistency (see the deprecation of [MaybeSource.await] for
+ * Deprecated in favor of [awaitSingleOrNull] for naming consistency (see the deprecation of `MaybeSource.await` for
  * details).
  * @suppress
  */

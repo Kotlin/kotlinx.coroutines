@@ -1,5 +1,6 @@
 package kotlinx.coroutines.debug.internal
 
+import kotlinx.coroutines.*
 import java.lang.ref.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.*
@@ -145,7 +146,7 @@ internal class DebugCoroutineInfoImpl internal constructor(
 
     /**
      * Last observed stacktrace of the coroutine captured on its suspension or resumption point.
-     * It means that for [running][State.RUNNING] coroutines resulting stacktrace is inaccurate and
+     * It means that for [running][RUNNING] coroutines resulting stacktrace is inaccurate and
      * reflects stacktrace of the resumption point, not the actual current stacktrace.
      */
     internal fun lastObservedStackTrace(): List<StackTraceElement> {

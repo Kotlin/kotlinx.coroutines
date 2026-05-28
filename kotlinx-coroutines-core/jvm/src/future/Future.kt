@@ -7,25 +7,46 @@ import java.util.function.*
 import kotlin.coroutines.*
 
 /**
- * Starts a new coroutine and returns its result as an implementation of [CompletableFuture].
+ * Launches a new *child coroutine* of [CoroutineScope] without blocking the current thread
+ * and returns a [CompletableFuture] representing the result of the coroutine's execution.
+ *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
  *
- * The coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with the [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
- * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [context] element.
+ * [block] is the computation of the new coroutine that will run concurrently.
+ * The [CompletableFuture] will only be completed once both the [block] and all the child coroutines created in it
+ * finish.
  *
- * By default, the coroutine is immediately scheduled for execution.
- * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
- * A value of [CoroutineStart.LAZY] is not supported
- * (since `CompletableFuture` framework does not provide the corresponding capability) and
- * produces [IllegalArgumentException].
+ * [context] specifies the additional context elements for the coroutine to combine with
+ * the elements already present in the [CoroutineScope.coroutineContext].
+ * It is incorrect to pass a [Job] element there, as this breaks structured concurrency.
  *
- * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ * By default, the coroutine is scheduled for execution on its [ContinuationInterceptor].
+ * There is no guarantee that it will start immediately: this is decided by the [ContinuationInterceptor].
+ * It is possible that the new coroutine will be cancelled before starting, in which case its code will not be executed.
+ * The [start] parameter can be used to adjust this behavior. See [CoroutineStart] for details.
+ * The [CoroutineStart.LAZY] value for [start] is not supported, since [CompletableFuture] does not provide an API
+ * for only starting the computation when its result is queried.
  *
- * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
- * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param block the coroutine code.
+ * ## Structured Concurrency
+ *
+ * [future] is equivalent to [async] in terms of structured concurrency.
+ *
+ * ## Communicating with the coroutine
+ *
+ * [CompletableFuture.get] can be used to block the current thread until the result of the [future] is available.
+ * If the [future] coroutine fails with an exception, [CompletableFuture.get] will throw an [ExecutionException]
+ * with the original error set as the cause.
+ *
+ * If [CompletableFuture.complete] or [CompletableFuture.completeExceptionally] are called on the result of the
+ * [future], the coroutine gets cancelled *without a cause specified*.
+ * This means that even if the future is completed with an exception externally,
+ * the parent [CoroutineScope] will not be notified about the error.
+ *
+ * @param context the context to be added to the [CoroutineScope.coroutineContext] when creating the new coroutine.
+ * @param start the coroutine start strategy. The default value is [CoroutineStart.DEFAULT].
+ * @param block the coroutine code to be invoked in the child coroutine.
+ * @throws IllegalArgumentException if [CoroutineStart.LAZY] is passed to [start].
+ * @see async for a function that returns `Deferred`, which can be awaited without blocking the thread.
  */
 public fun <T> CoroutineScope.future(
     context: CoroutineContext = EmptyCoroutineContext,
@@ -40,6 +61,25 @@ public fun <T> CoroutineScope.future(
     coroutine.start(start, coroutine, block)
     return future
 }
+
+/**
+ * Deprecated version of [future] that accepts a [Job].
+ *
+ * See the documentation for the non-deprecated [future] function to learn about the functionality of this function.
+ *
+ * See the documentation for the deprecated [async] overload accepting a [Job] for an explanation of the reason
+ * this pattern is deprecated and the list of possible alternatives.
+ */
+@Deprecated(
+    "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +
+        "This pattern should be avoided. " +
+        "This overload will be deprecated with an error in the future.",
+    level = DeprecationLevel.WARNING)
+public fun <T> CoroutineScope.future(
+    context: Job,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): CompletableFuture<T> = future(context as CoroutineContext, start, block)
 
 private class CompletableFutureCoroutine<T>(
     context: CoroutineContext,

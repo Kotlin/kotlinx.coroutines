@@ -91,7 +91,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
 
     fun incrementUseCount(unconfined: Boolean = false) {
         useCount += delta(unconfined)
-        if (!unconfined) shared = true 
+        if (!unconfined) shared = true
     }
 
     fun decrementUseCount(unconfined: Boolean = false) {
@@ -533,7 +533,7 @@ internal expect object DefaultExecutor {
  *
  * Coroutines on Darwin targets can call into the Objective-C world, where a callee may push a to-be-returned object to
  * the Autorelease Pool, so as to avoid a premature ARC release before it reaches the caller. This means the pool must
- * be eventually drained to avoid leaks. Since Kotlin Coroutines does not use [NSRunLoop], which provides automatic
+ * be eventually drained to avoid leaks. Since Kotlin Coroutines does not use `NSRunLoop`, which provides automatic
  * pool management, it must manage the pool creation and pool drainage manually.
  */
 internal expect inline fun platformAutoreleasePool(crossinline block: () -> Unit)

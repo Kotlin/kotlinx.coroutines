@@ -58,7 +58,7 @@ import kotlin.jvm.*
  * get values from the buffer without suspending emitters. The buffer space determines how much slow subscribers
  * can lag from the fast ones. When creating a shared flow, additional buffer capacity beyond replay can be reserved
  * using the `extraBufferCapacity` parameter.
- * 
+ *
  * A shared flow with a buffer can be configured to avoid suspension of emitters on buffer overflow using
  * the `onBufferOverflow` parameter, which is equal to one of the entries of the [BufferOverflow] enum. When a strategy other
  * than [SUSPENDED][BufferOverflow.SUSPEND] is configured, emissions to the shared flow never suspend.
@@ -466,8 +466,7 @@ internal open class SharedFlowImpl<T>(
 
     private fun correctCollectorIndexesOnDropOldest(newHead: Long) {
         forEachSlotLocked { slot ->
-            @Suppress("ConvertTwoComparisonsToRangeCheck") // Bug in JS backend
-            if (slot.index >= 0 && slot.index < newHead) {
+            if (slot.index in 0..<newHead) {
                 slot.index = newHead // force move it up (this collector was too slow and missed the value at its index)
             }
         }
@@ -542,8 +541,7 @@ internal open class SharedFlowImpl<T>(
         // take into account a special case of sync shared flow that can go past 1st queued emitter
         if (bufferCapacity == 0 && queueSize > 0) newMinCollectorIndex++
         forEachSlotLocked { slot ->
-            @Suppress("ConvertTwoComparisonsToRangeCheck") // Bug in JS backend
-            if (slot.index >= 0 && slot.index < newMinCollectorIndex) newMinCollectorIndex = slot.index
+            if (slot.index in 0..<newMinCollectorIndex) newMinCollectorIndex = slot.index
         }
         assert { newMinCollectorIndex >= minCollectorIndex } // can only grow
         if (newMinCollectorIndex <= minCollectorIndex) return EMPTY_RESUMES // nothing changes
@@ -578,21 +576,17 @@ internal open class SharedFlowImpl<T>(
                 }
             }
         }
-        // Compute new buffer size -> how many values we now actually have after resume
-        val newBufferSize1 = (newBufferEndIndex - head).toInt()
-        // Note: When nCollectors == 0 we resume ALL queued emitters and we might have resumed more than bufferCapacity,
-        // and newMinCollectorIndex might pointing the wrong place because of that. The easiest way to fix it is by
-        // forcing newMinCollectorIndex = newBufferEndIndex. We do not needed to update newBufferSize1 (which could be
-        // too big), because the only use of newBufferSize1 in the below code is in the minOf(replay, newBufferSize1)
-        // expression, which coerces values that are too big anyway.
-        if (nCollectors == 0) newMinCollectorIndex = newBufferEndIndex
         // Compute new replay size -> limit to replay the number of items we need, take into account that it can only grow
-        var newReplayIndex = maxOf(replayIndex, newBufferEndIndex - minOf(replay, newBufferSize1))
+        var newReplayIndex = maxOf(replayIndex, head, newBufferEndIndex - replay)
         // adjustment for synchronous case with cancelled emitter (NO_VALUE)
         if (bufferCapacity == 0 && newReplayIndex < newQueueEndIndex && buffer!!.getBufferAt(newReplayIndex) == NO_VALUE) {
             newBufferEndIndex++
             newReplayIndex++
         }
+        // Note: When nCollectors == 0 we resume ALL queued emitters and we might have resumed more than bufferCapacity,
+        // and newMinCollectorIndex might pointing the wrong place because of that. The easiest way to fix it is by
+        // forcing newMinCollectorIndex = newBufferEndIndex.
+        if (nCollectors == 0) newMinCollectorIndex = newBufferEndIndex
         // Update buffer state
         updateBufferLocked(newReplayIndex, newMinCollectorIndex, newBufferEndIndex, newQueueEndIndex)
         // just in case we've moved all buffered emitters and have NO_VALUE's at the tail now
@@ -619,6 +613,7 @@ internal open class SharedFlowImpl<T>(
         bufferSize = (newBufferEndIndex - newHead).toInt()
         queueSize = (newQueueEndIndex - newBufferEndIndex).toInt()
         // check our key invariants (just in case)
+        assert { bufferSize <= bufferCapacity }
         assert { bufferSize >= 0 }
         assert { queueSize >= 0 }
         assert { replayIndex <= this.head + bufferSize }
@@ -713,7 +708,7 @@ internal open class SharedFlowImpl<T>(
 
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseSharedFlow(context, capacity, onBufferOverflow)
-    
+
     private class Emitter(
         @JvmField val flow: SharedFlowImpl<*>,
         @JvmField var index: Long,

@@ -86,7 +86,7 @@ import kotlin.math.*
  *
  * The scheduler does not limit the count of pending blocking tasks, potentially creating up to [maxPoolSize] threads.
  * End users do not have access to the scheduler directly and can dispatch blocking tasks only with
- * [LimitingDispatcher] that does control concurrency level by its own mechanism.
+ * [LimitedDispatcher] that does control concurrency level by its own mechanism.
  */
 @Suppress("NOTHING_TO_INLINE")
 internal class CoroutineScheduler(

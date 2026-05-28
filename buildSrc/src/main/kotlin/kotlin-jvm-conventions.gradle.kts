@@ -3,6 +3,7 @@
 import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.gradle.api.tasks.bundling.Jar
 
 plugins {
     kotlin("jvm")
@@ -42,4 +43,8 @@ tasks.withType<Test> {
     }
     val stressTest = project.properties["stressTest"]
     if (stressTest != null) systemProperties["stressTest"] = stressTest
+}
+
+tasks.named<Jar>("jar") {
+    fillManifestImplementationAttributes(project)
 }
