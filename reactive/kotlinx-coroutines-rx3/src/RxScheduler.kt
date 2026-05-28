@@ -7,6 +7,8 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import java.util.concurrent.*
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.*
 
 /**
@@ -104,39 +106,77 @@ private typealias Task = suspend () -> Unit
  * Schedule [block] so that an adapted version of it, wrapped in [adaptForScheduling], executes after [delayMillis]
  * milliseconds.
  */
+@OptIn(ExperimentalAtomicApi::class)
 private fun CoroutineScope.scheduleTask(
     block: Runnable,
     delayMillis: Long,
     adaptForScheduling: (Task) -> Runnable
 ): Disposable {
     val ctx = coroutineContext
-    var handle: DisposableHandle? = null
-    val disposable = Disposable.fromRunnable {
-        // null if delay <= 0
-        handle?.dispose()
-    }
     val decoratedBlock = RxJavaPlugins.onSchedule(block)
+    // One of:
+    // - The user-visible Disposable. The task queries it just before running to see if it's still supposed to run.
+    // - `TASK_FINISHED`. The task sets it to indicate it will not observe the Disposable.
+    // - `null`. Initial value.
+    val disposableRef = AtomicReference<Any?>(null)
     suspend fun task() {
-        if (disposable.isDisposed) return
+        if ((disposableRef.load() as? Disposable)?.isDisposed == true) return
         try {
             runInterruptible {
                 decoratedBlock.run()
             }
         } catch (e: Throwable) {
             handleUndeliverableException(e, ctx)
+        } finally {
+            if (!disposableRef.compareAndSet(null, TASK_FINISHED)) {
+                // This task is almost finished, it cannot be cancelled anymore.
+                (disposableRef.load() as? WorkerTaskDisposable)?.cleanupOnScopeCancellationHandle?.dispose()
+            }
         }
     }
-
     val toSchedule = adaptForScheduling(::task)
     if (!isActive) return Disposable.disposed()
     if (delayMillis <= 0) {
         toSchedule.run()
+        return Disposable.empty().also { disposableRef.store(it) }
     } else {
-        @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
-        ctx.delay.invokeOnTimeout(delayMillis, toSchedule, ctx).let { handle = it }
+        @Suppress(
+            "INVISIBLE_MEMBER",
+            "INVISIBLE_REFERENCE"
+        ) // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+        run {
+            val timeoutHandle = ctx.delay.invokeOnTimeout(delayMillis, toSchedule, ctx)
+            // If the worker is cancelled, all outstanding work must be cancelled, too.
+            val onWorkerCancellationDisposal = ctx.job.disposeOnCompletion(timeoutHandle)
+            val disposable = WorkerTaskDisposable(timeoutHandle, onWorkerCancellationDisposal)
+            return if (disposableRef.compareAndSet(null, disposable)) {
+                disposable
+            } else {
+                onWorkerCancellationDisposal.dispose()
+                Disposable.empty()
+            }
+        }
     }
-    return disposable
 }
+
+private class WorkerTaskDisposable(
+    val timeoutHandle: DisposableHandle,
+    val cleanupOnScopeCancellationHandle: DisposableHandle,
+): Disposable {
+    private val isDisposedField = atomic(false)
+
+    override fun dispose() {
+        isDisposedField.value = true
+        timeoutHandle.dispose()
+        cleanupOnScopeCancellationHandle.dispose()
+    }
+
+    override fun isDisposed(): Boolean = isDisposedField.value
+
+    override fun toString(): String = "WorkerTaskDisposable(isDisposed=${isDisposed()})"
+}
+
+private val TASK_FINISHED = Any()
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary [Scheduler].

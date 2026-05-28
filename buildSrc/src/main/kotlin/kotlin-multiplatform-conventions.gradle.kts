@@ -1,6 +1,8 @@
 import org.gradle.api.tasks.testing.logging.*
+import org.gradle.api.tasks.bundling.Jar
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 
 plugins {
     kotlin("multiplatform")
@@ -29,18 +31,14 @@ kotlin {
         // According to https://kotlinlang.org/docs/native-target-support.html
         // Tier 1
         linuxX64()
-        macosX64()
         macosArm64()
         iosSimulatorArm64()
-        iosX64()
         // Tier 2
         linuxArm64()
         watchosSimulatorArm64()
-        watchosX64()
         watchosArm32()
         watchosArm64()
         tvosSimulatorArm64()
-        tvosX64()
         tvosArm64()
         iosArm64()
         // Tier 3
@@ -48,16 +46,22 @@ kotlin {
         androidNativeArm64()
         androidNativeX86()
         androidNativeX64()
+        iosX64()
         mingwX64()
         watchosDeviceArm64()
+
+        // Deprecated for removal: see KT-78660
+        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+        run {
+            macosX64()
+            tvosX64()
+            watchosX64()
+        }
     }
     js {
         @Suppress("DEPRECATION", "DEPRECATION_ERROR") // KT-68597, KT-68597
         outputModuleName = project.name
         nodejs()
-        compilations["main"]?.dependencies {
-            api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
-        }
     }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
@@ -66,16 +70,10 @@ kotlin {
         @Suppress("DEPRECATION", "DEPRECATION_ERROR") // KT-68597, KT-68597
         outputModuleName = project.name + "Wasm"
         nodejs()
-        compilations["main"]?.dependencies {
-            api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
-        }
     }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmWasi {
         nodejs()
-        compilations["main"]?.dependencies {
-            api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
-        }
         compilations.configureEach {
             compileTaskProvider.configure {
                 compilerOptions {
@@ -107,7 +105,6 @@ kotlin {
             // workaround for #3968 until this is fixed on atomicfu's side
             api("org.jetbrains.kotlinx:atomicfu:0.23.1")
         }
-        jsMain { }
         val wasmJsMain by getting {
         }
         val wasmJsTest by getting {
@@ -143,4 +140,22 @@ tasks.named("jvmTest", Test::class) {
         events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
     }
     project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
+}
+
+kotlin.targets.withType<KotlinJvmTarget>().configureEach {
+    // Fill attributes for the JVM implementation Jar only
+    tasks.named<Jar>(artifactsTaskName) {
+        fillManifestImplementationAttributes(project)
+    }
+}
+
+/*
+ * To avoid a conflict with a JPMS module provided by kotlinx-coroutines-*-jvm artifacts,
+ * an explicit automatic module name has to be specified in the manifest for metadata jars.
+ */
+tasks.named("allMetadataJar", Jar::class) {
+    val moduleName =  project.name.replace("-", ".") + ".artifact_disambiguating_module"
+    manifest {
+        attributes("Automatic-Module-Name" to moduleName)
+    }
 }

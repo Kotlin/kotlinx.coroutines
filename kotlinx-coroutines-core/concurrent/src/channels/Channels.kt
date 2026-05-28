@@ -25,7 +25,7 @@ import kotlin.jvm.*
  *
  * For this operation it is guaranteed that [failure][ChannelResult.failed] always contains an exception in it.
  *
- * @throws `InterruptedException` on JVM if the current thread is interrupted during the blocking send operation.
+ * Throws `InterruptedException` on JVM if the current thread is interrupted during the blocking send operation.
  */
 public fun <E> SendChannel<E>.trySendBlocking(element: E): ChannelResult<Unit> {
     /*

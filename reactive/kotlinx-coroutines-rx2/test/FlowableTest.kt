@@ -3,8 +3,6 @@ package kotlinx.coroutines.rx2
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.*
-import org.junit.*
-import org.junit.Test
 import kotlin.test.*
 
 class FlowableTest : TestBase() {

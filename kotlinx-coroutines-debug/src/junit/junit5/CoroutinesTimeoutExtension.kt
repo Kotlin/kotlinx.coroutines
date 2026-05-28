@@ -3,6 +3,7 @@ package kotlinx.coroutines.debug.junit5
 import kotlinx.coroutines.debug.*
 import kotlinx.coroutines.debug.runWithTimeoutDumpingCoroutines
 import org.junit.jupiter.api.extension.*
+import org.junit.jupiter.api.parallel.ResourceLock
 import org.junit.platform.commons.support.AnnotationSupport
 import java.lang.reflect.*
 import java.util.*

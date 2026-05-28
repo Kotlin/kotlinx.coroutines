@@ -1,6 +1,7 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.channels.BufferOverflow.*
+import kotlinx.coroutines.channels.ChannelResult.Companion.closed
 import kotlinx.coroutines.channels.ChannelResult.Companion.success
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*

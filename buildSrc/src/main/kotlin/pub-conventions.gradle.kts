@@ -14,7 +14,10 @@ apply(plugin = "signing")
 
 publishing {
     repositories {
-        configureMavenPublication(this, project)
+        maven {
+            name = "BuildLocal"
+            url = uri(project.rootProject.layout.buildDirectory.dir("build-local-repository"))
+        }
     }
 
     if (!isMultiplatform && !isBom) {
@@ -66,3 +69,8 @@ tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }
 
 // Compatibility with old TeamCity configurations that perform :kotlinx-coroutines-core:bintrayUpload
 tasks.register("bintrayUpload") { dependsOn(tasks.matching { it.name == "publish" }) }
+
+// Compatibility with old TeamCity configurations that perform `publishToMavenLocal`
+tasks.named("publishToMavenLocal") {
+    dependsOn(tasks.matching { it.name == "publishAllPublicationsToBuildLocalRepository" })
+}

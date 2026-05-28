@@ -199,4 +199,17 @@ class WithTimeoutTest : TestBase() {
         assertFalse(timeoutJob.isActive)
         assertFalse(timeoutJob.isCancelled)
     }
+
+    @Test
+    fun testTimeoutCancellationExceptionIncludesCoroutineName() = runTest {
+        val exception = assertFailsWith<TimeoutCancellationException> {
+            withContext(CoroutineName("waiting for x")) {
+                withTimeout(1) {
+                    awaitCancellation()
+                }
+            }
+        }
+        assertTrue(exception.message!!.contains("waiting for x"))
+        assertTrue(exception.message!!.contains("Timed out waiting", ignoreCase = true))
+    }
 }

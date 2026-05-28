@@ -9,6 +9,23 @@ Both bug reports and feature requests are welcome.
 Submit issues [here](https://github.com/Kotlin/kotlinx.coroutines/issues).
 Questions about usage and general inquiries are better suited for [StackOverflow](https://stackoverflow.com)
 or the `#coroutines` channel in [KotlinLang Slack](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up).
+There, questions get answered much quicker than they do in this issue tracker,
+while also reducing the load on the maintainers.
+
+### Commenting on issues
+
+Describing why you're interested in some specific issue helps us a lot with looking for the best solution.
+The more experiences, concerns, or suggestions get shared, the better!
+If you feel that something you know hasn't been said (or even if the issue discussion is too long to actually
+make sure of it), please do not hesitate to drop a line.
+
+If you feel like your case was already described and you have nothing to add, please still let us know about
+your interest by leaving a smiley (👍)! We use these as indicators of demand.
+
+Plese not that there is no need to leave a comment in this case, though.
+"+1"-style remarks or questions about the progress on an issue do not bring anything new
+and only create noise, complicating the job of finding insight in the discussion.
+Please avoid this. We reserve the right to delete such comments.
 
 ## Submitting PRs
 
@@ -35,48 +52,36 @@ so do familiarize yourself with the following guidelines.
     then separate them with a comment instead.
   * [Build the project](#building) to make sure everything works and passes the tests.
 * If you fix a bug:
+  * Note that what is a bug for some can be a feature for others.
+    Are you truly fixing a problem? Is there an open issue about it?
   * Write the test that reproduces the bug.
   * Fixes without tests are accepted only in exceptional circumstances if it can be shown that writing the 
     corresponding test is too hard or otherwise impractical.
   * Follow the style of writing tests that is used in this project: 
     name test functions as `testXxx`. Don't use backticks in test names.
 * If you introduce any new public APIs:
-  * Comment on the existing issue if you want to work on it or create one beforehand. 
-    Ensure that not only the issue describes a problem, but also that the proposed solution has received positive
-    feedback. Propose a solution if there isn't any.
-    PRs that add new API without a corresponding issue with positive feedback about the proposed implementation are
-    unlikely to be approved or reviewed.
+  * Before setting out to work on a problem, comment on the existing issue or create one,
+    proposing a solution and gathering feedback first before implementing it.
+    PRs that add new API without the corresponding issue with positive feedback about the proposed implementation are
+    very unlikely to be approved or reviewed.
   * All new APIs must come with documentation and tests.
   * All new APIs are initially released with the `@ExperimentalCoroutinesApi` annotation and graduate later.
   * [Update the public API dumps](#updating-the-public-api-dump) and commit the resulting changes as well. 
     It will not pass the tests otherwise.
-  * If you plan large API additions, then please start by submitting an issue with the proposed API design
-    to gather community feedback.
-  * [Contact the maintainers](#contacting-maintainers) to coordinate any extensive work in advance.
 
 ## Building
 
 This library is built with Gradle. 
 
-* Run `./gradlew build` to build. It also runs all the tests.
-* Run `./gradlew <module>:check` to test the module you are looking at to speed 
+* Run `./gradlew build` to build, also running all of the tests.
+* Run `./gradlew <module>:check` to test the module you are working with to speed
   things up during development.
 * Run `./gradlew <module>:jvmTest` to perform only the fast JVM tests of a multiplatform module.
-   
-You can import this project into IDEA, but you have to delegate build actions
-to Gradle (in Preferences -> Build, Execution, Deployment -> Build Tools -> Gradle -> Build and run).
+* Run `./gradlew <module>:jvmTest -Pstress=true` to run both fast and slow JVM tests.
 
 ### Environment requirements
 
-* JDK >= 11 referred to by the `JAVA_HOME` environment variable.
-* JDK 1.8 referred to by the `JDK_18` environment variable. Only used by nightly stress-tests. 
-  It is OK to have `JDK_18` point to a non-1.8 JDK (e.g. `JAVA_HOME`) for external contributions.
-
-For external contributions you can, for example, add this to your shell startup scripts (e.g. `~/.zshrc`):
-```shell
-# This assumes JAVA_HOME is set already to a JDK >= 11 version
-export JDK_18="$JAVA_HOME"
-```
+JDK >= 11 referred to by the `JAVA_HOME` environment variable.
 
 ### Running the Knit tool
 
@@ -86,8 +91,8 @@ export JDK_18="$JAVA_HOME"
 
 ### Updating the public API dump
 
-* Use the [Binary Compatibility Validator](https://github.com/Kotlin/binary-compatibility-validator/blob/master/README.md) for updates to public API:
-  * Run `./gradlew apiDump` to update API index files. 
+* Use the Kotlin Gradle Plugin's ABI validation for updates to public API:
+  * Run `./gradlew updateLegacyAbi` to update API index files.
   * Commit the updated API indexes together with other changes.
 
 ## Releases

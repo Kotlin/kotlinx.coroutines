@@ -25,3 +25,11 @@
 
 # An annotation used for build tooling, won't be directly accessed.
 -dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+
+# Keep GC anchor fields that prevent the sharing coroutine from being collected.
+-keepclassmembers class kotlinx.coroutines.flow.ReadonlySharedFlow {
+    kotlinx.coroutines.Job job;
+}
+-keepclassmembers class kotlinx.coroutines.flow.ReadonlyStateFlow {
+    kotlinx.coroutines.Job job;
+}

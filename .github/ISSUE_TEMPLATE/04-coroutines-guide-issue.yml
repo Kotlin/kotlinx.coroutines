@@ -1,0 +1,60 @@
+name: Documentation issue
+description: Report missing, unclear, or incorrect documentation in the Coroutines guide
+title: "[Docs] "
+labels:
+  - guide
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve the documentation!
+
+        If something in the Coroutines guide was confusing, misleading,
+        missing, or simply didn’t help — please let us know.
+
+        If you’re not sure how to phrase it, just describe where you got stuck.
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Where is the issue?
+      description: |
+        A link to the page or a short description of where this appears.
+      placeholder: |
+        https://kotlinlang.org/docs/coroutines-guide.html
+        or: “Channels → Fan-out section”
+    validations:
+      required: false
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What’s wrong or confusing?
+      description: |
+        Describe what didn’t work for you, or what you think is missing or incorrect.
+      placeholder: |
+        The explanation of ... is confusing because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Any suggestions? (optional)
+      description: |
+        If you have an idea how this could be explained better,
+        or have seen a good explanation elsewhere, feel free to share.
+      placeholder: |
+        This would make more sense to me with an explanation like this...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else? (optional)
+      description: |
+        Screenshots, links, examples, or related issues.
+    validations:
+      required: false

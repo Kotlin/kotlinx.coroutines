@@ -180,7 +180,7 @@ private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<Stac
 
     var last = continuation
     while (true) {
-        last = (last as? CoroutineStackFrame)?.callerFrame ?: break
+        last = last.callerFrame ?: break
         last.getStackTraceElement()?.let { stack.add(it) }
     }
     return stack

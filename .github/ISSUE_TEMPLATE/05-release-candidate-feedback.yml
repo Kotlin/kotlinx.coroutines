@@ -1,0 +1,61 @@
+name: Release candidate feedback
+description: Report a regression or issue found in a Release Candidate
+title: "RC: "
+labels:
+  - bug
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing a Release Candidate!
+
+        If something broke or started behaving differently in an RC,
+        please let us know as soon as possible.
+
+        If you’re not 100% sure whether this also happens in the latest stable release,
+        that’s okay — still file the issue and describe what you see.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What broke or changed?
+      description: |
+        Describe the observed behavior.
+        Even a rough description is helpful.
+      placeholder: |
+        After updating to the RC, I noticed that...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Reproducer (optional)
+      description: |
+        Any form of reproducer is welcome.
+
+        - A minimal, self-contained snippet is ideal
+        - A small sample project is great
+        - A real-world project or production code is also fine if isolating the issue is hard
+
+        If the code is private, please mention that — we can discuss alternatives.
+      placeholder: |
+        ```kotlin
+        runBlocking {
+            // example
+        }
+        ```
+
+        or a link to a repository / project
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else? (optional)
+      description: |
+        Versions, environment details, logs, or anything that might help.
+    validations:
+      required: false

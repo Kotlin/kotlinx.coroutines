@@ -395,6 +395,7 @@ public fun <T> MutableSharedFlow<T>.asSharedFlow(): SharedFlow<T> =
 public fun <T> MutableStateFlow<T>.asStateFlow(): StateFlow<T> =
     ReadonlyStateFlow(this, null)
 
+// Note: referenced by name in bundled ProGuard/R8 rules.
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class ReadonlySharedFlow<T>(
     flow: SharedFlow<T>,
@@ -405,6 +406,7 @@ private class ReadonlySharedFlow<T>(
         fuseSharedFlow(context, capacity, onBufferOverflow)
 }
 
+// Note: referenced by name in bundled ProGuard/R8 rules.
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class ReadonlyStateFlow<T>(
     flow: StateFlow<T>,

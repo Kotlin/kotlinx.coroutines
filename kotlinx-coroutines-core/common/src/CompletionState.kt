@@ -34,11 +34,11 @@ internal open class CompletedExceptionally(
 }
 
 /**
- * A specific subclass of [CompletedExceptionally] for cancelled [AbstractContinuation].
+ * A specific subclass of [CompletedExceptionally] for cancelled [CancellableContinuationImpl].
  *
  * @param continuation the continuation that was cancelled.
  * @param cause the exceptional completion cause. If `cause` is null, then a [CancellationException]
- *        if created on first access to [exception] property.
+ *        if created on first access to [cause] property.
  */
 internal class CancelledContinuation(
     continuation: Continuation<*>,

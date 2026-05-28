@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.*
 import kotlin.test.*
 
 /**
- * Test that ensures implementation correctness of [LimitingDispatcher] and
+ * Test that ensures implementation correctness of [kotlinx.coroutines.internal.LimitedDispatcher] and
  * designed to stress its particular implementation details.
  */
 class BlockingCoroutineDispatcherLivenessStressTest : SchedulerTestBase() {

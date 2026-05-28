@@ -106,7 +106,7 @@ public sealed interface SelectBuilder<in R> {
     @Deprecated(
         message = "Replaced with the same extension function",
         level = DeprecationLevel.ERROR,
-        replaceWith = ReplaceWith(expression = "onTimeout", imports = ["kotlinx.coroutines.selects.onTimeout"])
+        replaceWith = ReplaceWith(expression = "onTimeout(timeMillis, block)", imports = ["kotlinx.coroutines.selects.onTimeout"])
     ) // Since 1.7.0, was experimental
     public fun onTimeout(timeMillis: Long, block: suspend () -> R): Unit = onTimeout(timeMillis, block)
 }
@@ -416,7 +416,7 @@ internal open class SelectImplementation<R>(
      *
      * Unfortunately, we cannot store the result in the [state] field, as the latter stores
      * the clause object upon selection (see [ClauseData.clauseObject] and [SelectClause.clauseObject]).
-     * Instead, it is possible to merge the [internalResult] and [disposableHandle] fields into
+     * Instead, it is possible to merge the [internalResult] and [disposableHandleOrSegment] fields into
      * one that stores either result when the clause is successfully registered ([inRegistrationPhase] is `true`),
      * or [DisposableHandle] instance when the clause is completed during registration ([inRegistrationPhase] is `false`).
      * Yet, this optimization is omitted for code simplicity.

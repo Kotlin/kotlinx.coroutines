@@ -19,7 +19,7 @@ private typealias Node = LockFreeLinkedListNode
  * Important notes:
  * - There are no operations to add items to left side of the list, only to the end (right side), because we cannot
  *   efficiently linearize them with atomic multi-step head-removal operations. In short,
- *   support for [describeRemoveFirst] operation precludes ability to add items at the beginning.
+ *   support for the [remove] operation precludes ability to add items at the beginning.
  * - Previous pointers are not marked for removal. We don't support linearizable backwards traversal.
  * - Remove-helping logic is simplified and consolidated in [correctPrev] method.
  *
