@@ -24,8 +24,12 @@ class MDCContextPlusOperatorTest : TestBase() {
             (MDCContext(mapOf("key" to "value", "other" to "x")) + mapOf("key" to "new")).contextMap,
         )
         assertEquals(
-            emptyMap(),
-            (MDCContext() + emptyMap()).contextMap,
+            null,
+            (MDCContext(null) + emptyMap()).contextMap,
+        )
+        assertEquals(
+            mapOf("key" to "value"),
+            (MDCContext(mapOf("key" to "value")) + emptyMap()).contextMap,
         )
     }
 
@@ -64,8 +68,24 @@ class MDCContextPlusOperatorTest : TestBase() {
             (MDCContext(mapOf("key" to "value")) + listOf("key" to "new", "b" to "2")).contextMap,
         )
         assertEquals(
-            emptyMap(),
-            (MDCContext() + emptyList()).contextMap,
+            null,
+            (MDCContext(null) + emptyList()).contextMap,
+        )
+        assertEquals(
+            mapOf("key" to "value"),
+            (MDCContext(mapOf("key" to "value")) + emptyList()).contextMap,
+        )
+
+        // Regression: one-shot sequences must only be iterated once.
+        var iterated = false
+        val oneShot = Iterable {
+            check(!iterated)
+            iterated = true
+            listOf("a" to "1", "b" to "2").iterator()
+        }
+        assertEquals(
+            mapOf("a" to "1", "b" to "2"),
+            (MDCContext() + oneShot).contextMap,
         )
     }
 
@@ -84,8 +104,19 @@ class MDCContextPlusOperatorTest : TestBase() {
             (MDCContext(mapOf("key" to "value")) + sequenceOf("key" to "new", "b" to "2")).contextMap,
         )
         assertEquals(
-            emptyMap(),
-            (MDCContext() + emptySequence()).contextMap,
+            null,
+            (MDCContext(null) + emptySequence()).contextMap,
+        )
+        assertEquals(
+            mapOf("key" to "value"),
+            (MDCContext(mapOf("key" to "value")) + emptySequence()).contextMap,
+        )
+
+        // Regression: one-shot sequences must only be iterated once.
+        val oneShot = sequenceOf("a" to "1", "b" to "2").constrainOnce()
+        assertEquals(
+            mapOf("a" to "1", "b" to "2"),
+            (MDCContext() + oneShot).contextMap,
         )
     }
 
@@ -104,8 +135,12 @@ class MDCContextPlusOperatorTest : TestBase() {
             (MDCContext(mapOf("key" to "value")) + arrayOf("key" to "new", "b" to "2")).contextMap,
         )
         assertEquals(
-            emptyMap(),
-            (MDCContext() + emptyArray<Pair<String, String>>()).contextMap,
+            null,
+            (MDCContext(null) + emptyArray<Pair<String, String>>()).contextMap,
+        )
+        assertEquals(
+            mapOf("key" to "value"),
+            (MDCContext(mapOf("key" to "value")) + emptyArray()).contextMap,
         )
     }
 }

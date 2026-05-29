@@ -116,11 +116,14 @@ public class MDCContext(
 /**
  * Returns a new [MDCContext] with all entries from [map] added to this context.
  *
+ * If [map] is empty, this context is returned unchanged.
+ *
  * If [map] contains keys that are already present in this context, values from [map]
  * replace existing values.
  */
 @ExperimentalCoroutinesApi
-public operator fun MDCContext.plus(map: Map<String, String>): MDCContext = MDCContext((contextMap ?: emptyMap()) + map)
+public operator fun MDCContext.plus(map: Map<String, String>): MDCContext =
+    if (map.isEmpty()) this else MDCContext((contextMap ?: emptyMap()) + map)
 
 /**
  * Returns a new [MDCContext] with [pair] added to this context.
@@ -135,26 +138,47 @@ public operator fun MDCContext.plus(pair: Pair<String, String>): MDCContext = MD
 /**
  * Returns a new [MDCContext] with all [pairs] added to this context.
  *
+ * If [pairs] is empty, this context is returned unchanged.
+ *
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
  * in this context.
  */
 @ExperimentalCoroutinesApi
-public operator fun MDCContext.plus(pairs: Iterable<Pair<String, String>>): MDCContext = MDCContext((contextMap ?: emptyMap()) + pairs)
+public operator fun MDCContext.plus(pairs: Iterable<Pair<String, String>>): MDCContext = this + pairs.iterator()
 
 /**
  * Returns a new [MDCContext] with all [pairs] from the sequence added to this context.
  *
- * For duplicate keys, later values from [pairs] replace earlier values and values already present
- * in this context.
- */
-@ExperimentalCoroutinesApi
-public operator fun MDCContext.plus(pairs: Sequence<Pair<String, String>>): MDCContext = MDCContext((contextMap ?: emptyMap()) + pairs)
-
-/**
- * Returns a new [MDCContext] with all [pairs] from the array added to this context.
+ * If [pairs] is empty, this context is returned unchanged.
  *
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
  * in this context.
  */
 @ExperimentalCoroutinesApi
-public operator fun MDCContext.plus(pairs: Array<Pair<String, String>>): MDCContext = MDCContext((contextMap ?: emptyMap()) + pairs)
+public operator fun MDCContext.plus(pairs: Sequence<Pair<String, String>>): MDCContext = this + pairs.iterator()
+
+/**
+ * Returns a new [MDCContext] with all [pairs] from the array added to this context.
+ *
+ * If [pairs] is empty, this context is returned unchanged.
+ *
+ * For duplicate keys, later values from [pairs] replace earlier values and values already present
+ * in this context.
+ */
+@ExperimentalCoroutinesApi
+public operator fun MDCContext.plus(pairs: Array<Pair<String, String>>): MDCContext =
+    if (pairs.isEmpty()) this else MDCContext((contextMap ?: emptyMap()) + pairs)
+
+private operator fun MDCContext.plus(
+    iterator: Iterator<Pair<String, String>>,
+): MDCContext {
+    if (!iterator.hasNext()) return this
+    val base = contextMap
+    return MDCContext(buildMap {
+        if (base != null) putAll(base)
+        do {
+            val (key, value) = iterator.next()
+            put(key, value)
+        } while (iterator.hasNext())
+    })
+}
