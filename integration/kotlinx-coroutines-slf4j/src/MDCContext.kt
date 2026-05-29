@@ -132,7 +132,6 @@ public operator fun MDCContext.plus(map: Map<String, String>): MDCContext =
  * If the key `pair.first` is already present in this context, its existing value is replaced
  * with `pair.second`.
  */
-@ExperimentalCoroutinesApi
 public operator fun MDCContext.plus(pair: Pair<String, String>): MDCContext = MDCContext((contextMap ?: emptyMap()) + pair)
 
 /**
