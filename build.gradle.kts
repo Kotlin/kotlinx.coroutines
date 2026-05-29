@@ -45,10 +45,8 @@ allprojects {
         }
     }
 
-    if (shouldUseLocalMaven(rootProject)) {
-        repositories {
-            mavenLocal()
-        }
+    repositories {
+        mavenLocal()
     }
 
     // This project property is set during nightly stress test
@@ -73,6 +71,7 @@ allprojects {
          */
         google()
         mavenCentral()
+        mavenLocal()
         addDevRepositoryIfEnabled(this, project)
     }
 }

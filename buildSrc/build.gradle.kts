@@ -18,9 +18,7 @@ repositories {
     if (!kotlinDevUrl.isNullOrEmpty()) {
         maven(kotlinDevUrl)
     }
-    if (buildSnapshotTrain) {
-        mavenLocal()
-    }
+    mavenLocal()
 }
 
 val gradleProperties = Properties().apply {
