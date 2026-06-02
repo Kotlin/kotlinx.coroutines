@@ -7,7 +7,18 @@ pluginManagement {
 
     repositories {
         maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
-        gradlePluginPortal()
+        val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
+        if (cacheRedirectorEnabled) {
+            maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
+        } else {
+            gradlePluginPortal()
+        }
+        val prop = System.getProperty("build_snapshot_train")
+        var build_snapshot_train: String by extra
+        build_snapshot_train = if (prop != null && prop != "") "true" else "false"
+        if (build_snapshot_train.toBoolean()) {
+            mavenLocal()
+        }
     }
 }
 
@@ -19,9 +30,6 @@ fun module(path: String) {
     include(name)
     project(":$name").projectDir = file(path)
 }
-val prop = System.getProperty("build_snapshot_train")
-var build_snapshot_train: String by extra
-build_snapshot_train = if (prop != null && prop != "") "true" else "false"
 // ---------------------------
 
 include("benchmarks")
