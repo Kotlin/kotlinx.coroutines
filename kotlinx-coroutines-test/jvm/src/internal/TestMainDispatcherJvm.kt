@@ -5,27 +5,21 @@ import kotlinx.coroutines.internal.*
 
 internal class TestMainDispatcherFactory : MainDispatcherFactory {
 
-    override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher {
-        val otherFactories = allFactories.filter { it !== this }
-        val secondBestFactory = otherFactories.maxByOrNull { it.loadPriority } ?: MissingMainCoroutineDispatcherFactory
-        /* Do not immediately create the alternative dispatcher, as with `SUPPORT_MISSING` set to `false`,
-        it will throw an exception. Instead, create it lazily. */
-        return TestMainDispatcher({
-            val dispatcher = try {
-                secondBestFactory.tryCreateDispatcher(otherFactories)
+    override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher =
+        TestMainDispatcher(createInnerMain = {
+            /* Trying to allocate a non-test `Dispatchers.Main` may fail:
+               for example, `kotlinx-coroutines-android`'s implementation requires the Android runtime.
+               So, we won't even attempt to construct the alternative dispatcher until it's necessary. */
+            try {
+                val otherFactories = allFactories.filter { it !== this }
+                val secondBestFactory = otherFactories.maxByOrNull { it.loadPriority }
+                secondBestFactory?.createDispatcher(otherFactories)
             } catch (e: Throwable) {
+                /** Ignoring [MainDispatcherFactory.hintOnError] because the only implementation right now suggests
+                 * using `kotlinx-coroutines-test`, so the hint is useless in this scenario. */
                 reportMissingMainCoroutineDispatcher(e)
-            }
-            if (dispatcher.isMissing()) {
-                reportMissingMainCoroutineDispatcher(runCatching {
-                    // attempt to dispatch something to the missing dispatcher to trigger the exception.
-                    dispatcher.dispatch(dispatcher, Runnable { })
-                }.exceptionOrNull()) // can not be null, but it does not matter.
-            } else {
-                dispatcher
-            }
+            } ?: reportMissingMainCoroutineDispatcher()
         })
-    }
 
     /**
      * [Int.MAX_VALUE] -- test dispatcher always wins no matter what factories are present in the classpath.
@@ -35,10 +29,32 @@ internal class TestMainDispatcherFactory : MainDispatcherFactory {
         get() = Int.MAX_VALUE
 }
 
-internal actual fun Dispatchers.getTestMainDispatcher(): TestMainDispatcher {
-    val mainDispatcher = Main
-    require(mainDispatcher is TestMainDispatcher) { "TestMainDispatcher is not set as main dispatcher, have $mainDispatcher instead." }
+internal actual fun Dispatchers.getOrInstallTestMainDispatcher(): TestMainDispatcher {
+    val mainDispatcher = try {
+        Main
+    } catch (e: IllegalStateException) {
+        /**
+         * This can happen if [Main] is some other Main dispatcher with a higher priority
+         * or if the [TestMainDispatcherFactory] wasn't discovered by [java.util.ServiceLoader].
+         * We do not have any first-party Main dispatchers with a higher priority than the test one,
+         * and we do not support them, so this exception assumes the second scenario.
+         */
+        throw IllegalStateException(
+            "Failed to install a `kotlinx.coroutines.test` Main dispatcher as Dispatchers.Main", e
+        )
+    }
+    check(mainDispatcher is TestMainDispatcher) { "TestMainDispatcher is not set as main dispatcher, have $mainDispatcher instead." }
     return mainDispatcher
+}
+
+internal actual fun Dispatchers.getTestMainDispatcherOrNull(): TestMainDispatcher? = try {
+    Main as? TestMainDispatcher
+} catch (_: IllegalStateException) {
+    /**
+     * This may happen in one case only: [TestMainDispatcher] was not successfully installed as the Main dispatcher.
+     * Then, the current Main dispatcher isn't a [TestMainDispatcher], so we have to return `null`.
+     */
+    null
 }
 
 private fun reportMissingMainCoroutineDispatcher(e: Throwable? = null): Nothing {
