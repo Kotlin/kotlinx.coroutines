@@ -9,11 +9,12 @@ val buildSnapshotTrain = properties["build_snapshot_train"]?.toString()?.toBoole
 val kotlinDevUrl = project.providers.gradleProperty("kotlin_repo_url").orNull
 
 repositories {
-    mavenCentral()
     if (cacheRedirectorEnabled) {
         maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
+        maven("https://cache-redirector.jetbrains.com/maven-central")
     } else {
         maven("https://plugins.gradle.org/m2")
+        mavenCentral()
     }
     if (!kotlinDevUrl.isNullOrEmpty()) {
         maven(kotlinDevUrl)
