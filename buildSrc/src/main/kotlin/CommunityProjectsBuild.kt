@@ -78,7 +78,24 @@ fun getKotlinDevRepositoryUrl(project: Project): String? {
  */
 fun addDevRepositoryIfEnabled(rh: RepositoryHandler, project: Project) {
     val devRepoUrl = getKotlinDevRepositoryUrl(project) ?: return
-    rh.maven(devRepoUrl)
+    val version = getKotlinDevVersion(project) ?: return
+    rh.exclusiveContent {
+        forRepository {
+            rh.maven(devRepoUrl)
+        }
+        filter {
+            includeVersionByRegex("org.jetbrains.kotlin", ".*", version)
+        }
+    }
+}
+
+fun getKotlinDevVersion(project: Project): String? {
+    val version = project.providers.gradleProperty("kotlin_version").orNull
+    if (version != null) {
+        LOGGER.info("""Configured Kotlin Compiler version: '$version' for project ${project.name}""")
+        return version
+    }
+    return null
 }
 
 /**

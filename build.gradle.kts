@@ -3,12 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.gradle.kotlin.dsl.*
 
 buildscript {
-    if (shouldUseLocalMaven(rootProject)) {
-        repositories {
-            mavenLocal()
-        }
-    }
-
     repositories {
         mavenCentral()
         maven(url = "https://plugins.gradle.org/m2/")
