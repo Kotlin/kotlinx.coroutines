@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import org.junit.Test
 import org.junit.runner.*
+import android.os.Looper
 import org.robolectric.*
 import org.robolectric.annotation.*
 import org.robolectric.shadows.*
@@ -32,7 +33,7 @@ open class FirstRobolectricTest {
     @Test
     fun testDelay() {
         val component = TestComponent()
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         component.launchDelayed()
         mainLooper.runToNextTask()
@@ -42,7 +43,7 @@ open class FirstRobolectricTest {
     }
 
     private fun checkComponent(component: TestComponent) {
-        val mainLooper = ShadowLooper.getShadowMainLooper()
+        val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         component.launchSomething()
         assertFalse(component.launchCompleted)
