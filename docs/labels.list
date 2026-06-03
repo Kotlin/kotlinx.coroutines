@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE labels SYSTEM "https://resources.jetbrains.com/writerside/1.0/labels-list.dtd">
+<labels xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/labels.xsd">
+
+    <primary-label id="experimental-general" name="Experimental" short-name="Experimental" href="components-stability.html#stability-levels-explained" color="red">The feature is Experimental. It may be dropped or changed at any time. Use it only for evaluation purposes.</primary-label>
+    <primary-label id="experimental-opt-in" name="Experimental" short-name="Experimental" href="components-stability.html#stability-levels-explained" color="red" >The feature is Experimental. It may be dropped or changed at any time. Opt-in is required (see the details below), and you should use it only for evaluation purposes.</primary-label>
+    <primary-label id="experimental-exp" name="Experimental" short-name="Experimental" href="components-stability.html#stability-levels-explained" color="red">This includes features with Beta, Alpha, and Experimental status.</primary-label>
+    <primary-label id="alpha" name="Alpha" short-name="α" href="components-stability.html#stability-levels-explained" color="strawberry">The feature is in Alpha. It may change incompatibly and require manual migration in the future.</primary-label>
+    <primary-label id="beta" name="Beta" short-name="β" href="components-stability.html#stability-levels-explained" color="tangerine">The feature is in Beta. It is almost stable, but migration steps may be required in the future. We'll do our best to minimize any changes you have to make.</primary-label>
+    <primary-label id="advanced" name="Advanced" short-name="☆" color="purple"></primary-label>
+    <primary-label id="eap" name="EAP" short-name="EAP" color="red">This functionality is available only in the latest EAP version.</primary-label>
+</labels>

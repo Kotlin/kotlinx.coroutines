@@ -8,7 +8,7 @@
 		<toc-element topic="cancellation-and-timeouts.md" toc-title="Cancellation"/>
 		<toc-element topic="composing-suspending-functions.md"/>
 		<toc-element topic="coroutine-context-and-dispatchers.md"/>
-		<toc-element topic="flow.md"/>
+		<toc-element topic="coroutines-flow.md"/>
 		<toc-element topic="channels.md"/>
 		<toc-element topic="exception-handling.md"/>
 		<toc-element topic="shared-mutable-state-and-concurrency.md"/>
