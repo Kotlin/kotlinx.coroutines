@@ -74,27 +74,29 @@ public fun <T: JsAny?> Promise<T>.asDeferred(): Deferred<T> {
  * suspending function is waiting on the promise, this function immediately resumes with [CancellationException].
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+ *
+ * ## Current behavior on promise rejection (that may change in future releases)
+ *
+ * - For JS exceptions:
+ *   + On JS, they are thrown as is.
+ *   + On Wasm/JS, they are represented as a [JsException] object.
+ * - For non-exceptions:
+ *   + On JS, a plain [Exception] is thrown with a clarifying message.
+ *   + On Wasm/JS, they are wrapped in a [JsException] object, with [thrownValue] set to what was thrown.
+ * - Kotlin/Wasm/JS exceptions are rethrown as is.
  */
 @OptIn(ExperimentalWasmJsInterop::class)
 public suspend fun <T: JsAny?> Promise<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     this@await.then(
         onFulfilled = { cont.resume(it); null },
         onRejected = {
-            /**
-             * The observable behavior is:
-             * - For JS exceptions:
-             *   + On JS, they are thrown as is.
-             *   + On Wasm/JS, they are represented as a [JsException] object.
-             * - For non-exceptions:
-             *   + On JS, a plain [Exception] is thrown with a clarifying message.
-             *   + On Wasm/JS, they are wrapped in a [JsException] object, with [thrownValue] set to what was thrown.
-             * - Kotlin/Wasm/JS exceptions are rethrown as is.
-             *
-             * Since Wasm/JS support is experimental, the specifics may change.
-             * In any case, we consistently throw a [JsException] if this is a JS exception.
-             */
-            val exception = it.toThrowableOrNull()
-                ?: Exception("Promise rejected with a non-Throwable exception '$it' (type ${it::class})")
+            // KT-86697 prevents us from handling `undefined` as the rejection value on Wasm/JS, but on JS, this works:
+            val exception = try {
+                it.toThrowableOrNull()
+                    ?: Exception("Promise rejected with a non-Throwable exception '$it' (type ${it::class})")
+            } catch (_: Throwable) {
+                Exception("Promise rejected with a non-Throwable exception")
+            }
             cont.resumeWithException(exception)
             null
         })
