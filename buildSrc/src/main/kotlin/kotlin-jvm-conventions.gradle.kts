@@ -15,9 +15,10 @@ java {
 }
 
 kotlin {
-    @OptIn(ExperimentalAbiValidation::class)
-    abiValidation {
-        enabled = abiCheckEnabled
+    if (abiCheckEnabled) {
+        @OptIn(ExperimentalAbiValidation::class)
+        abiValidation {
+        }
     }
 
     compilerOptions {
@@ -43,10 +44,6 @@ tasks.withType<Test> {
     }
     val stressTest = project.properties["stressTest"]
     if (stressTest != null) systemProperties["stressTest"] = stressTest
-}
-
-tasks.check {
-   dependsOn(tasks.checkLegacyAbi)
 }
 
 tasks.named<Jar>("jar") {
