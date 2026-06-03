@@ -47,11 +47,6 @@ tasks.withType<Test> {
     if (stressTest != null) systemProperties["stressTest"] = stressTest
 }
 
-// TODO: delete this after starting to use Kotlin 2.3.20
-tasks.check {
-    dependsOn(tasks.matching { it.name == "checkLegacyAbi" })
-}
-
 tasks.named<Jar>("jar") {
     fillManifestImplementationAttributes(project)
 }

@@ -142,11 +142,6 @@ tasks.named("jvmTest", Test::class) {
     project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
 }
 
-// TODO: delete this after starting to use Kotlin 2.3.20
-tasks.check {
-    dependsOn(tasks.matching { it.name == "checkLegacyAbi" })
-}
-
 kotlin.targets.withType<KotlinJvmTarget>().configureEach {
     // Fill attributes for the JVM implementation Jar only
     tasks.named<Jar>(artifactsTaskName) {
