@@ -114,7 +114,7 @@ public class MDCContext(
 }
 
 /**
- * Returns a new [MDCContext] with all entries from [map] added to this context.
+ * Returns an [MDCContext] with all entries from [map] added to this context.
  *
  * If [map] is empty, this context is returned unchanged.
  *
@@ -135,9 +135,10 @@ public operator fun MDCContext.plus(map: Map<String, String>): MDCContext =
 public operator fun MDCContext.plus(pair: Pair<String, String>): MDCContext = MDCContext((contextMap ?: emptyMap()) + pair)
 
 /**
- * Returns a new [MDCContext] with all [pairs] added to this context.
+ * Returns an [MDCContext] with all [pairs] added to this context.
  *
  * If [pairs] is empty, this context is returned unchanged.
+ *
  * This behavior may change in the future as the API stabilizes.
  *
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
@@ -147,9 +148,10 @@ public operator fun MDCContext.plus(pair: Pair<String, String>): MDCContext = MD
 public operator fun MDCContext.plus(pairs: Iterable<Pair<String, String>>): MDCContext = this + pairs.iterator()
 
 /**
- * Returns a new [MDCContext] with all [pairs] from the sequence added to this context.
+ * Returns an [MDCContext] with all [pairs] from the sequence added to this context.
  *
  * If [pairs] is empty, this context is returned unchanged.
+ *
  * This behavior may change in the future as the API stabilizes.
  *
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
@@ -159,9 +161,10 @@ public operator fun MDCContext.plus(pairs: Iterable<Pair<String, String>>): MDCC
 public operator fun MDCContext.plus(pairs: Sequence<Pair<String, String>>): MDCContext = this + pairs.iterator()
 
 /**
- * Returns a new [MDCContext] with all [pairs] from the array added to this context.
+ * Returns an [MDCContext] with all [pairs] from the array added to this context.
  *
  * If [pairs] is empty, this context is returned unchanged.
+ *
  * This behavior may change in the future as the API stabilizes.
  *
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
