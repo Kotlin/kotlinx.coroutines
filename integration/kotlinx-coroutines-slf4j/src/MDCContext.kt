@@ -138,6 +138,7 @@ public operator fun MDCContext.plus(pair: Pair<String, String>): MDCContext = MD
  * Returns a new [MDCContext] with all [pairs] added to this context.
  *
  * If [pairs] is empty, this context is returned unchanged.
+ * This behavior may change in the future as the API stabilizes.
  *
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
  * in this context.
@@ -149,6 +150,7 @@ public operator fun MDCContext.plus(pairs: Iterable<Pair<String, String>>): MDCC
  * Returns a new [MDCContext] with all [pairs] from the sequence added to this context.
  *
  * If [pairs] is empty, this context is returned unchanged.
+ * This behavior may change in the future as the API stabilizes.
  *
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
  * in this context.
@@ -160,6 +162,7 @@ public operator fun MDCContext.plus(pairs: Sequence<Pair<String, String>>): MDCC
  * Returns a new [MDCContext] with all [pairs] from the array added to this context.
  *
  * If [pairs] is empty, this context is returned unchanged.
+ * This behavior may change in the future as the API stabilizes.
  *
  * For duplicate keys, later values from [pairs] replace earlier values and values already present
  * in this context.
