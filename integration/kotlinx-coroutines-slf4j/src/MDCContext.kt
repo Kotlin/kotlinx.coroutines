@@ -27,7 +27,7 @@ public typealias MDCContextMap = Map<String, String>?
  * You can derive a new [MDCContext] with additional entries via the `+` operators.
  *
  * ```
- * launch(MDCContext() + mapOf("key" to "value")) { // Propagate existing MDC with additional key-value pairs
+ * launch(MDCContext() + ("key" to "value")) { // Propagate existing MDC with additional key-value pairs
  *     logger.info { "..." } // The MDC context contains the mapping here
  * }
  * ```
@@ -52,7 +52,7 @@ public typealias MDCContextMap = Map<String, String>?
  * ```
  * launch(MDCContext()) {
  *     MDC.put("key", "value") // This update will be captured
- *     withContext(MDCContext() + mapOf("otherKey" to "otherValue")) { // This update will be captured as well
+ *     withContext(MDCContext() + ("otherKey" to "otherValue")) { // This update will be captured as well
  *         delay(100)
  *         println(MDC.get("key")) // This will print "value"
  *         println(MDC.get("otherKey")) // This will print "otherValue"
@@ -65,8 +65,8 @@ public typealias MDCContextMap = Map<String, String>?
  *
  * ```
  * val contextMap = withContext(MDCContext(mapOf("a" to "b"))) {
- *     withContext(MDCContext() + mapOf("key" to "value")) {
- *         withContext(MDCContext() + mapOf("key2" to "value2")) {
+ *     withContext(MDCContext() + ("key" to "value")) {
+ *         withContext(MDCContext() + ("key2" to "value2")) {
  *             yield()
  *             MDC.getCopyOfContextMap()
  *         }
