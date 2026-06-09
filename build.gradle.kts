@@ -54,11 +54,16 @@ allprojects {
 apply(plugin = "base")
 apply(plugin = "kover-conventions")
 
+val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
 // Configure repositories
 allprojects {
     repositories {
         google()
-        mavenCentral()
+        if (cacheRedirectorEnabled) {
+            maven("https://cache-redirector.jetbrains.com/maven-central")
+        } else {
+            mavenCentral()
+        }
         addDevRepositoryIfEnabled(this, project)
     }
 }
