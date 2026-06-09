@@ -58,6 +58,7 @@ allprojects {
 apply(plugin = "base")
 apply(plugin = "kover-conventions")
 
+val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
 // Configure repositories
 allprojects {
     repositories {
@@ -66,7 +67,11 @@ allprojects {
          * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
          */
         google()
-        mavenCentral()
+        if (cacheRedirectorEnabled) {
+            maven("https://cache-redirector.jetbrains.com/maven-central")
+        } else {
+            mavenCentral()
+        }
         addDevRepositoryIfEnabled(this, project)
     }
 }
