@@ -1,19 +1,20 @@
-// This file was automatically generated from flow.md by Knit tool. Do not edit.
+// This file was automatically generated from coroutines-flow-operators.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.exampleFlow14
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-                      
-fun simple(): Flow<Int> = flow {
-    // The WRONG way to change context for CPU-consuming code in flow builder
-    kotlinx.coroutines.withContext(Dispatchers.Default) {
-        for (i in 1..3) {
-            Thread.sleep(100) // pretend we are computing it in CPU-consuming way
-            emit(i) // emit next value
-        }
-    }
+
+fun requestFlow(i: Int): Flow<String> = flow {
+    emit("$i: First") 
+    delay(500) // wait 500 ms
+    emit("$i: Second")    
 }
 
-fun main() = runBlocking<Unit> {
-    simple().collect { value -> println(value) } 
-}            
+fun main() = runBlocking<Unit> { 
+    val startTime = currentTimeMillis() // remember the start time 
+    (1..3).asFlow().onEach { delay(100) } // a number every 100 ms 
+        .flatMapLatest { requestFlow(it) }                                                                           
+        .collect { value -> // collect and print 
+            println("$value at ${currentTimeMillis() - startTime} ms from start") 
+        } 
+}

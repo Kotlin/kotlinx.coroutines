@@ -1,21 +1,15 @@
-// This file was automatically generated from flow.md by Knit tool. Do not edit.
+// This file was automatically generated from coroutines-flow-operators.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.exampleFlow15
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
-           
-fun simple(): Flow<Int> = flow {
-    for (i in 1..3) {
-        Thread.sleep(100) // pretend we are computing it in CPU-consuming way
-        log("Emitting $i")
-        emit(i) // emit next value
-    }
-}.flowOn(Dispatchers.Default) // RIGHT way to change context for CPU-consuming code in flow builder
+fun simple(): Flow<Int> = (1..3).asFlow()
 
 fun main() = runBlocking<Unit> {
-    simple().collect { value ->
-        log("Collected $value") 
-    } 
+    try {
+        simple().collect { value -> println(value) }
+    } finally {
+        println("Done")
+    }
 }            
