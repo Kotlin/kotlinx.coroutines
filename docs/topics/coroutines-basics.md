@@ -626,5 +626,5 @@ the JVM thread version may throw an out-of-memory error or slow down thread crea
 * Discover more about combining suspending functions in [Composing suspending functions](composing-suspending-functions.md).
 * Learn how to cancel coroutines and handle timeouts in [Cancellation and timeouts](cancellation-and-timeouts.md).
 * Dive deeper into coroutine execution and thread management in [Coroutine context and dispatchers](coroutine-context-and-dispatchers.md).
-* Learn how to return multiple asynchronously computed values in [Asynchronous flows](coroutines-flow.md).
+* Learn how to return multiple asynchronously computed values in [Flows](coroutines-flow.md).
 

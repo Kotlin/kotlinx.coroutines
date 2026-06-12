@@ -38,7 +38,7 @@ In a flow, values move from an emitter toward a collector, from *upstream* to *d
 Intermediate operators collect an upstream flow, apply an operation to its values, and return a new downstream flow.
 That downstream flow can become the upstream flow for the next collector.
 
-![Parts of a flow: emitter, intermediate operator (optional), collector. Values move from upstream to downstream.](flow-upstream-downstream.svg){width="700px"}
+![Parts of a flow: emitter, intermediate operator (optional), collector. Values move from upstream to downstream.](flow-upstream-downstream.svg){width=700}
 
 Kotlin provides the following flow types:
 
@@ -85,7 +85,7 @@ fun main() {
 {kotlin-runnable="true"}
 
 In this example, the `flow()` builder function returns a [`Flow<T>`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/), but it doesn't start executing its block.
-A cold flow is like a recipe: it defines how to produce values, but it only starts producing values when you [collect it](#collect-from-a-cold-flow).
+A cold flow is like a recipe: it defines how to produce values, but it only starts producing values when you [collect it](#collect-a-cold-flow).
 
 You can also create cold flows with the following functions:
 
@@ -98,16 +98,13 @@ Here's an example:
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-//sampleStart
 fun main() {
     // Creates a flow from provided values
     val predefinedPageFlow = flowOf("Page 1", "Page 2", "Page 3")
     // Creates a flow from a range
     val generatedPageFlow = (1..3).asFlow()
 }
-//sampleEnd
 ```
-{kotlin-runnable="true"}
 
 ### Collect a cold flow
 
@@ -187,7 +184,7 @@ suspend fun main() {
 {kotlin-runnable="true"}
 
 In this example, [`CoroutineName`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-name/) adds a name to each coroutine.
-You can use `CoroutineName` for [debugging](coroutine-context-and-dispatchers.md#naming-coroutines-for-debugging), and here it helps show which collector runs each collection.
+You can use `CoroutineName` for [debugging](coroutine-context-and-dispatchers.md#naming-coroutines-for-debugging). Here, it helps show which collector runs each collection.
 
 ### Intermediate flow operators
 
@@ -360,7 +357,7 @@ suspend fun main() {
 }
 //sampleEnd
 ```
-{kotlin-runnable="true"}
+{kotlin-runnable="true" validate="false"}
 
 In this example, the collector throws an exception when it receives a value from the `emit()` function.
 The `flow()` builder function catches this downstream exception.
@@ -451,7 +448,7 @@ suspend fun main() {
 }
 //sampleEnd
 ```
-{kotlin-runnable="true"}
+{kotlin-runnable="true" validate="false"}
 
 In this example, if loading fails with an expected exception, the `.catch()` operator uses the `emit()` function to emit a fallback state.
 For unexpected exceptions, rethrow them in the `.catch()` operator.
@@ -527,7 +524,7 @@ In this example, the `.onEach()` operator runs upstream from `.catch()`, so the 
 
 #### Restart the upstream flow after an exception
 
-Some operations may fail temporarily, such as a network request that loses connection.
+Some operations may temporarily fail, such as a network request that loses its connection.
 For these cases, you can use the [`.retry()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/retry.html) operator to restart the upstream flow after an exception.
 
 The `.retry()` operator receives an exception and restarts collection when its lambda returns `true`, up to the specified number of retries.
@@ -595,7 +592,7 @@ suspend fun main() {
 Flow cancellation stops collection when the result is no longer needed, such as when a request times out.
 
 Flow collection is tied to the coroutine that calls the `collect()` function.
-When that coroutine is canceled, collection stops and the upstream flow is canceled too.
+When that coroutine is canceled, the collection stops, and the upstream flow is canceled too.
 
 To cancel flow collection, call the `cancel()` function on the `Job` of the collecting coroutine:
 
@@ -696,7 +693,7 @@ suspend fun main() {
 ```
 {kotlin-runnable="true"}
 
-In this example, the `.myTake()` function emits values from the upstream flow until it emits the requested number of values.
+In this example, the `.myTake()` function emits values from the upstream flow until it emits the specified number of values.
 Then it throws a `CancellationException` to cancel the upstream flow.
 
 ### Emit values concurrently with `channelFlow()`
@@ -812,7 +809,7 @@ Kotlin provides two hot flow types:
 
 [`SharedFlow`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-shared-flow/) is a hot flow that broadcasts emitted values that happen over time to its subscribers.
 
-You can create `SharedFlow` with the [`MutableSharedFlow()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-mutable-shared-flow.html) function.
+You can create a `SharedFlow` with the [`MutableSharedFlow()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-mutable-shared-flow.html) function.
 
 A `MutableSharedFlow` exposes functions for emitting values.
 If you expose it directly, code outside the class can emit values into the flow.
@@ -845,7 +842,7 @@ class Chatroom {
 Just like with cold flows, you can use the `collect()` function to collect values from a `SharedFlow`.
 
 You can also configure a `SharedFlow` to immediately replay already emitted values to new subscribers.
-The replay cache works like a small history buffer and stores a fixed number of previous emissions.
+The replay cache works like a small history buffer, storing a fixed number of previous emissions.
 
 To set how many previous emissions a new subscriber receives, use the `replay` parameter in `MutableSharedFlow()`:
 
@@ -864,7 +861,7 @@ class Chatroom {
         get() = _messages.asSharedFlow()
 
     suspend fun sendMessageToEveryone(message: Message) {
-        // Emits the message to subscribes of the messages flow
+        // Emits the message to subscribers of the messages flow
         _messages.emit(message)
     }
 }
@@ -873,7 +870,7 @@ class Chatroom {
 Collecting a hot flow doesn't complete by itself, so you must [cancel the collecting coroutines](#cancel-hot-flows) when you no longer need them.
 
 > A hot flow doesn't have a close or cancel operation.
-> Canceling collection only stops that subscriber from collecting.
+> Canceling collection only stops the corresponding subscriber from collecting.
 > To stop new emissions, cancel the coroutine or scope that produces values for the hot flow.
 >
 {style="note"}
@@ -894,7 +891,7 @@ data class Message(
     val text: String,
 )
 
-// Sets the number of already emitted messages new subscribers receive on subscription
+// Sets the number of already emitted messages that new subscribers receive on subscription
 const val MESSAGES_TO_REMEMBER = 10
 
 class Chatroom {
@@ -962,7 +959,7 @@ You can use [explicit backing fields](whatsnew23.md#explicit-backing-fields) to 
 Explicit backing fields define the implementation type in the `field` declaration.
 Inside the class, the compiler smart casts the property to the backing field type, so you can call the `emit()` function without a separate private backing property.
 
-> Explicit backing fields doesn't create the read-only wrapper that `.asSharedFlow()` provides.
+> Explicit backing fields don't create the read-only wrapper that `.asSharedFlow()` provides.
 > Use this pattern only when downcasting the exposed flow isn't a concern.
 > 
 {style="warning"}
@@ -1073,7 +1070,7 @@ fun loadBlob(url: String): StateFlow<LoadingState> {
 >
 {style="note"}
 
-Similarly to `MutableSharedFlow`, `MutableStateFlow` exposes APIs for emitting updates.
+Similar to `MutableSharedFlow`, `MutableStateFlow` exposes APIs for emitting updates.
 If you expose it directly, any code that receives it can update the state by downcasting it to `MutableStateFlow`.
 
 To prevent this, expose the mutable flow as a read-only `StateFlow` with the [`.asStateFlow()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/as-state-flow.html) function:
@@ -1192,7 +1189,7 @@ suspend fun main() {
 >
 {style="note"}
 
-Since `StateFlow` is a hot flow, collection doesn't complete by itself.
+Since `StateFlow` is a hot flow, collection doesn’t complete on its own.
 In this example, the `.takeWhile()` operator stops collection when loading reaches a terminal state.
 
 A `StateFlow` emits an update only when the new value differs from the current value.
@@ -1210,7 +1207,7 @@ The `.update()` function updates the value atomically, which helps when multiple
 >
 {style="note"}
 
-Here's an example where likes are stored in a `StateFlow` and each new state is calculated from the previous state:
+Here's an example where likes are stored in a `StateFlow`, and each new state is calculated from the previous state:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -1255,7 +1252,7 @@ suspend fun main() {
                 drawUpdatedNumberOfLikes(it)
             }
         }
-        // Simulates users that like the post
+        // Simulates users who like the post
         coroutineScope {
             repeat(10) {
                 launch {
@@ -1362,7 +1359,7 @@ When a new message is sent, the `.update()` function creates a new list from the
 {style="tip"}
 
 Since `messageHistory` is a `StateFlow`, subscribers receive the current message history when they start collecting.
-After that, they receive a new list each time a message is sent which changes the chat history.
+After that, they receive a new list each time a message is sent, which changes the chat history.
 
 ### Convert cold flows to hot flows
 
@@ -1401,10 +1398,10 @@ It also adds options for controlling when upstream collection starts and stops, 
 
 To use the built-in `.shareIn()` function, provide the following arguments:
 
-1. The coroutine scope where the upstream flow is collected.
-2. The [`SharingStarted`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-sharing-started/) strategy to control when upstream collection starts and stops.
+* The coroutine scope where the upstream flow is collected.
+* The [`SharingStarted`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-sharing-started/) strategy that controls when upstream collection starts and stops.
    For example, [`SharingStarted.Eagerly`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-sharing-started/-companion/-eagerly.html) starts upstream collection immediately in the provided scope, before any subscriber starts collecting.
-3. The optional `replay` value to control how many previous emissions new subscribers receive.
+* The optional `replay` value that controls how many previous emissions new subscribers receive.
 
 The `.shareIn()` function collects the upstream flow in the provided coroutine scope and broadcasts its emissions to subscribers.
 
@@ -1532,7 +1529,7 @@ val lastUpdateFlow: StateFlow<Instant?> =
         )
 ```
 
-#### Cancel hot flows
+### Cancel hot flows
 
 Hot flows don't stop when a subscriber is canceled.
 
@@ -1542,10 +1539,10 @@ The hot flow can still emit values to other subscribers, and the coroutine that 
 Hot flows themselves don't have a cancellation operation.
 To cancel a hot flow, cancel the coroutine or scope that produces values for it.
 
-Hot flows created with the `.shareIn()` or `.stateIn()` extension functions keep collecting the upstream flow until the sharing coroutine is canceled.
-To stop collection from the upstream flow, cancel the scope that runs that sharing coroutine.
+Hot flows created with the `.shareIn()` or `.stateIn()` extension functions continue to collect the upstream flow until the sharing coroutine is canceled.
+To stop collection from the upstream flow, cancel the scope that runs the sharing coroutine.
 
-> You can also stop upstream collection automatically when there are no subscribers by using [`SharingStarted.WhileSubscribed()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-sharing-started/-companion/-while-subscribed.html).
+> You can also stop upstream collection automatically when there are no subscribers with [`SharingStarted.WhileSubscribed()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-sharing-started/-companion/-while-subscribed.html).
 > 
 {style="tip"}
 
@@ -1625,7 +1622,7 @@ In this example, when you call the `derivedFlowsScope.cancel()` function, `total
 The `sendMessageToEveryone()` function still updates `messageHistory` because the coroutine that calls it wasn't canceled.
 As a result, `totalMessages.value` keeps the last collected size, while `chatroom.messageHistory.value.size` shows the actual number of messages.
 
-#### Handle exceptions in hot flows
+### Handle exceptions in hot flows
 
 In [cold flows](#handle-exceptions-in-flows), upstream exceptions propagate to the caller of `collect()` unless you use an operator such as `.catch()` to handle them first.
 
