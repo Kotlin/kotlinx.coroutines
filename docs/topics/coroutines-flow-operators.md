@@ -3,7 +3,7 @@
 
 [//]: # (title: Flow operators)
 
-> This page is currently being revised. For up-to-date Flow guidance, start with the [Flow overview](coroutines-flow.md).
+> We're currently revising this page. For an up-to-date guide to flows, start with the [Flow overview](coroutines-flow.md).
 >
 {style="note"}
 
