@@ -423,10 +423,13 @@ sealed interface LoadingState {
 
 fun loadBlob(url: String) = flow {
     emit(LoadingState.Started)
-    repeat(100) {
-        if (Random.nextInt(100) == 13)
+
+    val failureChancePerStep = 1 - java.lang.Math.pow(0.99, 10.0)
+
+    repeat(10) { step ->
+        if (Random.nextDouble() < failureChancePerStep)
             throw IOException("Failed to load!")
-        emit(LoadingState.Percentage(it))
+        emit(LoadingState.Percentage((step + 1) * 10))
         delay(10.milliseconds)
     }
     emit(LoadingState.Done)
@@ -558,10 +561,13 @@ sealed interface LoadingState {
 
 fun loadBlob(url: String) = flow {
     emit(LoadingState.Started)
-    repeat(100) {
-        if (Random.nextInt(100) == 13)
+
+    val failureChancePerStep = 1 - java.lang.Math.pow(0.99, 10.0)
+
+    repeat(10) { step ->
+        if (Random.nextDouble() < failureChancePerStep)
             throw IOException("Failed to load!")
-        emit(LoadingState.Percentage(it))
+        emit(LoadingState.Percentage((step + 1) * 10))
         delay(10.milliseconds)
     }
     emit(LoadingState.Done)
@@ -577,7 +583,6 @@ fun loadBlob(url: String) = flow {
     }
 }
 
-
 suspend fun main() {
     loadBlob("https://example.org/").collect {
         println("Got $it")
@@ -585,7 +590,7 @@ suspend fun main() {
 }
 //sampleEnd
 ```
-{kotlin-runnable="true"}
+{kotlin-runnable="true" validate="false"}
 
 ### Flow cancellation
 
@@ -693,7 +698,7 @@ suspend fun main() {
 ```
 {kotlin-runnable="true"}
 
-In this example, the `.myTake()` function emits values from the upstream flow until it emits the specified number of values.
+In this example, the `.myTake()` function emits values from the upstream flow until all requested values are emitted.
 Then it throws a `CancellationException` to cancel the upstream flow.
 
 ### Emit values concurrently with `channelFlow()`
@@ -814,7 +819,7 @@ You can create a `SharedFlow` with the [`MutableSharedFlow()`](https://kotlinlan
 A `MutableSharedFlow` exposes functions for emitting values.
 If you expose it directly, code outside the class can emit values into the flow.
 
-To prevent this, store the mutable flow in a private [backing property](properties.md#backing-properties), and expose a read-only `SharedFlow` with the [`.asSharedFlow()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/as-shared-flow.html) function.
+To prevent this, store the mutable flow in a private [backing property](properties.md#backing-properties) and expose a read-only `SharedFlow` with the [`.asSharedFlow()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/as-shared-flow.html) function.
 To emit values to subscribers, use the `emit()` function on the `MutableSharedFlow`:
 
 ```kotlin
@@ -861,7 +866,7 @@ class Chatroom {
         get() = _messages.asSharedFlow()
 
     suspend fun sendMessageToEveryone(message: Message) {
-        // Emits the message to subscribers of the messages flow
+        // Emits the message to subscribers of the messages flow 
         _messages.emit(message)
     }
 }
@@ -1152,12 +1157,14 @@ object DownloadManager {
         // Uses GlobalScope for illustrative purposes only,
         // to keep this example self-contained
         GlobalScope.launch {
-            repeat(100) {
-                if (Random.nextInt(100) == 13) {
+            val failureChancePerStep = 1 - java.lang.Math.pow(0.99, 10.0)
+
+            repeat(10) { step ->
+                if (Random.nextDouble() < failureChancePerStep) {
                     onFailure(IOException("Failed to load!"))
                     return@launch
                 }
-                onPercentageLoaded(it)
+                onPercentageLoaded((step + 1) * 10)
                 delay(10.milliseconds)
             }
             onCompletion()
