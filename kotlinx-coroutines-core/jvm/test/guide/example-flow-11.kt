@@ -1,12 +1,15 @@
-// This file was automatically generated from flow.md by Knit tool. Do not edit.
+// This file was automatically generated from coroutines-flow-operators.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.exampleFlow11
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun main() = runBlocking<Unit> {
-    val sum = (1..5).asFlow()
-        .map { it * it } // squares of numbers from 1 to 5                           
-        .reduce { a, b -> a + b } // sum them (terminal operator)
-    println(sum)
+fun main() = runBlocking<Unit> { 
+    val nums = (1..3).asFlow().onEach { delay(300) } // numbers 1..3 every 300 ms
+    val strs = flowOf("one", "two", "three").onEach { delay(400) } // strings every 400 ms          
+    val startTime = currentTimeMillis() // remember the start time 
+    nums.combine(strs) { a, b -> "$a -> $b" } // compose a single string with "combine"
+        .collect { value -> // collect and print 
+            println("$value at ${currentTimeMillis() - startTime} ms from start") 
+        } 
 }

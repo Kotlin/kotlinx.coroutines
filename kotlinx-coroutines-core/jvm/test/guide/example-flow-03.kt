@@ -1,13 +1,22 @@
-// This file was automatically generated from flow.md by Knit tool. Do not edit.
+// This file was automatically generated from coroutines-flow-operators.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.exampleFlow03
 
-import kotlinx.coroutines.*                 
-                           
-suspend fun simple(): List<Int> {
-    delay(1000) // pretend we are doing something asynchronous here
-    return listOf(1, 2, 3)
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+fun numbers(): Flow<Int> = flow {
+    try {                          
+        emit(1)
+        emit(2) 
+        println("This line will not execute")
+        emit(3)    
+    } finally {
+        println("Finally in numbers")
+    }
 }
 
 fun main() = runBlocking<Unit> {
-    simple().forEach { value -> println(value) } 
-}
+    numbers() 
+        .take(2) // take only the first two
+        .collect { value -> println(value) }
+}            

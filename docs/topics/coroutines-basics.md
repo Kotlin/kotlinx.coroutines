@@ -357,6 +357,9 @@ fun launchAll() {
 ```
 {kotlin-runnable="true"}
 
+In this example, the `launchAll()` function doesn't need the `suspend` keyword, because it only starts the coroutines in the current `CoroutineScope` and then returns immediately.
+Only mark functions with `suspend` when it makes sense for them to pause and resume before returning.
+
 ## Coroutine builder functions
 
 A coroutine builder function is a function that accepts a `suspend` [lambda](lambdas.md) that defines a coroutine to run.
@@ -623,5 +626,5 @@ the JVM thread version may throw an out-of-memory error or slow down thread crea
 * Discover more about combining suspending functions in [Composing suspending functions](composing-suspending-functions.md).
 * Learn how to cancel coroutines and handle timeouts in [Cancellation and timeouts](cancellation-and-timeouts.md).
 * Dive deeper into coroutine execution and thread management in [Coroutine context and dispatchers](coroutine-context-and-dispatchers.md).
-* Learn how to return multiple asynchronously computed values in [Asynchronous flows](flow.md).
+* Learn how to return multiple asynchronously computed values in [Flows](coroutines-flow.md).
 

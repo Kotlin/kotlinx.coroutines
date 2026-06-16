@@ -1,19 +1,20 @@
-// This file was automatically generated from flow.md by Knit tool. Do not edit.
+// This file was automatically generated from coroutines-flow-operators.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.exampleFlow12
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun main() = runBlocking<Unit> {
-    (1..5).asFlow()
-        .filter {
-            println("Filter $it")
-            it % 2 == 0              
-        }              
-        .map { 
-            println("Map $it")
-            "string $it"
-        }.collect { 
-            println("Collect $it")
-        }    
+fun requestFlow(i: Int): Flow<String> = flow {
+    emit("$i: First") 
+    delay(500) // wait 500 ms
+    emit("$i: Second")    
+}
+
+fun main() = runBlocking<Unit> { 
+    val startTime = currentTimeMillis() // remember the start time 
+    (1..3).asFlow().onEach { delay(100) } // emit a number every 100 ms 
+        .flatMapConcat { requestFlow(it) }                                                                           
+        .collect { value -> // collect and print 
+            println("$value at ${currentTimeMillis() - startTime} ms from start") 
+        } 
 }

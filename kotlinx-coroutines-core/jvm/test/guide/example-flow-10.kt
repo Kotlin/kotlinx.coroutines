@@ -1,22 +1,15 @@
-// This file was automatically generated from flow.md by Knit tool. Do not edit.
+// This file was automatically generated from coroutines-flow-operators.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.exampleFlow10
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-fun numbers(): Flow<Int> = flow {
-    try {                          
-        emit(1)
-        emit(2) 
-        println("This line will not execute")
-        emit(3)    
-    } finally {
-        println("Finally in numbers")
-    }
+fun main() = runBlocking<Unit> { 
+    val nums = (1..3).asFlow().onEach { delay(300) } // numbers 1..3 every 300 ms
+    val strs = flowOf("one", "two", "three").onEach { delay(400) } // strings every 400 ms
+    val startTime = currentTimeMillis() // remember the start time 
+    nums.zip(strs) { a, b -> "$a -> $b" } // compose a single string with "zip"
+        .collect { value -> // collect and print 
+            println("$value at ${currentTimeMillis() - startTime} ms from start") 
+        } 
 }
-
-fun main() = runBlocking<Unit> {
-    numbers() 
-        .take(2) // take only the first two
-        .collect { value -> println(value) }
-}            
