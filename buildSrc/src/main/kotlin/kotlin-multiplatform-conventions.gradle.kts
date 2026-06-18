@@ -14,9 +14,11 @@ java {
 }
 
 kotlin {
-    @OptIn(ExperimentalAbiValidation::class)
-    abiValidation {
-        enabled = abiCheckEnabled
+    if (abiCheckEnabled) {
+        @OptIn(ExperimentalAbiValidation::class)
+        abiValidation {
+            enabled = true
+        }
     }
 
     jvm {
@@ -61,9 +63,6 @@ kotlin {
     js {
         outputModuleName = project.name
         nodejs()
-        compilations["main"]?.dependencies {
-            api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
-        }
     }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
@@ -71,16 +70,10 @@ kotlin {
         // otherwise IC tasks that start clashing different modules with the same module name
         outputModuleName = project.name + "Wasm"
         nodejs()
-        compilations["main"]?.dependencies {
-            api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
-        }
     }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmWasi {
         nodejs()
-        compilations["main"]?.dependencies {
-            api("org.jetbrains.kotlinx:atomicfu:${version("atomicfu")}")
-        }
         compilations.configureEach {
             compileTaskProvider.configure {
                 compilerOptions {
@@ -112,7 +105,6 @@ kotlin {
             // workaround for #3968 until this is fixed on atomicfu's side
             api("org.jetbrains.kotlinx:atomicfu:0.23.1")
         }
-        jsMain { }
         val wasmJsMain by getting {
         }
         val wasmJsTest by getting {
@@ -148,10 +140,6 @@ tasks.named("jvmTest", Test::class) {
         events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
     }
     project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
-}
-
-tasks.check {
-   dependsOn(tasks.checkLegacyAbi)
 }
 
 kotlin.targets.withType<KotlinJvmTarget>().configureEach {

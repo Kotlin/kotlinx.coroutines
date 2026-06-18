@@ -1,29 +1,38 @@
-@file:JvmMultifileClass
-@file:JvmName("ChannelsKt")
-
+@file:OptIn(ExperimentalJsExport::class)
+@file:Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "INVISIBLE_REFERENCE", "EXPOSED_SUPER_INTERFACE")
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.JsAsyncIterable
 import kotlinx.coroutines.internal.recoverStackTrace
 import kotlinx.coroutines.selects.*
 import kotlin.internal.*
-import kotlin.js.JsExport
-import kotlin.jvm.*
+import kotlin.js.Promise
+import kotlinx.coroutines.internal.JsAsyncIterator
+import kotlinx.coroutines.internal.JsIteratorResult
+import kotlin.coroutines.EmptyCoroutineContext
 
+@JsImplicitExport(couldBeConvertedToExplicitExport = true)
 public actual interface SendChannel<in E> {
     @DelicateCoroutinesApi
     public actual val isClosedForSend: Boolean
+
     public actual suspend fun send(element: E)
-    public actual val onSend: SelectClause2<E, SendChannel<E>>
-    public actual fun trySend(element: E): ChannelResult<Unit>
     public actual fun close(cause: Throwable?): Boolean
     public actual fun invokeOnClose(handler: (cause: Throwable?) -> Unit)
+
+    @JsExport.Ignore // Can't be exported until the compiler supports exporting of value classes
+    public actual fun trySend(element: E): ChannelResult<Unit>
+
+    @JsExport.Ignore // Is not so easy to use on the JavaScript side, because it's implemented with the contextual operator invoke
+    public actual val onSend: SelectClause2<E, SendChannel<E>>
 
     @Deprecated(
         level = DeprecationLevel.ERROR,
         message = "Deprecated in the favour of 'trySend' method",
         replaceWith = ReplaceWith("trySend(element).isSuccess")
     ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
+    @JsExport.Ignore
     public actual fun offer(element: E): Boolean {
         val result = trySend(element)
         if (result.isSuccess) return true
@@ -31,25 +40,70 @@ public actual interface SendChannel<in E> {
     }
 }
 
-public actual interface ReceiveChannel<out E> {
+@JsImplicitExport(couldBeConvertedToExplicitExport = true)
+public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
     @DelicateCoroutinesApi
     public actual val isClosedForReceive: Boolean
     @ExperimentalCoroutinesApi
     public actual val isEmpty: Boolean
+
     public actual suspend fun receive(): E
-    public actual val onReceive: SelectClause1<E>
-    public actual suspend fun receiveCatching(): ChannelResult<E>
-    public actual val onReceiveCatching: SelectClause1<ChannelResult<E>>
-    public actual fun tryReceive(): ChannelResult<E>
-    public actual operator fun iterator(): ChannelIterator<E>
     public actual fun cancel(cause: CancellationException?)
 
+    override fun asyncIterator(): JsAsyncIterator<E> =
+        asyncIterator(CoroutineScope(EmptyCoroutineContext))
+
+    @JsExport.Ignore
+    // For Kotlin side only to be able to set up a custom scope for the iterator
+    public fun asyncIterator(scope: CoroutineScope): JsAsyncIterator<E> =
+        JsAsyncIterator(
+            next = {
+                scope.promise {
+                    val result = receiveCatching()
+                    if (result.isClosed) {
+                        when (val cause = result.exceptionOrNull()) {
+                            null, is CancellationException -> JsIteratorResult(done = true)
+                            else -> throw cause
+                        }
+                    } else {
+                        JsIteratorResult(value = result.getOrThrow(), done = false)
+                    }
+                }
+            },
+            `return` = { value: @UnsafeVariance E ->
+                cancel(null)
+                Promise.resolve(JsIteratorResult(value = value, done = true))
+            }.unsafeCast<() -> Promise<JsIteratorResult<E>>>(),
+            `throw` = { err: dynamic ->
+                cancel(CancellationException("Channel was closed via AsyncIterator#throw method", err))
+                Promise.reject(err)
+            }
+        )
+
+    @JsExport.Ignore // Is replaced by AsyncIterable implementation
+    public actual operator fun iterator(): ChannelIterator<E>
+
+    @JsExport.Ignore // Can't be exported until the compiler supports exporting of value classes
+    public actual fun tryReceive(): ChannelResult<E>
+
+    @JsExport.Ignore // Can't be exported until the compiler supports exporting of value classes
+    public actual suspend fun receiveCatching(): ChannelResult<E>
+
+    @JsExport.Ignore // Is not so easy to use on the JavaScript side, because it's implemented with the contextual operator invoke
+    public actual val onReceive: SelectClause1<E>
+
+    @JsExport.Ignore // Is not so easy to use on the JavaScript side, because it's implemented with the contextual operator invoke
+    public actual val onReceiveCatching: SelectClause1<ChannelResult<E>>
+
+    @JsExport.Ignore
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     public actual fun cancel(cause: Throwable?): Boolean
 
+    @JsExport.Ignore
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     public actual fun cancel(): Unit = cancel(null)
 
+    @JsExport.Ignore
     @Deprecated(
         level = DeprecationLevel.ERROR,
         message = "Deprecated in the favour of 'tryReceive'. " +
@@ -64,6 +118,7 @@ public actual interface ReceiveChannel<out E> {
     }
 
 
+    @JsExport.Ignore
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     @LowPriorityInOverloadResolution
     @Deprecated(
@@ -74,6 +129,7 @@ public actual interface ReceiveChannel<out E> {
         replaceWith = ReplaceWith("receiveCatching().getOrNull()")
     ) // Warning since 1.3.0, error in 1.5.0, cannot be hidden due to deprecated extensions
     public actual suspend fun receiveOrNull(): E? = receiveCatching().getOrNull()
+
     @Suppress("DEPRECATION_ERROR")
     @Deprecated(
         message = "Deprecated in favor of onReceiveCatching extension",
@@ -81,57 +137,4 @@ public actual interface ReceiveChannel<out E> {
         replaceWith = ReplaceWith("onReceiveCatching")
     ) // Warning since 1.3.0, error in 1.5.0, will be hidden or removed in 1.7.0
     public actual val onReceiveOrNull: SelectClause1<E?> get() = (this as BufferedChannel<E>).onReceiveOrNull
-}
-
-/**
- * Adds [element] to this channel, **blocking** the caller while this channel is full,
- * and returning either [successful][ChannelResult.isSuccess] result when the element was added, or
- * failed result representing closed channel with a corresponding exception.
- *
- * This is a way to call [Channel.send] method in a safe manner inside a blocking code using [runBlocking] and catching,
- * so this function should not be used from coroutine.
- *
- * Example of usage:
- *
- * ```
- * // From callback API
- * channel.trySendBlocking(element)
- *     .onSuccess { /* request next element or debug log */ }
- *     .onFailure { t: Throwable? -> /* throw or log */ }
- * ```
- *
- * For this operation it is guaranteed that [failure][ChannelResult.failed] always contains an exception in it.
- *
- * Throws `InterruptedException` on JVM if the current thread is interrupted during the blocking send operation.
- */
-public fun <E> SendChannel<E>.trySendBlocking(element: E): ChannelResult<Unit> {
-    /*
-     * Sent successfully -- bail out.
-     * But failure may indicate either that the channel is full or that
-     * it is close. Go to slow path on failure to simplify the successful path and
-     * to materialize default exception.
-     */
-    trySend(element).onSuccess { return ChannelResult.success(Unit) }
-    return runBlocking {
-        val r = runCatching { send(element) }
-        if (r.isSuccess) ChannelResult.success(Unit)
-        else ChannelResult.closed(r.exceptionOrNull())
-    }
-}
-
-/** @suppress */
-@Deprecated(
-    level = DeprecationLevel.HIDDEN,
-    message = "Deprecated in the favour of 'trySendBlocking'. " +
-        "Consider handling the result of 'trySendBlocking' explicitly and rethrow exception if necessary",
-    replaceWith = ReplaceWith("trySendBlocking(element)")
-) // WARNING in 1.5.0, ERROR in 1.6.0
-public fun <E> SendChannel<E>.sendBlocking(element: E) {
-    // fast path
-    if (trySend(element).isSuccess)
-        return
-    // slow path
-    runBlocking {
-        send(element)
-    }
 }

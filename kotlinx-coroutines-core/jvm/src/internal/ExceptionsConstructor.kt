@@ -47,6 +47,8 @@ private fun <E : Throwable> createConstructor(clz: Class<E>): Ctor {
         }
     } catch (_: NoSuchMethodException) {
         // Expected: there simply was no implementation of `StackTraceRecoverable`
+    } catch (_: NoClassDefFoundError) {
+        // clz has missing dependencies
     } catch (_: SecurityException) {
         // Restrictive SecurityManager
     }
