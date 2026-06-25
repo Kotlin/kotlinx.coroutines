@@ -308,50 +308,57 @@ It prevents your code from continuing in a canceled coroutine's scope, such as u
 Here's an example:
 
 ```kotlin
-import java.nio.file.*
-import java.nio.charset.*
-import kotlinx.coroutines.*
-import java.io.*
-
-//sampleStart
 // Defines a coroutine scope that uses the UI thread
-class ScreenWithFileContents(private val scope: CoroutineScope) {
-    fun displayFile(path: Path) {
+class ScreenWithButtons(private val scope: CoroutineScope) {
+    // Should only be called from the UI thread
+    fun loadAndUpdateButtons(filename: String) {
         scope.launch {
-            val contents = withContext(Dispatchers.IO) {
-                Files.newBufferedReader(
-                    path, Charset.forName("US-ASCII")
-                ).use {
-                    it.readLines()
-                }
+            val buttonNames = withContext(Dispatchers.IO) {
+                // Can be canceled here
+                readLines(filename) // A blocking call, cannot be canceled here
+                // Can be canceled here
             }
-            // It's safe to call updateUi here,
-            // In case of cancellation, withContext() wouldn't return any values
-            updateUi(contents)
+            // If withContext() returned a value, it wasn't canceled.
+            // Now this coroutine runs on the UI thread again,
+            // so no one can cancel this component's scope and dispose of buttons
+            // until this coroutine suspends for the next time and releases the UI thread.
+            // It's safe to call updateUi here, as buttons are guaranteed to exist.
+            //
+            // In other words, if the screen is canceled while withContext() is running,
+            // the coroutine throws CancellationException instead of assigning a value
+            // to buttonNames, so updateUi() is never called.
+            updateUi(buttonNames)
         }
     }
 
+    // Should only be called from the UI thread
     // Throws an exception if called after the user left the screen
-    private fun updateUi(contents: List<String>) {
-        contents.forEach { line -> addOneLineToUi(line) }
-    }
-  
-    private fun addOneLineToUi(line: String) {
-        // Placeholder for code that adds one line to the UI
+    private fun updateUi(buttonNames: List<String>) {
+        // Updates buttons with the specified names.
+
+        // Throws if buttons no longer exist,
+        // due to being disposed of
+        // after the user left the screen.
     }
 
-    // Only callable from the UI thread
+    // Should only be called from the UI thread
     fun leaveScreen() {
         // Cancels the scope when leaving the screen
         // You can no longer update the UI
         scope.cancel()
     }
 }
-//sampleEnd
+
+// UI controller code
+setHandler(Event.ScreenClosed) {
+    // Always executes from the UI thread
+    screenWithButtons.leaveScreen()
+    buttons.dispose()
+}
 ```
 
-In this example, `withContext(Dispatchers.IO)` cooperates with cancellation and prevents `updateUI()` from running if the
-`leaveScreen()` function cancels the coroutine before it returns the contents of the file.
+In this example, `withContext(Dispatchers.IO)` cooperates with cancellation and prevents `updateUi()` from running if the
+`leaveScreen()` function cancels the coroutine before it returns the button names.
 
 While prompt cancellation prevents using values after they are no longer valid, it can also stop your code while an important value is still in use, which might lead to losing that value.
 This can happen when a coroutine receives a value, such as an `AutoCloseable` resource, but is canceled before it can reach the part of the code that closes it.
