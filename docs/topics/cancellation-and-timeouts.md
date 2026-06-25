@@ -141,9 +141,12 @@ Here, `CompletableDeferred` signals that the child coroutines are launched befor
 ## Make coroutines react to cancellation {id="cancellation-is-cooperative"}
 
 In Kotlin, coroutine cancellation is _cooperative_.
-This means that coroutines only react to cancellation when they cooperate by [suspending](#suspension-points-and-cancellation) or [checking for cancellation explicitly](#check-for-cancellation-explicitly). We will also cover some typical usage patterns such as periodically calling the [`yield()`](#yield-often-in-non-suspending-code) suspending function in CPU-intensive code, and using [`runInterruptible()`](#interrupt-blocking-code-when-coroutines-are-canceled) to interrupt blocking code when coroutines are canceled.
+Coroutines react to cancellation only when they cooperate by [suspending](#suspension-points-and-cancellation) or [checking for cancellation explicitly](#check-for-cancellation-explicitly).
+There are standard approaches for making coroutines cancelable, such as periodically calling the [`yield()`](#yield-often-in-non-suspending-code) suspending function in CPU-intensive code.
+On the JVM, you can use [`runInterruptible()`](#interrupt-blocking-code-when-coroutines-are-canceled) with some blocking calls that support thread interruption.
 
-Coroutines which react to cancellations are sometimes referred to as **cancelable coroutines**. In this section, you will learn how to create cancelable coroutines.
+Coroutines that react to cancellation are sometimes referred to as **cancelable coroutines**.
+In this section, you will learn how to create cancelable coroutines.
 
 ### Suspension points and cancellation
 
