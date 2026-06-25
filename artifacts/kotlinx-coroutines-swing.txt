@@ -1,0 +1,1 @@
+org.jetbrains.kotlinx:kotlinx-coroutines-swing/.jar,.module,.pom,javadoc.jar,sources.jar
