@@ -317,10 +317,10 @@ class ScreenWithButtons(private val scope: CoroutineScope) {
     // Should only be called from the UI thread
     fun loadAndUpdateButtons(filename: String) {
         scope.launch {
+            // withContext will check for cancellation before entering the block
+            // and after the block returns
             val buttonNames = withContext(Dispatchers.IO) {
-                // Can be canceled here
                 readLines(filename) // A blocking call, cannot be canceled here
-                // Can be canceled here
             }
             // If withContext() returned a value, it wasn't canceled.
             // Now this coroutine runs on the UI thread again,
