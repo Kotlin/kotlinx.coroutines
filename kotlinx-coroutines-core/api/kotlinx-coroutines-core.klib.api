@@ -790,6 +790,9 @@ final object kotlinx.coroutines/Dispatchers { // kotlinx.coroutines/Dispatchers|
         final fun <get-Unconfined>(): kotlinx.coroutines/CoroutineDispatcher // kotlinx.coroutines/Dispatchers.Unconfined.<get-Unconfined>|<get-Unconfined>(){}[0]
 
     final fun injectMain(kotlinx.coroutines/MainCoroutineDispatcher) // kotlinx.coroutines/Dispatchers.injectMain|injectMain(kotlinx.coroutines.MainCoroutineDispatcher){}[0]
+
+    // Targets: [native]
+    final fun mainDispatcherOrNull(): kotlinx.coroutines/MainCoroutineDispatcher? // kotlinx.coroutines/Dispatchers.mainDispatcherOrNull|mainDispatcherOrNull(){}[0]
 }
 
 final object kotlinx.coroutines/GlobalScope : kotlinx.coroutines/CoroutineScope { // kotlinx.coroutines/GlobalScope|null[0]
