@@ -3,12 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.gradle.kotlin.dsl.*
 
 buildscript {
-    if (shouldUseLocalMaven(rootProject)) {
-        repositories {
-            mavenLocal()
-        }
-    }
-
     repositories {
         mavenCentral()
         maven(url = "https://plugins.gradle.org/m2/")
@@ -64,6 +58,7 @@ allprojects {
 apply(plugin = "base")
 apply(plugin = "kover-conventions")
 
+val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
 // Configure repositories
 allprojects {
     repositories {
@@ -72,7 +67,11 @@ allprojects {
          * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
          */
         google()
-        mavenCentral()
+        if (cacheRedirectorEnabled) {
+            maven("https://cache-redirector.jetbrains.com/maven-central")
+        } else {
+            mavenCentral()
+        }
         addDevRepositoryIfEnabled(this, project)
     }
 }
