@@ -1,0 +1,1 @@
+org.jetbrains.kotlinx:kotlinx-coroutines-slf4j/.jar,.module,.pom,javadoc.jar,sources.jar
