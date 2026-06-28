@@ -81,7 +81,7 @@ class HandlerDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
     }
 
     private fun CoroutineScope.doTestAwaitFrame() {
-        ShadowChoreographer.setPostFrameCallbackDelay(100)
+        ShadowLegacyChoreographer.setPostFrameCallbackDelay(100)
         val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
         mainLooper.pause()
         launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
@@ -96,7 +96,7 @@ class HandlerDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
     }
 
     private fun CoroutineScope.doTestAwaitWithDetectedChoreographer() {
-        ShadowChoreographer.setPostFrameCallbackDelay(100)
+        ShadowLegacyChoreographer.setPostFrameCallbackDelay(100)
         val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
         launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
             expect(1)
