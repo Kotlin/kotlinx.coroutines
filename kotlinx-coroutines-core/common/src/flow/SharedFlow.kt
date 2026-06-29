@@ -394,7 +394,7 @@ internal open class SharedFlowImpl<T>(
                     awaitValue(slot) // await signal that the new value is available
                 }
                 collectorJob?.ensureActive()
-                collector.emit(newValue as T)
+                collector.emitInternal(newValue as T)
             }
         } finally {
             freeSlot(slot)

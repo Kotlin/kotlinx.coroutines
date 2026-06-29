@@ -3,6 +3,8 @@ package kotlinx.coroutines.selects
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.internal.debuggerCapture
+import kotlinx.coroutines.flow.internal.wrapInternal
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.TrySelectDetailedResult.*
 import kotlin.contracts.*
@@ -640,7 +642,7 @@ internal open class SelectImplementation<R>(
                         val cont = curState as CancellableContinuation<Unit>
                         // Success! Store the resumption value and
                         // try to resume the continuation.
-                        this.internalResult = internalResult
+                        this.internalResult = wrapInternal(internalResult)
                         if (cont.tryResume(onCancellation)) return TRY_SELECT_SUCCESSFUL
                         // If the resumption failed, we need to clean the [result] field to avoid memory leaks.
                         this.internalResult = NO_RESULT
@@ -704,19 +706,21 @@ internal open class SelectImplementation<R>(
         // of memory leaks. Collect the internal result before that.
         val internalResult = this.internalResult
         cleanup(selectedClause)
-        // Process the internal result and invoke the user's block.
-        return if (!RECOVER_STACK_TRACES) {
-            // TAIL-CALL OPTIMIZATION: the `suspend` block
-            // is invoked at the very end.
-            val blockArgument = selectedClause.processResult(internalResult)
-            selectedClause.invokeBlock(blockArgument)
-        } else {
-            // TAIL-CALL OPTIMIZATION: the `suspend`
-            // function is invoked at the very end.
-            // However, internally this `suspend` function
-            // constructs a state machine to recover a
-            // possible stack-trace.
-            processResultAndInvokeBlockRecoveringException(selectedClause, internalResult)
+        return debuggerCapture<Any?, R>(internalResult) { result ->
+            // Process the internal result and invoke the user's block.
+            if (!RECOVER_STACK_TRACES) {
+                // TAIL-CALL OPTIMIZATION: the `suspend` block
+                // is invoked at the very end.
+                val blockArgument = selectedClause.processResult(result)
+                selectedClause.invokeBlock(blockArgument)
+            } else {
+                // TAIL-CALL OPTIMIZATION: the `suspend`
+                // function is invoked at the very end.
+                // However, internally this `suspend` function
+                // constructs a state machine to recover a
+                // possible stack-trace.
+                processResultAndInvokeBlockRecoveringException(selectedClause, result)
+            }
         }
     }
 

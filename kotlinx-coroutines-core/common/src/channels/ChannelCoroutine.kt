@@ -1,6 +1,8 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.emitAllInternal
 import kotlin.coroutines.*
 
 internal open class ChannelCoroutine<E>(
@@ -34,5 +36,9 @@ internal open class ChannelCoroutine<E>(
         val exception = cause.toCancellationException()
         _channel.cancel(exception) // cancel the channel
         cancelCoroutine(exception) // cancel the job
+    }
+
+    internal suspend fun emitAllInternal(flowCollector: FlowCollector<E>) {
+        emitAllInternal(_channel, flowCollector)
     }
 }

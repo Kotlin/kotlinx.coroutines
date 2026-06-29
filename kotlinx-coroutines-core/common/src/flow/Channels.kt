@@ -29,14 +29,28 @@ private suspend fun <T> FlowCollector<T>.emitAllImpl(channel: ReceiveChannel<T>,
     ensureActive()
     var cause: Throwable? = null
     try {
-        for (element in channel) {
-            emit(element)
-        }
+        emitAllInternal(channel, this)
     } catch (e: Throwable) {
         cause = e
         throw e
     } finally {
         if (consume) channel.cancelConsumed(cause)
+    }
+}
+
+internal suspend fun <T> emitAllInternal(channel: ReceiveChannel<T>, collector: FlowCollector<T>) {
+    when (channel) {
+        is BufferedChannel<*> -> {
+            (channel as BufferedChannel<T>).emitAllInternal(collector)
+        }
+        is ChannelCoroutine<*> -> {
+            (channel as ChannelCoroutine<T>).emitAllInternal(collector)
+        }
+        else -> {
+            for (element in channel) {
+                collector.emit(element)
+            }
+        }
     }
 }
 
