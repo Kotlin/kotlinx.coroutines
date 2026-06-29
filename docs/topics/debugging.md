@@ -16,6 +16,7 @@
 Debugging asynchronous programs is challenging, because multiple concurrent coroutines are typically working at the same time.
 To help with that, `kotlinx.coroutines` comes with additional features for debugging: debug mode, stacktrace recovery 
 and debug agent.
+These debugging capabilities are available only on JVM platforms.
 
 ## Debug mode
 
