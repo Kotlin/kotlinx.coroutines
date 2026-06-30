@@ -17,7 +17,7 @@ import kotlin.coroutines.*
  * or [launchIn] operator that starts collection of the flow in the given scope.
  * They are applied to the upstream flow and trigger execution of all operations.
  * Execution of the flow is also called _collecting the flow_  and is always performed in a suspending manner
- * without actual blocking. Terminal operators complete normally or exceptionally depending on successful or failed
+ * without actual blocking. Terminal operators complete normally or with an exception depending on successful or failed
  * execution of all the flow operations in the upstream. The most basic terminal operator is [collect], for example:
  *
  * ```
@@ -33,6 +33,10 @@ import kotlin.coroutines.*
  * By default, flows are _sequential_ and all flow operations are executed sequentially in the same coroutine,
  * with an exception for a few operations specifically designed to introduce concurrency into flow
  * execution such as [buffer] and [flatMapMerge]. See their documentation for details.
+ *
+ * A flow completes normally when the upstream emitter finishes execution.
+ * A flow completes with an exception when an exception is thrown by any of the flow operations.
+ * In this case, the upstream flow completes immediately and does not emit any more values.
  *
  * The `Flow` interface does not carry information whether a flow is a _cold_ stream that can be collected repeatedly and
  * triggers execution of the same code every time it is collected, or if it is a _hot_ stream that emits different
@@ -130,9 +134,10 @@ import kotlin.coroutines.*
  * When `emit` or `emitAll` throws, the Flow implementations must immediately stop emitting new values and finish with an exception.
  * For diagnostics or application-specific purposes, the exception may be different from the one thrown by the emit operation,
  * suppressing the original exception as discussed below.
- * If there is a need to emit values after the downstream failed, please use the [catch][Flow.catch] operator.
+ * If there is a need to emit fallback values after an upstream flow completes with an  exception, please use the
+ * [catch][Flow.catch] operator downstream of the failing operation in the flow chain.
  *
- * The [catch][Flow.catch] operator only catches upstream exceptions, but passes
+ * The [catch][Flow.catch] operator catches only the exception that the upstream flow completed with, but passes
  * all downstream exceptions. Similarly, terminal operators like [collect][Flow.collect]
  * throw any unhandled exceptions that occur in their code or in upstream flows, for example:
  *
