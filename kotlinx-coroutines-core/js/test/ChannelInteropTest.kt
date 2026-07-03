@@ -1,6 +1,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.JsAsyncIterator
 import kotlinx.coroutines.testing.*
 import kotlin.js.*
 import kotlin.test.*
