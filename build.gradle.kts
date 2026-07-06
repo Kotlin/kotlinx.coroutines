@@ -159,3 +159,23 @@ if (isSnapshotTrainEnabled(rootProject)) {
     // Report Kotlin compiler version when building project
     println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
 }
+
+allprojects {
+    repositories {
+        maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
+    }
+
+    plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        println("Project: $name")
+
+        extensions.configure<KotlinMultiplatformExtension> {
+            sourceSets.configureEach {
+                dependencies {
+                    implementation("org.jetbrains.kotlin.commonizer:commonizer-support-library:2.4.255-SNAPSHOT")
+                }
+            }
+
+            compilerOptions.freeCompilerArgs.add("-Xskip-prerelease-check")
+        }
+    }
+}
