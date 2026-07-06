@@ -138,3 +138,23 @@ configure(subprojects.filter {
 
 AuxBuildConfiguration.configure(rootProject)
 rootProject.registerTopLevelDeployTask()
+
+allprojects {
+    repositories {
+        maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
+    }
+
+    plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        println("Project: $name")
+
+        extensions.configure<KotlinMultiplatformExtension> {
+            sourceSets.configureEach {
+                dependencies {
+                    implementation("org.jetbrains.kotlin.commonizer:commonizer-support-library:2.5.255-SNAPSHOT")
+                }
+            }
+
+            compilerOptions.freeCompilerArgs.add("-Xskip-prerelease-check")
+        }
+    }
+}
