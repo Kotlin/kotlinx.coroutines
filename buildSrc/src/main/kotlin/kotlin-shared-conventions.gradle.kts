@@ -159,9 +159,6 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
         if (name == "compileJsAndWasmSharedMainKotlinMetadata") {
             enabled = false
         }
-        if (name == "compileJsAndWasmJsSharedMainKotlinMetadata") {
-            enabled = false
-        }
     }
 
     /*
