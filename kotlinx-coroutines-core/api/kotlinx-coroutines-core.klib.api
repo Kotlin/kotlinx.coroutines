@@ -198,6 +198,19 @@ abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.channels/ChannelIter
 
 abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.flow/Flow { // kotlinx.coroutines.flow/Flow|null[0]
     abstract suspend fun collect(kotlinx.coroutines.flow/FlowCollector<#A>) // kotlinx.coroutines.flow/Flow.collect|collect(kotlinx.coroutines.flow.FlowCollector<1:0>){}[0]
+
+    // Targets: [js]
+    open fun asAsyncIterable(): kotlinx.coroutines.internal/JsAsyncIterable<#A> // kotlinx.coroutines.flow/Flow.asAsyncIterable|asAsyncIterable(){}[0]
+
+    // Targets: [js]
+    open fun asAsyncIterable(kotlinx.coroutines/CoroutineScope): kotlinx.coroutines.internal/JsAsyncIterable<#A> // kotlinx.coroutines.flow/Flow.asAsyncIterable|asAsyncIterable(kotlinx.coroutines.CoroutineScope){}[0]
+
+    // Targets: [js]
+    final object Companion { // kotlinx.coroutines.flow/Flow.Companion|null[0]
+        final fun <#A2: kotlin/Any?> from(kotlin/Function0<kotlinx.coroutines.internal/JsAsyncIterator<#A2>>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.from|from(kotlin.Function0<kotlinx.coroutines.internal.JsAsyncIterator<0:0>>){0§<kotlin.Any?>}[0]
+        final fun <#A2: kotlin/Any?> from(kotlinx.coroutines.internal/JsAsyncIterable<#A2>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.from|from(kotlinx.coroutines.internal.JsAsyncIterable<0:0>){0§<kotlin.Any?>}[0]
+        final fun <#A2: kotlin/Any?> from(kotlinx.coroutines.internal/JsAsyncIterator<#A2>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.from|from(kotlinx.coroutines.internal.JsAsyncIterator<0:0>){0§<kotlin.Any?>}[0]
+    }
 }
 
 abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.flow/SharedFlow : kotlinx.coroutines.flow/Flow<#A> { // kotlinx.coroutines.flow/SharedFlow|null[0]
@@ -1263,7 +1276,7 @@ final inline fun <#A: kotlin/Any?> kotlinx.coroutines.internal/synchronized(kotl
 final inline fun <#A: kotlin/Any?> kotlinx.coroutines.internal/synchronizedImpl(kotlinx.coroutines.internal/SynchronizedObject, kotlin/Function0<#A>): #A // kotlinx.coroutines.internal/synchronizedImpl|synchronizedImpl(kotlinx.coroutines.internal.SynchronizedObject;kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
 
 // Targets: [js]
-abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.channels/ReceiveChannel : kotlinx.coroutines.channels/JsAsyncIterable<#A> { // kotlinx.coroutines.channels/ReceiveChannel|null[0]
+abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.channels/ReceiveChannel : kotlinx.coroutines.internal/JsAsyncIterable<#A> { // kotlinx.coroutines.channels/ReceiveChannel|null[0]
     abstract val isClosedForReceive // kotlinx.coroutines.channels/ReceiveChannel.isClosedForReceive|{}isClosedForReceive[0]
         abstract fun <get-isClosedForReceive>(): kotlin/Boolean // kotlinx.coroutines.channels/ReceiveChannel.isClosedForReceive.<get-isClosedForReceive>|<get-isClosedForReceive>(){}[0]
     abstract val isEmpty // kotlinx.coroutines.channels/ReceiveChannel.isEmpty|{}isEmpty[0]
@@ -1309,10 +1322,10 @@ final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_corou
 final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterator_Companion_btfdib_invoke_jkqnwo(noinline kotlin/Function0<kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>>, noinline kotlin/Function1<#A?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>>, noinline kotlin/Function1<kotlin/Any?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>>): kotlinx.coroutines.channels/JsAsyncIterator<#A> // kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterator_Companion_btfdib_invoke_jkqnwo|kotlinx_coroutines_channels_JsAsyncIterator_Companion_btfdib_invoke_jkqnwo(kotlin.Function0<kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<0:0?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<kotlin.Any?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>){0§<kotlin.Any?>}[0]
 
 // Targets: [js]
-final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_copy_1tks5(noinline kotlinx.coroutines.channels/JsIteratorResult<#A>, noinline #A? = ..., noinline kotlin/Boolean = ...): kotlinx.coroutines.channels/JsIteratorResult<#A> // kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_copy_1tks5|kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_copy_1tks5(kotlinx.coroutines.channels.JsIteratorResult<0:0>;0:0?;kotlin.Boolean){0§<kotlin.Any?>}[0]
+final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.internal/kotlinx_coroutines_internal_JsIteratorResult_Companion_kfjag7_copy_1tks5(noinline kotlinx.coroutines.internal/JsIteratorResult<#A>, noinline #A? = ..., noinline kotlin/Boolean = ...): kotlinx.coroutines.internal/JsIteratorResult<#A> // kotlinx.coroutines.internal/kotlinx_coroutines_internal_JsIteratorResult_Companion_kfjag7_copy_1tks5|kotlinx_coroutines_internal_JsIteratorResult_Companion_kfjag7_copy_1tks5(kotlinx.coroutines.internal.JsIteratorResult<0:0>;0:0?;kotlin.Boolean){0§<kotlin.Any?>}[0]
 
 // Targets: [js]
-final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_invoke_jkqnwo(noinline #A? = ..., noinline kotlin/Boolean): kotlinx.coroutines.channels/JsIteratorResult<#A> // kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_invoke_jkqnwo|kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_invoke_jkqnwo(0:0?;kotlin.Boolean){0§<kotlin.Any?>}[0]
+final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.internal/kotlinx_coroutines_internal_JsIteratorResult_Companion_kfjag7_invoke_jkqnwo(noinline #A? = ..., noinline kotlin/Boolean): kotlinx.coroutines.internal/JsIteratorResult<#A> // kotlinx.coroutines.internal/kotlinx_coroutines_internal_JsIteratorResult_Companion_kfjag7_invoke_jkqnwo|kotlinx_coroutines_internal_JsIteratorResult_Companion_kfjag7_invoke_jkqnwo(0:0?;kotlin.Boolean){0§<kotlin.Any?>}[0]
 
 // Targets: [js]
 final suspend fun (org.w3c.dom/Window).kotlinx.coroutines/awaitAnimationFrame(): kotlin/Double // kotlinx.coroutines/awaitAnimationFrame|awaitAnimationFrame@org.w3c.dom.Window(){}[0]
