@@ -18,6 +18,9 @@ internal actual fun w3cClearTimeout(window: W3CWindow, handle: Int) =
 internal actual fun w3cClearTimeout(handle: Int) =
     clearTimeout(handle)
 
+internal actual fun w3cRequestAnimationFrame(window: W3CWindow, callback: (Double) -> Unit): Int =
+    requestAnimationFrame(window, callback)
+
 internal actual class ScheduledMessageQueue actual constructor(private val dispatcher: SetTimeoutBasedDispatcher) : MessageQueue() {
     internal val processQueue: () -> Unit = ::process
 
@@ -93,3 +96,7 @@ private fun clearTimeout(handle: Int): Unit =
 private fun setTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int =
     js("window.setTimeout(handler, timeout)")
 
+@OptIn(ExperimentalWasmJsInterop::class)
+@Suppress("UNUSED_PARAMETER")
+private fun requestAnimationFrame(window: W3CWindow, callback: (Double) -> Unit): Int =
+    js("window.requestAnimationFrame(callback)")

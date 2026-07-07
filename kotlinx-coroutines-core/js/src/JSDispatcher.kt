@@ -17,6 +17,9 @@ internal actual fun w3cClearTimeout(window: W3CWindow, handle: Int) =
 internal actual fun w3cClearTimeout(handle: Int) =
     clearTimeout(handle)
 
+internal actual fun w3cRequestAnimationFrame(window: W3CWindow, callback: (Double) -> Unit): Int =
+    window.requestAnimationFrame(callback)
+
 internal actual class ScheduledMessageQueue actual constructor(private val dispatcher: SetTimeoutBasedDispatcher) : MessageQueue() {
     internal val processQueue: dynamic = { process() }
 

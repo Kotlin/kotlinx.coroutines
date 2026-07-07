@@ -8,6 +8,7 @@ internal expect fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeou
 internal expect fun w3cSetTimeout(handler: () -> Unit, timeout: Int): Int
 internal expect fun w3cClearTimeout(handle: Int)
 internal expect fun w3cClearTimeout(window: W3CWindow, handle: Int)
+internal expect fun w3cRequestAnimationFrame(window: W3CWindow, callback: (Double) -> Unit): Int
 
 internal expect class ScheduledMessageQueue(dispatcher: SetTimeoutBasedDispatcher) : MessageQueue {
     override fun schedule()

@@ -1283,6 +1283,9 @@ final suspend fun (org.w3c.dom/Window).kotlinx.coroutines/awaitAnimationFrame():
 final suspend fun <#A: kotlin/Any?> (kotlin.js/Promise<#A>).kotlinx.coroutines/await(): #A // kotlinx.coroutines/await|await@kotlin.js.Promise<0:0>(){0§<kotlin.Any?>}[0]
 
 // Targets: [wasmJs]
+final fun (kotlinx.coroutines/W3CWindow).kotlinx.coroutines/asCoroutineDispatcher(): kotlinx.coroutines/CoroutineDispatcher // kotlinx.coroutines/asCoroutineDispatcher|asCoroutineDispatcher@kotlinx.coroutines.W3CWindow(){}[0]
+
+// Targets: [wasmJs]
 final fun <#A: kotlin.js/JsAny?> (kotlin.js/Promise<#A>).kotlinx.coroutines/asDeferred(): kotlinx.coroutines/Deferred<#A> // kotlinx.coroutines/asDeferred|asDeferred@kotlin.js.Promise<0:0>(){0§<kotlin.js.JsAny?>}[0]
 
 // Targets: [wasmJs]
@@ -1302,6 +1305,9 @@ final fun <#A: kotlin/Any?> (kotlinx.coroutines/CoroutineScope).kotlinx.coroutin
 
 // Targets: [wasmJs]
 final fun <#A: kotlin/Any?> (kotlinx.coroutines/Deferred<#A>).kotlinx.coroutines/asPromise(): kotlin.js/Promise<kotlin.js/JsAny?> // kotlinx.coroutines/asPromise|asPromise@kotlinx.coroutines.Deferred<0:0>(){0§<kotlin.Any?>}[0]
+
+// Targets: [wasmJs]
+final suspend fun (kotlinx.coroutines/W3CWindow).kotlinx.coroutines/awaitAnimationFrame(): kotlin/Double // kotlinx.coroutines/awaitAnimationFrame|awaitAnimationFrame@kotlinx.coroutines.W3CWindow(){}[0]
 
 // Targets: [wasmJs]
 final suspend fun <#A: kotlin.js/JsAny?> (kotlin.js/Promise<#A>).kotlinx.coroutines/await(): #A // kotlinx.coroutines/await|await@kotlin.js.Promise<0:0>(){0§<kotlin.js.JsAny?>}[0]
