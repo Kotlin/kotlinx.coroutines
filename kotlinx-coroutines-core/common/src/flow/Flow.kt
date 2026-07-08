@@ -34,10 +34,6 @@ import kotlin.coroutines.*
  * with an exception for a few operations specifically designed to introduce concurrency into flow
  * execution such as [buffer] and [flatMapMerge]. See their documentation for details.
  *
- * A flow completes normally when the upstream emitter finishes execution.
- * A flow completes with an exception when an exception is thrown by any of the flow operations.
- * In this case, the upstream flow completes immediately and does not emit any more values.
- *
  * The `Flow` interface does not carry information whether a flow is a _cold_ stream that can be collected repeatedly and
  * triggers execution of the same code every time it is collected, or if it is a _hot_ stream that emits different
  * values from the same running source on each collection. Usually flows represent _cold_ streams, but
@@ -131,13 +127,13 @@ import kotlin.coroutines.*
  *
  * ### Exception transparency
  *
- * When `emit` or `emitAll` throws, the Flow implementations must immediately stop emitting new values and finish with an exception.
+ * When `emit` or `emitAll` throws, the Flow implementations must immediately stop emitting new values and complete with an exception.
  * For diagnostics or application-specific purposes, the exception may be different from the one thrown by the emit operation,
  * suppressing the original exception as discussed below.
- * If there is a need to emit fallback values after an upstream flow completes with an  exception, please use the
- * [catch][Flow.catch] operator downstream of the failing operation in the flow chain.
+ * If there is a need to emit fallback values after the flow completed with an exception, use the
+ * [catch][Flow.catch] operator and emit them from its [action][Flow.catch] block.
  *
- * The [catch][Flow.catch] operator catches only the exception that the upstream flow completed with, but passes
+ * The [catch][Flow.catch] operator only catches upstream exceptions, but passes
  * all downstream exceptions. Similarly, terminal operators like [collect][Flow.collect]
  * throw any unhandled exceptions that occur in their code or in upstream flows, for example:
  *
