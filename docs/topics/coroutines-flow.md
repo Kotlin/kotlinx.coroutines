@@ -1589,7 +1589,6 @@ class Chatroom {
 
 //sampleStart
 suspend fun main() {
-    val nUsers = 3
     val chatroom = Chatroom()
     withContext(Dispatchers.Default) {
         // Creates a child scope of the currently running coroutine
