@@ -4,8 +4,8 @@
 
 Cancellation lets you request to stop a coroutine before it completes.
 It stops work that's no longer needed, such as when a user closes a window or navigates away in a user interface while a coroutine is still running.
-You can use it to release resources early and to stop a coroutine from accessing objects past their disposal.
-You can also use cancellation to stop long-running coroutines, for example, sending heartbeats, running scheduled tasks, updating a state to reflect the newest reading (like the clock UI), etc.
+You can use cancellation to release resources early and to stop a coroutine from accessing objects past their disposal.
+You can also use cancellation to stop long-running coroutines, for example, sending heartbeats, running scheduled tasks, updating a state to reflect the newest reading (like the clock UI), and so on.
 
 Cancellation works through the [`Job`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/) handle, which represents the lifecycle of a coroutine and its parent-child relationships.
 `Job` allows you to check whether the coroutine is active and allows you to cancel it, along with its children, as defined by [structured concurrency](coroutines-basics.md#coroutine-scope-and-structured-concurrency).
@@ -73,7 +73,7 @@ suspend fun main() {
 {kotlin-runnable="true" id="manual-cancellation-example"}
 
 In this example, [`CompletableDeferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-completable-deferred/) is used as a signal that the coroutine has started running.
-The coroutine calls `complete()` when it starts executing, and `await()` only returns once that `CompletableDeferred` is completed. This way, cancellation happens only after the coroutine has started running. Without this check, the coroutine could be canceled before it runs the code inside its block. You don't need to have this check to cancel a coroutine, but it is included here to have a consistent example which always prints the explanation lines.
+The coroutine calls `complete()` when it starts executing, and `await()` only returns once that `CompletableDeferred` is completed. This way, cancellation happens only after the coroutine has started running. Without this check, the coroutine may be canceled before it runs the code inside its block. You don't need this check to cancel a coroutine, but it is included here to make the example reproducible, so the coroutine always starts and prints its messages before it's canceled.
 
 Similarly, a coroutine created by `async` can be canceled, `val deferred = async { ... }`, `deferred.cancel()`. The `async` builder returns a `Deferred` handle, which inherits from `Job`. Hence, the cancellation works in exactly the same way for `Deferred` as it does for `Job`.
 
@@ -87,7 +87,7 @@ Similarly, a coroutine created by `async` can be canceled, `val deferred = async
 ### Cancellation propagation
 
 [Structured concurrency](coroutines-basics.md#coroutine-scope-and-structured-concurrency) ensures that canceling a coroutine also cancels all of its children.
-This prevents child coroutines from working after the parent has been requested to stop.
+This prevents child coroutines from continuing their work after their parent coroutine is canceled.
 
 Here's an example:
 
@@ -317,7 +317,7 @@ class ScreenWithButtons(private val scope: CoroutineScope) {
     // Should only be called from the UI thread
     fun loadAndUpdateButtons(filename: String) {
         scope.launch {
-            // withContext will check for cancellation before entering the block
+            // withContext() checks for cancellation before entering the block
             // and after the block returns
             val buttonNames = withContext(Dispatchers.IO) {
                 readLines(filename) // A blocking call, cannot be canceled here
